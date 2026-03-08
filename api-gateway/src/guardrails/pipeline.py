@@ -284,7 +284,12 @@ class GuardrailsPipeline:
         reasons: list[str] = []
 
         if self.settings.guardrails_input_moderation_enabled:
-            moderation_reason = self._deterministic_input_moderation_reason(masked_query)
+            # Input moderation, kullanıcı niyeti üzerinde çalışmalıdır.
+            # Presidio masking bazı anahtar ifadeleri anonimleştirebildiği için
+            # önce ham sorguyu değerlendiriyoruz.
+            moderation_reason = self._deterministic_input_moderation_reason(user_query)
+            if moderation_reason is None:
+                moderation_reason = self._deterministic_input_moderation_reason(masked_query)
             if moderation_reason is not None:
                 return GuardrailsResult(
                     answer=self._build_input_refusal(moderation_reason),

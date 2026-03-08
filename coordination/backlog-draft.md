@@ -144,6 +144,32 @@ Bağlantı seviyesi blocker büyük ölçüde kapandı; backlog önceliği kalit
     - `5bf9cb5` (reranker default-off güvenli gate)
   - Final canlı doğrulama (mock yok): `evaluation/reports/eval_live_20260308_131021.json`
 
+---
+
+## Faz 2 Başlangıç Backlog'u
+
+**P0 (Karar Güncellemesi)**
+- [x] Reranker güvenli aktivasyonu değerlendirildi
+  - **Karar:** baseline'a net katkı göstermediği için **closed / default-off retained**
+  - Son karar: **safe activation achieved: hayır**
+  - Referans rapor: `coordination/phase2-reranker-recovery-2026-03-08.md`
+  - Branch/commit: `feat/phase2-reranker-activation` / `b27ad27`
+- [x] NeMo Guardrails güvenli dar kapsam entegrasyonu
+  - **Eski yaklaşım iptal edildi:** facts-only + self_check_facts hattı valid case bloklama nedeniyle merge edilmeyecek.
+  - **Uygulanan güvenli kapsam:** Presidio/KVKK maskeleme + input moderation odaklı düşük riskli default
+  - Sonuç: valid-case blanket blocking gözlenmedi; safe-scope politika **main'e entegre edildi**.
+  - Rapor: `coordination/phase2-guardrails-safe-scope-2026-03-08.md`
+  - Branch/commit: `feat/phase2-guardrails-safe-scope` / `7585f0b`
+
+**P1 (Açıldı)**
+- [x] Fine-tuning veri hazırlığı ve kalite gate iskeleti
+  - **Durum:** `hukuk-ai-phase2-ft-data-prep` — gemini — **completed + main'e entegre ✅**
+  - Çıktılar: `data/finetune/{sft,dpo,eval}`, `scripts/extract_qa_from_logs.py`, `scripts/validate_ft_data.py`, `docs/quality_gate_workflow.md`
+  - Branch/commit: `feat/phase2-ft-data-prep` / `b05175b703499c199ca88918ae77d809625427d8`
+- [ ] Gerçek log extraction + avukat review + ≥%80 onay gate
+- [ ] LoRA fine-tuning (dgxnode2)
+- [ ] YİM veri genişlemesi
+
 ### Faz 1 Kabul Kriteri Durumu
 | Kriter | Mevcut | Hedef | Durum |
 |--------|--------|-------|-------|

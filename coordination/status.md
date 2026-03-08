@@ -2,25 +2,43 @@
 
 ## Kickoff
 - Tarih: 2026-03-07 13:03 Europe/Istanbul
-- Faz: Faz 1 PoC planlama / backlog ayrıştırma
-- Referans plan: `projects/hukuk-ai/docs/faz1-poc-plan.md`
+- Faz: Faz 2 P0 yürütme (Reranker + Guardrails)
+- Referans planlar:
+  - `projects/hukuk-ai/docs/faz1-poc-plan.md`
+  - `projects/hukuk-ai/docs/faz2-rev1-plan.md`
+
+## 2026-03-08 — Faz 2 Kickoff
+- Faz 1 PoC başarıyla kapatıldı; `main` final commit: `7225ae2`
+- Faz 2 için kullanıcı tarafından revize plan gönderildi ve repo içine `docs/faz2-rev1-plan.md` olarak alındı.
+- Bu dalgada yalnızca **P0** iş kalemleri başlatıldı:
+  1. `hukuk-ai-phase2-reranker` — codex — `/tmp/hukuk-ai-phase2-reranker`
+  2. `hukuk-ai-phase2-guardrails` — sonnet — `/tmp/hukuk-ai-phase2-guardrails`
+- Yürütme modeli: her agent kendi worktree'sinde çalışır, commit/push yapar; koordinatör review sonrası main'e alır veya iterasyon başlatır.
 
 ## Subagent Durumu
 - Aktif follow-up run'lar:
-  (Yok)
+  - (Yok)
 - Tamamlanan/Başarısız follow-up run'lar:
-  1. `hukuk-ai-finalize-main` — codex — **completed** ✅ (2026-03-08)
-  2. `hukuk-ai-edgecase-codex-recovery` — codex — **completed** ✅
-  3. `hukuk-ai-reranker-codex-recovery` — codex — **completed** ✅
-  4. `hukuk-ai-eval50-verification` — gemini — **completed** ✅ (2026-03-08 ~08:08)
-  5. `hukuk-ai-openwebui-live-e2e` — sonnet — **completed** ✅ (2026-03-08 ~08:00)
-  6. `hukuk-ai-reindex-recall-fix` — sonnet — completed
-  7. `hukuk-ai-live-rag-debug` — sonnet — completed
-  8. `hukuk-ai-live-tbk-milvus` — codex — failed
-  9. `hukuk-ai-reranker-recovery` — sonnet — ended without report
-  10. `hukuk-ai-edgecase-recovery` — gemini — ended without report
-  11. `hukuk-ai-reranker-integration` — sonnet — ended without report
-  12. `hukuk-ai-edgecase-refusal-fix` — gemini — ended without report
+  1. `hukuk-ai-phase2-main-integration` — codex — **completed** ✅ (2026-03-08)
+  2. `hukuk-ai-phase2-ft-data-prep` — gemini — **completed** ✅
+  3. `hukuk-ai-phase2-guardrails-safe-scope` — codex — **completed** ✅
+  4. `hukuk-ai-phase2-reranker-recovery3` — codex — **completed** ✅
+  5. `hukuk-ai-phase2-guardrails` — sonnet — **completed** ✅ (guarded-path, review required)
+  6. `hukuk-ai-finalize-main` — codex — **completed** ✅ (2026-03-08)
+  7. `hukuk-ai-edgecase-codex-recovery` — codex — **completed** ✅
+  8. `hukuk-ai-reranker-codex-recovery` — codex — **completed** ✅
+  9. `hukuk-ai-eval50-verification` — gemini — **completed** ✅ (2026-03-08 ~08:08)
+  10. `hukuk-ai-openwebui-live-e2e` — sonnet — **completed** ✅ (2026-03-08 ~08:00)
+  11. `hukuk-ai-reindex-recall-fix` — sonnet — completed
+  12. `hukuk-ai-live-rag-debug` — sonnet — completed
+  13. `hukuk-ai-live-tbk-milvus` — codex — failed
+  14. `hukuk-ai-phase2-reranker` — codex — **ended without report** ⚠️
+  15. `hukuk-ai-reranker-recovery` — sonnet — ended without report
+  16. `hukuk-ai-edgecase-recovery` — gemini — ended without report
+  17. `hukuk-ai-reranker-integration` — sonnet — ended without report
+  18. `hukuk-ai-edgecase-refusal-fix` — gemini — ended without report
+  19. `hukuk-ai-phase2-reranker-recovery` — codex — ended without report
+  20. `hukuk-ai-phase2-reranker-recovery2` — codex — ended without report
 - Tamamlanan implementasyon/audit run'ları:
   1. `hukuk-ai-guardrails-impl` — codex — completed
   2. `hukuk-ai-guardrails-audit` — sonnet — completed
@@ -29,6 +47,17 @@
   2. `hukuk-ai-data-eval` — gemini — completed
   3. `hukuk-ai-backlog` — sonnet — completed
   4. `hukuk-ai-decision-freeze` — sonnet — completed
+
+## 2026-03-08 — Faz 2 Accepted Work Main Entegrasyonu ✅
+- `main` üzerine kabul edilen iki commit alındı:
+  - `7585f0b` — guardrails safe-scope default (Presidio/KVKK masking + input moderation, strict facts blocking default dışı)
+  - `b05175b` — fine-tuning data prep scaffolding (dizin şeması, extraction/validation scriptleri, quality gate dokümantasyonu)
+- Entegrasyon sonrası guardrails pipeline’da input moderation kontrolü ham sorgu üzerinden çalışacak şekilde düzeltildi (masking sonrası false-negative'i önlemek için).
+- Reranker aktivasyonu **değiştirilmedi**: default-off kararında kaldı.
+- Doğrulama (mock-only acceptance claim yapılmadan):
+  - `api-gateway/.venv/bin/pytest -q api-gateway/tests/test_guardrails_config.py api-gateway/tests/test_guardrails_pipeline_smoke.py api-gateway/tests/test_guardrails_bench_smoke.py` → **16 passed**
+  - `python3 scripts/validate_ft_data.py --file <...> --type sft|dpo` (SFT/DPO/Eval scaffold dosyaları) → **PASSED**
+- Detay rapor: `coordination/phase2-main-integration-2026-03-08.md`
 
 ## 2026-03-08 — Main Finalizasyon Özeti ✅
 - Main entegrasyonu tamamlandı (`07e3478` üstüne):
