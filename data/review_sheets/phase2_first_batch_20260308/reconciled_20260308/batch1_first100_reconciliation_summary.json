@@ -1,0 +1,83 @@
+{
+  "total_records": 100,
+  "decision_pair_counts": {
+    "APPROVE+APPROVE": 53,
+    "APPROVE+REVISE": 3,
+    "REVISE+APPROVE": 4,
+    "REVISE+REVISE": 40
+  },
+  "final_bucket_counts": {
+    "approved": 53,
+    "revised_needed": 47
+  },
+  "agreement_count": 93,
+  "disagreement_count": 7,
+  "approval_gate_percentage": 100.0,
+  "approval_gate_passed": true,
+  "training_candidate_count": 100,
+  "manual_review_count": 0,
+  "breakdown_by_difficulty": {
+    "easy": {
+      "approved": 9,
+      "revised_needed": 9
+    },
+    "hard": {
+      "approved": 13,
+      "revised_needed": 18
+    },
+    "medium": {
+      "approved": 31,
+      "revised_needed": 20
+    }
+  },
+  "breakdown_by_category": {
+    "out_of_scope": {
+      "revised_needed": 4
+    },
+    "tbk_eser": {
+      "approved": 3,
+      "revised_needed": 1
+    },
+    "tbk_genel": {
+      "approved": 30,
+      "revised_needed": 16
+    },
+    "tbk_haksiz_fiil": {
+      "approved": 7,
+      "revised_needed": 3
+    },
+    "tbk_hizmet": {
+      "approved": 1,
+      "revised_needed": 5
+    },
+    "tbk_kefalet": {
+      "approved": 4
+    },
+    "tbk_kira": {
+      "approved": 1,
+      "revised_needed": 7
+    },
+    "tbk_satis": {
+      "approved": 4
+    },
+    "tbk_vekaletname": {
+      "approved": 3,
+      "revised_needed": 3
+    },
+    "tmk_aile": {
+      "revised_needed": 2
+    },
+    "tmk_esya": {
+      "revised_needed": 2
+    },
+    "tmk_genel": {
+      "revised_needed": 4
+    }
+  },
+  "policy": {
+    "APPROVE+APPROVE": "approved",
+    "any_REJECT": "manual_escalation",
+    "APPROVE+REVISE_or_REVISE+REVISE": "revised_needed (requires corrected_answer if any REVISE)",
+    "revised_tiebreak_when_both_corrected_differ": "prefer_lawyerA_corrected"
+  }
+}
