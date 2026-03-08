@@ -119,14 +119,36 @@ Bağlantı seviyesi blocker büyük ölçüde kapandı; backlog önceliği kalit
 **P2 (Normal)**
 - [x] Verification engine kalibrasyonu (gerçek LLM yanıtlarıyla)
   - **Durum:** `hukuk-ai-eval50-verification` — gemini — **completed ✅**
-- [ ] Reranker entegrasyon testi (cross-encoder Türkçe precision)
-- [ ] Kalan açık kalite konuları: TBK-001 terminoloji farkı, TBK-011 retrieval gap, out-of-scope refusal davranışı, TMK out-of-scope refusal sertleştirmesi
+- [x] Reranker entegrasyon testi (cross-encoder Türkçe precision)
+  - **Sonuç:** güvenli aktif entegrasyon bulunamadı; **default-off** bırakılarak baseline korundu.
+  - Branch/commit: `feat/reranker-integration` / `5bf9cb5`
+  - Canlı sonuç özeti:
+    - enabled varyantı Faz 1 acceptance'ı bozdu
+    - disabled varyantı baseline'ı korudu
+  - Rapor: `coordination/reranker-codex-recovery-2026-03-08.md`
+- [x] Kalan açık kalite konuları: TBK-001 terminoloji farkı, TBK-011 retrieval gap, out-of-scope refusal davranışı, TMK out-of-scope refusal sertleştirmesi
+  - **Sonuç:** hedeflenen edge-case seti kapatıldı.
+  - Branch/commit: `fix/legal-edgecases` / `d873eb3`
+  - Final canlı sonuç özeti:
+    - citation_rate **0.86**
+    - correct_source_rate **0.7753**
+    - hallucination_rate **0.04**
+    - refusal_accuracy **0.90**
+  - Rapor: `coordination/edgecase-codex-recovery-2026-03-08.md`
+
+**P3 (Finalizasyon)**
+- [x] Main branch final entegrasyonu, test ve push
+  - **Durum:** `hukuk-ai-finalize-main` — codex — **completed ✅** (2026-03-08)
+  - Main'e entegre edilen commit'ler:
+    - `d873eb3` (edge-case/refusal iyileştirmeleri)
+    - `5bf9cb5` (reranker default-off güvenli gate)
+  - Final canlı doğrulama (mock yok): `evaluation/reports/eval_live_20260308_131021.json`
 
 ### Faz 1 Kabul Kriteri Durumu
 | Kriter | Mevcut | Hedef | Durum |
 |--------|--------|-------|-------|
-| citation_rate | 90% | ≥80% | ✅ GEÇTİ |
-| correct_source_rate | 80.17% | ≥70% | ✅ GEÇTİ |
-| hallucination_rate | 5% | ≤10% | ✅ GEÇTİ |
-| refusal_accuracy | 95% | ≥80% | ✅ GEÇTİ |
-| response_time | 10.5s | ≤30s | ✅ GEÇTİ |
+| citation_rate | 86% | ≥80% | ✅ GEÇTİ |
+| correct_source_rate | 77.53% | ≥70% | ✅ GEÇTİ |
+| hallucination_rate | 4% | ≤10% | ✅ GEÇTİ |
+| refusal_accuracy | 98% | ≥80% | ✅ GEÇTİ |
+| response_time | 9.45s | ≤30s | ✅ GEÇTİ |

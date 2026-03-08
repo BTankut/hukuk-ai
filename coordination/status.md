@@ -9,11 +9,18 @@
 - Aktif follow-up run'lar:
   (Yok)
 - Tamamlanan/Başarısız follow-up run'lar:
-  1. `hukuk-ai-eval50-verification` — gemini — **completed** ✅ (2026-03-08 ~08:08)
-  2. `hukuk-ai-openwebui-live-e2e` — sonnet — **completed** ✅ (2026-03-08 ~08:00)
-  3. `hukuk-ai-reindex-recall-fix` — sonnet — completed
-  4. `hukuk-ai-live-rag-debug` — sonnet — completed
-  5. `hukuk-ai-live-tbk-milvus` — codex — failed
+  1. `hukuk-ai-finalize-main` — codex — **completed** ✅ (2026-03-08)
+  2. `hukuk-ai-edgecase-codex-recovery` — codex — **completed** ✅
+  3. `hukuk-ai-reranker-codex-recovery` — codex — **completed** ✅
+  4. `hukuk-ai-eval50-verification` — gemini — **completed** ✅ (2026-03-08 ~08:08)
+  5. `hukuk-ai-openwebui-live-e2e` — sonnet — **completed** ✅ (2026-03-08 ~08:00)
+  6. `hukuk-ai-reindex-recall-fix` — sonnet — completed
+  7. `hukuk-ai-live-rag-debug` — sonnet — completed
+  8. `hukuk-ai-live-tbk-milvus` — codex — failed
+  9. `hukuk-ai-reranker-recovery` — sonnet — ended without report
+  10. `hukuk-ai-edgecase-recovery` — gemini — ended without report
+  11. `hukuk-ai-reranker-integration` — sonnet — ended without report
+  12. `hukuk-ai-edgecase-refusal-fix` — gemini — ended without report
 - Tamamlanan implementasyon/audit run'ları:
   1. `hukuk-ai-guardrails-impl` — codex — completed
   2. `hukuk-ai-guardrails-audit` — sonnet — completed
@@ -22,6 +29,20 @@
   2. `hukuk-ai-data-eval` — gemini — completed
   3. `hukuk-ai-backlog` — sonnet — completed
   4. `hukuk-ai-decision-freeze` — sonnet — completed
+
+## 2026-03-08 — Main Finalizasyon Özeti ✅
+- Main entegrasyonu tamamlandı (`07e3478` üstüne):
+  - `d873eb3` (edge-case/refusal iyileştirmeleri)
+  - `5bf9cb5` (reranker feature-flag, default-off)
+- Çatışma çözümü: `chat.py` retrieval çağrısında edge-case query expansion + reranker top-k gate birlikte korunacak şekilde birleştirildi.
+- Doğrulama:
+  - `api-gateway/.venv/bin/pytest -q` → **253 passed, 3 skipped**
+  - Canlı eval (mock yok): `evaluation/reports/eval_live_20260308_131021.json`
+    - citation_rate: **0.86**
+    - correct_source_rate: **0.7753**
+    - hallucination_rate: **0.04**
+    - refusal_accuracy: **0.98**
+- Son durum: Faz 1 acceptance metrikleri geçerli; main temiz ve push-ready.
 
 ## Gelen Sonuçlar
 - `hukuk-ai-guardrails-impl` tamamlandı.
