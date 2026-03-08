@@ -1,5 +1,14 @@
-# NeMo Guardrails configuration
-# Faz 1 strict verification: self_check_input/output/facts/hallucination + Presidio masking.
+# NeMo Guardrails configuration — SAFE DEFAULT (Phase 2 P0)
+#
+# Amaç:
+#  - Presidio/KVKK maskeleme (input + output)
+#  - Self check input ile yalnızca açıkça uygunsuz / kapsam dışı girişleri elemek
+#
+# Bilinçli olarak DEVRE DIŞI (varsayılan):
+#  - self_check_output
+#  - self_check_facts
+#  - self_check_hallucination
+#  - output-level citation blocking
 
 models:
   - type: main
@@ -10,32 +19,7 @@ models:
       api_key: ${DGX_API_KEY}
       temperature: 0.1
 
-  # Self-check rails için aynı OpenAI-compatible endpoint kullanılır.
   - type: self_check_input
-    engine: openai
-    model: ${DGX_MODEL}
-    parameters:
-      base_url: ${DGX_BASE_URL}
-      api_key: ${DGX_API_KEY}
-      temperature: 0.0
-
-  - type: self_check_output
-    engine: openai
-    model: ${DGX_MODEL}
-    parameters:
-      base_url: ${DGX_BASE_URL}
-      api_key: ${DGX_API_KEY}
-      temperature: 0.0
-
-  - type: self_check_facts
-    engine: openai
-    model: ${DGX_MODEL}
-    parameters:
-      base_url: ${DGX_BASE_URL}
-      api_key: ${DGX_API_KEY}
-      temperature: 0.0
-
-  - type: self_check_hallucination
     engine: openai
     model: ${DGX_MODEL}
     parameters:
@@ -51,23 +35,4 @@ rails:
 
   output:
     flows:
-      - self check output
-      - self check facts
-      - self check hallucination
-      - verify citations
       - mask sensitive output
-
-  config:
-    factuality:
-      # retrieved chunk'lar context altında guardrails'e verilir
-      context_key: retrieved_chunks
-      strict_mode: true
-
-    hallucination:
-      # self_check_hallucination için çoklu sample tutarlılık denetimi
-      num_samples: ${HALLUCINATION_SAMPLES|3}
-      agreement_threshold: 0.67
-
-# Presidio entity kapsamı KVKK odaklı genişletildi.
-# PERSON, PHONE_NUMBER, EMAIL_ADDRESS, LOCATION + TR_ID_NUMBER (custom regex) yönetimi
-# src/guardrails/actions.py içindeki PresidioMasker tarafından uygulanır.

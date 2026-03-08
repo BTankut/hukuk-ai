@@ -1,20 +1,12 @@
-# Faz 1 Guardrails flows
-# Amaç: manuel post-processing yerine self-check + citation verification + PII masking
-#
-# Colang 1.0 sözdizimi: çok satırlı action çağrısı YAML parse hatasına yol açar.
-# execute(...) çağrıları tek satırda yazılmalıdır.
+# Phase 2 P0 safe-scope guardrails flows
+# - KVKK odaklı Presidio maskeleme
+# - Input moderation (self check input) config.yml üzerinden
+# - Output/facts blocking rails intentionally disabled by default
 
 define flow mask sensitive input
   $masked_input = execute presidio_mask_input(text=$user_message)
   if $masked_input
     $user_message = $masked_input
-
-
-define flow verify citations
-  $citations_valid = execute verify_output_citations(answer=$bot_message, retrieved_chunks=$retrieved_chunks)
-  if not $citations_valid
-    bot "Bu konuda elimdeki kaynaklarda yeterli doğrulanmış bilgi bulamadım."
-    stop
 
 
 define flow mask sensitive output

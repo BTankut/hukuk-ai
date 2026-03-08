@@ -40,8 +40,12 @@ class Settings:
 
     # Guardrails
     guardrails_enabled: bool = True
-    guardrails_strict_mode: bool = True
+    # Düşük riskli varsayılan: facts/output block KAPALI.
+    # Sadece açık opt-in'de strict citation/facts denetimi uygulanır.
+    guardrails_strict_mode: bool = False
     guardrails_config_dir: Path = Path("guardrails")
+    guardrails_latency_limit_ms: int = 8000
+    guardrails_input_moderation_enabled: bool = True
 
     # Presidio / KVKK
     presidio_enabled: bool = True
@@ -61,8 +65,13 @@ class Settings:
             "dgx_model": os.getenv("DGX_MODEL", "Qwen/Qwen3.5-35B-A3B-FP8"),
             "dgx_api_key": os.getenv("DGX_API_KEY", "not-needed"),
             "guardrails_enabled": _to_bool(os.getenv("GUARDRAILS_ENABLED"), True),
-            "guardrails_strict_mode": _to_bool(os.getenv("GUARDRAILS_STRICT_MODE"), True),
+            "guardrails_strict_mode": _to_bool(os.getenv("GUARDRAILS_STRICT_MODE"), False),
             "guardrails_config_dir": Path(os.getenv("GUARDRAILS_CONFIG_DIR", "guardrails")),
+            "guardrails_latency_limit_ms": _to_int(os.getenv("GUARDRAILS_LATENCY_LIMIT_MS"), 8000),
+            "guardrails_input_moderation_enabled": _to_bool(
+                os.getenv("GUARDRAILS_INPUT_MODERATION_ENABLED"),
+                True,
+            ),
             "presidio_enabled": _to_bool(os.getenv("PRESIDIO_ENABLED"), True),
             "presidio_mask_char": os.getenv("PRESIDIO_MASK_CHAR", "*"),
             "presidio_language": os.getenv("PRESIDIO_LANGUAGE", "tr"),

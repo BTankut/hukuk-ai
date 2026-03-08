@@ -1,24 +1,14 @@
 prompts:
   - task: self_check_input
     content: |
-      Kullanıcı girdisi güvenli mi kontrol et.
-      Hukuki araştırma kapsamı dışındaki zararlı/kişisel veri ifşası taleplerini reddet.
-      Sadece "yes" veya "no" döndür.
+      Kullanıcı girdisi için muhafazakar bir uygunluk kontrolü yap.
 
-  - task: self_check_output
-    content: |
-      Bot yanıtını incele.
-      Kaynaksız kesin hukuk tavsiyesi, zararlı yönlendirme veya güvenlik ihlali varsa "no" döndür.
-      Aksi halde "yes".
+      "no" döndürmek için en az bir koşul açıkça sağlanmalı:
+      1) Kişisel veri kötüye kullanımı / ifşası talebi (TC kimlik no, telefon, adres vb.)
+      2) Yasadışı veya zararlı eylem talimatı
+      3) Hukuk asistanı kapsamı dışı, açıkça alakasız bir konu (ör. hava durumu, yemek tarifi)
 
-  - task: self_check_facts
-    content: |
-      Soruya verilen yanıt sadece retrieved_chunks içindeki doğrulanabilir olgulara dayanıyor mu?
-      retrieved_chunks dışı bilgi varsa "no", tamamen uyumluysa "yes" döndür.
+      Geçerli hukuki sorular (TBK dahil genel mevzuat soruları) için "yes" döndür.
+      Belirsiz durumda "yes" döndür (false positive engelle).
 
-  - task: self_check_hallucination
-    content: |
-      Yanıtın iç tutarlılığını denetle.
-      Birden fazla örneklem (num_samples={{ hallucination_samples }}) arasında
-      iddia çelişkisi veya desteklenmeyen kanun maddesi referansı varsa "no" döndür.
-      Aksi halde "yes".
+      Yalnızca "yes" veya "no" yanıtla.
