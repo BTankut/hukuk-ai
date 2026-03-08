@@ -1,0 +1,1 @@
+{"instruction": "Aşağıdaki kaynaklara dayanarak soruyu yanıtla.", "input": "KAYNAKLAR:\n[Kaynak: SCAFFOLDING] Bu bir şablon dosyasıdır.\n\nSORU: SCAFFOLDING - Düzeltilmiş RAG çıktısı şablonu", "output": "SCAFFOLDING - Düzeltilmiş RAG çıktısı şablonu. [Kaynak: SCAFFOLDING]"}
