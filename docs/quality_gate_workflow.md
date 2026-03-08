@@ -15,7 +15,7 @@ Bu aşamalardan elde edilen veriler doğrudan eğitime **SÖKÜLMEZ**. Sadece "a
 
 Tüm aday veriler (RAG çıktıları, dilekçe örnekleri, sentetik üretim) aşağıdaki adımlarla avukatlar tarafından incelenmek zorundadır:
 
-1.  **Aday Veri Seti Havuzu:** Çıkarılan aday veriler bir ön izleme klasöründe tutulur (örneğin `data/finetune/sft/candidates/`).
+1.  **Aday Veri Seti Havuzu:** Çıkarılan aday veriler `data/finetune/raw/pending_review/` altında tutulur (örnek paket: `data/finetune/raw/pending_review/phase1_eval_reports_20260308/`).
 2.  **İnceleme:** 2 ila 3 uzman avukat danışman, her bir QA çiftini manuel olarak inceler.
 3.  **Düzeltme ve Format Uyumlaştırma:**
     *   Hukuki muhakeme hataları düzeltilir.
@@ -38,7 +38,14 @@ Veriler avukat onayından ve ayrıştırmadan (held-out) geçtikten sonra, otoma
 *   Bütün jsonl dosyaları `scripts/validate_ft_data.py` ile denetlenir.
 *   Örnek olarak, SFT verilerinin `instruction`, `input` ve `output` anahtarlarını barındırdığı, DPO verilerinin ise `prompt`, `chosen` ve `rejected` anahtarlarını içerdiği sistem üzerinden teyit edilir.
 
-## 5. Gate Onayı (Go/No-Go)
+## 5. İzlenebilirlik (Manifest + Rapor)
+
+Extraction aşaması sonrası aşağıdaki artefaktlar aday paketinin yanında tutulur:
+- `extraction_manifest.json`: kaynak dosya listesi, filtrelenen/atlanan raporlar, kayıt sayıları, split parametreleri.
+- `extraction_report.md`: insan-okur özet (kaynaklar + adetler + uyarılar).
+- `candidate_metadata.jsonl`: her aday kaydın kaynak referansı ve kalite sinyalleri (`is_hallucination`, `refusal_expected` vb.).
+
+## 6. Gate Onayı (Go/No-Go)
 
 **Eğitime Geçiş İçin Zorunlu Şartlar:**
 - [ ] Minimum 1.000 adet onaylı SFT örneği oluşturuldu.
