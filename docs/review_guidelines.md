@@ -24,14 +24,27 @@ Her bir kayıt için aşağıdaki üç karardan **yalnızca biri** seçilmelidir
 
 ## 3. İnceleme Dosyası (CSV) Sütunları
 
+Yeni paketlerde satır başına triage için ek metadata sütunları bulunur. Avukatların odaklanması gereken zorunlu alanlar yine `lawyer_decision`, gerektiğinde `corrected_answer` ve `reviewer_name` sütunlarıdır.
+
 | Sütun Adı | Açıklama | Avukat Dolduracak mı? |
 | :--- | :--- | :--- |
-| `id` | Kaydın benzersiz numarası. Değiştirmeyiniz. | Hayır |
+| `batch_item_no` | Paket içi sıra numarası. Değiştirmeyiniz. | Hayır |
+| `candidate_id` | Aday kaydın benzersiz kimliği. Değiştirmeyiniz. | Hayır |
+| `question_id` | Soru kimliği (örn. TBK-044). | Hayır |
+| `difficulty` | Zorluk etiketi (`easy`, `medium`, `hard`). Segment bazlı kalite analizi için kullanılır. | Hayır |
+| `category` | Hukuki konu kategorisi (örn. `tbk_genel`, `tbk_kira`). | Hayır |
+| `source_file` | Cevabın geldiği evaluation raporu. | Hayır |
+| `source_record_id` | Kaynak rapordaki kayıt kimliği. | Hayır |
+| `split` | Adayın extraction split'i (`train_pending_review` / `heldout_pending_review`). | Hayır |
+| `refusal_expected` | Soruda refusal beklenip beklenmediği sinyali. | Hayır |
+| `is_hallucination` | Kaynak metadata'daki hallüsinasyon işareti. | Hayır |
+| `has_citation` | Cevapta kaynak atfı bulunduğu sinyali. | Hayır |
+| `response_time_ms` | Üretim sırasında ölçülen yanıt süresi. | Hayır |
 | `question` | Kullanıcının sorduğu hukuki soru. | Hayır |
 | `context` | Sistemin soruya cevap bulmak için getirdiği hukuki mevzuat/içtihat metni. | Hayır |
 | `generated_answer` | AI tarafından üretilmiş taslak cevap. | Hayır |
 | `lawyer_decision` | Avukat kararı: `APPROVE`, `REVISE` veya `REJECT`. | **Evet** |
-| `lawyer_comment` | Kararınızın kısa nedeni (Özellikle REJECT durumunda faydalıdır). | Opsiyonel |
+| `lawyer_comment` | Kararınızın kısa nedeni (özellikle REJECT durumunda faydalıdır). | Opsiyonel |
 | `corrected_answer` | Karar `REVISE` ise, cevabın sizin tarafınızdan düzeltilmiş hali. | **Evet (Karar REVISE ise)** |
 | `reviewer_name` | İncelemeyi yapan avukatın ad ve soyadı (veya rumuzu). | **Evet** |
 

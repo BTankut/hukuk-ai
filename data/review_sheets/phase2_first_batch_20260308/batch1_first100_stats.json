@@ -1,0 +1,36 @@
+{
+  "input": "data/finetune/raw/pending_review/phase1_eval_reports_20260308/sft_train_pending_review.jsonl",
+  "output": "data/review_sheets/phase2_first_batch_20260308/batch1_first100_master.csv",
+  "selection": "balanced",
+  "limit": 100,
+  "metadata_jsonl": "data/finetune/raw/pending_review/phase1_eval_reports_20260308/candidate_metadata.jsonl",
+  "metadata_split": "train_pending_review",
+  "summary": {
+    "count": 100,
+    "difficulty": {
+      "easy": 18,
+      "hard": 31,
+      "medium": 51
+    },
+    "category": {
+      "out_of_scope": 4,
+      "tbk_eser": 4,
+      "tbk_genel": 46,
+      "tbk_haksiz_fiil": 10,
+      "tbk_hizmet": 6,
+      "tbk_kefalet": 4,
+      "tbk_kira": 8,
+      "tbk_satis": 4,
+      "tbk_vekaletname": 6,
+      "tmk_aile": 2,
+      "tmk_esya": 2,
+      "tmk_genel": 4
+    },
+    "source_file": {
+      "evaluation/reports/eval_live_20260308_131021.json": 46,
+      "evaluation/reports/eval_live_reranker_recovery_baseline_20260308.json": 46,
+      "evaluation/reports/eval_reranker_disabled_8010_20260308.json": 8
+    },
+    "question_id_unique": 46
+  }
+}

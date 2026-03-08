@@ -1,2 +1,2 @@
-id,question,context,generated_answer,lawyer_decision,lawyer_comment,corrected_answer,reviewer_name
-66fff67c,SCAFFOLDING - Hukuki soru şablonu,[Kaynak: SCAFFOLDING] Bu bir şablon dosyasıdır.,SCAFFOLDING - Yanıt şablonu. [Kaynak: SCAFFOLDING],,,,
+batch_item_no,candidate_id,question_id,difficulty,category,source_file,source_record_id,split,refusal_expected,is_hallucination,has_citation,response_time_ms,question,context,generated_answer,lawyer_decision,lawyer_comment,corrected_answer,reviewer_name
+1,SCAFFOLD-0001,TBK-000,easy,tbk_genel,evaluation/reports/example.json,TBK-000,train_pending_review,False,False,True,0.0,SCAFFOLDING - Hukuki soru şablonu,[Kaynak: SCAFFOLDING] Bu bir şablon dosyasıdır.,SCAFFOLDING - Yanıt şablonu. [Kaynak: SCAFFOLDING],,,,
