@@ -32,6 +32,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import time
 import uuid
 from collections import OrderedDict
@@ -617,12 +618,18 @@ async def chat_completions(
 
                 metadata_filter = MetadataFilter(law_short_name=request_body.law_filter)
 
+            # Reranker etkinse daha fazla aday çek (varsayılan: 20)
+            _reranker_enabled = os.getenv("RERANKER_ENABLED", "false").lower() in {"1", "true", "yes"}
+            _retrieve_top_k = request_body.top_k
+            if _reranker_enabled:
+                _retrieve_top_k = int(os.getenv("RERANKER_RETRIEVE_TOP_K", "20"))
+
             # Embedder varsa embed et, yoksa direkt query string ile dene
             if hasattr(retriever, "retrieve") and callable(retriever.retrieve):
                 # MilvusRetriever: retrieve(query=str, top_k=int, metadata_filter=...)
                 results, stats = retriever.retrieve(
                     query=retrieval_query,  # Terminoloji genişletilmiş sorgu
-                    top_k=retrieval_top_k,
+                    top_k=max(retrieval_top_k, _retrieve_top_k),
                     metadata_filter=metadata_filter,
                 )
                 retrieved_chunks = [
@@ -636,15 +643,84 @@ async def chat_completions(
                     for r in results
                 ]
                 logger.info(
-                    "Retrieval: session=%s hits=%d latency=%.0fms",
+                    "Retrieval: session=%s hits=%d latency=%.0fms reranker=%s",
                     session_id,
                     stats.hit_count,
                     stats.latency_ms,
+                    "enabled" if _reranker_enabled else "disabled",
                 )
         except Exception as exc:
             logger.warning(
                 "Retrieval hatası (devam ediliyor, chunk yok): %s", exc, exc_info=True
             )
+
+    # ── Reranker (opsiyonel, RERANKER_ENABLED=true) ───────────────────────────
+    _reranker_enabled = os.getenv("RERANKER_ENABLED", "false").lower() in {"1", "true", "yes"}
+    if _reranker_enabled and retrieved_chunks:
+        try:
+            from rag.reranker import FAZ1_TOP_K, get_reranker
+
+            _reranker = get_reranker()
+            _candidates = [
+                {
+                    "text": chunk.text,
+                    "citation": chunk.citation,
+                    "source": chunk.source,
+                    "score": chunk.score,
+                    "metadata": chunk.metadata or {},
+                }
+                for chunk in retrieved_chunks
+            ]
+            _ranked, _rstats = _reranker.rerank(
+                query=last_user_msg,
+                candidates=_candidates,
+            )
+
+            if _ranked:
+                retrieved_chunks = [
+                    RetrievedChunk(
+                        text=r.text,
+                        citation=r.citation,
+                        source=r.source,
+                        score=r.score,
+                        metadata=r.metadata,
+                    )
+                    for r in _ranked
+                ]
+                logger.info(
+                    "Reranker: session=%s input=%d→top_k=%d latency=%.0fms thr=%.1f filter_rate=%.0f%%",
+                    session_id,
+                    _rstats.input_count,
+                    _rstats.top_k_count,
+                    _rstats.latency_ms,
+                    _rstats.threshold,
+                    _rstats.filter_rate * 100,
+                )
+            else:
+                # Threshold tüm adayları eledi → güvenli fallback: boş context
+                # NEDEN: top-k retrieval fallback'i, domain dışı sorgularda (örn: TMK sorusu
+                # ama sadece TBK verisi indeksli) yanlış domain chunk'larını döndürür.
+                # LLM bu chunk'ları kullanarak yanlış atıf yapar (hallucination ↑).
+                # Boş context ile LLM sistem promptu gereği "bilgim yok" yanıtı verir.
+                # Önceki davranışa dönmek için: RERANKER_FALLBACK_TOPK=true env var.
+                _fallback_topk = os.getenv("RERANKER_FALLBACK_TOPK", "false").lower() in {"1", "true", "yes"}
+                if _fallback_topk:
+                    retrieved_chunks = retrieved_chunks[:FAZ1_TOP_K]
+                    logger.warning(
+                        "Reranker: thr=%.1f tüm %d adayı eledi → top-%d retrieval fallback (RERANKER_FALLBACK_TOPK=true)",
+                        _rstats.threshold,
+                        _rstats.input_count,
+                        FAZ1_TOP_K,
+                    )
+                else:
+                    retrieved_chunks = []
+                    logger.warning(
+                        "Reranker: thr=%.1f tüm %d adayı eledi → boş context (güvenli fallback; RERANKER_FALLBACK_TOPK=true ile eski davranış)",
+                        _rstats.threshold,
+                        _rstats.input_count,
+                    )
+        except Exception as exc:
+            logger.warning("Reranker bypass (hata): %s", exc, exc_info=True)
 
     # ── Orchestrator ─────────────────────────────────────────────────────────
     orchestrator = _get_orchestrator(request)
