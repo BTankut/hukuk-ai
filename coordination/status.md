@@ -19,12 +19,13 @@
 - Aktif follow-up run'lar:
   (Yok)
 - Tamamlanan/Başarısız follow-up run'lar:
-  1. `hukuk-ai-phase2-review-packet` — gemini — **completed** ✅
-  2. `hukuk-ai-phase2-ft-log-extract` — codex — **completed** ✅
-  3. `hukuk-ai-phase2-main-integration` — codex — **completed** ✅ (2026-03-08)
-  4. `hukuk-ai-phase2-ft-data-prep` — gemini — **completed** ✅
-  5. `hukuk-ai-phase2-guardrails-safe-scope` — codex — **completed** ✅
-  6. `hukuk-ai-phase2-reranker-recovery3` — codex — **completed** ✅
+  1. `hukuk-ai-phase2-first-review-batch` — codex — **completed** ✅
+  2. `hukuk-ai-phase2-review-packet` — gemini — **completed** ✅
+  3. `hukuk-ai-phase2-ft-log-extract` — codex — **completed** ✅
+  4. `hukuk-ai-phase2-main-integration` — codex — **completed** ✅ (2026-03-08)
+  5. `hukuk-ai-phase2-ft-data-prep` — gemini — **completed** ✅
+  6. `hukuk-ai-phase2-guardrails-safe-scope` — codex — **completed** ✅
+  7. `hukuk-ai-phase2-reranker-recovery3` — codex — **completed** ✅
   5. `hukuk-ai-phase2-guardrails` — sonnet — **completed** ✅ (guarded-path, review required)
   6. `hukuk-ai-finalize-main` — codex — **completed** ✅ (2026-03-08)
   7. `hukuk-ai-edgecase-codex-recovery` — codex — **completed** ✅

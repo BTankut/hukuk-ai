@@ -177,6 +177,16 @@ Bağlantı seviyesi blocker büyük ölçüde kapandı; backlog önceliği kalit
   - Çıktılar: `docs/review_guidelines.md`, `scripts/prepare_review_sheets.py`, `scripts/calculate_approval_rate.py`, `data/review_sheets/template_review.csv`
   - Branch/commit: `feat/phase2-review-packet` / `76ef1e9e6e9ebeb1bdfb536bc15d37f4c7e87d47`
   - Rapor: `coordination/phase2-review-packet-2026-03-08.md`
+- [x] İlk 100'lük avukat review batch'i
+  - **Durum:** `hukuk-ai-phase2-first-review-batch` — codex — **completed ✅**
+  - Çıktılar:
+    - `data/review_sheets/phase2_first_batch_20260308/batch1_first100_master.csv`
+    - `data/review_sheets/phase2_first_batch_20260308/batch1_first100_lawyerA.csv`
+    - `data/review_sheets/phase2_first_batch_20260308/batch1_first100_lawyerB.csv`
+    - `data/review_sheets/phase2_first_batch_20260308/batch1_first100_stats.json`
+  - Dağılım: easy **18**, medium **51**, hard **31**
+  - Branch/commit: `feat/phase2-first-review-batch` / `ab99f0d`
+  - Rapor: `coordination/phase2-first-review-batch-2026-03-08.md`
 - [ ] Gerçek avukat review + ≥%80 onay gate uygulaması
 - [ ] LoRA fine-tuning (dgxnode2)
 - [ ] YİM veri genişlemesi
