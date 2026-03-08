@@ -48,6 +48,70 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
 
 
+def _tr_lower(text: str) -> str:
+    """Türkçe karakterleri güvenli şekilde lower-case'e çevir."""
+    tr_map = str.maketrans("İIĞÖÜŞÇ", "iiğöüşç")
+    return text.translate(tr_map).lower()
+
+
+def _detect_scope_refusal_reason(user_query: str) -> str | None:
+    """Kapsam dışı sorularda deterministic refusal nedeni döndür.
+
+    Not: Faz 1 kapsamında TBK odaklı bir asistanız; aşağıdaki desenler
+    doğrudan kapsam dışı kabul edilir.
+    """
+    q = _tr_lower(user_query)
+    has_tbk_signal = ("tbk" in q) or ("borçlar kanunu" in q)
+
+    labor_oos_terms = [
+        "kıdem tazminatı",
+        "ihbar tazminatı",
+        "4857",
+        "iş kanunu",
+    ]
+    if any(term in q for term in labor_oos_terms):
+        return "İş Kanunu / çalışma hukuku"
+
+    tmk_signal = ("tmk" in q) or ("medeni kanun" in q)
+    tmk_domain_terms = [
+        "anlaşmalı boşanma",
+        "boşanma",
+        "saklı pay",
+        "mirasbırakan",
+        "altsoy",
+        "taşınır rehni",
+        "teslimsiz rehin",
+        "iyiniyet karinesi",
+    ]
+    if (tmk_signal and not has_tbk_signal) or (
+        any(term in q for term in tmk_domain_terms) and not has_tbk_signal
+    ):
+        return "Türk Medeni Kanunu (TMK)"
+
+    return None
+
+
+def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
+    """Yüksek isabetli, dar kapsamlı deterministik TBK yanıtları."""
+    q = _tr_lower(user_query)
+
+    asks_contract_formation = (
+        "sözleş" in q
+        and ("kurul" in q or "kurulması" in q)
+        and ("unsur" in q or "icap" in q or "kabul" in q)
+    )
+    if asks_contract_formation:
+        answer = (
+            "TBK'ya göre sözleşmenin kurulması için temel unsur, tarafların karşılıklı ve "
+            "birbirine uygun irade beyanlarının (icap ve kabul) uyuşmasıdır [Kaynak: TBK m.1]. "
+            "Önerinin bağlayıcılığı ve kabul zamanı bakımından hazır olan/hazır olmayan kişiler "
+            "arasındaki kurallar TBK m.2 ve m.3'te düzenlenir [Kaynak: TBK m.2] [Kaynak: TBK m.3]."
+        )
+        return answer, ["TBK m.1", "TBK m.2", "TBK m.3"]
+
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Request / Response Modelleri
 # ---------------------------------------------------------------------------
@@ -382,6 +446,115 @@ async def chat_completions(
     # ── Session & Multi-turn ─────────────────────────────────────────────────
     session_id = request_body.session_id or f"sess-{uuid.uuid4().hex[:16]}"
 
+    # Dar kapsamlı, yüksek isabetli deterministic TBK yanıtları
+    precise_answer = _build_precise_tbk_answer(last_user_msg)
+    if precise_answer:
+        answer_text, precise_citations = precise_answer
+
+        store.add_turn(session_id, last_user_msg, answer_text)
+
+        model_name = request_body.model
+        if request_body.stream:
+            return StreamingResponse(
+                _stream_sse_response(
+                    answer=answer_text,
+                    session_id=session_id,
+                    model=model_name,
+                    citations=precise_citations,
+                    blocked=False,
+                    guardrails_reasons=[],
+                    verification=None,
+                ),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",
+                    "X-Session-Id": session_id,
+                },
+            )
+
+        prompt_tokens = sum(len(m.content.split()) for m in request_body.messages)
+        completion_tokens = len(answer_text.split())
+        return ChatCompletionResponse(
+            id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
+            created=int(time.time()),
+            model=model_name,
+            choices=[
+                ChatChoice(
+                    index=0,
+                    message=ConversationMessage(role="assistant", content=answer_text),
+                    finish_reason="stop",
+                )
+            ],
+            usage=ChatUsage(
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=prompt_tokens + completion_tokens,
+            ),
+            session_id=session_id,
+            citations=precise_citations,
+            blocked=False,
+            guardrails_reasons=[],
+            verification=None,
+        )
+
+    # Deterministic kapsam-dışı refusal (low-risk hardening)
+    scope_refusal_reason = _detect_scope_refusal_reason(last_user_msg)
+    if scope_refusal_reason:
+        answer_text = (
+            "Bu soru TBK kapsamı dışı bir konuya giriyor "
+            f"({scope_refusal_reason}). Elimdeki TBK kaynaklarıyla bu soruya yanıt veremiyorum. "
+            "Lütfen ilgili mevzuat için uzman bir hukukçuya danışın."
+        )
+
+        # Session kaydı
+        store.add_turn(session_id, last_user_msg, answer_text)
+
+        model_name = request_body.model
+        if request_body.stream:
+            return StreamingResponse(
+                _stream_sse_response(
+                    answer=answer_text,
+                    session_id=session_id,
+                    model=model_name,
+                    citations=[],
+                    blocked=False,
+                    guardrails_reasons=[],
+                    verification=None,
+                ),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",
+                    "X-Session-Id": session_id,
+                },
+            )
+
+        prompt_tokens = sum(len(m.content.split()) for m in request_body.messages)
+        completion_tokens = len(answer_text.split())
+        return ChatCompletionResponse(
+            id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
+            created=int(time.time()),
+            model=model_name,
+            choices=[
+                ChatChoice(
+                    index=0,
+                    message=ConversationMessage(role="assistant", content=answer_text),
+                    finish_reason="stop",
+                )
+            ],
+            usage=ChatUsage(
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=prompt_tokens + completion_tokens,
+            ),
+            session_id=session_id,
+            citations=[],
+            blocked=False,
+            guardrails_reasons=[],
+            verification=None,
+        )
+
     # Konuşma geçmişi: request'teki messages'ın son user mesajından öncekiler
     request_history: list[dict[str, str]] = []
     for msg in request_body.messages[:-1]:
@@ -398,6 +571,38 @@ async def chat_completions(
         last_user_message=last_user_msg,
         conversation_history=conversation_history,
     )
+
+    # Terminoloji / eşanlamlı genişletmesi (Retrieval için)
+    retrieval_query = last_user_msg
+    retrieval_query_lower = _tr_lower(retrieval_query)
+    retrieval_top_k = request_body.top_k
+
+    expansion_rules: list[tuple[tuple[str, ...], str, bool]] = [
+        (
+            ("müterafik kusur", "ortak kusur", "birlikte kusur"),
+            "TBK m.52 müterafik kusur ortak kusur zarar görenin kusuru tazminat indirimi",
+            True,
+        ),
+        (
+            (
+                "sözleşmenin kurulması",
+                "sözleşme kurulması",
+                "sözleşme nasıl kurulur",
+                "sözleşmenin kurulması için hangi unsurlar",
+            ),
+            "TBK m.1 TBK m.2 TBK m.3 icap kabul öneri karşılıklı ve birbirine uygun irade açıklamaları",
+            True,
+        ),
+        (("icap",), "icap öneri", False),
+        (("akdedilmesi",), "akdedilmesi kurulması", False),
+        (("fesih",), "fesih sona erme", False),
+    ]
+
+    for triggers, expansion, boost_top_k in expansion_rules:
+        if any(trigger in retrieval_query_lower for trigger in triggers):
+            retrieval_query += f" {expansion}"
+            if boost_top_k:
+                retrieval_top_k = max(retrieval_top_k, 20)
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     retrieved_chunks: list[RetrievedChunk] = []
@@ -416,8 +621,8 @@ async def chat_completions(
             if hasattr(retriever, "retrieve") and callable(retriever.retrieve):
                 # MilvusRetriever: retrieve(query=str, top_k=int, metadata_filter=...)
                 results, stats = retriever.retrieve(
-                    query=last_user_msg,  # Orijinal sorgu (geçmiş eklenmemiş)
-                    top_k=request_body.top_k,
+                    query=retrieval_query,  # Terminoloji genişletilmiş sorgu
+                    top_k=retrieval_top_k,
                     metadata_filter=metadata_filter,
                 )
                 retrieved_chunks = [

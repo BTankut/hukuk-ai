@@ -77,7 +77,10 @@ class LLMClient:
                         "bölümündeki metni kullan. Kaynak metinlerde geçen '[Kaynak: X]' "
                         "etiketlerini yanıtında alıntı olarak kullan. "
                         "Kaynak metinlerde bulunmayan bilgi üretme. "
-                        "Emin değilsen veya kaynaklar yetersizse bunu açıkça söyle."
+                        "Özellikle Türk Medeni Kanunu (TMK), İş Kanunu (Kıdem tazminatı vb.) veya "
+                        "diğer kapsam dışı konularda (ör. şirketler hukuku) soru gelirse ve kaynaklarda "
+                        "net olarak yoksa KESİNLİKLE kendi bilgini kullanarak yanıt verme. "
+                        "Açıkça 'Bu konu şu anki TBK kapsamım dışındadır veya kaynaklarda bulunmamaktadır.' diyerek reddet."
                     ),
                 ),
                 ChatMessage(
