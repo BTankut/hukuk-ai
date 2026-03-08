@@ -1,0 +1,400 @@
+{
+  "_meta": {
+    "description": "Faz 1 reranker A/B evaluation fixture — Türkçe hukuk",
+    "version": "1.0",
+    "created": "2026-03-07",
+    "status": "MANUAL_JUDGMENTS",
+    "note": "Relevanslık etiketleri (0/1) avukat onayı bekleniyor. Mevcut etiketler teknik ekip kestirimi.",
+    "laws_covered": ["TBK", "TCK", "TMK", "HMK", "CMK", "TTK", "IK"],
+    "evaluation_criteria": {
+      "relevant_1": "Sorguya doğrudan yanıt veren veya temel dayanak oluşturan hukuki metin",
+      "irrelevant_0": "Aynı hukuk dalından ama sorguyla zayıf ilişkili, ya da farklı konudan"
+    }
+  },
+  "queries": [
+    {
+      "id": "q001",
+      "query": "Haksız fiil nedeniyle tazminat davası açma süresi nedir?",
+      "law_domain": "borclar",
+      "difficulty": "easy",
+      "expected_citation": "TBK md.72",
+      "candidates": [
+        {
+          "id": "q001_c1",
+          "text": "Türk Borçlar Kanunu Madde 72 — Tazminat istemi, zarar görenin zararı ve tazminat yükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır.",
+          "citation": "TBK md.72",
+          "relevance": 1
+        },
+        {
+          "id": "q001_c2",
+          "text": "Türk Borçlar Kanunu Madde 49 — Kusurlu ve hukuka aykırı bir fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür. Zarar verici fiili yasaklayan bir hukuk kuralı bulunmasa bile, ahlaka aykırı bir fiille başkasına kasten zarar veren de bu zararı gidermekle yükümlüdür.",
+          "citation": "TBK md.49",
+          "relevance": 1
+        },
+        {
+          "id": "q001_c3",
+          "text": "Türk Borçlar Kanunu Madde 146 — Kanunda aksine bir hüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.",
+          "citation": "TBK md.146",
+          "relevance": 1
+        },
+        {
+          "id": "q001_c4",
+          "text": "Türk Borçlar Kanunu Madde 83 — Sözleşme, şekle aykırılık nedeniyle geçersiz olsa bile, alınan şey veya yapılan iş geri verilemeyecek nitelikte ise hâkim, sözleşme geçerli olarak kurulmuş olsaydı her iki tarafın haklarının ne olacağını belirleyerek onları bu haklarla birbirine borçlu kılabilir.",
+          "citation": "TBK md.83",
+          "relevance": 0
+        },
+        {
+          "id": "q001_c5",
+          "text": "Türk Medeni Kanunu Madde 2 — Herkes, haklarını kullanırken ve borçlarını yerine getirirken dürüstlük kurallarına uymak zorundadır. Bir hakkın açıkça kötüye kullanılmasını hukuk düzeni korumaz.",
+          "citation": "TMK md.2",
+          "relevance": 0
+        },
+        {
+          "id": "q001_c6",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 118 — Dava dilekçesi; tarafların ve varsa kanuni temsilci veya vekillerinin ad, soyad ve adresleri, davacının Türkiye Cumhuriyeti kimlik numarasını ve dava konusunu kapsamalıdır.",
+          "citation": "HMK md.118",
+          "relevance": 0
+        },
+        {
+          "id": "q001_c7",
+          "text": "Türk Borçlar Kanunu Madde 60 — Zarara uğrayan, aynen tazminat veya zararın para ile ödenmesini isteyebilir. Zarar görenin varlığında eksilme olmaksızın zarar meydana gelmişse, hâkim tazminat yerine başka bir giderim biçimine hükmedebilir.",
+          "citation": "TBK md.60",
+          "relevance": 0
+        }
+      ]
+    },
+    {
+      "id": "q002",
+      "query": "Haksız fiil tazminatında manevi tazminat koşulları nelerdir?",
+      "law_domain": "borclar",
+      "difficulty": "medium",
+      "expected_citation": "TBK md.56",
+      "candidates": [
+        {
+          "id": "q002_c1",
+          "text": "Türk Borçlar Kanunu Madde 56 — Hâkim, bir kimsenin bedensel bütünlüğünün zedelenmesi durumunda, olayın özelliklerini göz önünde tutarak, zarar görene uygun bir miktar paranın manevi tazminat olarak ödenmesine karar verebilir. Ağır bedensel zarar veya ölüm hâlinde, zarar görenin veya ölenin yakınlarına da manevi tazminat olarak uygun bir miktar paranın ödenmesine karar verilebilir.",
+          "citation": "TBK md.56",
+          "relevance": 1
+        },
+        {
+          "id": "q002_c2",
+          "text": "Türk Borçlar Kanunu Madde 58 — Kişilik hakkı hukuka aykırı olarak saldırıya uğrayan kimse, uğradığı manevi zarara karşılık manevi tazminat adıyla uygun bir miktar paranın ödenmesini isteyebilir. Hâkim, bu tazminatın ödenmesi yerine, diğer bir giderim biçimine hükmedebilir.",
+          "citation": "TBK md.58",
+          "relevance": 1
+        },
+        {
+          "id": "q002_c3",
+          "text": "Türk Borçlar Kanunu Madde 49 — Kusurlu ve hukuka aykırı bir fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür.",
+          "citation": "TBK md.49",
+          "relevance": 1
+        },
+        {
+          "id": "q002_c4",
+          "text": "Türk Borçlar Kanunu Madde 72 — Tazminat istemi, zarar görenin zararı ve tazminat yükümlüsünü öğrendiği tarihten başlayarak iki yılın geçmesiyle zamanaşımına uğrar.",
+          "citation": "TBK md.72",
+          "relevance": 0
+        },
+        {
+          "id": "q002_c5",
+          "text": "Türk Ceza Kanunu Madde 85 — Taksirle bir insanın ölümüne neden olan kişi, iki yıldan altı yıla kadar hapis cezası ile cezalandırılır.",
+          "citation": "TCK md.85",
+          "relevance": 0
+        },
+        {
+          "id": "q002_c6",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 294 — Kararın tebliğinden itibaren iki hafta içinde temyiz yoluna başvurulabilir.",
+          "citation": "HMK md.294",
+          "relevance": 0
+        }
+      ]
+    },
+    {
+      "id": "q003",
+      "query": "İş sözleşmesinin işveren tarafından feshinde ihbar süresi nedir?",
+      "law_domain": "is",
+      "difficulty": "easy",
+      "expected_citation": "IK md.17",
+      "candidates": [
+        {
+          "id": "q003_c1",
+          "text": "İş Kanunu Madde 17 — Belirsiz süreli iş sözleşmelerinin feshinden önce durumun diğer tarafa bildirilmesi gerekir. İşi altı aydan az sürmüş olan işçi için, bildirimin diğer tarafa yapılmasından başlayarak iki hafta sonra fesih gerçekleşmiş olur. İşi altı aydan bir buçuk yıla kadar sürmüş olan işçi için, bildirimin diğer tarafa yapılmasından başlayarak dört hafta sonra fesih gerçekleşmiş olur. İşi bir buçuk yıldan üç yıla kadar sürmüş olan işçi için, bildirimin diğer tarafa yapılmasından başlayarak altı hafta sonra fesih gerçekleşmiş olur. İşi üç yıldan fazla sürmüş işçi için, bildirim yapılmasından başlayarak sekiz hafta sonra fesih gerçekleşmiş olur.",
+          "citation": "IK md.17",
+          "relevance": 1
+        },
+        {
+          "id": "q003_c2",
+          "text": "İş Kanunu Madde 18 — Otuz veya daha fazla işçi çalıştıran işyerlerinde en az altı aylık kıdemi olan işçinin belirsiz süreli iş sözleşmesini fesheden işveren, işçinin yeterliliğinden veya davranışlarından ya da işletmenin, işyerinin veya işin gereklerinden kaynaklanan geçerli bir sebebe dayanmak zorundadır.",
+          "citation": "IK md.18",
+          "relevance": 1
+        },
+        {
+          "id": "q003_c3",
+          "text": "İş Kanunu Madde 25 — İşveren, aşağıda yazılı hallerde iş sözleşmesini sürenin bitiminden önce veya bildirim süresini beklemeksizin feshedebilir: I- Sağlık sebepleri, II- Ahlak ve iyi niyet kurallarına uymayan haller ve benzerleri, III- Zorlayıcı sebepler.",
+          "citation": "IK md.25",
+          "relevance": 1
+        },
+        {
+          "id": "q003_c4",
+          "text": "İş Kanunu Madde 32 — Genel anlamda ücret, bir kimseye bir iş karşılığında işveren veya üçüncü kişiler tarafından sağlanan ve para ile ödenen tutardır.",
+          "citation": "IK md.32",
+          "relevance": 0
+        },
+        {
+          "id": "q003_c5",
+          "text": "Türk Borçlar Kanunu Madde 420 — Hizmet sözleşmesine konulan ve işçiye uygulanan ceza koşulu, ancak işçi bakımından geçerlidir.",
+          "citation": "TBK md.420",
+          "relevance": 0
+        },
+        {
+          "id": "q003_c6",
+          "text": "Türk Ticaret Kanunu Madde 18 — Tacir, her türlü borcu için iflasa tabidir ve kanunda aksine hüküm bulunmadıkça, tacirler arasındaki hukuki işlemlerde iyiniyet kurallarına uymakla yükümlüdür.",
+          "citation": "TTK md.18",
+          "relevance": 0
+        },
+        {
+          "id": "q003_c7",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 1 — Medeni yargılama hukuku, kişilerin özel hukuk alanındaki uyuşmazlıklarının mahkemelerde çözüme kavuşturulmasına ilişkin usul ve esasları düzenler.",
+          "citation": "HMK md.1",
+          "relevance": 0
+        }
+      ]
+    },
+    {
+      "id": "q004",
+      "query": "Boşanma davalarında velayetin belirlenmesi nasıl yapılır?",
+      "law_domain": "medeni",
+      "difficulty": "medium",
+      "expected_citation": "TMK md.182",
+      "candidates": [
+        {
+          "id": "q004_c1",
+          "text": "Türk Medeni Kanunu Madde 182 — Mahkeme boşanmaya veya ayrılığa karar verirken, olanak bulundukça ana ve babayı dinledikten ve çocuk vesayet altında ise vasinin de görüşünü aldıktan sonra, ana ve babanın haklarını ve çocukla olan kişisel ilişkilerini düzenler. Velayetin kullanılması kendisine verilmeyen eşin çocuk ile kişisel ilişkisinin düzenlenmesinde, çocuğun özellikle sağlık, eğitim ve ahlak bakımından yararları esas tutulur.",
+          "citation": "TMK md.182",
+          "relevance": 1
+        },
+        {
+          "id": "q004_c2",
+          "text": "Türk Medeni Kanunu Madde 169 — Boşanma veya ayrılık davası açılınca hâkim, davanın devamı süresince gerekli olan, özellikle eşlerin barınmasına, geçimine, eşlerin mallarının yönetimine ve çocukların bakım ve korunmasına ilişkin geçici önlemleri resen alır.",
+          "citation": "TMK md.169",
+          "relevance": 1
+        },
+        {
+          "id": "q004_c3",
+          "text": "Türk Medeni Kanunu Madde 183 — Çocuğun korunmasına ilişkin diğer önlemler saklı kalmak üzere, mahkeme velayet kendisine bırakılan tarafın istemi üzerine, diğer tarafa ait kişisel eşyanın teslimini de emredebilir.",
+          "citation": "TMK md.183",
+          "relevance": 1
+        },
+        {
+          "id": "q004_c4",
+          "text": "Türk Medeni Kanunu Madde 166 — Evlilik birliği, ortak hayatı sürdürmeleri kendilerinden beklenmeyecek derecede temelinden sarsılmış olursa, eşlerden her biri boşanma davası açabilir.",
+          "citation": "TMK md.166",
+          "relevance": 0
+        },
+        {
+          "id": "q004_c5",
+          "text": "Türk Ceza Kanunu Madde 232 — Aynı konutta birlikte yaşadığı kişilerden birine karşı kötü muamelede bulunan kimse, iki aydan bir yıla kadar hapis cezası ile cezalandırılır.",
+          "citation": "TCK md.232",
+          "relevance": 0
+        },
+        {
+          "id": "q004_c6",
+          "text": "İş Kanunu Madde 74 — Kadın işçilerin doğumdan önce sekiz ve doğumdan sonra sekiz hafta olmak üzere toplam on altı haftalık süre için çalıştırılmamaları esastır.",
+          "citation": "IK md.74",
+          "relevance": 0
+        }
+      ]
+    },
+    {
+      "id": "q005",
+      "query": "Kasten adam öldürme suçunun cezası nedir?",
+      "law_domain": "ceza",
+      "difficulty": "easy",
+      "expected_citation": "TCK md.81",
+      "candidates": [
+        {
+          "id": "q005_c1",
+          "text": "Türk Ceza Kanunu Madde 81 — Bir insanı kasten öldüren kişi, müebbet hapis cezası ile cezalandırılır.",
+          "citation": "TCK md.81",
+          "relevance": 1
+        },
+        {
+          "id": "q005_c2",
+          "text": "Türk Ceza Kanunu Madde 82 — Kasten öldürme suçunun; eşe, üstsoya, altsoya, kardeşe karşı, beden veya ruh bakımından kendisini savunamayacak durumda bulunan kişiye karşı, kişinin yerine getirdiği kamu görevi nedeniyle, töre saikiyle işlenmesi hâlinde, kişi ağırlaştırılmış müebbet hapis cezası ile cezalandırılır.",
+          "citation": "TCK md.82",
+          "relevance": 1
+        },
+        {
+          "id": "q005_c3",
+          "text": "Türk Ceza Kanunu Madde 85 — Taksirle bir insanın ölümüne neden olan kişi, iki yıldan altı yıla kadar hapis cezası ile cezalandırılır.",
+          "citation": "TCK md.85",
+          "relevance": 1
+        },
+        {
+          "id": "q005_c4",
+          "text": "Türk Ceza Kanunu Madde 29 — Haksız bir fiilin meydana getirdiği hiddet veya şiddetli elemin etkisi altında suç işleyen kişiye, ağırlaştırılmış müebbet hapis cezası yerine on sekiz yıldan yirmi dört yıla ve müebbet hapis cezası yerine on iki yıldan on sekiz yıla kadar hapis cezası verilir.",
+          "citation": "TCK md.29",
+          "relevance": 1
+        },
+        {
+          "id": "q005_c5",
+          "text": "Türk Borçlar Kanunu Madde 72 — Tazminat istemi iki yıllık zamanaşımına tabidir.",
+          "citation": "TBK md.72",
+          "relevance": 0
+        },
+        {
+          "id": "q005_c6",
+          "text": "Ceza Muhakemesi Kanunu Madde 91 — Bir kişi, tutulmasını gerektirir ihbar veya şüphe sebepleri varsa, yakalanabilir. Yakalanan kişi derhal serbest bırakılır.",
+          "citation": "CMK md.91",
+          "relevance": 0
+        },
+        {
+          "id": "q005_c7",
+          "text": "Türk Medeni Kanunu Madde 440 — Vesayet makamı, kısıtlı kişinin ehliyetsizliğinden korunması amacıyla gerekli önlemleri alır.",
+          "citation": "TMK md.440",
+          "relevance": 0
+        }
+      ]
+    },
+    {
+      "id": "q006",
+      "query": "Şirketin iflasında alacaklıların sırası nasıl belirlenir?",
+      "law_domain": "ticaret",
+      "difficulty": "hard",
+      "expected_citation": "TTK md.206 veya İİK",
+      "candidates": [
+        {
+          "id": "q006_c1",
+          "text": "Türk Ticaret Kanunu Madde 376 — Şirketin borca batık olduğu şüphesini uyandıran işaretler varsa, yönetim kurulu, aktiflerin hem işletmenin devamlılığı esasına göre hem de muhtemel satış fiyatları üzerinden bir ara bilanço çıkartır.",
+          "citation": "TTK md.376",
+          "relevance": 1
+        },
+        {
+          "id": "q006_c2",
+          "text": "Türk Ticaret Kanunu Madde 377 — Şirketin borca batıklığı halinde yönetim kurulu, durumu mahkemeye bildirmekle yükümlüdür. Mahkeme bu bildirim üzerine şirketin iflasına karar verebilir.",
+          "citation": "TTK md.377",
+          "relevance": 1
+        },
+        {
+          "id": "q006_c3",
+          "text": "Türk Ticaret Kanunu Madde 353 — Anonim şirketlerin yönetim kurulu üyeleri, şirkete karşı sorumluluklarını yerine getirmedikleri takdirde hem şirkete hem de alacaklılara karşı sorumlu olurlar.",
+          "citation": "TTK md.353",
+          "relevance": 1
+        },
+        {
+          "id": "q006_c4",
+          "text": "Türk Ticaret Kanunu Madde 18 — Tacir, her türlü borcu için iflasa tabidir.",
+          "citation": "TTK md.18",
+          "relevance": 1
+        },
+        {
+          "id": "q006_c5",
+          "text": "Türk Borçlar Kanunu Madde 146 — Her alacak on yıllık zamanaşımına tabidir.",
+          "citation": "TBK md.146",
+          "relevance": 0
+        },
+        {
+          "id": "q006_c6",
+          "text": "İş Kanunu Madde 17 — Belirsiz süreli iş sözleşmelerinin feshinden önce bildirim gerekir.",
+          "citation": "IK md.17",
+          "relevance": 0
+        },
+        {
+          "id": "q006_c7",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 1 — Medeni yargılama hukuku kişilerin özel hukuk uyuşmazlıklarını düzenler.",
+          "citation": "HMK md.1",
+          "relevance": 0
+        }
+      ]
+    },
+    {
+      "id": "q007",
+      "query": "Hukuk mahkemesinde davaya cevap süresi ne kadardır?",
+      "law_domain": "usul",
+      "difficulty": "easy",
+      "expected_citation": "HMK md.127",
+      "candidates": [
+        {
+          "id": "q007_c1",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 127 — Davalı, dava dilekçesinin tebliğinden itibaren iki hafta içinde cevap dilekçesini mahkemeye sunmak zorundadır. Bu süre, tarafın talebi ve hâkimin uygun görmesi halinde bir defaya mahsus olmak üzere uzatılabilir.",
+          "citation": "HMK md.127",
+          "relevance": 1
+        },
+        {
+          "id": "q007_c2",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 122 — Dava açılınca, taraflar arasındaki hukuki ilişki derdest hale gelir ve dava, davacı tarafından geri alınmadıkça devam eder.",
+          "citation": "HMK md.122",
+          "relevance": 1
+        },
+        {
+          "id": "q007_c3",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 136 — Cevaba cevap ve ikinci cevap dilekçeleri, dilekçelerin tebliğinden itibaren iki hafta içinde verilir.",
+          "citation": "HMK md.136",
+          "relevance": 1
+        },
+        {
+          "id": "q007_c4",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 118 — Dava dilekçesi tarafların ad ve soyadı, adresi ile dava konusunu kapsamalıdır.",
+          "citation": "HMK md.118",
+          "relevance": 0
+        },
+        {
+          "id": "q007_c5",
+          "text": "Ceza Muhakemesi Kanunu Madde 147 — Şüphelinin haklarını açıklayan ifade tutanağa geçirilir.",
+          "citation": "CMK md.147",
+          "relevance": 0
+        },
+        {
+          "id": "q007_c6",
+          "text": "Türk Borçlar Kanunu Madde 49 — Kusurlu ve hukuka aykırı bir fiille başkasına zarar veren bu zararı gidermekle yükümlüdür.",
+          "citation": "TBK md.49",
+          "relevance": 0
+        }
+      ]
+    },
+    {
+      "id": "q008",
+      "query": "Gözaltı süresi ne kadar olabilir, uzatma hangi koşullarda yapılır?",
+      "law_domain": "ceza",
+      "difficulty": "medium",
+      "expected_citation": "CMK md.91",
+      "candidates": [
+        {
+          "id": "q008_c1",
+          "text": "Ceza Muhakemesi Kanunu Madde 91 — Yakalanan kişi, Cumhuriyet Savcılığınca serbest bırakılmazsa, soruşturmanın tamamlanması için gözaltına alınabilir. Gözaltı süresi, yakalama yerine en yakın hâkim veya mahkemeye gönderilme için zorunlu süre hariç, yakalamadan itibaren yirmi dört saati geçemez. Toplu olarak işlenen suçlarda bu süre, dört güne kadar uzatılabilir.",
+          "citation": "CMK md.91",
+          "relevance": 1
+        },
+        {
+          "id": "q008_c2",
+          "text": "Ceza Muhakemesi Kanunu Madde 100 — Kuvvetli suç şüphesinin varlığını gösteren somut delillerin ve bir tutuklama nedeninin bulunması halinde, şüpheli veya sanık hakkında tutuklama kararı verilebilir.",
+          "citation": "CMK md.100",
+          "relevance": 1
+        },
+        {
+          "id": "q008_c3",
+          "text": "Ceza Muhakemesi Kanunu Madde 148 — Şüphelinin ve sanığın beyanı özgür iradesine dayanmalıdır. Bunu engelleyici nitelikte kötü davranma, işkence, ilaç verme, yorma, aldatma, cebir veya tehditte bulunma, bazı araçları kullanma gibi bedensel veya ruhsal müdahaleler yapılamaz.",
+          "citation": "CMK md.148",
+          "relevance": 0
+        },
+        {
+          "id": "q008_c4",
+          "text": "Türk Ceza Kanunu Madde 109 — Bir kimseyi hukuka aykırı olarak bir yere götüren veya bir yerde tutan kişiye ağır hapis cezası verilir.",
+          "citation": "TCK md.109",
+          "relevance": 0
+        },
+        {
+          "id": "q008_c5",
+          "text": "Türk Borçlar Kanunu Madde 49 — Kusurlu ve hukuka aykırı bir fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür.",
+          "citation": "TBK md.49",
+          "relevance": 0
+        },
+        {
+          "id": "q008_c6",
+          "text": "Hukuk Muhakemeleri Kanunu Madde 1 — Medeni yargılama hukuku özel hukuk uyuşmazlıklarını düzenler.",
+          "citation": "HMK md.1",
+          "relevance": 0
+        }
+      ]
+    }
+  ]
+}

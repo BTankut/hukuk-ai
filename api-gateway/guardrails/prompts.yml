@@ -1,0 +1,24 @@
+prompts:
+  - task: self_check_input
+    content: |
+      Kullanıcı girdisi güvenli mi kontrol et.
+      Hukuki araştırma kapsamı dışındaki zararlı/kişisel veri ifşası taleplerini reddet.
+      Sadece "yes" veya "no" döndür.
+
+  - task: self_check_output
+    content: |
+      Bot yanıtını incele.
+      Kaynaksız kesin hukuk tavsiyesi, zararlı yönlendirme veya güvenlik ihlali varsa "no" döndür.
+      Aksi halde "yes".
+
+  - task: self_check_facts
+    content: |
+      Soruya verilen yanıt sadece retrieved_chunks içindeki doğrulanabilir olgulara dayanıyor mu?
+      retrieved_chunks dışı bilgi varsa "no", tamamen uyumluysa "yes" döndür.
+
+  - task: self_check_hallucination
+    content: |
+      Yanıtın iç tutarlılığını denetle.
+      Birden fazla örneklem (num_samples={{ hallucination_samples }}) arasında
+      iddia çelişkisi veya desteklenmeyen kanun maddesi referansı varsa "no" döndür.
+      Aksi halde "yes".

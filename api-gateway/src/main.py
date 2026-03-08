@@ -1,0 +1,179 @@
+"""Hukuk AI API Gateway — FastAPI Ana Uygulama.
+
+Başlatma sırası:
+    1. Settings & logging
+    2. LLMClient + GuardrailsPipeline oluştur
+    3. RAGOrchestrator oluştur (verification flag'i env'den)
+    4. Retriever oluştur (Milvus varsa MilvusRetriever, yoksa MockRetriever)
+    5. app.state'e bileşenleri kaydet
+    6. Router'ları include et
+
+Router'lar:
+    - /v1/health              → sağlık kontrolü (main.py)
+    - /v1/chat/completions    → chat router (SSE + multi-turn + RAG)
+    - /v1/sessions/*          → oturum yönetimi (chat router)
+    - /v1/models              → OpenAI model listesi (api/openai.py)
+    - /v1/chat [POST]         → legacy basit chat (main.py, backward-compat)
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
+
+from config import get_settings
+from guardrails.pipeline import GuardrailsPipeline
+from llm.client import LLMClient
+from rag.orchestrator import RAGOrchestrator, RetrievedChunk
+from api.openai import router as openai_router
+from routers.chat import router as chat_router
+
+settings = get_settings()
+
+# Logging
+logging.basicConfig(
+    level=getattr(logging, settings.log_level, logging.INFO),
+    format="%(asctime)s %(name)s %(levelname)s %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+# ── Bileşen Fabrikaları ────────────────────────────────────────────────────────
+
+llm_client = LLMClient(settings=settings)
+guardrails_pipeline = GuardrailsPipeline(settings=settings)
+
+# Verification Engine: USE_VERIFICATION=true ile etkinleştir (default: off)
+_use_verification = os.getenv("USE_VERIFICATION", "false").lower() in {"1", "true", "yes"}
+_verification_strict = os.getenv("VERIFICATION_STRICT", "true").lower() in {"1", "true", "yes"}
+
+orchestrator = RAGOrchestrator(
+    llm_client=llm_client,
+    guardrails=guardrails_pipeline,
+    use_verification=_use_verification,
+    verification_strict=_verification_strict,
+    verification_blocking=True,
+)
+
+logger.info(
+    "RAGOrchestrator hazır: verification=%s strict=%s",
+    _use_verification,
+    _verification_strict,
+)
+
+# ── Retriever (opsiyonel) ──────────────────────────────────────────────────────
+
+def _build_retriever() -> object | None:
+    """Milvus varsa MilvusRetriever döndür, yoksa None.
+
+    MILVUS_ENABLED=false → None (mock/offline mod)
+    MILVUS_ENABLED=true  → MilvusRetriever.from_env()
+    """
+    if os.getenv("MILVUS_ENABLED", "false").lower() not in {"1", "true", "yes"}:
+        logger.info("Retriever: MILVUS_ENABLED=false → retriever yok (direkt LLM modu)")
+        return None
+
+    try:
+        from rag.retriever import MilvusRetriever
+
+        retriever = MilvusRetriever.from_env()
+        health = retriever.health_check()
+        if health["status"] == "ok":
+            logger.info(
+                "Retriever: Milvus bağlandı, collection=%s entities=%d",
+                health.get("collection"),
+                health.get("num_entities", 0),
+            )
+            return retriever
+        else:
+            logger.warning("Milvus health check başarısız: %s — retriever yok", health.get("error"))
+            return None
+    except Exception as exc:
+        logger.warning("MilvusRetriever oluşturulamadı: %s — retriever yok", exc)
+        return None
+
+
+# ── FastAPI App ────────────────────────────────────────────────────────────────
+
+app = FastAPI(
+    title=settings.app_name,
+    description="AI Hukuk Asistanı — Türk Hukuku RAG API Gateway",
+    version="0.1.0",
+)
+
+# app.state: bileşenleri request handler'larına inject et
+app.state.orchestrator = orchestrator
+app.state.retriever = _build_retriever()
+
+# ── Router'lar ─────────────────────────────────────────────────────────────────
+
+# OpenAI-compat model listesi (/v1/models)
+app.include_router(openai_router)
+
+# Chat completions + session yönetimi (gerçek RAG + SSE + multi-turn)
+app.include_router(chat_router)
+
+
+# ── Legacy Endpoints ────────────────────────────────────────────────────────────
+
+
+class RetrievedChunkPayload(BaseModel):
+    text: str
+    citation: str
+    source: str | None = None
+    score: float | None = None
+    metadata: dict[str, str] | None = None
+
+
+class ChatRequest(BaseModel):
+    query: str = Field(min_length=2)
+    retrieved_chunks: list[RetrievedChunkPayload] = Field(default_factory=list)
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    citations: list[str]
+    blocked: bool
+    guardrails_reasons: list[str]
+
+
+@app.get("/v1/health")
+async def health() -> dict[str, str]:
+    """Servis sağlık kontrolü."""
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "guardrails": "enabled" if settings.guardrails_enabled else "disabled",
+        "retriever": "milvus" if app.state.retriever is not None else "none",
+        "verification": "enabled" if _use_verification else "disabled",
+    }
+
+
+@app.post("/v1/chat", response_model=ChatResponse, deprecated=True)
+async def chat_legacy(request: ChatRequest) -> ChatResponse:
+    """Legacy chat endpoint — chunk'ları dışarıdan alır.
+
+    Yeni entegrasyonlar için /v1/chat/completions kullanın.
+    """
+    response = await orchestrator.answer(
+        query=request.query,
+        retrieved_chunks=[
+            RetrievedChunk(
+                text=item.text,
+                citation=item.citation,
+                source=item.source,
+                score=item.score,
+                metadata=item.metadata,
+            )
+            for item in request.retrieved_chunks
+        ],
+    )
+
+    return ChatResponse(
+        answer=response.answer,
+        citations=response.citations,
+        blocked=response.blocked,
+        guardrails_reasons=response.guardrails_reasons,
+    )

@@ -1,0 +1,141 @@
+{
+  "_comment": "Bu dosya beklenen rapor formatını gösterir. Gerçek değerler benchmark çalıştırıldıktan sonra dolar.",
+  "report_meta": {
+    "generated_at": "2026-03-07T14:00:00+00:00",
+    "fixture_path": "evaluation/fixtures/reranker_queries.json",
+    "num_queries": 8,
+    "threshold_grid": [0.5, 0.6, 0.7],
+    "top_k": 5,
+    "faz1_acceptance_criterion": "top-5 precision ≥ baseline top-20 precision (gain ≥ 0.0)"
+  },
+  "models_evaluated": [
+    {
+      "key": "mmarco",
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "faz1_status": "PRIMARY",
+      "mock": false
+    },
+    {
+      "key": "msmarco_en",
+      "model_id": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "faz1_status": "CONTROL",
+      "mock": false
+    }
+  ],
+  "results": {
+    "mmarco": {
+      "model_key": "mmarco",
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "model_load_ms": 3800.0,
+      "per_threshold": {
+        "0.5": {
+          "threshold": 0.5,
+          "avg_precision_at_5": 0.725,
+          "avg_mrr_at_5": 0.812,
+          "avg_ndcg_at_5": 0.789,
+          "avg_baseline_precision": 0.412,
+          "precision_gain_vs_baseline": 0.313,
+          "passes_faz1_criterion": true,
+          "eval_latency_ms": 1240.5,
+          "per_query": [
+            {
+              "query_id": "q001",
+              "query": "Haksız fiil nedeniyle tazminat davası açma süresi nedir?",
+              "law_domain": "borclar",
+              "precision_at_5": 0.8,
+              "mrr_at_5": 1.0,
+              "ndcg_at_5": 0.91,
+              "baseline_precision": 0.43,
+              "above_threshold_count": 3,
+              "top_k_returned": 3,
+              "top_1_citation": "TBK md.72",
+              "top_1_score": 0.87,
+              "relevant_count": 3
+            }
+          ]
+        },
+        "0.6": {
+          "threshold": 0.6,
+          "avg_precision_at_5": 0.700,
+          "avg_mrr_at_5": 0.795,
+          "avg_ndcg_at_5": 0.768,
+          "avg_baseline_precision": 0.412,
+          "precision_gain_vs_baseline": 0.288,
+          "passes_faz1_criterion": true,
+          "eval_latency_ms": 1198.2,
+          "per_query": []
+        },
+        "0.7": {
+          "threshold": 0.7,
+          "avg_precision_at_5": 0.650,
+          "avg_mrr_at_5": 0.762,
+          "avg_ndcg_at_5": 0.721,
+          "avg_baseline_precision": 0.412,
+          "precision_gain_vs_baseline": 0.238,
+          "passes_faz1_criterion": true,
+          "eval_latency_ms": 1156.8,
+          "per_query": []
+        }
+      }
+    },
+    "msmarco_en": {
+      "model_key": "msmarco_en",
+      "model_id": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "model_load_ms": 1200.0,
+      "per_threshold": {
+        "0.5": {
+          "threshold": 0.5,
+          "avg_precision_at_5": 0.475,
+          "avg_mrr_at_5": 0.612,
+          "avg_ndcg_at_5": 0.541,
+          "avg_baseline_precision": 0.412,
+          "precision_gain_vs_baseline": 0.063,
+          "passes_faz1_criterion": true,
+          "eval_latency_ms": 580.3,
+          "per_query": []
+        },
+        "0.6": {
+          "threshold": 0.6,
+          "avg_precision_at_5": 0.450,
+          "avg_mrr_at_5": 0.598,
+          "avg_ndcg_at_5": 0.511,
+          "avg_baseline_precision": 0.412,
+          "precision_gain_vs_baseline": 0.038,
+          "passes_faz1_criterion": true,
+          "eval_latency_ms": 561.1,
+          "per_query": []
+        },
+        "0.7": {
+          "threshold": 0.7,
+          "avg_precision_at_5": 0.400,
+          "avg_mrr_at_5": 0.551,
+          "avg_ndcg_at_5": 0.463,
+          "avg_baseline_precision": 0.412,
+          "precision_gain_vs_baseline": -0.012,
+          "passes_faz1_criterion": false,
+          "eval_latency_ms": 534.7,
+          "per_query": []
+        }
+      }
+    }
+  },
+  "best_threshold_per_model": {
+    "mmarco": {
+      "best_threshold": "0.5",
+      "best_precision_at_5": 0.725
+    },
+    "msmarco_en": {
+      "best_threshold": "0.5",
+      "best_precision_at_5": 0.475
+    }
+  },
+  "faz1_decision": "CONFIRMED",
+  "chosen_model": "mmarco",
+  "recommendation": "✅ PRIMARY MODEL ONAYLANDI: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1 (Faz 1 D-2 kararı doğrulandı). Önerilen threshold: 0.5",
+  "missing_metrics": [
+    "Gerçek Milvus retrieval sıralaması (simüle edildi: fixture sırasıyla aynı)",
+    "Avukat onaylı relevanslık etiketleri (mevcut: teknik ekip kestirimi)",
+    "50+ soruluk tam eval seti (mevcut: 8 soruluk pilot)",
+    "İçtihat/ictihat veri kategorisi (Faz 1 scope dışı, mevzuat-only)"
+  ]
+}

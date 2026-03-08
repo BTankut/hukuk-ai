@@ -1,0 +1,3 @@
+[console_scripts]
+tbk-milvus-smoke = data_pipeline.milvus_smoke:main
+tbk-pilot = data_pipeline.cli:main

@@ -1,0 +1,792 @@
+"""Test Suite — Chat Router (Backlog #7).
+
+Test kapsamı:
+    - ConversationStore: get/add/clear, kapasite limitleri
+    - _build_multiturn_query: geçmiş enjeksiyonu
+    - _stream_sse_response: SSE format doğrulaması
+    - POST /v1/chat/completions: non-streaming yanıt
+    - POST /v1/chat/completions: streaming (SSE) yanıt
+    - POST /v1/chat/completions: multi-turn konuşma
+    - POST /v1/chat/completions: session_id davranışı
+    - POST /v1/chat/completions: hata durumları
+    - GET /v1/sessions/{id}: geçmiş okuma
+    - DELETE /v1/sessions/{id}: oturum silme
+    - GET /v1/sessions: aktif oturum sayısı
+    - GET /v1/health: health endpoint
+    - POST /v1/chat (legacy): backward compat
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from httpx import AsyncClient
+
+from routers.chat import (
+    ConversationStore,
+    ChatCompletionRequest,
+    ConversationMessage,
+    _build_multiturn_query,
+    _stream_sse_response,
+    get_conversation_store,
+    router as chat_router,
+)
+from rag.orchestrator import OrchestratorResponse
+
+
+# ---------------------------------------------------------------------------
+# Fixtures & Helpers
+# ---------------------------------------------------------------------------
+
+def _make_orch_response(
+    answer: str = "Test yanıtı.",
+    citations: list[str] | None = None,
+    blocked: bool = False,
+    reasons: list[str] | None = None,
+    verification: dict | None = None,
+) -> OrchestratorResponse:
+    return OrchestratorResponse(
+        answer=answer,
+        citations=citations or ["TBK m.49"],
+        blocked=blocked,
+        guardrails_reasons=reasons or [],
+        verification=verification,
+    )
+
+
+def _make_app(mock_orch: Any = None, mock_retriever: Any = None) -> FastAPI:
+    """Test için minimal FastAPI app oluştur."""
+    from fastapi import FastAPI
+
+    app = FastAPI()
+    app.include_router(chat_router)
+
+    if mock_orch is not None:
+        app.state.orchestrator = mock_orch
+    if mock_retriever is not None:
+        app.state.retriever = mock_retriever
+
+    return app
+
+
+@pytest.fixture
+def mock_orchestrator():
+    """Mock RAGOrchestrator."""
+    orch = MagicMock()
+    orch.use_verification = False
+    orch.answer = AsyncMock(return_value=_make_orch_response())
+    return orch
+
+
+@pytest.fixture
+def test_app(mock_orchestrator):
+    """Test uygulaması (retriever yok)."""
+    return _make_app(mock_orch=mock_orchestrator)
+
+
+@pytest.fixture
+def client(test_app):
+    """Senkron TestClient."""
+    # Yeni store ile her test izole çalışsın
+    new_store = ConversationStore()
+    test_app.dependency_overrides[get_conversation_store] = lambda: new_store
+    with TestClient(test_app) as c:
+        yield c
+    test_app.dependency_overrides.clear()
+
+
+# ---------------------------------------------------------------------------
+# ConversationStore Testleri
+# ---------------------------------------------------------------------------
+
+
+class TestConversationStore:
+
+    def test_empty_store_returns_empty_list(self):
+        store = ConversationStore()
+        assert store.get_history("nonexistent") == []
+
+    def test_add_turn_stores_messages(self):
+        store = ConversationStore()
+        store.add_turn("s1", "merhaba", "merhaba size de")
+        history = store.get_history("s1")
+        assert len(history) == 2
+        assert history[0] == {"role": "user", "content": "merhaba"}
+        assert history[1] == {"role": "assistant", "content": "merhaba size de"}
+
+    def test_multiple_turns_accumulate(self):
+        store = ConversationStore()
+        store.add_turn("s1", "soru1", "cevap1")
+        store.add_turn("s1", "soru2", "cevap2")
+        history = store.get_history("s1")
+        assert len(history) == 4
+
+    def test_clear_existing_session(self):
+        store = ConversationStore()
+        store.add_turn("s1", "soru", "cevap")
+        deleted = store.clear_session("s1")
+        assert deleted is True
+        assert store.get_history("s1") == []
+
+    def test_clear_nonexistent_session(self):
+        store = ConversationStore()
+        deleted = store.clear_session("yok")
+        assert deleted is False
+
+    def test_session_count(self):
+        store = ConversationStore()
+        assert store.session_count() == 0
+        store.add_turn("s1", "a", "b")
+        store.add_turn("s2", "c", "d")
+        assert store.session_count() == 2
+
+    def test_max_session_capacity(self):
+        store = ConversationStore()
+        store.MAX_SESSIONS = 3  # Override test için
+        for i in range(4):
+            store.add_turn(f"sess-{i}", "q", "a")
+        # 4. eklendiğinde 1. silinmeli → 3 oturum kalmalı
+        assert store.session_count() == 3
+        # En eski oturum sess-0 silinmiş olmalı
+        assert store.get_history("sess-0") == []
+        # sess-3 mevcut olmalı
+        assert len(store.get_history("sess-3")) == 2
+
+    def test_max_history_per_session_truncates(self):
+        store = ConversationStore()
+        store.MAX_MESSAGES_PER_SESSION = 4  # 2 tur maksimum
+        for i in range(5):
+            store.add_turn("s1", f"soru{i}", f"cevap{i}")
+        history = store.get_history("s1")
+        # En fazla 4 mesaj olmalı
+        assert len(history) <= 4
+
+    def test_get_history_returns_copy(self):
+        """Dönüş değeri referans değil kopya olmalı."""
+        store = ConversationStore()
+        store.add_turn("s1", "q", "a")
+        h1 = store.get_history("s1")
+        h1.append({"role": "user", "content": "eklendi"})
+        h2 = store.get_history("s1")
+        assert len(h2) == 2  # Değişmemiş olmalı
+
+
+# ---------------------------------------------------------------------------
+# _build_multiturn_query Testleri
+# ---------------------------------------------------------------------------
+
+
+class TestBuildMultiturnQuery:
+
+    def test_no_history_returns_query_unchanged(self):
+        result = _build_multiturn_query(
+            last_user_message="TBK nedir?",
+            conversation_history=[],
+        )
+        assert result == "TBK nedir?"
+
+    def test_with_history_includes_context(self):
+        history = [
+            {"role": "user", "content": "TBK nedir?"},
+            {"role": "assistant", "content": "Türk Borçlar Kanunu'dur."},
+        ]
+        result = _build_multiturn_query(
+            last_user_message="Kaçıncı madde?",
+            conversation_history=history,
+        )
+        assert "Önceki Konuşma" in result
+        assert "TBK nedir?" in result
+        assert "Kaçıncı madde?" in result
+        assert "[Mevcut Soru]" in result
+
+    def test_long_history_truncated(self):
+        # Çok uzun geçmiş
+        long_content = "a" * 5000
+        history = [{"role": "user", "content": long_content}]
+        result = _build_multiturn_query(
+            last_user_message="yeni soru",
+            conversation_history=history,
+            max_history_chars=100,
+        )
+        # Kısaltılmış olmalı
+        assert "..." in result
+        # Mevcut soru dahil olmalı
+        assert "yeni soru" in result
+
+    def test_assistant_role_labeled(self):
+        history = [
+            {"role": "assistant", "content": "Ben asistanım."},
+        ]
+        result = _build_multiturn_query(
+            last_user_message="tamam",
+            conversation_history=history,
+        )
+        assert "Asistan" in result
+
+
+# ---------------------------------------------------------------------------
+# _stream_sse_response Testleri
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_sse_stream_format():
+    """SSE chunk'larının OpenAI formatında olduğunu doğrula."""
+    chunks = []
+    async for chunk in _stream_sse_response(
+        answer="Test yanıtı kelimeler içeriyor.",
+        session_id="s1",
+        model="hukuk-ai-poc",
+        citations=["TBK m.49"],
+        blocked=False,
+        guardrails_reasons=[],
+        verification=None,
+        delay_between_chunks=0,
+    ):
+        chunks.append(chunk)
+
+    # En az 3 chunk: role, content(lar), finish, metadata, DONE
+    assert len(chunks) >= 3
+
+    # Son chunk [DONE] olmalı
+    assert chunks[-1] == "data: [DONE]\n\n"
+
+    # İkinci son chunk metadata olmalı
+    meta_chunk = chunks[-2]
+    assert meta_chunk.startswith("data: ")
+    meta_data = json.loads(meta_chunk[6:])
+    assert meta_data["object"] == "chat.completion.metadata"
+    assert "citations" in meta_data
+    assert meta_data["session_id"] == "s1"
+    assert meta_data["blocked"] is False
+
+    # İlk data chunk role olmalı
+    first_data = json.loads(chunks[0][6:])
+    assert first_data["object"] == "chat.completion.chunk"
+    assert first_data["choices"][0]["delta"] == {"role": "assistant"}
+
+
+@pytest.mark.asyncio
+async def test_sse_stream_content_complete():
+    """Tüm kelimeler SSE chunk'larında bulunmalı."""
+    answer = "Bu bir test cümlesidir ve birden fazla kelime içerir."
+    collected_words: list[str] = []
+
+    async for chunk in _stream_sse_response(
+        answer=answer,
+        session_id="s1",
+        model="test",
+        citations=[],
+        blocked=False,
+        guardrails_reasons=[],
+        verification=None,
+        words_per_chunk=2,
+        delay_between_chunks=0,
+    ):
+        if chunk.startswith("data: [DONE]") or chunk.startswith("data: "):
+            if "[DONE]" in chunk:
+                continue
+            try:
+                data = json.loads(chunk[6:])
+                if data.get("object") == "chat.completion.chunk":
+                    content = data["choices"][0]["delta"].get("content", "")
+                    collected_words.extend(content.split())
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+    reconstructed = " ".join(collected_words)
+    # Orijinal kelimelerin tamamı reconstructed içinde olmalı
+    for word in answer.split():
+        assert word in reconstructed, f"Kelime bulunamadı: {word}"
+
+
+# ---------------------------------------------------------------------------
+# POST /v1/chat/completions — Non-streaming Testleri
+# ---------------------------------------------------------------------------
+
+
+class TestChatCompletionsNonStreaming:
+
+    def test_basic_request(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response("TBK m.49 haksız fiili düzenler.")
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "model": "hukuk-ai-poc",
+                "messages": [{"role": "user", "content": "Haksız fiil nedir?"}],
+                "stream": False,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["object"] == "chat.completion"
+        assert data["choices"][0]["message"]["role"] == "assistant"
+        assert "TBK m.49" in data["choices"][0]["message"]["content"]
+        assert "session_id" in data
+        assert data["session_id"].startswith("sess-")
+
+    def test_response_includes_citations(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(citations=["TBK m.49", "TBK m.50"])
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "soru"}]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "TBK m.49" in data["citations"]
+        assert "TBK m.50" in data["citations"]
+
+    def test_session_id_preserved(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response())
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "session_id": "ozel-session-123",
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["session_id"] == "ozel-session-123"
+
+    def test_blocked_response(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(
+                blocked=True,
+                reasons=["pii_detected"],
+            )
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "soru"}]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["blocked"] is True
+        assert "pii_detected" in data["guardrails_reasons"]
+
+    def test_usage_fields_present(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response())
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "test soru"}]},
+        )
+        data = resp.json()
+        usage = data["usage"]
+        assert "prompt_tokens" in usage
+        assert "completion_tokens" in usage
+        assert "total_tokens" in usage
+        assert usage["total_tokens"] == usage["prompt_tokens"] + usage["completion_tokens"]
+
+    def test_400_on_empty_messages(self, client):
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": []},
+        )
+        assert resp.status_code == 400
+
+    def test_400_on_no_user_message(self, client):
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "assistant", "content": "Ben asistanım"}]},
+        )
+        assert resp.status_code == 400
+
+    def test_400_on_empty_user_content(self, client):
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "   "}]},
+        )
+        assert resp.status_code == 400
+
+    def test_503_when_no_orchestrator(self):
+        """Orchestrator app.state'te yoksa 503 döndürmeli."""
+        app = FastAPI()
+        app.include_router(chat_router)
+        # app.state.orchestrator set edilmemiş
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={"messages": [{"role": "user", "content": "soru"}]},
+            )
+        assert resp.status_code == 503
+
+    def test_verification_field_in_response(self, client, mock_orchestrator):
+        verification_data = {
+            "verdict": "pass",
+            "hallucination_risk": 0.0,
+            "claim_count": 2,
+        }
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(verification=verification_data)
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "soru"}]},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["verification"] == verification_data
+
+
+# ---------------------------------------------------------------------------
+# POST /v1/chat/completions — Streaming Testleri
+# ---------------------------------------------------------------------------
+
+
+class TestChatCompletionsStreaming:
+
+    def test_streaming_returns_event_stream(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response("Bu bir stream testi yanıtıdır.")
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "stream testi"}],
+                "stream": True,
+            },
+        )
+        assert resp.status_code == 200
+        assert "text/event-stream" in resp.headers["content-type"]
+
+    def test_streaming_contains_done_sentinel(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response("yanıt")
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "stream": True,
+            },
+        )
+        assert "[DONE]" in resp.text
+
+    def test_streaming_contains_role_chunk(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("test"))
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "stream": True,
+            },
+        )
+        lines = [l for l in resp.text.split("\n") if l.startswith("data:") and "[DONE]" not in l]
+        chunks = [json.loads(l[6:]) for l in lines]
+
+        role_chunks = [
+            c for c in chunks
+            if c.get("object") == "chat.completion.chunk"
+            and c.get("choices", [{}])[0].get("delta", {}).get("role") == "assistant"
+        ]
+        assert len(role_chunks) >= 1
+
+    def test_streaming_metadata_chunk(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(citations=["TMK m.1"])
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "evlilik kanunu"}],
+                "stream": True,
+            },
+        )
+        lines = [l for l in resp.text.split("\n") if l.startswith("data:") and "[DONE]" not in l]
+        meta_chunks = []
+        for l in lines:
+            try:
+                d = json.loads(l[6:])
+                if d.get("object") == "chat.completion.metadata":
+                    meta_chunks.append(d)
+            except json.JSONDecodeError:
+                pass
+
+        assert len(meta_chunks) == 1
+        assert "TMK m.1" in meta_chunks[0]["citations"]
+
+    def test_streaming_session_header(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response())
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "stream": True,
+                "session_id": "stream-sess-001",
+            },
+        )
+        assert resp.headers.get("x-session-id") == "stream-sess-001"
+
+
+# ---------------------------------------------------------------------------
+# Multi-turn Konuşma Testleri
+# ---------------------------------------------------------------------------
+
+
+class TestMultiTurn:
+
+    def test_multiturn_history_passed_to_orchestrator(self, client, mock_orchestrator):
+        """Konuşma geçmişi orchestrator'a iletilmeli."""
+        session_id = "multiturn-sess"
+
+        # Birinci tur
+        client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "TBK nedir?"}],
+                "session_id": session_id,
+            },
+        )
+
+        # İkinci tur — client geçmiş göndermiyor, session store kullanılmalı
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("İkinci cevap"))
+        client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "Kaçıncı madde?"}],
+                "session_id": session_id,
+            },
+        )
+
+        # İkinci turda orchestrator'a verilen query'de önceki konuşma olmalı
+        call_args = mock_orchestrator.answer.call_args
+        # keyword args ile çağrıldığında args tuple boş, kwargs'tan al
+        query_arg = call_args.kwargs.get("query") or (call_args.args[0] if call_args.args else "")
+        # Multiturn query formatı: "[Önceki..." içermeli
+        assert "Önceki Konuşma" in query_arg or "TBK nedir?" in query_arg
+
+    def test_client_provided_history_used(self, client, mock_orchestrator):
+        """Client geçmişi request'te gönderirse, bu kullanılmalı."""
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response())
+        client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [
+                    {"role": "user", "content": "TBK nedir?"},
+                    {"role": "assistant", "content": "Türk Borçlar Kanunu'dur."},
+                    {"role": "user", "content": "Kaç maddeden oluşuyor?"},
+                ],
+                "session_id": "client-hist-sess",
+            },
+        )
+        call_args = mock_orchestrator.answer.call_args
+        query_arg = call_args.kwargs.get("query") or (call_args.args[0] if call_args.args else "")
+        # Request'teki önceki mesajlar query'ye dahil edilmeli
+        assert "TBK nedir?" in query_arg or "Önceki Konuşma" in query_arg
+
+    def test_session_history_accumulates(self, client, mock_orchestrator):
+        """Her turdan sonra session geçmişi büyümeli."""
+        session_id = "accum-sess"
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("cevap"))
+
+        for i in range(3):
+            client.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [{"role": "user", "content": f"soru{i}"}],
+                    "session_id": session_id,
+                },
+            )
+
+        resp = client.get(f"/v1/sessions/{session_id}")
+        assert resp.status_code == 200
+        data = resp.json()
+        # 3 tur × 2 mesaj = 6
+        assert data["message_count"] == 6
+
+
+# ---------------------------------------------------------------------------
+# Session Yönetim Endpoint Testleri
+# ---------------------------------------------------------------------------
+
+
+class TestSessionEndpoints:
+
+    def test_get_session_empty(self, client):
+        resp = client.get("/v1/sessions/yok")
+        assert resp.status_code == 200
+        assert resp.json()["message_count"] == 0
+        assert resp.json()["messages"] == []
+
+    def test_get_session_after_chat(self, client, mock_orchestrator):
+        session_id = "sess-get-test"
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("cevap1"))
+        client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "soru1"}],
+                "session_id": session_id,
+            },
+        )
+        resp = client.get(f"/v1/sessions/{session_id}")
+        data = resp.json()
+        assert data["session_id"] == session_id
+        assert data["message_count"] == 2
+        assert data["messages"][0]["role"] == "user"
+        assert data["messages"][1]["role"] == "assistant"
+
+    def test_delete_existing_session(self, client, mock_orchestrator):
+        session_id = "sess-delete"
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response())
+        client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "session_id": session_id,
+            },
+        )
+        resp = client.delete(f"/v1/sessions/{session_id}")
+        assert resp.status_code == 200
+        assert resp.json()["deleted"] is True
+
+        # Silme sonrası geçmiş boş olmalı
+        resp2 = client.get(f"/v1/sessions/{session_id}")
+        assert resp2.json()["message_count"] == 0
+
+    def test_delete_nonexistent_session(self, client):
+        resp = client.delete("/v1/sessions/yok-session")
+        assert resp.status_code == 200
+        assert resp.json()["deleted"] is False
+
+    def test_list_sessions(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response())
+        resp = client.get("/v1/sessions")
+        initial_count = resp.json()["active_sessions"]
+
+        client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "session_id": "list-test-s1",
+            },
+        )
+        client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "session_id": "list-test-s2",
+            },
+        )
+
+        resp2 = client.get("/v1/sessions")
+        assert resp2.json()["active_sessions"] == initial_count + 2
+        assert resp2.json()["max_sessions"] == ConversationStore.MAX_SESSIONS
+
+
+# ---------------------------------------------------------------------------
+# Law Filter & Retriever Entegrasyonu
+# ---------------------------------------------------------------------------
+
+
+class TestLawFilterAndRetrieval:
+
+    def test_law_filter_passed_to_retriever(self, mock_orchestrator):
+        """law_filter MetadataFilter olarak retriever'a iletilmeli."""
+        mock_retriever = MagicMock()
+        mock_results = MagicMock()
+        mock_results.text = "TBK m.49 metni"
+        mock_results.citation = "TBK m.49"
+        mock_results.law_short_name = "TBK"
+        mock_results.score = 0.9
+        mock_results.metadata = {}
+
+        from rag.retriever import RetrievalStats
+        mock_stats = RetrievalStats(
+            collection="test",
+            query_preview="haksız",
+            top_k=5,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=([mock_results], mock_stats))
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response("RAG cevabı")
+        )
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [{"role": "user", "content": "haksız fiil nedir?"}],
+                    "law_filter": "TBK",
+                },
+            )
+
+        assert resp.status_code == 200
+        # Retriever çağrılmış mı?
+        mock_retriever.retrieve.assert_called_once()
+        call_kwargs = mock_retriever.retrieve.call_args.kwargs
+        assert call_kwargs.get("metadata_filter") is not None
+        assert call_kwargs["metadata_filter"].law_short_name == "TBK"
+
+    def test_no_retriever_still_works(self, client, mock_orchestrator):
+        """Retriever yokken orchestrator boş chunk ile çağrılmalı."""
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response("Direkt LLM cevabı")
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "soru"}]},
+        )
+        assert resp.status_code == 200
+        # Orchestrator çağrısındaki retrieved_chunks boş olmalı
+        call_args = mock_orchestrator.answer.call_args
+        retrieved = call_args.kwargs.get("retrieved_chunks", [])
+        assert retrieved == []
+
+
+# ---------------------------------------------------------------------------
+# Health ve Legacy Endpoint Testleri
+# ---------------------------------------------------------------------------
+
+
+class TestMainApp:
+    """main.py'deki health ve legacy endpoint testleri."""
+
+    @pytest.fixture
+    def main_client(self):
+        # Direkt main.py app'ini import et
+        from unittest.mock import patch, AsyncMock, MagicMock
+
+        with patch("llm.client.LLMClient.chat", new=AsyncMock(return_value="ok")):
+            with patch("guardrails.pipeline.GuardrailsPipeline.run") as mock_run:
+                mock_gr = MagicMock()
+                mock_gr.answer = "test yanıtı"
+                mock_gr.blocked = False
+                mock_gr.reasons = []
+                mock_run.return_value = mock_gr
+                import main
+                with TestClient(main.app) as c:
+                    yield c
+
+    def test_health_endpoint(self, main_client):
+        resp = main_client.get("/v1/health")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert "service" in data
+        assert "guardrails" in data
+        assert "retriever" in data
+        assert "verification" in data
+
+    def test_models_endpoint(self, main_client):
+        resp = main_client.get("/v1/models")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["object"] == "list"
+        assert len(data["data"]) >= 1
+        assert data["data"][0]["id"] == "hukuk-ai-poc"

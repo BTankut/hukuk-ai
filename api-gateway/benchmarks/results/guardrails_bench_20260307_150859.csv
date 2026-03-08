@@ -1,0 +1,41 @@
+run_id,timestamp,mode,guardrails_on,case_id,category,total_latency_s,citation_present,refusal_triggered,hallucination_blocked,expect_blocked,outcome_correct,error,notes
+mock_on_tbk-49-valid,2026-03-07T15:08:58,mock,True,tbk-49-valid,geçerli,0.0133,False,False,False,False,True,"ColangParsingError: Error while parsing Colang file: /Users/btmacstudio/.openclaw/workspace/projects/hukuk-ai/api-gateway/guardrails/rails.co
+Error parsing line 11 in rails.co: mapping values are not allowed here
+  in ""<unicode string>"", line 2, column 18:
+    retrieved_chunks : $retrieved_chunks
+                     ^:
+  $citations_valid = execute verify_output_citations(
+^",pipeline_error
+mock_on_tmk-8-valid,2026-03-07T15:08:58,mock,True,tmk-8-valid,geçerli,0.011,False,False,False,False,True,"ColangParsingError: Error while parsing Colang file: /Users/btmacstudio/.openclaw/workspace/projects/hukuk-ai/api-gateway/guardrails/rails.co
+Error parsing line 11 in rails.co: mapping values are not allowed here
+  in ""<unicode string>"", line 2, column 18:
+    retrieved_chunks : $retrieved_chunks
+                     ^:
+  $citations_valid = execute verify_output_citations(
+^",pipeline_error
+mock_on_fake-citation,2026-03-07T15:08:58,mock,True,fake-citation,hallüsinasyon,0.0053,False,False,False,True,False,"ColangParsingError: Error while parsing Colang file: /Users/btmacstudio/.openclaw/workspace/projects/hukuk-ai/api-gateway/guardrails/rails.co
+Error parsing line 11 in rails.co: mapping values are not allowed here
+  in ""<unicode string>"", line 2, column 18:
+    retrieved_chunks : $retrieved_chunks
+                     ^:
+  $citations_valid = execute verify_output_citations(
+^",pipeline_error
+mock_on_no-citation,2026-03-07T15:08:58,mock,True,no-citation,kaynak eksik,0.0048,False,False,False,True,False,"ColangParsingError: Error while parsing Colang file: /Users/btmacstudio/.openclaw/workspace/projects/hukuk-ai/api-gateway/guardrails/rails.co
+Error parsing line 11 in rails.co: mapping values are not allowed here
+  in ""<unicode string>"", line 2, column 18:
+    retrieved_chunks : $retrieved_chunks
+                     ^:
+  $citations_valid = execute verify_output_citations(
+^",pipeline_error
+mock_on_off-topic,2026-03-07T15:08:58,mock,True,off-topic,alan dışı,0.0042,False,False,False,False,True,"ColangParsingError: Error while parsing Colang file: /Users/btmacstudio/.openclaw/workspace/projects/hukuk-ai/api-gateway/guardrails/rails.co
+Error parsing line 11 in rails.co: mapping values are not allowed here
+  in ""<unicode string>"", line 2, column 18:
+    retrieved_chunks : $retrieved_chunks
+                     ^:
+  $citations_valid = execute verify_output_citations(
+^",pipeline_error
+mock_off_tbk-49-valid,2026-03-07T15:08:59,mock,False,tbk-49-valid,geçerli,0.0076,True,False,False,False,True,,
+mock_off_tmk-8-valid,2026-03-07T15:08:59,mock,False,tmk-8-valid,geçerli,0.0059,True,False,False,False,True,,
+mock_off_fake-citation,2026-03-07T15:08:59,mock,False,fake-citation,hallüsinasyon,0.0141,False,True,True,True,True,,
+mock_off_no-citation,2026-03-07T15:08:59,mock,False,no-citation,kaynak eksik,0.005,False,True,True,True,True,,
+mock_off_off-topic,2026-03-07T15:08:59,mock,False,off-topic,alan dışı,0.0048,False,True,True,False,False,,

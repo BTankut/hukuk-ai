@@ -1,0 +1,8 @@
+pyproject.toml
+src/main.py
+src/model.py
+src/embedding_service.egg-info/PKG-INFO
+src/embedding_service.egg-info/SOURCES.txt
+src/embedding_service.egg-info/dependency_links.txt
+src/embedding_service.egg-info/requires.txt
+src/embedding_service.egg-info/top_level.txt

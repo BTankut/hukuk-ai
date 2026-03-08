@@ -1,0 +1,23 @@
+# Faz 1 Guardrails flows
+# Amaç: manuel post-processing yerine self-check + citation verification + PII masking
+#
+# Colang 1.0 sözdizimi: çok satırlı action çağrısı YAML parse hatasına yol açar.
+# execute(...) çağrıları tek satırda yazılmalıdır.
+
+define flow mask sensitive input
+  $masked_input = execute presidio_mask_input(text=$user_message)
+  if $masked_input
+    $user_message = $masked_input
+
+
+define flow verify citations
+  $citations_valid = execute verify_output_citations(answer=$bot_message, retrieved_chunks=$retrieved_chunks)
+  if not $citations_valid
+    bot "Bu konuda elimdeki kaynaklarda yeterli doğrulanmış bilgi bulamadım."
+    stop
+
+
+define flow mask sensitive output
+  $masked_output = execute presidio_mask_output(text=$bot_message)
+  if $masked_output
+    $bot_message = $masked_output

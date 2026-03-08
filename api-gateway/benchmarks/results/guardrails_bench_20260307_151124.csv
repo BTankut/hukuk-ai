@@ -1,0 +1,11 @@
+run_id,timestamp,mode,guardrails_on,case_id,category,total_latency_s,citation_present,refusal_triggered,hallucination_blocked,expect_blocked,outcome_correct,error,notes
+mock_on_tbk-49-valid,2026-03-07T15:11:23,mock,True,tbk-49-valid,geçerli,0.0133,True,False,False,False,True,,
+mock_on_tmk-8-valid,2026-03-07T15:11:23,mock,True,tmk-8-valid,geçerli,0.0071,True,False,False,False,True,,
+mock_on_fake-citation,2026-03-07T15:11:23,mock,True,fake-citation,hallüsinasyon,0.0059,False,True,True,True,True,,
+mock_on_no-citation,2026-03-07T15:11:23,mock,True,no-citation,kaynak eksik,0.0046,False,True,True,True,True,,
+mock_on_off-topic,2026-03-07T15:11:23,mock,True,off-topic,alan dışı,0.005,False,True,True,False,False,,
+mock_off_tbk-49-valid,2026-03-07T15:11:24,mock,False,tbk-49-valid,geçerli,0.0084,True,False,False,False,True,,
+mock_off_tmk-8-valid,2026-03-07T15:11:24,mock,False,tmk-8-valid,geçerli,0.007,True,False,False,False,True,,
+mock_off_fake-citation,2026-03-07T15:11:24,mock,False,fake-citation,hallüsinasyon,0.0059,True,False,True,True,True,,
+mock_off_no-citation,2026-03-07T15:11:24,mock,False,no-citation,kaynak eksik,0.0046,False,False,True,True,True,,citation_missing_in_unblocked_response
+mock_off_off-topic,2026-03-07T15:11:24,mock,False,off-topic,alan dışı,0.0051,False,False,True,False,False,,citation_missing_in_unblocked_response

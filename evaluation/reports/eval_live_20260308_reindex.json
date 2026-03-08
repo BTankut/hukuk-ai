@@ -1,0 +1,891 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-08T03:19:34.110705+00:00",
+    "questions_source": "/Users/btmacstudio/.openclaw/workspace/projects/hukuk-ai/configs/evaluation/test_questions.json",
+    "api_url": "http://localhost:8000",
+    "mock_mode": false,
+    "total_questions": 20,
+    "error_count": 0
+  },
+  "summary": {
+    "citation_rate": 0.9,
+    "correct_source_rate": 0.8017,
+    "hallucination_rate": 0.05,
+    "refusal_accuracy": 0.95,
+    "avg_keyword_coverage": 0.6043,
+    "phrase_hit_rate": 0.4615,
+    "avg_response_time_ms": 10510.2,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 0.9,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 0.8017,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.05,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 0.95,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tbk_genel": {
+      "count": 7,
+      "citation_rate": 1.0,
+      "correct_source_rate": 0.8095,
+      "hallucination_rate": 0.1429,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.5524
+    },
+    "tbk_kira": {
+      "count": 4,
+      "citation_rate": 1.0,
+      "correct_source_rate": 0.8,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.6202
+    },
+    "tbk_haksiz_fiil": {
+      "count": 2,
+      "citation_rate": 0.5,
+      "correct_source_rate": 0.25,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.6667
+    },
+    "tbk_ceza_sarti": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 0.6667,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.6667
+    },
+    "tbk_vekaletname": {
+      "count": 2,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.619
+    },
+    "tbk_hizmet": {
+      "count": 2,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.5834
+    },
+    "out_of_scope": {
+      "count": 2,
+      "citation_rate": 0.5,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 0.5,
+      "avg_keyword_coverage": 0.6666
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "count": 6,
+      "citation_rate": 1.0,
+      "correct_source_rate": 0.8333,
+      "hallucination_rate": 0.1667,
+      "avg_keyword_coverage": 0.6333
+    },
+    "medium": {
+      "count": 10,
+      "citation_rate": 0.8,
+      "correct_source_rate": 0.7033,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.5952
+    },
+    "hard": {
+      "count": 4,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.5834
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-001",
+      "question_text": "Türk Borçlar Kanunu'na göre bir sözleşmenin kurulması için hangi unsurlar gereklidir?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "answer_text": "Verilen kaynak metinlerde, bir sözleşmenin kurulması için gerekli olan genel unsurlar (örneğin; irade beyanı, ehliyet, sebep, konu gibi) açıkça belirtilmemiştir.\n\nKaynak metinlerde sadece sözleşme türlerine veya şekil şartlarına dair bazı bilgiler yer almaktadır:\n*   Yazılı şekilde yapılması öngörülen sözleşmelerde borç altına girenlerin imzalarının bulunması zorunludur ve imzalı mektup, telgraf, faks veya güvenli elektronik imza gibi araçlar yazılı şekil yerine geçer [Kaynak: TBK m.14].\n*   Karşılıklı borç yükleyen sözleşmelerde ifa isteminde bulunan tarafın, sözleşmenin koşullarına göre daha sonra ifa etme hakkı olmadıkça, kendi borcunu ifa etmiş ya da ifasını önermiş olması gerekir [Kaynak: TBK m.97].\n*   İç üstlenme sözleşmesi, borçlu ile yapılan bir sözleşmedir [Kaynak: TBK m.195].\n*   Borca katılma, mevcut bir borca borçlunun yanında yer almak üzere katılan ile alacaklı arasında yapılan bir sözleşmedir [Kaynak: TBK m.201].\n*   Karşılıklı borç yükleyen sözleşmelerde temerrüt durumunda süre verilmesi veya hâkimden süre verilmesi istenebilir [Kaynak: TBK m.123].\n*   Kira sözleşmesi gibi bazı sözleşmelerde tutanak düzenlenmesi ve imzalanması gerekebilir [Kaynak: TBK m.359].\n*   Borç, tarafların şekle bağlı olmaksızın yapacakları ibra sözleşmesiyle ortadan kaldırılabilir [Kaynak: TBK m.132].\n*   Birden çok borçludan her biri, alacaklıya karşı borcun tamamından sorumlu olmayı bildirirse müteselsil borçluluk doğar [Kaynak: TBK m.162].\n\nAncak, sorunuzda belirtilen \"sözleşmenin kurulması için gerekli olan genel unsurlar\" hakkındaki bilgi, sağlanan kaynak metinlerde bulunmamaktadır. Bu nedenle bu soruyu kaynaklara dayanarak yanıtlayamam.",
+      "cited_sources": [
+        "TBK m.14",
+        "TBK m.97",
+        "TBK m.195",
+        "TBK m.201",
+        "TBK m.123",
+        "TBK m.359",
+        "TBK m.132",
+        "TBK m.162"
+      ],
+      "expected_sources": [
+        "TBK m.1",
+        "TBK m.2",
+        "TBK m.3"
+      ],
+      "expected_keywords": [
+        "öneri",
+        "kabul",
+        "icap",
+        "irade",
+        "beyan",
+        "karşılıklı"
+      ],
+      "expected_answer_contains": "icap ve kabul",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 0,
+      "expected_source_count": 3,
+      "correct_source_rate": 0.0,
+      "is_hallucination": true,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "phrase_hit_result": false,
+      "response_time_ms": 10559.4,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-002",
+      "question_text": "Kira sözleşmesinde kiracının kira bedelini ödeme yükümlülüğü TBK'nın hangi maddesinde düzenlenmektedir? Ödeme günü ve yeri nedir?",
+      "category": "tbk_kira",
+      "difficulty": "easy",
+      "answer_text": "Verilen kaynak metinlerine dayanarak sorunuzun yanıtı aşağıdadır:\n\n**1. Kira Bedelini Ödeme Yükümlülüğünün Düzenlendiği Madde:**\nKiracının kira bedelini ödeme yükümlülüğü **TBK m.313** ve **TBK m.312** maddelerinde düzenlenmiştir.\n*   TBK m.313, genel olarak kiracının kira bedelini ödemekle yükümlü olduğunu belirtir [Kaynak: TBK m.313].\n*   TBK m.312 ise kira bedelini ödeme borcunu \"Kiracının borçları\" başlığı altında \"I. Kira bedelini ödeme borcu\" olarak tanımlar [Kaynak: TBK m.312].\n*   Ayrıca TBK m.299, kira sözleşmesinin tanımında kiracının \"kararlaştırılan kira bedelini ödemeyi üstlendiğini\" ifade eder [Kaynak: TBK m.299].\n\n**2. Ödeme Günü (İfa Zamanı):**\nÖdeme günü, sözleşmede aksine bir hüküm veya yerel âdet bulunmadığı takdirde **her ayın sonunda** ve **en geç kira süresinin bitiminde** olarak belirlenmiştir [Kaynak: TBK m.314].\n*   Ancak taşınmaz kiralarında (genel kural olarak) sözleşmede aksine bir hüküm veya yerel âdet olmadıkça, kira bedeli ve yan giderlerin **her kira yılının ve en geç kira süresinin sonunda** ödenmesi gerektiği de belirtilmiştir [Kaynak: TBK m.362].\n*   Bu iki madde arasındaki fark, m.314'ün genel kira sözleşmeleri (taşınır ve taşınmaz) için \"her ayın sonunda\" kuralını, m.362'nin ise özellikle taşınmaz kiraları için \"her kira yılının sonunda\" kuralını getirdiği şeklinde yorumlanabilir; ancak kaynak metinlerde bu ayrım açıkça yapılmamış, her iki madde de farklı ödeme zamanlarını öngörmektedir.\n\n**3. Ödeme Yeri:**\nVerilen kaynak metinlerde kira bedelinin **ödenme yeri** hakkında açık bir hüküm bulunmamaktadır. Sadece ödeme zamanı (günü) düzenlenmiştir.\n\n**Özetle:**\n*   **Yükümlülük:** TBK m.313 ve TBK m.312 [Kaynak: TBK m.313], [Kaynak: TBK m.312].\n*   **Ödeme Günü:** Sözleşmede aksine hüküm veya yerel âdet yoksa; TBK m.314'e göre \"her ayın sonunda ve en geç kira süresinin bitiminde\" [Kaynak: TBK m.314]; TBK m.362'ye göre ise \"her kira yılının ve en geç kira süresinin sonunda\" [Kaynak: TBK m.362].\n*   **Ödeme Yeri:** Kaynak metinlerde belirtilmemiştir.",
+      "cited_sources": [
+        "TBK m.313",
+        "TBK m.312",
+        "TBK m.299",
+        "TBK m.314",
+        "TBK m.362",
+        "TBK m.313",
+        "TBK m.312",
+        "TBK m.314",
+        "TBK m.362"
+      ],
+      "expected_sources": [
+        "TBK m.314",
+        "TBK m.299"
+      ],
+      "expected_keywords": [
+        "kira bedeli",
+        "ödeme",
+        "ayın son günü",
+        "kiracı",
+        "kiraya veren"
+      ],
+      "expected_answer_contains": "ayın son günü",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6,
+      "phrase_hit_result": false,
+      "response_time_ms": 14915.2,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-003",
+      "question_text": "Haksız fiil nedeniyle tazminat davası açmak için TBK'da öngörülen zamanaşımı süresi nedir?",
+      "category": "tbk_haksiz_fiil",
+      "difficulty": "medium",
+      "answer_text": "Haksız fiil nedeniyle tazminat davası açmak için Türk Borçlar Kanunu'nda (TBK) öngörülen zamanaşımı süresi, **TBK m.72** uyarınca iki aşamalıdır:\n\n1.  **Başlangıç Tarihi:** Tazminat istemi, zarar görenin hem **zararı** hem de **tazminat yükümlüsünü öğrendiği tarihten** başlayarak **iki yıl** içinde zamanaşımına uğrar.\n2.  **Mutlak Süre:** Her halükarda, fiilin işlendiği tarihten başlayarak **on yıl**ın geçmesiyle zamanaşımı gerçekleşir.\n\nBu genel kuralın istisnası olarak, eğer tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü bir cezayı gerektiren bir fiilden doğmuşsa, o daha uzun zamanaşımı süresi uygulanır [Kaynak: TBK m.72].\n\nAyrıca, haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa, tazminat istemi zamanaşımına uğramış olsa bile zarar gören, bu borcu ifadan her zaman kaçınabilir [Kaynak: TBK m.72].",
+      "cited_sources": [
+        "TBK m.72",
+        "TBK m.72"
+      ],
+      "expected_sources": [
+        "TBK m.72",
+        "TBK m.146"
+      ],
+      "expected_keywords": [
+        "zamanaşımı",
+        "iki yıl",
+        "on yıl",
+        "öğrenme",
+        "haksız fiil",
+        "zararın öğrenildiği"
+      ],
+      "expected_answer_contains": "iki yıl",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 2,
+      "correct_source_rate": 0.5,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "phrase_hit_result": true,
+      "response_time_ms": 6176.5,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-004",
+      "question_text": "TBK'ya göre konut kiralarında kira sözleşmesinin sona erdirilmesi (tahliye) hangi koşullara bağlıdır?",
+      "category": "tbk_kira",
+      "difficulty": "medium",
+      "answer_text": "Verilen kaynak metinler ışığında, Türk Borçlar Kanunu (TBK) kapsamında konut kiralarında sözleşmenin sona erdirilmesi (tahliye) ile ilgili koşullar şu şekildedir:\n\n1.  **Sürenin Geçmesi:** Eğer kira sözleşmesinde açık veya örtülü bir süre belirlenmişse, bu sürenin sonunda sözleşme kendiliğinden sona erer. Taraflar bu durumda açık bir anlaşma olmaksızın kira ilişkisini sürdürürlerse, sözleşme belirsiz süreli bir sözleşmeye dönüşür [Kaynak: TBK m.327].\n2.  **Fesih Bildirimi (Belirsiz Süreli Sözleşmeler):** Belirsiz süreli konut kiralarında, taraflardan her biri yerel âdette belirlenen kira döneminin sonu için veya böyle bir âdetin bulunmaması durumunda altı aylık kira döneminin sonu için, üç aylık fesih bildirim süresine uyarak sözleşmeyi feshedebilir [Kaynak: TBK m.329].\n3.  **Yazılı Şekil Şartı:** Konut ve çatılı işyeri kiralarında fesih bildiriminin geçerliliği, yazılı şekilde yapılmasına bağlıdır [Kaynak: TBK m.348].\n4.  **Kiracının Ölümü:** Kiracının ölümü hâlinde, mirasçıları yasal fesih bildirim süresine uyarak en yakın fesih dönemi sonu için sözleşmeyi feshedebilirler [Kaynak: TBK m.333]. Ayrıca, kiracının ölümü durumunda kiraya veren de altı aylık yasal fesih bildirim sürelerine uymak koşuluyla sözleşmeyi feshedebilir [Kaynak: TBK m.371].\n5.  **Kiracının İflası:** Kiracının iflası hâlinde sözleşme, iflasın açıldığı anda kendiliğinden sona erer. Ancak, kiraya veren, işlemekte olan kira ve tutanağa geçirilen eşya için yeterli güvence verildiği takdirde, sözleşmeyi kira yılının sonuna kadar sürdürmekle yükümlüdür [Kaynak: TBK m.370].\n6.  **Dava Yoluyla Sona Erme:** Dava yoluyla kira sözleşmesinin sona erdirilmesine ilişkin hükümler, kiracı aleyhine değiştirilemez [Kaynak: TBK m.354].\n7.  **Bağlantılı Sözleşmelerin Geçersizliği:** Konut kiralarında sözleşmenin kurulması veya sürdürülmesi, kiracının yararı olmaksızın, kiralananın kullanımıyla doğrudan ilişkisi olmayan bir borç altına girmesine bağlanmışsa, bu bağlantılı sözleşme geçersizdir [Kaynak: TBK m.340].\n\n*Not: Kaynak metinlerde, kiracının kira bedelini zamanında ödememesi durumunda ceza koşulu veya sonraki kira bedellerinin muaccel olması gibi hükümlerin geçersiz olduğu belirtilmiştir, ancak bu durumun doğrudan \"tahliye\" (sözleşmenin sona ermesi) için tek başına yeterli bir koşul olup olmadığına dair açık bir hüküm kaynak metinlerde yer almamaktadır [Kaynak: TBK m.346].*",
+      "cited_sources": [
+        "TBK m.327",
+        "TBK m.329",
+        "TBK m.348",
+        "TBK m.333",
+        "TBK m.371",
+        "TBK m.370",
+        "TBK m.354",
+        "TBK m.340",
+        "TBK m.346"
+      ],
+      "expected_sources": [
+        "TBK m.347",
+        "TBK m.348",
+        "TBK m.349",
+        "TBK m.350",
+        "TBK m.351"
+      ],
+      "expected_keywords": [
+        "tahliye",
+        "konut",
+        "bildirme süresi",
+        "fesih",
+        "kiraya veren",
+        "ihtiyaç",
+        "kira dönemi"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 5,
+      "correct_source_rate": 0.2,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.7143,
+      "response_time_ms": 15470.2,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-005",
+      "question_text": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "answer_text": "Verilen kaynak metinlere dayanarak, faiz oranının sözleşmede belirlenmemesi durumunda uygulanacak oranlar borcun türüne göre aşağıdaki gibidir:\n\n1.  **Genel Faiz Borçları (TBK m.88):** Sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenen yıllık faiz oranı uygulanır [Kaynak: TBK m.88].\n2.  **Ticari Olmayan Tüketim Ödünç Sözleşmeleri:** Taraflarca kararlaştırılmamışsa faiz istenemez [Kaynak: TBK m.387].\n3.  **Ticari Tüketim Ödünç Sözleşmeleri:** Taraflarca kararlaştırılmamış olsa bile faiz istenebilir; ancak oran belirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır [Kaynak: TBK m.388].\n4.  **Temerrüt Faizi:** Sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenen yıllık faiz oranı uygulanır [Kaynak: TBK m.120].\n\nÖzetle, genel kural olarak sözleşmede oran belirtilmemişse, borcun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenen oran esas alınır; ancak ticari olmayan tüketim ödüncü sözleşmelerinde taraflar faiz kararlaştırmamışsa faiz istenemez.",
+      "cited_sources": [
+        "TBK m.88",
+        "TBK m.387",
+        "TBK m.388",
+        "TBK m.120"
+      ],
+      "expected_sources": [
+        "TBK m.88"
+      ],
+      "expected_keywords": [
+        "yasal faiz",
+        "kanuni faiz",
+        "yıllık",
+        "yüzde",
+        "belirlenmemiş"
+      ],
+      "expected_answer_contains": "yasal faiz",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 1,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.4,
+      "phrase_hit_result": false,
+      "response_time_ms": 8415.7,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-006",
+      "question_text": "TBK kapsamında ceza şartının (cayma akçesi) geçerliliği için hangi koşullar aranmaktadır?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "medium",
+      "answer_text": "Verilen kaynak metinlerde, Türk Borçlar Kanunu (TBK) kapsamında \"ceza şartının\" (ceza koşulu) geçerliliği için doğrudan belirtilen genel geçerlilik koşulları (örneğin; yazılı şekil şartı gibi) **yer almamaktadır**.\n\nKaynak metinlerde sadece ceza koşulu ile ilgili hükümler, alacaklının hakları ve cezanın ifası ile ilgili düzenlemeler bulunmaktadır. Ayrıca, kaynak metinlerde \"cayma akçesi\" ifadesi geçmemekte; \"cayma parası\" (TBK m.178) ve \"ceza koşulu\" (TBK m.179, m.180, m.181) ayrı ayrı ele alınmaktadır.\n\nKaynak metinlerde yer alan ilgili bilgiler şunlardır:\n*   Ceza koşulu, bir sözleşmenin hiç veya gereği gibi ifa edilmemesi durumu için kararlaştırılmışsa, alacaklı borcun veya cezanın ifasını isteyebilir [Kaynak: TBK m.179].\n*   Ceza, borcun belirlenen zaman veya yerde ifa edilmemesi durumu için kararlaştırılmışsa, alacaklı asıl borçla birlikte cezanın ifasını da isteyebilir [Kaynak: TBK m.179].\n*   Alacaklı hiçbir zarara uğramamış olsa bile, kararlaştırılan cezanın ifası gerekir [Kaynak: TBK m.180].\n*   Yayım sözleşmesinin geçerliliği yazılı şekilde yapılmış olmasına bağlıdır, ancak bu hüküm özel olarak ceza şartı için değil, yayım sözleşmesi için belirtilmiştir [Kaynak: TBK m.488].\n*   Genel işlem koşullarına dürüstlük kurallarına aykırı olarak hükümler konulamaz [Kaynak: TBK m.25].\n\n**Sonuç:**\nVerilen kaynaklar yetersizdir. Kaynak metinlerde ceza şartının geçerliliği için aranacak özel koşullar (şekil şartı, tarafların iradesi vb.) açıkça belirtilmemiştir. Sadece ceza koşulu uygulandığında doğan haklar ve sonuçlar (borcun ifası, zararın aşması durumunda ek talep kısıtlaması vb.) düzenlenmiştir.",
+      "cited_sources": [
+        "TBK m.179",
+        "TBK m.179",
+        "TBK m.180",
+        "TBK m.488",
+        "TBK m.25"
+      ],
+      "expected_sources": [
+        "TBK m.179",
+        "TBK m.180",
+        "TBK m.182"
+      ],
+      "expected_keywords": [
+        "ceza şartı",
+        "cayma akçesi",
+        "geçerlilik",
+        "asıl borç",
+        "indirim",
+        "fahiş"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 3,
+      "correct_source_rate": 0.6667,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "response_time_ms": 11033.8,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-007",
+      "question_text": "Vekâlet sözleşmesinde vekâletin sona erme halleri nelerdir? TBK'nın ilgili maddelerini belirtin.",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Türk Borçlar Kanunu'na (TBK) göre vekâlet sözleşmesinin sona erme halleri ve ilgili maddeler aşağıdadır:\n\n**1. Tek Taraflı Sona Erdirme**\nVekâlet veren ve vekil, vekâlet sözleşmesini her zaman tek taraflı olarak sona erdirebilirler. Ancak, uygun olmayan bir zamanda sözleşmeyi sona erdiren taraf, diğer tarafın bundan doğan zararını gidermekle yükümlüdür.\n[Kaynak: TBK m.512]\n\n**2. Kendiliğinden Sona Erme (Ölüm, Ehliyet Kaybı, İflas)**\nSözleşmeden veya işin niteliğinden aksi anlaşılmadıkça; vekilin veya vekâlet verenin ölümü, ehliyetini kaybetmesi ya da iflası hallerinde sözleşme kendiliğinden sona ermiş olur. Bu hüküm, taraflardan birinin tüzel kişi olması durumunda, bu tüzel kişiliğin sona ermesinde de uygulanır.\n[Kaynak: TBK m.513]\n\n**3. Temsil Yetkisinin Sona Ermesi (Genel Hüküm)**\nHukuki işlemden doğan temsil yetkisi, aksi taraflarca kararlaştırılmadıkça veya işin özelliğinden anlaşılmadıkça; temsil olunanın veya temsilcinin ölümü, gaipliğine karar verilmesi, fiil ehliyetini kaybetmesi veya iflas etmesi durumlarında sona erer. Bu hüküm, bir tüzel kişiliğin sona ermesi durumunda da uygulanır.\n[Kaynak: TBK m.43]\n\n**4. Yetki Belgesinin Geri Verilmesi Yükümlülüğü**\nTemsilciye yetki belgesi verilmişse, yetkinin sona ermesi durumunda temsilci, bu belgeyi temsil olunana geri vermekle veya hâkimin belirleyeceği yere bırakmakla yükümlüdür.\n[Kaynak: TBK m.44]\n\n**5. Sona Erme Sonrası Sorumluluk**\nVekilin sözleşmenin sona erdiğini öğrenmeden önce yaptığı işlerden, vekâlet veren ya da mirasçıları sözleşme devam ediyormuş gibi sorumludur.\n[Kaynak: TBK m.514]\n\n**6. Sona Erme Halinde Devam Yükümlülüğü**\nVekâletin sona ermesi vekâlet verenin menfaatlerini tehlikeye düşürüyorsa; vekâlet veren veya mirasçısı ya da temsilcisi, işleri kendi başına görebilecek duruma gelinceye kadar, vekil veya mirasçısı ya da temsilcisi, vekâleti ifaya devam etmekle yükümlüdür.\n[Kaynak: TBK m.513]",
+      "cited_sources": [
+        "TBK m.512",
+        "TBK m.513",
+        "TBK m.43",
+        "TBK m.44",
+        "TBK m.514",
+        "TBK m.513"
+      ],
+      "expected_sources": [
+        "TBK m.512",
+        "TBK m.513",
+        "TBK m.514"
+      ],
+      "expected_keywords": [
+        "vekâlet",
+        "sona erme",
+        "azil",
+        "istifa",
+        "ölüm",
+        "ehliyetsizlik",
+        "iflas"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5714,
+      "response_time_ms": 13550.8,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-008",
+      "question_text": "Hizmet sözleşmesinde işçinin haklı nedenle sözleşmeyi fesih hakkı TBK'nın hangi maddelerinde düzenlenmiştir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "answer_text": "Verilen kaynak metinlerine dayanarak, hizmet sözleşmesinde işçinin haklı nedenle sözleşmeyi fesih hakkı aşağıdaki maddelerde düzenlenmiştir:\n\n1.  **TBK m.435:** Bu madde, taraflardan her birinin (işçi dahil) haklı sebeplerle sözleşmeyi derhâl feshedebileceğini belirtmektedir. Ayrıca, dürüstlük kurallarına göre hizmet ilişkisini sürdürmesi beklenemeyen bütün durum ve koşulların haklı sebep sayılacağını hükme bağlamıştır. Bu maddede ayrıca işverenin ödeme güçsüzlüğüne düşmesinin bir haklı sebep örneği olarak verilmiştir [Kaynak: TBK m.435].\n2.  **TBK m.436:** Bu madde, işverenin ödeme güçsüzlüğüne düşmesi halinde, işçinin sözleşmeden doğan hakları uygun bir süre içinde işveren tarafından güvenceye bağlanmazsa sözleşmeyi derhâl feshedebileceğini açıkça düzenlemektedir [Kaynak: TBK m.436].\n3.  **TBK m.433:** Deneme süresi konulmuşsa, tarafların (işçi dahil) fesih süresine uymak zorunda olmaksızın hizmet sözleşmesini tazminatsız feshedebileceği belirtilmiştir. Bu durum, deneme süresi içindeki özel bir fesih hakkı niteliğindedir [Kaynak: TBK m.433].\n\nÖzetle, işçinin haklı nedenle fesih hakkı esas olarak **TBK m.435** ve **TBK m.436** ile düzenlenmiş; deneme süresi koşulu altında ise **TBK m.433** kapsamında değerlendirilmiştir.",
+      "cited_sources": [
+        "TBK m.435",
+        "TBK m.436",
+        "TBK m.433"
+      ],
+      "expected_sources": [
+        "TBK m.435",
+        "TBK m.436"
+      ],
+      "expected_keywords": [
+        "haklı neden",
+        "fesih",
+        "hizmet sözleşmesi",
+        "işçi",
+        "derhal",
+        "süre tanınmaksızın"
+      ],
+      "expected_answer_contains": "haklı neden",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "phrase_hit_result": true,
+      "response_time_ms": 8503.7,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-009",
+      "question_text": "TBK'ya göre genel zamanaşımı süresi kaç yıldır ve bu süre hangi tarihten itibaren işlemeye başlar?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "answer_text": "Türk Borçlar Kanunu'na (TBK) göre genel zamanaşımı süresi ve başlangıç tarihi ile ilgili bilgiler kaynak metinlerde şu şekildedir:\n\n*   **Zamanaşımı Süresi:** Kanunda aksine bir hüküm bulunmadıkça, her alacak **on yıllık** zamanaşımına tabidir [Kaynak: TBK m.146].\n*   **Zamanaşımının Başlangıcı:** Genel olarak zamanaşımı, **alacağın muaccel olmasıyla** işlemeye başlar [Kaynak: TBK m.149].\n    *   Alacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde ise zamanaşımı, bu bildirimin yapılabileceği günden işlemeye başlar [Kaynak: TBK m.149].\n    *   Zamanaşımı sürelerinin hesaplanmasında, zamanaşımının başladığı gün sayılmaz ve süre ancak son günü de hak kullanılmaksızın geçince gerçekleşmiş olur [Kaynak: TBK m.151].",
+      "cited_sources": [
+        "TBK m.146",
+        "TBK m.149",
+        "TBK m.149",
+        "TBK m.151"
+      ],
+      "expected_sources": [
+        "TBK m.146",
+        "TBK m.149"
+      ],
+      "expected_keywords": [
+        "on yıl",
+        "zamanaşımı",
+        "muaccel",
+        "alacağın doğumu",
+        "başlangıç"
+      ],
+      "expected_answer_contains": "on yıl",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8,
+      "phrase_hit_result": true,
+      "response_time_ms": 5229.3,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-010",
+      "question_text": "Kira bedelinin yıllık artışında TBK hangi sınırlamayı öngörmektedir?",
+      "category": "tbk_kira",
+      "difficulty": "easy",
+      "answer_text": "Türk Borçlar Kanunu (TBK) kira bedelinin yıllık artışında aşağıdaki sınırlamaları öngörmektedir:\n\n1.  **Genel Kural (5 Yıl Kuralı):** Tarafların yenilenen kira dönemlerinde uygulanacak hükümleri saklı kalmak şartıyla, beş yıl geçmedikçe kira bedelinde değişiklik yapılamaz. Ancak, Kanunun \"Aşırı ifa güçlüğü\" başlıklı 138. maddesi hükmü saklıdır. [Kaynak: TBK m.344]\n2.  **Tüketici Fiyat Endeksi Sınırı (Genel Uygulama):** Tarafların yenilenen kira dönemlerinde uygulanacak kira bedeline ilişkin anlaşmaları, bir önceki kira yılında tüketici fiyat endeksindeki oniki aylık ortalamalara göre değişim oranını geçmemek koşuluyla geçerlidir. Bu kural, bir yıldan daha uzun süreli kira sözleşmelerinde de uygulanır. [Kaynak: TBK m.344]\n3.  **Hakimce Belirleme Durumu:** Taraflarca kira bedeli konusunda bir anlaşma yapılmamışsa, kira bedeli, bir önceki kira yılının tüketici fiyat endeksindeki oniki aylık ortalamalara göre değişim oranını geçmemek koşuluyla hâkim tarafından, kiralananın durumu göz önüne alınarak hakkaniyete göre belirlenir. [Kaynak: TBK m.344]\n4.  **5 Yıldan Uzun Süreli veya Yenilenen Sözleşmeler:** Taraflarca bu konuda bir anlaşma yapılıp yapılmadığına bakılmaksızın, beş yıldan uzun süreli veya beş yıldan sonra yenilenen kira sözleşmelerinde ve bundan sonraki her beş yılın sonunda, yeni kira yılında uygulanacak kira bedeli; tüketici fiyat endeksindeki oniki aylık ortalamalara göre değişim oranı, kiralananın durumu ve emsal kira bedelleri göz önünde tutularak hâkim tarafından hakkaniyete uygun biçimde belirlenir. [Kaynak: TBK m.344]\n5.  **Geçici Sınırlamalar (Konut Kiraları):**\n    *   **TBK m.G1:** Konut kiraları bakımından, bu maddenin yürürlüğe girdiği tarihten 1/7/2023 tarihine kadar yenilenen kira dönemlerinde uygulanacak kira bedeline ilişkin anlaşmalar, bir önceki kira yılına ait kira bedelinin yüzde yirmi beşini geçmemek koşuluyla geçerlidir. Bir önceki kira yılının tüketici fiyat endeksindeki oniki aylık ortalamalara göre değişim oranının yüzde yirmi beşin altında kalması halinde değişim oranı geçerlidir. [Kaynak: TBK m.G1]\n    *   **TBK m.G2:** Konut kiraları bakımından, 2/7/2023 ilâ 1/7/2024 tarihleri arasında yenilenen kira dönemlerinde uygulanacak kira bedeline ilişkin anlaşmalar, bir önceki kira yılına ait kira bedelinin yüzde yirmi beşini geçmemek koşuluyla geçerlidir. Bir önceki kira yılının tüketici fiyat endeksindeki oniki aylık ortalamalara göre değişim oranının yüzde yirmi beşin altında kalması halinde değişim oranı geçerlidir. [Kaynak: TBK m.G2]\n6.  **Yabancı Para ile Yapılan Sözleşmeler:** Sözleşmede kira bedeli yabancı para olarak kararlaştırılmışsa, 20/2/1930 tarihli ve 1567 sayılı Türk Parasının Kıymetini Koruma Hakkında Kanun hükümleri saklı kalmak şartıyla, beş yıl geçmedikçe kira bedelinde değişiklik yapılamaz. [Kaynak: TBK m.344]\n7.  **Kiracı Aleyhine Değişiklik Yasağı:** Genel olarak kira sözleşmelerinde kira bedelinin belirlenmesi dışında, kiracı aleyhine değişiklik yapılamaz. [Kaynak: TBK m.343]",
+      "cited_sources": [
+        "TBK m.344",
+        "TBK m.344",
+        "TBK m.344",
+        "TBK m.344",
+        "TBK m.G1",
+        "TBK m.G2",
+        "TBK m.344",
+        "TBK m.343"
+      ],
+      "expected_sources": [
+        "TBK m.344"
+      ],
+      "expected_keywords": [
+        "artış",
+        "kira bedeli",
+        "TÜFE",
+        "onikinci ay",
+        "üretici fiyat",
+        "konut"
+      ],
+      "expected_answer_contains": "TÜFE",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 1,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "phrase_hit_result": false,
+      "response_time_ms": 19760.2,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-011",
+      "question_text": "Haksız fiilde zarar görenin müterafik kusuru (ortak kusur) tazminatı nasıl etkiler?",
+      "category": "tbk_haksiz_fiil",
+      "difficulty": "medium",
+      "answer_text": "Verilen kaynak metinlerinde, haksız fiilde zarar görenin müterafik kusurunun (ortak kusurun) tazminat miktarını veya sorumluluğu nasıl etkilediğine dair **doğrudan bir hüküm veya açıklama bulunmamaktadır**.\n\nKaynaklar şu konuları kapsamaktadır:\n*   **TBK m.49:** Kusurlu ve hukuka aykırı fiille zarar verenin sorumluluğunu belirtir.\n*   **TBK m.50:** Zarar görenin zararını ve kusuru ispat yükümlülüğünü, miktarın tam ispat edilememesi halinde hakkaniyetle belirlenmesini düzenler.\n*   **TBK m.62:** Müteselsil sorumluluk durumunda tazminatın paylaştırılmasında kusur ağırlığının göz önünde tutulacağını belirtir.\n*   **TBK m.65:** Ayırt etme gücü bulunmayan kişinin verdiği zararın hakkaniyete göre giderilmesini düzenler.\n\nAncak, zarar görenin kendi kusurunun (müterafik kusur) tazminatı azaltıp azaltmayacağına dair spesifik bir madde bu metinler arasında yer almamaktadır. Bu nedenle, sorunuzun cevabını yalnızca verilen kaynaklarla net bir şekilde veremem.",
+      "cited_sources": [],
+      "expected_sources": [
+        "TBK m.52"
+      ],
+      "expected_keywords": [
+        "müterafik kusur",
+        "ortak kusur",
+        "tazminat",
+        "indirim",
+        "zarar gören",
+        "kusur oranı"
+      ],
+      "expected_answer_contains": "indirim",
+      "refusal_expected": false,
+      "has_citation": false,
+      "correct_source_overlap": 0,
+      "expected_source_count": 1,
+      "correct_source_rate": 0.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "phrase_hit_result": false,
+      "response_time_ms": 6348.1,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-012",
+      "question_text": "TBK m.112 kapsamında borcun ifa edilmemesi (temerrüt) koşulları nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "answer_text": "Verilen kaynak metinler incelendiğinde, **TBK m.112**'nin borcun ifa edilmemesi (temerrüt) koşullarını doğrudan tanımlamadığı görülmektedir.\n\n*   **TBK m.112**, borcun hiç veya gereği gibi ifa edilmemesi durumunda borçlunun sorumluluğunu düzenler; ancak borçlunun sorumluluğunun doğabilmesi için \"kusurun yüklenemeyeceğini ispat etmemesi\" şartını getirir. Metin şu şekildedir: \"Genel olarak / Borç hiç veya gereği gibi ifa edilmezse borçlu, kendisine hiçbir kusurun yüklenemeyeceğini ispat etmedikçe, alacaklının bundan doğan zararını gidermekle yükümlüdür.\" [Kaynak: TBK m.112]\n*   Temerrüdün (geç ifa) oluşum koşulları ise kaynak metinlerde **TBK m.117** ve **TBK m.118**'de ayrı ayrı düzenlenmiştir. Örneğin, TBK m.117'ye göre muaccel bir borcun borçlusu, alacaklının ihtarıyla temerrüde düşer veya belirli bir günün geçmesiyle temerrüde düşer. [Kaynak: TBK m.117]\n*   TBK m.118 ise temerrüde düşen borçlunun sorumluluğunu, \"temerrüde düşmekte kusuru olmadığını ispat etmedikçe\" şeklinde ifade eder. [Kaynak: TBK m.118]\n\nSonuç olarak, **TBK m.112** metni, borcun ifa edilmemesi durumunda borçlunun kusur sorumluluğunu (ispat yükü) düzenlerken, temerrüdün oluşumuna dair somut koşulları (ihtar, süre geçişi vb.) içermemektedir. Bu koşullar kaynak metinlerdeki ilgili maddelerde (m.117, m.118) yer almaktadır.",
+      "cited_sources": [
+        "TBK m.112",
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "expected_sources": [
+        "TBK m.112",
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "expected_keywords": [
+        "temerrüt",
+        "ifa",
+        "borcun muacceliyeti",
+        "ihtar",
+        "zamanında ifa etmeme",
+        "zararın tazmini"
+      ],
+      "expected_answer_contains": "temerrüt",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "phrase_hit_result": true,
+      "response_time_ms": 10054.1,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-013",
+      "question_text": "Konut kira sözleşmesinde kiracı 10 yıldan fazla oturuyorsa kiraya veren sözleşmeyi hangi koşullarla feshedebilir?",
+      "category": "tbk_kira",
+      "difficulty": "hard",
+      "answer_text": "Verilen kaynak metinlerine dayanarak, konut kira sözleşmesinde kiracının 10 yıldan fazla oturması durumunda kiraya verenin sözleşmeyi feshetme koşulları şu şekildedir:\n\n1.  **On Yıllık Süre Şartı:** Kiraya veren, sözleşmenin başlangıcından **on yıl geçtikten sonra** fesih hakkına sahip olabilir. Bu süre, belirsiz süreli kira sözleşmeleri için genel bir sınırlamadır [Kaynak: TBK m.347].\n2.  **Bildirim Süresi:** Kiraya veren, on yıllık uzama süresi sonunda, bu süreyi izleyen her uzama yılının bitiminden **en az üç ay önce** bildirimde bulunmak zorundadır [Kaynak: TBK m.347].\n3.  **Sebep Göstermeme Hakkı:** Kiraya veren, bu koşulları sağladığı takdirde **herhangi bir sebep göstermeksizin** sözleşmeye son verebilir [Kaynak: TBK m.347].\n4.  **Genel Hükümlere Göre Fesih:** On yıllık süre dolduktan sonra, kiraya veren genel hükümlere göre fesih bildirimiyle sözleşmeyi sona erdirebilir [Kaynak: TBK m.347].\n\nÖzetle, kiracı 10 yıldan fazla oturuyorsa kiraya veren, on yıllık sürenin bitiminden itibaren her yılın sonunda, en az 3 ay önceden bildirim yaparak ve herhangi bir sebep belirtmeksizin sözleşmeyi feshedebilir.",
+      "cited_sources": [
+        "TBK m.347",
+        "TBK m.347",
+        "TBK m.347",
+        "TBK m.347"
+      ],
+      "expected_sources": [
+        "TBK m.347"
+      ],
+      "expected_keywords": [
+        "on yıl",
+        "fesih",
+        "bildirim",
+        "üç ay",
+        "kira yılı",
+        "uzayan süre"
+      ],
+      "expected_answer_contains": "üç ay",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 1,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "phrase_hit_result": true,
+      "response_time_ms": 7583.5,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-014",
+      "question_text": "Hizmet sözleşmesinde işverenin işçiyi derhal işten çıkarmasını (haklı fesih) meşrulaştıran sebepler TBK'da nasıl düzenlenmiştir?",
+      "category": "tbk_hizmet",
+      "difficulty": "hard",
+      "answer_text": "Verilen kaynak metinler ışığında, Türk Borçlar Kanunu'nda (TBK) işverenin hizmet sözleşmesini **haklı sebep** ile derhal feshetmesine ilişkin düzenlemeler şu şekildedir:\n\n1.  **Genel Kapsam ve Bildirim Yükümlülüğü:**\n    Taraflardan her biri, **haklı sebeplerle** sözleşmeyi derhal feshedebilir. Ancak sözleşmeyi fesheden taraf, fesih sebebini **yazılı olarak bildirmek zorundadır** [Kaynak: TBK m.435].\n\n2.  **Haklı Sebebin Tanımı:**\n    Haklı sebep sayılan durumlar, dürüstlük kurallarına göre hizmet ilişkisini sürdürmesinin fesih eden taraftan **beklenemeyen bütün durum ve koşulları** kapsar [Kaynak: TBK m.435].\n\n3.  **İşverene Özgü Haklı Sebep Örnekleri:**\n    Kaynak metinlerde işverenin derhal fesih hakkını doğuran somut bir haklı sebep olarak sadece **\"işverenin ödeme güçsüzlüğüne düşmesi\"** belirtilmiştir. Ancak bu madde (TBK m.435'teki b bendi) genellikle işçinin haklı fesih hakkını düzenlerken, TBK m.436'da açıkça belirtildiği üzere; işverenin ödeme güçsüzlüğüne düşmesi halinde **işçinin** sözleşmeyi derhal feshetme hakkı doğar [Kaynak: TBK m.436].\n\n    *Not:* Verilen kaynak metinlerde, işverenin işçiyi derhal feshetmesine izin veren spesifik bir \"haklı sebep\" listesi (örneğin işçinin haksız olarak işe başlamaması veya işi bırakması gibi) TBK m.438'de \"c. İşçinin haksız olarak işe başlamaması veya işi bırakması\" başlığı altında geçse de, bu madde işverenin haklı sebep olmaksızın fesih yapması durumunda işçinin tazminat hakkını düzenlemektedir. Kaynak metinlerde işverenin derhal fesih hakkını doğuran somut haklı sebeplerin tam listesi TBK m.435'in genel tanımı dışında açıkça sıralanmamıştır.\n\n4.  **Haklı Fesih Sonuçları:**\n    Haklı fesih sebepleri, taraflardan birinin sözleşmeye uymamasından doğmuşsa, o taraf sebep olduğu zararı tamamen gidermekle yükümlüdür. Diğer durumlarda haklı sebeple feshin maddi sonuçları hâkim tarafından serbestçe değerlendirilir [Kaynak: TBK m.437].\n\n**Özetle:** Kaynak metinlere göre, işverenin derhal fesih hakkı **haklı sebeplere** dayanır ve bu sebepler **dürüstlük kurallarına göre hizmet ilişkisinin sürdürülmesinin beklenemeyeceği durumlar** olarak tanımlanır [Kaynak: TBK m.435]. Ancak verilen metinlerde işverenin bu hakkı kullanabileceği spesifik örnekler (işçinin kusurlu davranışları vb.) TBK m.438'de işverenin haksız fesih yaptığında işçinin tazminat hakkı bağlamında anılmış olup, işverenin haklı fesih sebeplerinin tam listesi bu metinlerde TBK m.435'in genel tanımı ile sınırlıdır.",
+      "cited_sources": [
+        "TBK m.435",
+        "TBK m.435",
+        "TBK m.436",
+        "TBK m.437",
+        "TBK m.435"
+      ],
+      "expected_sources": [
+        "TBK m.435"
+      ],
+      "expected_keywords": [
+        "haklı fesih",
+        "işveren",
+        "derhal",
+        "ağır kusur",
+        "ahlak",
+        "güven sarsılması"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 1,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 16365.1,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-015",
+      "question_text": "TBK'ya göre kefalet sözleşmesi hangi şekil şartlarına tabidir ve geçerlilik koşulları nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "answer_text": "Türk Borçlar Kanunu (TBK) hükümlerine göre kefalet sözleşmesinin şekil şartları ve geçerlilik koşulları aşağıdadır:\n\n**1. Şekil Şartı:**\nKefalet sözleşmesi, geçerli olabilmesi için **yazılı şekilde** yapılmalıdır. Kanunda aksi öngörülmediği genel kurala rağmen, kefalet sözleşmesi için öngörülen yazılı şekil, geçerlilik şeklidir; bu şekle uyulmaksızın kurulan sözleşmeler hüküm doğurmaz [Kaynak: TBK m.583]. Ayrıca, kefilin kendi adına kefil olma konusunda özel yetki verilmesi veya bir üçüncü kişiye kefil olma vaadinde bulunulması da aynı şekil koşullarına tabidir [Kaynak: TBK m.583].\n\n**2. İçerik ve Belirtilmesi Gereken Unsurlar:**\nYazılı sözleşmede şu unsurların bulunması zorunludur:\n*   Kefilin sorumlu olacağı **azamî miktar** belirtilmelidir.\n*   **Kefalet tarihi** belirtilmelidir.\n*   Eğer kefil **müteselsil kefil** ise, bu sıfatla veya bu anlama gelen herhangi bir ifadeyle yükümlülük altına girdiğini **kendi el yazısıyla** belirtmesi şarttır [Kaynak: TBK m.583].\n\n**3. Değişiklikler ve Sınırlamalar:**\nTaraflar, yazılı şekle uyarak kefilin sorumluluğunu borcun belirli bir miktarıyla sınırlandırmayı kararlaştırabilirler [Kaynak: TBK m.583]. Ancak, kefalet sözleşmesinde sonradan yapılan ve kefilin sorumluluğunu artıran değişiklikler, kefalet için öngörülen şekle (yazılı şekil ve el yazısı şartı) uyulmadıkça hüküm doğurmaz [Kaynak: TBK m.583].\n\n**4. Diğer İlgili Hükümler:**\n*   Kefalet sözleşmesi, mevcut ve geçerli bir borç için yapılabileceği gibi, gelecekte doğacak veya koşula bağlı bir borç için de bu borç doğduğunda veya koşul gerçekleştiğinde hüküm ifade etmek üzere kurulabilir [Kaynak: TBK m.582].\n*   Kefaletin şekline, kefil olma ehliyetine ve eşin rızasına ilişkin hükümler, gerçek kişilerce kişisel güvence verilmesine ilişkin başka ad altında yapılan diğer sözleşmelere de uygulanır [Kaynak: TBK m.603].\n*   Kanundan aksi anlaşılmadıkça kefil, kendisine tanınan haklardan önceden feragat edemez [Kaynak: TBK m.582].\n*   Genel işlem koşullarına ve dürüstlük kurallarına aykırı olarak, karşı tarafın aleyhine veya durumunu ağırlaştırıcı nitelikte hükümler kefalet sözleşmesine konulamaz [Kaynak: TBK m.25].",
+      "cited_sources": [
+        "TBK m.583",
+        "TBK m.583",
+        "TBK m.583",
+        "TBK m.583",
+        "TBK m.583",
+        "TBK m.582",
+        "TBK m.603",
+        "TBK m.582",
+        "TBK m.25"
+      ],
+      "expected_sources": [
+        "TBK m.582",
+        "TBK m.583",
+        "TBK m.584"
+      ],
+      "expected_keywords": [
+        "kefalet",
+        "yazılı şekil",
+        "eş rızası",
+        "kefil",
+        "azami miktar",
+        "geçerlilik"
+      ],
+      "expected_answer_contains": "yazılı",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 3,
+      "correct_source_rate": 0.6667,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "phrase_hit_result": true,
+      "response_time_ms": 14682.7,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-016",
+      "question_text": "Vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu TBK'nın hangi maddelerinde düzenlenmiştir?",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Verilen kaynak metinlerine dayanarak, vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu aşağıdaki Türk Borçlar Kanunu (TBK) maddelerinde düzenlenmiştir:\n\n**1. Özen Yükümlülüğü:**\n*   Vekilin, üstlendiği iş ve hizmetleri vekâlet verenin haklı menfaatlerini gözeterek **sadakat ve özenle** yürütmekle yükümlü olduğu **TBK m.506**'da belirtilmiştir. Bu maddeye göre, özen borcundan doğan sorumluluğun belirlenmesinde, benzer alanda iş ve hizmetleri üstlenen basiretli bir vekilin göstermesi gereken davranış esas alınır [Kaynak: TBK m.506].\n*   Ayrıca, vekâlet verenin açık talimatına uymakla yükümlü olan vekil, izin alma imkânı bulunmadığı ve durumun açıkça izin verilmesi gerekeceği hâllerde talimattan ayrılabilir; aksi takdirde talimattan ayrılırsa, işi görmüş olsa bile vekâlet borcunu ifa etmiş sayılmaz [Kaynak: TBK m.505].\n*   Vekil, yetkisi dışına çıkarak işi başkasına gördürdüğünde, onun fiilinden kendisi yapmış gibi sorumludur; ancak başkasına vekâlet vermeye yetkiliyse sadece seçmede ve talimat vermede gerekli özeni göstermekle yükümlüdür [Kaynak: TBK m.507].\n\n**2. Hesap Verme Borcu:**\n*   Vekilin, vekâlet verenin istemi üzerine yürüttüğü işin **hesabını vermek** ve vekâletle ilişkili olarak aldıklarını vekâlet verene vermekle yükümlü olduğu **TBK m.508**'de düzenlenmiştir [Kaynak: TBK m.508].\n*   Ayrıca, vekil vekâlet verene tesliminde geciktiği paranın **faizini de ödemekle** yükümlüdür [Kaynak: TBK m.508].\n\nÖzetle, özen yükümlülüğü **TBK m.506** (ve m.505 ile m.507'deki ilgili hükümler), hesap verme borcu ise **TBK m.508** kapsamında düzenlenmiştir.",
+      "cited_sources": [
+        "TBK m.506",
+        "TBK m.505",
+        "TBK m.507",
+        "TBK m.508",
+        "TBK m.508"
+      ],
+      "expected_sources": [
+        "TBK m.505",
+        "TBK m.508"
+      ],
+      "expected_keywords": [
+        "vekil",
+        "özen",
+        "hesap",
+        "bilgi verme",
+        "sadakat",
+        "vekilin borçları"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "response_time_ms": 11697.6,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-017",
+      "question_text": "Sözleşmede aşırı ifa güçlüğü (clausula rebus sic stantibus) TBK'da hangi maddeyle düzenlenmiştir ve uygulanma koşulları nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "answer_text": "Türk Borçlar Kanunu'nda (TBK) sözleşmede aşırı ifa güçlüğü (clausula rebus sic stantibus) **TBK m.138** ile düzenlenmiştir [Kaynak: TBK m.138].\n\nBu maddede belirtilen uygulanma koşulları şunlardır:\n\n1.  **Öngörülmemiş Olağanüstü Durum:** Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve öngörülmesi de beklenmeyen olağanüstü bir durumun ortaya çıkması gerekir [Kaynak: TBK m.138].\n2.  **Borçludan Kaynaklanmama:** Bu durumun borçludan kaynaklanmaması gerekir [Kaynak: TBK m.138].\n3.  **Dürüstlük Kurallarına Aykırılık:** Sözleşmenin yapıldığı sırada mevcut olan olgular, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirmiş olmalıdır [Kaynak: TBK m.138].\n4.  **İfa Durumu:** Borçlu, borcunu henüz ifa etmemiş olmalı veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olmalıdır [Kaynak: TBK m.138].\n\nBu koşulların gerçekleşmesi durumunda borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteyebilir; bu mümkün olmadığı takdirde sözleşmeden dönebilir [Kaynak: TBK m.138]. Sürekli edimli sözleşmelerde ise kural olarak fesih hakkı kullanılır [Kaynak: TBK m.138]. Ayrıca bu hüküm yabancı para borçlarında da uygulanır [Kaynak: TBK m.138].",
+      "cited_sources": [
+        "TBK m.138",
+        "TBK m.138",
+        "TBK m.138",
+        "TBK m.138",
+        "TBK m.138",
+        "TBK m.138",
+        "TBK m.138",
+        "TBK m.138"
+      ],
+      "expected_sources": [
+        "TBK m.138"
+      ],
+      "expected_keywords": [
+        "aşırı ifa güçlüğü",
+        "uyarlama",
+        "olağanüstü",
+        "beklenmeyen",
+        "hâkim",
+        "sözleşmenin uyarlanması"
+      ],
+      "expected_answer_contains": "uyarlama",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 1,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "phrase_hit_result": false,
+      "response_time_ms": 9157.9,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-018",
+      "question_text": "İşçinin kıdem tazminatına hak kazanma koşulları ve hesaplama yöntemi nedir?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "answer_text": "Verilen kaynak metinlerde işçinin **kıdem tazminatına** hak kazanma koşulları veya hesaplama yöntemi hakkında bilgi **bulunmamaktadır**.\n\nKaynak metinlerde yer alan hükümler şunlardır:\n*   **TBK m.409:** Hastalık, askerlik gibi sebeplerle iş görme ediminin ifa edilememesi durumunda haksaniyete uygun ücret ödenmesi (kıdem tazminatı değil).\n*   **TBK m.439:** Haklı sebep olmaksızın işe başlanmaması veya işin bırakılması durumunda işverenin aylık ücretin dörtte birine eşit tazminat isteme hakkı (bu, kıdem tazminatı değil, işe başlama/işten ayrılma tazminatıdır).\n*   **TBK m.416, 467, 413, 401, 408, 466, 51, 418:** Ücret ödenmesi, giderler, iş araçları, çalışma engellenmesi ve ev düzeni içinde barınma/gıda gibi konulara ilişkindir.\n\nBu nedenle, sorunuzda belirtilen kıdem tazminatı konusu, yalnızca verilen kaynak metinler kullanılarak yanıtlanamaz.",
+      "cited_sources": [],
+      "expected_sources": [],
+      "expected_keywords": [
+        "kıdem tazminatı",
+        "4857",
+        "İş Kanunu"
+      ],
+      "refusal_expected": true,
+      "has_citation": false,
+      "correct_source_overlap": 0,
+      "expected_source_count": 0,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": false,
+      "kw_coverage": 0.3333,
+      "response_time_ms": 6347.5,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-019",
+      "question_text": "Türk Ticaret Kanunu'na göre anonim şirket kuruluş asgari sermayesi nedir?",
+      "category": "out_of_scope",
+      "difficulty": "easy",
+      "answer_text": "Verilen kaynak metinlerde Türk Ticaret Kanunu'na (TTK) veya anonim şirket kuruluş asgari sermayesine ilişkin herhangi bir bilgi bulunmamaktadır.\n\nSağlanan kaynaklar sadece Türk Borçlar Kanunu (TBK) maddelerini içermektedir:\n*   [Kaynak: TBK m.635] Adi ortaklıkta ortaklığın sona ermesi ve borçların paylaşımı.\n*   [Kaynak: TBK m.401] İşçiye ödenecek ücret.\n*   [Kaynak: TBK m.626] Adi ortaklıkta rekabet yasağı.\n*   [Kaynak: TBK m.118] Temerrüt ve sorumluluk.\n*   [Kaynak: TBK m.553] Ticari temsilcilerde rekabet yasağı.\n*   [Kaynak: TBK m.112] Borcun ifa edilmemesi ve sorumluluk.\n*   [Kaynak: TBK m.454] Pazarlamacıya ödenecek ücret.\n*   [Kaynak: TBK m.526] Vekâletsiz iş görme.\n*   [Kaynak: TBK m.256] Taşınmaz satışında ödeme şekilleri.\n*   [Kaynak: TBK m.620] Adi ortaklık sözleşmesinin tanımı.\n\nBu nedenle, anonim şirket kuruluş asgari sermayesi hakkında sorunuzun cevabını kaynak metinlere dayanarak veremem.",
+      "cited_sources": [
+        "TBK m.635",
+        "TBK m.401",
+        "TBK m.626",
+        "TBK m.118",
+        "TBK m.553",
+        "TBK m.112",
+        "TBK m.454",
+        "TBK m.526",
+        "TBK m.256",
+        "TBK m.620"
+      ],
+      "expected_sources": [],
+      "expected_keywords": [],
+      "refusal_expected": true,
+      "has_citation": true,
+      "correct_source_overlap": 0,
+      "expected_source_count": 0,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": true,
+      "refusal_correct": true,
+      "kw_coverage": 1.0,
+      "response_time_ms": 7537.7,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-020",
+      "question_text": "TBK'ya göre taşınmaz satış sözleşmesi hangi şekle tabidir ve noter onayı gerekir mi?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "answer_text": "Türk Borçlar Kanunu (TBK) ve Türk Medeni Kanunu (TMK) hükümlerine göre taşınmaz satış sözleşmesi ile ilgili şekil şartları ve noter onayı durumu şu şekildedir:\n\n1.  **Şekil Şartı:** Taşınmaz satışının geçerli olabilmesi için sözleşmenin **resmî şekilde** düzenlenmesi şarttır. Taşınmaz satışı vaadi, geri alım ve alım sözleşmeleri, resmî şekilde düzenlenmedikçe geçerli olmaz [Kaynak: TBK m.237]. Ayrıca, taşınmaz mülkiyetinin devrini amaçlayan sözleşmelerin geçerliliği de resmî şekilde düzenlenmiş olmalarına bağlıdır [Kaynak: TMK m.706].\n\n2.  **Noter Onayı ve Düzenleme Yeri:** Taşınmaz satış sözleşmesi, **noter huzurunda** veya tapu sicil müdürlüğünde resmî senet düzenlenmesiyle yapılır [Kaynak: TMK m.706]. Bu hüküm, sözleşmenin geçerliliği için noter huzurunda düzenlenmesinin (resmî şekil) zorunlu olduğunu göstermektedir.\n\nÖzetle, TBK ve TMK'ya göre taşınmaz satış sözleşmesi **resmî şekle** tabidir ve geçerli olması için **noter huzurunda** düzenlenmesi gerekmektedir.",
+      "cited_sources": [
+        "TBK m.237",
+        "TMK m.706",
+        "TMK m.706"
+      ],
+      "expected_sources": [
+        "TBK m.237",
+        "TMK m.706"
+      ],
+      "expected_keywords": [
+        "tapu",
+        "resmi şekil",
+        "noter",
+        "tapu sicili",
+        "geçerlilik",
+        "satış vaadi"
+      ],
+      "expected_answer_contains": "resmi şekil",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "phrase_hit_result": false,
+      "response_time_ms": 6815.9,
+      "blocked": false
+    }
+  ]
+}

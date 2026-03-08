@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: embedding-service
+Version: 0.1.0
+Summary: Hukuk AI Embedding Service
+Requires-Python: >=3.11
+Requires-Dist: fastapi>=0.115.0
+Requires-Dist: uvicorn>=0.30.0
+Requires-Dist: sentence-transformers>=3.0.0
+Requires-Dist: pydantic>=2.9.0

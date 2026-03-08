@@ -1,0 +1,14 @@
+[project]
+name = "embedding-service"
+version = "0.1.0"
+description = "Hukuk AI Embedding Service"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "sentence-transformers>=3.0.0",
+    "pydantic>=2.9.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}

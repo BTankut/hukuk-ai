@@ -1,0 +1,41 @@
+version: '3.8'
+
+# Hukuk AI — Open WebUI (Dedicated Instance)
+#
+# Port: 3001 (ana OpenClaw Open WebUI port 3000'da; çakışma önlemek için 3001)
+#
+# Başlatma:
+#   docker-compose -f api-gateway/docker-compose.yml up -d
+#
+# Smoke komutları:
+#   curl -s http://localhost:8000/v1/models       # API gateway modeller
+#   curl -s http://localhost:3001/health          # Open WebUI sağlık
+#   # Tam zincir:
+#   curl -s http://localhost:8000/v1/chat/completions \
+#     -H "Content-Type: application/json" \
+#     -d '{"model":"hukuk-ai-poc","messages":[{"role":"user","content":"Haksız fiil tazminat süresi?"}],"stream":false}'
+#
+# Servis durumu kontrol:
+#   bash scripts/dgx-vllm-ensure-running.sh  # DGX vLLM
+#   docker ps | grep hukuk-ai-open-webui      # Open WebUI container
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: hukuk-ai-open-webui
+    ports:
+      - "3001:8080"  # 3001 kullan; 3000 ana OpenClaw Open WebUI için
+    environment:
+      - "OLLAMA_BASE_URL="  # Ollama kullanılmıyor; boş bırak
+      - "OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1"
+      - "OPENAI_API_KEY=hukuk-ai-local"
+      - "WEBUI_AUTH=False"
+      - "DEFAULT_MODELS=hukuk-ai-poc"
+    volumes:
+      - hukuk-ai-open-webui-data:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  hukuk-ai-open-webui-data:
