@@ -167,16 +167,17 @@ Bağlantı seviyesi blocker büyük ölçüde kapandı; backlog önceliği kalit
   - Çıktılar: `data/finetune/{sft,dpo,eval}`, `scripts/extract_qa_from_logs.py`, `scripts/validate_ft_data.py`, `docs/quality_gate_workflow.md`
   - Branch/commit: `feat/phase2-ft-data-prep` / `b05175b703499c199ca88918ae77d809625427d8`
 - [x] Gerçek log extraction
-  - **Durum:** `hukuk-ai-phase2-ft-log-extract` — codex — **completed ✅**
+  - **Durum:** `hukuk-ai-phase2-ft-log-extract` — codex — **completed + main'e entegre ✅**
   - Çıktılar: `data/finetune/raw/pending_review/phase1_eval_reports_20260308/`
   - Hacim: **310 pre-dedupe**, **304 post-dedupe**, **276 train_pending_review**, **28 heldout_pending_review**
   - Branch/commit: `feat/phase2-ft-log-extract` / `bd25c184274e63c6bf5ada03207b9847c69e574a`
   - Rapor: `coordination/phase2-ft-log-extract-2026-03-08.md`
 - [x] Avukat review paketi + ≥%80 onay gate operasyonu iskeleti
-  - **Durum:** `hukuk-ai-phase2-review-packet` — gemini — **completed ✅**
+  - **Durum:** `hukuk-ai-phase2-review-packet` — gemini — **completed + main'e entegre ✅**
   - Çıktılar: `docs/review_guidelines.md`, `scripts/prepare_review_sheets.py`, `scripts/calculate_approval_rate.py`, `data/review_sheets/template_review.csv`
   - Branch/commit: `feat/phase2-review-packet` / `76ef1e9e6e9ebeb1bdfb536bc15d37f4c7e87d47`
   - Rapor: `coordination/phase2-review-packet-2026-03-08.md`
+- [ ] Gerçek avukat review + ≥%80 onay gate uygulaması
 - [ ] LoRA fine-tuning (dgxnode2)
 - [ ] YİM veri genişlemesi
 
