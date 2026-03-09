@@ -19,13 +19,22 @@
 - Aktif follow-up run'lar:
   (Yok)
 - Tamamlanan/Başarısız follow-up run'lar:
-  1. `hukuk-ai-phase2-first-review-batch` — codex — **completed** ✅
-  2. `hukuk-ai-phase2-review-packet` — gemini — **completed** ✅
-  3. `hukuk-ai-phase2-ft-log-extract` — codex — **completed** ✅
-  4. `hukuk-ai-phase2-main-integration` — codex — **completed** ✅ (2026-03-08)
-  5. `hukuk-ai-phase2-ft-data-prep` — gemini — **completed** ✅
-  6. `hukuk-ai-phase2-guardrails-safe-scope` — codex — **completed** ✅
-  7. `hukuk-ai-phase2-reranker-recovery3` — codex — **completed** ✅
+  1. `hukuk-ai-phase2-main-integration-2` — codex — **completed** ✅ (2026-03-09)
+  2. `hukuk-ai-phase2-third-review-batch` — codex — **completed** ✅
+  3. `hukuk-ai-phase2-second-review-batch` — codex — **completed** ✅
+  4. `hukuk-ai-phase2-heldout-supplementary-recovery2` — codex — **completed** ✅
+  5. `hukuk-ai-phase2-heldout-supplementary-recovery` — codex — **failed** ⚠️
+  6. `hukuk-ai-phase2-heldout-supplementary` — gemini — **ended without report** ⚠️
+  7. `hukuk-ai-phase2-lora-main-integration` — codex — **completed** ✅
+  8. `hukuk-ai-phase2-lora-setup-recovery` — codex — **completed** ✅
+  9. `hukuk-ai-phase2-train-config-recovery` — sonnet — **completed** ✅
+  10. `hukuk-ai-phase2-first-review-batch` — codex — **completed** ✅
+  11. `hukuk-ai-phase2-review-packet` — gemini — **completed** ✅
+  12. `hukuk-ai-phase2-ft-log-extract` — codex — **completed** ✅
+  13. `hukuk-ai-phase2-main-integration` — codex — **completed** ✅ (2026-03-08)
+  14. `hukuk-ai-phase2-ft-data-prep` — gemini — **completed** ✅
+  15. `hukuk-ai-phase2-guardrails-safe-scope` — codex — **completed** ✅
+  16. `hukuk-ai-phase2-reranker-recovery3` — codex — **completed** ✅
   5. `hukuk-ai-phase2-guardrails` — sonnet — **completed** ✅ (guarded-path, review required)
   6. `hukuk-ai-finalize-main` — codex — **completed** ✅ (2026-03-08)
   7. `hukuk-ai-edgecase-codex-recovery` — codex — **completed** ✅
@@ -42,6 +51,8 @@
   18. `hukuk-ai-edgecase-refusal-fix` — gemini — ended without report
   19. `hukuk-ai-phase2-reranker-recovery` — codex — ended without report
   20. `hukuk-ai-phase2-reranker-recovery2` — codex — ended without report
+  21. `hukuk-ai-phase2-lora-setup` — codex — ended without report
+  22. `hukuk-ai-phase2-train-config` — sonnet — ended without report
 - Tamamlanan implementasyon/audit run'ları:
   1. `hukuk-ai-guardrails-impl` — codex — completed
   2. `hukuk-ai-guardrails-audit` — sonnet — completed

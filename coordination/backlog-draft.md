@@ -188,7 +188,59 @@ Bağlantı seviyesi blocker büyük ölçüde kapandı; backlog önceliği kalit
   - Branch/commit: `feat/phase2-first-review-batch` / `ab99f0d`
   - Rapor: `coordination/phase2-first-review-batch-2026-03-08.md`
 - [ ] Gerçek avukat review + ≥%80 onay gate uygulaması
-- [ ] LoRA fine-tuning (dgxnode2)
+  - İkinci review paketi hazır:
+    - `data/review_sheets/phase2_second_batch_20260309/batch2_second100_master.csv`
+    - `data/review_sheets/phase2_second_batch_20260309/batch2_second100_lawyerA.csv`
+    - `data/review_sheets/phase2_second_batch_20260309/batch2_second100_lawyerB.csv`
+    - `data/review_sheets/phase2_second_batch_20260309/batch2_second100_stats.json`
+  - Hacim: **100 kayıt**
+  - Dağılım: easy **19**, medium **50**, hard **31**
+  - Branch/commit: `feat/phase2-second-review-batch` / `b6b020e`
+  - Main commit: `c9e4fcf` (phase2-main-integration-2 ile entegre)
+  - Rapor: `coordination/phase2-second-review-batch-2026-03-09.md`
+  - Üçüncü ve son mevcut paket de hazır:
+    - `data/review_sheets/phase2_third_batch_20260309/batch3_remaining76_master.csv`
+    - `data/review_sheets/phase2_third_batch_20260309/batch3_remaining76_lawyerA.csv`
+    - `data/review_sheets/phase2_third_batch_20260309/batch3_remaining76_lawyerB.csv`
+    - `data/review_sheets/phase2_third_batch_20260309/batch3_remaining76_stats.json`
+  - Hacim: **76 kayıt**
+  - Dağılım: easy **14**, medium **39**, hard **23**
+  - Overlap: batch1/batch2 ile **0**
+  - Branch/commit: `feat/phase2-third-review-batch` / `9c86cc2`
+  - Main commit: `776091b` (phase2-main-integration-2 ile entegre)
+  - Rapor: `coordination/phase2-third-review-batch-2026-03-09.md`
+- [ ] LoRA fine-tuning hazırlığı (dgxnode2 setup + train config)
+  - **Durum:** accepted LoRA prep branch’leri temiz bir aday dalda birleştirildi.
+    - `hukuk-ai-phase2-lora-setup-recovery` — codex — **completed ✅**
+      - Çıktılar: `configs/finetune/unsloth_sft_qwen35_35b_a3b.json`, `scripts/finetune/bootstrap_dgxnode2_unsloth.sh`, `scripts/finetune/validate_dgxnode2_env.sh`, `scripts/finetune/check_finetune_config.py`, `docs/finetune/dgxnode2-lora-bootstrap.md`
+      - Branch/commit: `feat/phase2-lora-setup` / `d14cf12`
+      - Rapor: `coordination/phase2-lora-setup-2026-03-09.md`
+    - `hukuk-ai-phase2-train-config-recovery` — sonnet — **completed ✅**
+      - Çıktılar: `configs/training/sft_config.yaml`, `configs/training/sft_llamafactory.yaml`, `scripts/build_training_dataset.py`, `data/finetune/sft/final_train.jsonl`
+      - İlk dataset build: **92 örnek**, quality gate geçti
+      - Branch/commit: `feat/phase2-train-config` / `8b29710`
+      - Rapor: `coordination/phase2-train-config-2026-03-09.md`
+    - `hukuk-ai-phase2-lora-main-integration` — codex — **completed ✅**
+      - Branch/commit: `feat/phase2-lora-main-integration` / `3450e77`
+      - Rapor: `coordination/phase2-lora-main-integration-2026-03-09.md`
+  - Kalan blocker'lar:
+    - **Hard blocker:** `min_clean_examples=1000` gate geçmiyor (`clean_examples=96`)
+    - **Soft warning:** çıktıların `%42.4`’ünde `[Kaynak:]` etiketi eksik
+    - dgxnode2 üzerinde gerçek bootstrap/preflight + HF auth henüz manuel çalıştırılmadı
+    - held-out/supplementary veri tarafı henüz tamamlanmadı
+  - **Held-out/supplementary recovery tamamlandı:**
+    - `data/finetune/eval/held_out_test.jsonl` → **22 gerçek kayıt**
+    - `data/finetune/sft/sft_training_batch1.jsonl` → **78 gerçek kayıt**
+    - `scripts/prepare_heldout_and_sft.py` → yeni
+    - Branch/commit: `feat/phase2-heldout-supplementary` / `4d6d57b`
+    - Main commit: `edb5287` (phase2-main-integration-2 ile entegre)
+    - Rapor: `coordination/phase2-heldout-supplementary-2026-03-09.md`
+  - Güncel blocker'lar:
+    - held-out hedefi **100** değil, şu an **22**
+    - clean/train hacmi **1000** değil, şu an **78**
+    - ana SFT/DPO dosyalarının bir kısmı hâlâ scaffold
+- [ ] İlk LoRA fine-tuning koşusu (dgxnode2)
+  - **Durum:** veri gate kapalı; held-out ve clean örnek sayısı hedefin altında.
 - [ ] YİM veri genişlemesi
 
 ### Faz 1 Kabul Kriteri Durumu
