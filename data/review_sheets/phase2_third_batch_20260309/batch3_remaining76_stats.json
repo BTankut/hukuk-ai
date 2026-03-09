@@ -1,0 +1,55 @@
+{
+  "input": "data/finetune/raw/pending_review/phase1_eval_reports_20260308/sft_train_pending_review.jsonl",
+  "metadata_jsonl": "data/finetune/raw/pending_review/phase1_eval_reports_20260308/candidate_metadata.jsonl",
+  "metadata_split": "train_pending_review",
+  "selection": "remaining_pool_all",
+  "selection_limit_requested": 76,
+  "selection_limit_applied": 76,
+  "excluded_from_first_batch_csv": "data/review_sheets/phase2_first_batch_20260308/batch1_first100_master.csv",
+  "excluded_from_second_batch_csv": "data/review_sheets/phase2_second_batch_20260309/batch2_second100_master.csv",
+  "excluded_candidate_count_first_batch": 100,
+  "excluded_candidate_count_second_batch": 100,
+  "excluded_candidate_count_union": 200,
+  "pool_total_train_pending_review": 276,
+  "pool_after_excluding_first_two_batches": 76,
+  "summary_selected": {
+    "count": 76,
+    "difficulty": {
+      "easy": 14,
+      "hard": 23,
+      "medium": 39
+    },
+    "category": {
+      "out_of_scope": 6,
+      "tbk_eser": 2,
+      "tbk_genel": 36,
+      "tbk_haksiz_fiil": 10,
+      "tbk_hizmet": 5,
+      "tbk_kefalet": 2,
+      "tbk_kira": 8,
+      "tbk_satis": 2,
+      "tbk_vekaletname": 5
+    },
+    "source_file": {
+      "evaluation/reports/eval_live_20260308_042436.json": 13,
+      "evaluation/reports/eval_live_20260308_045101.json": 9,
+      "evaluation/reports/eval_live_20260308_080601.json": 12,
+      "evaluation/reports/eval_live_20260308_edgecase_recovery_final.json": 20,
+      "evaluation/reports/eval_live_20260308_reindex.json": 11,
+      "evaluation/reports/eval_reranker_disabled_8010_20260308.json": 11
+    },
+    "question_id_unique": 39
+  },
+  "summary_remaining_after_third_batch": {
+    "count": 0,
+    "difficulty": {},
+    "category": {},
+    "source_file": {},
+    "question_id_unique": 0
+  },
+  "overlap_check": {
+    "selected_vs_batch1_overlap_count": 0,
+    "selected_vs_batch2_overlap_count": 0,
+    "batch1_vs_batch2_overlap_count": 0
+  }
+}
