@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "file": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_train_pending_review.jsonl",
+      "total_lines": 2383,
+      "invalid_json": 0,
+      "missing_required_keys": 0,
+      "passed": true
+    },
+    {
+      "file": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_heldout_pending_review.jsonl",
+      "total_lines": 260,
+      "invalid_json": 0,
+      "missing_required_keys": 0,
+      "passed": true
+    },
+    {
+      "file": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_all_pending_review.jsonl",
+      "total_lines": 2643,
+      "invalid_json": 0,
+      "missing_required_keys": 0,
+      "passed": true
+    }
+  ]
+}

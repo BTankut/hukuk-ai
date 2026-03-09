@@ -1,0 +1,116 @@
+{
+  "generated_at": "2026-03-09T03:12:13.387130+00:00",
+  "script": "scripts/expand_phase2_pending_candidates.py",
+  "instruction": "Aşağıdaki kaynaklara dayanarak soruyu yanıtla.",
+  "split": {
+    "method": "question_hash_bucket",
+    "hash": "sha256(normalized_question)",
+    "modulo": 10,
+    "heldout_buckets": [
+      0
+    ]
+  },
+  "sources": [
+    {
+      "file": "data/review_sheets/phase2_first_batch_20260308/reconciled_20260308/batch1_first100_reconciled_master.jsonl",
+      "source_type": "reconciled_correction_pair",
+      "details": {
+        "rows_total": 100,
+        "rows_missing_required": 0,
+        "rows_without_correction_delta": 53,
+        "candidates": 47
+      }
+    },
+    {
+      "file": "api-gateway/src/data_pipeline/fixtures/tbk_detail.html",
+      "source_type": "mevzuat_tbk_article",
+      "details": {
+        "law_no": "6098",
+        "law_name": "Türk Borçlar Kanunu",
+        "source_kind": "html_cache",
+        "warnings": [
+          "TBK verisi HTML cache'ten yüklendi: tbk_detail.html"
+        ],
+        "articles_parsed": 651,
+        "templates_per_article": 4,
+        "candidates": 2604
+      }
+    }
+  ],
+  "dedupe_against": {
+    "files": [
+      "data/finetune/raw/pending_review/phase1_eval_reports_20260308/sft_all_pending_review.jsonl"
+    ],
+    "distinct_qa_keys_loaded": 304,
+    "per_file_new_keys": {
+      "data/finetune/raw/pending_review/phase1_eval_reports_20260308/sft_all_pending_review.jsonl": 304
+    }
+  },
+  "counts": {
+    "raw_candidates_pre_dedupe": 2651,
+    "duplicates_removed_existing_pool": 0,
+    "duplicates_removed_within_new": 8,
+    "total_candidates_post_dedupe": 2643,
+    "train_pending_review": 2383,
+    "heldout_pending_review": 260,
+    "by_origin": {
+      "synthetic_pending_review_source_grounded_tbk_fixture": 2604,
+      "source_grounded_correction_pair_pending_revalidation": 39
+    },
+    "source_type_counts": {
+      "mevzuat_tbk_article": 2604,
+      "reconciled_correction_pair": 39
+    },
+    "source_file_counts": {
+      "api-gateway/src/data_pipeline/fixtures/tbk_detail.html": 2604,
+      "data/review_sheets/phase2_first_batch_20260308/reconciled_20260308/batch1_first100_reconciled_master.jsonl": 39
+    },
+    "source_grounded_count": 2643,
+    "synthetic_pending_review_count": 2604,
+    "non_synthetic_pending_review_count": 39
+  },
+  "blocker_impact_estimate": {
+    "approved_baseline": 100,
+    "target_examples": 1000,
+    "gap_before": 900,
+    "new_pending_candidates": 2643,
+    "potential_gap_after_if_all_approved": 0
+  },
+  "validation": {
+    "schema_validation_file": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/schema_validation.json",
+    "all_passed": true,
+    "files": [
+      {
+        "file": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_train_pending_review.jsonl",
+        "total_lines": 2383,
+        "invalid_json": 0,
+        "missing_required_keys": 0,
+        "passed": true
+      },
+      {
+        "file": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_heldout_pending_review.jsonl",
+        "total_lines": 260,
+        "invalid_json": 0,
+        "missing_required_keys": 0,
+        "passed": true
+      },
+      {
+        "file": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_all_pending_review.jsonl",
+        "total_lines": 2643,
+        "invalid_json": 0,
+        "missing_required_keys": 0,
+        "passed": true
+      }
+    ]
+  },
+  "outputs": {
+    "train": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_train_pending_review.jsonl",
+    "heldout": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_heldout_pending_review.jsonl",
+    "all": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/sft_all_pending_review.jsonl",
+    "metadata": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/candidate_metadata.jsonl",
+    "manifest": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/extraction_manifest.json",
+    "report": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/extraction_report.md",
+    "schema_validation": "data/finetune/raw/pending_review/phase2_candidate_expansion_20260309/schema_validation.json"
+  },
+  "disclaimer": "All records in this package are pending-review and must not be treated as lawyer-approved training data."
+}

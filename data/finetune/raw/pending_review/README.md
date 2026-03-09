@@ -9,3 +9,4 @@ Bu klasördeki veriler **ham aday veri**dir.
 ## Mevcut paketler
 
 - `phase1_eval_reports_20260308/`: Faz 1 canlı eval artefaktlarından otomatik çekilen ilk aday havuzu.
+- `phase2_candidate_expansion_20260309/`: TBK mevzuat fixture (tam HTML) + reconciled correction-pair artefaktlarından üretilen genişletilmiş aday havuzu (tamamı pending-review).
