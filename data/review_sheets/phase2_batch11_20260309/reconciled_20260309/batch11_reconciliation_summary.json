@@ -1,0 +1,38 @@
+{
+  "total_records": 100,
+  "decision_pair_counts": {
+    "APPROVE+REVISE": 1,
+    "REVISE+REVISE": 99
+  },
+  "final_bucket_counts": {
+    "revised_needed": 100
+  },
+  "agreement_count": 99,
+  "disagreement_count": 1,
+  "approval_gate_percentage": 100.0,
+  "approval_gate_passed": true,
+  "training_candidate_count": 100,
+  "manual_review_count": 0,
+  "breakdown_by_difficulty": {
+    "medium": {
+      "revised_needed": 1
+    },
+    "unknown": {
+      "revised_needed": 99
+    }
+  },
+  "breakdown_by_category": {
+    "tbk_kira": {
+      "revised_needed": 1
+    },
+    "unknown": {
+      "revised_needed": 99
+    }
+  },
+  "policy": {
+    "APPROVE+APPROVE": "approved",
+    "any_REJECT": "manual_escalation",
+    "APPROVE+REVISE_or_REVISE+REVISE": "revised_needed (requires corrected_answer if any REVISE)",
+    "revised_tiebreak_when_both_corrected_differ": "prefer_lawyerA_corrected"
+  }
+}
