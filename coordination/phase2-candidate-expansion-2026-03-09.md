@@ -49,4 +49,4 @@ Yorum: Onay açığını doğrudan kapatmaz (çünkü pending), ancak review pip
 
 ## Commit
 - Branch: `feat/phase2-candidate-expansion`
-- Commit: `TBD`
+- Commit: `5dfc9b7`
