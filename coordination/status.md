@@ -19,7 +19,8 @@
 - Aktif follow-up run'lar:
   (Yok)
 - Tamamlanan/Başarısız follow-up run'lar:
-  1. `hukuk-ai-phase2-main-integration-2` — codex — **completed** ✅ (2026-03-09)
+  1. `hukuk-ai-phase2-candidate-expansion` — codex — **completed** ✅
+  2. `hukuk-ai-phase2-main-integration-2` — codex — **completed** ✅ (2026-03-09)
   2. `hukuk-ai-phase2-third-review-batch` — codex — **completed** ✅
   3. `hukuk-ai-phase2-second-review-batch` — codex — **completed** ✅
   4. `hukuk-ai-phase2-heldout-supplementary-recovery2` — codex — **completed** ✅

@@ -241,6 +241,14 @@ Bağlantı seviyesi blocker büyük ölçüde kapandı; backlog önceliği kalit
     - ana SFT/DPO dosyalarının bir kısmı hâlâ scaffold
 - [ ] İlk LoRA fine-tuning koşusu (dgxnode2)
   - **Durum:** veri gate kapalı; held-out ve clean örnek sayısı hedefin altında.
+  - **Candidate expansion tamamlandı:**
+    - yeni pending-review adaylar: **2643**
+    - train pending-review: **2383**
+    - heldout pending-review: **260**
+    - source-grounded correction-pair pending-revalidation: **39**
+    - Branch/commit: `feat/phase2-candidate-expansion` / `5dfc9b7`
+    - Rapor: `coordination/phase2-candidate-expansion-2026-03-09.md`
+  - **Yeni durum:** approval açığını kapatacak büyüklükte pending havuz üretildi; bundan sonraki darboğaz gerçek avukat review kapasitesi.
 - [ ] YİM veri genişlemesi
 
 ### Faz 1 Kabul Kriteri Durumu
