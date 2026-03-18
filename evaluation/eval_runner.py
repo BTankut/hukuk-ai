@@ -97,7 +97,7 @@ class ChatAPIClient:
     def __init__(
         self,
         base_url: str = "http://localhost:8000",
-        timeout: float = 60.0,
+        timeout: float = 180.0,
         law_filter: str | None = None,  # Recall fix: None → TBK+TMK her ikisi de retrieve edilir
         use_verification: bool = True,
     ) -> None:
@@ -120,10 +120,12 @@ class ChatAPIClient:
         """
         url = f"{self.base_url}/v1/chat/completions"
         payload = {
-            "model": "hukuk-ai-poc",
+            "model": "hukuk-lora",
             "messages": [{"role": "user", "content": question}],
             "stream": False,
             "use_verification": self.use_verification,
+            "max_tokens": 512,
+            "chat_template_kwargs": {"enable_thinking": False},
         }
         if session_id:
             payload["session_id"] = session_id
