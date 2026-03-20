@@ -26,6 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model-ref")
     parser.add_argument("--checkpoint-ref")
     parser.add_argument("--git-commit")
+    parser.add_argument("--runner")
     parser.add_argument("--train-package-sha")
     parser.add_argument("--notes")
     parser.add_argument("--output", required=True)
@@ -43,6 +44,7 @@ def main() -> int:
     model_ref = args.model_ref or report_meta.get("model_ref")
     checkpoint_ref = args.checkpoint_ref or report_meta.get("checkpoint_ref")
     git_commit = args.git_commit or report_meta.get("git_commit")
+    runner = args.runner or report_meta.get("runner")
 
     missing = [
         name
@@ -51,6 +53,7 @@ def main() -> int:
             "model_ref": model_ref,
             "checkpoint_ref": checkpoint_ref,
             "git_commit": git_commit,
+            "runner": runner,
         }.items()
         if not value
     ]
@@ -68,6 +71,7 @@ def main() -> int:
         "model_ref": model_ref,
         "checkpoint_ref": checkpoint_ref,
         "git_commit": git_commit,
+        "runner": runner,
         "train_package_sha": args.train_package_sha,
         "report_path": str(report_path),
         "report_sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),

@@ -93,8 +93,11 @@ notes: |
   - DGX bootstrap runbook restore edildi: `docs/finetune/dgxnode2-lora-bootstrap.md`
   - `scripts/finetune/plan_posttrain_eval.py` ile ilk post-train raw eval + manifest + promotion zinciri repo içinde planlanabilir hale geldi.
   - Text-only PEFT training entrypoint restore edildi: `scripts/finetune/train_qwen35_textonly_peft.py`
+  - Promotion gate artık baseline/post-train arasında aynı eval runner family zorunluluğu getiriyor.
+  - Frozen baseline manifest `runner=eval_runner` ile zenginleştirildi.
+  - Direct merged-model fallback bu yüzden şu an promotion değil, diagnostic/runtime recovery yolu olarak konumlanıyor.
 
   ### Sonraki Beklenen Çıktı
   - İlk gerçek trained checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.
-  - Ardından aynı eval family ile post-train raw report + evidence manifest üretimi.
+  - Ardından aynı eval family ve aynı runner family ile post-train raw report + evidence manifest üretimi.
   - Sonrasında promotion check'in baseline vs post-train manifest ile çalıştırılması.

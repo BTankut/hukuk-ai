@@ -160,6 +160,7 @@ The readiness gate passes only if all of the following are true:
 - The train set does not exceed the allowed duplicate question threshold.
 - The active train file comes from the frozen execution package / official builder path.
 - Baseline and post-train evidence are manifest-backed and SHA-verified.
+- Baseline and post-train evidence must come from the same eval runner family.
 - The forbidden v1 dataset path is absent from active workflow files.
 - Baseline evidence is provided.
 - In `promotion` mode, post-train evidence is provided.

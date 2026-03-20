@@ -36,6 +36,7 @@ class EvidenceManifest:
     model_ref: str
     checkpoint_ref: str
     git_commit: str
+    runner: str
     report_path: Path
     report_sha256: str
 
@@ -205,6 +206,7 @@ def _parse_evidence_manifest(path: Path) -> tuple[EvidenceManifest | None, str |
         "model_ref",
         "checkpoint_ref",
         "git_commit",
+        "runner",
         "report_path",
         "report_sha256",
     ]
@@ -236,6 +238,7 @@ def _parse_evidence_manifest(path: Path) -> tuple[EvidenceManifest | None, str |
             model_ref=str(payload["model_ref"]).strip(),
             checkpoint_ref=str(payload["checkpoint_ref"]).strip(),
             git_commit=str(payload["git_commit"]).strip(),
+            runner=str(payload["runner"]).strip(),
             report_path=report_path,
             report_sha256=expected_sha256,
         ),
@@ -323,6 +326,8 @@ def _check_promotion_evidence_contract(
 
     baseline_checkpoints = {manifest.checkpoint_ref for manifest in baseline_manifests}
     post_train_checkpoints = {manifest.checkpoint_ref for manifest in post_train_manifests}
+    baseline_runners = {manifest.runner for manifest in baseline_manifests}
+    post_train_runners = {manifest.runner for manifest in post_train_manifests}
     if len(baseline_checkpoints) != 1:
         return CheckItem(
             name="Promotion evidence contract",
@@ -341,12 +346,34 @@ def _check_promotion_evidence_contract(
             ok=False,
             detail=f"baseline and post-train checkpoint_ref are identical: {sorted(baseline_checkpoints)}",
         )
+    if len(baseline_runners) != 1:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=f"baseline evidence has multiple runners: {sorted(baseline_runners)}",
+        )
+    if len(post_train_runners) != 1:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=f"post-train evidence has multiple runners: {sorted(post_train_runners)}",
+        )
+    if baseline_runners != post_train_runners:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=(
+                f"baseline runner {sorted(baseline_runners)} does not match "
+                f"post-train runner {sorted(post_train_runners)}"
+            ),
+        )
 
     return CheckItem(
         name="Promotion evidence contract",
         ok=True,
         detail=(
             f"eval_family={sorted(baseline_families)} | "
+            f"runner={sorted(baseline_runners)} | "
             f"baseline_checkpoint={sorted(baseline_checkpoints)} | "
             f"post_train_checkpoint={sorted(post_train_checkpoints)}"
         ),

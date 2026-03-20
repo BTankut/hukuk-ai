@@ -69,6 +69,7 @@ def test_parse_evidence_manifest_validates_report_sha(tmp_path: Path) -> None:
                 "model_ref": "base:qwen35",
                 "checkpoint_ref": "base-runtime",
                 "git_commit": "abc1234",
+                "runner": "eval_runner",
                 "report_path": str(report_path),
                 "report_sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),
             }
@@ -82,6 +83,7 @@ def test_parse_evidence_manifest_validates_report_sha(tmp_path: Path) -> None:
     assert manifest is not None
     assert manifest.eval_family == "faz1-50"
     assert manifest.report_path == report_path
+    assert manifest.runner == "eval_runner"
 
 
 def test_check_evidence_manifests_rejects_raw_report_path(tmp_path: Path) -> None:
@@ -110,6 +112,7 @@ def test_promotion_evidence_contract_requires_distinct_checkpoint_refs(tmp_path:
         model_ref="base:qwen35",
         checkpoint_ref="shared-ref",
         git_commit="base123",
+        runner="eval_runner",
         report_path=report_path,
         report_sha256=report_sha,
     )
@@ -120,6 +123,7 @@ def test_promotion_evidence_contract_requires_distinct_checkpoint_refs(tmp_path:
         model_ref="lora:qwen35",
         checkpoint_ref="shared-ref",
         git_commit="post123",
+        runner="eval_runner",
         report_path=report_path,
         report_sha256=report_sha,
     )
@@ -132,3 +136,40 @@ def test_promotion_evidence_contract_requires_distinct_checkpoint_refs(tmp_path:
 
     assert item.ok is False
     assert "identical" in item.detail
+
+
+def test_promotion_evidence_contract_requires_same_runner(tmp_path: Path) -> None:
+    report_path = tmp_path / "report.json"
+    report_path.write_text(json.dumps({"report_meta": {}}), encoding="utf-8")
+    report_sha = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    baseline_manifest = readiness.EvidenceManifest(
+        path=tmp_path / "baseline.json",
+        role="baseline",
+        eval_family="faz1-50",
+        model_ref="base:qwen35",
+        checkpoint_ref="base-runtime",
+        git_commit="base123",
+        runner="eval_runner",
+        report_path=report_path,
+        report_sha256=report_sha,
+    )
+    post_train_manifest = readiness.EvidenceManifest(
+        path=tmp_path / "post.json",
+        role="post_train",
+        eval_family="faz1-50",
+        model_ref="merged:qwen35",
+        checkpoint_ref="merged-runtime",
+        git_commit="post123",
+        runner="eval_merged_model",
+        report_path=report_path,
+        report_sha256=report_sha,
+    )
+
+    item = readiness._check_promotion_evidence_contract(
+        [baseline_manifest],
+        [post_train_manifest],
+        expected_eval_family="faz1-50",
+    )
+
+    assert item.ok is False
+    assert "does not match" in item.detail

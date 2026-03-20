@@ -6,6 +6,7 @@
   "model_ref": "Qwen/Qwen3.5-35B-A3B-FP8",
   "checkpoint_ref": "base-acceptance-runtime-20260308",
   "git_commit": "420cd08",
+  "runner": "eval_runner",
   "train_package_sha": null,
   "report_path": "evaluation/reports/eval_live_20260308_080601.json",
   "report_sha256": "11f2dc040452b59e24153544daa4d9ff5a9bf8effb1644ea652847cad32f7c4b",

@@ -16,6 +16,7 @@ def test_builder_reuses_identity_fields_from_report_meta(tmp_path: Path, monkeyp
         json.dumps(
             {
                 "report_meta": {
+                    "runner": "eval_runner",
                     "eval_family": "faz1-50",
                     "model_ref": "gateway-live:qwen35",
                     "checkpoint_ref": "runtime-20260321",
@@ -50,3 +51,4 @@ def test_builder_reuses_identity_fields_from_report_meta(tmp_path: Path, monkeyp
     assert payload["model_ref"] == "gateway-live:qwen35"
     assert payload["checkpoint_ref"] == "runtime-20260321"
     assert payload["git_commit"] == "abc1234"
+    assert payload["runner"] == "eval_runner"
