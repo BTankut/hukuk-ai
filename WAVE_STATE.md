@@ -2,10 +2,11 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T03:00:00+03:00
+last_activity: 2026-03-21T06:10:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "restore edilen fine-tune execution chain uzerinden ilk gercek post-train checkpoint + eval manifest akisını calistirmak"
-blockers: []
+next_action: "dgxnode2 ssh geri geldiginde detached log-backed launch ile text-only PEFT dry-run ve direct diagnostic eval smoke'u yeniden acmak"
+blockers:
+  - "dgxnode2 ssh stabilitesi: 192.168.12.236 port 22 timeout/reset, fabric ip 192.168.101.12 de ssh timeout"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -98,8 +99,15 @@ notes: |
   - Direct merged-model fallback bu yüzden şu an promotion değil, diagnostic/runtime recovery yolu olarak konumlanıyor.
   - `evaluation/eval_transformers_direct.py` ile merged checkpoint için repo-native diagnostic runner eklendi.
   - `scripts/finetune/plan_posttrain_diagnostic_eval.py` ile serving bloklandığında direct diagnostic eval zinciri planlanabilir hale geldi.
+  - dgxnode2 üzerinde `scripts/finetune/check_finetune_config.py` `READY_FOR_TRAINING_GATE` verdi.
+  - dgxnode2 Hugging Face cache içinde `Qwen/Qwen3.5-35B-A3B` mevcut.
+  - Historical merged checkpoint direct diagnostic fallback ile 100% weight load seviyesine kadar doğrulandı.
+  - Text-only PEFT dry-run base model shard loading aşamasına kadar doğrulandı.
+  - Uzun dgxnode2 oturumlarında ssh reset/timeout gözlendi; ağır remote işler için detached log-backed launch stratejisine geçildi.
+  - Bu amaçla `scripts/finetune/detach_logged_job.py` eklendi.
+  - Recovery notu yazıldı: `coordination/dgxnode2-overnight-launch-recovery-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
-  - İlk gerçek trained checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.
-  - Ardından aynı eval family ve aynı runner family ile post-train raw report + evidence manifest üretimi.
-  - Sonrasında promotion check'in baseline vs post-train manifest ile çalıştırılması.
+  - dgxnode2 ssh erişimi geri gelir gelmez detached log-backed training dry-run ve diagnostic smoke'un tekrar açılması.
+  - Ardından ilk bounded training smoke checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.
+  - Sonra uygun runner/family kuralına göre post-train raw report + evidence manifest zincirinin ilerletilmesi.
