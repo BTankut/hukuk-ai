@@ -689,6 +689,12 @@ class TestSessionEndpoints:
 
 class TestLawFilterAndRetrieval:
 
+    def test_request_default_top_k_is_20(self):
+        request = ChatCompletionRequest(
+            messages=[ConversationMessage(role="user", content="soru")]
+        )
+        assert request.top_k == 20
+
     def test_law_filter_passed_to_retriever(self, mock_orchestrator):
         """law_filter MetadataFilter olarak retriever'a iletilmeli."""
         mock_retriever = MagicMock()
@@ -732,6 +738,97 @@ class TestLawFilterAndRetrieval:
         call_kwargs = mock_retriever.retrieve.call_args.kwargs
         assert call_kwargs.get("metadata_filter") is not None
         assert call_kwargs["metadata_filter"].law_short_name == "TBK"
+
+    def test_explicit_article_refs_are_force_included(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        semantic_results = [
+            RetrievalResult(
+                chunk_id="semantic",
+                text="Genel tasinmaz satis aciklamasi",
+                score=0.9,
+                metadata={"law_short_name": "TBK", "madde_no": "237", "fikra_no": "1"},
+            )
+        ]
+        exact_tbk = [
+            RetrievalResult(
+                chunk_id="tbk-237",
+                text="Tasinmaz satisi resmi sekle tabidir.",
+                score=0.95,
+                metadata={"law_short_name": "TBK", "madde_no": "237", "fikra_no": "1"},
+            )
+        ]
+        exact_tmk = [
+            RetrievalResult(
+                chunk_id="tmk-706",
+                text="Tasinmaz mulkiyetinin devri resmi sekle baglidir.",
+                score=0.94,
+                metadata={"law_short_name": "TMK", "madde_no": "706", "fikra_no": "1"},
+            )
+        ]
+
+        semantic_stats = RetrievalStats(
+            collection="test",
+            query_preview="tasinmaz",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        exact_stats = RetrievalStats(
+            collection="test",
+            query_preview="tasinmaz",
+            top_k=2,
+            filter_expr='metadata["madde_no"] == "237"',
+            hit_count=1,
+            latency_ms=2.0,
+        )
+
+        mock_retriever.retrieve = MagicMock(
+            side_effect=[
+                (semantic_results, semantic_stats),
+                (exact_tbk, exact_stats),
+                (exact_tmk, exact_stats),
+            ]
+        )
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "TBK m.237 ile TMK m.706 arasindaki iliski nedir?",
+                        }
+                    ],
+                },
+            )
+
+        assert resp.status_code == 200
+        assert mock_retriever.retrieve.call_count == 3
+
+        first_call = mock_retriever.retrieve.call_args_list[0].kwargs
+        second_call = mock_retriever.retrieve.call_args_list[1].kwargs
+        third_call = mock_retriever.retrieve.call_args_list[2].kwargs
+
+        assert first_call["top_k"] == 20
+        assert second_call["metadata_filter"].law_short_name == "TBK"
+        assert second_call["metadata_filter"].madde_no == "237"
+        assert third_call["metadata_filter"].law_short_name == "TMK"
+        assert third_call["metadata_filter"].madde_no == "706"
+
+        orch_call = mock_orchestrator.answer.call_args
+        citations = [chunk.citation for chunk in orch_call.kwargs["retrieved_chunks"]]
+        assert "TBK m.237" in citations
+        assert "TMK m.706" in citations
 
     def test_no_retriever_still_works(self, client, mock_orchestrator):
         """Retriever yokken orchestrator boş chunk ile çağrılmalı."""

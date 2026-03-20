@@ -33,6 +33,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from collections import OrderedDict
@@ -47,6 +48,20 @@ from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"])
+_ARTICLE_REF_RE = re.compile(
+    r"\b(?P<law>TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK)\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    re.IGNORECASE,
+)
+_LAW_CODE_NORMALIZATION = {
+    "TBK": "TBK",
+    "TMK": "TMK",
+    "TCK": "TCK",
+    "HMK": "HMK",
+    "TTK": "TTK",
+    "İİK": "İİK",
+    "IİK": "İİK",
+    "IIK": "İİK",
+}
 
 
 def _tr_lower(text: str) -> str:
@@ -113,6 +128,78 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
     return None
 
 
+def _extract_explicit_article_refs(query: str) -> list[tuple[str, str]]:
+    refs: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    for match in _ARTICLE_REF_RE.finditer(query):
+        raw_law = match.group("law").upper()
+        law = _LAW_CODE_NORMALIZATION.get(raw_law)
+        if law is None:
+            continue
+        madde = match.group("madde").strip().lower()
+        ref = (law, madde)
+        if ref not in seen:
+            refs.append(ref)
+            seen.add(ref)
+
+    return refs
+
+
+def _dedupe_retrieved_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
+    deduped: list[RetrievedChunk] = []
+    seen: set[tuple[str, str]] = set()
+
+    for chunk in chunks:
+        key = (chunk.citation, chunk.text)
+        if key in seen:
+            continue
+        deduped.append(chunk)
+        seen.add(key)
+
+    return deduped
+
+
+def _retrieve_explicit_article_chunks(
+    *,
+    retriever: Any,
+    query: str,
+    article_refs: list[tuple[str, str]],
+) -> list[RetrievedChunk]:
+    from rag.retriever import MetadataFilter
+
+    exact_chunks: list[RetrievedChunk] = []
+
+    for law, madde in article_refs:
+        try:
+            results, _stats = retriever.retrieve(
+                query=query,
+                top_k=2,
+                metadata_filter=MetadataFilter(law_short_name=law, madde_no=madde),
+            )
+        except Exception as exc:
+            logger.warning(
+                "Exact article retrieval bypass (law=%s madde=%s): %s",
+                law,
+                madde,
+                exc,
+            )
+            continue
+
+        exact_chunks.extend(
+            RetrievedChunk(
+                text=result.text,
+                citation=result.citation,
+                source=result.law_short_name,
+                score=result.score,
+                metadata=result.metadata,
+            )
+            for result in results
+        )
+
+    return exact_chunks
+
+
 # ---------------------------------------------------------------------------
 # Request / Response Modelleri
 # ---------------------------------------------------------------------------
@@ -132,7 +219,7 @@ class ChatCompletionRequest(BaseModel):
         session_id:       Konuşma oturumu (None → yeni oturum oluşturulur)
         law_filter:       Metadata filtresi (kanun kısaltması: "TBK", "TMK", ...)
         use_verification: Verification Engine etkinleştir/pasifleştir (default: True)
-        top_k:            Retrieval hit sayısı (default: 10)
+        top_k:            Retrieval hit sayısı (default: 20)
     """
 
     model: str = "hukuk-ai-poc"
@@ -145,7 +232,7 @@ class ChatCompletionRequest(BaseModel):
     session_id: str | None = None
     law_filter: str | None = None
     use_verification: bool = True
-    top_k: int = Field(default=10, ge=1, le=50)
+    top_k: int = Field(default=20, ge=1, le=50)
 
 
 class ChatChoice(BaseModel):
@@ -577,6 +664,7 @@ async def chat_completions(
     retrieval_query = last_user_msg
     retrieval_query_lower = _tr_lower(retrieval_query)
     retrieval_top_k = request_body.top_k
+    explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
 
     expansion_rules: list[tuple[tuple[str, ...], str, bool]] = [
         (
@@ -649,6 +737,22 @@ async def chat_completions(
                     stats.latency_ms,
                     "enabled" if _reranker_enabled else "disabled",
                 )
+
+                if explicit_article_refs:
+                    exact_chunks = _retrieve_explicit_article_chunks(
+                        retriever=retriever,
+                        query=last_user_msg,
+                        article_refs=explicit_article_refs,
+                    )
+                    if exact_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(exact_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval exact-include: session=%s refs=%s added=%d total=%d",
+                            session_id,
+                            explicit_article_refs,
+                            len(exact_chunks),
+                            len(retrieved_chunks),
+                        )
         except Exception as exc:
             logger.warning(
                 "Retrieval hatası (devam ediliyor, chunk yok): %s", exc, exc_info=True
