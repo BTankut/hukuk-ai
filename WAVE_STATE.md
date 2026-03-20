@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T20:34:00+03:00
-last_eval: evaluation/reports/eval_live_20260308_080601.json
-next_action: "guardrails açık canlı runtime ile reranker safe activation karar koşusuna geçmek"
+last_activity: 2026-03-20T21:55:00+03:00
+last_eval: evaluation/reports/reranker_safe_activation_20260320_173726.json
+next_action: "guardrails facts-only ve latency yolunu mevcut live runtime üzerinde ölçmek"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -47,13 +47,16 @@ notes: |
   - Guardrails pipeline, `llama.cpp` runtime'ın stringified refusal cevabını parse edip fail-open davranacak şekilde düzeltildi.
   - Gateway smoke, guardrails açık modda PASS verdi.
   - Unsafe live smoke, `input_unsafe_request` ile doğru şekilde bloklandı.
+  - `faz1-50` üzerinde reranker safe-activation sweep tamamlandı: `baseline-off`, `thr=0.1`, `0.2`, `0.3`, `0.4`, `0.5`.
+  - Sonuç: hiçbir reranker threshold'u baseline-off varyantını geçemedi; karar `keep-off`.
+  - `evaluation/run_reranker_safe_activation.py`, Faz 1 gate fail'inde matrisi yarıda kesmeyecek şekilde düzeltildi.
   - Runtime notu güncellendi: `coordination/runtime-bringup-recovery-2026-03-20.md`
+  - Reranker karar notu kayda geçirildi: `coordination/reranker-safe-activation-decision-2026-03-20.md`
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
-  - Reranker canlı sweep manuel API restart gerektiriyor; otomatik restart bu repo içinde bilinçli olarak yapılmıyor.
   - Eski DGX node1 hattı (`192.168.12.243`) kararsız; aktif live endpoint şu an dgxnode2 fallback runtime.
 
   ### Sonraki Beklenen Çıktı
-  - İlk canlı karar matrisi: `baseline-off` + `thr=0.1..0.5`.
-  - Ardından guardrails ve reranker kombinasyonunda faz2 P0 karar notu.
+  - Guardrails facts-only / latency karar notu.
+  - Ardından retrieval genişleme gerekip gerekmediğine dair P0 kararı.

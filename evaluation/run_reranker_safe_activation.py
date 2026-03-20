@@ -256,9 +256,10 @@ def _probe_api(api_url: str) -> None:
         raise RuntimeError(f"API health check failed for {health_url}: {exc}") from exc
 
 
-def _execute_runs(runs: list[RunSpec], variants: list[Variant]) -> None:
+def _execute_runs(runs: list[RunSpec], variants: list[Variant]) -> int:
     variant_map = {variant.name: variant for variant in variants}
     current_variant: str | None = None
+    hard_failures = 0
 
     if not sys.stdin.isatty():
         raise SystemExit(
@@ -286,7 +287,19 @@ def _execute_runs(runs: list[RunSpec], variants: list[Variant]) -> None:
         run.returncode = proc.returncode
         run.elapsed_ms = round(elapsed, 1)
         if proc.returncode != 0:
-            raise SystemExit(proc.returncode)
+            if proc.returncode == 1:
+                print(
+                    "NOTE: Eval returned 1 for this variant. "
+                    "Recording the failed Faz 1 gate and continuing the matrix."
+                )
+            else:
+                hard_failures += 1
+                print(
+                    f"ERROR: Eval command failed with return code {proc.returncode}. "
+                    "Continuing to record the rest of the matrix."
+                )
+
+    return hard_failures
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -371,13 +384,13 @@ def main() -> int:
     _print_plan(summary)
     print("Live mode: API health check passed. Make sure the gateway was restarted with the correct reranker env block before each variant.")
     try:
-        _execute_runs(runs, variants)
+        hard_failures = _execute_runs(runs, variants)
     finally:
         summary["runs"] = [asdict(run) for run in runs]
         with summary_path.open("w", encoding="utf-8") as handle:
             json.dump(summary, handle, ensure_ascii=False, indent=2)
     print(f"summary: {summary_path}")
-    return 0
+    return 0 if hard_failures == 0 else 1
 
 
 if __name__ == "__main__":

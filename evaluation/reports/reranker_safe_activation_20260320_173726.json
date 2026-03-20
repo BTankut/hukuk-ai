@@ -1,0 +1,262 @@
+{
+  "run_id": "20260320_173726",
+  "mode": "live",
+  "api_url": "http://localhost:8000",
+  "output_dir": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports",
+  "run_dir": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726",
+  "manual_restart_required": true,
+  "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+  "thresholds": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5
+  ],
+  "sets": [
+    {
+      "set_key": "faz1-50",
+      "questions_path": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "question_count": 50
+    }
+  ],
+  "variants": [
+    {
+      "name": "baseline-off",
+      "enabled": false,
+      "threshold": 0.7,
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "retrieve_top_k": 20,
+      "env": {
+        "RERANKER_ENABLED": "false",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.7",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "manual_restart_note": "Restart the API gateway with reranker disabled before running the evals."
+    },
+    {
+      "name": "reranker-on-thr-0p1",
+      "enabled": true,
+      "threshold": 0.1,
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "retrieve_top_k": 20,
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.1",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "manual_restart_note": "Restart the API gateway with reranker enabled and this threshold before running the evals."
+    },
+    {
+      "name": "reranker-on-thr-0p2",
+      "enabled": true,
+      "threshold": 0.2,
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "retrieve_top_k": 20,
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.2",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "manual_restart_note": "Restart the API gateway with reranker enabled and this threshold before running the evals."
+    },
+    {
+      "name": "reranker-on-thr-0p3",
+      "enabled": true,
+      "threshold": 0.3,
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "retrieve_top_k": 20,
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.3",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "manual_restart_note": "Restart the API gateway with reranker enabled and this threshold before running the evals."
+    },
+    {
+      "name": "reranker-on-thr-0p4",
+      "enabled": true,
+      "threshold": 0.4,
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "retrieve_top_k": 20,
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.4",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "manual_restart_note": "Restart the API gateway with reranker enabled and this threshold before running the evals."
+    },
+    {
+      "name": "reranker-on-thr-0p5",
+      "enabled": true,
+      "threshold": 0.5,
+      "model_id": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "retrieve_top_k": 20,
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.5",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "manual_restart_note": "Restart the API gateway with reranker enabled and this threshold before running the evals."
+    }
+  ],
+  "runs": [
+    {
+      "variant": "baseline-off",
+      "set_key": "faz1-50",
+      "questions_path": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "report_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/baseline-off__faz1-50.json",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/eval_runner.py",
+        "--questions",
+        "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+        "--output",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/baseline-off__faz1-50.json",
+        "--api-url",
+        "http://localhost:8000"
+      ],
+      "env": {
+        "RERANKER_ENABLED": "false",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.7",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "executed": true,
+      "returncode": 0,
+      "elapsed_ms": 775974.9
+    },
+    {
+      "variant": "reranker-on-thr-0p1",
+      "set_key": "faz1-50",
+      "questions_path": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "report_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p1__faz1-50.json",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/eval_runner.py",
+        "--questions",
+        "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+        "--output",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p1__faz1-50.json",
+        "--api-url",
+        "http://localhost:8000"
+      ],
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.1",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "executed": true,
+      "returncode": 0,
+      "elapsed_ms": 657049.3
+    },
+    {
+      "variant": "reranker-on-thr-0p2",
+      "set_key": "faz1-50",
+      "questions_path": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "report_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p2__faz1-50.json",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/eval_runner.py",
+        "--questions",
+        "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+        "--output",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p2__faz1-50.json",
+        "--api-url",
+        "http://localhost:8000"
+      ],
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.2",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "executed": true,
+      "returncode": 0,
+      "elapsed_ms": 859521.0
+    },
+    {
+      "variant": "reranker-on-thr-0p3",
+      "set_key": "faz1-50",
+      "questions_path": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "report_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p3__faz1-50.json",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/eval_runner.py",
+        "--questions",
+        "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+        "--output",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p3__faz1-50.json",
+        "--api-url",
+        "http://localhost:8000"
+      ],
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.3",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "executed": true,
+      "returncode": 1,
+      "elapsed_ms": 658517.7
+    },
+    {
+      "variant": "reranker-on-thr-0p4",
+      "set_key": "faz1-50",
+      "questions_path": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "report_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p4__faz1-50.json",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/eval_runner.py",
+        "--questions",
+        "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+        "--output",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p4__faz1-50.json",
+        "--api-url",
+        "http://localhost:8000"
+      ],
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.4",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "executed": true,
+      "returncode": 0,
+      "elapsed_ms": null
+    },
+    {
+      "variant": "reranker-on-thr-0p5",
+      "set_key": "faz1-50",
+      "questions_path": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "report_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p5__faz1-50.json",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/eval_runner.py",
+        "--questions",
+        "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+        "--output",
+        "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726/reranker-on-thr-0p5__faz1-50.json",
+        "--api-url",
+        "http://localhost:8000"
+      ],
+      "env": {
+        "RERANKER_ENABLED": "true",
+        "RERANKER_MODEL": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+        "RERANKER_THRESHOLD": "0.5",
+        "RERANKER_RETRIEVE_TOP_K": "20"
+      },
+      "executed": true,
+      "returncode": 1,
+      "elapsed_ms": null
+    }
+  ],
+  "summary_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/reranker_safe_activation_20260320_173726.json"
+}
