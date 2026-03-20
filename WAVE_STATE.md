@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T21:55:00+03:00
-last_eval: evaluation/reports/reranker_safe_activation_20260320_173726.json
-next_action: "guardrails facts-only ve latency yolunu mevcut live runtime üzerinde ölçmek"
+last_activity: 2026-03-20T22:00:00+03:00
+last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
+next_action: "retrieval genişleme gerekip gerekmediğini zor slice'larda ayırmak"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -50,13 +50,17 @@ notes: |
   - `faz1-50` üzerinde reranker safe-activation sweep tamamlandı: `baseline-off`, `thr=0.1`, `0.2`, `0.3`, `0.4`, `0.5`.
   - Sonuç: hiçbir reranker threshold'u baseline-off varyantını geçemedi; karar `keep-off`.
   - `evaluation/run_reranker_safe_activation.py`, Faz 1 gate fail'inde matrisi yarıda kesmeyecek şekilde düzeltildi.
+  - Guardrails canlı benchmark'ı mevcut safe-default modun doğruluğunu yeniden teyit etti.
+  - Mevcut repo gerçeği `facts-only` değil, `safe-scope minimal` olarak kayda geçirildi.
   - Runtime notu güncellendi: `coordination/runtime-bringup-recovery-2026-03-20.md`
   - Reranker karar notu kayda geçirildi: `coordination/reranker-safe-activation-decision-2026-03-20.md`
+  - Guardrails karar notu kayda geçirildi: `coordination/guardrails-safe-default-decision-2026-03-20.md`
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
   - Eski DGX node1 hattı (`192.168.12.243`) kararsız; aktif live endpoint şu an dgxnode2 fallback runtime.
+  - `self_check_facts` / `self_check_hallucination` hattı bu dalgada shelve; ayrı kalibrasyon olmadan tekrar varsayılan yapılmayacak.
 
   ### Sonraki Beklenen Çıktı
-  - Guardrails facts-only / latency karar notu.
-  - Ardından retrieval genişleme gerekip gerekmediğine dair P0 kararı.
+  - Retrieval genişleme gerekip gerekmediğine dair P0 kararı.
+  - Ardından training gate için kalan veri/need ayrımı.

@@ -35,7 +35,7 @@ import os
 import sys
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -176,7 +176,7 @@ async def _measure_case(
     mode: str,
     guardrails_on: bool,
 ) -> BenchmarkRow:
-    ts = datetime.utcnow().isoformat(timespec="seconds")
+    ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
     error_msg = ""
     citation_present = False
     refusal_triggered = False
@@ -317,7 +317,7 @@ def _print_summary(rows: list[BenchmarkRow]) -> None:
 
 def _write_csv(rows: list[BenchmarkRow], out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     csv_path = out_dir / f"guardrails_bench_{ts}.csv"
 
     fieldnames = list(BenchmarkRow.__dataclass_fields__.keys())
