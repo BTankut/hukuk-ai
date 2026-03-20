@@ -20,6 +20,13 @@ Reference package:
 
 - `coordination/pretrain-execution-package-2026-03-21.md`
 - `coordination/promotion-evidence-contract-2026-03-21.md`
+- `coordination/finetune-execution-chain-restoration-2026-03-21.md`
+
+The fine-tune bootstrap / preflight entrypoints are:
+
+- `bash scripts/finetune/bootstrap_dgxnode2_unsloth.sh ~/.venvs/hukuk-ai-ft`
+- `bash scripts/finetune/validate_dgxnode2_env.sh ~/.venvs/hukuk-ai-ft`
+- `python3 scripts/finetune/check_finetune_config.py --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json`
 
 ## Hard Gates
 

@@ -1,0 +1,89 @@
+# ============================================================
+# AI Hukuk Asistani — SFT Training Config (Unsloth, Primary)
+# ============================================================
+# Target hardware : dgxnode2
+# Method          : bf16 LoRA SFT
+# Base model      : Qwen/Qwen3.5-35B-A3B
+# Active package  : data/finetune/sft/final_train.jsonl (807 rows)
+# Gate policy     : check_finetune_config.py -> check_training_readiness.py
+# ============================================================
+
+model:
+  name: "Qwen/Qwen3.5-35B-A3B"
+  load_in_4bit: false
+  load_in_16bit: true
+  dtype: "bfloat16"
+  max_seq_length: 2048
+  trust_remote_code: true
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: "none"
+  use_rslora: false
+
+training:
+  output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/adapter"
+  train_file: "./data/finetune/sft/final_train.jsonl"
+  eval_file: "./data/finetune/eval/held_out_test.jsonl"
+  dataset_format: "alpaca"
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 2.0e-5
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  gradient_checkpointing: "unsloth"
+  optim: "adamw_8bit"
+  logging_steps: 10
+  eval_steps: 50
+  save_steps: 100
+  save_total_limit: 3
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  bf16: true
+  fp16: false
+  dataloader_num_workers: 2
+  seed: 42
+  report_to: "none"
+
+export:
+  merge_and_save: true
+  merged_output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/merged"
+  quantize_to_fp8: true
+  fp8_output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/merged-fp8"
+  gguf_export: true
+  gguf_output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/gguf"
+  gguf_quantization: "q8_0"
+
+promotion:
+  baseline_evidence_manifest: "./evaluation/reports/evidence_baseline_faz1_50_20260308.json"
+  expected_eval_family: "faz1-50"
+  post_train_role: "post_train"
+  report_dir: "./evaluation/reports"
+
+quality_gate:
+  min_training_examples: 800
+  max_question_duplicate_excess: 0
+  expected_train_sha256: "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0"
+  expected_heldout_rows: 22
+  max_output_empty_pct: 1.0
+  max_missing_citation_pct: 30.0
+
+dataset_sources:
+  active_builder: "python3 scripts/build_training_dataset.py"
+  finetune_gate: "python3 scripts/finetune/check_finetune_config.py --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json"
+  held_out_eval: "data/finetune/eval/held_out_test.jsonl"
+

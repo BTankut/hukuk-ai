@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T01:24:00+03:00
+last_activity: 2026-03-21T02:05:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "ilk post-train eval manifest zinciri için gerekli trained checkpoint artefact'ını ve karşılaştırma koşusunu hazırlamak"
+next_action: "restore edilen fine-tune execution chain üzerinden gerçek post-train checkpoint + eval manifest akışını çalıştırmak"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -86,7 +86,13 @@ notes: |
   - İlk frozen baseline manifest üretildi: `evaluation/reports/evidence_baseline_faz1_50_20260308.json`
   - Raw eval runner'lar artık `schema_version`, `eval_family`, `model_ref`, `checkpoint_ref`, `git_commit` alanlarını doğrudan `report_meta` içinde taşıyor.
   - `scripts/run_eval_matrix.sh` ve `evaluation/run_reranker_safe_activation.py` bu metadata'yı raw raporlara propagate edecek şekilde güncellendi.
+  - Tarihsel raporlarda referans verilen ama `main` worktree'de eksik kalan fine-tune bootstrap/config zinciri geri eklendi.
+  - `configs/finetune/unsloth_sft_qwen35_35b_a3b.json` artık frozen 807-row package, baseline evidence manifest ve expected eval family ile hizalı.
+  - `scripts/finetune/check_finetune_config.py` artık train SHA / row count / held-out row count doğruluyor ve canonical readiness gate'i doğrudan çağırıyor.
+  - `configs/training/sft_config.yaml` ve `configs/training/sft_llamafactory.yaml` current canonical package için restore edildi.
+  - DGX bootstrap runbook restore edildi: `docs/finetune/dgxnode2-lora-bootstrap.md`
 
   ### Sonraki Beklenen Çıktı
-  - İlk post-train evidence manifest zincirinin kurulması.
-  - Ardından promotion check için gerçek trained checkpoint karşılaştırma koşusunun hazırlanması.
+  - İlk gerçek trained checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.
+  - Ardından aynı eval family ile post-train raw report + evidence manifest üretimi.
+  - Sonrasında promotion check'in baseline vs post-train manifest ile çalıştırılması.

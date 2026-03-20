@@ -1,0 +1,75 @@
+{
+  "model": {
+    "name": "Qwen/Qwen3.5-35B-A3B",
+    "max_seq_length": 2048,
+    "load_in_16bit": true,
+    "load_in_4bit": false,
+    "trust_remote_code": true
+  },
+  "data": {
+    "train_file": "data/finetune/sft/final_train.jsonl",
+    "held_out_file": "data/finetune/eval/held_out_test.jsonl",
+    "expected_train_sha256": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+    "expected_heldout_rows": 22,
+    "min_clean_examples": 807,
+    "placeholder_markers": [
+      "SCAFFOLDING",
+      "BELIRTLENMEMIS",
+      "BELİRTİLMEMİŞ",
+      "TODO",
+      "TBD"
+    ]
+  },
+  "lora": {
+    "r": 16,
+    "alpha": 32,
+    "dropout": 0.0,
+    "bias": "none",
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "gradient_checkpointing": "unsloth",
+    "random_state": 3407
+  },
+  "training": {
+    "epochs": 3,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "warmup_steps": 20,
+    "learning_rate": 2e-05,
+    "logging_steps": 10,
+    "save_steps": 100,
+    "max_steps": -1,
+    "weight_decay": 0.01,
+    "lr_scheduler_type": "cosine",
+    "optimizer": "adamw_8bit",
+    "seed": 3407,
+    "dataloader_num_workers": 2
+  },
+  "output": {
+    "dir": "artifacts/finetune/unsloth-sft-qwen35-35b-a3b",
+    "adapter_subdir": "adapter",
+    "merged_subdir": "merged",
+    "smoke_subdir": "smoke"
+  },
+  "evaluation": {
+    "eval_family": "faz1-50",
+    "questions_path": "configs/evaluation/test_questions.json",
+    "baseline_manifest": "evaluation/reports/evidence_baseline_faz1_50_20260308.json",
+    "report_dir": "evaluation/reports",
+    "max_question_duplicate_excess": 0,
+    "max_tokens": 3000,
+    "delay_seconds": 1.0,
+    "timeout_seconds": 300.0,
+    "workflow_files": [
+      "scripts/build_training_dataset.py",
+      "configs/finetune/unsloth_sft_qwen35_35b_a3b.json"
+    ]
+  }
+}

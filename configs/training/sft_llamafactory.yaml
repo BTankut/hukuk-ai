@@ -1,0 +1,60 @@
+# ============================================================
+# AI Hukuk Asistani — SFT Training Config (LLaMA Factory, Fallback)
+# ============================================================
+# Use only if the Unsloth path on dgxnode2 becomes incompatible.
+# The active dataset and evidence gate remain identical to sft_config.yaml.
+# ============================================================
+
+model_name_or_path: Qwen/Qwen3.5-35B-A3B
+trust_remote_code: true
+
+stage: sft
+do_train: true
+finetuning_type: lora
+
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target: q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj
+
+dataset: hukuk_sft_active
+template: alpaca
+cutoff_len: 2048
+max_samples: 10000
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+output_dir: ./artifacts/finetune/hukuk-ai-sft-v3/llamafactory
+overwrite_output_dir: true
+save_total_limit: 3
+plot_loss: false
+
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 2.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
+
+val_size: 0.05
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 50
+
+logging_steps: 10
+save_steps: 100
+report_to: none
+
+# Register dataset in LLaMA-Factory/data/dataset_info.json:
+#
+# "hukuk_sft_active": {
+#   "file_name": "../../../../data/finetune/sft/final_train.jsonl",
+#   "formatting": "alpaca",
+#   "columns": {
+#     "prompt": "instruction",
+#     "query": "input",
+#     "response": "output"
+#   }
+# }
