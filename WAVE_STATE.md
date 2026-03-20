@@ -4,8 +4,12 @@ status: running
 started_at: 2026-03-20T18:40:00+03:00
 last_activity: 2026-03-20T19:40:00+03:00
 last_eval: evaluation/reports/eval_live_20260308_080601.json
-next_action: "run_reranker_safe_activation.py ile baseline-off ve reranker-on threshold sweep canlı koşularını sırayla almak"
-blockers: []
+next_action: "API Gateway, Embedding, Milvus ve DGX servislerini ayağa kaldırıp ardından safe-activation canlı koşusuna geçmek"
+blockers:
+  - localhost:8000 down
+  - localhost:8081 down
+  - localhost:19530 down
+  - 192.168.12.243:30000 unreachable
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -39,6 +43,7 @@ notes: |
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
   - Reranker canlı sweep manuel API restart gerektiriyor; otomatik restart bu repo içinde bilinçli olarak yapılmıyor.
+  - Canlı eval için gerekli servisler şu an erişilebilir değil.
 
   ### Sonraki Beklenen Çıktı
-  - İlk canlı karar matrisi: `baseline-off` + `thr=0.1..0.5`.
+  - İlk canlı karar matrisi: `baseline-off` + `thr=0.1..0.5`, ancak bunun için önce servis bring-up gerekli.
