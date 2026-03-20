@@ -526,7 +526,14 @@ def main() -> int:
     with open(args.questions, encoding="utf-8") as f:
         data = json.load(f)
 
-    questions = data.get("questions", [])
+    if isinstance(data, dict):
+        questions = data.get("questions", [])
+    elif isinstance(data, list):
+        questions = data
+    else:
+        logger.error("Beklenmeyen soru dosyası formatı: %s", type(data).__name__)
+        return 1
+
     if not questions:
         logger.error("Soru listesi boş! Dosya: %s", args.questions)
         return 1

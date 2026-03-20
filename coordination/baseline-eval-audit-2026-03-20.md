@@ -56,6 +56,9 @@ Bu repo için kanonik giriş noktası `scripts/run_eval_matrix.sh` olmalıdır.
 - `faz1-50` seti: mevcut 50 soruluk çalışma seti.
 - `phase3-95` seti: Phase 3 hardening seti.
 - `faz2-170` seti: Faz 2/3 zorlu seti.
-- Repo bugün sadece `faz1-50` dosyasını içerir; `phase3-95` ve `faz2-170` setleri eklenmeden bu modlar bilinçli olarak hata verir.
+- 2026-03-20 restorasyonu sonrası üç dosya da repo içinde mevcuttur:
+  - `configs/evaluation/test_questions.json`
+  - `configs/evaluation/test_questions_v2_95.json`
+  - `configs/evaluation/test_questions_v3_170.json`
 
 Script, gerekli soru dosyası yoksa açık hata vermelidir. Sessiz fallback kabul edilmez.
