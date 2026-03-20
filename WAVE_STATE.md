@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T23:18:00+03:00
+last_activity: 2026-03-20T23:23:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "duplicate soru grupları için cleanup inventory çıkarıp canonicalization kararını hazırlamak"
+next_action: "en yüksek hacimli duplicate cluster'lar için review packet üretmek"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -62,6 +62,8 @@ notes: |
   - Varsayılan config'ten NeMo `self check input` çıkarıldı; deterministik input moderation resmi safe default oldu.
   - Training duplicate hard gate notu kayda geçirildi: `coordination/training-duplicate-hard-gate-2026-03-20.md`
   - `scripts/check_training_readiness.py` artık question duplicate excess için hard fail veriyor.
+  - Duplicate inventory üretildi: `coordination/training-duplicate-inventory-2026-03-20.json`
+  - Cleanup plan notu kayda geçirildi: `coordination/training-duplicate-cleanup-plan-2026-03-20.md`
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; readiness gate artık bunu bloklayıcı fail olarak görüyor.
@@ -69,7 +71,8 @@ notes: |
   - `self_check_facts` / `self_check_hallucination` hattı bu dalgada shelve; ayrı kalibrasyon olmadan tekrar varsayılan yapılmayacak.
   - Guardrails LLM post-processing hâlâ zaman zaman latency limite çarpıp `draft_answer` fallback kullanabiliyor; bu safe-default içinde kabul ediliyor.
   - Duplicate cleanup henüz yapılmadı; gate artık bunu görünür ve bloklayıcı hale getiriyor.
+  - Inventory sonucuna göre blind dedupe güvenli değil; cluster bazlı canonicalization gerekiyor.
 
   ### Sonraki Beklenen Çıktı
-  - Duplicate cleanup inventory.
+  - Duplicate review packet.
   - Ardından training gate için kalan veri/need ayrımı.

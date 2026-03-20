@@ -1,0 +1,810 @@
+{
+  "summary": {
+    "total_records": 923,
+    "unique_questions": 807,
+    "duplicate_question_groups": 24,
+    "duplicate_excess_rows": 116,
+    "classification_counts": {
+      "all_rows_unique_outputs": 13,
+      "mixed_repeat_and_variant_outputs": 11
+    }
+  },
+  "groups": [
+    {
+      "question": "TBK'ya göre konut kiralarında kira sözleşmesinin sona erdirilmesi (tahliye) hangi koşullara bağlıdır?",
+      "count": 10,
+      "distinct_outputs": 4,
+      "duplicate_excess_rows": 9,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 10
+      },
+      "sample_rows": [
+        {
+          "output_preview": "TBK’ya göre konut ve çatılı işyeri kiralarında tahliye başlıca şu hâllere bağlıdır: kiracının temerrüdü (TBK m.315), yazılı tahliye taahhüdü, iki haklı ihtar veya kiraya verenin sözleşme kurulurken bilmediği şekilde kiracının ya da birlikte yaşadığı eşinin aynı ilçe/belde sınırla",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TBK’ya göre konut ve çatılı işyeri kiralarında tahliye, kanunda öngörülen sebeplere dayanır: kiracının temerrüdü (TBK m.315), yazılı tahliye taahhüdü, iki haklı ihtar veya kiracının ya da birlikte yaşadığı eşinin aynı ilçe veya belde sınırları içinde oturmaya elverişli konutunun ",
+          "citations": [
+            "TBK m.315",
+            "TBK m.347",
+            "TBK m.350",
+            "TBK m.351",
+            "TBK m.352",
+            "TBK m.331"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Konut ve çatılı işyeri kiralarında kiraya veren, sırf sürenin bitimine dayanarak tahliye isteyemez. Tahliye ancak kanundaki sebeplerle mümkündür: kiracının temerrüdü (TBK m.315), iki haklı ihtar veya yazılı tahliye taahhüdü ile diğer m.352 hâlleri, gereksinim veya yeniden inşa/im",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "TBK'ya göre genel zamanaşımı süresi kaç yıldır ve bu süre hangi tarihten itibaren işlemeye başlar?",
+      "count": 9,
+      "distinct_outputs": 9,
+      "duplicate_excess_rows": 8,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 9
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Türk Borçlar Kanunu'na (TBK) göre genel zamanaşımı süresi ve başlangıç tarihi ile ilgili bilgiler kaynak metinlerde şu şekildedir:  **Genel Zamanaşımı Süresi:** Kanunda aksine bir hüküm bulunmadıkça, her alacak **on yıllık** zamanaşımına tabidir. [Kaynak: TBK m.146]  **Zamanaşımı",
+          "citations": [
+            "TBK m.146",
+            "TBK m.149",
+            "TBK m.151"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Türk Borçlar Kanunu'na (TBK) göre genel zamanaşımı süresi ve başlangıç tarihi ile ilgili bilgiler kaynak metinlerde şu şekildedir:  *   **Zamanaşımı Süresi:** Kanunda aksine bir hüküm bulunmadıkça, her alacak **on yıllık** zamanaşımına tabidir [Kaynak: TBK m.146]. *   **Zamanaşım",
+          "citations": [
+            "TBK m.146",
+            "TBK m.149",
+            "TBK m.151"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TBK m.146’ya göre kanunda aksine hüküm yoksa her alacak 10 yıllık zamanaşımına tabidir. TBK m.149’a göre zamanaşımı, alacağın muaccel olduğu tarihten itibaren işlemeye başlar; muacceliyet bir bildirime bağlıysa, bildirim yapılabilecek günden itibaren süre işler.",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+      "count": 8,
+      "distinct_outputs": 8,
+      "duplicate_excess_rows": 7,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 8
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Verilen kaynak metinlerine dayanarak, sözleşmede faiz oranı kararlaştırılmamışsa uygulanacak oranlar borcun türüne göre aşağıdaki gibidir:  1.  **Genel Faiz Borcu (TBK m.88):** Faiz ödeme borcunda sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevz",
+          "citations": [
+            "TBK m.88",
+            "TBK m.120",
+            "TBK m.388",
+            "TBK m.387"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TBK'ya göre faiz oranı sözleşmede belirlenmemişse, uygulanacak oran borcun türüne göre farklılık göstermektedir:  1.  **Genel Durum (TBK m.88 ve m.120):** Sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir [Kaynak: T",
+          "citations": [
+            "TBK m.88",
+            "TBK m.120",
+            "TBK m.388",
+            "TBK m.387"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlere dayanarak, faiz oranının sözleşmede belirlenmemesi durumunda uygulanacak oranlar borcun türüne göre aşağıdaki gibidir:  1.  **Genel Faiz Borçları (TBK m.88):** Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa, faiz borcun",
+          "citations": [
+            "TBK m.88",
+            "TBK m.387",
+            "TBK m.388",
+            "TBK m.120"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Sözleşmede aşırı ifa güçlüğü (clausula rebus sic stantibus) TBK'da hangi maddeyle düzenlenmiştir ve uygulanma koşulları nelerdir?",
+      "count": 8,
+      "distinct_outputs": 7,
+      "duplicate_excess_rows": 7,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 8
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Türk Borçlar Kanunu'nda (TBK) sözleşmede aşırı ifa güçlüğü (clausula rebus sic stantibus) **TBK m.138** ile düzenlenmiştir [Kaynak: TBK m.138].  Bu maddede belirtilen uygulanma koşulları şunlardır:  1.  **Öngörülmemiş Olağanüstü Durum:** Sözleşmenin yapıldığı sırada taraflarca ön",
+          "citations": [
+            "TBK m.138"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Türk Borçlar Kanunu'nda (TBK) aşırı ifa güçlüğü (clausula rebus sic stantibus) **TBK m.138** ile düzenlenmiştir [Kaynak: TBK m.138].  Bu maddenin uygulanabilmesi için aşağıdaki koşulların gerçekleşmesi gerekmektedir:  1.  **Öngörülemeyen Olağanüstü Durum:** Sözleşmenin yapıldığı ",
+          "citations": [
+            "TBK m.138"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Türk Borçlar Kanunu'nda (TBK) sözleşmede aşırı ifa güçlüğü (clausula rebus sic stantibus) **TBK m.138** ile düzenlenmiştir [Kaynak: TBK m.138].  Bu maddede belirtilen uygulanma koşulları şunlardır:  1.  **Öngörülmemiş Olağanüstü Durum:** Sözleşmenin yapıldığı sırada taraflarca ön",
+          "citations": [
+            "TBK m.138"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu TBK'nın hangi maddelerinde düzenlenmiştir?",
+      "count": 8,
+      "distinct_outputs": 7,
+      "duplicate_excess_rows": 7,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 8
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Vekilin özen ve sadakat borcu TBK m.506’da, hesap verme ve vekâletle ilgili aldıklarını teslim etme borcu ise TBK m.508’de düzenlenmiştir.",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlerine dayanarak, vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu aşağıdaki maddelerde düzenlenmiştir:  **1. Özen Yükümlülüğü:** *   Vekilin, üstlendiği iş ve hizmetleri vekâlet verenin haklı menfaatlerini gözeterek sadakat ve özenle yürütm",
+          "citations": [
+            "TBK m.506",
+            "TBK m.628",
+            "TBK m.508"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlerine dayanarak vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu aşağıdaki maddelerde düzenlenmiştir:  **1. Özen Yükümlülüğü:** *   Vekilin, üstlendiği iş ve hizmetleri vekâlet verenin haklı menfaatlerini gözeterek, **sadakat ve özenle** yü",
+          "citations": [
+            "TBK m.506",
+            "TBK m.510",
+            "TBK m.507",
+            "TBK m.505",
+            "TBK m.508"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "TBK'ya göre kefalet sözleşmesi hangi şekil şartlarına tabidir ve geçerlilik koşulları nelerdir?",
+      "count": 7,
+      "distinct_outputs": 6,
+      "duplicate_excess_rows": 6,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 7
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Türk Borçlar Kanunu (TBK) uyarınca kefalet sözleşmesinin şekil şartları ve geçerlilik koşulları aşağıdaki gibidir:  **1. Yazılı Şekil Şartı ve İçerik Zorunlulukları** Kefalet sözleşmesi, geçerli olabilmesi için **yazılı şekilde** yapılmalıdır. Yazılı şekil şartına uyulmadıkça söz",
+          "citations": [
+            "TBK m.583",
+            "TBK m.582",
+            "TBK m.584",
+            "TBK m.589"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Kefalet sözleşmesi TBK m.583 gereği yazılı yapılmalı; kefilin sorumlu olacağı azamî miktar ve kefalet tarihi belirtilmeli; kefil bu azamî miktarı, tarihi ve müteselsil kefilse bu sıfatı kendi el yazısıyla yazmalıdır. TBK m.582 gereği mevcut ve geçerli bir borç için, ayrıca doğunc",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Türk Borçlar Kanunu'na (TBK) göre kefalet sözleşmesinin şekil şartları ve geçerlilik koşulları aşağıdaki gibidir:  **1. Yazılı Şekil Şartı ve İçerik Zorunlulukları** Kefalet sözleşmesi, geçerli olabilmesi için **yazılı şekilde** yapılmalıdır. Sözleşmede ayrıca kefilin sorumlu ola",
+          "citations": [
+            "TBK m.583",
+            "TBK m.582",
+            "TBK m.598",
+            "TBK m.581"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Eser sözleşmesinde eserin beklenmedik hâl (mücbir sebep) nedeniyle yok olması durumunda hasara kim katlanır?",
+      "count": 6,
+      "distinct_outputs": 4,
+      "duplicate_excess_rows": 5,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 6
+      },
+      "sample_rows": [
+        {
+          "output_preview": "TBK m.483’e göre eser, işsahibi teslim almada temerrüde düşmedikçe teslimden önce beklenmedik olayla yok olursa yüklenici ücret ve gider isteyemez; yani işin hasarı kural olarak yükleniciye aittir. Malzemeye gelen hasar ise malzemeyi sağlayana aittir. Yok olma işsahibinin malzeme",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TBK m.483’e göre eser teslimden önce beklenmedik hâl sonucu yok olursa, işsahibi eseri teslim almada temerrüde düşmedikçe yüklenici yaptığı işin ücretini ve giderlerini isteyemez; bu nedenle hasara kural olarak yüklenici katlanır. Malzemeye ilişkin hasar ise malzemeyi sağlayana a",
+          "citations": [
+            "TBK m.483",
+            "TBK m.485"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TBK m.483’e göre eser, işsahibi teslim almada temerrüde düşmedikçe teslimden önce beklenmedik olayla yok olursa yüklenici ücret ve gider isteyemez; yani işin hasarı kural olarak yükleniciye aittir. Malzemeye gelen hasar ise malzemeyi sağlayana aittir. Yok olma işsahibinin malzeme",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Haksız fiilde zarar görenin müterafik kusuru (ortak kusur) tazminatı nasıl etkiler?",
+      "count": 6,
+      "distinct_outputs": 4,
+      "duplicate_excess_rows": 5,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 6
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Verilen kaynak metinler ışığında, haksız fiilde zarar görenin müterafik kusurunun (ortak kusurun) tazminatı etkileme şekli aşağıdaki gibidir:  Zarar gören, zararı doğuran fiile razı olmuş veya zararın doğmasında ya da artmasında etkili olmuşsa, hâkim tazminatı indirebilir veya ta",
+          "citations": [
+            "TBK m.52"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinler ışığında, haksız fiilde zarar görenin müterafik kusurunun (ortak kusurun) tazminatı etkileme şekli aşağıdaki gibidir:  Zarar gören, zararı doğuran fiile razı olmuş veya zararın doğmasında ya da artmasında etkili olmuşsa, hâkim tazminatı indirebilir veya ta",
+          "citations": [
+            "TBK m.52"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TBK m.52 uyarınca zarar gören, zararın doğmasına veya artmasına razı olmuş ya da katkıda bulunmuşsa hâkim tazminatı indirebilir veya tamamen kaldırabilir. Müterafik kusur, tazminatın kapsamını azaltan ya da ortadan kaldırabilen bir etkendir.",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Alacaklının temerrüdü (alacaklı direnimi) hâlinde borçlu borcundan nasıl kurtulur?",
+      "count": 6,
+      "distinct_outputs": 3,
+      "duplicate_excess_rows": 5,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 6
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Alacaklı temerrüdünde borçlu, teslim edeceği şeyi hasar ve giderleri alacaklıya ait olmak üzere tevdi ederek borcundan kurtulabilir (TBK m.107). Şey tevdiye elverişli değilse, bozulabilirse veya korunması/tevdi edilmesi önemli gider gerektiriyorsa, alacaklıya önceden ihtar edip h",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Alacaklı temerrüdünde bir şeyin teslimi borcunda borçlu, teslim edeceği şeyi tevdi ederek borcundan kurtulabilir (TBK m.107). Şey tevdiye uygun değilse, bozulabilecekse veya tevdi ya da bakım masrafı önemliyse, hâkim izniyle satıp bedeli tevdi edebilir (TBK m.108). Borcun konusu ",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Alacaklı temerrüdünde borçlu, teslim edeceği şeyi hasar ve giderleri alacaklıya ait olmak üzere tevdi ederek borcundan kurtulabilir (TBK m.107). Şey tevdiye elverişli değilse, bozulabilirse veya korunması/tevdi edilmesi önemli gider gerektiriyorsa, alacaklıya önceden ihtar edip h",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Garantörlük (garanti sözleşmesi) ile kefalet sözleşmesi arasındaki temel fark nedir?",
+      "count": 6,
+      "distinct_outputs": 3,
+      "duplicate_excess_rows": 5,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 6
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Temel fark, kefaletin asıl borca bağlı (fer’î) bir kişisel teminat olması, garanti sözleşmesinin ise kural olarak asıl borç ilişkisinden bağımsız bir taahhüt doğurmasıdır. Bu nedenle kefalette asıl borç geçersiz veya sona ermişse kefalet de etkilenir ve kefil asıl borca ilişkin d",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Temel fark, kefaletin fer’î; garanti sözleşmesinin ise bağımsız nitelikte olmasıdır. Kefalette kefilin borcu geçerli bir asıl borca bağlıdır ve asıl borca ilişkin def’iler kural olarak kefile de yarar; ayrıca sıkı şekil şartlarına tabidir. Garanti sözleşmesinde ise garantör, asıl",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Temel fark, kefaletin asıl borca bağlı (fer’î) bir kişisel teminat olması, garanti sözleşmesinin ise kural olarak asıl borç ilişkisinden bağımsız bir taahhüt doğurmasıdır. Bu nedenle kefalette asıl borç geçersiz veya sona ermişse kefalet de etkilenir ve kefil asıl borca ilişkin d",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Geri alma hakkı saklı tutulan bağışlamada bağışlayan hangi hallerde bağışlamayı geri alabilir?",
+      "count": 6,
+      "distinct_outputs": 3,
+      "duplicate_excess_rows": 5,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 6
+      },
+      "sample_rows": [
+        {
+          "output_preview": "TBK m.292’ye göre bağışlayan, bağışlananın kendisinden önce ölmesi hâlinde bağışlama konusunun kendisine dönmesi koşulunu koyabilir. Bunun dışında ifa edilmiş bağışlama TBK m.295 uyarınca şu hâllerde geri alınabilir: bağışlananın bağışlayana veya yakınlarından birine karşı ağır s",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Bağışlayan, sözleşmede bağışlananın kendisinden önce ölmesi hâlinde bağışlama konusunun kendisine dönmesini kararlaştırabilir. Bunun dışında bağışlamanın geri alınması, bağışlananın bağışlayana veya yakınlarından birine karşı ağır suç işlemesi, bağışlayana ya da ailesinden birine",
+          "citations": [
+            "TBK m.292",
+            "TBK m.295",
+            "TBK m.296"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Bağışlayan, TBK m.295 uyarınca bağışlanan kendisine veya yakınlarından birine karşı ağır suç işlerse, kanundan doğan aile yükümlülüklerine önemli ölçüde aykırı davranırsa veya yüklemeli bağışlamada haklı sebep olmaksızın yüklemeyi yerine getirmezse bağışlamayı geri alabilir. Bağı",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Adi ortaklıkta ortakların idare hak ve yetkisi kime aittir?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Verilen kaynak metinlere dayanarak, adi ortaklıkta ortakların idare hak ve yetkisinin kime ait olduğu aşağıdaki gibidir:  1.  **Genel Kural:** Yönetim, sözleşme veya kararla yalnızca bir veya birden çok ortağa ya da üçüncü bir kişiye bırakılmadıkça, **bütün ortaklar** ortaklığı y",
+          "citations": [
+            "TBK m.625",
+            "TBK m.637",
+            "TBK m.629"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Adi ortaklıkta ortakların idare hak ve yetkisi, aşağıdaki kurallara göre belirlenir:  1.  **Genel Kural:** Yönetim, sözleşme veya kararla yalnızca bir veya birden çok ortağa ya da üçüncü bir kişiye bırakılmadıkça, **bütün ortaklar ortaklığı yönetme hakkına sahiptir** [Kaynak: TBK",
+          "citations": [
+            "TBK m.625",
+            "TBK m.629",
+            "TBK m.637"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Adi ortaklıkta ortakların idare hak ve yetkisi, aşağıdaki kurallara göre belirlenir:  1.  **Genel Kural:** Yönetim, sözleşme veya kararla yalnızca bir veya birden çok ortağa ya da üçüncü bir kişiye bırakılmadıkça, **bütün ortaklar ortaklığı yönetme hakkına sahiptir** [Kaynak: TBK",
+          "citations": [
+            "TBK m.625",
+            "TBK m.637",
+            "TBK m.629"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Bağışlama vaadinin geçerliliği hangi şekil şartına bağlıdır?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Bağışlama vaadinin (bağışlama sözü vermenin) geçerliliği, **yazılı şekilde** yapılmasına bağlıdır [Kaynak: TBK m.288].  Ancak, eğer bağışlama konusu bir **taşınmaz** veya taşınmaz üzerindeki bir ayni hak ise, bu bağışlama sözünün geçerliliği ancak **resmî şekilde** yapılmış olmas",
+          "citations": [
+            "TBK m.288"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Bağışlama vaadinin (bağışlama sözü vermenin) geçerliliği, **yazılı şekilde yapılmasına** bağlıdır. Ancak, eğer bağışlama konusu bir **taşınmaz** veya **taşınmaz üzerindeki ayni bir hak** ise, bu bağışlama sözünün geçerliliği **resmî şekilde** yapılmış olmasına bağlıdır [Kaynak: T",
+          "citations": [
+            "TBK m.288"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TBK m.288'e göre bağışlama vaadinin (bağışlama sözü vermenin) geçerliliği, bu sözleşmenin **yazılı şekilde** yapılmasına bağlıdır [Kaynak: TBK m.288].  Ancak, bir taşınmazın veya taşınmaz üzerindeki ayni bir hakkın bağışlanması sözü vermenin geçerliliği, ancak **resmî şekilde** y",
+          "citations": [
+            "TBK m.288"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Bina malikinin sorumluluğunda, malikin rücu hakkı kime karşıdır?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Verilen kaynak metinlere dayanarak, bina malikinin sorumluluğunda rücu hakkının kime karşı olduğu şu şekilde belirtilmiştir:  Bir binanın veya diğer yapı eserlerinin maliki, yapımındaki bozukluklardan veya bakımındaki eksikliklerden doğan zararı gidermekle yükümlüdür. Bu sorumlul",
+          "citations": [
+            "TBK m.69"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Bina malikinin sorumluluğunda, rücu hakkı bu sebeplerle kendilerine karşı sorumlu olan diğer kişilere karşıdır [Kaynak: TBK m.69].  Özellikle, intifa ve oturma hakkı sahipleri de binanın bakımındaki eksikliklerden doğan zararlardan malikle birlikte müteselsilen sorumlu oldukları ",
+          "citations": [
+            "TBK m.69"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlerde, bina malikinin sorumluluğuna ilişkin hükümler **[Kaynak: TBK m.69]** bölümünde yer almaktadır. Bu maddeye göre, bir binanın veya diğer yapı eserlerinin maliki, yapımındaki bozukluklardan veya bakımındaki eksikliklerden doğan zararı gidermekle yükümlüdür",
+          "citations": [
+            "TBK m.69"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Eser sözleşmesinde yüklenicinin özen ve sadakat borcu TBK'da nasıl düzenlenmiştir?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Türk Borçlar Kanunu (TBK) uyarınca, eser sözleşmesinde yüklenicinin özen ve sadakat borcu **TBK m.471** kapsamında şu şekilde düzenlenmiştir:  1.  **Genel Yükümlülük:** Yüklenici, üstlendiği edimleri işsahibinin haklı menfaatlerini gözeterek, sadakat ve özenle ifa etmek zorundadı",
+          "citations": [
+            "TBK m.471",
+            "TBK m.472"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlere dayanarak, Eser sözleşmesinde yüklenicinin özen ve sadakat borcu **TBK m.471** kapsamında şu şekilde düzenlenmiştir:  1.  **Genel Yükümlülük:** Yüklenici, üstlendiği edimleri işsahibinin haklı menfaatlerini gözeterek, sadakat ve özenle ifa etmek zorundadı",
+          "citations": [
+            "TBK m.471",
+            "TBK m.470"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Eser sözleşmesinde yüklenicinin özen ve sadakat borcu, Türk Borçlar Kanunu'nun (TBK) 471. maddesinde düzenlenmiştir.  Bu maddeye göre: *   Yüklenici, üstlendiği edimleri işsahibinin haklı menfaatlerini gözeterek, **sadakat ve özenle ifa etmek zorundadır** [Kaynak: TBK m.471]. *  ",
+          "citations": [
+            "TBK m.471"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Genel işlem koşullarının (standart sözleşme şartları) yürürlüğe girmesi hangi şarta bağlanmıştır?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Türk Borçlar Kanunu'na (TBK) göre, genel işlem koşullarının sözleşmenin kapsamına girmesi (yürürlüğe girmesi) aşağıdaki şartlara bağlanmıştır:  1.  **Açık Bilgi Verme ve İçeriği Öğrenme İmkânı:** Sözleşmenin yapılması sırasında düzenleyenin, karşı tarafa bu koşulların varlığı hak",
+          "citations": [
+            "TBK m.21",
+            "TBK m.20"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlere dayanarak, genel işlem koşullarının sözleşmenin kapsamına girmesi (yani yürürlüğe girmesi) aşağıdaki şartlara bağlanmıştır:  1.  **Açık Bilgi Verme ve İmkan Sağlama:** Sözleşmenin yapılması sırasında düzenleyenin, karşı tarafa bu koşulların varlığı hakkın",
+          "citations": [
+            "TBK m.21"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Genel işlem koşullarının sözleşmenin kapsamına girmesi (yürürlüğe girmesi), aşağıdaki şartların birlikte gerçekleşmesine bağlıdır:  1.  Sözleşmenin yapılması sırasında düzenleyenin, karşı tarafa bu koşulların varlığı hakkında **açıkça bilgi vermesi**, 2.  Karşı tarafa bu koşullar",
+          "citations": [
+            "TBK m.21"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Sebepsiz zenginleşmeden doğan istem hakkı hangi sürelerde zamanaşımına uğrar?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Sebepsiz zenginleşmeden doğan istem hakkının zamanaşımı süreleri, kaynak metinlerdeki **TBK m.82** hükmüne göre aşağıdaki şekildedir:  1.  **İki Yıllık Süre:** Hak sahibinin, geri isteme hakkı olduğunu öğrendiği tarihten başlayarak **iki yıl** geçmesiyle zamanaşımına uğrar. 2.  *",
+          "citations": [
+            "TBK m.82"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin geri isteme hakkı olduğunu öğrendiği tarihten başlayarak **iki yılın** ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak **on yılın** geçmesiyle zamanaşımına uğrar [Kaynak: TBK m.82].  Bu süreler içinde istem ha",
+          "citations": [
+            "TBK m.82"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin geri isteme hakkı olduğunu öğrendiği tarihten başlayarak **iki yılın** ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak **on yılın** geçmesiyle zamanaşımına uğrar [Kaynak: TBK m.82].  Ayrıca, zenginleşme zengin",
+          "citations": [
+            "TBK m.82"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "TBK'ya göre müteselsil kefaletin şartları nelerdir?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Türk Borçlar Kanunu'na (TBK) göre müteselsil kefaletin şartları, aşağıdaki kaynak metinlerde belirtilen şekil ve içerik koşullarından oluşmaktadır:  1.  **Yazılı Şekil Şartı:** Kefalet sözleşmesi, yazılı şekilde yapılmadıkça geçerli olmaz. Bu yazılı şekil, müteselsil kefalet için",
+          "citations": [
+            "TBK m.583",
+            "TBK m.586"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Müteselsil kefalet için kefalet sözleşmesi yazılı olmalı; azamî miktar ve kefalet tarihi bulunmalı; kefil bunları ve müteselsil kefil olduğunu kendi el yazısıyla belirtmelidir (TBK m.583). Ayrıca kefilin müteselsil kefil sıfatıyla yükümlülük altına girmesi gerekir; alacaklı da TB",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Türk Borçlar Kanunu (TBK) hükümlerine göre müteselsil kefaletin şartları ve sonuçları aşağıda belirtilmiştir:  **1. Şekil Şartı (Yazılılık ve Özel İfade)** Müteselsil kefalet sözleşmesinin geçerli olabilmesi için yazılı şekilde yapılması zorunludur. Sözleşmede kefilin sorumlu ola",
+          "citations": [
+            "TBK m.583",
+            "TBK m.584",
+            "TBK m.586",
+            "TBK m.601",
+            "TBK m.590",
+            "TBK m.589",
+            "TBK m.598"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Vekâletsiz iş görmede işgörenin sorumluluğu nasıldır?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Vekâletsiz iş görmede işgörenin sorumluluğu, verilen kaynak metinlerine göre şu şekildedir:  1.  **Genel Sorumluluk İlkesi:** Vekâletsiz işgören, her türlü ihmalinden sorumludur. Ancak, işgören bu işi, işsahibinin karşılaştığı zararı veya zarar tehlikesini gidermek üzere yapmışsa",
+          "citations": [
+            "TBK m.527",
+            "TBK m.526"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlerine dayanarak, vekâletsiz iş görmede (negotiorum gestio) işgörenin sorumluluğu şu şekildedir:  1.  **Genel Sorumluluk İlkesi:** Vekâletsiz işgören, her türlü ihmalinden sorumludur. Ancak, işgören bu işi, işsahibinin karşılaştığı zararı veya zarar tehlikesin",
+          "citations": [
+            "TBK m.527",
+            "TBK m.528",
+            "TBK m.526"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Verilen kaynak metinlere dayanarak, vekâletsiz iş görmede (negotiorum gestio) işgörenin sorumluluğu şu şekildedir:  1.  **Genel Sorumluluk İlkesi:** Vekâletsiz işgören, her türlü ihmalinden sorumludur. Ancak, bu işi işsahibinin karşılaştığı zararı veya zarar tehlikesini gidermek ",
+          "citations": [
+            "TBK m.527",
+            "TBK m.528",
+            "TBK m.526"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Ömür boyu gelir sözleşmesinin şekil şartı nedir?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Ömür boyu gelir sözleşmesinin şekil şartı, **yazılı şekilde yapılmak** zorunluluğudur.  Kaynak metinlere göre: *   Ömür boyu gelir sözleşmesi, yazılı şekilde yapılmadıkça **geçerli olmaz** [Kaynak: TBK m.608]. *   Genel kural olarak sözleşmelerin geçerliliği kanunda aksi öngörülm",
+          "citations": [
+            "TBK m.608",
+            "TBK m.12"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Ömür boyu gelir sözleşmesinin şekil şartı, **yazılı şekilde yapılmış olmasıdır**. Sözleşme yazılı şekilde yapılmadıkça geçerli olmaz [Kaynak: TBK m.608].",
+          "citations": [
+            "TBK m.608"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Ömür boyu gelir sözleşmesinin şekil şartı, **yazılı şekilde yapılmasıdır**.  Bu sözleşme, yazılı şekilde yapılmadıkça geçerli olmaz [Kaynak: TBK m.608].  Genel kural olarak sözleşmelerin geçerliliği kanunda aksi öngörülmedikçe hiçbir şekle bağlı değildir [Kaynak: TBK m.12], ancak",
+          "citations": [
+            "TBK m.608",
+            "TBK m.12"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "İfa zamanı taraflarca kararlaştırılmayan bir borç ne zaman muaccel olur?",
+      "count": 5,
+      "distinct_outputs": 5,
+      "duplicate_excess_rows": 4,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Türk Borçlar Kanunu'na (TBK) göre, ifa zamanı taraflarca kararlaştırılmadıkça veya hukuki ilişkinin özelliğinden anlaşılmadıkça, her borç doğumu anında muaccel olur [Kaynak: TBK m.90].  Bu kural, borcun süreye bağlanmamış olması durumunda geçerlidir. Eğer borç belirli bir süreye ",
+          "citations": [
+            "TBK m.90",
+            "TBK m.92"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "İfa zamanı taraflarca kararlaştırılmayan bir borç, süreye bağlanmamışsa veya hukuki ilişkinin özelliğinden anlaşılmadıkça, **doğumu anında muaccel olur** [Kaynak: TBK m.90].",
+          "citations": [
+            "TBK m.90"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "İfa zamanı taraflarca kararlaştırılmayan bir borç, **doğumu anında muaccel olur**.  Bu durum, süreye bağlanmamış veya ifa zamanı taraflarca kararlaştırılmadıkça (veya hukuki ilişkinin özelliğinden anlaşılmadıkça) her borcun doğumu anında muaccel olacağını belirten hükme dayanmakt",
+          "citations": [
+            "TBK m.90"
+          ],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "Alacağın devri (temliki) sözleşmesinin geçerliliği hangi şekil şartına tabidir?",
+      "count": 5,
+      "distinct_outputs": 3,
+      "duplicate_excess_rows": 4,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 5
+      },
+      "sample_rows": [
+        {
+          "output_preview": "Alacağın devri (temliki) sözleşmesinin geçerliliği, **yazılı şekilde** yapılmış olmasına bağlıdır.  Bu husus, Türk Borçlar Kanunu'nun 184. maddesinde açıkça belirtilmiştir: \"Alacağın devrinin geçerliliği, yazılı şekilde yapılmış olmasına bağlıdır\" [Kaynak: TBK m.184]. Ancak aynı ",
+          "citations": [
+            "TBK m.184",
+            "TBK m.185",
+            "TBK m.12"
+          ],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Alacağın devrinin geçerliliği TBK m.184 uyarınca yazılı şekilde yapılmış olmasına bağlıdır. Noter şartı yoktur; sözlü devir geçerli olmaz.",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "Alacağın devrinin geçerliliği TBK m.184 uyarınca yazılı şekilde yapılmış olmasına bağlıdır. Noter şartı yoktur; sözlü devir geçerli olmaz.",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "TMK'ya göre iyiniyet karinesi nedir ve hangi maddede düzenlenmiştir?",
+      "count": 3,
+      "distinct_outputs": 2,
+      "duplicate_excess_rows": 2,
+      "classification": "mixed_repeat_and_variant_outputs",
+      "bucket_counts": {
+        "unknown": 3
+      },
+      "sample_rows": [
+        {
+          "output_preview": "TMK m.3’e göre kanunun iyiniyete hukukî sonuç bağladığı durumlarda asıl olan iyiniyetin varlığıdır. Ancak durumun gereklerine göre kendisinden beklenen özeni göstermeyen kişi iyiniyet iddiasında bulunamaz.",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TMK m.3’te düzenlenmiştir. Kanunun iyiniyete hukukî sonuç bağladığı durumlarda asıl olan iyiniyetin varlığıdır; ancak durumun gereklerine göre kendisinden beklenen özeni göstermeyen kişi iyiniyet iddiasında bulunamaz.",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TMK m.3’e göre kanunun iyiniyete hukukî sonuç bağladığı durumlarda asıl olan iyiniyetin varlığıdır. Ancak durumun gereklerine göre kendisinden beklenen özeni göstermeyen kişi iyiniyet iddiasında bulunamaz.",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    },
+    {
+      "question": "TMK'ya göre anlaşmalı boşanma davası açabilmek için evliliğin en az ne kadar sürmüş olması gerekir?",
+      "count": 2,
+      "distinct_outputs": 2,
+      "duplicate_excess_rows": 1,
+      "classification": "all_rows_unique_outputs",
+      "bucket_counts": {
+        "unknown": 2
+      },
+      "sample_rows": [
+        {
+          "output_preview": "TMK m.166/3 uyarınca anlaşmalı boşanma davası açılabilmesi için evliliğin en az 1 yıl sürmüş olması gerekir.",
+          "citations": [],
+          "bucket": "unknown"
+        },
+        {
+          "output_preview": "TMK m.166/3 uyarınca anlaşmalı boşanma için evliliğin en az 1 yıl sürmüş olması gerekir.",
+          "citations": [],
+          "bucket": "unknown"
+        }
+      ]
+    }
+  ]
+}
