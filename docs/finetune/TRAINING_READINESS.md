@@ -97,6 +97,11 @@ Provide the evidence manifest paths to the readiness script with `--post-train-e
 
 The post-train manifest must be distinct from the baseline manifest and must reference the trained checkpoint or output directory.
 
+Diagnostic note:
+
+- `evaluation/eval_transformers_direct.py` may be used as a runtime-recovery / diagnostic path for merged checkpoints.
+- This direct runner is not promotion-compatible against the current accepted baseline unless a matching baseline is also produced with the same runner family.
+
 ## Readiness CLI
 
 Run the gate from the repo root.

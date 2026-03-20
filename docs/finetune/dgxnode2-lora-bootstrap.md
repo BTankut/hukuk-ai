@@ -100,6 +100,21 @@ Bu repo'da baseline referansı:
 
 - `evaluation/reports/evidence_baseline_faz1_50_20260308.json`
 
+## 7) Serving bloklanırsa diagnostic fallback
+
+`qwen3_5_moe` serving path bloke ise merged checkpoint için şu diagnostic plan kullanılabilir:
+
+```bash
+python3 scripts/finetune/plan_posttrain_diagnostic_eval.py \
+  --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json \
+  --checkpoint-ref hukuk-ai-sft-v3 \
+  --model-path /path/to/merged-checkpoint \
+  --model hukuk-ai-sft-v3 \
+  --git-commit $(git rev-parse --short HEAD)
+```
+
+Bu yol promotion shortcut değildir; yalnız runtime recovery / diagnostic içindir.
+
 ## Notlar
 
 - Tarihsel `outputs/hukuk-ai-lora-v2` run'ı audit için korunur ama promotion için kullanılamaz.

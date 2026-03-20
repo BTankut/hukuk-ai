@@ -96,6 +96,8 @@ notes: |
   - Promotion gate artık baseline/post-train arasında aynı eval runner family zorunluluğu getiriyor.
   - Frozen baseline manifest `runner=eval_runner` ile zenginleştirildi.
   - Direct merged-model fallback bu yüzden şu an promotion değil, diagnostic/runtime recovery yolu olarak konumlanıyor.
+  - `evaluation/eval_transformers_direct.py` ile merged checkpoint için repo-native diagnostic runner eklendi.
+  - `scripts/finetune/plan_posttrain_diagnostic_eval.py` ile serving bloklandığında direct diagnostic eval zinciri planlanabilir hale geldi.
 
   ### Sonraki Beklenen Çıktı
   - İlk gerçek trained checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.

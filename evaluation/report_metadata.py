@@ -33,7 +33,7 @@ def resolve_model_ref(
     env_value = os.getenv("MODEL_REF")
     if env_value:
         return env_value.strip()
-    if runner == "eval_vllm_direct" and model:
+    if runner in {"eval_vllm_direct", "eval_transformers_direct"} and model:
         return model
     return "mock-chat-client" if mock_mode else "gateway-api"
 
@@ -41,6 +41,7 @@ def resolve_model_ref(
 def resolve_checkpoint_ref(
     explicit: str | None,
     *,
+    runner: str,
     api_url: str,
     mock_mode: bool,
     model: str | None = None,
@@ -52,6 +53,8 @@ def resolve_checkpoint_ref(
         return env_value.strip()
     if mock_mode:
         return "mock-runtime"
+    if runner == "eval_transformers_direct" and model:
+        return f"transformers:{model}"
     if model:
         return f"vllm:{model}"
     return f"api:{api_url.rstrip('/')}"
@@ -93,6 +96,7 @@ def build_identity_metadata(
         ),
         "checkpoint_ref": resolve_checkpoint_ref(
             checkpoint_ref,
+            runner=runner,
             api_url=api_url,
             mock_mode=mock_mode,
             model=model,
