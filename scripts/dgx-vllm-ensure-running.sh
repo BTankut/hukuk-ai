@@ -15,7 +15,8 @@ set -euo pipefail
 
 DGX_HOST="${DGX_HOST:-btankut@192.168.12.243}"
 DGX_PORT="${DGX_PORT:-30000}"
-DGX_CONTAINER="${DGX_CONTAINER:-vllm_head}"
+DGX_CONTAINER="${DGX_CONTAINER:-}"
+DGX_CONTAINER_CANDIDATES="${DGX_CONTAINER_CANDIDATES:-vllm_qwen35_lowmem,vllm_head,vllm_qwen35moe,qwen35-base-eval}"
 WAIT_FOR_HEALTH=false
 HEALTH_TIMEOUT=300  # saniye
 
@@ -44,6 +45,54 @@ done
 
 echo "[dgx-vllm] DGX host: ${DGX_HOST}"
 
+ssh_dgx() {
+  ssh -o ConnectTimeout=8 -o StrictHostKeyChecking=no "${DGX_HOST}" "$@"
+}
+
+discover_container() {
+  if [[ -n "${DGX_CONTAINER}" ]]; then
+    echo "${DGX_CONTAINER}"
+    return 0
+  fi
+
+  local candidates="${DGX_CONTAINER_CANDIDATES//,/ }"
+  ssh_dgx "
+    for c in ${candidates}; do
+      if docker inspect \"\$c\" >/dev/null 2>&1; then
+        echo \"\$c\"
+        exit 0
+      fi
+    done
+    exit 1
+  "
+}
+
+container_status() {
+  local container="$1"
+  ssh_dgx "docker inspect \"${container}\" --format '{{.State.Status}}' 2>/dev/null || echo missing"
+}
+
+container_cmd() {
+  local container="$1"
+  ssh_dgx "docker inspect \"${container}\" --format '{{json .Config.Cmd}}' 2>/dev/null || echo []"
+}
+
+is_direct_vllm_container() {
+  local container="$1"
+  local cmd_json
+  cmd_json="$(container_cmd "${container}")"
+  [[ "${cmd_json}" == *"\"vllm\""* && "${cmd_json}" == *"\"serve\""* ]]
+}
+
+print_log_hint() {
+  local container="$1"
+  if is_direct_vllm_container "${container}"; then
+    echo "[dgx-vllm]    Log için: ssh ${DGX_HOST} 'docker logs --tail 50 ${container}'"
+  else
+    echo "[dgx-vllm]    Log için: ssh ${DGX_HOST} 'docker exec ${container} tail -50 /tmp/vllm_serve.log'"
+  fi
+}
+
 # 1. vLLM sağlık kontrolü (M4 Max'ten)
 check_health() {
   curl -sf --max-time 5 "http://192.168.12.243:${DGX_PORT}/v1/models" \
@@ -58,21 +107,40 @@ fi
 
 echo "[dgx-vllm] vLLM çalışmıyor. Container içinde başlatılıyor..."
 
-# 2. Container ayakta mı?
-CONTAINER_STATUS=$(ssh -o ConnectTimeout=8 -o StrictHostKeyChecking=no "${DGX_HOST}" \
-  "docker inspect ${DGX_CONTAINER} --format '{{.State.Status}}' 2>/dev/null || echo missing")
-
-if [[ "${CONTAINER_STATUS}" != "running" ]]; then
-  echo "[dgx-vllm] ❌ Container '${DGX_CONTAINER}' durumu: ${CONTAINER_STATUS}"
-  echo "[dgx-vllm]    Container'ı başlatmak için: ssh ${DGX_HOST} 'docker start ${DGX_CONTAINER}'"
+DGX_CONTAINER="$(discover_container || true)"
+if [[ -z "${DGX_CONTAINER}" ]]; then
+  echo "[dgx-vllm] ❌ Uygun vLLM container bulunamadı veya DGX'e SSH erişimi kurulamadı."
+  echo "[dgx-vllm]    Adaylar: ${DGX_CONTAINER_CANDIDATES}"
+  echo "[dgx-vllm]    Not: farklı runtime için DGX_PORT ve/veya DGX_CONTAINER override edilebilir."
   exit 1
 fi
 
-# 3. vLLM'i container içinde arka planda başlat
-ssh -o ConnectTimeout=8 -o StrictHostKeyChecking=no "${DGX_HOST}" \
-  "docker exec -d ${DGX_CONTAINER} bash -c '${VLLM_START_CMD}'"
+echo "[dgx-vllm] Container: ${DGX_CONTAINER}"
 
-echo "[dgx-vllm] vLLM başlatma komutu gönderildi (model yükleme ~4 dakika sürer)."
+# 2. Container ayakta mı?
+CONTAINER_STATUS="$(container_status "${DGX_CONTAINER}")"
+
+if [[ "${CONTAINER_STATUS}" != "running" ]]; then
+  if is_direct_vllm_container "${DGX_CONTAINER}"; then
+    echo "[dgx-vllm] Container '${DGX_CONTAINER}' doğrudan vLLM serve çalıştırıyor; docker start gönderiliyor..."
+    ssh_dgx "docker start \"${DGX_CONTAINER}\" >/dev/null"
+  elif [[ "${CONTAINER_STATUS}" == "missing" ]]; then
+    echo "[dgx-vllm] ❌ Container '${DGX_CONTAINER}' bulunamadı."
+    exit 1
+  else
+    echo "[dgx-vllm] Wrapper container '${DGX_CONTAINER}' durumu: ${CONTAINER_STATUS}; docker start gönderiliyor..."
+    ssh_dgx "docker start \"${DGX_CONTAINER}\" >/dev/null"
+  fi
+fi
+
+if is_direct_vllm_container "${DGX_CONTAINER}"; then
+  echo "[dgx-vllm] Direct vLLM container modu tespit edildi; container start yeterli."
+else
+  # 3. vLLM'i wrapper container içinde arka planda başlat
+  REMOTE_VLLM_START_CMD="$(printf '%q' "${VLLM_START_CMD}")"
+  ssh_dgx "docker exec -d \"${DGX_CONTAINER}\" bash -lc ${REMOTE_VLLM_START_CMD}"
+  echo "[dgx-vllm] vLLM başlatma komutu gönderildi (model yükleme ~4 dakika sürer)."
+fi
 
 if [[ "${WAIT_FOR_HEALTH}" == "true" ]]; then
   echo "[dgx-vllm] Health check bekleniyor (max ${HEALTH_TIMEOUT}s)..."
@@ -80,7 +148,7 @@ if [[ "${WAIT_FOR_HEALTH}" == "true" ]]; then
   while ! check_health; do
     if [[ $elapsed -ge $HEALTH_TIMEOUT ]]; then
       echo "[dgx-vllm] ❌ Health check ${HEALTH_TIMEOUT}s içinde geçmedi."
-      echo "[dgx-vllm]    Log için: ssh ${DGX_HOST} 'docker exec ${DGX_CONTAINER} tail -50 /tmp/vllm_serve.log'"
+      print_log_hint "${DGX_CONTAINER}"
       exit 1
     fi
     sleep 15
@@ -90,5 +158,5 @@ if [[ "${WAIT_FOR_HEALTH}" == "true" ]]; then
   echo "[dgx-vllm] ✅ vLLM sağlıklı (${elapsed}s sonra)."
 else
   echo "[dgx-vllm]    Health check için: bash scripts/dgx-vllm-ensure-running.sh --wait"
-  echo "[dgx-vllm]    Log için: ssh ${DGX_HOST} 'docker exec ${DGX_CONTAINER} tail -50 /tmp/vllm_serve.log'"
+  print_log_hint "${DGX_CONTAINER}"
 fi

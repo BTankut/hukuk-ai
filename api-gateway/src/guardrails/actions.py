@@ -32,8 +32,12 @@ class PresidioMasker:
 
     def __post_init__(self) -> None:
         self._entities = [e.strip() for e in self.settings.presidio_entities.split(",") if e.strip()]
-        self._analyzer = AnalyzerEngine() if AnalyzerEngine else None
-        self._anonymizer = AnonymizerEngine() if AnonymizerEngine else None
+        if self.settings.presidio_enabled and AnalyzerEngine and AnonymizerEngine:
+            self._analyzer = AnalyzerEngine()
+            self._anonymizer = AnonymizerEngine()
+        else:
+            self._analyzer = None
+            self._anonymizer = None
 
     def mask(self, text: str) -> str:
         if not text:

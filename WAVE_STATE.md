@@ -6,7 +6,7 @@ last_activity: 2026-03-20T19:55:00+03:00
 last_eval: evaluation/reports/eval_live_20260308_080601.json
 next_action: "DGX runtime drift'ini netleştirip generation katmanını stabilize etmek; ardından kısa live smoke ve safe-activation canlı koşusu"
 blockers:
-  - DGX runtime eski varsayımdan sapmış durumda: `30000/vllm_head` yerine `30001/qwen35-base-eval` gözlendi
+  - DGX runtime drift raporu var: `30000/vllm_head` dışında `30001/qwen35-base-eval` varyantı da gözlendi
   - DGX host/endpoint erişimi kararsız: ilk probe sonrası `ssh` ve `http` timeout'ları yaşandı
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -51,7 +51,7 @@ notes: |
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
   - Reranker canlı sweep manuel API restart gerektiriyor; otomatik restart bu repo içinde bilinçli olarak yapılmıyor.
-  - DGX generation katmanı kararlı değil; ilk `30001` probe'undan sonra timeout gözlendi.
+  - DGX generation katmanı kararlı değil; `30001` varyantı bir probda görüldü ama sonraki doğrulamalarda timeout gözlendi.
 
   ### Sonraki Beklenen Çıktı
   - DGX stabilize olduktan sonra kısa live smoke.

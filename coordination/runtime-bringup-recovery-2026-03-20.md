@@ -11,7 +11,7 @@ Temiz klonlanan `/Users/btmacstudio/Projects/hukuk-ai` üzerinde, backup klasör
 - `localhost:8000` API gateway başarıyla ayağa kaldırıldı.
 - `localhost:3001` Open WebUI zaten çalışır durumdaydı.
 - DGX tarafındaki eski varsayım (`192.168.12.243:30000`, container=`vllm_head`) artık güncel değil.
-- Bu turda doğrulanan DGX runtime: container=`qwen35-base-eval`, port=`30001`, model id=`qwen35-base`.
+- Bu turda ajan probunda görülen ve gateway env'ine yansıtılan aday DGX runtime: container=`qwen35-base-eval`, port=`30001`, model id=`qwen35-base`.
 - DGX endpoint'i ilk sağlık probunda cevap verdi, ancak sonrasında hem LAN HTTP hem SSH erişimi timeout vermeye başladı. Bu yüzden tam E2E generation çağrısı kararlı biçimde tamamlanamadı.
 
 ## Backup vs Temiz Repo
@@ -41,10 +41,10 @@ Temiz klonlanan `/Users/btmacstudio/Projects/hukuk-ai` üzerinde, backup klasör
 
 ### DGX
 
-- İlk başarılı probe:
+- Ajan tarafından raporlanan ilk başarılı probe:
   - `GET http://192.168.12.243:30001/v1/models`
   - model id=`qwen35-base`
-- Remote docker envanterinde görülen aktif container:
+- Ajan raporunda görülen aktif container:
   - `qwen35-base-eval`
 - Eski script default'u bu host için başarısız oldu:
   - container=`vllm_head`
@@ -117,7 +117,7 @@ curl http://localhost:8000/v1/models
 ## Kalan Bloker
 
 - DGX endpoint'i bu turda kararlı değildi.
-- İlk probe'da `30001` üzerinden cevap alınmasına rağmen sonraki `curl` ve `ssh` denemeleri timeout verdi.
+- `30001` varyantı bir ajan probunda görüldü; ancak sonraki `curl` ve `ssh` denemelerinde aynı runtime bağımsız olarak doğrulanamadı ve timeout yaşandı.
 - Sonuç: lokal RAG zinciri hazır, fakat generation katmanı kararlı olmadığı için safe-activation canlı koşusuna henüz geçilmedi.
 
 ## Sonraki Adım

@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from config import Settings
+import guardrails.actions as guardrails_actions
 
 
 def _config_dir() -> Path:
@@ -50,3 +51,16 @@ def test_settings_defaults_are_safe_scope():
     settings = Settings()
     assert settings.guardrails_strict_mode is False
     assert settings.guardrails_input_moderation_enabled is True
+
+
+def test_presidio_masker_skips_engine_init_when_disabled(monkeypatch):
+    def _unexpected_init():
+        raise AssertionError("Presidio engines should not initialize when disabled")
+
+    monkeypatch.setattr(guardrails_actions, "AnalyzerEngine", _unexpected_init)
+    monkeypatch.setattr(guardrails_actions, "AnonymizerEngine", _unexpected_init)
+
+    masker = guardrails_actions.PresidioMasker(Settings(presidio_enabled=False))
+
+    assert masker._analyzer is None
+    assert masker._anonymizer is None
