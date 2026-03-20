@@ -80,6 +80,7 @@ Pre-training preflight:
 ```bash
 python scripts/check_training_readiness.py \
   --mode preflight \
+  --max-question-duplicate-excess 0 \
   --baseline-evidence-path evaluation/reports/<baseline_report>.json
 ```
 
@@ -88,6 +89,7 @@ Promotion check after training:
 ```bash
 python scripts/check_training_readiness.py \
   --mode promotion \
+  --max-question-duplicate-excess 0 \
   --baseline-evidence-path evaluation/reports/<baseline_report>.json \
   --post-train-evidence-path evaluation/reports/<post_train_report>.json
 ```
@@ -100,6 +102,7 @@ Examples:
 python scripts/check_training_readiness.py \
   --mode preflight \
   --workflow-file scripts/build_training_dataset.py \
+  --max-question-duplicate-excess 0 \
   --baseline-evidence-path evaluation/reports/eval_live_20260308_080601.json
 ```
 
