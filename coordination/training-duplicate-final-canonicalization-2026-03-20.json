@@ -1,0 +1,151 @@
+{
+  "manifest_version": 1,
+  "scope": "duplicate clusters 01-24",
+  "source_packet": "coordination/training-duplicate-review-packet-final-2026-03-20.json",
+  "selections": [
+    {
+      "cluster_id": "cluster-01",
+      "question": "TBK'ya göre konut kiralarında kira sözleşmesinin sona erdirilmesi (tahliye) hangi koşullara bağlıdır?",
+      "selected_variant_id": "cluster-01-variant-03",
+      "reason": "Prefer the tighter cited variant; covers the tahliye grounds directly without drifting into a broad survey."
+    },
+    {
+      "cluster_id": "cluster-02",
+      "question": "TBK'ya göre genel zamanaşımı süresi kaç yıldır ve bu süre hangi tarihten itibaren işlemeye başlar?",
+      "selected_variant_id": "cluster-02-variant-06",
+      "reason": "Most concise cited variant; preserves the 10-year rule and the muacceliyet starting point."
+    },
+    {
+      "cluster_id": "cluster-03",
+      "question": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+      "selected_variant_id": "cluster-03-variant-05",
+      "reason": "Best balanced cited variant; answers the general TBK rule without expanding into less relevant special cases."
+    },
+    {
+      "cluster_id": "cluster-04",
+      "question": "Sözleşmede aşırı ifa güçlüğü (clausula rebus sic stantibus) TBK'da hangi maddeyle düzenlenmiştir ve uygulanma koşulları nelerdir?",
+      "selected_variant_id": "cluster-04-variant-07",
+      "reason": "Cited and direct; keeps the answer anchored on TBK m.138 and the core conditions."
+    },
+    {
+      "cluster_id": "cluster-05",
+      "question": "Vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu TBK'nın hangi maddelerinde düzenlenmiştir?",
+      "selected_variant_id": "cluster-05-variant-07",
+      "reason": "Cited and focused; keeps the answer on the asked duties and the relevant TBK provisions."
+    },
+    {
+      "cluster_id": "cluster-06",
+      "question": "TBK'ya göre kefalet sözleşmesi hangi şekil şartlarına tabidir ve geçerlilik koşulları nelerdir?",
+      "selected_variant_id": "cluster-06-variant-05",
+      "reason": "Most complete cited variant; covers form, spouse consent, future debt cases, and scope of liability."
+    },
+    {
+      "cluster_id": "cluster-07",
+      "question": "Eser sözleşmesinde eserin beklenmedik hâl (mücbir sebep) nedeniyle yok olması durumunda hasara kim katlanır?",
+      "selected_variant_id": "cluster-07-variant-03",
+      "reason": "Cited and concise; answers the general eser sözleşmesi rule without drifting into publication-contract specifics."
+    },
+    {
+      "cluster_id": "cluster-08",
+      "question": "Haksız fiilde zarar görenin müterafik kusuru (ortak kusur) tazminatı nasıl etkiler?",
+      "selected_variant_id": "cluster-08-variant-03",
+      "reason": "Cited and direct; states the reduction or removal effect without extra note text."
+    },
+    {
+      "cluster_id": "cluster-09",
+      "question": "Alacaklının temerrüdü (alacaklı direnimi) hâlinde borçlu borcundan nasıl kurtulur?",
+      "selected_variant_id": "cluster-09-variant-02",
+      "reason": "Most balanced uncited variant; concise and still covers tevdi, sale with court permission, and non-delivery obligations."
+    },
+    {
+      "cluster_id": "cluster-10",
+      "question": "Garantörlük (garanti sözleşmesi) ile kefalet sözleşmesi arasındaki temel fark nedir?",
+      "selected_variant_id": "cluster-10-variant-03",
+      "reason": "Only cited variant and still concise; captures accessory versus independent obligation distinction."
+    },
+    {
+      "cluster_id": "cluster-11",
+      "question": "Geri alma hakkı saklı tutulan bağışlamada bağışlayan hangi hallerde bağışlamayı geri alabilir?",
+      "selected_variant_id": "cluster-11-variant-01",
+      "reason": "Most complete cited variant; ties the answer to TBK m.292, m.295, and m.296 without drifting beyond the asked revocation grounds."
+    },
+    {
+      "cluster_id": "cluster-12",
+      "question": "Adi ortaklıkta ortakların idare hak ve yetkisi kime aittir?",
+      "selected_variant_id": "cluster-12-variant-04",
+      "reason": "Cited and focused; states the shared-management default and the contractual deviation possibility without unnecessary detail."
+    },
+    {
+      "cluster_id": "cluster-13",
+      "question": "Bağışlama vaadinin geçerliliği hangi şekil şartına bağlıdır?",
+      "selected_variant_id": "cluster-13-variant-05",
+      "reason": "Shortest cited variant; directly answers that the bağışlama vaadi must be made in writing."
+    },
+    {
+      "cluster_id": "cluster-14",
+      "question": "Bina malikinin sorumluluğunda, malikin rücu hakkı kime karşıdır?",
+      "selected_variant_id": "cluster-14-variant-05",
+      "reason": "Most direct cited variant; cleanly states recourse against the person actually responsible for the construction defect or bakım eksikliği."
+    },
+    {
+      "cluster_id": "cluster-15",
+      "question": "Eser sözleşmesinde yüklenicinin özen ve sadakat borcu TBK'da nasıl düzenlenmiştir?",
+      "selected_variant_id": "cluster-15-variant-05",
+      "reason": "Focused cited variant on TBK m.471; answers the asked duty rule without broadening into a full contractor-obligations survey."
+    },
+    {
+      "cluster_id": "cluster-16",
+      "question": "Genel işlem koşullarının (standart sözleşme şartları) yürürlüğe girmesi hangi şarta bağlanmıştır?",
+      "selected_variant_id": "cluster-16-variant-05",
+      "reason": "Compact cited variant; captures the notice and opportunity-to-learn condition under TBK m.21."
+    },
+    {
+      "cluster_id": "cluster-17",
+      "question": "Sebepsiz zenginleşmeden doğan istem hakkı hangi sürelerde zamanaşımına uğrar?",
+      "selected_variant_id": "cluster-17-variant-05",
+      "reason": "Concise cited variant; preserves the two-year and ten-year structure together with the ifadan kaçınma rule."
+    },
+    {
+      "cluster_id": "cluster-18",
+      "question": "TBK'ya göre müteselsil kefaletin şartları nelerdir?",
+      "selected_variant_id": "cluster-18-variant-04",
+      "reason": "Best balanced cited variant; captures express designation or equivalent wording plus the prior-pursuit exceptions."
+    },
+    {
+      "cluster_id": "cluster-19",
+      "question": "Vekâletsiz iş görmede işgörenin sorumluluğu nasıldır?",
+      "selected_variant_id": "cluster-19-variant-04",
+      "reason": "Most complete cited variant; covers the ordinary diligence baseline and the increased liability when acting against the principal's prohibition."
+    },
+    {
+      "cluster_id": "cluster-20",
+      "question": "Ömür boyu gelir sözleşmesinin şekil şartı nedir?",
+      "selected_variant_id": "cluster-20-variant-05",
+      "reason": "Shortest cited variant; directly states the official-form requirement."
+    },
+    {
+      "cluster_id": "cluster-21",
+      "question": "İfa zamanı taraflarca kararlaştırılmayan bir borç ne zaman muaccel olur?",
+      "selected_variant_id": "cluster-21-variant-05",
+      "reason": "Shortest cited variant; directly states immediate muacceliyet when the borç is born."
+    },
+    {
+      "cluster_id": "cluster-22",
+      "question": "Alacağın devri (temliki) sözleşmesinin geçerliliği hangi şekil şartına tabidir?",
+      "selected_variant_id": "cluster-22-variant-02",
+      "reason": "Cleaner and more direct than the cited survey variant; states the written-form rule without widening the scope beyond the asked condition."
+    },
+    {
+      "cluster_id": "cluster-23",
+      "question": "TMK'ya göre iyiniyet karinesi nedir ve hangi maddede düzenlenmiştir?",
+      "selected_variant_id": "cluster-23-variant-02",
+      "reason": "Cleanest variant; states the good-faith presumption and TMK m.3 without extra wording."
+    },
+    {
+      "cluster_id": "cluster-24",
+      "question": "TMK'ya göre anlaşmalı boşanma davası açabilmek için evliliğin en az ne kadar sürmüş olması gerekir?",
+      "selected_variant_id": "cluster-24-variant-02",
+      "reason": "Shortest equivalent variant; directly states the one-year minimum."
+    }
+  ]
+}

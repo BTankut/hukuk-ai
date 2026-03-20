@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T23:46:00+03:00
+last_activity: 2026-03-21T00:18:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "cluster-11 ve sonrası için canonicalization manifest'ini genişletmek"
+next_action: "training provenance ayrımı ve pre-train execution package'ini kilitlemek"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -77,9 +77,9 @@ notes: |
   - Guardrails LLM post-processing hâlâ zaman zaman latency limite çarpıp `draft_answer` fallback kullanabiliyor; bu safe-default içinde kabul ediliyor.
   - Duplicate cleanup henüz yapılmadı; gate artık bunu görünür ve bloklayıcı hale getiriyor.
   - Inventory sonucuna göre blind dedupe güvenli değil; cluster bazlı canonicalization gerekiyor.
-  - Review packet şu an yalnızca top-5 cluster'ı kapsıyor; uzun kuyruk gruplar ayrı tur gerektiriyor.
-  - Top-10 seçimi sonrası duplicate excess `116 -> 52` seviyesine düşürülebiliyor; fakat resmi train dosyası henüz rewrite edilmedi.
+  - Duplicate cleanup tamamlandı; `final_train.jsonl` artık `807` unique question içeriyor ve duplicate excess `0`.
+  - Readiness gate yeniden `READY` durumuna geldi; bu tek başına training başlatma izni anlamına gelmiyor.
 
   ### Sonraki Beklenen Çıktı
-  - Cluster-11+ canonicalization.
-  - Ardından training gate için kalan veri/need ayrımı.
+  - Training provenance ayrımı için resmi execution package.
+  - Ardından pre-train / promotion kanıt zincirinin kapatılması.
