@@ -4,6 +4,22 @@ This document defines the minimum gate that must pass before any new SFT or LoRA
 
 The goal is simple: do not start or promote training unless the data, config, and evaluation evidence are all traceable.
 
+## Execution Package
+
+Before any new training run is treated as valid, freeze the active pre-train package.
+
+The official active build chain is:
+
+- `python3 scripts/build_training_dataset.py --dry-run`
+- `python3 scripts/build_training_dataset.py`
+- `python3 scripts/check_training_readiness.py --mode preflight --baseline-evidence-path evaluation/reports/<baseline_report>.json`
+
+The builder now applies the official duplicate canonicalization package by default, so the active `final_train.jsonl` is reproducible from source reconciled masters plus the frozen canonicalization manifest.
+
+Reference package:
+
+- `coordination/pretrain-execution-package-2026-03-21.md`
+
 ## Hard Gates
 
 ### 1. Provenance
@@ -113,6 +129,7 @@ The readiness gate passes only if all of the following are true:
 - `final_train.jsonl` exists and validates as SFT JSONL.
 - `held_out_test.jsonl` exists and does not overlap with the train set.
 - The train set does not exceed the allowed duplicate question threshold.
+- The active train file comes from the frozen execution package / official builder path.
 - The forbidden v1 dataset path is absent from active workflow files.
 - Baseline evidence is provided.
 - In `promotion` mode, post-train evidence is provided.

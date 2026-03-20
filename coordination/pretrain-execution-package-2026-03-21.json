@@ -1,0 +1,155 @@
+{
+  "package_version": 1,
+  "generated_at": "2026-03-21",
+  "active_train": {
+    "path": "data/finetune/sft/final_train.jsonl",
+    "row_count": 807,
+    "sha256": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+    "builder_reproduces_exact_file": true
+  },
+  "held_out": {
+    "path": "data/finetune/eval/held_out_test.jsonl",
+    "row_count": 22,
+    "sha256_12": "16fcc4e557a9"
+  },
+  "baseline_evidence": [
+    {
+      "path": "evaluation/reports/eval_live_20260308_080601.json",
+      "sha256_12": "11f2dc040452"
+    }
+  ],
+  "canonicalization": {
+    "packet": "coordination/training-duplicate-review-packet-final-2026-03-20.json",
+    "manifest": "coordination/training-duplicate-final-canonicalization-2026-03-20.json"
+  },
+  "reconciled_sources": {
+    "active": [
+      {
+        "path": "data/review_sheets/phase2_first_batch_20260308/reconciled_20260308/batch1_first100_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "15372341981d"
+      },
+      {
+        "path": "data/review_sheets/phase2_second_batch_20260309/reconciled_20260309/batch2_second100_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "6c2f285f4f76"
+      },
+      {
+        "path": "data/review_sheets/phase2_third_batch_20260309/reconciled_20260309/batch3_remaining76_reconciled_master.jsonl",
+        "row_count": 76,
+        "include_in_training_rows": 76,
+        "sha256_12": "5bcad4ad792f"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch4_20260309/reconciled_20260309/batch4_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "723b42dc2c7b"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch5_20260309/reconciled_20260309/batch5_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "738f23d69a18"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch6_20260309/reconciled_20260309/batch6_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "a16e33febaa4"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch7_20260309/reconciled_20260309/batch7_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "382f9b16e63e"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch8_20260309/reconciled_20260309/batch8_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "8ca534f0b063"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch9_20260309/reconciled_20260309/batch9_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "09230a353845"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch10_20260309/reconciled_20260309/batch10_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "ee113c10c5b8"
+      },
+      {
+        "path": "data/review_sheets/phase2_batch11_20260309/reconciled_20260309/batch11_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 100,
+        "sha256_12": "ac5fe53b92e4"
+      }
+    ],
+    "non_active": [
+      {
+        "path": "data/review_sheets/phase2_second_batch_20260309/reconciled_20260309/batch1_first100_reconciled_master.jsonl",
+        "row_count": 100,
+        "include_in_training_rows": 0,
+        "final_bucket": "manual_escalation",
+        "sha256_12": "c3d7ae8e411b"
+      }
+    ]
+  },
+  "supplementary_inputs": [
+    {
+      "path": "data/finetune/sft/legal_qa.jsonl",
+      "row_count": 1,
+      "active_rows": 0,
+      "status": "scaffolding_only"
+    },
+    {
+      "path": "data/finetune/sft/petition_examples.jsonl",
+      "row_count": 1,
+      "active_rows": 0,
+      "status": "scaffolding_only"
+    },
+    {
+      "path": "data/finetune/sft/rag_corrected.jsonl",
+      "row_count": 1,
+      "active_rows": 0,
+      "status": "scaffolding_only"
+    },
+    {
+      "path": "data/finetune/sft/refusal_examples.jsonl",
+      "row_count": 1,
+      "active_rows": 0,
+      "status": "scaffolding_only"
+    }
+  ],
+  "excluded_inputs": [
+    {
+      "path": "data/finetune/sft_training_v1.jsonl",
+      "reason": "forbidden_invalid_v1_dataset"
+    },
+    {
+      "path": "data/finetune/raw/pending_review",
+      "reason": "pending_review_not_active_training_input"
+    },
+    {
+      "path": "scripts/expand_phase2_pending_candidates.py",
+      "reason": "synthetic_pending_review_outputs_are_not_lawyer_approved_training_data"
+    }
+  ],
+  "historical_runs": [
+    {
+      "run_id": "v1",
+      "status": "invalid_audit_only"
+    },
+    {
+      "run_id": "v2",
+      "status": "historical_not_promotion_eligible",
+      "reason": "ran on the older 1076-row snapshot instead of the frozen 807-row active package"
+    }
+  ]
+}

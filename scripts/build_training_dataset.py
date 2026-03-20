@@ -9,6 +9,10 @@ Data flow:
   ↓
   Supplementary SFT files (legal_qa, petition_examples, rag_corrected, refusal_examples)
   ↓
+  Deterministic shuffle
+  ↓
+  Duplicate canonicalization manifest (official active train package)
+  ↓
   Quality gate checks
   ↓
   data/finetune/sft/final_train.jsonl   (deduplicated, validated, shuffled)
@@ -36,6 +40,8 @@ import random
 import sys
 from pathlib import Path
 
+import apply_duplicate_canonicalization as canonicalization
+
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).parent.parent
 DEFAULT_RECONCILED_MASTERS = sorted(
@@ -49,6 +55,12 @@ SUPPLEMENTARY_FILES = [
 ]
 HELD_OUT_FILE = PROJECT_ROOT / "data/finetune/eval/held_out_test.jsonl"
 OUTPUT_FILE   = PROJECT_ROOT / "data/finetune/sft/final_train.jsonl"
+DEFAULT_CANONICALIZATION_PACKET = (
+    PROJECT_ROOT / "coordination/training-duplicate-review-packet-final-2026-03-20.json"
+)
+DEFAULT_CANONICALIZATION_MANIFEST = (
+    PROJECT_ROOT / "coordination/training-duplicate-final-canonicalization-2026-03-20.json"
+)
 
 # ---- Quality gate thresholds (must match sft_config.yaml) ----
 MIN_EXAMPLES          = 80
@@ -309,6 +321,48 @@ def filter_held_out_contamination(records: list[dict], held_out_questions: set[s
     return clean
 
 
+def maybe_apply_duplicate_canonicalization(
+    records: list[dict],
+    packet_path: Path | None,
+    manifest_path: Path | None,
+) -> tuple[list[dict], dict | None]:
+    if packet_path is None and manifest_path is None:
+        return records, None
+    if packet_path is None or manifest_path is None:
+        raise ValueError("Both packet_path and manifest_path must be provided together")
+    if not packet_path.exists():
+        raise FileNotFoundError(f"Canonicalization packet not found: {packet_path}")
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Canonicalization manifest not found: {manifest_path}")
+
+    packet = canonicalization._load_json(packet_path)
+    manifest = canonicalization._load_json(manifest_path)
+    rewritten, stats = canonicalization.apply_manifest(records, packet, manifest)
+    log.info(
+        "Canonicalization: clusters %d/%d | total %d -> %d | duplicate excess %d -> %d",
+        stats["clusters_applied"],
+        stats["clusters_requested"],
+        stats["before"]["total_records"],
+        stats["after"]["total_records"],
+        stats["before"]["duplicate_excess_rows"],
+        stats["after"]["duplicate_excess_rows"],
+    )
+    return rewritten, stats
+
+
+def finalize_output_row(record: dict) -> dict:
+    """Strip internal source metadata but preserve canonicalization markers."""
+    row = {k: v for k, v in record.items() if k != "_meta"}
+    meta = dict(record.get("_meta") or {})
+    if "canonicalized_duplicate_cluster" in meta:
+        row["_meta"] = {
+            "canonicalized_duplicate_cluster": meta["canonicalized_duplicate_cluster"],
+            "selected_variant_id": meta["selected_variant_id"],
+            "collapsed_from_rows": meta["collapsed_from_rows"],
+        }
+    return row
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build SFT training dataset from reconciled reviews")
     parser.add_argument(
@@ -326,6 +380,21 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed for shuffling")
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument(
+        "--canonicalization-packet",
+        default=str(DEFAULT_CANONICALIZATION_PACKET) if DEFAULT_CANONICALIZATION_PACKET.exists() else None,
+        help="Optional duplicate canonicalization review packet JSON.",
+    )
+    parser.add_argument(
+        "--canonicalization-manifest",
+        default=str(DEFAULT_CANONICALIZATION_MANIFEST) if DEFAULT_CANONICALIZATION_MANIFEST.exists() else None,
+        help="Optional duplicate canonicalization manifest JSON.",
+    )
+    parser.add_argument(
+        "--no-canonicalization",
+        action="store_true",
+        help="Skip duplicate-question canonicalization even if default package files exist.",
+    )
     args = parser.parse_args()
 
     output_path = Path(args.output)
@@ -353,11 +422,20 @@ def main() -> int:
     if held_out_questions:
         records = filter_held_out_contamination(records, held_out_questions)
 
-    # 5. Shuffle deterministically
+    # 5. Shuffle deterministically.
     random.seed(args.seed)
     random.shuffle(records)
 
-    # 6. Quality gate
+    # 6. Apply canonicalization package for the official active train set.
+    if args.no_canonicalization:
+        packet_path = None
+        manifest_path = None
+    else:
+        packet_path = Path(args.canonicalization_packet) if args.canonicalization_packet else None
+        manifest_path = Path(args.canonicalization_manifest) if args.canonicalization_manifest else None
+    records, _ = maybe_apply_duplicate_canonicalization(records, packet_path, manifest_path)
+
+    # 7. Quality gate
     gate_passed = quality_gate(records)
     if not gate_passed:
         log.error("Quality gate FAILED. Aborting. Fix issues before training.")
@@ -365,7 +443,7 @@ def main() -> int:
 
     log.info("Total training examples: %d", len(records))
 
-    # 7. Write (unless dry-run)
+    # 8. Write (unless dry-run)
     if args.dry_run:
         log.info("DRY RUN — no file written. Would write %d examples to %s", len(records), output_path)
         return 0
@@ -374,8 +452,7 @@ def main() -> int:
     written = 0
     with open(output_path, "w", encoding="utf-8") as f:
         for r in records:
-            # Strip internal _meta field before writing (trainers don't need it)
-            row = {k: v for k, v in r.items() if k != "_meta"}
+            row = finalize_output_row(r)
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
             written += 1
 

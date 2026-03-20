@@ -1,15 +1,18 @@
 # TRAINING LOG — Faz-3 Fine-Tuning
 
 > **Important:** The previous "complete" training run (v1) is invalid and has been discarded.  
-> The current active run is **v2** and uses the correct lawyer-reviewed dataset.
+> The current active train package is the canonicalized lawyer-reviewed set at `data/finetune/sft/final_train.jsonl`.
 >
-> **2026-03-20 readiness correction:** the committed `final_train.jsonl` was rebuilt after a held-out contamination bug was found in `scripts/build_training_dataset.py`. The current repo file now contains **923** training rows and excludes the 22 held-out questions. Historical v2 training on 2026-03-18 used the earlier 1076-row snapshot that existed at the same path at that time.
+> **2026-03-21 package freeze:** `scripts/build_training_dataset.py` now reproduces the active package by default, including held-out filtering and final duplicate canonicalization. The committed `final_train.jsonl` now contains **807** training rows and **807** unique questions.
+>
+> **Promotion note:** historical v2 training on 2026-03-18 used the earlier **1076**-row snapshot that existed at the same path at that time. That run remains auditable, but it is **not promotion-eligible** against the current frozen package until re-run and re-evaluated.
 
 ## Snapshot
 
-- **Current valid run:** Training v2
-- **Status:** RUNNING (as of 2026-03-18)
-- **Target output:** `outputs/hukuk-ai-lora-v2`
+- **Current active train package:** `data/finetune/sft/final_train.jsonl`
+- **Active package size:** `807`
+- **Readiness status:** `READY` (2026-03-21 preflight)
+- **Historical output under audit:** `outputs/hukuk-ai-lora-v2`
 
 ---
 
@@ -50,7 +53,7 @@
 
 ---
 
-## Training v2 — CURRENT (Correct Dataset)
+## Training v2 — HISTORICAL (Pre-Canonicalization Snapshot)
 
 - **Date:** 2026-03-18
 - **Dataset used:** `data/finetune/sft/final_train.jsonl`
@@ -88,7 +91,8 @@
 
 ### Status
 
-- **RUNNING**
+- **HISTORICAL / NOT PROMOTION-ELIGIBLE**
+- This run predates the held-out leakage fix and duplicate canonicalization freeze.
 
 ---
 
@@ -96,5 +100,5 @@
 
 1. v1 is retained in documentation only for auditability.
 2. v1 metrics/loss should not be used in model selection decisions.
-3. v2 is the first valid Faz-3 training run with the correct supervised dataset.
-4. Subsequent evaluations and deployment decisions should be based on v2 artifacts only.
+3. v2 is the first historical run launched on the lawyer-reviewed path, but it no longer matches the frozen active train package.
+4. Subsequent evaluations and deployment decisions must be based on runs executed against the current canonicalized package plus post-train evidence.

@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T00:18:00+03:00
+last_activity: 2026-03-21T00:47:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "training provenance ayrımı ve pre-train execution package'ini kilitlemek"
+next_action: "promotion evidence contract'ini baseline/post-train family eşleşmesiyle sıkılaştırmak"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -79,7 +79,10 @@ notes: |
   - Inventory sonucuna göre blind dedupe güvenli değil; cluster bazlı canonicalization gerekiyor.
   - Duplicate cleanup tamamlandı; `final_train.jsonl` artık `807` unique question içeriyor ve duplicate excess `0`.
   - Readiness gate yeniden `READY` durumuna geldi; bu tek başına training başlatma izni anlamına gelmiyor.
+  - Resmi pre-train execution package donduruldu: `coordination/pretrain-execution-package-2026-03-21.md`
+  - `scripts/build_training_dataset.py` artık final canonicalization manifest'ini varsayılan olarak uygular ve aktif `807` satırlık paketi yeniden üretebilir.
+  - `docs/finetune/TRAINING_LOG.md` aktif package ile tarihsel v2 run anlatısını ayıracak şekilde düzeltildi.
 
   ### Sonraki Beklenen Çıktı
-  - Training provenance ayrımı için resmi execution package.
-  - Ardından pre-train / promotion kanıt zincirinin kapatılması.
+  - Promotion evidence contract'inin aynı eval family / checkpoint referansı ile sıkılaştırılması.
+  - Ardından kontrollü pre-train / promotion kanıt zincirinin kapatılması.
