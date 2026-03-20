@@ -2,6 +2,8 @@
 
 > **Important:** The previous "complete" training run (v1) is invalid and has been discarded.  
 > The current active run is **v2** and uses the correct lawyer-reviewed dataset.
+>
+> **2026-03-20 readiness correction:** the committed `final_train.jsonl` was rebuilt after a held-out contamination bug was found in `scripts/build_training_dataset.py`. The current repo file now contains **923** training rows and excludes the 22 held-out questions. Historical v2 training on 2026-03-18 used the earlier 1076-row snapshot that existed at the same path at that time.
 
 ## Snapshot
 

@@ -17,7 +17,7 @@ Usage:
     # Build training set (dry-run, no file write)
     python scripts/build_training_dataset.py --dry-run
 
-    # Build and write
+    # Build and write (all discovered reconciled masters by default)
     python scripts/build_training_dataset.py
 
     # With a specific reconciled file
@@ -38,10 +38,8 @@ from pathlib import Path
 
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).parent.parent
-RECONCILED_MASTER = (
-    PROJECT_ROOT
-    / "data/review_sheets/phase2_first_batch_20260308/reconciled_20260308"
-    / "batch1_first100_reconciled_master.jsonl"
+DEFAULT_RECONCILED_MASTERS = sorted(
+    PROJECT_ROOT.glob("data/review_sheets/**/reconciled_*/*reconciled_master.jsonl")
 )
 SUPPLEMENTARY_FILES = [
     PROJECT_ROOT / "data/finetune/sft/legal_qa.jsonl",
@@ -73,6 +71,15 @@ def _is_scaffolding(record: dict) -> bool:
         if isinstance(v, str) and "SCAFFOLDING" in v:
             return True
     return False
+
+
+def _extract_question(text: str) -> str:
+    """Normalize free text or SFT input payload into the bare question string."""
+    if "\n\nSORU:" in text:
+        return text.split("\n\nSORU:", 1)[1].strip()
+    if "SORU:" in text:
+        return text.split("SORU:", 1)[1].strip()
+    return text.strip()
 
 
 def _build_sft_row(
@@ -217,7 +224,7 @@ def load_held_out(path: Path) -> set[str]:
                 continue
             try:
                 row = json.loads(line)
-                q = row.get("input", row.get("question", ""))
+                q = _extract_question(row.get("input", row.get("question", "")))
                 if q and "SCAFFOLDING" not in q:
                     questions.add(q.strip())
             except json.JSONDecodeError:
@@ -292,9 +299,7 @@ def filter_held_out_contamination(records: list[dict], held_out_questions: set[s
     clean = []
     removed = 0
     for r in records:
-        inp = r.get("input", "")
-        # Extract question from "KAYNAKLAR:\n...\n\nSORU: <question>"
-        question_part = inp.split("\n\nSORU:")[-1].strip() if "\n\nSORU:" in inp else inp.strip()
+        question_part = _extract_question(r.get("input", ""))
         if question_part in held_out_questions:
             removed += 1
         else:
@@ -306,8 +311,12 @@ def filter_held_out_contamination(records: list[dict], held_out_questions: set[s
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build SFT training dataset from reconciled reviews")
-    parser.add_argument("--reconciled", nargs="+", default=[str(RECONCILED_MASTER)],
-                        help="Path to reconciled master JSONL")
+    parser.add_argument(
+        "--reconciled",
+        nargs="+",
+        default=[str(path) for path in DEFAULT_RECONCILED_MASTERS],
+        help="Path(s) to reconciled master JSONL. Defaults to all discovered reconciled masters.",
+    )
     parser.add_argument("--output", default=str(OUTPUT_FILE),
                         help="Output JSONL path")
     parser.add_argument("--no-supplementary", action="store_true",
@@ -324,6 +333,7 @@ def main() -> int:
     # 1. Load reconciled master (approved + revised)
     records = []
     reconciled_paths = [Path(p) for p in args.reconciled] if isinstance(args.reconciled, list) else [Path(args.reconciled)]
+    log.info("Reconciled source files: %d", len(reconciled_paths))
     for pth in reconciled_paths:
         if not pth.exists():
             log.error("Reconciled file not found: %s", pth)
