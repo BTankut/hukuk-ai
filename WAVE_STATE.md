@@ -4,7 +4,7 @@ status: running
 started_at: 2026-03-20T18:40:00+03:00
 last_activity: 2026-03-20T19:40:00+03:00
 last_eval: evaluation/reports/eval_live_20260308_080601.json
-next_action: "Reranker A/B ve threshold sweep için canonical eval matrix üzerinden ilk karşılaştırmaları hazırlamak"
+next_action: "run_reranker_safe_activation.py ile baseline-off ve reranker-on threshold sweep canlı koşularını sırayla almak"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -33,9 +33,12 @@ notes: |
   - `scripts/check_training_readiness.py --mode preflight` artık PASS veriyor.
   - 95q ve 170q eval setleri git geçmişinden geri alındı.
   - `scripts/run_eval_matrix.sh all` artık üç seti de plan modunda çözüyor.
+  - `evaluation/run_reranker_safe_activation.py` eklendi.
+  - `docs/reranker-safe-activation-runbook.md` ile canlı A/B akışı belgelendi.
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
+  - Reranker canlı sweep manuel API restart gerektiriyor; otomatik restart bu repo içinde bilinçli olarak yapılmıyor.
 
   ### Sonraki Beklenen Çıktı
-  - Reranker A/B için baseline komutları ve ilk karar matrisi hazırlanacak.
+  - İlk canlı karar matrisi: `baseline-off` + `thr=0.1..0.5`.
