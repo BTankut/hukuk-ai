@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T02:05:00+03:00
+last_activity: 2026-03-21T03:00:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "restore edilen fine-tune execution chain üzerinden gerçek post-train checkpoint + eval manifest akışını çalıştırmak"
+next_action: "qwen3_5_moe uyumlu runtime veya direct merged eval fallback ile ilk gerçek post-train evidence zincirini çalıştırmak"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -91,8 +91,13 @@ notes: |
   - `scripts/finetune/check_finetune_config.py` artık train SHA / row count / held-out row count doğruluyor ve canonical readiness gate'i doğrudan çağırıyor.
   - `configs/training/sft_config.yaml` ve `configs/training/sft_llamafactory.yaml` current canonical package için restore edildi.
   - DGX bootstrap runbook restore edildi: `docs/finetune/dgxnode2-lora-bootstrap.md`
+  - Tarihsel merged fine-tune checkpoint dgxnode2 üzerinde doğrulandı: `/home/btankut/hukuk-ai-finetune/outputs/hukuk-ai-lora-v2/merged`
+  - İzole FT eval recovery denemesi `192.168.12.236:30002` için yapıldı.
+  - İlk deneme image entrypoint davranışı nedeniyle yanlış model/port ile açıldı.
+  - Env-driven ikinci deneme doğru path/porta ulaştı fakat vLLM image içindeki `Transformers` stack `qwen3_5_moe` mimarisini tanımadığı için startup fail verdi.
+  - Bu blocker kayda geçirildi: `coordination/posttrain-runtime-recovery-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
-  - İlk gerçek trained checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.
-  - Ardından aynı eval family ile post-train raw report + evidence manifest üretimi.
+  - `qwen3_5_moe` destekli serving image veya direct merged-model evaluator fallback seçiminin netleştirilmesi.
+  - Ardından ilk gerçek post-train raw report + evidence manifest üretimi.
   - Sonrasında promotion check'in baseline vs post-train manifest ile çalıştırılması.
