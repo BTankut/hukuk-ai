@@ -7,7 +7,11 @@ from guardrails.pipeline import GuardrailsPipeline
 
 
 def test_guardrails_pipeline_does_not_block_valid_legal_answer_in_safe_default():
-    settings = Settings(guardrails_enabled=False, guardrails_strict_mode=False)
+    settings = Settings(
+        guardrails_enabled=False,
+        guardrails_strict_mode=False,
+        presidio_enabled=False,
+    )
     pipeline = GuardrailsPipeline(settings=settings)
 
     result = asyncio.run(
@@ -23,7 +27,11 @@ def test_guardrails_pipeline_does_not_block_valid_legal_answer_in_safe_default()
 
 
 def test_guardrails_pipeline_does_not_blanket_block_on_invalid_citation_in_safe_default():
-    settings = Settings(guardrails_enabled=False, guardrails_strict_mode=False)
+    settings = Settings(
+        guardrails_enabled=False,
+        guardrails_strict_mode=False,
+        presidio_enabled=False,
+    )
     pipeline = GuardrailsPipeline(settings=settings)
 
     result = asyncio.run(
@@ -39,7 +47,11 @@ def test_guardrails_pipeline_does_not_blanket_block_on_invalid_citation_in_safe_
 
 
 def test_guardrails_pipeline_blocks_clearly_unsafe_input_request():
-    settings = Settings(guardrails_enabled=False, guardrails_strict_mode=False)
+    settings = Settings(
+        guardrails_enabled=False,
+        guardrails_strict_mode=False,
+        presidio_enabled=False,
+    )
     pipeline = GuardrailsPipeline(settings=settings)
 
     result = asyncio.run(
@@ -52,3 +64,32 @@ def test_guardrails_pipeline_blocks_clearly_unsafe_input_request():
 
     assert result.blocked is True
     assert "input_sensitive_data_request" in result.reasons
+
+
+def test_guardrails_pipeline_fail_opens_on_english_false_positive_refusal(monkeypatch):
+    settings = Settings(
+        guardrails_enabled=True,
+        guardrails_strict_mode=False,
+        presidio_enabled=False,
+    )
+    pipeline = GuardrailsPipeline(settings=settings)
+
+    async def _fake_guardrails(*_args, **_kwargs):
+        return (
+            "response=[{'role': 'assistant', 'content': \"I'm sorry, I can't respond to that.\"}] "
+            "llm_output=None output_data=None"
+        )
+
+    monkeypatch.setattr(pipeline, "_generate_with_rails_guarded", _fake_guardrails)
+
+    result = asyncio.run(
+        pipeline.run(
+            user_query="TBK 49 nedir?",
+            draft_answer="TBK m.49 haksiz fiil sorumlulugunun genel kuralini duzenler. [Kaynak: TBK m.49]",
+            retrieved_chunks=[{"text": "...", "citation": "TBK m.49"}],
+        )
+    )
+
+    assert result.blocked is False
+    assert result.answer.endswith("[Kaynak: TBK m.49]")
+    assert "guardrails_fail_open_refusal_fallback" in result.reasons

@@ -2,12 +2,10 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T20:28:00+03:00
+last_activity: 2026-03-20T20:34:00+03:00
 last_eval: evaluation/reports/eval_live_20260308_080601.json
-next_action: "dgxnode2 fallback runtime üzerinde guardrails false-positive'ı izole edip canlı karar koşusuna geçmek"
-blockers:
-  - Guardrails, `192.168.12.236:8080/v1` üstündeki `llama.cpp` runtime ile false-positive refusal üretiyor
-  - Eski DGX runtime hattı (`192.168.12.243`) kararsız; resmi live endpoint netleştirilmeli
+next_action: "guardrails açık canlı runtime ile reranker safe activation karar koşusuna geçmek"
+blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -46,14 +44,16 @@ notes: |
   - API Gateway `localhost:8000` üzerinde ayağa kaldırıldı.
   - Retrieval zinciri `mevzuat_e5_shadow` + remote e5 embedding ile doğrulandı.
   - Yeni live LLM runtime doğrulandı: `192.168.12.236:8080/v1` / `Qwen3.5-35B-A3B-Q8_0.gguf`
-  - Gateway smoke, guardrails kapalı modda PASS verdi.
+  - Guardrails pipeline, `llama.cpp` runtime'ın stringified refusal cevabını parse edip fail-open davranacak şekilde düzeltildi.
+  - Gateway smoke, guardrails açık modda PASS verdi.
+  - Unsafe live smoke, `input_unsafe_request` ile doğru şekilde bloklandı.
   - Runtime notu güncellendi: `coordination/runtime-bringup-recovery-2026-03-20.md`
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
   - Reranker canlı sweep manuel API restart gerektiriyor; otomatik restart bu repo içinde bilinçli olarak yapılmıyor.
-  - Guardrails katmanı yeni `llama.cpp` runtime ile uyumlu davranmıyor; false-positive refusal üretiyor.
+  - Eski DGX node1 hattı (`192.168.12.243`) kararsız; aktif live endpoint şu an dgxnode2 fallback runtime.
 
   ### Sonraki Beklenen Çıktı
-  - Guardrails kararı netleştikten sonra kısa live smoke.
-  - Ardından ilk canlı karar matrisi: `baseline-off` + `thr=0.1..0.5`.
+  - İlk canlı karar matrisi: `baseline-off` + `thr=0.1..0.5`.
+  - Ardından guardrails ve reranker kombinasyonunda faz2 P0 karar notu.

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import ast
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -79,7 +81,13 @@ class GuardrailsPipeline:
         "bu konuda bilgi veremem",
         "kapsam dışı",
         "güvenlik nedeniyle",
+        "i'm sorry, i can't respond to that",
+        "i cannot respond to that",
+        "i can't assist with that",
+        "i cannot assist with that",
+        "unable to comply with that request",
     )
+    _STRINGIFIED_RESPONSE_RE = re.compile(r"response=(\[[\s\S]*?\])\s+llm_output=")
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -225,6 +233,18 @@ class GuardrailsPipeline:
     @staticmethod
     def _extract_text(result: Any) -> str:
         if isinstance(result, str):
+            match = GuardrailsPipeline._STRINGIFIED_RESPONSE_RE.search(result)
+            if match:
+                try:
+                    payload = ast.literal_eval(match.group(1))
+                except Exception:
+                    payload = None
+                if isinstance(payload, list):
+                    first = payload[0] if payload else None
+                    if isinstance(first, dict):
+                        content = first.get("content")
+                        if isinstance(content, str) and content.strip():
+                            return content
             return result
         if isinstance(result, dict):
             if "content" in result:
