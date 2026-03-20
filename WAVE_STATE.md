@@ -4,9 +4,10 @@ status: running
 started_at: 2026-03-20T18:40:00+03:00
 last_activity: 2026-03-21T06:10:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "dgxnode2 ssh geri geldiginde detached log-backed launch ile text-only PEFT dry-run ve direct diagnostic eval smoke'u yeniden acmak"
+next_action: "dgxnode2 model endpoint geri geldiginde localhost:8000 uzerinden Wave 2 prompt-only smoke ve citation-drift slice evalini calistirmak; es zamanli olarak ssh toparlaninca detached remote training probes'a donmek"
 blockers:
   - "dgxnode2 ssh stabilitesi: 192.168.12.236 port 22 timeout/reset, fabric ip 192.168.101.12 de ssh timeout"
+  - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed, 192.168.101.12:8080 timeout"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -106,8 +107,17 @@ notes: |
   - Uzun dgxnode2 oturumlarında ssh reset/timeout gözlendi; ağır remote işler için detached log-backed launch stratejisine geçildi.
   - Bu amaçla `scripts/finetune/detach_logged_job.py` eklendi.
   - Recovery notu yazıldı: `coordination/dgxnode2-overnight-launch-recovery-2026-03-21.md`
+  - Live prompt path'in `rag/prompt_builder.py` değil `llm/client.py` olduğu teyit edildi; ilk Wave 2 prompt-only değişiklik doğrudan active path üzerinde yapıldı.
+  - `llm/client.py` explicit article, law-prefix, cross-law citation discipline ve compactness kurallarıyla sertleştirildi.
+  - `api-gateway/tests/test_llm_client.py` ile gerçek prompt path test kapsamına alındı.
+  - Embedding service local cache + offline startup + cpu fallback ile sertleştirildi: `services/embedding-service/src/model.py`
+  - `tests/test_embedding_service_model.py` eklendi.
+  - Local embedding service `127.0.0.1:8081` health `ok`.
+  - Local gateway `127.0.0.1:8000` health `ok`.
+  - Live smoke gateway'den generation aşamasına geçemedi; upstream dgxnode2 model endpoint şu an down.
+  - Prompt hardening notu yazıldı: `coordination/wave2-prompt-hardening-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
+  - dgxnode2 model endpoint geri gelir gelmez localhost gateway üzerinden prompt-only live smoke ve citation-drift/cross-law slice evali.
   - dgxnode2 ssh erişimi geri gelir gelmez detached log-backed training dry-run ve diagnostic smoke'un tekrar açılması.
   - Ardından ilk bounded training smoke checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.
-  - Sonra uygun runner/family kuralına göre post-train raw report + evidence manifest zincirinin ilerletilmesi.

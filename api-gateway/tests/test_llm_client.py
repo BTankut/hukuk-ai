@@ -1,0 +1,51 @@
+from __future__ import annotations
+
+import asyncio
+
+from config import Settings
+from llm.client import ChatMessage, LLMClient
+
+
+class CapturingLLMClient(LLMClient):
+    def __init__(self) -> None:
+        super().__init__(Settings())
+        self.calls: list[tuple[list[ChatMessage], float]] = []
+
+    async def chat(self, messages, temperature: float = 0.1) -> str:  # type: ignore[override]
+        self.calls.append((list(messages), temperature))
+        return "ok"
+
+
+def test_generate_rag_draft_uses_wave2_prompt_rules_with_context() -> None:
+    client = CapturingLLMClient()
+
+    asyncio.run(
+        client.generate_rag_draft(
+            query="TMK m.706 ile TBK m.237 birlikte nasıl değerlendirilir?",
+            context="[Kaynak: TMK m.706]\nResmi şekil gerekir.\n\n[Kaynak: TBK m.237]\nSatış sözleşmesi...",
+        )
+    )
+
+    messages, temperature = client.calls[-1]
+    assert temperature == 0.1
+    assert len(messages) == 2
+    assert messages[0].role == "system"
+    assert "Kanun prefixlerini asla karıştırma" in messages[0].content
+    assert "Cross-law sorularda" in messages[0].content
+    assert "Önce kısa sonucu ver" in messages[0].content
+    assert "Soruda açık madde numarası geçiyorsa" in messages[1].content
+    assert "[Kaynak: TMK m.706]" in messages[1].content
+    assert "TMK m.706 ile TBK m.237" in messages[1].content
+
+
+def test_generate_rag_draft_uses_refusal_prompt_without_context() -> None:
+    client = CapturingLLMClient()
+
+    asyncio.run(client.generate_rag_draft(query="Kıdem tazminatı nasıl hesaplanır?", context=""))
+
+    messages, _temperature = client.calls[-1]
+    assert len(messages) == 2
+    assert messages[0].role == "system"
+    assert "bilgi üretme" in messages[0].content
+    assert "Kaynak olmadan yanıt verme" in messages[1].content
+    assert "Kıdem tazminatı nasıl hesaplanır?" in messages[1].content

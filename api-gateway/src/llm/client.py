@@ -46,52 +46,60 @@ class LLMClient:
         )
         return response.choices[0].message.content or ""
 
+    @staticmethod
+    def _build_no_context_messages(query: str) -> list[ChatMessage]:
+        return [
+            ChatMessage(
+                role="system",
+                content=(
+                    "Sen bir Türk hukuku asistanısın. Sana doğrulanmış kaynak verilmemişse "
+                    "bilgi üretme. Kısa kal, tahmin yürütme ve kaynak bulunmadığını açıkça belirt."
+                ),
+            ),
+            ChatMessage(
+                role="user",
+                content=(
+                    "Aşağıdaki soru için ilgili mevzuat kaynağı bulunamadı. "
+                    "Kaynak olmadan yanıt verme; kullanıcıya mevcut kaynaklarda açık dayanak "
+                    "bulunmadığını kibarca açıkla ve uzman bir avukata danışmasını öner.\n\n"
+                    f"SORU:\n{query}"
+                ),
+            ),
+        ]
+
+    @staticmethod
+    def _build_rag_messages(query: str, context: str) -> list[ChatMessage]:
+        system_prompt = (
+            "Sen bir Türk hukuku asistanısın. YALNIZCA verilen KAYNAKLAR bölümünü kullan. "
+            "Kaynakta bulunmayan bilgi, sonuç veya madde üretme.\n\n"
+            "Yanıtı üretmeden önce zihinsel olarak şu sırayı izle, fakat bu adımları kullanıcıya yazma:\n"
+            "1. Sorunun gerçekten hangi kanun ailesine dayandığını belirle (TBK, TMK, TCK, HMK, TTK, İİK).\n"
+            "2. Soru belirli bir maddeye atıf yapıyorsa ve o madde kaynaklarda varsa önce onu değerlendir.\n"
+            "3. Her iddiayı yalnız gerçekten dayandığın kaynak maddelerle eşleştir.\n\n"
+            "Zorunlu kurallar:\n"
+            "- Her hukuki iddiada en yakın ilgili '[Kaynak: X]' etiketini kullan.\n"
+            "- Kanun prefixlerini asla karıştırma; TBK/TMK/TCK/HMK/TTK/İİK aynen korunmalı.\n"
+            "- Komşu veya benzer maddeyi yalnız yakın olduğu için cite etme; sadece gerçekten dayandığın maddeyi yaz.\n"
+            "- Cross-law sorularda cevap gerçekten iki kanuna dayanıyorsa her iki kanundan da açık kaynak göster; dayanmıyorsa gereksiz ikinci kanun ekleme.\n"
+            "- Önce kısa sonucu ver, sonra en fazla üç kısa dayanak maddesiyle devam et.\n"
+            "- Kaynak yetersizse açıkça bunu söyle ve tahmin yürütme."
+        )
+        user_prompt = (
+            "Aşağıdaki kaynak metinlerini kullanarak soruyu yanıtla. "
+            "Önce tek cümlelik sonucu ver. Ardından yalnız gerçekten dayandığın maddeleri "
+            "'[Kaynak: X]' biçiminde göster. Soruda açık madde numarası geçiyorsa ve kaynaklarda "
+            "varsa o maddeyi atlama.\n\n"
+            f"KAYNAKLAR:\n{context}\n\n"
+            f"SORU:\n{query}"
+        )
+        return [
+            ChatMessage(role="system", content=system_prompt),
+            ChatMessage(role="user", content=user_prompt),
+        ]
+
     async def generate_rag_draft(self, query: str, context: str) -> str:
         if not context or not context.strip():
-            # Bağlam yoksa güvenli refusal üret
-            messages = [
-                ChatMessage(
-                    role="system",
-                    content=(
-                        "Sen bir Türk hukuku asistanısın. Yalnızca sana verilen kaynak "
-                        "metinlerine dayanarak yanıt ver. Kaynak verilmemişse bunu açıkça "
-                        "belirt ve bilgi üretme."
-                    ),
-                ),
-                ChatMessage(
-                    role="user",
-                    content=(
-                        "Aşağıdaki soru için ilgili mevzuat kaynağı bulunamadı. "
-                        "Kaynak olmadan yanıt verme; kullanıcıya mevzuat bulunmadığını "
-                        "kibarca açıkla ve uzman bir avukata danışmasını öner.\n\n"
-                        f"SORU:\n{query}"
-                    ),
-                ),
-            ]
+            messages = self._build_no_context_messages(query)
         else:
-            messages = [
-                ChatMessage(
-                    role="system",
-                    content=(
-                        "Sen bir Türk hukuku asistanısın. YALNIZCA verilen KAYNAKLAR "
-                        "bölümündeki metni kullan. Kaynak metinlerde geçen '[Kaynak: X]' "
-                        "etiketlerini yanıtında alıntı olarak kullan. "
-                        "Kaynak metinlerde bulunmayan bilgi üretme. "
-                        "Özellikle Türk Medeni Kanunu (TMK), İş Kanunu (Kıdem tazminatı vb.) veya "
-                        "diğer kapsam dışı konularda (ör. şirketler hukuku) soru gelirse ve kaynaklarda "
-                        "net olarak yoksa KESİNLİKLE kendi bilgini kullanarak yanıt verme. "
-                        "Açıkça 'Bu konu şu anki TBK kapsamım dışındadır veya kaynaklarda bulunmamaktadır.' diyerek reddet."
-                    ),
-                ),
-                ChatMessage(
-                    role="user",
-                    content=(
-                        "Aşağıdaki kaynak metinleri kullanarak soruyu yanıtla. "
-                        "Yanıtta her iddia için ilgili kaynak etiketini '[Kaynak: X]' "
-                        "biçiminde ekle.\n\n"
-                        f"KAYNAKLAR:\n{context}\n\n"
-                        f"SORU:\n{query}"
-                    ),
-                ),
-            ]
+            messages = self._build_rag_messages(query, context)
         return await self.chat(messages=messages, temperature=0.1)
