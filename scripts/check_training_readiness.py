@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from collections import Counter
@@ -25,6 +26,18 @@ class CheckItem:
     name: str
     ok: bool
     detail: str
+
+
+@dataclass(slots=True)
+class EvidenceManifest:
+    path: Path
+    role: str
+    eval_family: str
+    model_ref: str
+    checkpoint_ref: str
+    git_commit: str
+    report_path: Path
+    report_sha256: str
 
 
 def _print_check(item: CheckItem) -> None:
@@ -169,6 +182,177 @@ def _check_required_paths(paths: list[Path], label: str) -> CheckItem:
     return CheckItem(name=label, ok=True, detail=f"{len(paths)} paths present")
 
 
+def _resolve_repo_path(path_value: str) -> Path:
+    path = Path(path_value)
+    if path.is_absolute():
+        return path
+    return (PROJECT_ROOT / path).resolve()
+
+
+def _parse_evidence_manifest(path: Path) -> tuple[EvidenceManifest | None, str | None]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return None, f"unreadable JSON ({exc})"
+
+    if not isinstance(payload, dict):
+        return None, "manifest must be a JSON object"
+
+    required_fields = [
+        "manifest_version",
+        "role",
+        "eval_family",
+        "model_ref",
+        "checkpoint_ref",
+        "git_commit",
+        "report_path",
+        "report_sha256",
+    ]
+    missing = [field for field in required_fields if not payload.get(field)]
+    if missing:
+        return None, f"missing required fields: {', '.join(missing)}"
+
+    role = str(payload["role"]).strip()
+    if role not in {"baseline", "post_train"}:
+        return None, f"invalid role={role!r}"
+
+    report_path = _resolve_repo_path(str(payload["report_path"]))
+    if not report_path.exists():
+        return None, f"report path missing: {report_path}"
+
+    actual_sha256 = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    expected_sha256 = str(payload["report_sha256"]).strip()
+    if actual_sha256 != expected_sha256:
+        return None, (
+            "report sha256 mismatch: "
+            f"expected={expected_sha256} actual={actual_sha256}"
+        )
+
+    return (
+        EvidenceManifest(
+            path=path,
+            role=role,
+            eval_family=str(payload["eval_family"]).strip(),
+            model_ref=str(payload["model_ref"]).strip(),
+            checkpoint_ref=str(payload["checkpoint_ref"]).strip(),
+            git_commit=str(payload["git_commit"]).strip(),
+            report_path=report_path,
+            report_sha256=expected_sha256,
+        ),
+        None,
+    )
+
+
+def _check_evidence_manifests(
+    paths: list[Path],
+    *,
+    label: str,
+    allowed_roles: set[str],
+    expected_eval_family: str | None = None,
+) -> tuple[CheckItem, list[EvidenceManifest]]:
+    if not paths:
+        return CheckItem(name=label, ok=False, detail="no paths provided"), []
+
+    manifests: list[EvidenceManifest] = []
+    errors: list[str] = []
+    for path in paths:
+        if not path.exists():
+            errors.append(f"{path}: missing manifest file")
+            continue
+
+        manifest, error = _parse_evidence_manifest(path)
+        if error:
+            errors.append(f"{path}: {error}")
+            continue
+        if manifest.role not in allowed_roles:
+            errors.append(
+                f"{path}: role {manifest.role!r} not allowed (expected one of {sorted(allowed_roles)})"
+            )
+            continue
+        if expected_eval_family and manifest.eval_family != expected_eval_family:
+            errors.append(
+                f"{path}: eval_family={manifest.eval_family!r} != expected {expected_eval_family!r}"
+            )
+            continue
+        manifests.append(manifest)
+
+    if errors:
+        return CheckItem(name=label, ok=False, detail="; ".join(errors)), []
+
+    families = sorted({manifest.eval_family for manifest in manifests})
+    checkpoints = sorted({manifest.checkpoint_ref for manifest in manifests})
+    return (
+        CheckItem(
+            name=label,
+            ok=True,
+            detail=(
+                f"{len(manifests)} manifest(s), eval_family={families}, "
+                f"checkpoint_ref={checkpoints}"
+            ),
+        ),
+        manifests,
+    )
+
+
+def _check_promotion_evidence_contract(
+    baseline_manifests: list[EvidenceManifest],
+    post_train_manifests: list[EvidenceManifest],
+    expected_eval_family: str | None = None,
+) -> CheckItem:
+    baseline_families = {manifest.eval_family for manifest in baseline_manifests}
+    post_train_families = {manifest.eval_family for manifest in post_train_manifests}
+    if baseline_families != post_train_families:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=(
+                f"baseline eval families {sorted(baseline_families)} do not match "
+                f"post-train eval families {sorted(post_train_families)}"
+            ),
+        )
+
+    if expected_eval_family and baseline_families != {expected_eval_family}:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=(
+                f"eval family mismatch: expected {expected_eval_family!r}, "
+                f"got {sorted(baseline_families)}"
+            ),
+        )
+
+    baseline_checkpoints = {manifest.checkpoint_ref for manifest in baseline_manifests}
+    post_train_checkpoints = {manifest.checkpoint_ref for manifest in post_train_manifests}
+    if len(baseline_checkpoints) != 1:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=f"baseline evidence has multiple checkpoint refs: {sorted(baseline_checkpoints)}",
+        )
+    if len(post_train_checkpoints) != 1:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=f"post-train evidence has multiple checkpoint refs: {sorted(post_train_checkpoints)}",
+        )
+    if baseline_checkpoints == post_train_checkpoints:
+        return CheckItem(
+            name="Promotion evidence contract",
+            ok=False,
+            detail=f"baseline and post-train checkpoint_ref are identical: {sorted(baseline_checkpoints)}",
+        )
+
+    return CheckItem(
+        name="Promotion evidence contract",
+        ok=True,
+        detail=(
+            f"eval_family={sorted(baseline_families)} | "
+            f"baseline_checkpoint={sorted(baseline_checkpoints)} | "
+            f"post_train_checkpoint={sorted(post_train_checkpoints)}"
+        ),
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Check fine-tuning readiness gates.")
     parser.add_argument(
@@ -215,6 +399,10 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=0,
         help="Maximum allowed duplicate question excess rows inside the train set.",
+    )
+    parser.add_argument(
+        "--expected-eval-family",
+        help="Expected evaluation family label shared by baseline and post-train evidence manifests (example: faz1-50).",
     )
     return parser
 
@@ -269,12 +457,39 @@ def main() -> int:
             )
 
     checks.append(_scan_forbidden_refs(workflow_files, args.forbidden_ref))
-    checks.append(_check_required_paths(baseline_paths, "Baseline evidence"))
+
+    baseline_item, baseline_manifests = _check_evidence_manifests(
+        baseline_paths,
+        label="Baseline evidence manifest",
+        allowed_roles={"baseline"},
+        expected_eval_family=args.expected_eval_family,
+    )
+    checks.append(baseline_item)
 
     if args.mode == "promotion":
-        checks.append(_check_required_paths(post_train_paths, "Post-train evidence"))
+        post_train_item, post_train_manifests = _check_evidence_manifests(
+            post_train_paths,
+            label="Post-train evidence manifest",
+            allowed_roles={"post_train"},
+            expected_eval_family=args.expected_eval_family,
+        )
+        checks.append(post_train_item)
+        if baseline_item.ok and post_train_item.ok:
+            checks.append(
+                _check_promotion_evidence_contract(
+                    baseline_manifests,
+                    post_train_manifests,
+                    expected_eval_family=args.expected_eval_family,
+                )
+            )
     elif post_train_paths:
-        checks.append(_check_required_paths(post_train_paths, "Optional post-train evidence"))
+        optional_item, _ = _check_evidence_manifests(
+            post_train_paths,
+            label="Optional post-train evidence manifest",
+            allowed_roles={"post_train"},
+            expected_eval_family=args.expected_eval_family,
+        )
+        checks.append(optional_item)
 
     print("Training readiness report")
     print("=" * 24)

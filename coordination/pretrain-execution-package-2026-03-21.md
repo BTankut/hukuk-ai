@@ -12,14 +12,14 @@ Decision: `build_training_dataset.py` + official canonicalization manifest is th
 - Held-out file: `data/finetune/eval/held_out_test.jsonl`
   - rows: `22`
   - sha256: `16fcc4e557a9...`
-- Frozen baseline evidence: `evaluation/reports/eval_live_20260308_080601.json`
-  - sha256: `11f2dc040452...`
+- Frozen baseline evidence manifest: `evaluation/reports/evidence_baseline_faz1_50_20260308.json`
+  - raw report: `evaluation/reports/eval_live_20260308_080601.json`
 
 ## Official Build Chain
 
 1. `python3 scripts/build_training_dataset.py --dry-run`
 2. `python3 scripts/build_training_dataset.py`
-3. `python3 scripts/check_training_readiness.py --mode preflight --baseline-evidence-path evaluation/reports/eval_live_20260308_080601.json`
+3. `python3 scripts/check_training_readiness.py --mode preflight --expected-eval-family faz1-50 --baseline-evidence-path evaluation/reports/evidence_baseline_faz1_50_20260308.json`
 
 ## What The Builder Now Freezes
 

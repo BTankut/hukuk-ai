@@ -1,0 +1,21 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-03-20T20:56:44.339817+00:00",
+  "role": "baseline",
+  "eval_family": "faz1-50",
+  "model_ref": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "checkpoint_ref": "base-acceptance-runtime-20260308",
+  "git_commit": "420cd08",
+  "train_package_sha": null,
+  "report_path": "evaluation/reports/eval_live_20260308_080601.json",
+  "report_sha256": "11f2dc040452b59e24153544daa4d9ff5a9bf8effb1644ea652847cad32f7c4b",
+  "report_meta": {
+    "generated_at": "2026-03-08T05:06:01.270311+00:00",
+    "questions_source": "/Users/btmacstudio/.openclaw/workspace/projects/hukuk-ai/configs/evaluation/test_questions.json",
+    "api_url": "http://localhost:8000",
+    "mock_mode": false,
+    "total_questions": 50,
+    "error_count": 0
+  },
+  "notes": "Faz 1 canlı kabul baseline artifact."
+}

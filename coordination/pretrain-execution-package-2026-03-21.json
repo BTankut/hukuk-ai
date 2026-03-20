@@ -14,7 +14,8 @@
   },
   "baseline_evidence": [
     {
-      "path": "evaluation/reports/eval_live_20260308_080601.json",
+      "manifest_path": "evaluation/reports/evidence_baseline_faz1_50_20260308.json",
+      "report_path": "evaluation/reports/eval_live_20260308_080601.json",
       "sha256_12": "11f2dc040452"
     }
   ],

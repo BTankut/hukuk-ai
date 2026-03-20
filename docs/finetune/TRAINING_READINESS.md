@@ -19,6 +19,7 @@ The builder now applies the official duplicate canonicalization package by defau
 Reference package:
 
 - `coordination/pretrain-execution-package-2026-03-21.md`
+- `coordination/promotion-evidence-contract-2026-03-21.md`
 
 ## Hard Gates
 
@@ -75,7 +76,7 @@ The readiness script also checks active workflow files for forbidden references 
 
 Before training starts, there must be at least one frozen baseline evaluation artifact for the model state you are comparing against.
 
-Provide the evidence paths to the readiness script with `--baseline-evidence-path`.
+Provide the evidence manifest paths to the readiness script with `--baseline-evidence-path`.
 
 The evidence should correspond to the same evaluation family that you plan to use for comparison after training.
 
@@ -83,9 +84,9 @@ The evidence should correspond to the same evaluation family that you plan to us
 
 Before any model is promoted, there must be at least one post-train evaluation artifact showing the new run was evaluated on the intended benchmark.
 
-Provide the evidence paths to the readiness script with `--post-train-evidence-path`.
+Provide the evidence manifest paths to the readiness script with `--post-train-evidence-path`.
 
-The post-train artifact must be distinct from the baseline artifact and must reference the trained checkpoint or output directory.
+The post-train manifest must be distinct from the baseline manifest and must reference the trained checkpoint or output directory.
 
 ## Readiness CLI
 
@@ -94,10 +95,20 @@ Run the gate from the repo root.
 Pre-training preflight:
 
 ```bash
+python scripts/build_eval_evidence_manifest.py \
+  --report-path evaluation/reports/eval_live_20260308_080601.json \
+  --role baseline \
+  --eval-family faz1-50 \
+  --model-ref Qwen/Qwen3.5-35B-A3B-FP8 \
+  --checkpoint-ref base-acceptance-runtime-20260308 \
+  --git-commit 420cd08 \
+  --output evaluation/reports/evidence_baseline_faz1_50_20260308.json
+
 python scripts/check_training_readiness.py \
   --mode preflight \
+  --expected-eval-family faz1-50 \
   --max-question-duplicate-excess 0 \
-  --baseline-evidence-path evaluation/reports/<baseline_report>.json
+  --baseline-evidence-path evaluation/reports/evidence_baseline_faz1_50_20260308.json
 ```
 
 Promotion check after training:
@@ -105,9 +116,10 @@ Promotion check after training:
 ```bash
 python scripts/check_training_readiness.py \
   --mode promotion \
+  --expected-eval-family faz1-50 \
   --max-question-duplicate-excess 0 \
-  --baseline-evidence-path evaluation/reports/<baseline_report>.json \
-  --post-train-evidence-path evaluation/reports/<post_train_report>.json
+  --baseline-evidence-path evaluation/reports/<baseline_manifest>.json \
+  --post-train-evidence-path evaluation/reports/<post_train_manifest>.json
 ```
 
 Optional workflow files can be checked for forbidden references with `--workflow-file`.
@@ -118,8 +130,9 @@ Examples:
 python scripts/check_training_readiness.py \
   --mode preflight \
   --workflow-file scripts/build_training_dataset.py \
+  --expected-eval-family faz1-50 \
   --max-question-duplicate-excess 0 \
-  --baseline-evidence-path evaluation/reports/eval_live_20260308_080601.json
+  --baseline-evidence-path evaluation/reports/evidence_baseline_faz1_50_20260308.json
 ```
 
 ## Pass Rule
@@ -130,6 +143,7 @@ The readiness gate passes only if all of the following are true:
 - `held_out_test.jsonl` exists and does not overlap with the train set.
 - The train set does not exceed the allowed duplicate question threshold.
 - The active train file comes from the frozen execution package / official builder path.
+- Baseline and post-train evidence are manifest-backed and SHA-verified.
 - The forbidden v1 dataset path is absent from active workflow files.
 - Baseline evidence is provided.
 - In `promotion` mode, post-train evidence is provided.
