@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T01:14:00+03:00
+last_activity: 2026-03-21T01:24:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "raw eval runner'lara schema_version / model_ref / checkpoint_ref metadata'sını gömmek"
+next_action: "ilk post-train eval manifest zinciri için gerekli trained checkpoint artefact'ını ve karşılaştırma koşusunu hazırlamak"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -84,7 +84,9 @@ notes: |
   - `docs/finetune/TRAINING_LOG.md` aktif package ile tarihsel v2 run anlatısını ayıracak şekilde düzeltildi.
   - Promotion evidence contract sıkılaştırıldı; readiness gate artık baseline/post-train manifest içinde `eval_family`, `checkpoint_ref` ve `report_sha256` doğruluyor.
   - İlk frozen baseline manifest üretildi: `evaluation/reports/evidence_baseline_faz1_50_20260308.json`
+  - Raw eval runner'lar artık `schema_version`, `eval_family`, `model_ref`, `checkpoint_ref`, `git_commit` alanlarını doğrudan `report_meta` içinde taşıyor.
+  - `scripts/run_eval_matrix.sh` ve `evaluation/run_reranker_safe_activation.py` bu metadata'yı raw raporlara propagate edecek şekilde güncellendi.
 
   ### Sonraki Beklenen Çıktı
-  - Raw eval runner'lara daha zengin identity metadata gömülmesi.
-  - Ardından ilk post-train evidence manifest zincirinin kurulması.
+  - İlk post-train evidence manifest zincirinin kurulması.
+  - Ardından promotion check için gerçek trained checkpoint karşılaştırma koşusunun hazırlanması.

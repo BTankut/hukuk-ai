@@ -81,6 +81,7 @@ from metrics import (  # noqa: E402
     compute_metrics,
     aggregate_metrics,
 )
+from report_metadata import build_identity_metadata  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Chat API Client
@@ -374,6 +375,12 @@ def build_report(
     questions_path: Path,
     api_url: str,
     mock_mode: bool,
+    eval_family: str | None = None,
+    model_ref: str | None = None,
+    checkpoint_ref: str | None = None,
+    git_commit: str | None = None,
+    report_role: str = "evaluation",
+    config_fingerprint: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Değerlendirme raporu oluştur."""
 
@@ -382,15 +389,31 @@ def build_report(
         # None değerleri temizle (JSON boyutunu küçültur)
         return {k: v for k, v in d.items() if v is not None}
 
+    report_meta = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "questions_source": str(questions_path),
+        "api_url": api_url if not mock_mode else "MOCK",
+        "mock_mode": mock_mode,
+        "total_questions": summary.total_questions,
+        "error_count": summary.error_count,
+    }
+    report_meta.update(
+        build_identity_metadata(
+            runner="eval_runner",
+            questions_path=questions_path,
+            api_url=api_url,
+            mock_mode=mock_mode,
+            eval_family=eval_family,
+            model_ref=model_ref,
+            checkpoint_ref=checkpoint_ref,
+            git_commit=git_commit,
+            report_role=report_role,
+            config_fingerprint=config_fingerprint,
+        )
+    )
+
     return {
-        "report_meta": {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "questions_source": str(questions_path),
-            "api_url": api_url if not mock_mode else "MOCK",
-            "mock_mode": mock_mode,
-            "total_questions": summary.total_questions,
-            "error_count": summary.error_count,
-        },
+        "report_meta": report_meta,
         "summary": {
             "citation_rate": summary.citation_rate,
             "correct_source_rate": summary.correct_source_rate,
@@ -511,6 +534,31 @@ def main() -> int:
         default=60.0,
         help="API zaman aşımı süresi saniye (varsayılan: 60.0)",
     )
+    parser.add_argument(
+        "--eval-family",
+        default=None,
+        help="Eval family label to embed in report metadata (defaults to inference from question file name).",
+    )
+    parser.add_argument(
+        "--model-ref",
+        default=None,
+        help="Logical model identifier to embed in report metadata.",
+    )
+    parser.add_argument(
+        "--checkpoint-ref",
+        default=None,
+        help="Checkpoint/runtime identifier to embed in report metadata.",
+    )
+    parser.add_argument(
+        "--git-commit",
+        default=None,
+        help="Git commit to embed in report metadata.",
+    )
+    parser.add_argument(
+        "--report-role",
+        default="evaluation",
+        help="Logical report role to embed in report metadata (example: baseline, post_train, ab_variant).",
+    )
     parser.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
@@ -576,6 +624,18 @@ def main() -> int:
         questions_path=args.questions,
         api_url=args.api_url,
         mock_mode=args.mock,
+        eval_family=args.eval_family,
+        model_ref=args.model_ref,
+        checkpoint_ref=args.checkpoint_ref,
+        git_commit=args.git_commit,
+        report_role=args.report_role,
+        config_fingerprint={
+            "law_filter": args.law_filter,
+            "verification_enabled": not args.no_verification,
+            "category_filter": args.category,
+            "delay_seconds": args.delay,
+            "timeout_seconds": args.timeout,
+        },
     )
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)

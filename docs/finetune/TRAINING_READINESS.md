@@ -80,6 +80,8 @@ Provide the evidence manifest paths to the readiness script with `--baseline-evi
 
 The evidence should correspond to the same evaluation family that you plan to use for comparison after training.
 
+If the raw report already embeds `eval_family`, `model_ref`, `checkpoint_ref`, and `git_commit` inside `report_meta`, `scripts/build_eval_evidence_manifest.py` can reuse them automatically.
+
 ### 7. Post-Train Evidence
 
 Before any model is promoted, there must be at least one post-train evaluation artifact showing the new run was evaluated on the intended benchmark.

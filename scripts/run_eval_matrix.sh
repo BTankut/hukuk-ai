@@ -31,6 +31,9 @@ VERBOSE=false
 NO_VERIFICATION=false
 DELAY="0.5"
 TIMEOUT="60.0"
+MODEL_REF="${MODEL_REF:-gateway-api}"
+CHECKPOINT_REF="${CHECKPOINT_REF:-gateway-live}"
+GIT_COMMIT="${GIT_COMMIT:-unknown}"
 
 usage() {
     cat <<'EOF'
@@ -55,6 +58,9 @@ Options:
   --delay SEC        delay between live requests (default: 0.5)
   --timeout SEC      HTTP timeout in seconds (default: 60.0)
   --no-verification  disable verification engine in eval_runner
+  env MODEL_REF=...  embed logical model identifier in raw report metadata
+  env CHECKPOINT_REF=... embed checkpoint/runtime identifier in raw report metadata
+  env GIT_COMMIT=... embed git commit in raw report metadata
   --verbose, -v      enable verbose logging
   --help, -h         show this help
 EOF
@@ -108,6 +114,11 @@ run_case() {
         "--api-url" "$API_URL"
         "--delay" "$DELAY"
         "--timeout" "$TIMEOUT"
+        "--eval-family" "$CASE_LABEL"
+        "--model-ref" "$MODEL_REF"
+        "--checkpoint-ref" "$CHECKPOINT_REF"
+        "--git-commit" "$GIT_COMMIT"
+        "--report-role" "baseline"
     )
 
     if [[ "$MOCK_MODE" == true ]]; then

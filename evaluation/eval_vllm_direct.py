@@ -26,6 +26,7 @@ from typing import Any
 # Same metrics module used by existing runner
 sys.path.insert(0, str(Path(__file__).parent))
 from metrics import QuestionResult, aggregate_metrics, compute_metrics  # noqa: E402
+from report_metadata import build_identity_metadata  # noqa: E402
 
 
 SYSTEM_PROMPT = (
@@ -166,6 +167,15 @@ def main() -> int:
     parser.add_argument("--delay", type=float, default=1.0, help="Delay between requests (sec)")
     parser.add_argument("--timeout", type=float, default=300.0, help="Per-request timeout seconds")
     parser.add_argument("--enable-thinking", action="store_true", help="Enable Qwen thinking/reasoning mode")
+    parser.add_argument("--eval-family", default=None, help="Eval family label to embed in report metadata")
+    parser.add_argument("--model-ref", default=None, help="Logical model identifier to embed in report metadata")
+    parser.add_argument("--checkpoint-ref", default=None, help="Checkpoint/runtime identifier to embed in report metadata")
+    parser.add_argument("--git-commit", default=None, help="Git commit to embed in report metadata")
+    parser.add_argument(
+        "--report-role",
+        default="evaluation",
+        help="Logical report role to embed in report metadata (example: baseline, post_train, ab_variant)",
+    )
     args = parser.parse_args()
 
     max_tokens = max(args.max_tokens, 3000)
@@ -236,21 +246,44 @@ def main() -> int:
 
     summary = aggregate_metrics(results)
 
+    report_meta = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "questions_source": str(args.questions),
+        "api_url": args.api_url,
+        "mock_mode": False,
+        "retrieval_profile": None,
+        "model": args.model,
+        "max_tokens": max_tokens,
+        "enable_thinking": bool(args.enable_thinking),
+        "planned_questions": len(questions),
+        "total_questions": summary.total_questions,
+        "error_count": summary.error_count,
+        "duration_seconds": round(time.time() - started, 1),
+    }
+    report_meta.update(
+        build_identity_metadata(
+            runner="eval_vllm_direct",
+            questions_path=args.questions,
+            api_url=args.api_url,
+            mock_mode=False,
+            eval_family=args.eval_family,
+            model_ref=args.model_ref,
+            checkpoint_ref=args.checkpoint_ref,
+            git_commit=args.git_commit,
+            report_role=args.report_role,
+            model=args.model,
+            config_fingerprint={
+                "category_filter": args.category,
+                "delay_seconds": args.delay,
+                "timeout_seconds": args.timeout,
+                "max_tokens": max_tokens,
+                "enable_thinking": bool(args.enable_thinking),
+            },
+        )
+    )
+
     report = {
-        "report_meta": {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "questions_source": str(args.questions),
-            "api_url": args.api_url,
-            "mock_mode": False,
-            "retrieval_profile": None,
-            "model": args.model,
-            "max_tokens": max_tokens,
-            "enable_thinking": bool(args.enable_thinking),
-            "planned_questions": len(questions),
-            "total_questions": summary.total_questions,
-            "error_count": summary.error_count,
-            "duration_seconds": round(time.time() - started, 1),
-        },
+        "report_meta": report_meta,
         "validation": {
             "is_valid": True,
             "error_count": summary.error_count,

@@ -10,7 +10,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 EVAL_DIR = PROJECT_ROOT / "evaluation"
 sys.path.insert(0, str(EVAL_DIR))
 
-from run_reranker_safe_activation import RunSpec, Variant, _execute_runs
+from run_reranker_safe_activation import RunSpec, Variant, _build_eval_command, _execute_runs
 
 
 def _variant(name: str) -> Variant:
@@ -74,3 +74,26 @@ def test_execute_runs_flags_hard_command_failures(monkeypatch, capsys):
     assert [run.executed for run in runs] == [True, True]
     assert [run.returncode for run in runs] == [127, 0]
     assert "error: eval command failed" in capsys.readouterr().out.lower()
+
+
+def test_build_eval_command_embeds_identity_metadata():
+    command = _build_eval_command(
+        Path("/tmp/questions.json"),
+        Path("/tmp/report.json"),
+        "http://localhost:8000",
+        set_key="faz1-50",
+        model_ref="gateway-live:qwen35",
+        checkpoint_ref="runtime-20260321",
+        git_commit="abc1234",
+    )
+
+    assert "--eval-family" in command
+    assert "faz1-50" in command
+    assert "--model-ref" in command
+    assert "gateway-live:qwen35" in command
+    assert "--checkpoint-ref" in command
+    assert "runtime-20260321" in command
+    assert "--git-commit" in command
+    assert "abc1234" in command
+    assert "--report-role" in command
+    assert "ab_variant" in command

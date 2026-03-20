@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -34,7 +35,7 @@ from metrics import (
     aggregate_metrics,
     QuestionResult,
 )
-from eval_runner import MockChatClient, run_evaluation
+from eval_runner import MockChatClient, build_report, run_evaluation
 
 
 # ===========================================================================
@@ -577,3 +578,45 @@ class TestQuestionsJSON:
 
         refusal_qs = [q for q in data["questions"] if q.get("refusal_expected")]
         assert len(refusal_qs) >= 1, "En az 1 refusal sorusu bekleniyor"
+
+
+class TestReportMetadata:
+    def test_build_report_embeds_identity_metadata(self):
+        summary = SimpleNamespace(
+            total_questions=1,
+            error_count=0,
+            citation_rate=1.0,
+            correct_source_rate=1.0,
+            hallucination_rate=0.0,
+            refusal_accuracy=1.0,
+            avg_keyword_coverage=1.0,
+            phrase_hit_rate=1.0,
+            avg_response_time_ms=120.0,
+            blocked_rate=0.0,
+            faz1_criteria={"overall": {"passes": True, "status": "PASS"}},
+            by_category={},
+            by_difficulty={},
+        )
+
+        report = build_report(
+            results=[],
+            summary=summary,
+            questions_path=PROJECT_ROOT / "configs" / "evaluation" / "test_questions_v2_95.json",
+            api_url="http://localhost:8000",
+            mock_mode=False,
+            model_ref="gateway-live:qwen35",
+            checkpoint_ref="dgxnode2-runtime-20260321",
+            git_commit="abc1234",
+            report_role="baseline",
+            config_fingerprint={"verification_enabled": True},
+        )
+
+        meta = report["report_meta"]
+        assert meta["schema_version"] == 2
+        assert meta["runner"] == "eval_runner"
+        assert meta["report_role"] == "baseline"
+        assert meta["eval_family"] == "phase3-95"
+        assert meta["model_ref"] == "gateway-live:qwen35"
+        assert meta["checkpoint_ref"] == "dgxnode2-runtime-20260321"
+        assert meta["git_commit"] == "abc1234"
+        assert meta["config_fingerprint"] == {"verification_enabled": True}

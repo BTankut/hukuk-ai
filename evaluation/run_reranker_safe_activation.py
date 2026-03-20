@@ -31,6 +31,9 @@ DEFAULT_MODEL = os.getenv(
     "RERANKER_MODEL",
     "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
 )
+DEFAULT_EVAL_MODEL_REF = os.getenv("EVAL_MODEL_REF", "gateway-api")
+DEFAULT_EVAL_CHECKPOINT_REF = os.getenv("EVAL_CHECKPOINT_REF", "gateway-live")
+DEFAULT_GIT_COMMIT = os.getenv("GIT_COMMIT", "unknown")
 DEFAULT_BASELINE_THRESHOLD = 0.7
 DEFAULT_RETRIEVE_TOP_K = 20
 SET_PATHS = {
@@ -156,7 +159,16 @@ def _build_variants(thresholds: list[float], model_id: str) -> list[Variant]:
     return variants
 
 
-def _build_eval_command(questions_path: Path, report_path: Path, api_url: str) -> list[str]:
+def _build_eval_command(
+    questions_path: Path,
+    report_path: Path,
+    api_url: str,
+    *,
+    set_key: str,
+    model_ref: str,
+    checkpoint_ref: str,
+    git_commit: str,
+) -> list[str]:
     return [
         sys.executable,
         str(EVAL_RUNNER),
@@ -166,6 +178,16 @@ def _build_eval_command(questions_path: Path, report_path: Path, api_url: str) -
         str(report_path),
         "--api-url",
         api_url,
+        "--eval-family",
+        set_key,
+        "--model-ref",
+        model_ref,
+        "--checkpoint-ref",
+        checkpoint_ref,
+        "--git-commit",
+        git_commit,
+        "--report-role",
+        "ab_variant",
     ]
 
 
@@ -174,6 +196,10 @@ def _build_plan(
     variants: list[Variant],
     api_url: str,
     output_dir: Path,
+    *,
+    model_ref: str,
+    checkpoint_ref: str,
+    git_commit: str,
 ) -> tuple[list[RunSpec], dict[str, Any]]:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     run_dir = output_dir / f"reranker_safe_activation_{run_id}"
@@ -193,7 +219,15 @@ def _build_plan(
         )
         for variant in variants:
             report_path = run_dir / f"{variant.name}__{set_key}.json"
-            command = _build_eval_command(questions_path, report_path, api_url)
+            command = _build_eval_command(
+                questions_path,
+                report_path,
+                api_url,
+                set_key=set_key,
+                model_ref=model_ref,
+                checkpoint_ref=checkpoint_ref,
+                git_commit=git_commit,
+            )
             runs.append(
                 RunSpec(
                     variant=variant.name,
@@ -345,6 +379,21 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_MODEL,
         help="Reranker model id to advertise in the env matrix.",
     )
+    parser.add_argument(
+        "--eval-model-ref",
+        default=DEFAULT_EVAL_MODEL_REF,
+        help="Logical model identifier to embed in raw eval report metadata.",
+    )
+    parser.add_argument(
+        "--eval-checkpoint-ref",
+        default=DEFAULT_EVAL_CHECKPOINT_REF,
+        help="Checkpoint/runtime identifier to embed in raw eval report metadata.",
+    )
+    parser.add_argument(
+        "--git-commit",
+        default=DEFAULT_GIT_COMMIT,
+        help="Git commit to embed in raw eval report metadata.",
+    )
     return parser
 
 
@@ -361,7 +410,15 @@ def main() -> int:
         return 1
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    runs, summary = _build_plan(sets, variants, args.api_url, args.output_dir)
+    runs, summary = _build_plan(
+        sets,
+        variants,
+        args.api_url,
+        args.output_dir,
+        model_ref=args.eval_model_ref,
+        checkpoint_ref=args.eval_checkpoint_ref,
+        git_commit=args.git_commit,
+    )
     summary["mode"] = "dry-run" if plan_only else "live"
     summary["thresholds"] = thresholds
 
