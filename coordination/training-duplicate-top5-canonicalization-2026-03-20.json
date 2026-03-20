@@ -1,0 +1,37 @@
+{
+  "manifest_version": 1,
+  "scope": "top-5 duplicate clusters",
+  "source_packet": "coordination/training-duplicate-review-packet-2026-03-20.json",
+  "selections": [
+    {
+      "cluster_id": "cluster-01",
+      "question": "TBK'ya göre konut kiralarında kira sözleşmesinin sona erdirilmesi (tahliye) hangi koşullara bağlıdır?",
+      "selected_variant_id": "cluster-01-variant-03",
+      "reason": "Cited and concise; covers the main tahliye grounds without the unsupported breadth of the longest variant."
+    },
+    {
+      "cluster_id": "cluster-02",
+      "question": "TBK'ya göre genel zamanaşımı süresi kaç yıldır ve bu süre hangi tarihten itibaren işlemeye başlar?",
+      "selected_variant_id": "cluster-02-variant-06",
+      "reason": "Directly answers period and start date with the two core citations and avoids extra side details."
+    },
+    {
+      "cluster_id": "cluster-03",
+      "question": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+      "selected_variant_id": "cluster-03-variant-05",
+      "reason": "Best structured cited variant; distinguishes general interest, default interest, and loan-specific rules."
+    },
+    {
+      "cluster_id": "cluster-04",
+      "question": "Sözleşmede aşırı ifa güçlüğü (clausula rebus sic stantibus) TBK'da hangi maddeyle düzenlenmiştir ve uygulanma koşulları nelerdir?",
+      "selected_variant_id": "cluster-04-variant-07",
+      "reason": "Cited and complete; states the article, conditions, and remedy path with clean wording."
+    },
+    {
+      "cluster_id": "cluster-05",
+      "question": "Vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu TBK'nın hangi maddelerinde düzenlenmiştir?",
+      "selected_variant_id": "cluster-05-variant-07",
+      "reason": "Targets the exact question with the two core articles and keeps the answer tighter than broader variants."
+    }
+  ]
+}
