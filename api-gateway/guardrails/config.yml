@@ -2,9 +2,10 @@
 #
 # Amaç:
 #  - Presidio/KVKK maskeleme (input + output)
-#  - Self check input ile yalnızca açıkça uygunsuz / kapsam dışı girişleri elemek
+#  - Python pipeline içindeki deterministik input moderation
 #
 # Bilinçli olarak DEVRE DIŞI (varsayılan):
+#  - NeMo `self check input` (dgxnode2 llama.cpp runtime false-positive drift)
 #  - self_check_output
 #  - self_check_facts
 #  - self_check_hallucination
@@ -19,18 +20,9 @@ models:
       api_key: ${DGX_API_KEY}
       temperature: 0.1
 
-  - type: self_check_input
-    engine: openai
-    model: ${DGX_MODEL}
-    parameters:
-      base_url: ${DGX_BASE_URL}
-      api_key: ${DGX_API_KEY}
-      temperature: 0.0
-
 rails:
   input:
     flows:
-      - self check input
       - mask sensitive input
 
   output:

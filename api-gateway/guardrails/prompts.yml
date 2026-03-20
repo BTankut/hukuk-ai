@@ -1,14 +1,3 @@
-prompts:
-  - task: self_check_input
-    content: |
-      Kullanıcı girdisi için muhafazakar bir uygunluk kontrolü yap.
-
-      "no" döndürmek için en az bir koşul açıkça sağlanmalı:
-      1) Kişisel veri kötüye kullanımı / ifşası talebi (TC kimlik no, telefon, adres vb.)
-      2) Yasadışı veya zararlı eylem talimatı
-      3) Hukuk asistanı kapsamı dışı, açıkça alakasız bir konu (ör. hava durumu, yemek tarifi)
-
-      Geçerli hukuki sorular (TBK dahil genel mevzuat soruları) için "yes" döndür.
-      Belirsiz durumda "yes" döndür (false positive engelle).
-
-      Yalnızca "yes" veya "no" yanıtla.
+# Varsayılan safe mode, NeMo `self_check_input` kullanmaz.
+# Input moderation Python pipeline'da deterministik olarak uygulanır.
+prompts: []

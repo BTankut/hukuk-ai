@@ -16,10 +16,12 @@ def test_guardrails_config_safe_scope_enabled_by_default():
     config_path = _config_dir() / "config.yml"
     data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
+    models = data["models"]
     input_flows = data["rails"]["input"]["flows"]
     output_flows = data["rails"]["output"]["flows"]
 
-    assert "self check input" in input_flows
+    assert [model["type"] for model in models] == ["main"]
+    assert "self check input" not in input_flows
     assert "mask sensitive input" in input_flows
     assert "mask sensitive output" in output_flows
 
@@ -30,14 +32,11 @@ def test_guardrails_config_safe_scope_enabled_by_default():
     assert "verify citations" not in output_flows
 
 
-def test_guardrails_prompts_only_include_input_self_check():
+def test_guardrails_prompts_are_empty_in_default_safe_mode():
     prompts_path = _config_dir() / "prompts.yml"
     data = yaml.safe_load(prompts_path.read_text(encoding="utf-8"))
 
-    tasks = {item["task"] for item in data["prompts"]}
-    assert "self_check_input" in tasks
-    assert "self_check_facts" not in tasks
-    assert "self_check_hallucination" not in tasks
+    assert data["prompts"] == []
 
 
 def test_rails_co_references_presidio_actions():

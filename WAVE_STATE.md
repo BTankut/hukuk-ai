@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T23:10:00+03:00
+last_activity: 2026-03-20T23:13:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "dgxnode2 runtime'da guardrails self_check_input false-positive drift'ini kaldırmak"
+next_action: "training gate için question-level duplicate hard gate ve temizleme planını kapatmak"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -58,13 +58,15 @@ notes: |
   - Retrieval low-risk kararı kayda geçirildi: `coordination/retrieval-low-risk-decision-2026-03-20.md`
   - Retrieval baseline `top_k=20` olarak güncellendi.
   - Açık madde referanslarında exact article force-include retrieval davranışı eklendi.
+  - Guardrails runtime hardening notu kayda geçirildi: `coordination/guardrails-runtime-hardening-2026-03-20.md`
+  - Varsayılan config'ten NeMo `self check input` çıkarıldı; deterministik input moderation resmi safe default oldu.
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
   - Eski DGX node1 hattı (`192.168.12.243`) kararsız; aktif live endpoint şu an dgxnode2 fallback runtime.
   - `self_check_facts` / `self_check_hallucination` hattı bu dalgada shelve; ayrı kalibrasyon olmadan tekrar varsayılan yapılmayacak.
-  - `self_check_input`, dgxnode2 `llama.cpp` runtime üzerinde boş completion kaynaklı false-positive üretme riski taşıyor; ayrı runtime-hardening işi olarak ayrıldı.
+  - Guardrails LLM post-processing hâlâ zaman zaman latency limite çarpıp `draft_answer` fallback kullanabiliyor; bu safe-default içinde kabul ediliyor.
 
   ### Sonraki Beklenen Çıktı
-  - Guardrails runtime drift fix.
+  - Training duplicate hard gate.
   - Ardından training gate için kalan veri/need ayrımı.
