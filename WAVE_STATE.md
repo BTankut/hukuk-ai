@@ -2,12 +2,12 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T19:55:00+03:00
+last_activity: 2026-03-20T20:28:00+03:00
 last_eval: evaluation/reports/eval_live_20260308_080601.json
-next_action: "DGX runtime drift'ini netleştirip generation katmanını stabilize etmek; ardından kısa live smoke ve safe-activation canlı koşusu"
+next_action: "dgxnode2 fallback runtime üzerinde guardrails false-positive'ı izole edip canlı karar koşusuna geçmek"
 blockers:
-  - DGX runtime drift raporu var: `30000/vllm_head` dışında `30001/qwen35-base-eval` varyantı da gözlendi
-  - DGX host/endpoint erişimi kararsız: ilk probe sonrası `ssh` ve `http` timeout'ları yaşandı
+  - Guardrails, `192.168.12.236:8080/v1` üstündeki `llama.cpp` runtime ile false-positive refusal üretiyor
+  - Eski DGX runtime hattı (`192.168.12.243`) kararsız; resmi live endpoint netleştirilmeli
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -42,17 +42,18 @@ notes: |
   - `docker compose -f api-gateway/docker-compose.milvus.yml up -d` ile Milvus hattı geri kaldırıldı.
   - `api-gateway/.venv` temiz repoda `3.12.9` ile kuruldu.
   - `api-gateway[dev,milvus]` bağımlılıkları kuruldu.
-  - `en_core_web_lg` kurularak gateway startup blocker'ı aşıldı.
   - Embedding service `localhost:8081` üzerinde ayağa kaldırıldı.
   - API Gateway `localhost:8000` üzerinde ayağa kaldırıldı.
   - Retrieval zinciri `mevzuat_e5_shadow` + remote e5 embedding ile doğrulandı.
-  - Runtime notu kaydedildi: `coordination/runtime-bringup-recovery-2026-03-20.md`
+  - Yeni live LLM runtime doğrulandı: `192.168.12.236:8080/v1` / `Qwen3.5-35B-A3B-Q8_0.gguf`
+  - Gateway smoke, guardrails kapalı modda PASS verdi.
+  - Runtime notu güncellendi: `coordination/runtime-bringup-recovery-2026-03-20.md`
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; şu an yalnızca raporlandı, henüz yeni bir hard gate yapılmadı.
   - Reranker canlı sweep manuel API restart gerektiriyor; otomatik restart bu repo içinde bilinçli olarak yapılmıyor.
-  - DGX generation katmanı kararlı değil; `30001` varyantı bir probda görüldü ama sonraki doğrulamalarda timeout gözlendi.
+  - Guardrails katmanı yeni `llama.cpp` runtime ile uyumlu davranmıyor; false-positive refusal üretiyor.
 
   ### Sonraki Beklenen Çıktı
-  - DGX stabilize olduktan sonra kısa live smoke.
+  - Guardrails kararı netleştikten sonra kısa live smoke.
   - Ardından ilk canlı karar matrisi: `baseline-off` + `thr=0.1..0.5`.

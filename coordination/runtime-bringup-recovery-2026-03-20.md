@@ -13,6 +13,10 @@ Temiz klonlanan `/Users/btmacstudio/Projects/hukuk-ai` üzerinde, backup klasör
 - DGX tarafındaki eski varsayım (`192.168.12.243:30000`, container=`vllm_head`) artık güncel değil.
 - Bu turda ajan probunda görülen ve gateway env'ine yansıtılan aday DGX runtime: container=`qwen35-base-eval`, port=`30001`, model id=`qwen35-base`.
 - DGX endpoint'i ilk sağlık probunda cevap verdi, ancak sonrasında hem LAN HTTP hem SSH erişimi timeout vermeye başladı. Bu yüzden tam E2E generation çağrısı kararlı biçimde tamamlanamadı.
+- Kullanıcı yönlendirmesi sonrası yeni fallback runtime doğrulandı: `dgxnode2` (`192.168.12.236:8080/v1`), model=`Qwen3.5-35B-A3B-Q8_0.gguf`, server=`llama.cpp`.
+- Bu fallback runtime ile doğrudan OpenAI-compatible chat çağrısı geçti.
+- Gateway de bu runtime'a çevrilerek kısa RAG smoke PASS alındı.
+- Ancak `GUARDRAILS_ENABLED=true` iken NeMo guardrails yeni runtime üzerinde false-positive refusal üretiyor; bu nedenle smoke doğrulaması guardrails kapalı modda tamamlandı.
 
 ## Backup vs Temiz Repo
 
@@ -49,6 +53,11 @@ Temiz klonlanan `/Users/btmacstudio/Projects/hukuk-ai` üzerinde, backup klasör
 - Eski script default'u bu host için başarısız oldu:
   - container=`vllm_head`
   - port=`30000`
+- Kullanıcı sonrası doğrulanan fallback runtime:
+  - `GET http://192.168.12.236:8080/v1/models`
+  - model id=`Qwen3.5-35B-A3B-Q8_0.gguf`
+  - `GET/POST` çağrıları LAN IP üzerinden başarılı, fabric IP (`192.168.101.12`) timeout
+  - OpenAI client + `extra_body={"chat_template_kwargs": {"enable_thinking": False}}` uyumlu
 
 ## Uygulanan Bring-Up Sırası
 
@@ -116,13 +125,17 @@ curl http://localhost:8000/v1/models
 
 ## Kalan Bloker
 
-- DGX endpoint'i bu turda kararlı değildi.
-- `30001` varyantı bir ajan probunda görüldü; ancak sonraki `curl` ve `ssh` denemelerinde aynı runtime bağımsız olarak doğrulanamadı ve timeout yaşandı.
-- Sonuç: lokal RAG zinciri hazır, fakat generation katmanı kararlı olmadığı için safe-activation canlı koşusuna henüz geçilmedi.
+- `192.168.12.243` üzerindeki eski / drifting runtime hâlâ kararsız.
+- Yeni çalışan runtime `192.168.12.236:8080/v1` üzerinde generation katmanı hazır.
+- Asıl yeni blocker guardrails uyumluluğu:
+  - `GUARDRAILS_ENABLED=true` iken kısa hukuki soruda false-positive refusal (`I'm sorry, I can't respond to that.`)
+  - `GUARDRAILS_ENABLED=false` iken aynı soru için gateway doğru, kaynaklı yanıt üretiyor.
+- Sonuç: lokal RAG + new LLM hattı hazır; safe-activation canlı koşusu öncesi guardrails runtime uyumu ayrı karar/iyileştirme işi olarak ele alınmalı.
 
 ## Sonraki Adım
 
-1. DGX host erişimini stabilize et.
-2. `30001` runtime'ını resmi endpoint mi, geçici eval container'ı mı netleştir.
-3. Ardından gateway üzerinden kısa canlı smoke isteğini tekrar et.
-4. Sonra `evaluation/run_reranker_safe_activation.py --live` çalıştır.
+1. `192.168.12.236:8080/v1` runtime'ını geçici değilse resmi live endpoint olarak kayda geçir.
+2. Guardrails false-positive'ı bu runtime üzerinde izole et ve karar ver:
+   - ya extraction/prompt/parser uyarlaması yap,
+   - ya da reranker canlı sweep'i guardrails kapalı baseline olarak koş.
+3. Ardından `evaluation/run_reranker_safe_activation.py --live` çalıştır.
