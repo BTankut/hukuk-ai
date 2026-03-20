@@ -1,34 +1,31 @@
 # Wave State
-current_wave: faz3-lora-v2-training
+current_wave: faz2-p0-order-restoration
 status: running
-started_at: 2026-03-18T07:55:00+03:00
-last_activity: 2026-03-18T08:47:00+03:00
-last_eval: evaluation/reports/eval_faz3_base.json
-next_action: "LoRA v2 eğitimi tamamlanınca merge → serve → 170q eval (FT vs base)"
+started_at: 2026-03-20T18:40:00+03:00
+last_activity: 2026-03-20T18:40:00+03:00
+last_eval: evaluation/reports/eval_live_20260308_080601.json
+next_action: "Reranker A/B ve threshold sweep ile başlayıp ardından guardrails facts-only / latency yolunu doğrulamak"
 blockers: []
 notes: |
-  ## Faz 3 — LoRA v2 Eğitimi (1076 avukat onaylı veri)
-  
-  ### Önceki Eğitim (v1) — GEÇERSİZ
-  - 388 sentetik veri ile eğitildi (sft_training_v1.jsonl)
-  - 1076'lık avukat onaylı final_train.jsonl KULLANILMADI
-  - Eski dosyalar silindi (v1, v3, merged-v3)
-  
-  ### Yeni Eğitim (v2) — ÇALIŞIYOR
-  - Veri: final_train.jsonl (1076 kayıt, avukat onaylı/düzeltmeli)
-  - dgxnode2 üzerinde Axolotl + LoRA (r=16, q_proj+v_proj)
-  - 405 step toplam (3 epoch), ~30s/step
-  - Şu an: step 86/405 (%21), loss=0.63, epoch 0.59
-  - GPU: 86.7GB / 121.7GB, eğitim stabil
-  - Tahmini bitiş: ~2.5 saat sonra (~10:30)
-  
-  ### Eğitim Sonrası Plan
-  1. Merge (LoRA → merged model)
-  2. Serve (vLLM cu130-nightly, enforce-eager)
-  3. 170q V3 eval (FT vs base karşılaştırma)
-  4. Base eval zaten tamamlandı: src=50.9%, hal=26.5%, ref=94.1%, cit=88.8%
-  
-  ### Bilinen Sorunlar
-  - Merged model torch.compile ile crash → enforce-eager zorunlu
-  - LoRA adapter vLLM'de IndexError → merged model serve edilmeli
-  - dgxnode1'de base model eval tamamlandı (170q, 0 error)
+  ## Faz 2 P0 Hizalama Dalgası
+
+  Amaç, training odaklı ilerlemeyi durdurmak değil; önce P0 kapılarını yeniden sıraya koymak.
+
+  ### Aktif Sıra
+  1. Reranker A/B ve threshold sweep
+  2. Guardrails facts-only ve latency yolu
+  3. Retrieval genişleme kararı
+  4. Training gate
+
+  ### Baseline Ayrımı
+  - 50q: Faz 1 canlı kabul baz çizgisi
+  - 95q: Phase 3 hardening
+  - 170q: model misuse / training sınırı
+
+  ### Şu Anki Kural
+  - Yeni training run, readiness gate kapanmadan geçerli sayılmaz.
+  - Veri provenance'u lawyer-reviewed / pending-review / synthetic olarak açık ayrılacak.
+  - Reranker ve guardrails kararları, training'den bağımsız olarak ölçülüp kilitlenecek.
+
+  ### Sonraki Beklenen Çıktı
+  - P0 execution map'e göre ilk karar: reranker keep-off mu, enable mı?
