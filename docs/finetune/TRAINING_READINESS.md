@@ -34,7 +34,19 @@ The final training set must contain approved or lawyer-corrected records only.
 
 Pending-review files are allowed only as intermediate review inputs. They are not valid training inputs unless they have been reconciled and written into the final train set.
 
-### 4. Config Validation
+### 4. Question Duplicate Gate
+
+The final training set must not contain duplicate question rows beyond the allowed threshold.
+
+The readiness check scans extracted question text inside `final_train.jsonl` and fails if duplicate excess rows exceed the configured limit.
+
+Default rule:
+
+- `--max-question-duplicate-excess 0`
+
+This keeps training blocked until repeated questions are either merged, removed, or explicitly waived.
+
+### 5. Config Validation
 
 All JSONL inputs used by the training pipeline must pass schema validation with:
 
@@ -43,7 +55,7 @@ All JSONL inputs used by the training pipeline must pass schema validation with:
 
 The readiness script also checks active workflow files for forbidden references to the invalid v1 dataset path.
 
-### 5. Baseline Evidence
+### 6. Baseline Evidence
 
 Before training starts, there must be at least one frozen baseline evaluation artifact for the model state you are comparing against.
 
@@ -51,7 +63,7 @@ Provide the evidence paths to the readiness script with `--baseline-evidence-pat
 
 The evidence should correspond to the same evaluation family that you plan to use for comparison after training.
 
-### 6. Post-Train Evidence
+### 7. Post-Train Evidence
 
 Before any model is promoted, there must be at least one post-train evaluation artifact showing the new run was evaluated on the intended benchmark.
 
@@ -97,6 +109,7 @@ The readiness gate passes only if all of the following are true:
 
 - `final_train.jsonl` exists and validates as SFT JSONL.
 - `held_out_test.jsonl` exists and does not overlap with the train set.
+- The train set does not exceed the allowed duplicate question threshold.
 - The forbidden v1 dataset path is absent from active workflow files.
 - Baseline evidence is provided.
 - In `promotion` mode, post-train evidence is provided.

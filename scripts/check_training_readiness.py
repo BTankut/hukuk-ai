@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -123,6 +124,38 @@ def _check_leakage(train_file: Path, heldout_file: Path) -> CheckItem:
     )
 
 
+def _check_question_duplicates(train_file: Path, max_duplicate_excess: int) -> CheckItem:
+    train_records = _load_jsonl_records(train_file)
+    questions = [_extract_question(record) for record in train_records]
+    questions = [question for question in questions if question]
+
+    counts = Counter(questions)
+    duplicate_groups = [(question, count) for question, count in counts.items() if count > 1]
+    duplicate_groups.sort(key=lambda item: (-item[1], item[0]))
+
+    duplicate_excess = sum(count - 1 for _, count in duplicate_groups)
+    if duplicate_excess > max_duplicate_excess:
+        sample = [f"{question} (x{count})" for question, count in duplicate_groups[:3]]
+        return CheckItem(
+            name="Question duplicate check",
+            ok=False,
+            detail=(
+                f"{len(duplicate_groups)} duplicate question groups, "
+                f"{duplicate_excess} excess rows, threshold={max_duplicate_excess}, "
+                f"sample={sample}"
+            ),
+        )
+
+    return CheckItem(
+        name="Question duplicate check",
+        ok=True,
+        detail=(
+            f"{len(counts)} unique questions, "
+            f"{duplicate_excess} excess duplicate rows (threshold={max_duplicate_excess})"
+        ),
+    )
+
+
 def _check_required_paths(paths: list[Path], label: str) -> CheckItem:
     if not paths:
         return CheckItem(name=label, ok=False, detail="no paths provided")
@@ -177,6 +210,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_FORBIDDEN_REF,
         help="Forbidden dataset path string to scan for in workflow files.",
     )
+    parser.add_argument(
+        "--max-question-duplicate-excess",
+        type=int,
+        default=0,
+        help="Maximum allowed duplicate question excess rows inside the train set.",
+    )
     return parser
 
 
@@ -209,6 +248,23 @@ def main() -> int:
                     name="Held-out leakage check",
                     ok=False,
                     detail=f"unable to compare train and held-out JSONL: {exc}",
+                )
+            )
+
+    if train_file.exists():
+        try:
+            checks.append(
+                _check_question_duplicates(
+                    train_file,
+                    max_duplicate_excess=args.max_question_duplicate_excess,
+                )
+            )
+        except (json.JSONDecodeError, OSError) as exc:
+            checks.append(
+                CheckItem(
+                    name="Question duplicate check",
+                    ok=False,
+                    detail=f"unable to scan train JSONL duplicates: {exc}",
                 )
             )
 
