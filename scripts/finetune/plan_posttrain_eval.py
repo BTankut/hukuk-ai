@@ -8,7 +8,7 @@ import json
 import re
 import shlex
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 from handoff_config import file_sha256, load_handoff_config
@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--git-commit", default="unknown", help="Git commit embedded in the raw report metadata.")
     parser.add_argument("--report-path", default=None, help="Optional explicit raw report output path.")
     parser.add_argument("--manifest-path", default=None, help="Optional explicit evidence manifest output path.")
-    parser.add_argument("--stamp", default=None, help="Optional UTC stamp override, format YYYYMMDD.")
+    parser.add_argument("--stamp", default=None, help="Optional local-date stamp override, format YYYYMMDD.")
     parser.add_argument(
         "--format",
         choices=("shell", "json"),
@@ -80,7 +80,7 @@ def build_plan(
         raise SystemExit(f"questions path not found: {cfg.questions_path}")
 
     safe_checkpoint = _slugify(checkpoint_ref)
-    date_stamp = stamp or datetime.now(timezone.utc).strftime("%Y%m%d")
+    date_stamp = stamp or datetime.now().astimezone().strftime("%Y%m%d")
     resolved_report = report_path or (
         cfg.report_dir / f"eval_post_train_{cfg.eval_family}_{safe_checkpoint}_{date_stamp}.json"
     )

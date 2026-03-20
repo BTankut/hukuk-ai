@@ -21,6 +21,7 @@ Concretely, the following files were referenced by historical reports but missin
 - `scripts/finetune/validate_dgxnode2_env.sh`
 - `scripts/finetune/check_finetune_config.py`
 - `scripts/finetune/handoff_config.py`
+- `scripts/finetune/train_qwen35_textonly_peft.py`
 - `scripts/finetune/plan_posttrain_eval.py`
 - `docs/finetune/dgxnode2-lora-bootstrap.md`
 

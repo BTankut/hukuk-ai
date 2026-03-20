@@ -123,6 +123,13 @@ python scripts/check_training_readiness.py \
 Promotion check after training:
 
 ```bash
+python3 scripts/finetune/plan_posttrain_eval.py \
+  --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json \
+  --checkpoint-ref <trained_checkpoint_ref> \
+  --api-url <candidate_runtime_url> \
+  --model <candidate_runtime_model> \
+  --git-commit <git_commit>
+
 python scripts/check_training_readiness.py \
   --mode promotion \
   --expected-eval-family faz1-50 \

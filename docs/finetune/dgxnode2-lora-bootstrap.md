@@ -7,6 +7,7 @@ Bu runbook dgxnode2 üzerinde resmi fine-tune zincirini ayağa kaldırmak içind
 - `scripts/finetune/bootstrap_dgxnode2_unsloth.sh`
 - `scripts/finetune/validate_dgxnode2_env.sh`
 - `scripts/finetune/check_finetune_config.py`
+- `scripts/finetune/train_qwen35_textonly_peft.py`
 - `configs/finetune/unsloth_sft_qwen35_35b_a3b.json`
 - `configs/training/sft_config.yaml`
 - `configs/training/sft_llamafactory.yaml`
@@ -73,6 +74,10 @@ Fallback yol:
 
 Fallback yalnız Unsloth stack'i dgxnode2 üzerinde bozulursa kullanılmalı; active dataset ve promotion standardı değişmez.
 
+Text-only smoke / training entrypoint:
+
+- `python3 scripts/finetune/train_qwen35_textonly_peft.py --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json --dry-run`
+
 ## 6) Eğitim sonrası zorunlu zincir
 
 Training tamamlandığında promotion için en az şu adımlar gerekir:
@@ -87,7 +92,8 @@ Alternatif olarak komut planını hazır üretmek için:
 python3 scripts/finetune/plan_posttrain_eval.py \
   --checkpoint-ref hukuk-ai-sft-v3 \
   --api-url http://192.168.12.236:8080 \
-  --model hukuk-ai-sft-v3
+  --model hukuk-ai-sft-v3 \
+  --git-commit $(git rev-parse --short HEAD)
 ```
 
 Bu repo'da baseline referansı:
