@@ -1,0 +1,37 @@
+{
+  "manifest_version": 1,
+  "scope": "duplicate clusters 06-10",
+  "source_packet": "coordination/training-duplicate-review-packet-batch2-2026-03-20.json",
+  "selections": [
+    {
+      "cluster_id": "cluster-06",
+      "question": "TBK'ya göre kefalet sözleşmesi hangi şekil şartlarına tabidir ve geçerlilik koşulları nelerdir?",
+      "selected_variant_id": "cluster-06-variant-05",
+      "reason": "Most complete cited variant; covers form, spouse consent, future debt cases, and scope of liability."
+    },
+    {
+      "cluster_id": "cluster-07",
+      "question": "Eser sözleşmesinde eserin beklenmedik hâl (mücbir sebep) nedeniyle yok olması durumunda hasara kim katlanır?",
+      "selected_variant_id": "cluster-07-variant-03",
+      "reason": "Cited and concise; answers the general eser sözleşmesi rule without drifting into publication-contract specifics."
+    },
+    {
+      "cluster_id": "cluster-08",
+      "question": "Haksız fiilde zarar görenin müterafik kusuru (ortak kusur) tazminatı nasıl etkiler?",
+      "selected_variant_id": "cluster-08-variant-03",
+      "reason": "Cited and direct; states the reduction/removal effect without extra note text."
+    },
+    {
+      "cluster_id": "cluster-09",
+      "question": "Alacaklının temerrüdü (alacaklı direnimi) hâlinde borçlu borcundan nasıl kurtulur?",
+      "selected_variant_id": "cluster-09-variant-02",
+      "reason": "Most balanced uncited variant; concise and covers tevdi, sale with court permission, and non-delivery obligations."
+    },
+    {
+      "cluster_id": "cluster-10",
+      "question": "Garantörlük (garanti sözleşmesi) ile kefalet sözleşmesi arasındaki temel fark nedir?",
+      "selected_variant_id": "cluster-10-variant-03",
+      "reason": "Only cited variant and still concise; captures accessory vs independent obligation distinction."
+    }
+  ]
+}

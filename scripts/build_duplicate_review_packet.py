@@ -49,7 +49,8 @@ def _extract_citations(answer: str) -> list[str]:
 def build_packet(
     train_records: list[dict],
     inventory: dict,
-    top_n: int,
+    start_cluster: int,
+    cluster_count: int,
     source_inventory: str,
 ) -> dict:
     grouped_records: dict[str, list[dict]] = defaultdict(list)
@@ -58,8 +59,10 @@ def build_packet(
         if question:
             grouped_records[question].append(record)
 
+    selected_entries = inventory["groups"][start_cluster - 1:start_cluster - 1 + cluster_count]
+
     packet_clusters: list[dict] = []
-    for cluster_index, entry in enumerate(inventory["groups"][:top_n], start=1):
+    for cluster_index, entry in enumerate(selected_entries, start=start_cluster):
         question = entry["question"]
         rows = grouped_records[question]
 
@@ -96,8 +99,9 @@ def build_packet(
 
     return {
         "summary": {
-            "top_n_clusters": top_n,
+            "start_cluster": start_cluster,
             "cluster_count": len(packet_clusters),
+            "end_cluster": start_cluster + len(packet_clusters) - 1 if packet_clusters else start_cluster - 1,
             "source_inventory": source_inventory,
             "review_rule": "Select or merge a canonical answer per cluster; do not blind-delete by row.",
         },
@@ -109,6 +113,8 @@ def _render_markdown(packet: dict) -> str:
     lines = [
         "# Training Duplicate Review Packet",
         "",
+        f"- Start cluster: `{packet['summary']['start_cluster']}`",
+        f"- End cluster: `{packet['summary']['end_cluster']}`",
         f"- Cluster count: `{packet['summary']['cluster_count']}`",
         f"- Source inventory: `{packet['summary']['source_inventory']}`",
         f"- Rule: {packet['summary']['review_rule']}",
@@ -152,7 +158,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build duplicate review packet from train set.")
     parser.add_argument("--train-file", default=str(DEFAULT_TRAIN_FILE))
     parser.add_argument("--inventory-file", default=str(DEFAULT_INVENTORY_FILE))
-    parser.add_argument("--top-n", type=int, default=5)
+    parser.add_argument("--start-cluster", type=int, default=1)
+    parser.add_argument("--count", type=int, default=5)
     parser.add_argument("--json-out", required=True)
     parser.add_argument("--md-out", required=True)
     return parser
@@ -166,7 +173,8 @@ def main() -> int:
     packet = build_packet(
         train_records=_load_jsonl(train_file),
         inventory=_load_json(inventory_file),
-        top_n=args.top_n,
+        start_cluster=args.start_cluster,
+        cluster_count=args.count,
         source_inventory=str(inventory_file.relative_to(PROJECT_ROOT)),
     )
 

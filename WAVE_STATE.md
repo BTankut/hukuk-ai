@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-20T23:38:00+03:00
+last_activity: 2026-03-20T23:46:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "cluster-06 ve sonrası için canonicalization manifest'ini genişletmek"
+next_action: "cluster-11 ve sonrası için canonicalization manifest'ini genişletmek"
 blockers: []
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
@@ -67,6 +67,8 @@ notes: |
   - Top-5 duplicate cluster review packet üretildi: `coordination/training-duplicate-review-packet-2026-03-20.md`
   - Top-5 duplicate canonicalization manifest'i yazıldı: `coordination/training-duplicate-top5-canonicalization-2026-03-20.json`
   - `scripts/apply_duplicate_canonicalization.py` ile top-5 dry-run doğrulandı.
+  - Batch2 (`06-10`) review packet ve canonicalization manifest'i üretildi.
+  - Top10 birleşik dry-run sonucu duplicate excess `116 -> 52` seviyesine indirilebiliyor.
 
   ### Kalan Risk
   - Train set içinde 116 question-level duplicate hâlâ mevcut; readiness gate artık bunu bloklayıcı fail olarak görüyor.
@@ -76,8 +78,8 @@ notes: |
   - Duplicate cleanup henüz yapılmadı; gate artık bunu görünür ve bloklayıcı hale getiriyor.
   - Inventory sonucuna göre blind dedupe güvenli değil; cluster bazlı canonicalization gerekiyor.
   - Review packet şu an yalnızca top-5 cluster'ı kapsıyor; uzun kuyruk gruplar ayrı tur gerektiriyor.
-  - Top-5 seçimi sonrası duplicate excess `116 -> 78` seviyesine düşürülebiliyor; fakat resmi train dosyası henüz rewrite edilmedi.
+  - Top-10 seçimi sonrası duplicate excess `116 -> 52` seviyesine düşürülebiliyor; fakat resmi train dosyası henüz rewrite edilmedi.
 
   ### Sonraki Beklenen Çıktı
-  - Cluster-06+ canonicalization.
+  - Cluster-11+ canonicalization.
   - Ardından training gate için kalan veri/need ayrımı.

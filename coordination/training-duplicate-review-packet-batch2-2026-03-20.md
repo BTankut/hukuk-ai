@@ -1,0 +1,360 @@
+# Training Duplicate Review Packet
+
+- Start cluster: `6`
+- End cluster: `10`
+- Cluster count: `5`
+- Source inventory: `coordination/training-duplicate-inventory-2026-03-20.json`
+- Rule: Select or merge a canonical answer per cluster; do not blind-delete by row.
+
+## Cluster 1
+
+- Cluster id: `cluster-06`
+- Question: TBK'ya göre kefalet sözleşmesi hangi şekil şartlarına tabidir ve geçerlilik koşulları nelerdir?
+- Rows: `7`
+- Distinct outputs: `6`
+- Classification: `mixed_repeat_and_variant_outputs`
+
+### Variant `cluster-06-variant-01`
+
+- Occurrence count: `2`
+- Citations: (none)
+
+```text
+Kefalet sözleşmesi geçerli olabilmek için yazılı olmalı; kefilin sorumlu olacağı azamî miktar ve kefalet tarihi bulunmalıdır. Kefil, azamî miktarı, tarihi ve müteselsil kefalet varsa bu sıfatı kendi el yazısıyla belirtmelidir (TBK m.583). Evli kişinin kefaleti kural olarak eşin yazılı rızasına tabidir; gelecekte doğacak veya koşula bağlı borç için de kefalet kurulabilir (TBK m.582, m.584).
+```
+
+### Variant `cluster-06-variant-02`
+
+- Occurrence count: `1`
+- Citations: TBK m.583, TBK m.589, TBK m.582, TBK m.584
+
+```text
+Türk Borçlar Kanunu (TBK) hükümlerine göre kefalet sözleşmesinin şekil şartları ve geçerlilik koşulları aşağıdadır:
+
+**1. Yazılı Şekil Şartı ve İçerik Zorunlulukları**
+Kefalet sözleşmesi, geçerli olabilmesi için **yazılı şekilde** yapılmalıdır. Yazılı şekil şartına uyulmadıkça sözleşme hüküm doğurmaz [Kaynak: TBK m.583].
+
+Bu yazılı sözleşmede aşağıdaki unsurların bulunması zorunludur:
+*   Kefilin sorumlu olacağı **azamî miktar** belirtilmelidir [Kaynak: TBK m.583].
+*   **Kefalet tarihi** belirtilmelidir [Kaynak: TBK m.583].
+*   Kefilin, sorumlu olduğu azamî miktarı, kefalet tarihini ve eğer müteselsil kefil ise bu sıfatla veya bu anlama gelen bir ifadeyle yükümlülük altına girdiğini **kendi el yazısıyla** belirtmesi şarttır [Kaynak: TBK m.583].
+
+**2. Özel Yetki ve Vaadler**
+Kefilin kendi adına kefil olma konusunda özel yetki verilmesi veya üçüncü bir kişiye kefil olma vaadinde bulunulması da yukarıda belirtilen aynı şekil koşullarına tabidir [Kaynak: TBK m.583].
+
+**3. Sözleşme İçeriği ve Sınırlamalar**
+*   Taraflar, yazılı şekle uyarak kefilin sorumluluğunu borcun belirli bir miktarıyla sınırlandırmayı kararlaştırabilirler [Kaynak: TBK m.583].
+*   Kefalet sözleşmesinde sonradan yapılan ve kefilin sorumluluğunu artıran değişiklikler, kefalet için öngörülen şekle uyulmadıkça hüküm doğurmaz [Kaynak: TBK m.583].
+*   Kefilin, asıl borç ilişkisinin hükümsüz hâle gelmesinin sebep olduğu zarardan ve ceza koşulundan sorumlu olacağına ilişkin anlaşmalar kesin olarak hükümsüzdür [Kaynak: TBK m.589].
+
+**4. Asıl Borç ile İlişki**
+Kefalet sözleşmesi, mevcut ve geçerli bir borç için yapılabilir. Ancak gelecekte doğacak veya koşula bağlı bir borç için de, bu borç doğduğunda veya koşul gerçekleştiğinde hüküm ifade etmek üzere kefalet sözleşmesi kurulabilir [Kaynak: TBK m.582].
+
+**5. Eş Rızası Şartı (Evli Kefiller İçin)**
+Eşlerden biri, mahkemece verilmiş bir ayrılık kararı olmadıkça veya yasal olarak ayrı yaşama hakkı doğmadıkça, ancak diğerinin **yazılı rızasıyla** kefil olabilir. Bu rızanın sözleşmenin kurulmasından önce ya da en geç kurulması anında verilmiş olması şarttır [Kaynak: TBK m.584].
+*   *İstisnalar:* Ticaret siciline kayıtlı ticari işletme sahipleri, ticaret şirketleri ortakları/yöneticileri, esnaf ve sanatkârlar, belirli kredi kanunları kapsamında verilen kefaletler ve kooperatif kredilerinde eşin rızası aranmaz [Kaynak: TBK m.584].
+*   *Değişiklikler:* Kefalet sözleşmesinde sonradan yapılan ve kefilin sorumluluğunu artırmayan veya güvenceleri azaltmayan değişiklikler için eşin rızası gerekmez [Kaynak: TBK m.584].
+
+**6. Geçerlilik Dışı Durumlar**
+Kefil, kanun hükümlerine göre kendisine tanınan haklardan önceden feragat edemez [Kaynak: TBK m.582]. Yanılma veya ehliyetsizlik sebebiyle borçlunun sorumlu olmadığı bir borç için kefil olan kişi, sözleşmeyi sakatlayan eksikliği biliyorsa kefaletle ilgili kanun hükümlerine göre sorumlu olur [Kaynak: TBK m.582].
+```
+
+### Variant `cluster-06-variant-03`
+
+- Occurrence count: `1`
+- Citations: TBK m.583, TBK m.582, TBK m.598, TBK m.581
+
+```text
+Türk Borçlar Kanunu'na (TBK) göre kefalet sözleşmesinin şekil şartları ve geçerlilik koşulları aşağıdaki gibidir:
+
+**1. Yazılı Şekil Şartı ve İçerik Zorunlulukları**
+Kefalet sözleşmesi, geçerli olabilmesi için **yazılı şekilde** yapılmalıdır. Sözleşmede ayrıca kefilin sorumlu olacağı **azamî miktar** ile **kefalet tarihi** belirtilmelidir. Bu bilgiler sözleşmede bulunmadığı takdirde kefalet sözleşmesi geçerli olmaz [Kaynak: TBK m.583].
+
+**2. Kefilin El Yazısı ile İmza Zorunluluğu**
+Kefilin, sorumlu olduğu azamî miktarı, kefalet tarihini ve eğer müteselsil kefil ise bu sıfatla veya bu anlama gelen bir ifadeyle yükümlülük altına girdiğini, kefalet sözleşmesinde **kendi el yazısıyla** belirtmesi şarttır [Kaynak: TBK m.583].
+
+**3. Özel Yetki ve Kefil Olma Vaadi**
+Kendi adına kefil olma konusunda özel yetki verilmesi veya üçüncü bir kişiye kefil olma vaadinde bulunulması da yukarıda belirtilen aynı şekil koşullarına (yazılı şekil, azamî miktar, tarih ve el yazısı ile belirtilme) tabidir [Kaynak: TBK m.583].
+
+**4. Değişikliklerin Şekli**
+Kefalet sözleşmesinde sonradan yapılan ve kefilin sorumluluğunu artıran değişiklikler, kefalet için öngörülen şekil şartlarına (yazılı şekil ve el yazısı ile belirtilme) uyulmadıkça hüküm doğurmaz [Kaynak: TBK m.583].
+
+**5. Borcun Mevcudiyeti ve Geçerliliği**
+Kefalet sözleşmesi mevcut ve geçerli bir borç için yapılabilir. Ancak gelecekte doğacak veya koşula bağlı bir borç için de, bu borç doğduğunda veya koşul gerçekleştiğinde hüküm ifade etmek üzere kefalet sözleşmesi kurulabilir [Kaynak: TBK m.582].
+
+**6. Borçlunun Sorumlu Olmadığı Durumlar**
+Yanılma veya ehliyetsizlik sebebiyle borçlunun sorumlu olmadığı bir borç için kefalet veren kişi, sözleşmeyi sakatlayan eksikliği biliyorsa kefaletle ilgili kanun hükümlerine göre sorumlu olur. Aynı kural, borçlu yönünden zamanaşımına uğramış bir borca kefil olan kişi hakkında da uygulanır [Kaynak: TBK m.582].
+
+**7. Feragat Yasağı**
+Kanundan aksi anlaşılmadıkça kefil, bu bölümde kendisine tanınan haklardan önceden feragat edemez [Kaynak: TBK m.582].
+
+**8. Süre Sınırı**
+Bir gerçek kişi tarafından verilmiş olan her türlü kefalet, sözleşmenin kurulmasından başlayarak **on yılın** geçmesiyle kendiliğinden ortadan kalkar. Kefalet on yıldan fazla bir süre için verilmiş olsa bile, kefil ancak on yıllık süre doluncaya kadar takip edilebilir [Kaynak: TBK m.598]. Kefalet süresi, en erken kefaletin sona ermesinden bir yıl önce yapılmak kaydıyla, kefilin kefalet sözleşmesinin şekline uygun yazılı açıklamasıyla azamî on yıllık yeni bir dönem için uzatılabilir [Kaynak: TBK m.598].
+
+**9. Asıl Borcun Sona Ermesi**
+Hangi sebeple olursa olsun, asıl borç sona erince kefil de borcundan kurtulur [Kaynak: TBK m.598].
+
+**10. Tanım**
+Kefalet sözleşmesi, kefilin alacaklıya karşı, borçlunun borcunu ifa etmemesinin sonuçlarından kişisel olarak sorumlu olmayı üstlendiği sözleşmedir [Kaynak: TBK m.581].
+```
+
+### Variant `cluster-06-variant-04`
+
+- Occurrence count: `1`
+- Citations: TBK m.583, TBK m.582, TBK m.584, TBK m.589
+
+```text
+Türk Borçlar Kanunu (TBK) uyarınca kefalet sözleşmesinin şekil şartları ve geçerlilik koşulları aşağıdaki gibidir:
+
+**1. Yazılı Şekil Şartı ve İçerik Zorunlulukları**
+Kefalet sözleşmesi, geçerli olabilmesi için **yazılı şekilde** yapılmalıdır. Yazılı şekil şartına uyulmadıkça sözleşme hüküm doğurmaz [Kaynak: TBK m.583].
+
+Bu yazılı sözleşmede aşağıdaki unsurların bulunması zorunludur:
+*   Kefilin sorumlu olacağı **azamî miktar** belirtilmelidir.
+*   **Kefalet tarihi** belirtilmelidir.
+*   Kefil, bu azamî miktarı, kefalet tarihini ve eğer **müteselsil kefil** ise bu sıfatla veya bu anlama gelen bir ifadeyle yükümlülük altına girdiğini **kendi el yazısıyla** belirtmek zorundadır [Kaynak: TBK m.583].
+
+**2. Özel Yetki ve Kefil Olma Vaadi**
+Kendi adına kefil olma konusunda özel yetki verilmesi veya üçüncü bir kişiye kefil olma vaadinde bulunulması da, yukarıda belirtilen aynı şekil koşullarına tabidir [Kaynak: TBK m.583].
+
+**3. Sözleşme İçeriği ve Değişiklikler**
+*   Taraflar, yazılı şekle uyarak kefilin sorumluluğunu borcun belirli bir miktarıyla sınırlandırmayı kararlaştırabilirler [Kaynak: TBK m.583].
+*   Kefalet sözleşmesinde sonradan yapılan ve kefilin sorumluluğunu artıran değişiklikler, kefalet için öngörülen şekle uyulmadıkça hüküm doğurmaz [Kaynak: TBK m.583].
+
+**4. Asıl Borç ile İlişki**
+Kefalet sözleşmesi, mevcut ve geçerli bir borç için yapılabilir. Ancak, gelecekte doğacak veya koşula bağlı bir borç için de, bu borç doğduğunda veya koşul gerçekleştiğinde hüküm ifade etmek üzere kefalet sözleşmesi kurulabilir [Kaynak: TBK m.582].
+
+**5. Eş Rızası Şartı (Evli Kefiller İçin)**
+Eşlerden biri, mahkemece verilmiş bir ayrılık kararı olmadıkça veya yasal olarak ayrı yaşama hakkı doğmadıkça, ancak diğer eşin **yazılı rızasıyla** kefil olabilir. Bu rızanın sözleşmenin kurulmasından önce veya en geç kurulması anında verilmiş olması şarttır [Kaynak: TBK m.584].
+*   *İstisnalar:* Ticaret siciline kayıtlı ticari işletme sahipleri, ticaret şirketleri ortakları/yöneticileri, esnaf ve sanatkârlar, belirli kanunlar kapsamında verilen kefaletler ve tarım/kredi kooperatifleri ile ilgili kefaletler için eş rızası aranmaz [Kaynak: TBK m.584].
+
+**6. Geçersizlik Halleri**
+*   Kefilin, asıl borç ilişkisinin hükümsüz hâle gelmesinin sebep olduğu zarardan ve ceza koşulundan sorumlu olacağına ilişkin anlaşmalar kesin olarak hükümsüzdür [Kaynak: TBK m.589].
+*   Kanundan aksi anlaşılmadıkça kefil, kendisine tanınan haklardan önceden feragat edemez [Kaynak: TBK m.582].
+```
+
+### Variant `cluster-06-variant-05`
+
+- Occurrence count: `1`
+- Citations: TBK m.583, TBK m.582, TBK m.584, TBK m.589
+
+```text
+Türk Borçlar Kanunu (TBK) uyarınca kefalet sözleşmesinin şekil şartları ve geçerlilik koşulları aşağıdaki gibidir:
+
+**1. Yazılı Şekil Şartı ve İçerik Zorunlulukları**
+Kefalet sözleşmesi, geçerli olabilmesi için **yazılı şekilde** yapılmalıdır. Sözleşmede mutlaka kefilin sorumlu olacağı **azamî miktar** ve **kefalet tarihi** belirtilmelidir. Ayrıca, kefilin bu azamî miktarı, kefalet tarihini ve müteselsil kefil olması durumunda bu sıfatla veya bu anlama gelen bir ifadeyle yükümlülük altına girdiğini **kendi el yazısıyla** belirtmesi şarttır [Kaynak: TBK m.583].
+
+**2. Özel Yetki ve Kefil Olma Vaadi**
+Kendi adına kefil olma konusunda özel yetki verilmesi veya üçüncü bir kişiye kefil olma vaadinde bulunulması da yukarıda belirtilen aynı şekil koşullarına tabidir [Kaynak: TBK m.583].
+
+**3. Şekil Şartına Uyulmamasının Sonucu**
+Kefalet sözleşmesinde, kefilin sorumluluğunu artıran değişiklikler yapıldığında, bu değişikliklerin de kefalet için öngörülen şekil şartlarına (yazılılık, el yazısı ile belirtilme vb.) uyulmadıkça hüküm doğurmaz [Kaynak: TBK m.583].
+
+**4. Asıl Borcun Varlığı**
+Kefalet sözleşmesi, mevcut ve geçerli bir borç için yapılabilir. Ancak, gelecekte doğacak veya koşula bağlı bir borç için de, bu borç doğduğunda veya koşul gerçekleştiğinde hüküm ifade etmek üzere kefalet sözleşmesi kurulabilir [Kaynak: TBK m.582].
+
+**5. Eşin Rızası (Evli Kefiller İçin)**
+Eşlerden biri, mahkemece verilmiş bir ayrılık kararı olmadıkça veya yasal olarak ayrı yaşama hakkı doğmadıkça, ancak diğer eşin **yazılı rızasıyla** kefil olabilir. Bu rızanın sözleşmenin kurulmasından önce veya en geç kurulması anında verilmiş olması şarttır [Kaynak: TBK m.584].
+*İstisnalar:* Ticaret siciline kayıtlı ticari işletme sahipleri, ticaret şirketleri ortakları/yöneticileri, esnaf ve sanatkârlar, belirli kanunlar kapsamında verilen kefaletler ve kooperatif kredilerinde eşin rızası aranmaz [Kaynak: TBK m.584].
+
+**6. Geçerlilik Dışı Anlaşmalar**
+Kefilin, asıl borç ilişkisinin hükümsüz hâle gelmesinin sebep olduğu zarardan ve ceza koşulundan sorumlu olacağına ilişkin anlaşmalar kesin olarak hükümsüzdür [Kaynak: TBK m.589].
+
+**7. Kefilin Sorumluluğunun Sınırı**
+Kefil, her durumda kefalet sözleşmesinde belirtilen azamî miktara kadar sorumludur. Aksine bir kararlaştırma yoksa, kefil asıl borç, borçlunun kusur veya temerrüdünün yasal sonuçları, alacaklının takip masrafları ve belirli sınırlar içindeki faizlerden sorumludur [Kaynak: TBK m.589].
+```
+
+### Variant `cluster-06-variant-06`
+
+- Occurrence count: `1`
+- Citations: (none)
+
+```text
+Kefalet sözleşmesi TBK m.583 gereği yazılı yapılmalı; kefilin sorumlu olacağı azamî miktar ve kefalet tarihi belirtilmeli; kefil bu azamî miktarı, tarihi ve müteselsil kefilse bu sıfatı kendi el yazısıyla yazmalıdır. TBK m.582 gereği mevcut ve geçerli bir borç için, ayrıca doğunca hüküm ifade etmek üzere gelecekteki veya koşullu borç için de kefalet verilebilir. Evli kişinin kefaleti için kural olarak TBK m.584 uyarınca eşin önceden veya en geç kuruluş anında yazılı rızası gerekir; kanuni istisnalar saklıdır.
+```
+
+## Cluster 2
+
+- Cluster id: `cluster-07`
+- Question: Eser sözleşmesinde eserin beklenmedik hâl (mücbir sebep) nedeniyle yok olması durumunda hasara kim katlanır?
+- Rows: `6`
+- Distinct outputs: `4`
+- Classification: `mixed_repeat_and_variant_outputs`
+
+### Variant `cluster-07-variant-01`
+
+- Occurrence count: `3`
+- Citations: (none)
+
+```text
+TBK m.483’e göre eser, işsahibi teslim almada temerrüde düşmedikçe teslimden önce beklenmedik olayla yok olursa yüklenici ücret ve gider isteyemez; yani işin hasarı kural olarak yükleniciye aittir. Malzemeye gelen hasar ise malzemeyi sağlayana aittir. Yok olma işsahibinin malzemesinin veya arsanın ayıbından ya da talimatından kaynaklanmış ve yüklenici bunu zamanında bildirmişse, yaptığı işin değerini ve giderlerini isteyebilir; işsahibinin kusuru varsa ayrıca tazminat da talep edebilir. Eserin tamamlanması işsahibiyle ilgili beklenmedik bir olay nedeniyle imkânsızlaşırsa TBK m.485 uyarınca yüklenici yaptığı işin değeri ve giderlerini isteyebilir.
+```
+
+### Variant `cluster-07-variant-02`
+
+- Occurrence count: `1`
+- Citations: TBK m.483, TBK m.498, TBK m.485
+
+```text
+Eser sözleşmesinde eserin beklenmedik hâl (mücbir sebep) nedeniyle yok olması durumunda hasarın kim tarafından karşılanacağı, eserin teslim edilip edilmediğine ve eserin türüne (genel eser sözleşmesi mi yoksa yayım sözleşmesi mi) göre değişiklik gösterir. Kaynak metinlere dayanarak durumlar şöyledir:
+
+**1. Genel Eser Sözleşmelerinde (Teslimden Önce Yok Olma):**
+Eğer eser, işsahibine teslim edilmeden önce beklenmedik bir olay sonucu yok olursa, işsahibi eseri teslim almada temerrüde düşmedikçe yüklenici, yaptığı işin ücretini ve giderlerinin ödenmesini isteyemez. Bu durumda malzemeye gelen hasar, onu sağlayana ait olur.
+[Kaynak: TBK m.483]
+
+**2. Yayım Sözleşmelerinde (Teslimden Sonra Yok Olma):**
+Eser, yayımcıya teslim edildikten sonra beklenmedik bir hâl sonucu yok olsa bile, yayımcı bedeli ödemekle yükümlüdür. Ancak eser sahibinin eserin başka bir örneği varsa, bu örneği yayımcıya vermesi gerekir; başka bir örneği yoksa ve eser az bir çabayla yeniden meydana getirilebilecekse, eser sahibi eseri meydana getirerek teslim etmekle yükümlüdür. Bu durumlarda eser sahibi uygun bir karşılık isteyebilir.
+[Kaynak: TBK m.498]
+
+**3. İşsahibi Yüzünden İfa İmkânsızlığı:**
+Eserin tamamlanması, işsahibi ile ilgili beklenmedik bir olay dolayısıyla imkânsızlaşırsa, yüklenici yaptığı işin değerini ve bu değere girmeyen giderlerini isteyebilir. Eğer ifa imkânsızlığının ortaya çıkmasında işsahibi kusurluysa, yüklenicinin ayrıca tazminat isteme hakkı vardır.
+[Kaynak: TBK m.485]
+
+**4. Malzeme Hasarı:**
+Eserin yok olması durumunda, malzemeye gelen hasar, malzemeyi sağlayan kişiye aittir.
+[Kaynak: TBK m.483]
+
+Özetle; teslimden önceki beklenmedik hâllerde yüklenici ücret alamaz ve malzeme hasarı sağlayana aittir, ancak yayım sözleşmelerinde teslimden sonra eser yok olsa bile yayımcı bedeli ödemekle yükümlüdür.
+```
+
+### Variant `cluster-07-variant-03`
+
+- Occurrence count: `1`
+- Citations: TBK m.483, TBK m.485
+
+```text
+TBK m.483’e göre eser teslimden önce beklenmedik hâl sonucu yok olursa, işsahibi eseri teslim almada temerrüde düşmedikçe yüklenici yaptığı işin ücretini ve giderlerini isteyemez; bu nedenle hasara kural olarak yüklenici katlanır. Malzemeye ilişkin hasar ise malzemeyi sağlayana aittir. Yok olma işsahibinin verdiği ayıplı malzeme, arsa veya talimatından kaynaklanmışsa ve yüklenici gerekli bildirimi zamanında yapmışsa, yaptığı işin değeri ile giderlerini isteyebilir. [Kaynak: TBK m.483] [Kaynak: TBK m.485]
+```
+
+### Variant `cluster-07-variant-04`
+
+- Occurrence count: `1`
+- Citations: (none)
+
+```text
+TBK m.483’e göre eser teslimden önce beklenmedik olayla yok olursa, işsahibi eseri teslim almada temerrüde düşmedikçe yüklenici ücret ve gider isteyemez; bu bakımdan hasara kural olarak yüklenici katlanır. Malzemeye gelen hasar ise malzemeyi sağlayana aittir. Yok olma işsahibinin sağladığı ayıplı malzeme, arsa veya talimatından kaynaklanıyorsa yüklenici yaptığı işin değerini ve giderlerini isteyebilir.
+```
+
+## Cluster 3
+
+- Cluster id: `cluster-08`
+- Question: Haksız fiilde zarar görenin müterafik kusuru (ortak kusur) tazminatı nasıl etkiler?
+- Rows: `6`
+- Distinct outputs: `4`
+- Classification: `mixed_repeat_and_variant_outputs`
+
+### Variant `cluster-08-variant-01`
+
+- Occurrence count: `3`
+- Citations: (none)
+
+```text
+TBK m.52 uyarınca zarar gören, zararın doğmasına veya artmasına razı olmuş ya da katkıda bulunmuşsa hâkim tazminatı indirebilir veya tamamen kaldırabilir. Müterafik kusur, tazminatın kapsamını azaltan ya da ortadan kaldırabilen bir etkendir.
+```
+
+### Variant `cluster-08-variant-02`
+
+- Occurrence count: `1`
+- Citations: TBK m.52
+
+```text
+Verilen kaynak metinler ışığında, haksız fiilde zarar görenin müterafik kusurunun (ortak kusurun) tazminatı etkileme şekli aşağıdaki gibidir:
+
+Zarar gören, zararı doğuran fiile razı olmuş veya zararın doğmasında ya da artmasında etkili olmuşsa, hâkim tazminatı indirebilir veya tamamen kaldırabilir. Ayrıca, zarar görenin tazminat yükümlüsünün durumunu ağırlaştırmış olması da hâkimin tazminatı indirmesine veya tamamen kaldırmasına neden olabilir.
+
+Bu hükümler **[Kaynak: TBK m.52]** metninde açıkça belirtilmiştir.
+
+*Not: Kaynak metinlerde "müterafik kusur" ifadesi doğrudan geçmemekle birlikte, "zararın doğmasında veya artmasında etkili olmak" ve "fiile razı olmak" kavramları, Türk hukukundaki müterafik kusur (ortak kusur) durumunu kapsamaktadır ve tazminatın indirilmesi veya kaldırılması sonucunu doğurur.*
+```
+
+### Variant `cluster-08-variant-03`
+
+- Occurrence count: `1`
+- Citations: TBK m.52
+
+```text
+Verilen kaynak metinler ışığında, haksız fiilde zarar görenin müterafik kusurunun (ortak kusurun) tazminatı etkileme şekli aşağıdaki gibidir:
+
+Zarar gören, zararı doğuran fiile razı olmuş veya zararın doğmasında ya da artmasında etkili olmuşsa, hâkim tazminatı indirebilir veya tamamen kaldırabilir. Ayrıca, zarar görenin tazminat yükümlüsünün durumunu ağırlaştırmış olması da hâkimin tazminatı indirmesine veya tamamen kaldırmasına neden olabilir [Kaynak: TBK m.52].
+
+Bu hükümler, zarar görenin kendi kusuru veya fiile rızası nedeniyle tazminat miktarının azaltılabileceğini veya tamamen ortadan kaldırılabileceğini göstermektedir.
+```
+
+### Variant `cluster-08-variant-04`
+
+- Occurrence count: `1`
+- Citations: (none)
+
+```text
+TBK m.52’ye göre zarar gören zarara razı olmuş, zararın doğmasına veya artmasına katkıda bulunmuş ya da tazminat yükümlüsünün durumunu ağırlaştırmışsa hâkim tazminatı indirebilir veya tamamen kaldırabilir.
+```
+
+## Cluster 4
+
+- Cluster id: `cluster-09`
+- Question: Alacaklının temerrüdü (alacaklı direnimi) hâlinde borçlu borcundan nasıl kurtulur?
+- Rows: `6`
+- Distinct outputs: `3`
+- Classification: `mixed_repeat_and_variant_outputs`
+
+### Variant `cluster-09-variant-01`
+
+- Occurrence count: `3`
+- Citations: (none)
+
+```text
+Alacaklı temerrüdünde borçlu, teslim edeceği şeyi hasar ve giderleri alacaklıya ait olmak üzere tevdi ederek borcundan kurtulabilir (TBK m.107). Şey tevdiye elverişli değilse, bozulabilirse veya korunması/tevdi edilmesi önemli gider gerektiriyorsa, alacaklıya önceden ihtar edip hâkimin izniyle sattırarak bedelini tevdi edebilir (m.108). Borcun konusu bir şeyin teslimini gerektirmiyorsa borçlu, borçlu temerrüdü hükümlerine göre sözleşmeden dönebilir (m.110).
+```
+
+### Variant `cluster-09-variant-02`
+
+- Occurrence count: `2`
+- Citations: (none)
+
+```text
+Alacaklı temerrüdünde bir şeyin teslimi borcunda borçlu, teslim edeceği şeyi tevdi ederek borcundan kurtulabilir (TBK m.107). Şey tevdiye uygun değilse, bozulabilecekse veya tevdi ya da bakım masrafı önemliyse, hâkim izniyle satıp bedeli tevdi edebilir (TBK m.108). Borcun konusu bir şeyin teslimi değilse, borçlu borçlu temerrüdüne ilişkin hükümler çerçevesinde sözleşmeden dönebilir (TBK m.110).
+```
+
+### Variant `cluster-09-variant-03`
+
+- Occurrence count: `1`
+- Citations: (none)
+
+```text
+Alacaklı temerrüdünde, borç bir şeyin teslimine ilişkinse borçlu teslim edeceği şeyi tevdi ederek borcundan kurtulabilir (TBK m.107). Şey tevdiye elverişli değilse, bozulma tehlikesi varsa veya tevdi ya da bakım gideri önemliyse hâkim izniyle satılıp bedeli tevdi edilebilir (TBK m.108). Borcun konusu bir şeyin teslimi değilse borçlu, alacaklı temerrüdünün sonuçları çerçevesinde sözleşmeden dönebilir (TBK m.110).
+```
+
+## Cluster 5
+
+- Cluster id: `cluster-10`
+- Question: Garantörlük (garanti sözleşmesi) ile kefalet sözleşmesi arasındaki temel fark nedir?
+- Rows: `6`
+- Distinct outputs: `3`
+- Classification: `mixed_repeat_and_variant_outputs`
+
+### Variant `cluster-10-variant-01`
+
+- Occurrence count: `3`
+- Citations: (none)
+
+```text
+Temel fark, kefaletin fer’î; garanti sözleşmesinin ise bağımsız nitelikte olmasıdır. Kefalette kefilin borcu geçerli bir asıl borca bağlıdır ve asıl borca ilişkin def’iler kural olarak kefile de yarar; ayrıca sıkı şekil şartlarına tabidir. Garanti sözleşmesinde ise garantör, asıl borçtan bağımsız bir edim üstlenir; asıl borcun geçersizliği veya sona ermesi kural olarak garantörün sorumluluğunu kendiliğinden ortadan kaldırmaz.
+```
+
+### Variant `cluster-10-variant-02`
+
+- Occurrence count: `2`
+- Citations: (none)
+
+```text
+Temel fark, kefaletin asıl borca bağlı (fer’î) bir kişisel teminat olması, garanti sözleşmesinin ise kural olarak asıl borç ilişkisinden bağımsız bir taahhüt doğurmasıdır. Bu nedenle kefalette asıl borç geçersiz veya sona ermişse kefalet de etkilenir ve kefil asıl borca ilişkin def’ileri ileri sürebilir; garanti veren ise kural olarak bağımsız olarak sorumlu olur. Kefalet TBK’da sıkı şekil şartlarına tabidir; garanti sözleşmesi aynı rejime tabi değildir.
+```
+
+### Variant `cluster-10-variant-03`
+
+- Occurrence count: `1`
+- Citations: TBK m.128, TBK m.582
+
+```text
+Temel fark, kefaletin asıl borca bağlı fer’î bir kişisel teminat olması; garanti sözleşmesinin ise kural olarak bağımsız ve asli bir taahhüt doğurmasıdır. Bu nedenle kefalette asıl borcun geçersizliği veya sona ermesi kefili etkiler ve kefil asıl borca ilişkin def’ileri ileri sürebilir. Garanti veren ise kural olarak asıl borç ilişkisinden bağımsız sorumluluk üstlenir. Ayrıca kefalet, TBK’daki sıkı şekil şartlarına tabidir. [Kaynak: TBK m.128] [Kaynak: TBK m.582]
+```
