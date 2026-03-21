@@ -2,12 +2,11 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T07:17:00+03:00
+last_activity: 2026-03-21T11:08:14+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "dgxnode3 detached full Qwen run'i izleyip final adapter artefact'ini almak; hemen ardindan post-train evidence zincirini hazirlamak"
+next_action: "dgxnode3 full-run adapter'ini repo post-train eval kimligine baglayip matched raw eval + evidence manifest zincirini uretmek"
 blockers:
   - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; bu artik inference blocker, training blocker degil"
-  - "node3 full training tamamlanmadan post-train evidence ve promotion karsilastirmasi uretilemez"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -137,8 +136,11 @@ notes: |
   - Aynı launcher ile detached full node3 run başlatıldı.
   - Full run pid: `869015`
   - Full run log: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/runtime_logs/hukuk_ai_active_807_run.log`
+  - dgxnode3 detached full Qwen run başarıyla tamamlandı.
+  - Full run sonucu: `3` epoch, `606` step, `train_runtime=1.007e+04`, `train_loss=0.5051`
+  - Final adapter üretildi: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/outputs/hukuk_ai_active_807_run/lora_adapter`
 
   ### Sonraki Beklenen Çıktı
-  - dgxnode3 full Qwen run completion ve final adapter artefact'ı.
-  - post-train diagnostic/promotion evidence planı.
+  - matched post-train raw eval raporu ve evidence manifest'i.
+  - baseline ile promotion-ready karşılaştırma notu.
   - Ayrı iş kolunda dgxnode2 inference runtime restore stratejisi.

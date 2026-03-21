@@ -73,6 +73,33 @@
 - This is the first successful smoke using the user-provided proven Qwen3.5 training path with the repo's frozen active package.
 - The next valid milestone is a full run plus post-train evidence, not promotion by smoke alone.
 
+## Node3 Proven Path Full Run — 2026-03-21
+
+- **Node:** `dgxnode3`
+- **Trainer path:** external proven Qwen3.5 Unsloth repo
+- **Input bridge:** exported ShareGPT view of the active 807-row package
+- **Status:** `PASS`
+
+### Evidence
+
+- epochs: `3`
+- global steps: `606`
+- train runtime: `1.007e+04`
+- train samples per second: `0.24`
+- train steps per second: `0.06`
+- final train loss: `0.5051`
+
+### Artefacts
+
+- external final adapter: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/outputs/hukuk_ai_active_807_run/lora_adapter`
+- external final checkpoint: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/outputs/hukuk_ai_active_807_run/checkpoint-606`
+- adapter weights size: `3724487160` bytes
+
+### Note
+
+- This is the first completed full run on the frozen active package using the user-provided proven Qwen3.5 path.
+- The next valid milestone is matched post-train evaluation plus evidence manifest production.
+
 ---
 
 ## Training v1 — INVALID (Wrong Dataset)
