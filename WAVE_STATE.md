@@ -162,9 +162,15 @@ notes: |
   - Node3 unified-memory recovery icin launch oncesi `drop_caches` adimi resmilestirildi.
   - Test sonucu: `gpu_memory_utilization=0.50` modeli yukledi ama KV cache icin alan birakmadi; launcher default'u `0.70` olarak guncellendi.
   - Serving recovery kaydi eklendi: `coordination/node3-merged-vllm-recovery-2026-03-21.md`
+  - Repo-native `0.70` relaunch basarili oldu; merged vLLM runtime `dgxnode3:30003` uzerinde health verdi.
+  - Merged runtime load/serve kaniti: weight load `612.58s`, model load memory `65.53 GiB`, available KV cache `15.58 GiB`.
+  - Local loopback tunnel acildi: `127.0.0.1:30003 -> dgxnode3:30003`
+  - Local merged candidate gateway acildi: `127.0.0.1:8003`
+  - Merged gateway health PASS verdi: `guardrails=enabled`, `retriever=milvus`
+  - Timed cited smoke PASS verdi: `TBK m.49` sorusunda `15.889s`, citation=`TBK m.49`, blocked=`false`
 
   ### Sonraki Beklenen Çıktı
-  - node3 merged vLLM runtime health teyidi (`30003`).
-  - local candidate gateway switchover ve cited smoke sonucu (`8003`).
+  - merged gateway icin kisa latency/quality slice.
+  - eski node3 adapter/proxy yolu ile net serving karari.
   - node3 serving hattinda latency iyilestirme notu ve/veya alternatif serving stratejisi.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.

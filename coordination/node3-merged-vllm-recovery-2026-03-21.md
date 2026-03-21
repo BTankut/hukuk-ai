@@ -95,18 +95,54 @@ This means:
   - pre-launch cache drop support added
   - default `gpu_memory_utilization` raised from the temporary `0.50` test value to `0.70`
 
+## Verification
+
+The repo-native launcher eventually succeeded with:
+
+- `image=vllm-node-tf5:latest`
+- `max_model_len=8192`
+- `gpu_memory_utilization=0.70`
+- `enforce_eager=true`
+
+Observed runtime evidence:
+
+- `Loading weights took 612.58 seconds`
+- `Model loading took 65.53 GiB memory`
+- `Available KV cache memory: 15.58 GiB`
+- `GPU KV cache size: 203,808 tokens`
+- `Maximum concurrency for 8,192 tokens per request: 70.27x`
+- API server start:
+  - `Starting vLLM API server 0 on http://0.0.0.0:30003`
+  - `/v1/models` returned `hukuk-ai-sft-qwen35-807-merged`
+
+Local switchover also succeeded:
+
+- loopback tunnel:
+  - `127.0.0.1:30003 -> dgxnode3:127.0.0.1:30003`
+- candidate gateway:
+  - `127.0.0.1:8003`
+
+Health:
+
+- `http://127.0.0.1:30003/v1/models` => `200`
+- `http://127.0.0.1:8003/v1/health` => `{"status":"ok","guardrails":"enabled","retriever":"milvus"}`
+
+Timed cited smoke:
+
+- query: `TBK m.49 neyi duzenler? Kisa ve kaynakli cevap ver.`
+- result: PASS
+- citations: `["TBK m.49"]`
+- blocked: `false`
+- elapsed: `15.889s`
+
 ## Current State
 
-- repo-native launcher has already relaunched the runtime with:
-  - `image=vllm-node-tf5:latest`
-  - `max_model_len=8192`
-  - `gpu_memory_utilization=0.70`
-  - `enforce_eager=true`
-- this relaunch is the current active attempt
+- merged vLLM runtime is up on `dgxnode3:30003`
+- local merged candidate gateway is up on `127.0.0.1:8003`
+- first timed cited smoke is materially faster than the earlier adapter/proxy path and remains source-grounded
 
 ## Next Step
 
-1. wait for the `0.70` relaunch to finish loading
-2. verify `http://127.0.0.1:30003/v1/models`
-3. open the local tunnel + candidate gateway on `8003`
-4. run a cited smoke and compare latency against the previous adapter/proxy path
+1. run a short matched latency/quality slice on the merged gateway
+2. compare it against the earlier node3 adapter/proxy path
+3. decide whether merged vLLM becomes the new official candidate serving path
