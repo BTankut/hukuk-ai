@@ -2,12 +2,12 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T06:53:48+03:00
+last_activity: 2026-03-21T07:06:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "dgxnode2 training chain restore edildigi icin historical merged checkpoint uzerinde detached direct diagnostic eval baslatmak; ayri is kolunda 192.168.12.236:8080 live runtime path'ini resmi serving/runtime blocker olarak kapatmak"
+next_action: "aktif 807 satirlik paketi ShareGPT formatina export edip repo'yu dgxnode3'e tasimak; orada Qwen3.5 proven path ile preflight ve bounded smoke baslatmak"
 blockers:
-  - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; hostta dinleyen aktif model server bulunmuyor"
-  - "post-train promotion path serving/runtime parity olmadan bloklu; diagnostic direct eval promotion kaniti yerine gecmez"
+  - "dgxnode3 proven Qwen path ShareGPT conversations bekliyor; mevcut aktif paket icin compatibility export gerektiriyor"
+  - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; bu artik inference blocker, training blocker degil"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -124,8 +124,13 @@ notes: |
   - `192.168.12.236:8080` için hostta dinleyen aktif runtime bulunamadı; `ss -ltnp` yalnız `unsloth studio` (`0.0.0.0:8000`) ve yardımcı servisleri gösterdi.
   - Önceki node2 runtime izleri `sglang_qwen3_node2.log` içinde bulundu; tarihsel launch `31000` portunda ve scheduler/warmup exception ile kapanmış görünüyor.
   - Historical merged checkpoint varlığı tekrar doğrulandı: `/home/btankut/hukuk-ai-finetune/outputs/hukuk-ai-lora-v2/merged` (~65G).
+  - Kullanıcı yönlendirmesiyle proven external FINAL_SETTINGS kaynakları içe alındı.
+  - Qwen3.5 stable training ayarları `dgxnode3` üstünde doğrulandı: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/FINAL_SETTINGS.md`
+  - GPT-OSS-120B stable training ayarları `dgxnode4` üstünde doğrulandı: `/home/btankut/dgx-spark-gpt-oss-120b/FINAL_SETTINGS.md`
+  - Node karar realignment: primary training target `dgxnode3`, inference/recovery target `dgxnode2`, alternative experimental track `dgxnode4`
+  - `dgxnode3` üzerindeki proven Qwen path'in ShareGPT `conversations` formatı beklediği doğrulandı; repo içine bunun için resmi exporter eklendi.
 
   ### Sonraki Beklenen Çıktı
-  - Historical merged checkpoint üzerinde detached direct diagnostic eval raporu ve manifest'i.
-  - Ardından `192.168.12.236:8080` için resmi serving/runtime blocker notu ve restore stratejisi.
-  - Live runtime geri gelirse localhost gateway üzerinden prompt-only smoke ve citation-drift/cross-law slice evali.
+  - ShareGPT export artefact ve node3-uyumlu training bridge.
+  - dgxnode3 üzerinde frozen package preflight ve bounded Qwen smoke.
+  - Ayrı iş kolunda dgxnode2 inference runtime restore stratejisi.

@@ -1,7 +1,7 @@
 # ============================================================
 # AI Hukuk Asistani — SFT Training Config (Unsloth, Primary)
 # ============================================================
-# Target hardware : dgxnode2
+# Target hardware : dgxnode3 (preferred), dgxnode2 (validated recovery fallback)
 # Method          : bf16 LoRA SFT
 # Base model      : Qwen/Qwen3.5-35B-A3B
 # Active package  : data/finetune/sft/final_train.jsonl (807 rows)
@@ -19,7 +19,7 @@ model:
 lora:
   r: 16
   alpha: 32
-  dropout: 0.05
+  dropout: 0.0
   target_modules:
     - q_proj
     - k_proj
@@ -32,7 +32,7 @@ lora:
   use_rslora: false
 
 training:
-  output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/adapter"
+  output_dir: "./artifacts/finetune/unsloth-sft-qwen35-35b-a3b/text-only-peft"
   train_file: "./data/finetune/sft/final_train.jsonl"
   eval_file: "./data/finetune/eval/held_out_test.jsonl"
   dataset_format: "alpaca"
@@ -42,7 +42,7 @@ training:
   gradient_accumulation_steps: 8
   learning_rate: 2.0e-5
   lr_scheduler_type: "cosine"
-  warmup_ratio: 0.05
+  warmup_steps: 20
   weight_decay: 0.01
   max_grad_norm: 1.0
   gradient_checkpointing: "unsloth"
@@ -51,21 +51,22 @@ training:
   eval_steps: 50
   save_steps: 100
   save_total_limit: 3
+  max_steps: -1
   load_best_model_at_end: true
   metric_for_best_model: "eval_loss"
   bf16: true
   fp16: false
   dataloader_num_workers: 2
-  seed: 42
+  seed: 3407
   report_to: "none"
 
 export:
   merge_and_save: true
-  merged_output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/merged"
+  merged_output_dir: "./artifacts/finetune/unsloth-sft-qwen35-35b-a3b/merged"
   quantize_to_fp8: true
-  fp8_output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/merged-fp8"
+  fp8_output_dir: "./artifacts/finetune/unsloth-sft-qwen35-35b-a3b/merged-fp8"
   gguf_export: true
-  gguf_output_dir: "./artifacts/finetune/hukuk-ai-sft-v3/gguf"
+  gguf_output_dir: "./artifacts/finetune/unsloth-sft-qwen35-35b-a3b/gguf"
   gguf_quantization: "q8_0"
 
 promotion:
@@ -86,4 +87,3 @@ dataset_sources:
   active_builder: "python3 scripts/build_training_dataset.py"
   finetune_gate: "python3 scripts/finetune/check_finetune_config.py --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json"
   held_out_eval: "data/finetune/eval/held_out_test.jsonl"
-

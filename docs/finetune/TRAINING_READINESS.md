@@ -27,6 +27,14 @@ The fine-tune bootstrap / preflight entrypoints are:
 - `bash scripts/finetune/bootstrap_dgxnode2_unsloth.sh ~/.venvs/hukuk-ai-ft`
 - `bash scripts/finetune/validate_dgxnode2_env.sh ~/.venvs/hukuk-ai-ft`
 - `python3 scripts/finetune/check_finetune_config.py --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json`
+- `python3 scripts/finetune/export_sharegpt_dataset.py --dry-run`
+
+If a proven external trainer expects ShareGPT conversations, use the exporter above as a transport view of the active package.
+
+Rule:
+
+- `final_train.jsonl` remains the only canonical active package
+- derived ShareGPT JSONL is a compatibility export, not a second source of truth
 
 ## Hard Gates
 
