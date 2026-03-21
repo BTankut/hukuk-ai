@@ -155,8 +155,16 @@ notes: |
   - `dgxnode3` uzerinde merged export detached olarak baslatildi; hedef artefact `outputs/hukuk_ai_active_807_run/merged_model`
   - Merge tamamlanir tamamlanmaz kullanilacak merged vLLM switchover launcher'i eklendi: `scripts/finetune/launch_dgxnode3_merged_vllm.sh`
   - Merged vLLM runtime'i local RAG zincirine baglayacak candidate gateway switchover launcher'i eklendi: `scripts/finetune/launch_local_candidate_gateway_node3_merged.sh`
+  - Merged export helper dogrulandi: resmi Unsloth `merged_16bit` ciktisi gecersizse HF `merge_and_unload()` fallback ile tam checkpoint zorlanıyor.
+  - Node3 merged checkpoint gecerli olarak dogrulandi: `outputs/hukuk_ai_active_807_run/merged_model` (~66G, 2 shard).
+  - `vllm/vllm-openai:cu130-nightly` merged local checkpoint icin tokenizer safhasinda fail verdi: `TokenizersBackend does not exist`.
+  - Faz 1 runtime family image'i `vllm-node-tf5:latest`, tokenizer fail'ini asti ve gercek weight load safhasina gecti.
+  - Node3 unified-memory recovery icin launch oncesi `drop_caches` adimi resmilestirildi.
+  - Test sonucu: `gpu_memory_utilization=0.50` modeli yukledi ama KV cache icin alan birakmadi; launcher default'u `0.70` olarak guncellendi.
+  - Serving recovery kaydi eklendi: `coordination/node3-merged-vllm-recovery-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
-  - node3 merged artefact tamamlanma teyidi.
+  - node3 merged vLLM runtime health teyidi (`30003`).
+  - local candidate gateway switchover ve cited smoke sonucu (`8003`).
   - node3 serving hattinda latency iyilestirme notu ve/veya alternatif serving stratejisi.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.
