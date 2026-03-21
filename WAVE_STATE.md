@@ -154,6 +154,7 @@ notes: |
   - Detached node3 merge launcher eklendi: `scripts/finetune/launch_dgxnode3_qwen_external_merge.sh`
   - `dgxnode3` uzerinde merged export detached olarak baslatildi; hedef artefact `outputs/hukuk_ai_active_807_run/merged_model`
   - Merge tamamlanir tamamlanmaz kullanilacak merged vLLM switchover launcher'i eklendi: `scripts/finetune/launch_dgxnode3_merged_vllm.sh`
+  - Merged vLLM runtime'i local RAG zincirine baglayacak candidate gateway switchover launcher'i eklendi: `scripts/finetune/launch_local_candidate_gateway_node3_merged.sh`
 
   ### Sonraki Beklenen Çıktı
   - node3 merged artefact tamamlanma teyidi.

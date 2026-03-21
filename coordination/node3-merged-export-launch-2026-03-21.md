@@ -16,6 +16,7 @@ Decision: the current promotion-eligible adapter is now being exported as a merg
 - merge helper: `scripts/finetune/merge_unsloth_adapter.py`
 - detached launcher: `scripts/finetune/launch_dgxnode3_qwen_external_merge.sh`
 - merged vLLM launcher: `scripts/finetune/launch_dgxnode3_merged_vllm.sh`
+- local candidate-gateway switchover launcher: `scripts/finetune/launch_local_candidate_gateway_node3_merged.sh`
 
 The helper loads the base model in 16-bit, attaches the LoRA adapter, clears stale quantization flags, and writes the merged checkpoint through:
 
@@ -39,3 +40,5 @@ The first log lines confirmed the container booted and entered the Unsloth merge
 3. re-measure latency before making any stronger live-parity claim
 
 The repo-native vLLM switchover script is already prepared for step 2, so the next blocking event is the merged artefact itself, not more local scaffolding.
+
+The corresponding local bridge for that runtime is also prepared. Once node3 serves the merged model on `30003`, the repo can open a loopback tunnel and start a separate local candidate gateway on `8003` without disturbing the existing baseline path.
