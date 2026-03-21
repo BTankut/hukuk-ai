@@ -100,6 +100,33 @@
 - This is the first completed full run on the frozen active package using the user-provided proven Qwen3.5 path.
 - The next valid milestone is matched post-train evaluation plus evidence manifest production.
 
+## Node3 Post-Train Evaluation — 2026-03-21
+
+- **Node:** `dgxnode3`
+- **Serving chain:** external adapter serve -> repo OpenAI proxy -> local SSH tunnel -> candidate gateway `127.0.0.1:8002`
+- **Eval family:** `faz1-50`
+- **Runner:** `eval_runner`
+- **Promotion gate status:** `READY`
+
+### Official artefacts
+
+- raw report: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321_t600.json`
+- evidence manifest: `evaluation/reports/evidence_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321_t600.json`
+
+### Summary
+
+- citation rate: `0.9000`
+- correct source rate: `0.7713`
+- hallucination rate: `0.0200`
+- refusal accuracy: `1.0000`
+- avg response time: `120302.8 ms`
+- error count: `0`
+
+### Note
+
+- This closes the repo's formal post-train evidence requirement for the frozen 807-row package.
+- It does **not** mean the candidate has matched the original Faz 1 live latency picture; the current served path is still far slower than the desired live target.
+
 ---
 
 ## Training v1 — INVALID (Wrong Dataset)

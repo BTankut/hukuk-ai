@@ -2,11 +2,11 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T11:56:17+03:00
-last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "candidate gateway 127.0.0.1:8002 uzerinden faz1-50 post-train eval'i calistirip evidence manifest ve promotion gate cikarmak"
+last_activity: 2026-03-21T16:58:00+03:00
+last_eval: evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321_t600.json
+next_action: "node3 candidate runtime icin latency dusurme/serving-path iyilestirme calismasi yapmak; formal promotion gate READY olsa da Faz 1 canli latency hedefi henuz saglanmiyor"
 blockers:
-  - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; bu artik inference blocker, training blocker degil"
+  - "node3 post-train candidate runtime ortalama yanit suresi ~120.3s; FAZ1-FINAL-RAPOR canli kabul hedefi olan <=30s ile uyumlu degil"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -142,8 +142,15 @@ notes: |
   - `scripts/finetune/openai_generate_proxy.py` ile `/generate` -> `/v1/chat/completions` uyum katmanı eklendi.
   - node3 candidate adapter serve `:18000`, OpenAI proxy `:30002`, local SSH tunnel `127.0.0.1:30002` ve local candidate gateway `127.0.0.1:8002` ayağa kaldırıldı.
   - Candidate gateway smoke PASS verdi; `TBK m.49` için cited cevap döndü.
+  - İlk `faz1-50` post-train eval koşusu timeout baskısı altında audit artefact üretti: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321.json`
+  - Bu ilk koşu `11` hata/time-out içerdiği için promotion zincirinde resmi aday olarak kullanılmadı.
+  - `t600` temiz rerun tamamlandı ve resmi post-train raw report donduruldu: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321_t600.json`
+  - `t600` summary: citation `0.9000`, correct source `0.7713`, hallucination `0.0200`, refusal accuracy `1.0000`, avg response time `120302.8 ms`, error count `0`
+  - Post-train evidence manifest üretildi: `evaluation/reports/evidence_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321_t600.json`
+  - Promotion gate matched baseline manifest ile tekrar çalıştırıldı ve `READY` verdi.
+  - Baseline/post-train runner parity korundu: her iki artefact da `runner=eval_runner`, `eval_family=faz1-50`
+  - Resmi promotion contract geçilmiş olsa da candidate serving hattı Faz 1 canlı latency beklentisinin belirgin üzerinde kaldı.
 
   ### Sonraki Beklenen Çıktı
-  - `faz1-50` post-train raw eval raporu ve evidence manifest'i.
-  - baseline ile promotion-ready karşılaştırma notu.
-  - Ayrı iş kolunda dgxnode2 inference runtime restore stratejisi.
+  - node3 serving hattinda latency iyilestirme notu ve/veya alternatif serving stratejisi.
+  - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.
