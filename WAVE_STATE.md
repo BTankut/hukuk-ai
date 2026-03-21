@@ -168,9 +168,16 @@ notes: |
   - Local merged candidate gateway acildi: `127.0.0.1:8003`
   - Merged gateway health PASS verdi: `guardrails=enabled`, `retriever=milvus`
   - Timed cited smoke PASS verdi: `TBK m.49` sorusunda `15.889s`, citation=`TBK m.49`, blocked=`false`
+  - Merged lane icin matched `faz1-50` eval tamamlandi: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_merged_20260321.json`
+  - Merged eval summary: citation `87.76%`, correct source `72.99%`, hallucination `6.12%`, refusal `100%`, avg response `21876.2 ms`, error `1`
+  - Merged post-train evidence manifest uretildi: `evaluation/reports/evidence_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_merged_20260321.json`
+  - Report delta araci eklendi: `scripts/compare_eval_reports.py`
+  - Eski adapter/proxy path'e gore latency yaklasik `-81.8%` iyilesti (`120302.8 ms -> 21876.2 ms`), kalite metrikleri gate icinde kalarak kismi dusus gosterdi.
+  - Serving karari kayda gecirildi: merged `vLLM` lane primary post-train candidate path, adapter/proxy lane fallback.
+  - Karar notu: `coordination/node3-merged-serving-decision-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
-  - merged gateway icin kisa latency/quality slice.
-  - eski node3 adapter/proxy yolu ile net serving karari.
+  - merged lane uzerinden sonraki tuning/eval dalgasi.
+  - zayif slice'lar icin hedefli iyilestirme notu (`TBK-043`, kefalet cluster).
   - node3 serving hattinda latency iyilestirme notu ve/veya alternatif serving stratejisi.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.

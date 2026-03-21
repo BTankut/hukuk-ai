@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-03-21T16:32:58.373364+00:00",
+  "role": "post_train",
+  "eval_family": "faz1-50",
+  "model_ref": "hukuk-ai-sft-qwen35-807-merged",
+  "checkpoint_ref": "hukuk-ai-sft-qwen35-807-node3-merged",
+  "git_commit": "01df01d",
+  "runner": "eval_runner",
+  "train_package_sha": null,
+  "report_path": "evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_merged_20260321.json",
+  "report_sha256": "a49e042379e2d8b2aa34b73367ce566762241df9d6ea37d2178d7c9d092e8221",
+  "report_meta": {
+    "generated_at": "2026-03-21T16:30:10.674825+00:00",
+    "questions_source": "configs/evaluation/test_questions.json",
+    "api_url": "http://127.0.0.1:8003",
+    "mock_mode": false,
+    "total_questions": 50,
+    "error_count": 1,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "post_train",
+    "eval_family": "faz1-50",
+    "model_ref": "hukuk-ai-sft-qwen35-807-merged",
+    "checkpoint_ref": "hukuk-ai-sft-qwen35-807-node3-merged",
+    "git_commit": "01df01d",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 120.0
+    }
+  },
+  "notes": ""
+}
