@@ -153,6 +153,7 @@ notes: |
   - Latency iyilestirme icin current node3 adapter icin resmi `merged_16bit` export yolu eklendi: `scripts/finetune/merge_unsloth_adapter.py`
   - Detached node3 merge launcher eklendi: `scripts/finetune/launch_dgxnode3_qwen_external_merge.sh`
   - `dgxnode3` uzerinde merged export detached olarak baslatildi; hedef artefact `outputs/hukuk_ai_active_807_run/merged_model`
+  - Merge tamamlanir tamamlanmaz kullanilacak merged vLLM switchover launcher'i eklendi: `scripts/finetune/launch_dgxnode3_merged_vllm.sh`
 
   ### Sonraki Beklenen Çıktı
   - node3 merged artefact tamamlanma teyidi.
