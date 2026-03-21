@@ -1,0 +1,307 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-21T18:21:14.382235+00:00",
+    "questions_source": "configs/evaluation/test_questions_weak_slices_node3_merged.json",
+    "api_url": "http://127.0.0.1:8003",
+    "mock_mode": false,
+    "total_questions": 5,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "post_train",
+    "eval_family": "weak-slices-node3-merged",
+    "model_ref": "hukuk_ai_sft_qwen35_807",
+    "checkpoint_ref": "node3_merged_8003",
+    "git_commit": "unknown",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 60.0
+    }
+  },
+  "summary": {
+    "citation_rate": 0.8,
+    "correct_source_rate": 0.5333,
+    "hallucination_rate": 0.2,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.5,
+    "phrase_hit_rate": 0.6,
+    "avg_response_time_ms": 27731.1,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 0.8,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 0.5333,
+      "passes": false,
+      "status": "❌ BAŞARISIZ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.2,
+      "passes": false,
+      "status": "❌ BAŞARISIZ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": false,
+      "status": "❌ FAZ 1 KRİTERLERİ KARŞILANMADI"
+    }
+  },
+  "by_category": {
+    "tbk_genel": {
+      "count": 2,
+      "citation_rate": 1.0,
+      "correct_source_rate": 0.3333,
+      "hallucination_rate": 0.5,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.35
+    },
+    "tbk_satis": {
+      "count": 1,
+      "citation_rate": 0.0,
+      "correct_source_rate": 0.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.8333
+    },
+    "tbk_kefalet": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.8
+    },
+    "tbk_haksiz_fiil": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.1667
+    }
+  },
+  "by_difficulty": {
+    "hard": {
+      "count": 3,
+      "citation_rate": 0.6667,
+      "correct_source_rate": 0.2222,
+      "hallucination_rate": 0.3333,
+      "avg_keyword_coverage": 0.5111
+    },
+    "medium": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.8
+    },
+    "easy": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.1667
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-012",
+      "question_text": "TBK m.112 kapsamında borcun ifa edilmemesi (temerrüt) koşulları nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "answer_text": "TBK m.112 metni, \"Borç hiç veya gereği gibi ifa edilmezse borçlu, kendisine hiçbir kusurun yüklenemeyeceğini ispat etmedikçe, alacaklının bundan doğan zararını gidermekle yükümlüdür\" kuralını içerir; bu madde metin olarak doğrudan \"koşulları\" başlığı altında listeleyen bir hüküm değildir, ancak genel sorumluluk kuralını ifade eder [Kaynak: TBK m.112].\n\nTemerrüt (borcun hiç veya gereği gibi ifa edilmemesi) sorumluluğunun doğması için temel koşul, borcun hiç veya gereği gibi ifa edilmemiş olmasıdır; bu durumda borçlu, kendisine hiçbir kusurun yüklenemeyeceğini ispat etmedikçe alacaklının zararını gidermekle yükümlüdür [Kaynak: TBK m.112]. Bu kural, borcun ifa edilmemesinden doğan genel sorumluluğu düzenler; temerrüde düşme koşulları (örneğin ihtara gerek olup olmadığı, ifa gününün belirlenmesi gibi) TBK m.117 ve m.106 gibi diğer maddelerde düzenlenmiştir [Kaynak: TBK m.117] [Kaynak: TBK m.106].",
+      "cited_sources": [
+        "TBK m.112",
+        "TBK m.112",
+        "TBK m.117",
+        "TBK m.106"
+      ],
+      "expected_sources": [
+        "TBK m.112",
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "expected_keywords": [
+        "temerrüt",
+        "ifa",
+        "borcun muacceliyeti",
+        "ihtar",
+        "zamanında ifa etmeme",
+        "zararın tazmini"
+      ],
+      "expected_answer_contains": "temerrüt",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 3,
+      "correct_source_rate": 0.6667,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "phrase_hit_result": true,
+      "response_time_ms": 27867.2,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-021",
+      "question_text": "Satış sözleşmesinde satıcının ayıptan doğan sorumluluğu (ayıba karşı tekeffül) için alıcının gözden geçirme ve bildirim külfeti hangi sürelere tabidir?",
+      "category": "tbk_satis",
+      "difficulty": "hard",
+      "answer_text": "Satış sözleşmesinde satıcının ayıptan doğan sorumluluğu için alıcının gözden geçirme ve bildirim külfeti, satılanın türüne ve ayıbın niteliğine göre değişen özel süreler ile genel iki yıllık zamanaşımı süresine tabidir.\n\nAlıcı, devraldığı satılanın durumunu işlerin olağan akışına göre imkân bulunur bulunmaz gözden geçirmek ve satılanda satıcının sorumluluğunu gerektiren bir ayıp görürse, bunu uygun bir süre içinde ona bildirmek zorundadır; alıcı gözden geçirmeyi ve bildirimde bulunmayı ihmal ederse, satılanı kabul etmiş sayılır. Ancak, satılanda olağan bir gözden geçirmeyle ortaya çıkarılamayacak bir ayıp bulunması hâlinde, bu hüküm uygulanmaz ve bu tür bir ayıbın bulunduğu sonradan anlaşılırsa, hemen satıcıya bildirilmelidir. Hayvan satışında satıcının sorumlu olacağı süre yazılı olarak belirlenmemiş ve ayıp da hayvanın gebeliğine ilişkin değilse satıcı, ancak ayıbın devrin yapıldığı veya alıcının devralmada temerrüdünün gerçekleştiği günden başlayarak dokuz gün içinde kendisine bildirilmesi ve ayrıca, hayvanın bilirkişilerce gözden geçirilmesinin aynı süre içinde yetkili makamdan istenmesi hâlinde sorumlu olur. Satıcı, daha uzun bir süre için üstlenmiş olmadıkça, satılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar.",
+      "cited_sources": [],
+      "expected_sources": [
+        "TBK m.223"
+      ],
+      "expected_keywords": [
+        "gözden geçirme",
+        "bildirim",
+        "ayıp",
+        "olağan akış",
+        "hemen",
+        "gecikmeksizin"
+      ],
+      "expected_answer_contains": "gözden geçirme",
+      "refusal_expected": false,
+      "has_citation": false,
+      "correct_source_overlap": 0,
+      "expected_source_count": 1,
+      "correct_source_rate": 0.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8333,
+      "phrase_hit_result": true,
+      "response_time_ms": 35771.3,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-026",
+      "question_text": "TBK'ya göre müteselsil kefaletin şartları nelerdir?",
+      "category": "tbk_kefalet",
+      "difficulty": "medium",
+      "answer_text": "TBK m.586 uyarınca müteselsil kefalet, kefilin müteselsil kefil sıfatıyla veya bu anlama gelen herhangi bir ifadeyle yükümlülük altına girmesini kabul etmesiyle doğar; bu durumda alacaklı, borçluyu takip etmeden veya taşınmaz rehnini paraya çevirmeden kefili takip edebilir. Ancak, bu takip hakkının kullanılması için borçlunun ifada gecikmesi ve ihtarın sonuçsuz kalması veya açıkça ödeme güçsüzlüğü içinde olması gerekir. Alacak, teslime bağlı taşınır rehni veya alacak rehni ile güvenceye alınmışsa, rehnin paraya çevrilmesinden önce kefile başvurulamaz; ancak alacağın rehnin paraya çevrilmesi yoluyla tamamen karşılanamayacağının önceden hâkim tarafından belirlenmesi veya borçlunun iflas etmesi ya da konkordato mehli verilmesi hâllerinde, rehnin paraya çevrilmesinden önce de kefile başvurulabilir [Kaynak: TBK m.586].\n\nAyrıca, müteselsil kefalet sözleşmesinin geçerliliği için TBK m.583 hükmü gereği yazılı şekilde yapılması ve kefilin sorumlu olacağı azamî miktar ile kefalet tarihini ve müteselsil kefil olması durumunda, bu sıfatla veya bu anlama gelen herhangi bir ifadeyle yükümlülük altına girdiğini kefalet sözleşmesinde kendi el yazısıyla belirtmesi şarttır [Kaynak: TBK m.583].",
+      "cited_sources": [
+        "TBK m.586",
+        "TBK m.583"
+      ],
+      "expected_sources": [
+        "TBK m.586"
+      ],
+      "expected_keywords": [
+        "müteselsil",
+        "kefil",
+        "el yazısı",
+        "takip",
+        "asıl borçlu"
+      ],
+      "expected_answer_contains": "müteselsil",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 1,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8,
+      "phrase_hit_result": true,
+      "response_time_ms": 34240.8,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-037",
+      "question_text": "Geri alma hakkı saklı tutulan bağışlamada bağışlayan hangi hallerde bağışlamayı geri alabilir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "answer_text": "Geri alma hakkı saklı tutulan bağışlamada bağışlayan, bağışlama sözleşmesinde öngörülen koşulların gerçekleşmesi durumunda bağışlamayı geri alabilir; ayrıca TBK m.296 uyarınca bağışlama sözü veren, mali durumundaki olağanüstü değişiklikler veya yeni aile yükümlülükleri gibi hallerde sözünü geri alabilir.\n\nDayanak metinler:\n[Kaynak: TBK m.296]\n[Kaynak: TBK m.287]\n[Kaynak: TBK m.293]",
+      "cited_sources": [
+        "TBK m.296",
+        "TBK m.287",
+        "TBK m.293"
+      ],
+      "expected_sources": [
+        "TBK m.295"
+      ],
+      "expected_keywords": [
+        "geri alma",
+        "ağır suç",
+        "aile ödevleri",
+        "nafaka",
+        "hukuka aykırı"
+      ],
+      "expected_answer_contains": "ağır suç",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 0,
+      "expected_source_count": 1,
+      "correct_source_rate": 0.0,
+      "is_hallucination": true,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.2,
+      "phrase_hit_result": false,
+      "response_time_ms": 18511.0,
+      "blocked": false
+    },
+    {
+      "question_id": "TBK-043",
+      "question_text": "Manevi tazminat istemi TBK'nın hangi maddesinde düzenlenmiştir ve hangi durumlarda talep edilebilir?",
+      "category": "tbk_haksiz_fiil",
+      "difficulty": "easy",
+      "answer_text": "Manevi tazminat istemi, TBK m.58 ve m.56 hükümleri uyarınca kişilik hakkının zedelenmesi durumunda talep edilebilir; ayrıca TMK m.174 (boşanma), TMK m.121 (nişan), TMK m.25 (saldırı tehlikesi ve devam eden saldırı) ve TBK m.439 (işçinin işe başlamaması veya işi bırakması) gibi özel durumlarda da istem hakkı doğar. [Kaynak: TBK m.58] [Kaynak: TBK m.56] [Kaynak: TMK m.174] [Kaynak: TMK m.121] [Kaynak: TMK m.25] [Kaynak: TBK m.439]",
+      "cited_sources": [
+        "TBK m.58",
+        "TBK m.56",
+        "TMK m.174",
+        "TMK m.121",
+        "TMK m.25",
+        "TBK m.439"
+      ],
+      "expected_sources": [
+        "TBK m.56",
+        "TBK m.58"
+      ],
+      "expected_keywords": [
+        "manevi tazminat",
+        "kişilik hakları",
+        "bedensel bütünlük",
+        "ölüm",
+        "acı",
+        "elem"
+      ],
+      "expected_answer_contains": "kişilik hakları",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "phrase_hit_result": false,
+      "response_time_ms": 22265.2,
+      "blocked": false
+    }
+  ]
+}

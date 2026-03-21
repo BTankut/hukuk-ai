@@ -187,9 +187,16 @@ notes: |
   - `8004` health PASS verdi: `guardrails=enabled`, `retriever=milvus`
   - `TBK m.49` cited smoke `8004` uzerinden PASS verdi; citation=`TBK m.49`, blocked=`false`
   - Bridge notu eklendi: `coordination/dgx1-merged-endpoint-bridge-2026-03-21.md`
+  - Kullanici tarafindan `dgx1` inference servisi FP8 KV cache + fixed GB memory + CUDA graphs + FlashInfer ile yeniden ayarlandi.
+  - Stable rerun oncesi `8004` health ve `TBK m.49` smoke tekrar PASS verdi.
+  - Tam `faz1-50` stable rerun tamamlandi: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_stable_20260321.json`
+  - Stable rerun summary: citation `76.5%`, correct source `68.4%`, hallucination `0.0%`, refusal `100.0%`, avg response `15593 ms`, error `16`
+  - Ilk `dgx1` full denemeye gore error count `35 -> 16` iyilesti, fakat lane yaklasik `TBK-031` civarinda yine connection-error dalgasina girdi.
+  - Gateway tarafinda koku hata tekrar ayni: `openai.APIConnectionError` / `httpx.ReadError`
+  - Stable rerun karari kayda gecirildi: `coordination/dgx1-merged-stable-rerun-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
-  - node1 merged lane uzerinden kisa matched smoke/eval dilimleri.
+  - dgx1 serving layer icin sustained-load stabilite duzeltmesi.
   - zayif slice'lar icin hedefli iyilestirme notu (`TBK-043`, kefalet cluster).
-  - node1/node3 merged serving lane karsilastirma notu ve tercih karari.
+  - node1/node3 merged serving lane nihai tercih karari.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.
