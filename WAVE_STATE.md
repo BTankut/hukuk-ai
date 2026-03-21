@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T16:58:00+03:00
+last_activity: 2026-03-21T17:12:00+03:00
 last_eval: evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321_t600.json
-next_action: "node3 candidate runtime icin latency dusurme/serving-path iyilestirme calismasi yapmak; formal promotion gate READY olsa da Faz 1 canli latency hedefi henuz saglanmiyor"
+next_action: "node3 current adapter icin merged_16bit export tamamlaninca daha hizli serving path'e gecip latency yeniden olcmek"
 blockers:
   - "node3 post-train candidate runtime ortalama yanit suresi ~120.3s; FAZ1-FINAL-RAPOR canli kabul hedefi olan <=30s ile uyumlu degil"
 notes: |
@@ -150,7 +150,11 @@ notes: |
   - Promotion gate matched baseline manifest ile tekrar çalıştırıldı ve `READY` verdi.
   - Baseline/post-train runner parity korundu: her iki artefact da `runner=eval_runner`, `eval_family=faz1-50`
   - Resmi promotion contract geçilmiş olsa da candidate serving hattı Faz 1 canlı latency beklentisinin belirgin üzerinde kaldı.
+  - Latency iyilestirme icin current node3 adapter icin resmi `merged_16bit` export yolu eklendi: `scripts/finetune/merge_unsloth_adapter.py`
+  - Detached node3 merge launcher eklendi: `scripts/finetune/launch_dgxnode3_qwen_external_merge.sh`
+  - `dgxnode3` uzerinde merged export detached olarak baslatildi; hedef artefact `outputs/hukuk_ai_active_807_run/merged_model`
 
   ### Sonraki Beklenen Çıktı
+  - node3 merged artefact tamamlanma teyidi.
   - node3 serving hattinda latency iyilestirme notu ve/veya alternatif serving stratejisi.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.
