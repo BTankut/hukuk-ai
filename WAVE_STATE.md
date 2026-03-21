@@ -2,12 +2,12 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T06:10:00+03:00
+last_activity: 2026-03-21T06:53:48+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "dgxnode2 model endpoint geri geldiginde localhost:8000 uzerinden Wave 2 prompt-only smoke ve citation-drift slice evalini calistirmak; es zamanli olarak ssh toparlaninca detached remote training probes'a donmek"
+next_action: "dgxnode2 training chain restore edildigi icin historical merged checkpoint uzerinde detached direct diagnostic eval baslatmak; ayri is kolunda 192.168.12.236:8080 live runtime path'ini resmi serving/runtime blocker olarak kapatmak"
 blockers:
-  - "dgxnode2 ssh stabilitesi: 192.168.12.236 port 22 timeout/reset, fabric ip 192.168.101.12 de ssh timeout"
-  - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed, 192.168.101.12:8080 timeout"
+  - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; hostta dinleyen aktif model server bulunmuyor"
+  - "post-train promotion path serving/runtime parity olmadan bloklu; diagnostic direct eval promotion kaniti yerine gecmez"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -116,8 +116,16 @@ notes: |
   - Local gateway `127.0.0.1:8000` health `ok`.
   - Live smoke gateway'den generation aşamasına geçemedi; upstream dgxnode2 model endpoint şu an down.
   - Prompt hardening notu yazıldı: `coordination/wave2-prompt-hardening-2026-03-21.md`
+  - dgxnode2 SSH geri geldi; remote repo `/home/btankut/hukuk-ai-git` ile detached log-backed execution yeniden açıldı.
+  - Text-only PEFT dry-run detached olarak tamamlandı: `DRY_RUN_OK`, `load_time_s=281.49`, `peak_mem_reserved_gb=64.64`.
+  - İlk gerçek one-step training smoke detached olarak tamamlandı: `TRAIN_OK`.
+  - Smoke artefact'ları remote path altında üretildi: `artifacts/finetune/unsloth-sft-qwen35-35b-a3b/smoke-step1-20260321/adapter` ve `checkpoint-1`.
+  - Smoke telemetry: `step_time_s=33.607`, `train_runtime=35.82`, `train_loss=0.5954`, `peak_mem_reserved_gb=66.79`.
+  - `192.168.12.236:8080` için hostta dinleyen aktif runtime bulunamadı; `ss -ltnp` yalnız `unsloth studio` (`0.0.0.0:8000`) ve yardımcı servisleri gösterdi.
+  - Önceki node2 runtime izleri `sglang_qwen3_node2.log` içinde bulundu; tarihsel launch `31000` portunda ve scheduler/warmup exception ile kapanmış görünüyor.
+  - Historical merged checkpoint varlığı tekrar doğrulandı: `/home/btankut/hukuk-ai-finetune/outputs/hukuk-ai-lora-v2/merged` (~65G).
 
   ### Sonraki Beklenen Çıktı
-  - dgxnode2 model endpoint geri gelir gelmez localhost gateway üzerinden prompt-only live smoke ve citation-drift/cross-law slice evali.
-  - dgxnode2 ssh erişimi geri gelir gelmez detached log-backed training dry-run ve diagnostic smoke'un tekrar açılması.
-  - Ardından ilk bounded training smoke checkpoint artefact'ının restore edilen zincir üzerinden üretilmesi.
+  - Historical merged checkpoint üzerinde detached direct diagnostic eval raporu ve manifest'i.
+  - Ardından `192.168.12.236:8080` için resmi serving/runtime blocker notu ve restore stratejisi.
+  - Live runtime geri gelirse localhost gateway üzerinden prompt-only smoke ve citation-drift/cross-law slice evali.

@@ -14,6 +14,40 @@
 - **Readiness status:** `READY` (2026-03-21 preflight)
 - **Historical output under audit:** `outputs/hukuk-ai-lora-v2`
 
+## Execution Recovery — 2026-03-21
+
+- **Node:** `dgxnode2`
+- **Chain:** official text-only PEFT entrypoint
+- **Dry-run status:** `PASS`
+- **One-step smoke status:** `PASS`
+
+### Dry-run evidence
+
+- `loaded_model_class=Qwen3_5MoeForCausalLM`
+- `load_time_s=281.49`
+- `peak_mem_reserved_gb=64.64`
+- Result: `DRY_RUN_OK`
+
+### One-step smoke evidence
+
+- `max_train_samples=8`
+- `max_steps=1`
+- `train_runtime=35.82`
+- `step_time_s=33.607`
+- `train_loss=0.5954`
+- `peak_mem_reserved_gb=66.79`
+- Result: `TRAIN_OK`
+
+### Artefacts
+
+- remote adapter: `artifacts/finetune/unsloth-sft-qwen35-35b-a3b/smoke-step1-20260321/adapter`
+- remote checkpoint: `artifacts/finetune/unsloth-sft-qwen35-35b-a3b/smoke-step1-20260321/checkpoint-1`
+
+### Note
+
+- This smoke restores confidence in the execution chain only.
+- It does **not** replace the need for a fresh full run against the frozen package plus post-train evidence.
+
 ---
 
 ## Training v1 — INVALID (Wrong Dataset)
