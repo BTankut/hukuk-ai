@@ -194,9 +194,15 @@ notes: |
   - Ilk `dgx1` full denemeye gore error count `35 -> 16` iyilesti, fakat lane yaklasik `TBK-031` civarinda yine connection-error dalgasina girdi.
   - Gateway tarafinda koku hata tekrar ayni: `openai.APIConnectionError` / `httpx.ReadError`
   - Stable rerun karari kayda gecirildi: `coordination/dgx1-merged-stable-rerun-2026-03-21.md`
+  - `dgx1` inference docker'i yenilendi; full `faz1-50` kosusu sifirdan tekrar alindi: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_docker_refresh_20260322.json`
+  - Docker refresh run summary: citation `78.0%`, correct source `68.2%`, hallucination `2.0%`, refusal `98.0%`, avg response `16696 ms`, error `0`
+  - Bu run eski sustained-load baglanti kirilmasini kapatti; onceki `16` hatali run'a gore artik `0` connection error var.
+  - Ancak lane hala Faz 1'i dar farkla kaciriyor; blocker artik infra degil kalite/précision.
+  - Belirgin kalite kusurlari: `TBK-019` refusal miss, `TBK-044` hallucination.
+  - Docker refresh karari kayda gecirildi: `coordination/dgx1-docker-refresh-eval-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
-  - dgx1 serving layer icin sustained-load stabilite duzeltmesi.
+  - dgx1 lane uzerinde citation/source precision iyilestirmesi.
   - zayif slice'lar icin hedefli iyilestirme notu (`TBK-043`, kefalet cluster).
   - node1/node3 merged serving lane nihai tercih karari.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.
