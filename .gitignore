@@ -18,6 +18,8 @@ venv/
 
 # Logs / temp
 *.log
+*.pid
+runtime_logs/
 .tmp/
 /tmp/
 

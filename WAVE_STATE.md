@@ -2,9 +2,9 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T11:08:14+03:00
+last_activity: 2026-03-21T11:56:17+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "dgxnode3 full-run adapter'ini repo post-train eval kimligine baglayip matched raw eval + evidence manifest zincirini uretmek"
+next_action: "candidate gateway 127.0.0.1:8002 uzerinden faz1-50 post-train eval'i calistirip evidence manifest ve promotion gate cikarmak"
 blockers:
   - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; bu artik inference blocker, training blocker degil"
 notes: |
@@ -139,8 +139,11 @@ notes: |
   - dgxnode3 detached full Qwen run başarıyla tamamlandı.
   - Full run sonucu: `3` epoch, `606` step, `train_runtime=1.007e+04`, `train_loss=0.5051`
   - Final adapter üretildi: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/outputs/hukuk_ai_active_807_run/lora_adapter`
+  - `scripts/finetune/openai_generate_proxy.py` ile `/generate` -> `/v1/chat/completions` uyum katmanı eklendi.
+  - node3 candidate adapter serve `:18000`, OpenAI proxy `:30002`, local SSH tunnel `127.0.0.1:30002` ve local candidate gateway `127.0.0.1:8002` ayağa kaldırıldı.
+  - Candidate gateway smoke PASS verdi; `TBK m.49` için cited cevap döndü.
 
   ### Sonraki Beklenen Çıktı
-  - matched post-train raw eval raporu ve evidence manifest'i.
+  - `faz1-50` post-train raw eval raporu ve evidence manifest'i.
   - baseline ile promotion-ready karşılaştırma notu.
   - Ayrı iş kolunda dgxnode2 inference runtime restore stratejisi.
