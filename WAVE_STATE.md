@@ -2,12 +2,12 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T07:06:00+03:00
+last_activity: 2026-03-21T07:14:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "aktif 807 satirlik paketi ShareGPT formatina export edip repo'yu dgxnode3'e tasimak; orada Qwen3.5 proven path ile preflight ve bounded smoke baslatmak"
+next_action: "dgxnode3 proven Qwen path icin repo-native launcher/runbook dondurup aktif 807 satirlik paketle full training run baslatmak; dgxnode2'yi inference/runtime hattinda tutmak"
 blockers:
-  - "dgxnode3 proven Qwen path ShareGPT conversations bekliyor; mevcut aktif paket icin compatibility export gerektiriyor"
   - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; bu artik inference blocker, training blocker degil"
+  - "node3 full training run henuz repo-native launcher/runbook ile dondurulmus degil"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -129,8 +129,12 @@ notes: |
   - GPT-OSS-120B stable training ayarları `dgxnode4` üstünde doğrulandı: `/home/btankut/dgx-spark-gpt-oss-120b/FINAL_SETTINGS.md`
   - Node karar realignment: primary training target `dgxnode3`, inference/recovery target `dgxnode2`, alternative experimental track `dgxnode4`
   - `dgxnode3` üzerindeki proven Qwen path'in ShareGPT `conversations` formatı beklediği doğrulandı; repo içine bunun için resmi exporter eklendi.
+  - Repo `dgxnode3` üstüne sync edildi ve preflight gate PASS verdi: `READY_FOR_TRAINING_GATE`
+  - `final_train.jsonl` -> `final_train_sharegpt.jsonl` export'u node3 üzerinde `807/807` satırla PASS verdi.
+  - External proven Qwen repo `/home/btankut/dgx-spark-unsloth-qwen3.5-training` aktif exported paket ile one-step smoke PASS verdi.
+  - Node3 smoke sonucu: `train_loss=1.634`, `train_runtime=72.03s`, adapter `/outputs/hukuk_ai_active_807_smoke/lora_adapter`
 
   ### Sonraki Beklenen Çıktı
-  - ShareGPT export artefact ve node3-uyumlu training bridge.
-  - dgxnode3 üzerinde frozen package preflight ve bounded Qwen smoke.
+  - dgxnode3 proven path için repo-native launcher/runbook.
+  - dgxnode3 üzerinde full Qwen training run başlangıcı.
   - Ayrı iş kolunda dgxnode2 inference runtime restore stratejisi.
