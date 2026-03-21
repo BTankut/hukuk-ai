@@ -179,9 +179,17 @@ notes: |
   - `TBK-043` timeout'i anlik tekrar etmedi; manuel retry `25.835s` icinde dondu ancak gereksiz ek citation'lar urettigi icin asil sorun source over-expansion olarak kayda gecirildi.
   - Weak-slice notu: `coordination/node3-merged-weak-slices-2026-03-21.md`
   - Bir sonraki tuning/eval dalgasi icin 5 soruluk hizli iterasyon seti eklendi: `configs/evaluation/test_questions_weak_slices_node3_merged.json`
+  - Guncel merged checkpoint `dgxnode1` uzerine fabric lane ile kopyalandi: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/outputs/hukuk_ai_active_807_run/merged_model_fabric_stage_20260321`
+  - `dgxnode1` OpenAI-compatible merged endpoint dogrulandi: `http://dgx1:30000/v1`, model=`/models/merged_model_fabric_stage_20260321`, `max_model_len=8192`
+  - Repo-native local bridge eklendi: `scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh`
+  - Local tunnel acildi: `127.0.0.1:30004 -> dgxnode1:127.0.0.1:30000`
+  - Local merged candidate gateway acildi: `127.0.0.1:8004`
+  - `8004` health PASS verdi: `guardrails=enabled`, `retriever=milvus`
+  - `TBK m.49` cited smoke `8004` uzerinden PASS verdi; citation=`TBK m.49`, blocked=`false`
+  - Bridge notu eklendi: `coordination/dgx1-merged-endpoint-bridge-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
-  - merged lane uzerinden sonraki tuning/eval dalgasi.
+  - node1 merged lane uzerinden kisa matched smoke/eval dilimleri.
   - zayif slice'lar icin hedefli iyilestirme notu (`TBK-043`, kefalet cluster).
-  - node3 serving hattinda latency iyilestirme notu ve/veya alternatif serving stratejisi.
+  - node1/node3 merged serving lane karsilastirma notu ve tercih karari.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.
