@@ -2,12 +2,12 @@
 current_wave: faz2-p0-order-restoration
 status: running
 started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T07:14:00+03:00
+last_activity: 2026-03-21T07:17:00+03:00
 last_eval: api-gateway/benchmarks/results/guardrails_bench_20260320_195504.csv
-next_action: "dgxnode3 proven Qwen path icin repo-native launcher/runbook dondurup aktif 807 satirlik paketle full training run baslatmak; dgxnode2'yi inference/runtime hattinda tutmak"
+next_action: "dgxnode3 detached full Qwen run'i izleyip final adapter artefact'ini almak; hemen ardindan post-train evidence zincirini hazirlamak"
 blockers:
   - "dgxnode2 live model endpoint down: 192.168.12.236:8080 connection failed; bu artik inference blocker, training blocker degil"
-  - "node3 full training run henuz repo-native launcher/runbook ile dondurulmus degil"
+  - "node3 full training tamamlanmadan post-train evidence ve promotion karsilastirmasi uretilemez"
 notes: |
   ## Faz 2 P0 Hizalama Dalgası
 
@@ -133,8 +133,12 @@ notes: |
   - `final_train.jsonl` -> `final_train_sharegpt.jsonl` export'u node3 üzerinde `807/807` satırla PASS verdi.
   - External proven Qwen repo `/home/btankut/dgx-spark-unsloth-qwen3.5-training` aktif exported paket ile one-step smoke PASS verdi.
   - Node3 smoke sonucu: `train_loss=1.634`, `train_runtime=72.03s`, adapter `/outputs/hukuk_ai_active_807_smoke/lora_adapter`
+  - `scripts/finetune/launch_dgxnode3_qwen_external.sh` ile repo-native node3 launcher donduruldu.
+  - Aynı launcher ile detached full node3 run başlatıldı.
+  - Full run pid: `869015`
+  - Full run log: `/home/btankut/dgx-spark-unsloth-qwen3.5-training/runtime_logs/hukuk_ai_active_807_run.log`
 
   ### Sonraki Beklenen Çıktı
-  - dgxnode3 proven path için repo-native launcher/runbook.
-  - dgxnode3 üzerinde full Qwen training run başlangıcı.
+  - dgxnode3 full Qwen run completion ve final adapter artefact'ı.
+  - post-train diagnostic/promotion evidence planı.
   - Ayrı iş kolunda dgxnode2 inference runtime restore stratejisi.
