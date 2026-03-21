@@ -178,6 +178,7 @@ notes: |
   - Weak-slice analizi tamamlandi; en kritik regresyonlar `TBK-043`, `TBK-026`, `TBK-037`, `TBK-021`, `TBK-012`
   - `TBK-043` timeout'i anlik tekrar etmedi; manuel retry `25.835s` icinde dondu ancak gereksiz ek citation'lar urettigi icin asil sorun source over-expansion olarak kayda gecirildi.
   - Weak-slice notu: `coordination/node3-merged-weak-slices-2026-03-21.md`
+  - Bir sonraki tuning/eval dalgasi icin 5 soruluk hizli iterasyon seti eklendi: `configs/evaluation/test_questions_weak_slices_node3_merged.json`
 
   ### Sonraki Beklenen Çıktı
   - merged lane uzerinden sonraki tuning/eval dalgasi.

@@ -1,0 +1,110 @@
+{
+  "_meta": {
+    "name": "node3_merged_weak_slices",
+    "description": "Merged vLLM serving lane regressions isolated from the 2026-03-21 faz1-50 matched run",
+    "total_questions": 5
+  },
+  "questions": [
+    {
+      "id": "TBK-012",
+      "question": "TBK m.112 kapsamında borcun ifa edilmemesi (temerrüt) koşulları nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.112",
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "expected_keywords": [
+        "temerrüt",
+        "ifa",
+        "borcun muacceliyeti",
+        "ihtar",
+        "zamanında ifa etmeme",
+        "zararın tazmini"
+      ],
+      "expected_answer_contains": "temerrüt",
+      "refusal_expected": false,
+      "notes": "Borçlu temerrüdü — TBK m.112 ve bağlantılı maddeler"
+    },
+    {
+      "id": "TBK-021",
+      "question": "Satış sözleşmesinde satıcının ayıptan doğan sorumluluğu (ayıba karşı tekeffül) için alıcının gözden geçirme ve bildirim külfeti hangi sürelere tabidir?",
+      "category": "tbk_satis",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.223"
+      ],
+      "expected_keywords": [
+        "gözden geçirme",
+        "bildirim",
+        "ayıp",
+        "olağan akış",
+        "hemen",
+        "gecikmeksizin"
+      ],
+      "expected_answer_contains": "gözden geçirme",
+      "refusal_expected": false,
+      "notes": "Ayıba karşı tekeffül bildirim külfeti"
+    },
+    {
+      "id": "TBK-026",
+      "question": "TBK'ya göre müteselsil kefaletin şartları nelerdir?",
+      "category": "tbk_kefalet",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.586"
+      ],
+      "expected_keywords": [
+        "müteselsil",
+        "kefil",
+        "el yazısı",
+        "takip",
+        "asıl borçlu"
+      ],
+      "expected_answer_contains": "müteselsil",
+      "refusal_expected": false,
+      "notes": "Müteselsil kefalet"
+    },
+    {
+      "id": "TBK-037",
+      "question": "Geri alma hakkı saklı tutulan bağışlamada bağışlayan hangi hallerde bağışlamayı geri alabilir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.295"
+      ],
+      "expected_keywords": [
+        "geri alma",
+        "ağır suç",
+        "aile ödevleri",
+        "nafaka",
+        "hukuka aykırı"
+      ],
+      "expected_answer_contains": "ağır suç",
+      "refusal_expected": false,
+      "notes": "Bağışlamanın geri alınması"
+    },
+    {
+      "id": "TBK-043",
+      "question": "Manevi tazminat istemi TBK'nın hangi maddesinde düzenlenmiştir ve hangi durumlarda talep edilebilir?",
+      "category": "tbk_haksiz_fiil",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.56",
+        "TBK m.58"
+      ],
+      "expected_keywords": [
+        "manevi tazminat",
+        "kişilik hakları",
+        "bedensel bütünlük",
+        "ölüm",
+        "acı",
+        "elem"
+      ],
+      "expected_answer_contains": "kişilik hakları",
+      "refusal_expected": false,
+      "notes": "Manevi tazminat"
+    }
+  ]
+}
