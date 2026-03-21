@@ -6,8 +6,8 @@ from __future__ import annotations
 import argparse
 
 import unsloth  # noqa: F401
-from peft import PeftModel
 from unsloth import FastModel
+from peft import PeftModel
 
 
 def parse_args() -> argparse.Namespace:
