@@ -175,6 +175,9 @@ notes: |
   - Eski adapter/proxy path'e gore latency yaklasik `-81.8%` iyilesti (`120302.8 ms -> 21876.2 ms`), kalite metrikleri gate icinde kalarak kismi dusus gosterdi.
   - Serving karari kayda gecirildi: merged `vLLM` lane primary post-train candidate path, adapter/proxy lane fallback.
   - Karar notu: `coordination/node3-merged-serving-decision-2026-03-21.md`
+  - Weak-slice analizi tamamlandi; en kritik regresyonlar `TBK-043`, `TBK-026`, `TBK-037`, `TBK-021`, `TBK-012`
+  - `TBK-043` timeout'i anlik tekrar etmedi; manuel retry `25.835s` icinde dondu ancak gereksiz ek citation'lar urettigi icin asil sorun source over-expansion olarak kayda gecirildi.
+  - Weak-slice notu: `coordination/node3-merged-weak-slices-2026-03-21.md`
 
   ### Sonraki Beklenen Çıktı
   - merged lane uzerinden sonraki tuning/eval dalgasi.
