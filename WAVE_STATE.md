@@ -200,6 +200,12 @@ notes: |
   - Ancak lane hala Faz 1'i dar farkla kaciriyor; blocker artik infra degil kalite/précision.
   - Belirgin kalite kusurlari: `TBK-019` refusal miss, `TBK-044` hallucination.
   - Docker refresh karari kayda gecirildi: `coordination/dgx1-docker-refresh-eval-2026-03-22.md`
+  - `TTK/TCK` deterministic scope-refusal genisletildi; `TBK-019` refusal miss kapatildi.
+  - Router regresyon testleri gecti: `api-gateway/.venv/bin/pytest api-gateway/tests/test_chat_router.py -q`
+  - Refusal-fix full rerun tamamlandi: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_refusal_fix_20260322.json`
+  - Refusal-fix summary: citation `79.6%`, correct source `68.6%`, hallucination `6.1%`, refusal `100.0%`, avg response `16268 ms`, error `1`
+  - `TBK-019` duzeldi, ama sonraki blocker `TBK-044` ve genel-law cluster hallucination/source drift oldu.
+  - Refusal-fix notu eklendi: `coordination/refusal-fix-ttk-rerun-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
   - dgx1 lane uzerinde citation/source precision iyilestirmesi.

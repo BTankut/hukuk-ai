@@ -32,6 +32,7 @@ from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
     ConversationMessage,
+    _detect_scope_refusal_reason,
     _build_multiturn_query,
     _stream_sse_response,
     get_conversation_store,
@@ -228,6 +229,21 @@ class TestBuildMultiturnQuery:
             conversation_history=history,
         )
         assert "Asistan" in result
+
+
+class TestScopeRefusalDetection:
+
+    def test_ttk_query_detected_as_out_of_scope(self):
+        reason = _detect_scope_refusal_reason(
+            "Türk Ticaret Kanunu'na göre anonim şirket kuruluş asgari sermayesi nedir?"
+        )
+        assert reason == "Türk Ticaret Kanunu (TTK)"
+
+    def test_tck_query_detected_as_out_of_scope(self):
+        reason = _detect_scope_refusal_reason(
+            "TCK m.141 neyi düzenler?"
+        )
+        assert reason == "Türk Ceza Kanunu (TCK)"
 
 
 # ---------------------------------------------------------------------------

@@ -104,6 +104,25 @@ def _detect_scope_refusal_reason(user_query: str) -> str | None:
     ):
         return "Türk Medeni Kanunu (TMK)"
 
+    ttk_signal = ("ttk" in q) or ("ticaret kanunu" in q)
+    ttk_domain_terms = [
+        "anonim şirket",
+        "asgari sermaye",
+        "limited şirket",
+        "ticari işletme",
+        "çek",
+        "bono",
+        "poliçe",
+    ]
+    if (ttk_signal and not has_tbk_signal) or (
+        any(term in q for term in ttk_domain_terms) and not has_tbk_signal
+    ):
+        return "Türk Ticaret Kanunu (TTK)"
+
+    tck_signal = ("tck" in q) or ("ceza kanunu" in q)
+    if tck_signal and not has_tbk_signal:
+        return "Türk Ceza Kanunu (TCK)"
+
     return None
 
 
