@@ -459,6 +459,46 @@ class TestPreciseDeterministicAnswers:
                 ["uygun olmayan zamanda", "zararını gidermekle yükümlüdür"],
             ),
             (
+                "TBK m.512 uyarınca vekalet sözleşmesi hangi hallerde kendiliğinden sona erer ve azil bildirimi için özel bir şekil şartı öngörülmüş müdür?",
+                ["TBK m.512", "TBK m.513"],
+                ["özel bir şekil şartı öngörülmemiştir", "ölümü, ehliyetini kaybetmesi veya iflası"],
+            ),
+            (
+                "TBK m.509 kapsamında vekilin özen borcunu ihlal etmesi halinde müvekkile karşı sorumluluğunun koşulları ve kapsamı nedir?",
+                ["TBK m.509", "TBK m.504"],
+                ["vekâletin kapsamı", "müvekkili zarara uğratıyorsa"],
+            ),
+            (
+                "Azil ve istifanın vekâlet sözleşmesine etkisi TBK'da nasıl düzenlenmiştir?",
+                ["TBK m.512", "TBK m.513"],
+                ["Azil ve istifa", "kendiliğinden sona ermesine yol açar"],
+            ),
+            (
+                "TBK m.507 uyarınca müvekkil aynı iş için birden fazla vekil atamışsa bu vekillerin birbirine ve müvekkile karşı sorumluluğu nasıl belirlenir?",
+                ["TBK m.507", "TBK m.162"],
+                ["birden çok vekilin müvekkile verdikleri zarar", "müteselsil sorumluluk"],
+            ),
+            (
+                "Vekilim benim adıma imzaladığı sözleşmede verdiğim yetkinin sınırlarını aştı; bu sözleşmeyi geçersiz sayabilir miyim?",
+                ["TBK m.504", "TBK m.46"],
+                ["yetkisiz temsil", "onay verirse sözleşme hüküm doğurur"],
+            ),
+            (
+                "TBK m.513 uyarınca müvekkilin ölümü veya iflası halinde vekalet ilişkisinin sona ermesiyle birlikte vekilin başlatılmış işleri tamamlama yükümlülüğü devam eder mi?",
+                ["TBK m.513", "TBK m.512"],
+                ["başlatılmış işleri sürdürmek", "zarar önlemek"],
+            ),
+            (
+                "TBK m.514 kapsamında vekalet sona erdiğinden haberdar olmayan vekil üçüncü kişilerle işlem yapmayı sürdürürse bu işlemler geçerli midir?",
+                ["TBK m.514", "TBK m.512"],
+                ["vekâlet devam ediyormuş gibi sonuç doğurur", "iyiniyetli işlem güvenliğinin korunması"],
+            ),
+            (
+                "TBK m.503 kapsamında vekilin özen borcunun standartı nasıl belirlenir? Avukatlık gibi serbest meslek vekâletlerinde bu standart farklı mıdır?",
+                ["TBK m.503", "TBK m.509"],
+                ["basiretli ve mesleki özeni yüksek", "avukatlık gibi serbest meslek vekâletlerinde"],
+            ),
+            (
                 "Bir arkadaşımın bankaya olan borcuna kefil oldum; asıl borçlu ödeme yapamıyor. Kefil olarak hangi aşamaları izlemeliyim?",
                 ["TBK m.587", "TBK m.586", "TBK m.596"],
                 ["doğrudan kefile başvurabilir", "halef olur"],

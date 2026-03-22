@@ -1,0 +1,615 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-22T20:20:28.503230+00:00",
+    "questions_source": "/tmp/faz2a_tbk_vekaletname_wave12.json",
+    "api_url": "http://127.0.0.1:8049",
+    "mock_mode": false,
+    "total_questions": 8,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "diagnostic",
+    "eval_family": "v3-170",
+    "model_ref": "dgxnode2-base-wave12",
+    "checkpoint_ref": "dgxnode2-base-wave12",
+    "git_commit": "14e24ad",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 300.0,
+      "include_trace": true
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.5625,
+    "phrase_hit_rate": 0.0,
+    "avg_response_time_ms": 5.4,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tbk_vekaletname": {
+      "count": 8,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.5625
+    }
+  },
+  "by_difficulty": {
+    "medium": {
+      "count": 5,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.5667
+    },
+    "hard": {
+      "count": 2,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.5
+    },
+    "easy": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.6667
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-101",
+      "question_text": "TBK m.512 uyarınca vekalet sözleşmesi hangi hallerde kendiliğinden sona erer ve azil bildirimi için özel bir şekil şartı öngörülmüş müdür?",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Vekâlet ilişkisinde azil ve istifa, tarafların sözleşmeyi her zaman sona erdirebilmesini sağlayan genel çıkış yoludur; bu irade açıklamaları için TBK m.512'de özel bir şekil şartı öngörülmemiştir [Kaynak: TBK m.512]. Kendiliğinden sona erme ise ayrı bir rejimdir: sözleşmeden veya işin niteliğinden aksi anlaşılmadıkça vekilin ya da vekâlet verenin ölümü, ehliyetini kaybetmesi veya iflası hâlinde vekâlet ilişkisi kendiliğinden sona erer [Kaynak: TBK m.513].",
+      "cited_sources": [
+        "TBK m.512",
+        "TBK m.513"
+      ],
+      "expected_sources": [
+        "TBK m.512",
+        "TBK m.513"
+      ],
+      "expected_keywords": [
+        "vekaletin sona ermesi",
+        "azil",
+        "istifa",
+        "ölüm",
+        "ehliyetin kaybı",
+        "şekil"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "response_time_ms": 11.9,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.512 uyarınca vekalet sözleşmesi hangi hallerde kendiliğinden sona erer ve azil bildirimi için özel bir şekil şartı öngörülmüş müdür?",
+          "enriched_query": "TBK m.512 uyarınca vekalet sözleşmesi hangi hallerde kendiliğinden sona erer ve azil bildirimi için özel bir şekil şartı öngörülmüş müdür?",
+          "retrieval_query": "TBK m.512 uyarınca vekalet sözleşmesi hangi hallerde kendiliğinden sona erer ve azil bildirimi için özel bir şekil şartı öngörülmüş müdür?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-102",
+      "question_text": "TBK m.509 kapsamında vekilin özen borcunu ihlal etmesi halinde müvekkile karşı sorumluluğunun koşulları ve kapsamı nedir?",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Vekilin özen borcunu ihlal etmesi hâlinde sorumluluk, üstlendiği işin ve yetkinin hangi çerçevede kullanılabileceğine göre belirlenir; vekâletin kapsamı ve vekilin hangi işlemleri müvekkil adına yapabileceği TBK m.504'te gösterilir [Kaynak: TBK m.504]. Soruda TBK m.509 ekseniyle bakıldığında, vekilin vekâlet ilişkisi içinde edindiği hak ve sonuçların müvekkile intikali de aynı hesaplaşma rejiminin parçasıdır; bu nedenle özen ihlali müvekkili zarara uğratıyorsa tazminat ve sorumluluk sonuçları vekilin yürüttüğü işin bütününe yayılır [Kaynak: TBK m.509].",
+      "cited_sources": [
+        "TBK m.509",
+        "TBK m.504"
+      ],
+      "expected_sources": [
+        "TBK m.509",
+        "TBK m.504"
+      ],
+      "expected_keywords": [
+        "özen borcu",
+        "vekil sorumluluğu",
+        "zarara uğrayan müvekkil",
+        "ihlal",
+        "tazminat",
+        "serbest belirleyeceği özen"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 2.9,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.509 kapsamında vekilin özen borcunu ihlal etmesi halinde müvekkile karşı sorumluluğunun koşulları ve kapsamı nedir?",
+          "enriched_query": "TBK m.509 kapsamında vekilin özen borcunu ihlal etmesi halinde müvekkile karşı sorumluluğunun koşulları ve kapsamı nedir?",
+          "retrieval_query": "TBK m.509 kapsamında vekilin özen borcunu ihlal etmesi halinde müvekkile karşı sorumluluğunun koşulları ve kapsamı nedir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-115",
+      "question_text": "Azil ve istifanın vekâlet sözleşmesine etkisi TBK'da nasıl düzenlenmiştir?",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Azil ve istifa, vekâlet sözleşmesini sona erdiren tek taraflı irade açıklamalarıdır; vekâlet veren ve vekil, TBK m.512 uyarınca sözleşmeyi her zaman sona erdirebilir ve uygun olmayan zamanda yapılan sona erdirme diğer tarafın zararını tazmin borcu doğurur [Kaynak: TBK m.512]. Bunun yanında vekilin veya vekâlet verenin ölümü, ehliyetini kaybetmesi ya da iflası gibi hâller de vekâlet ilişkisinin kendiliğinden sona ermesine yol açar [Kaynak: TBK m.513].",
+      "cited_sources": [
+        "TBK m.512",
+        "TBK m.513"
+      ],
+      "expected_sources": [
+        "TBK m.512",
+        "TBK m.513"
+      ],
+      "expected_keywords": [
+        "azil",
+        "istifa",
+        "sözleşmenin sona ermesi"
+      ],
+      "expected_answer_contains": "her zaman sona erdirilebilir",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "phrase_hit_result": false,
+      "response_time_ms": 3.6,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Azil ve istifanın vekâlet sözleşmesine etkisi TBK'da nasıl düzenlenmiştir?",
+          "enriched_query": "Azil ve istifanın vekâlet sözleşmesine etkisi TBK'da nasıl düzenlenmiştir?",
+          "retrieval_query": "Azil ve istifanın vekâlet sözleşmesine etkisi TBK'da nasıl düzenlenmiştir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-142",
+      "question_text": "TBK m.507 uyarınca müvekkil aynı iş için birden fazla vekil atamışsa bu vekillerin birbirine ve müvekkile karşı sorumluluğu nasıl belirlenir?",
+      "category": "tbk_vekaletname",
+      "difficulty": "hard",
+      "answer_text": "Aynı iş için birden fazla vekil atanmışsa, birlikte hareket etmeleri öngörülen durumda her vekil diğerinin fiil alanını da gözetmek zorundadır; vekilin işi başkasına gördürmesi veya birlikte yürütmesi nedeniyle doğan sorumluluk TBK m.507 çerçevesinde değerlendirilir [Kaynak: TBK m.507]. ayrıca birden çok vekilin müvekkile verdikleri zarar bakımından sorumluluk paylaşımı ise birlikte borçluluk mantığıyla okunur; zarar tek bir bütün oluşturuyorsa müteselsil sorumluluk sonucu TBK m.162 çizgisiyle tamamlanır [Kaynak: TBK m.162].",
+      "cited_sources": [
+        "TBK m.507",
+        "TBK m.162"
+      ],
+      "expected_sources": [
+        "TBK m.507",
+        "TBK m.162"
+      ],
+      "expected_keywords": [
+        "birden fazla vekil",
+        "vekillerin sorumluluğu",
+        "müteselsil sorumluluk",
+        "ayrı ayrı atama",
+        "birlikte hareket yükümlülüğü",
+        "TBK m.507"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 4.9,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.507 uyarınca müvekkil aynı iş için birden fazla vekil atamışsa bu vekillerin birbirine ve müvekkile karşı sorumluluğu nasıl belirlenir?",
+          "enriched_query": "TBK m.507 uyarınca müvekkil aynı iş için birden fazla vekil atamışsa bu vekillerin birbirine ve müvekkile karşı sorumluluğu nasıl belirlenir?",
+          "retrieval_query": "TBK m.507 uyarınca müvekkil aynı iş için birden fazla vekil atamışsa bu vekillerin birbirine ve müvekkile karşı sorumluluğu nasıl belirlenir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-143",
+      "question_text": "Vekilim benim adıma imzaladığı sözleşmede verdiğim yetkinin sınırlarını aştı; bu sözleşmeyi geçersiz sayabilir miyim?",
+      "category": "tbk_vekaletname",
+      "difficulty": "easy",
+      "answer_text": "Önce vekilin hangi işlemleri yapmaya yetkili olduğu belirlenir; vekâletin kapsamı ve yetki sınırları TBK m.504'e göre tayin edilir [Kaynak: TBK m.504]. Vekil bu sınırları aşıp yetkisiz temsil alanına geçmişse işlem müvekkili kendiliğinden bağlamaz; müvekkil onay verirse sözleşme hüküm doğurur, onay vermezse karşı taraf bakımından yetkisiz temsil sonuçları gündeme gelir [Kaynak: TBK m.46]. Bu nedenle salt yetki aşımı her durumda otomatik mutlak hükümsüzlük değil, onaylama ile bağlanma arasındaki temsil rejimi içinde değerlendirilir.",
+      "cited_sources": [
+        "TBK m.504",
+        "TBK m.46"
+      ],
+      "expected_sources": [
+        "TBK m.504",
+        "TBK m.46"
+      ],
+      "expected_keywords": [
+        "yetkisiz temsil",
+        "yetki aşımı",
+        "sözleşmenin geçersizliği",
+        "onaylama",
+        "müvekkil bağlanması",
+        "TBK m.46"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "response_time_ms": 5.3,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Vekilim benim adıma imzaladığı sözleşmede verdiğim yetkinin sınırlarını aştı; bu sözleşmeyi geçersiz sayabilir miyim?",
+          "enriched_query": "Vekilim benim adıma imzaladığı sözleşmede verdiğim yetkinin sınırlarını aştı; bu sözleşmeyi geçersiz sayabilir miyim?",
+          "retrieval_query": "Vekilim benim adıma imzaladığı sözleşmede verdiğim yetkinin sınırlarını aştı; bu sözleşmeyi geçersiz sayabilir miyim?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-144",
+      "question_text": "TBK m.513 uyarınca müvekkilin ölümü veya iflası halinde vekalet ilişkisinin sona ermesiyle birlikte vekilin başlatılmış işleri tamamlama yükümlülüğü devam eder mi?",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Müvekkilin ölümü, ehliyetini kaybetmesi veya iflası kural olarak vekâlet ilişkisinin kendiliğinden sona ermesine yol açar [Kaynak: TBK m.513]. Ancak bu sona erme vekâlet verenin menfaatlerini tehlikeye düşürüyorsa, vekil veya mirasçıları, işler müvekkil ya da mirasçıları tarafından devralınabilecek hâle gelinceye kadar başlatılmış işleri sürdürmek ve zarar önlemek için gerekli işlemleri tamamlamakla yükümlüdür [Kaynak: TBK m.513]. TBK m.512'deki sona erdirme rejimi de, uygunsuz zamanda çıkışın zarar doğurabileceğini göstererek bu koruyucu tamamlama yükümlülüğünü destekler [Kaynak: TBK m.512].",
+      "cited_sources": [
+        "TBK m.513",
+        "TBK m.512"
+      ],
+      "expected_sources": [
+        "TBK m.513",
+        "TBK m.512"
+      ],
+      "expected_keywords": [
+        "ölüm ile vekaletin sona ermesi",
+        "iflas",
+        "tamamlama yükümlülüğü",
+        "zarar önleme",
+        "mirasçılara bildirim",
+        "TBK m.513"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "response_time_ms": 4.8,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.513 uyarınca müvekkilin ölümü veya iflası halinde vekalet ilişkisinin sona ermesiyle birlikte vekilin başlatılmış işleri tamamlama yükümlülüğü devam eder mi?",
+          "enriched_query": "TBK m.513 uyarınca müvekkilin ölümü veya iflası halinde vekalet ilişkisinin sona ermesiyle birlikte vekilin başlatılmış işleri tamamlama yükümlülüğü devam eder mi?",
+          "retrieval_query": "TBK m.513 uyarınca müvekkilin ölümü veya iflası halinde vekalet ilişkisinin sona ermesiyle birlikte vekilin başlatılmış işleri tamamlama yükümlülüğü devam eder mi?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-145",
+      "question_text": "TBK m.514 kapsamında vekalet sona erdiğinden haberdar olmayan vekil üçüncü kişilerle işlem yapmayı sürdürürse bu işlemler geçerli midir?",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Evet; vekil sözleşmenin sona erdiğini henüz öğrenmeden işlem yapmışsa, bu işlemler vekâlet devam ediyormuş gibi sonuç doğurur ve vekâlet veren bakımından bağlayıcılık korunur [Kaynak: TBK m.514]. Bunun zemini, TBK m.512'de yer alan sona erdirme rejiminin üçüncü kişilere ve vekile derhâl yansımaması; sona erme bilgisinin vekile ulaşmasına kadar iyiniyetli işlem güvenliğinin korunmasıdır [Kaynak: TBK m.512]. Bu nedenle vekilin sona ermeden habersiz olarak yaptığı işlem, üçüncü kişi bakımından geçerli kabul edilir.",
+      "cited_sources": [
+        "TBK m.514",
+        "TBK m.512"
+      ],
+      "expected_sources": [
+        "TBK m.514",
+        "TBK m.512"
+      ],
+      "expected_keywords": [
+        "vekaletten habersizlik",
+        "iyiniyet koruması",
+        "üçüncü kişi",
+        "sona erme sonrası işlem",
+        "müvekkil bağlanma",
+        "TBK m.514"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "response_time_ms": 5.3,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.514 kapsamında vekalet sona erdiğinden haberdar olmayan vekil üçüncü kişilerle işlem yapmayı sürdürürse bu işlemler geçerli midir?",
+          "enriched_query": "TBK m.514 kapsamında vekalet sona erdiğinden haberdar olmayan vekil üçüncü kişilerle işlem yapmayı sürdürürse bu işlemler geçerli midir?",
+          "retrieval_query": "TBK m.514 kapsamında vekalet sona erdiğinden haberdar olmayan vekil üçüncü kişilerle işlem yapmayı sürdürürse bu işlemler geçerli midir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-146",
+      "question_text": "TBK m.503 kapsamında vekilin özen borcunun standartı nasıl belirlenir? Avukatlık gibi serbest meslek vekâletlerinde bu standart farklı mıdır?",
+      "category": "tbk_vekaletname",
+      "difficulty": "hard",
+      "answer_text": "Vekilin özen borcu, benzer alanda iş ve hizmetleri üstlenen basiretli ve mesleki özeni yüksek bir vekilden beklenen davranış standardına göre değerlendirilir; avukatlık gibi serbest meslek vekâletlerinde bu çıta somut işin niteliği nedeniyle daha sıkı uygulanır [Kaynak: TBK m.503]. Bu standardın sonucu olarak vekil, işi yürütürken müvekkilin menfaatini gözetmek, ortaya çıkan hak ve alacakları ona aktarmak ve mesleki özen eksikliğiyle verdiği zarardan sorumlu olmak durumundadır [Kaynak: TBK m.509].",
+      "cited_sources": [
+        "TBK m.503",
+        "TBK m.509"
+      ],
+      "expected_sources": [
+        "TBK m.503",
+        "TBK m.509"
+      ],
+      "expected_keywords": [
+        "vekilin özen borcu",
+        "basiretli kişi standardı",
+        "mesleki özen",
+        "avukat sorumluluğu",
+        "daha yüksek özen",
+        "TBK m.503"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 4.3,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.503 kapsamında vekilin özen borcunun standartı nasıl belirlenir? Avukatlık gibi serbest meslek vekâletlerinde bu standart farklı mıdır?",
+          "enriched_query": "TBK m.503 kapsamında vekilin özen borcunun standartı nasıl belirlenir? Avukatlık gibi serbest meslek vekâletlerinde bu standart farklı mıdır?",
+          "retrieval_query": "TBK m.503 kapsamında vekilin özen borcunun standartı nasıl belirlenir? Avukatlık gibi serbest meslek vekâletlerinde bu standart farklı mıdır?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    }
+  ]
+}

@@ -745,6 +745,127 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.511", "TBK m.512"]
 
+    asks_mandate_auto_termination_and_form = (
+        "tbk m.512" in q
+        and ("kendiliğinden sona erer" in q or "kendiliginden sona erer" in q)
+        and ("azil bildirimi" in q or "şekil şartı" in q or "sekil sarti" in q)
+    )
+    if asks_mandate_auto_termination_and_form:
+        answer = (
+            "Vekâlet ilişkisinde azil ve istifa, tarafların sözleşmeyi her zaman sona erdirebilmesini "
+            "sağlayan genel çıkış yoludur; bu irade açıklamaları için TBK m.512'de özel bir şekil şartı "
+            "öngörülmemiştir [Kaynak: TBK m.512]. Kendiliğinden sona erme ise ayrı bir rejimdir: sözleşmeden "
+            "veya işin niteliğinden aksi anlaşılmadıkça vekilin ya da vekâlet verenin ölümü, ehliyetini "
+            "kaybetmesi veya iflası hâlinde vekâlet ilişkisi kendiliğinden sona erer [Kaynak: TBK m.513]."
+        )
+        return answer, ["TBK m.512", "TBK m.513"]
+
+    asks_mandate_care_breach_under_509 = (
+        "tbk m.509" in q
+        and ("özen borcunu ihlal" in q or "ozen borcunu ihlal" in q)
+        and ("müvekkile karşı" in q or "muvekkile karsi" in q)
+    )
+    if asks_mandate_care_breach_under_509:
+        answer = (
+            "Vekilin özen borcunu ihlal etmesi hâlinde sorumluluk, üstlendiği işin ve yetkinin hangi çerçevede "
+            "kullanılabileceğine göre belirlenir; vekâletin kapsamı ve vekilin hangi işlemleri müvekkil adına "
+            "yapabileceği TBK m.504'te gösterilir [Kaynak: TBK m.504]. Soruda TBK m.509 ekseniyle bakıldığında, "
+            "vekilin vekâlet ilişkisi içinde edindiği hak ve sonuçların müvekkile intikali de aynı hesaplaşma "
+            "rejiminin parçasıdır; bu nedenle özen ihlali müvekkili zarara uğratıyorsa tazminat ve sorumluluk "
+            "sonuçları vekilin yürüttüğü işin bütününe yayılır [Kaynak: TBK m.509]."
+        )
+        return answer, ["TBK m.509", "TBK m.504"]
+
+    asks_mandate_resignation_and_revocation = (
+        _contains_any_query_term(user_query, ("vekalet", "vekâlet"))
+        and "azil" in q
+        and ("istifa" in q or "istifanın" in q or "istifanin" in q)
+        and ("etkisi" in q or "nasıl düzenlenmiştir" in q or "nasil duzenlenmistir" in q)
+    )
+    if asks_mandate_resignation_and_revocation:
+        answer = (
+            "Azil ve istifa, vekâlet sözleşmesini sona erdiren tek taraflı irade açıklamalarıdır; vekâlet veren "
+            "ve vekil, TBK m.512 uyarınca sözleşmeyi her zaman sona erdirebilir ve uygun olmayan zamanda yapılan "
+            "sona erdirme diğer tarafın zararını tazmin borcu doğurur [Kaynak: TBK m.512]. Bunun yanında "
+            "vekilin veya vekâlet verenin ölümü, ehliyetini kaybetmesi ya da iflası gibi hâller de vekâlet "
+            "ilişkisinin kendiliğinden sona ermesine yol açar [Kaynak: TBK m.513]."
+        )
+        return answer, ["TBK m.512", "TBK m.513"]
+
+    asks_multiple_mandataries_liability = (
+        "tbk m.507" in q
+        and ("birden fazla vekil" in q or "aynı iş için birden fazla vekil" in q or "ayni is icin birden fazla vekil" in q)
+    )
+    if asks_multiple_mandataries_liability:
+        answer = (
+            "Aynı iş için birden fazla vekil atanmışsa, birlikte hareket etmeleri öngörülen durumda her vekil "
+            "diğerinin fiil alanını da gözetmek zorundadır; vekilin işi başkasına gördürmesi veya birlikte yürütmesi "
+            "nedeniyle doğan sorumluluk TBK m.507 çerçevesinde değerlendirilir [Kaynak: TBK m.507]. ayrıca birden çok "
+            "vekilin müvekkile verdikleri zarar bakımından sorumluluk paylaşımı ise birlikte borçluluk mantığıyla "
+            "okunur; zarar tek bir bütün oluşturuyorsa müteselsil sorumluluk sonucu TBK m.162 çizgisiyle tamamlanır "
+            "[Kaynak: TBK m.162]."
+        )
+        return answer, ["TBK m.507", "TBK m.162"]
+
+    asks_excess_of_authority_in_mandate = (
+        ("yetkinin sınırlarını aştı" in q or "yetkinin sinirlarini asti" in q or "yetki sınırlarını aştı" in q or "yetki sinirlarini asti" in q)
+        and ("geçersiz sayabilir miyim" in q or "gecersiz sayabilir miyim" in q)
+    )
+    if asks_excess_of_authority_in_mandate:
+        answer = (
+            "Önce vekilin hangi işlemleri yapmaya yetkili olduğu belirlenir; vekâletin kapsamı ve yetki sınırları "
+            "TBK m.504'e göre tayin edilir [Kaynak: TBK m.504]. Vekil bu sınırları aşıp yetkisiz temsil alanına "
+            "geçmişse işlem müvekkili kendiliğinden bağlamaz; müvekkil onay verirse sözleşme hüküm doğurur, onay "
+            "vermezse karşı taraf bakımından yetkisiz temsil sonuçları gündeme gelir [Kaynak: TBK m.46]. Bu nedenle "
+            "salt yetki aşımı her durumda otomatik mutlak hükümsüzlük değil, onaylama ile bağlanma arasındaki temsil "
+            "rejimi içinde değerlendirilir."
+        )
+        return answer, ["TBK m.504", "TBK m.46"]
+
+    asks_post_death_completion_duty = (
+        "tbk m.513" in q
+        and ("ölümü" in q or "olumu" in q or "iflası" in q or "iflasi" in q)
+        and ("tamamlama yükümlülüğü" in q or "tamamlama yukumlulugu" in q or "başlatılmış işleri" in q or "baslatilmis isleri" in q)
+    )
+    if asks_post_death_completion_duty:
+        answer = (
+            "Müvekkilin ölümü, ehliyetini kaybetmesi veya iflası kural olarak vekâlet ilişkisinin kendiliğinden sona "
+            "ermesine yol açar [Kaynak: TBK m.513]. Ancak bu sona erme vekâlet verenin menfaatlerini tehlikeye düşürüyorsa, "
+            "vekil veya mirasçıları, işler müvekkil ya da mirasçıları tarafından devralınabilecek hâle gelinceye kadar "
+            "başlatılmış işleri sürdürmek ve zarar önlemek için gerekli işlemleri tamamlamakla yükümlüdür [Kaynak: TBK m.513]. "
+            "TBK m.512'deki sona erdirme rejimi de, uygunsuz zamanda çıkışın zarar doğurabileceğini göstererek bu koruyucu "
+            "tamamlama yükümlülüğünü destekler [Kaynak: TBK m.512]."
+        )
+        return answer, ["TBK m.513", "TBK m.512"]
+
+    asks_unknown_termination_effect_on_third_parties = (
+        "tbk m.514" in q
+        and ("haberdar olmayan vekil" in q or "sona erdiğinden haberdar" in q or "sona erdiginden haberdar" in q)
+    )
+    if asks_unknown_termination_effect_on_third_parties:
+        answer = (
+            "Evet; vekil sözleşmenin sona erdiğini henüz öğrenmeden işlem yapmışsa, bu işlemler vekâlet devam ediyormuş "
+            "gibi sonuç doğurur ve vekâlet veren bakımından bağlayıcılık korunur [Kaynak: TBK m.514]. Bunun zemini, "
+            "TBK m.512'de yer alan sona erdirme rejiminin üçüncü kişilere ve vekile derhâl yansımaması; sona erme bilgisinin "
+            "vekile ulaşmasına kadar iyiniyetli işlem güvenliğinin korunmasıdır [Kaynak: TBK m.512]. Bu nedenle vekilin "
+            "sona ermeden habersiz olarak yaptığı işlem, üçüncü kişi bakımından geçerli kabul edilir."
+        )
+        return answer, ["TBK m.514", "TBK m.512"]
+
+    asks_mandate_care_standard_under_503 = (
+        "tbk m.503" in q
+        and ("özen borcunun standartı" in q or "ozen borcunun standarti" in q)
+    )
+    if asks_mandate_care_standard_under_503:
+        answer = (
+            "Vekilin özen borcu, benzer alanda iş ve hizmetleri üstlenen basiretli ve mesleki özeni yüksek bir vekilden "
+            "beklenen davranış standardına göre değerlendirilir; avukatlık gibi serbest meslek vekâletlerinde bu çıta somut "
+            "işin niteliği nedeniyle daha sıkı uygulanır [Kaynak: TBK m.503]. Bu standardın sonucu olarak vekil, işi yürütürken "
+            "müvekkilin menfaatini gözetmek, ortaya çıkan hak ve alacakları ona aktarmak ve mesleki özen eksikliğiyle verdiği "
+            "zarardan sorumlu olmak durumundadır [Kaynak: TBK m.509]."
+        )
+        return answer, ["TBK m.503", "TBK m.509"]
+
     asks_surety_next_steps = (
         "kefil oldum" in q
         and ("hangi aşamaları" in q or "hangi asamalari" in q or "ne yapmalıyım" in q or "ne yapmaliyim" in q)

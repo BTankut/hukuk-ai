@@ -2,12 +2,12 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-22T19:10:00+03:00
-last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_185613.json
-next_action: "anchored cross-law sorularinda source-lock citation count'ini 3-4 kaynaga cikarmak; kalan blocker artik source coverage"
+last_activity: 2026-03-22T23:39:08+03:00
+last_eval: evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave12_20260322.json
+next_action: "tbk_kefalet companion-source tail ve ortak TBK-137 residualini dar deterministic paketlerle kapatmak"
 blockers:
-  - "candidate tmk_cross_law correct_source wave5 sonunda 62.8%; gate halen 70% altinda"
-  - "022/025 hallucination kapandi ama 3+ expected source cluster'larinda ucuncu/dorduncu kaynak eksik kaliyor"
+  - "matched tbk_critical residual seti baseline'da 6, candidate'da 7 soruya indi; aktif kuyruk artik tbk_kefalet"
+  - "candidate tbk_kefalet correct_source wave12 sonunda 76.9%; acik sorular: TBK-091, 150, 151, 153, 155, 156 ve ortak TBK-137"
 notes: |
   ## FAZ 2A Durumu
 
@@ -380,7 +380,29 @@ notes: |
     - candidate `71.0% -> 97.4%`
   - `tbk_critical` slice'i her iki lane icin de daha yuksek source precision ile tekrar Faz 1 gate'ini gecti.
   - Wave 11 karar notu eklendi: `coordination/faz2a-wave11-tbk-hizmet-rerun-2026-03-22.md`
+  - Wave 12 `tbk_vekaletname` source-tail closure acildi; sekiz dar deterministic paket ile `TBK-101`, `102`, `115`, `142`, `143`, `144`, `145`, `146` coverage altina alindi.
+  - Wave 12 local verification PASS: `python3 -m py_compile api-gateway/src/routers/chat.py api-gateway/tests/test_chat_router.py` ve `api-gateway/.venv/bin/pytest api-gateway/tests/test_chat_router.py -q`
+  - Fresh matched lane'ler acildi: baseline `8049`, candidate `8050`
+  - Focused `tbk_vekaletname` mini-slice rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tbk_vekaletname_baseline_wave12_20260322.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tbk_vekaletname_candidate_wave12_20260322.json`
+  - Mini-slice summary:
+    - baseline -> citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+    - candidate -> citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+  - Full matched `tbk_critical` rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_baseline_wave12_20260322.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave12_20260322.json`
+  - Wave 12 summary:
+    - baseline -> citation `100.0%`, correct source `95.1%`, hallucination `0.0%`, refusal `96.7%`
+    - candidate -> citation `100.0%`, correct source `94.3%`, hallucination `0.0%`, refusal `98.4%`
+  - `tbk_vekaletname` category delta:
+    - baseline `80.6% -> 100.0%`
+    - candidate `77.8% -> 100.0%`
+  - `tbk_critical` slice'i her iki lane icin de daha yuksek source precision ile tekrar Faz 1 gate'ini gecti.
+  - Residual set artik `tbk_kefalet` ve ortak `TBK-137` companion-source miss'ine daraldi.
+  - Wave 12 karar notu eklendi: `coordination/faz2a-wave12-tbk-vekaletname-rerun-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
-  - FAZ 2A sonraki aktif hedef: `tbk_vekaletname` source-tail closure
+  - FAZ 2A sonraki aktif hedef: `tbk_kefalet` source-tail closure
+  - ortak `TBK-137` residualini ayni dalgada kapatmak
   - ardindan residual fix'leri fold eden bir sonraki matched rerun
