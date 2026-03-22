@@ -428,6 +428,41 @@ class TestPreciseDeterministicAnswers:
                 ["TBK m.128", "TBK m.582"],
                 ["bağımsız", "fer'î"],
             ),
+            (
+                "İşçinin sadakat ve özen borcu TBK kapsamında nasıl düzenlenmiştir?",
+                ["TBK m.396"],
+                ["sadakatle davranmak", "iş sırlarını"],
+            ),
+            (
+                "İş yerinde işveren tarafından sürekli hakarete uğratılan işçi, bunu gerekçe göstererek sözleşmesini derhal feshedebilir mi?",
+                ["TBK m.435", "TBK m.417"],
+                ["kişiliğini korumak", "haklı sebeple derhâl feshedebilir"],
+            ),
+            (
+                "İşverenim 3 aydır ücretimi ödemiyor. TBK'ya göre bu durumda hangi hakları kullanabilirim?",
+                ["TBK m.401", "TBK m.435", "TBK m.437"],
+                ["ücret alacağını talep", "zararın tamamen giderilmesi"],
+            ),
+            (
+                "'Vekalet sözleşmesi yazılı şekle tabi olmadığından sözlü da kurulabilir; sözlü vekil yaptığı işleri ispat edemezse ücret alamaz' iddiası doğru mudur?",
+                ["TBK m.502", "TBK m.510", "TBK m.12"],
+                ["hiçbir şekle bağlı değildir", "sözleşme veya teamül varsa vekil ücrete hak kazanır"],
+            ),
+            (
+                "Ücretli vekalet sözleşmesinde müvekkil haklı bir neden olmaksızın azil yaparsa vekilin tazminat hakları nelerdir?",
+                ["TBK m.511", "TBK m.512"],
+                ["uygun olmayan zamanda", "zararını gidermekle yükümlüdür"],
+            ),
+            (
+                "Bir arkadaşımın bankaya olan borcuna kefil oldum; asıl borçlu ödeme yapamıyor. Kefil olarak hangi aşamaları izlemeliyim?",
+                ["TBK m.587", "TBK m.586", "TBK m.596"],
+                ["doğrudan kefile başvurabilir", "halef olur"],
+            ),
+            (
+                "Kiracım sözleşmeyi erken feshetti; sözleşmede 10.000 TL cezai şart var ama bu çok yüksek. Mahkeme bu miktarı indirebilir mi?",
+                ["TBK m.182", "TBK m.27"],
+                ["kendiliğinden indirir", "kesin hükümsüzdür"],
+            ),
         ],
     )
     def test_precise_answers_cover_high_risk_eval_questions(

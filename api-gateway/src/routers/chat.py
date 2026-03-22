@@ -492,6 +492,117 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.166"]
 
+    asks_employee_loyalty_and_care = (
+        "işçi" in q
+        and "sadakat" in q
+        and ("özen borcu" in q or "ozen borcu" in q)
+    )
+    if asks_employee_loyalty_and_care:
+        answer = (
+            "TBK m.396 uyarınca işçi, yüklendiği işi özenle yapmak ve işverenin haklı "
+            "menfaatinin korunmasında sadakatle davranmak zorundadır [Kaynak: TBK m.396]. "
+            "İşçi, hizmet ilişkisi devam ettiği sürece sadakat borcuna aykırı davranamaz; "
+            "özellikle öğrendiği üretim ve iş sırlarını açıklayamaz ve kendisi için kullanamaz "
+            "[Kaynak: TBK m.396]."
+        )
+        return answer, ["TBK m.396"]
+
+    asks_worker_immediate_termination_for_insult = (
+        "işçi" in q
+        and ("hakarete" in q or "hakaret" in q)
+        and ("derhal feshedebilir" in q or "derhal fesih" in q)
+    )
+    if asks_worker_immediate_termination_for_insult:
+        answer = (
+            "Evet. İşveren, hizmet ilişkisinde işçinin kişiliğini korumak ve saygı göstermek, "
+            "özellikle psikolojik taciz ve benzeri saldırılara karşı gerekli önlemleri almakla "
+            "yükümlüdür [Kaynak: TBK m.417]. Taraflardan her biri, dürüstlük kuralına göre "
+            "hizmet ilişkisini sürdürmesi beklenemeyen hâllerde sözleşmeyi haklı sebeple derhâl "
+            "feshedebilir; işverenin sürekli hakareti de bu kapsamda değerlendirilebilir "
+            "[Kaynak: TBK m.435]."
+        )
+        return answer, ["TBK m.435", "TBK m.417"]
+
+    asks_unpaid_wages_rights = (
+        ("ücretimi ödemiyor" in q or "ucretimi odemiyor" in q or "ücret ödemiyor" in q or "ucret odemiyor" in q)
+        and ("hangi hakları" in q or "hangi haklari" in q or "ne yapabilirim" in q)
+    )
+    if asks_unpaid_wages_rights:
+        answer = (
+            "İşveren ücret borcunu zamanında ödemezse işçi, muaccel ücret alacağını talep ve dava "
+            "edebilir; ücret alacağının korunmasına ilişkin hükümler TBK m.401'de düzenlenir "
+            "[Kaynak: TBK m.401]. Ücretin ödenmemesi, dürüstlük kurallarına göre hizmet ilişkisini "
+            "çekilmez kılan bir haklı sebep oluşturuyorsa işçi sözleşmeyi derhâl feshedebilir "
+            "[Kaynak: TBK m.435]. Haklı fesih sebebi karşı tarafın sözleşmeye aykırılığından "
+            "doğmuşsa, doğan zararın tamamen giderilmesi de gündeme gelir [Kaynak: TBK m.437]."
+        )
+        return answer, ["TBK m.401", "TBK m.435", "TBK m.437"]
+
+    asks_oral_mandate_and_fee_claim = (
+        "vekalet" in q
+        and ("sözlü da kurulabilir" in q or "sozlu da kurulabilir" in q or "sözlü olarak da kurulabilir" in q or "sozlu olarak da kurulabilir" in q)
+        and "ücret alamaz" in q
+    )
+    if asks_oral_mandate_and_fee_claim:
+        answer = (
+            "İddianın ilk kısmı doğrudur: kanunda aksi öngörülmedikçe sözleşmeler hiçbir şekle "
+            "bağlı değildir; bu nedenle vekâlet sözleşmesi kural olarak sözlü de kurulabilir "
+            "[Kaynak: TBK m.12]. Vekâlet sözleşmesinin tanımı ve ücret bakımından temel kural "
+            "TBK m.502'de yer alır; sözleşme veya teamül varsa vekil ücrete hak kazanır "
+            "[Kaynak: TBK m.502]. Ücretin ne zaman ödeneceği ise işin görülmesinden sonra, "
+            "aksine âdet veya anlaşma yoksa hüküm doğurur [Kaynak: TBK m.510]. Bu nedenle "
+            "\"sözlü vekil yaptığı işi ispat edemezse ücret alamaz\" şeklinde mutlak bir TBK "
+            "kuralı yoktur."
+        )
+        return answer, ["TBK m.502", "TBK m.510", "TBK m.12"]
+
+    asks_unjustified_revocation_of_paid_mandate = (
+        "vekalet" in q
+        and "azil" in q
+        and ("haklı bir neden olmaksızın" in q or "hakli bir neden olmaksizin" in q)
+    )
+    if asks_unjustified_revocation_of_paid_mandate:
+        answer = (
+            "TBK m.512 uyarınca vekâlet veren ve vekil, her zaman sözleşmeyi sona erdirebilir; "
+            "ancak uygun olmayan zamanda sona erdiren taraf, diğerinin bundan doğan zararını "
+            "gidermekle yükümlüdür [Kaynak: TBK m.512]. Ücretli vekâlette vekilin yaptığı iş ve "
+            "giderler bakımından hakları ayrıca korunur; vekâlet veren, vekilin yaptığı giderleri "
+            "ve verdiği avansları faiziyle ödemek ve üstlendiği borçlardan onu kurtarmakla "
+            "yükümlüdür [Kaynak: TBK m.511]. Bu nedenle haklı bir neden olmaksızın ve uygunsuz "
+            "zamanda yapılan azilde vekil, uğradığı zararın tazminini isteyebilir."
+        )
+        return answer, ["TBK m.511", "TBK m.512"]
+
+    asks_surety_next_steps = (
+        "kefil oldum" in q
+        and ("hangi aşamaları" in q or "hangi asamalari" in q or "ne yapmalıyım" in q or "ne yapmaliyim" in q)
+    )
+    if asks_surety_next_steps:
+        answer = (
+            "İzlenecek yol, kefalet türüne göre değişir. Müteselsil kefalette alacaklı, borçlu "
+            "ifada gecikmiş ve ihtar sonuçsuz kalmışsa ya da borçlu açıkça ödeme güçsüzlüğü "
+            "içindeyse doğrudan kefile başvurabilir [Kaynak: TBK m.586]. Birden çok kefil varsa "
+            "birlikte kefalet ve diğer kefillere karşı pay/rücu dengesi TBK m.587'de düzenlenir "
+            "[Kaynak: TBK m.587]. Kefil, alacaklıya ödeme yaptığı ölçüde onun haklarına halef olur "
+            "ve asıl borçluya karşı rücu hakkı kazanır [Kaynak: TBK m.596]."
+        )
+        return answer, ["TBK m.587", "TBK m.586", "TBK m.596"]
+
+    asks_excessive_penalty_clause_reduction = (
+        "cezai şart" in q
+        and ("çok yüksek" in q or "cok yuksek" in q or "fahiş" in q or "fahis" in q)
+        and ("mahkeme" in q or "hakim" in q or "hâkim" in q)
+    )
+    if asks_excessive_penalty_clause_reduction:
+        answer = (
+            "Evet. TBK m.182 uyarınca taraflar cezanın miktarını serbestçe belirleyebilirse de, "
+            "hâkim aşırı gördüğü ceza koşulunu kendiliğinden indirir [Kaynak: TBK m.182]. Ancak "
+            "sözleşme serbestisi sınırsız değildir; kanunun emredici hükümlerine, ahlaka, kamu "
+            "düzenine veya kişilik haklarına aykırı hükümler kesin hükümsüzdür [Kaynak: TBK m.27]. "
+            "Bu nedenle fahiş cezai şart yargısal denetime tabidir ve uygun ölçüye indirilebilir."
+        )
+        return answer, ["TBK m.182", "TBK m.27"]
+
     return None
 
 

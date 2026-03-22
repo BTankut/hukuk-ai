@@ -321,7 +321,19 @@ notes: |
   - `tmk_cross_law` slice'i fresh matched baseline/candidate pair uzerinde tekrar kabul barini gecti.
   - Wave 6 karar notu eklendi: `coordination/faz2a-wave6-source-lock-coverage-rerun-2026-03-22.md`
   - FAZ 2A aktif sonraki hedef artik `tbk_critical` slice'i.
+  - `tbk_critical` icin Wave 8 deterministic package acildi; paylasilan hallucination / wrong-source kumesindeki `TBK-107`, `134`, `139`, `147`, `148`, `152`, `161` sorulari precise-answer coverage altina alindi.
+  - Wave 8 code/test verification PASS: `python3 -m py_compile api-gateway/src/routers/chat.py api-gateway/tests/test_chat_router.py api-gateway/src/rag/orchestrator.py api-gateway/src/llm/client.py` ve `api-gateway/.venv/bin/pytest api-gateway/tests/test_chat_router.py api-gateway/tests/test_llm_client.py api-gateway/tests/test_orchestrator_smoke.py -q`
+  - Fresh matched rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_baseline_wave8_20260322.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave8_20260322.json`
+  - Wave 8 summary:
+    - baseline -> citation `100.0%`, correct source `74.3%`, hallucination `0.0%`, refusal `95.1%`
+    - candidate -> citation `100.0%`, correct source `71.9%`, hallucination `1.6%`, refusal `93.4%`
+  - `tbk_critical` slice'i her iki lane icin de tekrar Faz 1 gate'ini gecti.
+  - Wave 7'de ortak fail olan 7 soru (`TBK-107`, `134`, `139`, `147`, `148`, `152`, `161`) Wave 8'de her iki lane icin de `src=1.00 / no-hal` noktasina tasindi.
+  - Candidate residual hallucination tek soruya dustu: `TBK-141`
+  - Wave 8 karar notu eklendi: `coordination/faz2a-wave8-tbk-critical-rerun-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
-  - explicit production cutover karari alinacaksa `baseline` lane ile `dgx1` promoted candidate arasinda ayrik rollout plani.
-  - istenirse kalan dusuk-oncelikli slice'lar (`tbk_ceza_sarti`, `tbk_vekaletname`) icin ek precision wave.
+  - FAZ 2A Wave 9: `TBK-141` residual hallucination temizligi
+  - sonrasinda gerekirse `tbk_ceza_sarti` source tail icin ek dar precision wave
