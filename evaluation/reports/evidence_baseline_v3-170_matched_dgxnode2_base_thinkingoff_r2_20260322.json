@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-03-22T10:12:27.829882+00:00",
+  "role": "baseline",
+  "eval_family": "v3-170",
+  "model_ref": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "checkpoint_ref": "dgxnode2-base-runtime-thinkingoff-20260322",
+  "git_commit": "0bbf7ba",
+  "runner": "eval_runner",
+  "train_package_sha": null,
+  "report_path": "evaluation/reports/eval_baseline_v3-170_matched_dgxnode2_base_thinkingoff_r2_20260322.json",
+  "report_sha256": "f768ad1124da6ad7dad431cd4a85b0a39452f2c68448e026dfa21e2fc83af551",
+  "report_meta": {
+    "generated_at": "2026-03-22T10:11:37.196522+00:00",
+    "questions_source": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions_v3_170.json",
+    "api_url": "http://127.0.0.1:8000",
+    "mock_mode": false,
+    "total_questions": 170,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "baseline",
+    "eval_family": "v3-170",
+    "model_ref": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "checkpoint_ref": "dgxnode2-base-runtime-thinkingoff-20260322",
+    "git_commit": "0bbf7ba",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 180.0
+    }
+  },
+  "notes": ""
+}

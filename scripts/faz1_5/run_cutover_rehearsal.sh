@@ -56,7 +56,17 @@ stop_pid_file() {
     sleep 0.5
   done
 
-  echo "[FAIL] ${label}: pid ${pid} did not stop in time" >&2
+  echo "[WARN] ${label}: pid ${pid} ignored TERM, sending KILL"
+  kill -9 "$pid"
+  for _ in {1..10}; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      echo "[INFO] ${label}: stopped after KILL"
+      return 0
+    fi
+    sleep 0.2
+  done
+
+  echo "[FAIL] ${label}: pid ${pid} did not stop after KILL" >&2
   exit 1
 }
 

@@ -12,6 +12,10 @@ GATEWAY_PORT="${GATEWAY_PORT:-8004}"
 MODEL_NAME="${MODEL_NAME:-/models/merged_model_fabric_stage_20260321}"
 MILVUS_COLLECTION="${MILVUS_COLLECTION:-mevzuat_e5_shadow}"
 EMBEDDING_BASE_URL="${EMBEDDING_BASE_URL:-http://127.0.0.1:8081/v1}"
+TUNNEL_LOG_NAME="${TUNNEL_LOG_NAME:-dgx1_merged_vllm_tunnel.log}"
+TUNNEL_PID_NAME="${TUNNEL_PID_NAME:-dgx1_merged_vllm_tunnel.pid}"
+LOG_NAME="${LOG_NAME:-candidate_gateway_dgx1_merged.log}"
+PID_NAME="${PID_NAME:-candidate_gateway_dgx1_merged.pid}"
 
 mkdir -p "${LOG_DIR}"
 
@@ -28,14 +32,14 @@ echo "[INFO] model_name=${MODEL_NAME}"
 
 python3 "${REPO_ROOT}/scripts/finetune/detach_logged_job.py" \
   --workdir "${REPO_ROOT}" \
-  --log-path "${LOG_DIR}/dgx1_merged_vllm_tunnel.log" \
-  --pid-path "${LOG_DIR}/dgx1_merged_vllm_tunnel.pid" \
+  --log-path "${LOG_DIR}/${TUNNEL_LOG_NAME}" \
+  --pid-path "${LOG_DIR}/${TUNNEL_PID_NAME}" \
   -- ssh -N -L "127.0.0.1:${LOCAL_TUNNEL_PORT}:127.0.0.1:${REMOTE_VLLM_PORT}" "${REMOTE_HOST}"
 
 python3 "${REPO_ROOT}/scripts/finetune/detach_logged_job.py" \
   --workdir "${API_DIR}" \
-  --log-path "${LOG_DIR}/candidate_gateway_dgx1_merged.log" \
-  --pid-path "${LOG_DIR}/candidate_gateway_dgx1_merged.pid" \
+  --log-path "${LOG_DIR}/${LOG_NAME}" \
+  --pid-path "${LOG_DIR}/${PID_NAME}" \
   -- /bin/bash -lc "DGX_BASE_URL=http://127.0.0.1:${LOCAL_TUNNEL_PORT}/v1 \
 DGX_MODEL=${MODEL_NAME} \
 MILVUS_ENABLED=true \
@@ -49,6 +53,6 @@ GUARDRAILS_ENABLED=true \
 PRESIDIO_ENABLED=false \
 .venv/bin/python -m uvicorn src.main:app --host 127.0.0.1 --port ${GATEWAY_PORT} --log-level info"
 
-echo "[INFO] tunnel_log=${LOG_DIR}/dgx1_merged_vllm_tunnel.log"
-echo "[INFO] gateway_log=${LOG_DIR}/candidate_gateway_dgx1_merged.log"
+echo "[INFO] tunnel_log=${LOG_DIR}/${TUNNEL_LOG_NAME}"
+echo "[INFO] gateway_log=${LOG_DIR}/${LOG_NAME}"
 echo "[INFO] smoke_url=http://127.0.0.1:${GATEWAY_PORT}/v1/health"

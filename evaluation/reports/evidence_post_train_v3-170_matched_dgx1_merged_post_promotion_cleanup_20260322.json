@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-03-22T10:56:43.441391+00:00",
+  "role": "post_train",
+  "eval_family": "v3-170",
+  "model_ref": "hukuk-ai-sft-qwen35-807",
+  "checkpoint_ref": "dgx1-merged-post-promotion-cleanup-20260322",
+  "git_commit": "4196147",
+  "runner": "eval_runner",
+  "train_package_sha": null,
+  "report_path": "evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_post_promotion_cleanup_20260322.json",
+  "report_sha256": "534a775b3908bdac588e8b150429ff1f44e4ec76488735b34b79a92efaec5a4d",
+  "report_meta": {
+    "generated_at": "2026-03-22T10:56:25.206277+00:00",
+    "questions_source": "configs/evaluation/test_questions_v3_170.json",
+    "api_url": "http://127.0.0.1:8004",
+    "mock_mode": false,
+    "total_questions": 170,
+    "error_count": 5,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "post_train",
+    "eval_family": "v3-170",
+    "model_ref": "hukuk-ai-sft-qwen35-807",
+    "checkpoint_ref": "dgx1-merged-post-promotion-cleanup-20260322",
+    "git_commit": "4196147",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 180.0
+    }
+  },
+  "notes": ""
+}

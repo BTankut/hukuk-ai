@@ -1,0 +1,125 @@
+{
+  "families": [
+    {
+      "family": "faz1-50",
+      "taxonomy": {
+        "wrong source despite retrieved evidence": 6,
+        "retrieval miss": 5
+      },
+      "samples": {
+        "wrong source despite retrieved evidence": [
+          "TBK-003",
+          "TBK-006",
+          "TBK-007",
+          "TBK-016",
+          "TBK-033"
+        ],
+        "retrieval miss": [
+          "TBK-008",
+          "TBK-047",
+          "TBK-048",
+          "TBK-049",
+          "TBK-050"
+        ]
+      }
+    },
+    {
+      "family": "v2-95",
+      "taxonomy": {
+        "wrong source despite retrieved evidence": 25,
+        "over-refusal": 2,
+        "retrieval miss": 4,
+        "cross-law confusion": 7,
+        "unsupported question answered": 5
+      },
+      "samples": {
+        "wrong source despite retrieved evidence": [
+          "TBK-051",
+          "TBK-052",
+          "TBK-054",
+          "TBK-055",
+          "TBK-057"
+        ],
+        "over-refusal": [
+          "TBK-065",
+          "TBK-093"
+        ],
+        "retrieval miss": [
+          "TBK-081",
+          "TBK-083",
+          "HAL-002",
+          "HAL-003"
+        ],
+        "cross-law confusion": [
+          "TMK-CL-002",
+          "TMK-CL-003",
+          "TMK-CL-005",
+          "TMK-CL-006",
+          "TMK-CL-008"
+        ],
+        "unsupported question answered": [
+          "OOS-002",
+          "OOS-004",
+          "OOS-006",
+          "OOS-008",
+          "OOS-010"
+        ]
+      }
+    },
+    {
+      "family": "v3-170",
+      "taxonomy": {
+        "wrong source despite retrieved evidence": 56,
+        "infrastructure / timeout / serving error": 5,
+        "retrieval miss": 5,
+        "over-refusal": 9,
+        "cross-law confusion": 20,
+        "unsupported question answered": 5
+      },
+      "samples": {
+        "wrong source despite retrieved evidence": [
+          "TBK-052",
+          "TBK-054",
+          "TBK-055",
+          "TBK-057",
+          "TBK-059"
+        ],
+        "infrastructure / timeout / serving error": [
+          "TBK-058",
+          "TBK-114",
+          "HAL-009",
+          "TBK-120",
+          "TBK-163"
+        ],
+        "retrieval miss": [
+          "TBK-083",
+          "TBK-133",
+          "TBK-150",
+          "TBK-152",
+          "TBK-159"
+        ],
+        "over-refusal": [
+          "TBK-093",
+          "TMK-CL-005",
+          "HAL-002",
+          "TMK-CL-016",
+          "TMK-CL-024"
+        ],
+        "cross-law confusion": [
+          "TMK-CL-001",
+          "TMK-CL-002",
+          "TMK-CL-003",
+          "TMK-CL-006",
+          "TMK-CL-008"
+        ],
+        "unsupported question answered": [
+          "OOS-002",
+          "OOS-004",
+          "OOS-006",
+          "OOS-010",
+          "OOS-011"
+        ]
+      }
+    }
+  ]
+}

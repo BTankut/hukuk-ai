@@ -1,13 +1,26 @@
 # Wave State
-current_wave: faz2-p0-order-restoration
-status: running
-started_at: 2026-03-20T18:40:00+03:00
-last_activity: 2026-03-21T17:12:00+03:00
-last_eval: evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_node3_20260321_t600.json
-next_action: "node3 current adapter icin merged_16bit export tamamlaninca daha hizli serving path'e gecip latency yeniden olcmek"
+current_wave: faz1_5-decision-closure
+status: completed
+started_at: 2026-03-22T09:00:00+03:00
+last_activity: 2026-03-22T14:02:57+03:00
+last_eval: evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_post_promotion_cleanup_20260322.json
+next_action: "faz1.5 karari kapandi; siradaki resmi is retrieval/coverage fazini acmak"
 blockers:
-  - "node3 post-train candidate runtime ortalama yanit suresi ~120.3s; FAZ1-FINAL-RAPOR canli kabul hedefi olan <=30s ile uyumlu degil"
+  - "promoted candidate ve preserved baseline v3-170 correct_source barini gecemedi; ana blocker retrieval/source-precision ve cross-law confusion"
 notes: |
+  ## Faz 1.5 Kapanis Durumu
+
+  - Steering karari: `NO-GO - Retrieval/Coverage first`
+  - Full-family matched eval baseline ve candidate icin kapandi.
+  - `v3-170` sonucu:
+    - baseline: citation `84.7%`, correct source `65.6%`, hallucination `7.1%`, refusal `91.2%`
+    - candidate: citation `89.1%`, correct source `65.1%`, hallucination `7.9%`, refusal `91.5%`, error `5`
+  - Dominant taxonomy:
+    - `wrong source despite retrieved evidence`
+    - `cross-law confusion`
+  - Cutover + rollback rehearsal PASS verdi.
+  - Release controls halen acik; ancak ana steering blocker Gate 2 kalite/coverage.
+
   ## Faz 2 P0 Hizalama Dalgası
 
   Amaç, training odaklı ilerlemeyi durdurmak değil; önce P0 kapılarını yeniden sıraya koymak.

@@ -2,121 +2,133 @@
 
 **Date:** 2026-03-22  
 **Reference:** `docs/FAZ1_5-PLANLAMA-2026-03-22.md`  
-**Status:** Draft decision report for master-planner review
+**Status:** Final steering decision report
 
 ## Executive Summary
 
-FAZ 1.5 is not a new feature wave. It is a decision gate for determining whether the promoted `dgx1` candidate can replace the baseline with a defensible scope and rollback posture.
+FAZ 1.5 is now closed as a decision gate.
 
-The repo now has the core governance pieces in place:
+The final steering outcome is:
 
-- eval freeze
-- train lineage audit
-- production readiness matrix
-- scope contract
-- promoted candidate serving lane
-- baseline serving lane
-- matched family runner
+- `NO-GO - Retrieval/Coverage first`
 
-The current evidence is strong enough to say the training and promotion process is controlled again. It is not yet enough to declare production cutover readiness for the full target scope.
+Reason:
 
-## What Has Been Closed
+- the promoted `dgx1` merged candidate does not materially outperform the preserved `dgxnode2` baseline on the decision-critical `v3-170` family
+- both lanes fail the formal `correct_source` acceptance line on `v3-170`
+- the dominant failure pattern is not a narrow training regression but a broader `wrong source despite retrieved evidence` plus `cross-law confusion` problem
 
-### Governance and reproducibility
+Operationally, FAZ 1.5 did prove that the pilot topology can be cut over and rolled back safely. That proof is real, but it is not enough to approve either `GO` or `NARROW GO` because Gate 2 fails before Gate 3 can justify rollout.
 
-- `coordination/faz1_5-eval-freeze-2026-03-22.md` freezes the three family sets and the runner contract.
-- `scripts/faz1_5/run_matched_eval_family.sh` is the single matched family runner for baseline and candidate comparisons.
-- `evaluation/eval_runner.py`, `evaluation/metrics.py`, and `evaluation/report_metadata.py` are the frozen comparison core for this phase.
+## What Closed In FAZ 1.5
 
-### Training lineage
+- eval freeze closed
+- train lineage audit closed
+- scope contract closed
+- full-family matched eval closed for baseline and candidate
+- category / error taxonomy published
+- cutover + rollback rehearsal succeeded
+- steering decision can now be stated in one sentence
 
-- `training/audits/faz1_5-train-lineage-audit-2026-03-22.md` explains the `1076 -> 807` reduction with explicit buckets.
-- The audit shows zero train/held-out overlap and preserves the canonicalization story.
+## Full-Family Decision Table
 
-### Stabilized serving lane
+| Family | Baseline | Candidate | Steering Read |
+| --- | --- | --- | --- |
+| `faz1-50` | citation `88.0%`, source `86.7%`, hal `0.0%`, refusal `100.0%` | citation `86.0%`, source `84.7%`, hal `0.0%`, refusal `100.0%` | candidate is slightly weaker but still within a safe narrow family band |
+| `v2-95` | citation `84.2%`, source `74.9%`, hal `5.3%`, refusal `87.4%` | citation `86.3%`, source `72.8%`, hal `8.4%`, refusal `92.6%` | candidate beats baseline on citation/refusal, but misses the stricter FAZ 1.5 minimum regression bar |
+| `v3-170` | citation `84.7%`, source `65.6%`, hal `7.1%`, refusal `91.2%`, error `0` | citation `89.1%`, source `65.1%`, hal `7.9%`, refusal `91.5%`, error `5` | candidate is not meaningfully better on the hardest family and does not justify cutover |
 
-- The promoted candidate lane is operational on `dgx1`.
-- The latest closed cleanup rerun for the candidate shows:
-  - citation `88.0%`
-  - correct source `86.0%`
-  - hallucination `0.0%`
-  - refusal `100.0%`
-  - average response time `9.116 s`
-- The baseline lane remains preserved separately on `dgxnode2`.
+## Root-Cause Read
 
-### Readiness and scope boundaries
+The full-family category breakdown shows the main blocker is not a simple serving failure and not a single isolated slice.
 
-- `coordination/faz1_5-production-readiness-matrix-2026-03-22.md` marks the current state as not cutover-ready.
-- `coordination/faz1_5-scope-contract-2026-03-22.md` keeps the claim surface narrow:
-  - TBK is primary
-  - TMK is narrow
-  - broad Turkish law coverage is not claimed
-  - unsupported legal domains must refuse or defer
+On `v3-170`, the candidate taxonomy is:
 
-### Matched evidence closed so far
+- `wrong source despite retrieved evidence`: `56`
+- `cross-law confusion`: `20`
+- `over-refusal`: `9`
+- `infrastructure / timeout / serving error`: `5`
+- `retrieval miss`: `5`
+- `unsupported question answered`: `5`
 
-- Official baseline source-of-record was reset to `dgxnode2_base_thinkingoff_r2_20260322` after earlier baseline artefacts were invalidated. See:
-  - `coordination/faz1_5-baseline-rerun-reset-2026-03-22.md`
-- Closed matched reports at this stage:
-  - `evaluation/reports/eval_baseline_faz1-50_matched_dgxnode2_base_thinkingoff_r2_20260322.json`
-  - `evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
-  - `evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
-- Closed matched manifests at this stage:
-  - `evaluation/reports/evidence_baseline_faz1-50_matched_dgxnode2_base_thinkingoff_r2_20260322.json`
-  - `evaluation/reports/evidence_post_train_faz1-50_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
-  - `evaluation/reports/evidence_post_train_v2-95_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
+The most decision-relevant category deltas are:
 
-### Early matched outcome
+- `tmk_cross_law`: baseline `src 32.5% / hal 10.0%`, candidate `src 38.3% / hal 16.7%`
+- `tbk_ceza_sarti`: baseline `src 69.7%`, candidate `src 60.0%`
+- `tbk_kefalet`: baseline `src 65.4%`, candidate `src 61.5%`
+- `tbk_vekaletname`: baseline `src 67.6%`, candidate `src 62.7%`
+- `tbk_hizmet`: baseline `src 64.0%`, candidate `src 58.8%`
 
-- Baseline `faz1-50` (`dgxnode2_base_thinkingoff_r2_20260322`) closed strongly:
-  - citation `88.0%`
-  - correct source `86.7%`
-  - hallucination `0.0%`
-  - refusal `100.0%`
-- Candidate `v2-95` (`dgx1_merged_post_promotion_cleanup_20260322`) also closed above the formal FAZ 1.5 minimum regression bar:
-  - citation `86.3%`
-  - correct source `72.8%`
-  - hallucination `8.4%`
-  - refusal `92.6%`
-- This means FAZ 1.5 is no longer blocked by a simple `v2-95` regression story. The largest unresolved quality question is now `v3-170`, not `faz1-50`.
+Interpretation:
 
-## What Is Still Open
+- the hardest-family failure is dominated by source precision and coverage assembly problems
+- the candidate slightly improves some cross-law source selection, but not enough to change the steering outcome
+- the candidate also gives back performance in several TBK-heavy slices and carries `5` serving errors
 
-The following FAZ 1.5 gates are not fully closed at the time of this draft:
+## Release Readiness Read
 
-- matched baseline comparator for `v2-95`
-- full-family matched evaluation for `v3-170`
-- category / root-cause breakdown published from the full family results
-- closed rollback rehearsal record
-- final steering decision package attached to one evidence bundle
+FAZ 1.5 also closes the operational question more clearly than before.
 
-The repo currently contains the machinery for these steps, but the final closed evidence bundle is not yet complete.
+- the pilot topology is now proven reversible
+- cutover + rollback rehearsal passed
+- baseline and candidate lanes both returned cited smoke success before and after rollback
 
-## Decision Posture
+But release readiness is still not closed for production use:
 
-Based on the repo state available today, the correct posture is:
+- auth is missing
+- immutable audit logging is missing
+- Redis-backed session persistence is missing
+- tokenizer-backed accounting is missing
+- observability and alerting are partial/missing
+- backup / restore proof is missing
 
-- `NO-GO` for production cutover
-- `CONTINUE FAZ 1.5` for full-family matched evidence and cutover rehearsal closure
+These release-control gaps remain real, but they are not the primary steering blocker. The primary blocker is still Gate 2 quality on the hardest family.
 
-The current candidate is technically strong, but the decision standard in FAZ 1.5 is broader than the single `faz1-50` family. A cutover claim should wait until the `v2-95` and `v3-170` family evidence, taxonomy, and rehearsal closure are packaged together.
+## Official Steering Decision
+
+Official decision:
+
+> `NO-GO - Retrieval/Coverage first.` Promoted `dgx1` merged aday, `v3-170` zor sette preserved baseline’dan anlamlı biçimde üstün değildir; iki lane de `correct_source` barını kaçırdığı ve baskın hata kümesi `wrong source despite retrieved evidence` ile `cross-law confusion` olduğu için cutover açılmayacaktır.
+
+## What This Decision Rejects
+
+- `GO` rejected: full-family quality is not strong enough
+- `NARROW GO` rejected: `v2-95` and `v3-170` do not support a defensible pilot cutover claim
+- `NO-GO - Stabilization first` not selected as the primary lane: there are serving/timeouts issues, but they are secondary to the broader retrieval/source-precision failure pattern
+- `NO-GO - Productization first` not selected as the primary lane: customer-appliance packaging remains a separate future question, but model qualification already fails earlier
+
+## Next Official Work
+
+The next official investment lane should target:
+
+1. retrieval / source-precision improvement on `tmk_cross_law`
+2. source selection quality on `tbk_kefalet`, `tbk_vekaletname`, `tbk_hizmet`, `tbk_ceza_sarti`
+3. reduction of `wrong source despite retrieved evidence` before any new cutover claim
+
+Secondary follow-up, but not the first steering lane:
+
+1. serving timeout cleanup on the promoted lane
+2. remaining release-control closure
+3. customer-appliance / productization separation
 
 ## Evidence Package Reference
 
-Current supporting artefacts:
-
-- `coordination/faz1_5-eval-freeze-2026-03-22.md`
-- `coordination/faz1_5-baseline-rerun-reset-2026-03-22.md`
-- `coordination/faz1_5-production-readiness-matrix-2026-03-22.md`
-- `coordination/faz1_5-scope-contract-2026-03-22.md`
-- `training/audits/faz1_5-train-lineage-audit-2026-03-22.md`
-- `evaluation/reports/evidence_baseline_faz1-50_matched_dgxnode2_base_thinkingoff_r2_20260322.json`
-- `evaluation/reports/evidence_post_train_faz1-50_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
-- `evaluation/reports/evidence_post_train_v2-95_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
-- `evaluation/reports/eval_baseline_faz1-50_matched_dgxnode2_base_thinkingoff_r2_20260322.json`
-- `evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
-- `evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_post_promotion_cleanup_20260322.json`
+- [faz1_5-eval-freeze-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/faz1_5-eval-freeze-2026-03-22.md)
+- [faz1_5-baseline-rerun-reset-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/faz1_5-baseline-rerun-reset-2026-03-22.md)
+- [faz1_5-production-readiness-matrix-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/faz1_5-production-readiness-matrix-2026-03-22.md)
+- [faz1_5-cutover-rehearsal-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/faz1_5-cutover-rehearsal-2026-03-22.md)
+- [faz1_5-closure-matrix-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/faz1_5-closure-matrix-2026-03-22.md)
+- [faz1_5-steering-decision-table-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/faz1_5-steering-decision-table-2026-03-22.md)
+- [faz1_5-scope-contract-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/faz1_5-scope-contract-2026-03-22.md)
+- [faz1_5-train-lineage-audit-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/training/audits/faz1_5-train-lineage-audit-2026-03-22.md)
+- [faz1_5-category-breakdown-2026-03-22.md](/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/faz1_5-category-breakdown-2026-03-22.md)
+- [eval_baseline_faz1-50_matched_dgxnode2_base_thinkingoff_r2_20260322.json](/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/eval_baseline_faz1-50_matched_dgxnode2_base_thinkingoff_r2_20260322.json)
+- [eval_baseline_v2-95_matched_dgxnode2_base_thinkingoff_r2_20260322.json](/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/eval_baseline_v2-95_matched_dgxnode2_base_thinkingoff_r2_20260322.json)
+- [eval_baseline_v3-170_matched_dgxnode2_base_thinkingoff_r2_20260322.json](/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/eval_baseline_v3-170_matched_dgxnode2_base_thinkingoff_r2_20260322.json)
+- [eval_post_train_faz1-50_matched_dgx1_merged_post_promotion_cleanup_20260322.json](/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_post_promotion_cleanup_20260322.json)
+- [eval_post_train_v2-95_matched_dgx1_merged_post_promotion_cleanup_20260322.json](/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_post_promotion_cleanup_20260322.json)
+- [eval_post_train_v3-170_matched_dgx1_merged_post_promotion_cleanup_20260322.json](/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_post_promotion_cleanup_20260322.json)
 
 ## Conclusion
 
-FAZ 1.5 has re-established a controlled, evidence-backed path from baseline to promoted candidate. The current state supports stabilized operation and a bounded scope contract. It does not yet justify a full production cutover declaration.
+FAZ 1.5 succeeded as a decision phase because it produced a defensible answer. That answer is not cutover approval. The correct next move is a retrieval/coverage wave, not production rollout.
