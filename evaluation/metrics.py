@@ -245,6 +245,7 @@ class QuestionResult:
     blocked: bool = False
     verification_verdict: str | None = None
     error: str | None = None
+    trace: dict[str, Any] | None = None
 
 
 def compute_metrics(
@@ -256,6 +257,7 @@ def compute_metrics(
     blocked: bool = False,
     verification: dict[str, Any] | None = None,
     error: str | None = None,
+    trace: dict[str, Any] | None = None,
 ) -> QuestionResult:
     """Tek soru için tüm metrikleri hesapla.
 
@@ -319,6 +321,7 @@ def compute_metrics(
         blocked=blocked,
         verification_verdict=v_verdict,
         error=error,
+        trace=trace,
     )
 
 

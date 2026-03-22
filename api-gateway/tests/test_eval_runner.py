@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import sys
+import urllib.request
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -36,6 +37,7 @@ from metrics import (
     QuestionResult,
 )
 from eval_runner import MockChatClient, build_report, run_evaluation
+from eval_runner import ChatAPIClient
 
 
 # ===========================================================================
@@ -615,8 +617,93 @@ class TestReportMetadata:
         assert meta["schema_version"] == 2
         assert meta["runner"] == "eval_runner"
         assert meta["report_role"] == "baseline"
-        assert meta["eval_family"] == "phase3-95"
+        assert meta["eval_family"] == "v2-95"
         assert meta["model_ref"] == "gateway-live:qwen35"
         assert meta["checkpoint_ref"] == "dgxnode2-runtime-20260321"
         assert meta["git_commit"] == "abc1234"
         assert meta["config_fingerprint"] == {"verification_enabled": True}
+
+    def test_build_report_preserves_optional_trace(self):
+        summary = SimpleNamespace(
+            total_questions=1,
+            error_count=0,
+            citation_rate=1.0,
+            correct_source_rate=1.0,
+            hallucination_rate=0.0,
+            refusal_accuracy=1.0,
+            avg_keyword_coverage=1.0,
+            phrase_hit_rate=1.0,
+            avg_response_time_ms=120.0,
+            blocked_rate=0.0,
+            faz1_criteria={"overall": {"passes": True, "status": "PASS"}},
+            by_category={},
+            by_difficulty={},
+        )
+        result = QuestionResult(
+            question_id="TBK-001",
+            question_text="TBK m.1 nedir?",
+            category="tbk_genel",
+            difficulty="easy",
+            answer_text="TBK m.1",
+            cited_sources=["TBK m.1"],
+            expected_sources=["TBK m.1"],
+            expected_keywords=[],
+            has_citation=True,
+            correct_source_overlap=1,
+            expected_source_count=1,
+            correct_source_rate=1.0,
+            kw_coverage=1.0,
+            refusal_correct=True,
+            trace={
+                "query_signals": {"user_query": "TBK m.1 nedir?"},
+                "retrieval": {"top_k_requested": 20},
+            },
+        )
+
+        report = build_report(
+            results=[result],
+            summary=summary,
+            questions_path=PROJECT_ROOT / "configs" / "evaluation" / "test_questions.json",
+            api_url="http://localhost:8000",
+            mock_mode=False,
+        )
+
+        assert report["per_question"][0]["trace"]["query_signals"]["user_query"] == "TBK m.1 nedir?"
+
+
+class TestChatApiClient:
+    def test_chat_api_client_passes_include_trace_and_reads_trace(self, monkeypatch):
+        captured: dict[str, object] = {}
+
+        class _FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self):
+                return json.dumps(
+                    {
+                        "choices": [{"message": {"content": "Yanıt"}}],
+                        "citations": ["TBK m.1"],
+                        "blocked": False,
+                        "verification": {"verdict": "pass"},
+                        "trace": {"query_signals": {"user_query": "TBK m.1 nedir?"}},
+                    }
+                ).encode("utf-8")
+
+        def fake_urlopen(req, timeout):
+            captured["payload"] = json.loads(req.data.decode("utf-8"))
+            return _FakeResponse()
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        client = ChatAPIClient(
+            base_url="http://localhost:8000",
+            include_trace=True,
+        )
+
+        result = client.chat("TBK m.1 nedir?")
+
+        assert captured["payload"]["include_trace"] is True
+        assert result["trace"]["query_signals"]["user_query"] == "TBK m.1 nedir?"

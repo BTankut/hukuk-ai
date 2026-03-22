@@ -246,6 +246,16 @@ notes: |
   - Serving lane karari guncellendi: `dgx1` merged primary, `node3` merged fallback/debug.
   - Serving lane karar notu eklendi: `coordination/dgx1-merged-serving-decision-2026-03-22.md`
   - `dgx1` launcher varsayilan remote host'u IP'ye pinlendi: `scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh`
+  - Master planner'in FAZ 2A yol haritasi worktree'e alindi: `docs/FAZ2A-RETRIEVAL-COVERAGE-REQUALIFICATION-YOL-HARITASI-2026-03-22.md`
+  - Repo-native FAZ 2A uygulama plani yazildi: `coordination/faz2a-implementation-plan-2026-03-22.md`
+  - FAZ 2A olcum sozlesmesi ve canonical family etiketleri donduruldu: `coordination/faz2a-measurement-contract-2026-03-22.md`
+  - `evaluation/report_metadata.py`, `scripts/run_eval_matrix.sh` ve `evaluation/run_reranker_safe_activation.py` canonical etiketler icin `v2-95` / `v3-170` eksenine hizalandi; legacy alias kabul edilmeye devam ediyor.
+  - `v3-170` source-of-record raporlarindan report-derived failure freeze uretildi: `evaluation/reports/faz2a-failure-freeze-2026-03-22.md`
+  - Frozen failure pack yazildi: `evaluation/reports/faz2a-failure-pack-v3-170-2026-03-22.jsonl` (`100` failing row)
+  - Diagnostic subset'ler uretildi: `configs/evaluation/test_questions_faz2a_tmk_cross_law_v3_30.json` ve `configs/evaluation/test_questions_faz2a_tbk_critical_v3_61.json`
+  - Chat API'ye optional trace kontrati eklendi: `include_trace=true` ile query/retrieval/context/verification trace'i response'a tasiniyor.
+  - Eval runner'a optional trace passthrough eklendi; diagnostic run'lar artik ham rapora trace yazabilecek.
+  - Yeni FAZ 2A trace regresyon testleri gecti: `api-gateway/.venv/bin/pytest tests/test_chat_router.py -q`, `api-gateway/.venv/bin/pytest tests/test_eval_runner.py -q`
 
   ### Sonraki Beklenen Çıktı
   - explicit production cutover karari alinacaksa `baseline` lane ile `dgx1` promoted candidate arasinda ayrik rollout plani.

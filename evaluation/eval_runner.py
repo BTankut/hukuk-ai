@@ -101,11 +101,13 @@ class ChatAPIClient:
         timeout: float = 180.0,
         law_filter: str | None = None,  # Recall fix: None → TBK+TMK her ikisi de retrieve edilir
         use_verification: bool = True,
+        include_trace: bool = False,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.law_filter = law_filter
         self.use_verification = use_verification
+        self.include_trace = include_trace
 
     def chat(
         self,
@@ -128,6 +130,8 @@ class ChatAPIClient:
             "max_tokens": 512,
             "chat_template_kwargs": {"enable_thinking": False},
         }
+        if self.include_trace:
+            payload["include_trace"] = True
         if session_id:
             payload["session_id"] = session_id
         if law_filter or self.law_filter:
@@ -153,12 +157,14 @@ class ChatAPIClient:
             citations = body.get("citations", [])
             blocked = body.get("blocked", False)
             verification = body.get("verification")
+            trace = body.get("trace")
 
             return {
                 "answer_text": answer_text,
                 "citations": citations,
                 "blocked": blocked,
                 "verification": verification,
+                "trace": trace,
                 "response_time_ms": elapsed_ms,
                 "error": None,
             }
@@ -171,6 +177,7 @@ class ChatAPIClient:
                 "citations": [],
                 "blocked": False,
                 "verification": None,
+                "trace": None,
                 "response_time_ms": 0.0,
                 "error": f"HTTP {e.code}: {err_body[:100]}",
             }
@@ -181,6 +188,7 @@ class ChatAPIClient:
                 "citations": [],
                 "blocked": False,
                 "verification": None,
+                "trace": None,
                 "response_time_ms": 0.0,
                 "error": str(exc),
             }
@@ -234,6 +242,7 @@ class MockChatClient:
                 "citations": [],
                 "blocked": False,
                 "verification": {"verdict": "pass", "hallucination_risk": 0.0},
+                "trace": None,
                 "response_time_ms": 12.5,
                 "error": None,
             }
@@ -265,6 +274,7 @@ class MockChatClient:
                 "verdict": "pass" if citations else "warn",
                 "hallucination_risk": 0.1,
             },
+            "trace": None,
             "response_time_ms": rng.uniform(80, 350),
             "error": None,
         }
@@ -328,6 +338,7 @@ def run_evaluation(
                 "citations": [],
                 "blocked": False,
                 "verification": None,
+                "trace": None,
                 "response_time_ms": 0.0,
                 "error": str(exc),
             }
@@ -340,6 +351,7 @@ def run_evaluation(
             blocked=api_result["blocked"],
             verification=api_result["verification"],
             error=api_result["error"],
+            trace=api_result.get("trace"),
         )
         results.append(result)
 
@@ -559,6 +571,11 @@ def main() -> int:
         default="evaluation",
         help="Logical report role to embed in report metadata (example: baseline, post_train, ab_variant).",
     )
+    parser.add_argument(
+        "--include-trace",
+        action="store_true",
+        help="Persist optional retrieval/context trace into raw reports for diagnostic runs.",
+    )
     parser.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
@@ -603,6 +620,7 @@ def main() -> int:
             timeout=args.timeout,
             law_filter=args.law_filter,
             use_verification=not args.no_verification,
+            include_trace=args.include_trace,
         )
 
     # ── Değerlendirme ─────────────────────────────────────────────────────────
@@ -635,6 +653,7 @@ def main() -> int:
             "category_filter": args.category,
             "delay_seconds": args.delay,
             "timeout_seconds": args.timeout,
+            "include_trace": args.include_trace,
         },
     )
 

@@ -25,7 +25,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 EVAL_RUNNER = PROJECT_ROOT / "evaluation" / "eval_runner.py"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "evaluation" / "reports"
 DEFAULT_API_URL = "http://localhost:8000"
-DEFAULT_SETS = ["faz1-50", "phase3-95", "faz2-170"]
+DEFAULT_SETS = ["faz1-50", "v2-95", "v3-170"]
 DEFAULT_THRESHOLDS = [0.1, 0.2, 0.3, 0.4, 0.5]
 DEFAULT_MODEL = os.getenv(
     "RERANKER_MODEL",
@@ -38,8 +38,12 @@ DEFAULT_BASELINE_THRESHOLD = 0.7
 DEFAULT_RETRIEVE_TOP_K = 20
 SET_PATHS = {
     "faz1-50": PROJECT_ROOT / "configs" / "evaluation" / "test_questions.json",
-    "phase3-95": PROJECT_ROOT / "configs" / "evaluation" / "test_questions_v2_95.json",
-    "faz2-170": PROJECT_ROOT / "configs" / "evaluation" / "test_questions_v3_170.json",
+    "v2-95": PROJECT_ROOT / "configs" / "evaluation" / "test_questions_v2_95.json",
+    "v3-170": PROJECT_ROOT / "configs" / "evaluation" / "test_questions_v3_170.json",
+}
+SET_ALIASES = {
+    "phase3-95": "v2-95",
+    "faz2-170": "v3-170",
 }
 
 
@@ -87,7 +91,7 @@ def _normalize_sets(raw_sets: list[str]) -> list[str]:
             if set_key == "all":
                 candidates = DEFAULT_SETS
             else:
-                candidates = [set_key]
+                candidates = [SET_ALIASES.get(set_key, set_key)]
             for candidate in candidates:
                 if candidate not in SET_PATHS:
                     raise ValueError(
@@ -354,7 +358,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--sets",
         nargs="+",
         default=DEFAULT_SETS,
-        help="Canonical eval sets to run: faz1-50, phase3-95, faz2-170, or all.",
+        help="Canonical eval sets to run: faz1-50, v2-95, v3-170, or all. Legacy aliases remain accepted.",
     )
     parser.add_argument(
         "--thresholds",

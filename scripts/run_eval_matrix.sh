@@ -6,8 +6,8 @@
 #
 # Modes:
 #   faz1-50   -> 50-question acceptance baseline
-#   phase3-95 -> 95-question hardening baseline
-#   faz2-170  -> 170-question stress / training-readiness baseline
+#   v2-95     -> 95-question hardening baseline
+#   v3-170    -> 170-question stress / training-readiness baseline
 #   all       -> run or print all three in order
 #
 # Examples:
@@ -45,8 +45,8 @@ Default:
 
 Modes:
   faz1-50   50-question acceptance baseline
-  phase3-95 95-question hardening baseline
-  faz2-170 170-question stress / training-readiness baseline
+  v2-95     95-question hardening baseline
+  v3-170    170-question stress / training-readiness baseline
   all       all three modes in order
 
 Options:
@@ -86,12 +86,12 @@ resolve_case() {
             CASE_LABEL="faz1-50"
             QUESTIONS_FILE="$PROJECT_ROOT/configs/evaluation/test_questions.json"
             ;;
-        phase3-95)
-            CASE_LABEL="phase3-95"
+        phase3-95|v2-95)
+            CASE_LABEL="v2-95"
             QUESTIONS_FILE="$PROJECT_ROOT/configs/evaluation/test_questions_v2_95.json"
             ;;
-        faz2-170)
-            CASE_LABEL="faz2-170"
+        faz2-170|v3-170)
+            CASE_LABEL="v3-170"
             QUESTIONS_FILE="$PROJECT_ROOT/configs/evaluation/test_questions_v3_170.json"
             ;;
         *)
@@ -209,10 +209,10 @@ STAMP="$(date +%Y%m%d_%H%M%S)"
 case "$MODE" in
     all)
         run_case "faz1-50" "$STAMP"
-        run_case "phase3-95" "$STAMP"
-        run_case "faz2-170" "$STAMP"
+        run_case "v2-95" "$STAMP"
+        run_case "v3-170" "$STAMP"
         ;;
-    faz1-50|phase3-95|faz2-170)
+    faz1-50|phase3-95|faz2-170|v2-95|v3-170)
         run_case "$MODE" "$STAMP"
         ;;
     *)

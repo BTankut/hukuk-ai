@@ -415,6 +415,27 @@ async def test_sse_stream_content_complete():
         assert word in reconstructed, f"Kelime bulunamadı: {word}"
 
 
+@pytest.mark.asyncio
+async def test_sse_stream_metadata_carries_optional_trace():
+    chunks = []
+    async for chunk in _stream_sse_response(
+        answer="Test yanıtı",
+        session_id="s1",
+        model="test",
+        citations=["TBK m.49"],
+        blocked=False,
+        guardrails_reasons=[],
+        verification={"verdict": "pass"},
+        trace={"query_signals": {"user_query": "TBK m.49 nedir?"}},
+        delay_between_chunks=0,
+    ):
+        chunks.append(chunk)
+
+    meta_data = json.loads(chunks[-2][6:])
+    assert meta_data["object"] == "chat.completion.metadata"
+    assert meta_data["trace"]["query_signals"]["user_query"] == "TBK m.49 nedir?"
+
+
 # ---------------------------------------------------------------------------
 # POST /v1/chat/completions — Non-streaming Testleri
 # ---------------------------------------------------------------------------
@@ -938,6 +959,102 @@ class TestLawFilterAndRetrieval:
         citations = [chunk.citation for chunk in orch_call.kwargs["retrieved_chunks"]]
         assert "TBK m.237" in citations
         assert "TMK m.706" in citations
+
+    def test_trace_is_not_returned_by_default(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        results = [
+            RetrievalResult(
+                chunk_id="tbk-49",
+                text="Haksız fiil metni",
+                score=0.9,
+                metadata={"law_short_name": "TBK", "madde_no": "49", "fikra_no": "1"},
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="haksız",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=(results, stats))
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={"messages": [{"role": "user", "content": "TBK m.49 nedir?"}]},
+            )
+
+        assert resp.status_code == 200
+        assert "trace" not in resp.json()
+
+    def test_include_trace_returns_retrieval_context_trace(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        results = [
+            RetrievalResult(
+                chunk_id="tbk-49",
+                text="Haksız fiil metni",
+                score=0.9,
+                metadata={
+                    "source_id": "tbk-49-f1",
+                    "law_short_name": "TBK",
+                    "madde_no": "49",
+                    "fikra_no": "1",
+                },
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="haksız",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=(results, stats))
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(
+                "TBK m.49 haksız fiili düzenler [Kaynak: TBK m.49]",
+                citations=["TBK m.49"],
+                verification={"verdict": "pass"},
+            )
+        )
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [{"role": "user", "content": "TBK m.49 nedir?"}],
+                    "include_trace": True,
+                },
+            )
+
+        assert resp.status_code == 200
+        trace = resp.json()["trace"]
+        assert trace["query_signals"]["user_query"] == "TBK m.49 nedir?"
+        assert trace["query_signals"]["explicit_article_refs"] == [{"law": "TBK", "madde": "49"}]
+        assert trace["retrieval"]["top_k_requested"] == 20
+        assert trace["retrieval"]["top_k_effective"] == 20
+        assert trace["retrieval"]["pre_rerank_chunks"][0]["source_id"] == "tbk-49-f1"
+        assert trace["context_assembly"]["context_chunk_citations"] == ["TBK m.49"]
+        assert "Haksız fiil metni" in trace["context_assembly"]["assembled_context"]
+        assert trace["generation_outcome"]["verification"]["verdict"] == "pass"
 
     def test_no_retriever_still_works(self, client, mock_orchestrator):
         """Retriever yokken orchestrator boş chunk ile çağrılmalı."""

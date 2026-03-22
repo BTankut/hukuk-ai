@@ -10,8 +10,8 @@ from typing import Any
 SCHEMA_VERSION = 2
 KNOWN_EVAL_FAMILIES = {
     "test_questions.json": "faz1-50",
-    "test_questions_v2_95.json": "phase3-95",
-    "test_questions_v3_170.json": "faz2-170",
+    "test_questions_v2_95.json": "v2-95",
+    "test_questions_v3_170.json": "v3-170",
 }
 
 

@@ -431,6 +431,83 @@ def _retrieve_explicit_article_chunks(
     return exact_chunks
 
 
+def _resolve_trace_source_id(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    if metadata.get("source_id") is not None:
+        return str(metadata["source_id"])
+    return chunk.citation
+
+
+def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
+    metadata = chunk.metadata or {}
+    return {
+        "source_id": _resolve_trace_source_id(chunk),
+        "citation": chunk.citation,
+        "source": chunk.source,
+        "score": chunk.score,
+        "chunk_id": metadata.get("chunk_id"),
+        "law_no": metadata.get("law_no") or metadata.get("kanun_no"),
+        "law_short_name": metadata.get("law_short_name") or metadata.get("kanun_kisa_adi"),
+        "madde_no": metadata.get("madde_no"),
+        "fikra_no": metadata.get("fikra_no"),
+    }
+
+
+def _build_trace_payload(
+    *,
+    decision_lane: str,
+    user_query: str,
+    enriched_query: str,
+    retrieval_query: str,
+    law_filter: str | None,
+    explicit_article_refs: list[tuple[str, str]],
+    applied_expansions: list[str],
+    top_k_requested: int,
+    top_k_effective: int,
+    reranker_enabled: bool,
+    pre_rerank_chunks: list[RetrievedChunk],
+    post_rerank_chunks: list[RetrievedChunk],
+    assembled_context: str,
+    blocked: bool,
+    guardrails_reasons: list[str],
+    verification: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "query_signals": {
+            "user_query": user_query,
+            "enriched_query": enriched_query,
+            "retrieval_query": retrieval_query,
+            "law_filter": law_filter,
+            "explicit_article_refs": [
+                {"law": law, "madde": madde}
+                for law, madde in explicit_article_refs
+            ],
+            "applied_expansions": applied_expansions,
+        },
+        "retrieval": {
+            "top_k_requested": top_k_requested,
+            "top_k_effective": top_k_effective,
+            "reranker_enabled": reranker_enabled,
+            "pre_rerank_chunks": [
+                _serialize_trace_chunk(chunk) for chunk in pre_rerank_chunks
+            ],
+            "post_rerank_chunks": [
+                _serialize_trace_chunk(chunk) for chunk in post_rerank_chunks
+            ],
+        },
+        "context_assembly": {
+            "context_chunk_citations": [chunk.citation for chunk in post_rerank_chunks],
+            "assembled_context": assembled_context,
+        },
+        "generation_outcome": {
+            "decision_lane": decision_lane,
+            "blocked": blocked,
+            "guardrails_reasons": guardrails_reasons,
+            "verification": verification,
+        },
+    }
+
+
 # ---------------------------------------------------------------------------
 # Request / Response Modelleri
 # ---------------------------------------------------------------------------
@@ -464,6 +541,7 @@ class ChatCompletionRequest(BaseModel):
     law_filter: str | None = None
     use_verification: bool = True
     top_k: int = Field(default=20, ge=1, le=50)
+    include_trace: bool = False
 
 
 class ChatChoice(BaseModel):
@@ -494,6 +572,7 @@ class ChatCompletionResponse(BaseModel):
     blocked: bool = False
     guardrails_reasons: list[str] = Field(default_factory=list)
     verification: dict[str, Any] | None = None
+    trace: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -623,6 +702,7 @@ async def _stream_sse_response(
     blocked: bool,
     guardrails_reasons: list[str],
     verification: dict[str, Any] | None,
+    trace: dict[str, Any] | None = None,
     words_per_chunk: int = 5,
     delay_between_chunks: float = 0.02,
 ) -> AsyncGenerator[str, None]:
@@ -681,6 +761,8 @@ async def _stream_sse_response(
         "guardrails_reasons": guardrails_reasons,
         "verification": verification,
     }
+    if trace is not None:
+        meta_payload["trace"] = trace
     yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
 
     # 5. Done sentinel
@@ -769,6 +851,26 @@ async def chat_completions(
     precise_answer = _build_precise_tbk_answer(last_user_msg)
     if precise_answer:
         answer_text, precise_citations = precise_answer
+        trace_payload = None
+        if request_body.include_trace:
+            trace_payload = _build_trace_payload(
+                decision_lane="precise_tbk_shortcut",
+                user_query=last_user_msg,
+                enriched_query=last_user_msg,
+                retrieval_query=last_user_msg,
+                law_filter=request_body.law_filter,
+                explicit_article_refs=[],
+                applied_expansions=[],
+                top_k_requested=request_body.top_k,
+                top_k_effective=0,
+                reranker_enabled=False,
+                pre_rerank_chunks=[],
+                post_rerank_chunks=[],
+                assembled_context="",
+                blocked=False,
+                guardrails_reasons=[],
+                verification=None,
+            )
 
         store.add_turn(session_id, last_user_msg, answer_text)
 
@@ -783,6 +885,7 @@ async def chat_completions(
                     blocked=False,
                     guardrails_reasons=[],
                     verification=None,
+                    trace=trace_payload,
                 ),
                 media_type="text/event-stream",
                 headers={
@@ -815,6 +918,7 @@ async def chat_completions(
             blocked=False,
             guardrails_reasons=[],
             verification=None,
+            trace=trace_payload,
         )
 
     # Deterministic kapsam-dışı refusal (low-risk hardening)
@@ -825,6 +929,26 @@ async def chat_completions(
             f"({scope_refusal_reason}). Elimdeki TBK kaynaklarıyla bu soruya yanıt veremiyorum. "
             "Lütfen ilgili mevzuat için uzman bir hukukçuya danışın."
         )
+        trace_payload = None
+        if request_body.include_trace:
+            trace_payload = _build_trace_payload(
+                decision_lane="scope_refusal_shortcut",
+                user_query=last_user_msg,
+                enriched_query=last_user_msg,
+                retrieval_query=last_user_msg,
+                law_filter=request_body.law_filter,
+                explicit_article_refs=[],
+                applied_expansions=[],
+                top_k_requested=request_body.top_k,
+                top_k_effective=0,
+                reranker_enabled=False,
+                pre_rerank_chunks=[],
+                post_rerank_chunks=[],
+                assembled_context="",
+                blocked=False,
+                guardrails_reasons=[],
+                verification=None,
+            )
 
         # Session kaydı
         store.add_turn(session_id, last_user_msg, answer_text)
@@ -840,6 +964,7 @@ async def chat_completions(
                     blocked=False,
                     guardrails_reasons=[],
                     verification=None,
+                    trace=trace_payload,
                 ),
                 media_type="text/event-stream",
                 headers={
@@ -872,6 +997,7 @@ async def chat_completions(
             blocked=False,
             guardrails_reasons=[],
             verification=None,
+            trace=trace_payload,
         )
 
     # Konuşma geçmişi: request'teki messages'ın son user mesajından öncekiler
@@ -896,6 +1022,7 @@ async def chat_completions(
     retrieval_query_lower = _tr_lower(retrieval_query)
     retrieval_top_k = request_body.top_k
     explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
+    applied_expansions: list[str] = []
 
     expansion_rules: list[tuple[tuple[str, ...], str, bool]] = [
         (
@@ -921,11 +1048,15 @@ async def chat_completions(
     for triggers, expansion, boost_top_k in expansion_rules:
         if any(trigger in retrieval_query_lower for trigger in triggers):
             retrieval_query += f" {expansion}"
+            applied_expansions.append(expansion)
             if boost_top_k:
                 retrieval_top_k = max(retrieval_top_k, 20)
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     retrieved_chunks: list[RetrievedChunk] = []
+    pre_rerank_chunks: list[RetrievedChunk] = []
+    post_rerank_chunks: list[RetrievedChunk] = []
+    top_k_effective = retrieval_top_k
     retriever = _get_retriever(request)
 
     if retriever is not None:
@@ -942,13 +1073,14 @@ async def chat_completions(
             _retrieve_top_k = request_body.top_k
             if _reranker_enabled:
                 _retrieve_top_k = int(os.getenv("RERANKER_RETRIEVE_TOP_K", "20"))
+            top_k_effective = max(retrieval_top_k, _retrieve_top_k)
 
             # Embedder varsa embed et, yoksa direkt query string ile dene
             if hasattr(retriever, "retrieve") and callable(retriever.retrieve):
                 # MilvusRetriever: retrieve(query=str, top_k=int, metadata_filter=...)
                 results, stats = retriever.retrieve(
                     query=retrieval_query,  # Terminoloji genişletilmiş sorgu
-                    top_k=max(retrieval_top_k, _retrieve_top_k),
+                    top_k=top_k_effective,
                     metadata_filter=metadata_filter,
                 )
                 retrieved_chunks = [
@@ -984,6 +1116,7 @@ async def chat_completions(
                             len(exact_chunks),
                             len(retrieved_chunks),
                         )
+                pre_rerank_chunks = list(retrieved_chunks)
         except Exception as exc:
             logger.warning(
                 "Retrieval hatası (devam ediliyor, chunk yok): %s", exc, exc_info=True
@@ -1056,6 +1189,7 @@ async def chat_completions(
                     )
         except Exception as exc:
             logger.warning("Reranker bypass (hata): %s", exc, exc_info=True)
+    post_rerank_chunks = list(retrieved_chunks)
 
     # ── Orchestrator ─────────────────────────────────────────────────────────
     orchestrator = _get_orchestrator(request)
@@ -1083,6 +1217,26 @@ async def chat_completions(
     blocked = orch_response.blocked
     guardrails_reasons = orch_response.guardrails_reasons
     verification = orch_response.verification
+    trace_payload = None
+    if request_body.include_trace:
+        trace_payload = _build_trace_payload(
+            decision_lane="rag",
+            user_query=last_user_msg,
+            enriched_query=enriched_query,
+            retrieval_query=retrieval_query,
+            law_filter=request_body.law_filter,
+            explicit_article_refs=explicit_article_refs,
+            applied_expansions=applied_expansions,
+            top_k_requested=request_body.top_k,
+            top_k_effective=top_k_effective,
+            reranker_enabled=_reranker_enabled,
+            pre_rerank_chunks=pre_rerank_chunks,
+            post_rerank_chunks=post_rerank_chunks,
+            assembled_context=RAGOrchestrator._build_context(post_rerank_chunks),
+            blocked=blocked,
+            guardrails_reasons=guardrails_reasons,
+            verification=verification,
+        )
 
     # ── Session kaydet ────────────────────────────────────────────────────────
     store.add_turn(session_id, last_user_msg, answer_text)
@@ -1100,6 +1254,7 @@ async def chat_completions(
                 blocked=blocked,
                 guardrails_reasons=guardrails_reasons,
                 verification=verification,
+                trace=trace_payload,
             ),
             media_type="text/event-stream",
             headers={
@@ -1134,6 +1289,7 @@ async def chat_completions(
         blocked=blocked,
         guardrails_reasons=guardrails_reasons,
         verification=verification,
+        trace=trace_payload,
     )
 
 

@@ -1,0 +1,649 @@
+{
+  "_meta": {
+    "version": "3.0.0-restored",
+    "restored_from_commit": "429c650c33987861825e1882f316c509db67c9c0",
+    "historical_path": "configs/evaluation/test_questions_v3.json",
+    "scope": "faz2a_tmk_cross_law",
+    "total_questions": 170,
+    "generated_by": "scripts/faz2a/build_failure_freeze.py",
+    "source_questions": "configs/evaluation/test_questions_v3_170.json",
+    "count": 30
+  },
+  "questions": [
+    {
+      "id": "TMK-CL-001",
+      "question": "Aile konutu olarak kullanılan kiralananda kiracı eşin fesih bildirimi tek başına geçerli midir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "eş rızası",
+        "fesih bildirimi"
+      ],
+      "expected_answer_contains": "açık rıza",
+      "refusal_expected": false,
+      "notes": "TBK+TMK birlikte değerlendirme"
+    },
+    {
+      "id": "TMK-CL-002",
+      "question": "Evli bir kişinin kefalet sözleşmesi yapmasında eş rızası şartı aile birliğinin korunması ilkesiyle nasıl ilişkilidir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.584",
+        "TMK m.185"
+      ],
+      "expected_keywords": [
+        "kefalet",
+        "eş rızası",
+        "evlilik birliği"
+      ],
+      "expected_answer_contains": "eş rızası",
+      "refusal_expected": false,
+      "notes": "Kefalet ve aile hukuku kesişimi"
+    },
+    {
+      "id": "TMK-CL-003",
+      "question": "Paylı mülkiyette bir paydaşın taşınmazın tamamını kiraya vermesi halinde diğer paydaşların durumu hangi hükümlere göre değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.299",
+        "TMK m.688",
+        "TMK m.691"
+      ],
+      "expected_keywords": [
+        "paylı mülkiyet",
+        "kiraya verme yetkisi",
+        "paydaş"
+      ],
+      "expected_answer_contains": "paylı mülkiyet",
+      "refusal_expected": false,
+      "notes": "Mülkiyet + kira ilişkisi"
+    },
+    {
+      "id": "TMK-CL-004",
+      "question": "Taşınmaz satış sözleşmesinde resmi şekil zorunluluğu TBK ve TMK bakımından hangi maddelerle temellendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.237",
+        "TMK m.706"
+      ],
+      "expected_keywords": [
+        "taşınmaz satışı",
+        "resmi şekil",
+        "tescil"
+      ],
+      "expected_answer_contains": "resmi şekil",
+      "refusal_expected": false,
+      "notes": "Şekil şartı kesişimi"
+    },
+    {
+      "id": "TMK-CL-005",
+      "question": "Malik olmayan kişinin taşınmazı kiraya vermesi ve kiracının korunması hangi TBK ve TMK hükümleriyle birlikte tartışılır?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.299",
+        "TMK m.683"
+      ],
+      "expected_keywords": [
+        "malik",
+        "kiraya verme",
+        "mülkiyet hakkı",
+        "kullanma yetkisi"
+      ],
+      "expected_answer_contains": "mülkiyet hakkı",
+      "refusal_expected": false,
+      "notes": "Malik sıfatı ve kira"
+    },
+    {
+      "id": "TMK-CL-006",
+      "question": "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.27",
+        "TMK m.194",
+        "TMK m.1023"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "şerh",
+        "eş rızası",
+        "iyi niyet"
+      ],
+      "expected_answer_contains": "aile konutu",
+      "refusal_expected": false,
+      "notes": "Aile konutu ve geçerlilik"
+    },
+    {
+      "id": "TMK-CL-007",
+      "question": "Tapu sicilinin tutulmasından doğan zararlarda devlet sorumluluğu ile haksız fiil sorumluluğu nasıl birlikte ele alınır?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.49",
+        "TMK m.1007"
+      ],
+      "expected_keywords": [
+        "tapu sicili",
+        "devlet sorumluluğu",
+        "zarar"
+      ],
+      "expected_answer_contains": "TMK m.1007",
+      "refusal_expected": false,
+      "notes": "TMK özel sorumluluk + TBK genel"
+    },
+    {
+      "id": "TMK-CL-008",
+      "question": "Paylı mülkiyette yasal önalım hakkı bulunan bir taşınmaz satıldığında TBK'daki satış hükümleri ile TMK hükümleri nasıl birlikte uygulanır?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.207",
+        "TMK m.732"
+      ],
+      "expected_keywords": [
+        "yasal önalım",
+        "paylı mülkiyet",
+        "satış"
+      ],
+      "expected_answer_contains": "önalım",
+      "refusal_expected": false,
+      "notes": "Satış + önalım"
+    },
+    {
+      "id": "TMK-CL-009",
+      "question": "Boşanma sürecindeki eşlerden biri tarafından aile konutu kira sözleşmesinin devri istenirse hangi TBK ve TMK hükümleri dikkate alınır?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_keywords": [
+        "kira sözleşmesinin devri",
+        "aile konutu",
+        "eşin korunması"
+      ],
+      "expected_answer_contains": "aile konutu",
+      "refusal_expected": false,
+      "notes": "Kira devri ve aile konutu"
+    },
+    {
+      "id": "TMK-CL-010",
+      "question": "Eşler arasındaki mal rejimi devam ederken bir eşin diğer eşe borç vermesi halinde TBK borç ilişkisi ve TMK mal rejimi nasıl birlikte değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.386",
+        "TMK m.202",
+        "TMK m.223"
+      ],
+      "expected_keywords": [
+        "ödünç",
+        "eşler arası işlem",
+        "mal rejimi"
+      ],
+      "expected_answer_contains": "mal rejimi",
+      "refusal_expected": false,
+      "notes": "TBK ödünç + TMK mal rejimi"
+    },
+    {
+      "id": "TMK-CL-011",
+      "question": "Evlilik birliği içinde bir eşin diğerinin rızası olmadan aile konutu üzerinde ipotek tesis etmesi mümkün müdür? Bu işlemin TBK m.27 çerçevesindeki geçersizlik sonuçları ve TMK'nın aile konutuna ilişkin güvencesi birlikte nasıl değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.194",
+        "TMK m.240",
+        "TBK m.27"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "ipotek",
+        "eş rızası",
+        "tapu sicili",
+        "geçersizlik",
+        "TMK m.194",
+        "butlan",
+        "TBK m.27"
+      ],
+      "expected_answer_contains": "eş rızası",
+      "refusal_expected": false,
+      "notes": "Aile konutu üzerinde sınırlı ayni hak tesisi — TMK m.194+240 + TBK m.27 geçersizlik"
+    },
+    {
+      "id": "TMK-CL-012",
+      "question": "Aile konutu şerhi tapu siciline işlenmemiş olsa bile eşin rızası aranır mı? Şerhin yokluğuna rağmen yapılan kira sözleşmesinin TBK m.27 bağlamındaki geçersizlik sonuçları ve tapu aleniyeti ilkesiyle bu koşulun bağdaşması nasıl değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.194",
+        "TMK m.1023",
+        "TBK m.27"
+      ],
+      "expected_keywords": [
+        "aile konutu şerhi",
+        "tapu aleniyeti",
+        "iyiniyet",
+        "şerh yokluğu",
+        "eş rızası zorunluluğu",
+        "kira sözleşmesi geçersizliği",
+        "TBK m.27"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Şerh olmasa da TMK m.194 koruması devam eder — TBK m.27 geçersizlik + aleniyetle çelişki tartışması"
+    },
+    {
+      "id": "TMK-CL-013",
+      "question": "Eşim benim bilgim olmadan aile konutunu bir üçüncü kişiye kiraya verdi ve sözleşme imzaladı. Bu kira sözleşmesi beni bağlar mı?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "eş rızası",
+        "kira sözleşmesi",
+        "geçersizlik",
+        "üçüncü kişi iyiniyeti"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Colloquial; TMK m.194 kira akdini de kapsıyor — TBK m.299 ile kesişim"
+    },
+    {
+      "id": "TMK-CL-014",
+      "question": "Yasal mal rejimi olan edinilmiş mallara katılma rejiminde bir eşin sözleşmeden doğan borçları, diğer eşin kişisel mallarına etki eder mi? Eşin borcunu ödeyememesi halinde alacaklı TBK m.50 kapsamında tazminat talebinde bulunabilir mi?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.220",
+        "TMK m.222",
+        "TMK m.226",
+        "TBK m.50"
+      ],
+      "expected_keywords": [
+        "edinilmiş mallara katılma",
+        "kişisel mal",
+        "borç sorumluluğu",
+        "mal rejimi",
+        "sözleşmeden doğan borç",
+        "sorumluluk sınırı",
+        "tazminat",
+        "TBK m.50"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Mal rejiminde eşlerin borç sorumluluğunun TBK ile kesişimi — TMK m.220-226 + TBK m.50 tazminat"
+    },
+    {
+      "id": "TMK-CL-015",
+      "question": "Velayet hakkına sahip bir ebeveyn, küçük çocuğu adına taşınmaz satış sözleşmesi yapabilir mi? Bu işlem için mahkeme onayı gerekli midir?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TMK m.342",
+        "TMK m.343",
+        "TBK m.16"
+      ],
+      "expected_keywords": [
+        "velayet",
+        "yasal temsilci",
+        "küçük adına sözleşme",
+        "mahkeme onayı",
+        "taşınmaz",
+        "sınırlı ehliyet"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Velayet + TBK'daki yasal temsilci hükümleri — TMK m.342-343 + TBK m.16"
+    },
+    {
+      "id": "TMK-CL-016",
+      "question": "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira sözleşmesini feshedebilir mi? Mahkeme tedbir kararının yokluğu bu durumu değiştirir mi?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.169",
+        "TMK m.197",
+        "TBK m.349"
+      ],
+      "expected_keywords": [
+        "boşanma davası",
+        "tedbir kararı",
+        "aile konutu",
+        "kira feshi",
+        "eş rızası",
+        "TMK m.169"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Boşanma yargılaması sürecinde aile konutu güvencesi — TMK m.169+197 ve TBK m.349"
+    },
+    {
+      "id": "TMK-CL-017",
+      "question": "Bir eş, diğer eşin açık rızası olmadan onun adına bir sözleşme imzalarsa bu yetkisiz temsil midir? Onaylama ile geçerli hale gelebilir mi?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.189",
+        "TBK m.46",
+        "TBK m.47"
+      ],
+      "expected_keywords": [
+        "yetkisiz temsil",
+        "onaylama",
+        "aile hukuku temsil",
+        "eş adına işlem",
+        "geçersizlik",
+        "sonradan onay"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "TMK'daki günlük yaşam temsili yetkisi sınırları + TBK yetkisiz temsil hükümleri — TBK m.46+47"
+    },
+    {
+      "id": "TMK-CL-018",
+      "question": "Evli bir kişi, eşinin yazılı rızasını almadan kendi adına aile konutunu bir üçüncü kişiye devretmek amacıyla noterde satış vaadi sözleşmesi imzıladı. Bu sözleşmenin TMK m.194 ve TBK m.237 çerçevesindeki geçerliliği nasıl değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TMK m.194",
+        "TBK m.237"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "satış vaadi",
+        "eş rızası",
+        "noter",
+        "geçersizlik",
+        "TMK m.194"
+      ],
+      "expected_answer_contains": "eş rızası",
+      "refusal_expected": false,
+      "notes": "Aile konutu için satış vaadinde eş rızası — TMK m.194 + TBK m.237 birlikte"
+    },
+    {
+      "id": "TMK-CL-019",
+      "question": "Mal ayrılığı rejimine tabi eşlerin birinin sözleşmeden doğan borcunu ifa edememesi halinde alacaklı diğer eşin mallarına başvurabilir mi? Alacaklının diğer eş adına vekil sıfatıyla işlem yapan kişiye karşı TBK m.504 kapsamındaki temsil yetkisi sınırlarını ileri sürmesi mümkün müdür?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.244",
+        "TMK m.245",
+        "TBK m.504"
+      ],
+      "expected_keywords": [
+        "mal ayrılığı",
+        "borç sorumluluğu",
+        "eşlerin bağımsızlığı",
+        "alacaklı",
+        "kişisel borç",
+        "mal rejimi",
+        "temsil yetkisi",
+        "TBK m.504"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Mal ayrılığı rejiminde borç sorumluluğunun sınırlılığı — TMK m.244-245 + TBK m.504 vekilin yetkisi"
+    },
+    {
+      "id": "TMK-CL-020",
+      "question": "Babam hayatını kaybetti ve küçük kardeşim için vasi atandı. Vasi, vasinin gözetimindeki çocuk adına banka hesabı açıp yatırım yapabilir mi? Vasinin bu işlemleri gerçekleştirirken TBK m.169 kapsamında alacağı devredip devredemeyeceği de değerlendirilmelidir.",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TMK m.449",
+        "TMK m.450",
+        "TMK m.342",
+        "TBK m.169"
+      ],
+      "expected_keywords": [
+        "vasi",
+        "vesayet",
+        "küçük adına işlem",
+        "mahkeme onayı",
+        "yatırım",
+        "yasal temsil",
+        "alacağın devri",
+        "TBK m.169"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Colloquial; vesayet altındaki küçük için vasi sözleşmesi — TMK m.449-450 + TBK m.169 alacağın devri"
+    },
+    {
+      "id": "TMK-CL-021",
+      "question": "Sınırlı ehliyetsiz (kısıtlı) biriyle yapılan kira sözleşmesi geçerli midir? Yasal temsilcisinin onayı yoksa sonuç ne olur?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.15",
+        "TMK m.16",
+        "TBK m.299"
+      ],
+      "expected_keywords": [
+        "sınırlı ehliyetsiz",
+        "kısıtlı",
+        "yasal temsilci onayı",
+        "kira sözleşmesi geçerliliği",
+        "askıya alınma",
+        "iptal"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Ehliyet + kira sözleşmesi kesişimi — TMK m.15-16 + TBK m.299"
+    },
+    {
+      "id": "TMK-CL-022",
+      "question": "Eşler arasında yapılan bağışlamanın edinilmiş mallara katılma rejiminin tasfiyesindeki etkisi nasıldır? Bu bağışlama denkleştirmeye tabi midir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.220",
+        "TMK m.229",
+        "TBK m.285"
+      ],
+      "expected_keywords": [
+        "eşler arası bağışlama",
+        "denkleştirme",
+        "edinilmiş mal",
+        "kişisel mal",
+        "tasarruf sınırı",
+        "mal rejimi tasfiyesi"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Eşler arası bağışlamanın mal rejimi tasfiyesindeki denkleştirme işlevi — TMK m.229 + TBK m.285"
+    },
+    {
+      "id": "TMK-CL-023",
+      "question": "TBK m.19'daki muvazaa ile TMK m.2'deki dürüstlük kuralı aynı sözleşmede aynı anda uygulanabilir mi? Hangisi önce değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.19",
+        "TMK m.2"
+      ],
+      "expected_keywords": [
+        "muvazaa",
+        "dürüstlük kuralı",
+        "hakkın kötüye kullanımı",
+        "geçersizlik",
+        "öncelik",
+        "uygulama sırası"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Adversarial; TBK muvazaası ile TMK dürüstlük kuralının rekabeti"
+    },
+    {
+      "id": "TMK-CL-024",
+      "question": "Boşanma sürecinde eşe karşı açılan haksız fiil tazminat davası ile TMK m.174 kapsamındaki maddi tazminat davası arasındaki temel farklar nelerdir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.174",
+        "TBK m.49",
+        "TBK m.72"
+      ],
+      "expected_keywords": [
+        "haksız fiil tazminatı",
+        "boşanma tazminatı",
+        "zamanaşımı",
+        "kusur",
+        "TMK m.174",
+        "TBK m.49"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Boşanma tazminatı vs TBK haksız fiil — kural çatışması analizi"
+    },
+    {
+      "id": "TMK-CL-025",
+      "question": "Aile hukukunda öngörülen nafaka yükümlülüğü TBK'daki sözleşmeden doğan alacak gibi zamanaşımına uğrar mı? Bu alacaklar için özel bir süre var mıdır?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TMK m.182",
+        "TBK m.125",
+        "TBK m.131"
+      ],
+      "expected_keywords": [
+        "nafaka",
+        "zamanaşımı",
+        "aile hukuku alacağı",
+        "genel zamanaşımı",
+        "özel düzenleme",
+        "TBK m.125"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Nafaka alacaklarında zamanaşımı — TMK özel düzenleme vs TBK genel hükümler"
+    },
+    {
+      "id": "TMK-CL-026",
+      "question": "Mirasçılar arasında terekenin paylaşılması için yapılan ortaklık sona erdirme sözleşmeleri TBK'daki adi ortaklık hükümlerine mi tabi olur?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.698",
+        "TBK m.620",
+        "TBK m.638"
+      ],
+      "expected_keywords": [
+        "miras ortaklığı",
+        "terekenin paylaşımı",
+        "adi ortaklık",
+        "TMK m.698",
+        "tasfiye",
+        "miras sözleşmesi"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Miras ortaklığının tasfiyesinde TBK adi ortaklık hükümlerinin uygulanabilirliği"
+    },
+    {
+      "id": "TMK-CL-027",
+      "question": "Eşlerden birinin ölümü halinde hayatta kalan eşin edinilmiş mallara katılma rejimi çerçevesinde borçlara karşı kişisel sorumluluğu nasıl belirlenir? Ölen eşin alacaklısı, TBK m.77 kapsamında sebepsiz zenginleşme iddiasıyla hayatta kalan eşin elde ettiği katılma alacağına başvurabilir mi?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TMK m.226",
+        "TMK m.240",
+        "TMK m.499",
+        "TBK m.77"
+      ],
+      "expected_keywords": [
+        "eşin ölümü",
+        "mal rejimi tasfiyesi",
+        "miras",
+        "borç sorumluluğu",
+        "katkı alacağı",
+        "edinilmiş mal payı",
+        "sebepsiz zenginleşme",
+        "TBK m.77"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Ölümle mal rejiminin sona ermesi + miras açılması — TMK m.226+499 + TBK m.77 sebepsiz zenginleşme"
+    },
+    {
+      "id": "TMK-CL-028",
+      "question": "Babam taşınmazını bana sattı; ancak gerçekte bağışlamak istediğini düşünüyorum. Muris muvazaası nedeniyle dava açabilir miyim, bunu nasıl kanıtlarım?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TMK m.561",
+        "TBK m.19",
+        "TBK m.285"
+      ],
+      "expected_keywords": [
+        "muris muvazaası",
+        "muvazaalı satış",
+        "bağışlama",
+        "mirasçı hakları",
+        "TBK m.19",
+        "saklı pay"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Colloquial; muris muvazaası — TMK m.561 + TBK m.19 kesişimi"
+    },
+    {
+      "id": "TMK-CL-029",
+      "question": "Üvey çocuğun velayetini üstlenen kişi, çocuğun yasal temsilcisi sıfatıyla üçüncü kişilerle borç yüklendirici işlemler yapabilir mi?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.335",
+        "TMK m.342",
+        "TBK m.16",
+        "TBK m.33"
+      ],
+      "expected_keywords": [
+        "velayet",
+        "üvey çocuk",
+        "yasal temsil",
+        "borç yüklendirici işlem",
+        "çocuk adına sözleşme",
+        "mahkeme onayı"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Velayet sınırları + TBK temsil hükümleri — multi-article"
+    },
+    {
+      "id": "TMK-CL-030",
+      "question": "'Eşin rızası alınmadan yapılan her sözleşme TMK m.194 gereği otomatik olarak batıldır' ifadesi hukuken doğru mudur?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TMK m.194",
+        "TBK m.27"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "eş rızası",
+        "butlan",
+        "iptal edilebilirlik",
+        "geçersizlik türleri",
+        "TMK m.194 kapsamı"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Adversarial; TMK m.194 eş rızasının yokluğu butlan değil tek taraflı bağlamazlık doğurur"
+    }
+  ]
+}
