@@ -1,0 +1,993 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-22T21:26:29.547689+00:00",
+    "questions_source": "/tmp/faz2a_tmk_family_home_wave15.json",
+    "api_url": "http://127.0.0.1:8056",
+    "mock_mode": false,
+    "total_questions": 9,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "diagnostic",
+    "eval_family": "v3-170",
+    "model_ref": "hukuk-ai-sft-qwen35-807",
+    "checkpoint_ref": "dgx1-merged-wave15-family-home",
+    "git_commit": "6614b27",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 300.0,
+      "include_trace": true
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.7155,
+    "phrase_hit_rate": 0.8,
+    "avg_response_time_ms": 1633.0,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tmk_cross_law": {
+      "count": 9,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.7155
+    }
+  },
+  "by_difficulty": {
+    "hard": {
+      "count": 7,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.7151
+    },
+    "medium": {
+      "count": 2,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.7167
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TMK-CL-001",
+      "question_text": "Aile konutu olarak kullanılan kiralananda kiracı eşin fesih bildirimi tek başına geçerli midir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.349] TBK m.349 - Aile konutu olarak kullanılmak üzere kiralanan taşınmazlarda kiracı, eşinin açık rızası olmadıkça kira sözleşmesini feshedemez.\n- [Kaynak: TMK m.194] TMK m.194 - Eşlerden biri, diğer eşin açık rızası bulunmadıkça, aile konutu ile ilgili kira sözleşmesini feshedemez, aile konutunu devredemez veya aile konutu üzerindeki hakları sınırlayamaz.\n- [Kaynak: TMK m.169] TMK m.169 - Boşanma veya ayrılık davası açılınca hâkim, davanın devamı süresince gerekli olan, özellikle eşlerin barınmasına, geçimine, eşlerin mallarının yönetimine ve çocukların bakım ve korunmasına ilişkin geçici önle\n- [Kaynak: TMK m.197] TMK m.197 - Eşlerden biri, ortak hayat sebebiyle kişiliği, ekonomik güvenliği veya ailenin huzuru ciddî biçimde tehlikeye düştüğü sürece ayrı yaşama hakkına sahiptir.",
+      "cited_sources": [
+        "TBK m.349",
+        "TMK m.194",
+        "TMK m.169",
+        "TMK m.197"
+      ],
+      "expected_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "eş rızası",
+        "fesih bildirimi"
+      ],
+      "expected_answer_contains": "açık rıza",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "phrase_hit_result": true,
+      "response_time_ms": 14639.4,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Aile konutu olarak kullanılan kiralananda kiracı eşin fesih bildirimi tek başına geçerli midir?",
+          "enriched_query": "Aile konutu olarak kullanılan kiralananda kiracı eşin fesih bildirimi tek başına geçerli midir?",
+          "retrieval_query": "Aile konutu olarak kullanılan kiralananda kiracı eşin fesih bildirimi tek başına geçerli midir? TBK m.349 TMK m.194 TMK m.169 TMK m.197 aile konutu boşanma kira fesih tedbir fesih sona erme TBK m.349 TMK m.194 aile konutu eş rızası kira feshi TBK m.432 TBK m.433 hizmet sözleşmesi ihbar fesih bildirim",
+          "law_filter": null,
+          "mentioned_laws": [
+            "TBK",
+            "TMK"
+          ],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [
+            {
+              "law": "TBK",
+              "madde": "349"
+            },
+            {
+              "law": "TMK",
+              "madde": "194"
+            },
+            {
+              "law": "TMK",
+              "madde": "169"
+            },
+            {
+              "law": "TMK",
+              "madde": "197"
+            }
+          ],
+          "applied_expansions": [
+            "TBK m.349 TMK m.194 TMK m.169 TMK m.197 aile konutu boşanma kira fesih tedbir",
+            "fesih sona erme",
+            "TBK m.349 TMK m.194 aile konutu eş rızası kira feshi",
+            "TBK m.432 TBK m.433 hizmet sözleşmesi ihbar fesih bildirim"
+          ]
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 20,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [
+            {
+              "source_id": "TBK m.349",
+              "citation": "TBK m.349",
+              "source": "TBK",
+              "score": 0.8238509893417358,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "349",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TMK m.194",
+              "citation": "TMK m.194",
+              "source": "TMK",
+              "score": 0.8206382989883423,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "194",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TMK m.169",
+              "citation": "TMK m.169",
+              "source": "TMK",
+              "score": 0.7540727257728577,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "169",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TMK m.197",
+              "citation": "TMK m.197",
+              "source": "TMK",
+              "score": 0.7750869989395142,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "197",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.348",
+              "citation": "TBK m.348",
+              "source": "TBK",
+              "score": 0.8337050080299377,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "348",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.369",
+              "citation": "TBK m.369",
+              "source": "TBK",
+              "score": 0.827354371547699,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "369",
+              "fikra_no": ""
+            },
+            {
+              "source_id": "TBK m.350",
+              "citation": "TBK m.350",
+              "source": "TBK",
+              "score": 0.8260003328323364,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "350",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.330",
+              "citation": "TBK m.330",
+              "source": "TBK",
+              "score": 0.8227435350418091,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "330",
+              "fikra_no": ""
+            },
+            {
+              "source_id": "TBK m.329",
+              "citation": "TBK m.329",
+              "source": "TBK",
+              "score": 0.820429801940918,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "329",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.331",
+              "citation": "TBK m.331",
+              "source": "TBK",
+              "score": 0.8200221061706543,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "331",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.347",
+              "citation": "TBK m.347",
+              "source": "TBK",
+              "score": 0.8192190527915955,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "347",
+              "fikra_no": ""
+            },
+            {
+              "source_id": "TBK m.333",
+              "citation": "TBK m.333",
+              "source": "TBK",
+              "score": 0.8158187866210938,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "333",
+              "fikra_no": "1"
+            }
+          ],
+          "post_rerank_chunks": [
+            {
+              "source_id": "TBK m.349",
+              "citation": "TBK m.349",
+              "source": "TBK",
+              "score": 0.8238509893417358,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "349",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TMK m.194",
+              "citation": "TMK m.194",
+              "source": "TMK",
+              "score": 0.8206382989883423,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "194",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TMK m.169",
+              "citation": "TMK m.169",
+              "source": "TMK",
+              "score": 0.7540727257728577,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "169",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TMK m.197",
+              "citation": "TMK m.197",
+              "source": "TMK",
+              "score": 0.7750869989395142,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "197",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.348",
+              "citation": "TBK m.348",
+              "source": "TBK",
+              "score": 0.8337050080299377,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "348",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.369",
+              "citation": "TBK m.369",
+              "source": "TBK",
+              "score": 0.827354371547699,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "369",
+              "fikra_no": ""
+            },
+            {
+              "source_id": "TBK m.350",
+              "citation": "TBK m.350",
+              "source": "TBK",
+              "score": 0.8260003328323364,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "350",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.330",
+              "citation": "TBK m.330",
+              "source": "TBK",
+              "score": 0.8227435350418091,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "330",
+              "fikra_no": ""
+            },
+            {
+              "source_id": "TBK m.329",
+              "citation": "TBK m.329",
+              "source": "TBK",
+              "score": 0.820429801940918,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "329",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.331",
+              "citation": "TBK m.331",
+              "source": "TBK",
+              "score": 0.8200221061706543,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "331",
+              "fikra_no": "1"
+            },
+            {
+              "source_id": "TBK m.347",
+              "citation": "TBK m.347",
+              "source": "TBK",
+              "score": 0.8192190527915955,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "347",
+              "fikra_no": ""
+            },
+            {
+              "source_id": "TBK m.333",
+              "citation": "TBK m.333",
+              "source": "TBK",
+              "score": 0.8158187866210938,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "333",
+              "fikra_no": "1"
+            }
+          ]
+        },
+        "context_assembly": {
+          "context_chunk_citations": [
+            "TBK m.349",
+            "TMK m.194",
+            "TMK m.169",
+            "TMK m.197",
+            "TBK m.348",
+            "TBK m.369",
+            "TBK m.350",
+            "TBK m.330",
+            "TBK m.329",
+            "TBK m.331",
+            "TBK m.347",
+            "TBK m.333"
+          ],
+          "assembled_context": "[Kaynak: TBK m.349]\nTBK m.349 - Aile konutu olarak kullanılmak üzere kiralanan\ntaşınmazlarda kiracı, eşinin açık rızası olmadıkça kira sözleşmesini feshedemez. Bu rızanın alınması mümkün olmazsa veya eş haklı sebep olmaksızın rızasını vermekten kaçınırsa kiracı, hâkimden bu konuda bir karar vermesini isteyebilir. Kiracı olmayan eşin, kiraya verene bildirimde bulunarak kira sözleşmesinin tarafı sıfatını kazanması hâlinde kiraya veren, fesih bildirimi ile fesih ihtarına bağlı bir ödeme süresini kiracıya ve eşine ayrı ayrı bildirmek zorundadır. II. Dava yoluyla 1. Kiraya verenden kaynaklanan sebeplerle a. Gereksinim, yeniden inşa ve imar\n\n---\n\n[Kaynak: TMK m.194]\nTMK m.194 - Eşlerden biri,\ndiğer eşin açık rızası bulunmadıkça, aile konutu ile ilgili kira sözleşmesini feshedemez, aile konutunu devredemez veya aile konutu üzerindeki hakları sınırlayamaz. Rızayı sağlayamayan veya haklı bir sebep olmadan kendisine rıza verilmeyen eş, hâkimin müdahalesini isteyebilir. Aile konutu olarak özgülenen taşınmaz malın maliki olmayan eş, tapu kütüğüne konutla ilgili gerekli şerhin verilmesini tapu müdürlüğünden isteyebilir. [15] Aile konutu eşlerden biri tarafından kira ile sağlanmışsa, sözleşmenin tarafı olmayan eş, kiralayana yapacağı bildirimle sözleşmenin tarafı hâline gelir ve bildirimde bulunan eş diğeri ile müteselsilen sorumlu olur. E. Birliğin korunması I. Genel olarak\n\n---\n\n[Kaynak: TMK m.169]\nTMK m.169 - Boşanma veya ayrılık davası açılınca hâkim, davanın devamı süresince\ngerekli olan, özellikle eşlerin barınmasına, geçimine, eşlerin mallarının yönetimine ve çocukların bakım ve korunmasına ilişkin geçici önlemleri re'sen alır. C. Karar I. Boşanma veya ayrılık\n\n---\n\n[Kaynak: TMK m.197]\nTMK m.197 - Eşlerden biri, ortak hayat sebebiyle kişiliği, ekonomik güvenliği veya\nailenin huzuru ciddî biçimde tehlikeye düştüğü sürece ayrı yaşama hakkına sahiptir. Birlikte yaşamaya ara verilmesi haklı bir sebebe dayanıyorsa hâkim, eşlerden birinin istemi üzerine birinin diğerine yapacağı parasal katkıya, konut ve ev eşyasından yararlanmaya ve eşlerin mallarının yönetimine ilişkin önlemleri alır. Eşlerden biri, haklı bir sebep olmaksızın diğerinin birlikte yaşamaktan kaçınması veya ortak hayatın başka bir sebeple olanaksız hâle gelmesi üzerine de yukarıdaki istemlerde bulunabilir. Eşlerin ergin olmayan çocukları varsa hâkim, ana ve baba ile çocuklar arasındaki ilişkileri düzenleyen hükümlere göre gereken önlemleri alır. IV. Borçlulara ait önlemler\n\n---\n\n[Kaynak: TBK m.348]\nTBK m.348 - Konut ve çatılı işyeri kiralarında fesih bildiriminin\ngeçerliliği, yazılı şekilde yapılmasına bağlıdır. b. Aile konutu\n\n---\n\n[Kaynak: TBK m.369]\nTBK m.369 - 3. Olağanüstü fesih / Taraflardan biri, kira ilişkisinin devamını kendisi\niçin çekilmez hâle getiren önemli sebeplerin varlığı durumunda, sözleşmeyi yasal fesih bildirim süresine uyarak her zaman feshedebilir. Hâkim, durum ve koşulları göz önünde tutarak, olağanüstü fesih bildiriminin parasal sonuçlarını karara bağlar. b. Kiracının iflası\n\n---\n\n[Kaynak: TBK m.350]\nTBK m.350 - Kiraya veren, kira sözleşmesini;\n1. Kiralananı kendisi, eşi, altsoyu, üstsoyu veya kanun gereği bakmakla yükümlü olduğu diğer kişiler için konut ya da işyeri gereksinimi sebebiyle kullanma zorunluluğu varsa, 2. Kiralananın yeniden inşası veya imarı amacıyla esaslı onarımı, genişletilmesi ya da değiştirilmesi gerekli ve bu işler sırasında kiralananın kullanımı imkânsız ise, belirli süreli sözleşmelerde sürenin sonunda, belirsiz süreli sözleşmelerde kiraya ilişkin genel hükümlere göre fesih dönemine ve fesih bildirimi için öngörülen sürelere uyularak belirlenecek tarihten başlayarak bir ay içinde açacağı dava ile sona erdirebilir. b. Yeni malikin gereksinimi\n\n---\n\n[Kaynak: TBK m.330]\nTBK m.330 - 3. Taşınır kiralarında / Taraflardan her biri, bir taşınıra ilişkin kira\nsözleşmesini üç gün önceden yapılacak fesih bildirim süresine uyarak her zaman feshedebilir. Kiraya verenin meslekî faaliyeti gereği kiraya verdiği ve kiracının da özel kullanımına yarayan taşınır bir malın kiracısı, kira sözleşmesini, üç aylık kira dönemi sonu için en az bir ay önceden yapacağı bir fesih bildirimiyle sona erdirebilir. Bu durumda kiraya verenin, zararının giderilmesini isteme hakkı yoktur. III. Olağanüstü fesih\n\n---\n\n[Kaynak: TBK m.329]\nTBK m.329 - 2. Taşınmaz ve taşınır / Taraflardan her biri, bir taşınmaza veya taşınır bir\nyapıya ilişkin kira sözleşmesini yerel âdette belirlenen kira döneminin sonu için veya böyle bir âdetin bulunmaması durumunda, altı aylık kira döneminin sonu için, üç aylık fesih bildirim süresine uyarak feshedebilir.\n\n---\n\n[Kaynak: TBK m.331]\nTBK m.331 - 1. Önemli sebepler / Taraflardan her biri, kira ilişkisinin devamını kendisi\niçin çekilmez hâle getiren önemli sebeplerin varlığı durumunda, sözleşmeyi yasal fesih bildirim süresine uyarak her zaman feshedebilir. Hâkim, durum ve koşulları göz önünde tutarak, olağanüstü fesih bildiriminin parasal sonuçlarını karara bağlar.\n\n---\n\n[Kaynak: TBK m.347]\nTBK m.347 - 1. Genel olarak / Konut ve çatılı işyeri kiralarında kiracı, belirli\nsüreli sözleşmelerin süresinin bitiminden en az onbeş gün önce bildirimde bulunmadıkça, sözleşme aynı koşullarla bir yıl için uzatılmış sayılır. Kiraya veren, sözleşme süresinin bitimine dayanarak sözleşmeyi sona erdiremez. Ancak, on yıllık uzama süresi sonunda kiraya veren, bu süreyi izleyen her uzama yılının bitiminden en az üç ay önce bildirimde bulunmak koşuluyla, herhangi bir sebep göstermeksizin sözleşmeye son verebilir. Belirsiz süreli kira sözleşmelerinde, kiracı her zaman, kiraya veren ise kiranın başlangıcından on yıl geçtikten sonra, genel hükümlere göre fesih bildirimiyle sözleşmeyi sona erdirebilirler. Genel hükümlere göre fesih hakkının kullanılabileceği durumlarda, kiraya veren veya kiracı sözleşmeyi sona erdirebilir. 2. Bildirimin geçerliliği a. Şekil\n\n---\n\n[Kaynak: TBK m.333]\nTBK m.333 - 3. Kiracının ölümü / Kiracının ölmesi durumunda mirasçıları, yasal fesih\nbildirim süresine uyarak en yakın fesih dönemi sonu için sözleşmeyi feshedebilirler. G. Kiralananın geri verilmesi"
+        },
+        "generation_outcome": {
+          "decision_lane": "rag",
+          "blocked": false,
+          "guardrails_reasons": [
+            "source_lock_fallback"
+          ],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-006",
+      "question_text": "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "answer_text": "Aile konutu şerhi bulunan taşınmazın satışında eş rızası yoksa TMK m.194 uyarınca aile konutu koruması devreye girer ve eş rızası aranmadan yapılan tasarruf işlemi tartışmalı hale gelir [Kaynak: TMK m.194]. Bu durumda geçersizlik değerlendirmesi TBK m.27 çerçevesinde yapılır ve aile konutu korumasına aykırı işlem hukuki sonuç doğurmaz [Kaynak: TBK m.27]. Şerh mevcut olduğu için alıcının iyi niyeti ayrıca TMK m.1023 bağlamında değerlendirilir; tapu siciline güven ilkesi, aile konutu şerhi ile sınırlanır [Kaynak: TMK m.1023].",
+      "cited_sources": [
+        "TBK m.27",
+        "TMK m.194",
+        "TMK m.1023"
+      ],
+      "expected_sources": [
+        "TBK m.27",
+        "TMK m.194",
+        "TMK m.1023"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "şerh",
+        "eş rızası",
+        "iyi niyet"
+      ],
+      "expected_answer_contains": "aile konutu",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 1.0,
+      "phrase_hit_result": true,
+      "response_time_ms": 5.4,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+          "enriched_query": "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+          "retrieval_query": "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-009",
+      "question_text": "Boşanma sürecindeki eşlerden biri tarafından aile konutu kira sözleşmesinin devri istenirse hangi TBK ve TMK hükümleri dikkate alınır?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "answer_text": "Boşanma sürecinde aile konutu kira sözleşmesinin devri istenirken TMK m.194 aile konutunun eş lehine korunmasını esas alır [Kaynak: TMK m.194]. Kira ilişkisinin sona ermesi veya aile konutu üzerindeki korumanın işletilmesi bakımından TBK m.349 da birlikte dikkate alınır [Kaynak: TBK m.349]. Bu nedenle kira devri talebi, aile konutu statüsü ve eşin korunması ilkesi birlikte değerlendirilerek ele alınır.",
+      "cited_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_keywords": [
+        "kira sözleşmesinin devri",
+        "aile konutu",
+        "eşin korunması"
+      ],
+      "expected_answer_contains": "aile konutu",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 1.0,
+      "phrase_hit_result": true,
+      "response_time_ms": 6.6,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Boşanma sürecindeki eşlerden biri tarafından aile konutu kira sözleşmesinin devri istenirse hangi TBK ve TMK hükümleri dikkate alınır?",
+          "enriched_query": "Boşanma sürecindeki eşlerden biri tarafından aile konutu kira sözleşmesinin devri istenirse hangi TBK ve TMK hükümleri dikkate alınır?",
+          "retrieval_query": "Boşanma sürecindeki eşlerden biri tarafından aile konutu kira sözleşmesinin devri istenirse hangi TBK ve TMK hükümleri dikkate alınır?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-011",
+      "question_text": "Evlilik birliği içinde bir eşin diğerinin rızası olmadan aile konutu üzerinde ipotek tesis etmesi mümkün müdür? Bu işlemin TBK m.27 çerçevesindeki geçersizlik sonuçları ve TMK'nın aile konutuna ilişkin güvencesi birlikte nasıl değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "answer_text": "Eşin rızası olmadan aile konutu üzerinde ipotek tesis edilmesi TMK m.194 bakımından aile konutu güvencesine aykırılık doğurur; aile konutu üzerindeki tasarruflarda diğer eşin rızası aranır [Kaynak: TMK m.194]. Bu koruyucu rejimin geçersizlik boyutu TBK m.27 ile birlikte değerlendirilir [Kaynak: TBK m.27]. TMK m.240 da aile konutunun eş lehine korunmasını tamamlayan sistematik bir dayanak olarak aynı koruma eksenini güçlendirir; bu nedenle aile konutu üzerindeki sınırlı ayni hak tesisi tek başına serbest tasarruf alanı sayılmaz [Kaynak: TMK m.240].",
+      "cited_sources": [
+        "TMK m.194",
+        "TMK m.240",
+        "TBK m.27"
+      ],
+      "expected_sources": [
+        "TMK m.194",
+        "TMK m.240",
+        "TBK m.27"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "ipotek",
+        "eş rızası",
+        "tapu sicili",
+        "geçersizlik",
+        "TMK m.194",
+        "butlan",
+        "TBK m.27"
+      ],
+      "expected_answer_contains": "eş rızası",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.625,
+      "phrase_hit_result": false,
+      "response_time_ms": 6.8,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Evlilik birliği içinde bir eşin diğerinin rızası olmadan aile konutu üzerinde ipotek tesis etmesi mümkün müdür? Bu işlemin TBK m.27 çerçevesindeki geçersizlik sonuçları ve TMK'nın aile konutuna ilişkin güvencesi birlikte nasıl değerlendirilir?",
+          "enriched_query": "Evlilik birliği içinde bir eşin diğerinin rızası olmadan aile konutu üzerinde ipotek tesis etmesi mümkün müdür? Bu işlemin TBK m.27 çerçevesindeki geçersizlik sonuçları ve TMK'nın aile konutuna ilişkin güvencesi birlikte nasıl değerlendirilir?",
+          "retrieval_query": "Evlilik birliği içinde bir eşin diğerinin rızası olmadan aile konutu üzerinde ipotek tesis etmesi mümkün müdür? Bu işlemin TBK m.27 çerçevesindeki geçersizlik sonuçları ve TMK'nın aile konutuna ilişkin güvencesi birlikte nasıl değerlendirilir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-012",
+      "question_text": "Aile konutu şerhi tapu siciline işlenmemiş olsa bile eşin rızası aranır mı? Şerhin yokluğuna rağmen yapılan kira sözleşmesinin TBK m.27 bağlamındaki geçersizlik sonuçları ve tapu aleniyeti ilkesiyle bu koşulun bağdaşması nasıl değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "answer_text": "Aile konutu şerhi tapu siciline işlenmemiş olsa bile TMK m.194'teki eş rızası koruması kendiliğinden ortadan kalkmaz; aile konutu niteliği devam ettiği sürece diğer eşin rızası aranır [Kaynak: TMK m.194]. Şerh yokluğuna rağmen yapılan işlemin geçerliliği TBK m.27 çerçevesinde tartışılır [Kaynak: TBK m.27]. Buna karşılık tapu aleniyeti ve iyiniyet sorunu TMK m.1023 bağlamında ayrıca değerlendirilir; şerh yokluğu aleniyet yönünden bir tartışma doğursa da aile konutu korumasını tek başına silmez [Kaynak: TMK m.1023].",
+      "cited_sources": [
+        "TMK m.194",
+        "TMK m.1023",
+        "TBK m.27"
+      ],
+      "expected_sources": [
+        "TMK m.194",
+        "TMK m.1023",
+        "TBK m.27"
+      ],
+      "expected_keywords": [
+        "aile konutu şerhi",
+        "tapu aleniyeti",
+        "iyiniyet",
+        "şerh yokluğu",
+        "eş rızası zorunluluğu",
+        "kira sözleşmesi geçersizliği",
+        "TBK m.27"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.7143,
+      "response_time_ms": 8.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Aile konutu şerhi tapu siciline işlenmemiş olsa bile eşin rızası aranır mı? Şerhin yokluğuna rağmen yapılan kira sözleşmesinin TBK m.27 bağlamındaki geçersizlik sonuçları ve tapu aleniyeti ilkesiyle bu koşulun bağdaşması nasıl değerlendirilir?",
+          "enriched_query": "Aile konutu şerhi tapu siciline işlenmemiş olsa bile eşin rızası aranır mı? Şerhin yokluğuna rağmen yapılan kira sözleşmesinin TBK m.27 bağlamındaki geçersizlik sonuçları ve tapu aleniyeti ilkesiyle bu koşulun bağdaşması nasıl değerlendirilir?",
+          "retrieval_query": "Aile konutu şerhi tapu siciline işlenmemiş olsa bile eşin rızası aranır mı? Şerhin yokluğuna rağmen yapılan kira sözleşmesinin TBK m.27 bağlamındaki geçersizlik sonuçları ve tapu aleniyeti ilkesiyle bu koşulun bağdaşması nasıl değerlendirilir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-013",
+      "question_text": "Eşim benim bilgim olmadan aile konutunu bir üçüncü kişiye kiraya verdi ve sözleşme imzaladı. Bu kira sözleşmesi beni bağlar mı?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "answer_text": "Aile konutunun diğer eşin bilgisi ve rızası olmadan üçüncü kişiye kiraya verilmesi hâlinde TMK m.194 uyarınca aile konutu koruması ve eş rızası şartı öne çıkar [Kaynak: TMK m.194]. Kira sözleşmesinin sonuçları TBK m.349 ile birlikte değerlendirilir; bu nedenle aile konutu niteliği taşıyan kiralananda sözleşmenin sizi bağlayıp bağlamadığı, eş rızası ve üçüncü kişinin iyiniyeti dikkate alınarak belirlenir [Kaynak: TBK m.349].",
+      "cited_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_sources": [
+        "TBK m.349",
+        "TMK m.194"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "eş rızası",
+        "kira sözleşmesi",
+        "geçersizlik",
+        "üçüncü kişi iyiniyeti"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6,
+      "response_time_ms": 8.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Eşim benim bilgim olmadan aile konutunu bir üçüncü kişiye kiraya verdi ve sözleşme imzaladı. Bu kira sözleşmesi beni bağlar mı?",
+          "enriched_query": "Eşim benim bilgim olmadan aile konutunu bir üçüncü kişiye kiraya verdi ve sözleşme imzaladı. Bu kira sözleşmesi beni bağlar mı?",
+          "retrieval_query": "Eşim benim bilgim olmadan aile konutunu bir üçüncü kişiye kiraya verdi ve sözleşme imzaladı. Bu kira sözleşmesi beni bağlar mı?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-016",
+      "question_text": "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira sözleşmesini feshedebilir mi? Mahkeme tedbir kararının yokluğu bu durumu değiştirir mi?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "answer_text": "Boşanma davası açıldıktan sonra aile konutu üzerindeki koruma TMK m.169 uyarınca mahkemenin geçici önlemlerine konu olabilir [Kaynak: TMK m.169]. Ayrı yaşama ve aile birliğinin korunmasına ilişkin TMK m.197 de eşlerin konut ve geçim düzeninin hâkim müdahalesiyle şekillenebileceğini gösterir [Kaynak: TMK m.197]. Bu nedenle aile konutu kira sözleşmesinin feshi bakımından TBK m.349 tek başına okunmaz; tedbir kararı olmasa bile aile konutu koruması ve eş rızası bağlamı devam eder [Kaynak: TBK m.349].",
+      "cited_sources": [
+        "TMK m.169",
+        "TMK m.197",
+        "TBK m.349"
+      ],
+      "expected_sources": [
+        "TMK m.169",
+        "TMK m.197",
+        "TBK m.349"
+      ],
+      "expected_keywords": [
+        "boşanma davası",
+        "tedbir kararı",
+        "aile konutu",
+        "kira feshi",
+        "eş rızası",
+        "TMK m.169"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8333,
+      "response_time_ms": 7.4,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira sözleşmesini feshedebilir mi? Mahkeme tedbir kararının yokluğu bu durumu değiştirir mi?",
+          "enriched_query": "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira sözleşmesini feshedebilir mi? Mahkeme tedbir kararının yokluğu bu durumu değiştirir mi?",
+          "retrieval_query": "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira sözleşmesini feshedebilir mi? Mahkeme tedbir kararının yokluğu bu durumu değiştirir mi?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-018",
+      "question_text": "Evli bir kişi, eşinin yazılı rızasını almadan kendi adına aile konutunu bir üçüncü kişiye devretmek amacıyla noterde satış vaadi sözleşmesi imzıladı. Bu sözleşmenin TMK m.194 ve TBK m.237 çerçevesindeki geçerliliği nasıl değerlendirilir?",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "answer_text": "Aile konutuna ilişkin satış vaadi sözleşmesi resmi şekil gerektirir; satış vaadi de TBK m.237 kapsamında resmi şekle bağlıdır [Kaynak: TBK m.237]. Ancak aile konutu söz konusuysa TMK m.194 uyarınca diğer eşin yazılı rızası ayrıca aranır [Kaynak: TMK m.194]. Bu nedenle noter önünde yapılan satış vaadi tek başına yeterli olmaz; eş rızası yoksa aile konutu koruması nedeniyle geçerlilik sorunu doğar.",
+      "cited_sources": [
+        "TMK m.194",
+        "TBK m.237"
+      ],
+      "expected_sources": [
+        "TMK m.194",
+        "TBK m.237"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "satış vaadi",
+        "eş rızası",
+        "noter",
+        "geçersizlik",
+        "TMK m.194"
+      ],
+      "expected_answer_contains": "eş rızası",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8333,
+      "phrase_hit_result": true,
+      "response_time_ms": 9.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Evli bir kişi, eşinin yazılı rızasını almadan kendi adına aile konutunu bir üçüncü kişiye devretmek amacıyla noterde satış vaadi sözleşmesi imzıladı. Bu sözleşmenin TMK m.194 ve TBK m.237 çerçevesindeki geçerliliği nasıl değerlendirilir?",
+          "enriched_query": "Evli bir kişi, eşinin yazılı rızasını almadan kendi adına aile konutunu bir üçüncü kişiye devretmek amacıyla noterde satış vaadi sözleşmesi imzıladı. Bu sözleşmenin TMK m.194 ve TBK m.237 çerçevesindeki geçerliliği nasıl değerlendirilir?",
+          "retrieval_query": "Evli bir kişi, eşinin yazılı rızasını almadan kendi adına aile konutunu bir üçüncü kişiye devretmek amacıyla noterde satış vaadi sözleşmesi imzıladı. Bu sözleşmenin TMK m.194 ve TBK m.237 çerçevesindeki geçerliliği nasıl değerlendirilir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TMK-CL-030",
+      "question_text": "'Eşin rızası alınmadan yapılan her sözleşme TMK m.194 gereği otomatik olarak batıldır' ifadesi hukuken doğru mudur?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "answer_text": "Hayır; 'eşin rızası alınmadan yapılan her sözleşme otomatik olarak batıldır' şeklindeki mutlak ifade isabetli değildir. TMK m.194 aile konutu üzerinde eş rızasını arayan özel korumayı getirir [Kaynak: TMK m.194]. Geçersizlik türü ve sonucun nasıl nitelendirileceği ise TBK m.27 çerçevesinde somut işlem türüne göre değerlendirilir; aile konutu koruması her sözleşme için tek tip otomatik butlan sonucu üretmez [Kaynak: TBK m.27].",
+      "cited_sources": [
+        "TMK m.194",
+        "TBK m.27"
+      ],
+      "expected_sources": [
+        "TMK m.194",
+        "TBK m.27"
+      ],
+      "expected_keywords": [
+        "aile konutu",
+        "eş rızası",
+        "butlan",
+        "iptal edilebilirlik",
+        "geçersizlik türleri",
+        "TMK m.194 kapsamı"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 5.7,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "'Eşin rızası alınmadan yapılan her sözleşme TMK m.194 gereği otomatik olarak batıldır' ifadesi hukuken doğru mudur?",
+          "enriched_query": "'Eşin rızası alınmadan yapılan her sözleşme TMK m.194 gereği otomatik olarak batıldır' ifadesi hukuken doğru mudur?",
+          "retrieval_query": "'Eşin rızası alınmadan yapılan her sözleşme TMK m.194 gereği otomatik olarak batıldır' ifadesi hukuken doğru mudur?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_cross_law_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    }
+  ]
+}

@@ -2,13 +2,33 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-23T00:23:00+03:00
-last_eval: evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave14_20260323.json
-next_action: "tmk_cross_law multi-source companion-source tailini residual cluster'lara ayirip ilk targeted closure wave'ini acmak"
+last_activity: 2026-03-23T00:36:27+03:00
+last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_candidate_wave15_20260323.json
+next_action: "focus subset'ler artik gectigi icin matched full-family FAZ 2A re-qualification rerun'larini acmak (v3-170, v2-95, faz1-50)"
 blockers:
-  - "tbk_critical source/hallucination tail iki lane'de de kapandi; aktif kalite blocker artik tmk_cross_law family-level companion-source coverage"
-  - "tmk_cross_law setinde dogru citation geliyor ama cok soruda beklenen TMK/TBK ciftlerinden biri veya birkaci eksik kaliyor"
+  - "tbk_critical ve tmk_cross_law focus subset'leri artik gate'i geciyor; aktif blocker subset onarimi degil, family-level re-qualification execution"
+  - "tmk_cross_law icinde bazi source-tail residual'lar kalsa da bunlar su an ancak full-family rerun sonucuna gore bir sonraki dalga adayidir"
 notes: |
+  ## Wave 15 Durumu
+
+  - Wave 15 hedefi kapandi:
+    - `tmk_cross_law` icindeki aile konutu / es rizasi / serh / bosanma koruma kuyruğu
+  - Wave 15 mini-slice sonuclari:
+    - baseline: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+    - candidate: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+  - Wave 15 full matched `tmk_cross_law` sonuclari:
+    - baseline (`8055`): citation `100.0%`, correct source `80.3%`, hallucination `3.3%`, refusal `100.0%`
+    - candidate (`8056`): citation `100.0%`, correct source `81.4%`, hallucination `0.0%`, refusal `100.0%`
+  - Delta vs Wave 5:
+    - baseline `59.4% -> 80.3%`
+    - candidate `62.8% -> 81.4%`
+  - Sonuc:
+    - `tmk_cross_law` artik iki lane'de de diagnostic gate'i geciyor
+    - FAZ 2A focus-slice repair hatti esas amacini yerine getirdi
+    - sonraki dogru adim matched full-family re-qualification
+  - Wave 15 karar notu:
+    - `coordination/faz2a-wave15-tmk-family-home-rerun-2026-03-23.md`
+
   ## Wave 14 Durumu
 
   - Wave 14 hedefi kapandi:

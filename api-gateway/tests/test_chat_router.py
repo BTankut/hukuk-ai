@@ -32,6 +32,7 @@ from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
     ConversationMessage,
+    _build_precise_tmk_tbk_cross_law_answer,
     _contains_query_term,
     _extract_explicit_article_refs,
     _extract_law_mentions,
@@ -657,6 +658,43 @@ class TestPreciseDeterministicAnswers:
         assert citations == expected_citations
         for citation in expected_citations:
             assert citation in answer
+        for fragment in expected_fragments:
+            assert fragment in answer
+
+
+class TestPreciseCrossLawDeterministicAnswers:
+
+    @pytest.mark.parametrize(
+        ("question", "expected_citations", "expected_fragments"),
+        [
+            (
+                "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+                ["TBK m.27", "TMK m.194", "TMK m.1023"],
+                ["aile konutu şerhi", "iyi niyeti"],
+            ),
+            (
+                "Evlilik birliği içinde bir eşin diğerinin rızası olmadan aile konutu üzerinde ipotek tesis etmesi mümkün müdür? Bu işlemin TBK m.27 çerçevesindeki geçersizlik sonuçları ve TMK'nın aile konutuna ilişkin güvencesi birlikte nasıl değerlendirilir?",
+                ["TMK m.194", "TMK m.240", "TBK m.27"],
+                ["ipotek", "aile konutu güvencesine"],
+            ),
+            (
+                "Aile konutu şerhi tapu siciline işlenmemiş olsa bile eşin rızası aranır mı? Şerhin yokluğuna rağmen yapılan kira sözleşmesinin TBK m.27 bağlamındaki geçersizlik sonuçları ve tapu aleniyeti ilkesiyle bu koşulun bağdaşması nasıl değerlendirilir?",
+                ["TMK m.194", "TMK m.1023", "TBK m.27"],
+                ["tapu aleniyeti", "şerh yokluğu"],
+            ),
+            (
+                "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira sözleşmesini feshedebilir mi? Mahkeme tedbir kararının yokluğu bu durumu değiştirir mi?",
+                ["TMK m.169", "TMK m.197", "TBK m.349"],
+                ["geçici önlemlerine", "tedbir kararı olmasa bile"],
+            ),
+        ],
+    )
+    def test_precise_cross_law_answers(self, question, expected_citations, expected_fragments):
+        result = _build_precise_tmk_tbk_cross_law_answer(question)
+
+        assert result is not None
+        answer, citations = result
+        assert citations == expected_citations
         for fragment in expected_fragments:
             assert fragment in answer
 

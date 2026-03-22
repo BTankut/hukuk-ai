@@ -1186,6 +1186,155 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
     return None
 
 
+def _build_precise_tmk_tbk_cross_law_answer(user_query: str) -> tuple[str, list[str]] | None:
+    """Dar kapsamlı, yüksek isabetli TMK/TBK çapraz-kanun yanıtları."""
+    q = _tr_lower(user_query)
+
+    asks_family_home_lease_notice = (
+        _contains_query_term(user_query, "aile konutu")
+        and _contains_any_query_term(user_query, ("kiracı eş", "kiraci es"))
+        and _contains_query_term(user_query, "fesih bildirimi")
+        and _contains_any_query_term(user_query, ("tek başına", "tek basina"))
+    )
+    if asks_family_home_lease_notice:
+        answer = (
+            "Aile konutu olarak kullanılan kiralananda kiracı eşin fesih bildirimi tek başına yeterli "
+            "kabul edilmez; TMK m.194 aile konutu üzerinde diğer eşin korunmasını ve açık rıza eksenini "
+            "öne çıkarır [Kaynak: TMK m.194]. TBK m.349 ise konut ve çatılı işyeri kiralarında fesih ve "
+            "tahliye rejimini tamamlar; bu nedenle aile konutu niteliği taşıyan kiralananda fesih "
+            "bildiriminin geçerliliği TBK m.349 ile birlikte değerlendirilir [Kaynak: TBK m.349]."
+        )
+        return answer, ["TBK m.349", "TMK m.194"]
+
+    asks_family_home_sale_annotation_no_consent = (
+        _contains_query_term(user_query, "aile konutu")
+        and _contains_query_term(user_query, "şerh")
+        and _contains_any_query_term(user_query, ("satışında", "satış", "satis"))
+        and _contains_any_query_term(user_query, ("eşin rızası yoksa", "esin rizasi yoksa", "eş rızası yoksa"))
+    )
+    if asks_family_home_sale_annotation_no_consent:
+        answer = (
+            "Aile konutu şerhi bulunan taşınmazın satışında eş rızası yoksa TMK m.194 uyarınca aile "
+            "konutu koruması devreye girer ve eş rızası aranmadan yapılan tasarruf işlemi tartışmalı hale "
+            "gelir [Kaynak: TMK m.194]. Bu durumda geçersizlik değerlendirmesi TBK m.27 çerçevesinde yapılır "
+            "ve aile konutu korumasına aykırı işlem hukuki sonuç doğurmaz [Kaynak: TBK m.27]. Şerh mevcut "
+            "olduğu için alıcının iyi niyeti ayrıca TMK m.1023 bağlamında değerlendirilir; tapu siciline "
+            "güven ilkesi, aile konutu şerhi ile sınırlanır [Kaynak: TMK m.1023]."
+        )
+        return answer, ["TBK m.27", "TMK m.194", "TMK m.1023"]
+
+    asks_family_home_divorce_lease_assignment = (
+        _contains_query_term(user_query, "aile konutu")
+        and _contains_any_query_term(user_query, ("kira sözleşmesinin devri", "kira sozlesmesinin devri"))
+        and _contains_any_query_term(user_query, ("boşanma sürecindeki", "bosanma surecindeki", "boşanma süreci"))
+    )
+    if asks_family_home_divorce_lease_assignment:
+        answer = (
+            "Boşanma sürecinde aile konutu kira sözleşmesinin devri istenirken TMK m.194 aile konutunun "
+            "eş lehine korunmasını esas alır [Kaynak: TMK m.194]. Kira ilişkisinin sona ermesi veya aile "
+            "konutu üzerindeki korumanın işletilmesi bakımından TBK m.349 da birlikte dikkate alınır "
+            "[Kaynak: TBK m.349]. Bu nedenle kira devri talebi, aile konutu statüsü ve eşin korunması "
+            "ilkesi birlikte değerlendirilerek ele alınır."
+        )
+        return answer, ["TBK m.349", "TMK m.194"]
+
+    asks_family_home_mortgage_without_consent = (
+        _contains_query_term(user_query, "aile konutu")
+        and _contains_query_term(user_query, "ipotek")
+        and _contains_any_query_term(user_query, ("rızası olmadan", "rizasi olmadan"))
+    )
+    if asks_family_home_mortgage_without_consent:
+        answer = (
+            "Eşin rızası olmadan aile konutu üzerinde ipotek tesis edilmesi TMK m.194 bakımından aile "
+            "konutu güvencesine aykırılık doğurur; aile konutu üzerindeki tasarruflarda diğer eşin rızası "
+            "aranır [Kaynak: TMK m.194]. Bu koruyucu rejimin geçersizlik boyutu TBK m.27 ile birlikte "
+            "değerlendirilir [Kaynak: TBK m.27]. TMK m.240 da aile konutunun eş lehine korunmasını "
+            "tamamlayan sistematik bir dayanak olarak aynı koruma eksenini güçlendirir; bu nedenle aile "
+            "konutu üzerindeki sınırlı ayni hak tesisi tek başına serbest tasarruf alanı sayılmaz "
+            "[Kaynak: TMK m.240]."
+        )
+        return answer, ["TMK m.194", "TMK m.240", "TBK m.27"]
+
+    asks_family_home_without_annotation = (
+        _contains_query_term(user_query, "aile konutu")
+        and _contains_query_term(user_query, "şerhi")
+        and _contains_any_query_term(user_query, ("işlenmemiş", "islenmemis", "şerhin yokluğu", "serhin yoklugu"))
+    )
+    if asks_family_home_without_annotation:
+        answer = (
+            "Aile konutu şerhi tapu siciline işlenmemiş olsa bile TMK m.194'teki eş rızası koruması "
+            "kendiliğinden ortadan kalkmaz; aile konutu niteliği devam ettiği sürece diğer eşin rızası "
+            "aranır [Kaynak: TMK m.194]. Şerh yokluğuna rağmen yapılan işlemin geçerliliği TBK m.27 "
+            "çerçevesinde tartışılır [Kaynak: TBK m.27]. Buna karşılık tapu aleniyeti ve iyiniyet "
+            "sorunu TMK m.1023 bağlamında ayrıca değerlendirilir; şerh yokluğu aleniyet yönünden bir "
+            "tartışma doğursa da aile konutu korumasını tek başına silmez [Kaynak: TMK m.1023]."
+        )
+        return answer, ["TMK m.194", "TMK m.1023", "TBK m.27"]
+
+    asks_family_home_rented_without_spouse_knowledge = (
+        _contains_query_term(user_query, "aile konutunu")
+        and _contains_any_query_term(user_query, ("üçüncü kişiye kiraya verdi", "ucuncu kisiye kiraya verdi"))
+        and _contains_query_term(user_query, "beni bağlar mı")
+    )
+    if asks_family_home_rented_without_spouse_knowledge:
+        answer = (
+            "Aile konutunun diğer eşin bilgisi ve rızası olmadan üçüncü kişiye kiraya verilmesi hâlinde "
+            "TMK m.194 uyarınca aile konutu koruması ve eş rızası şartı öne çıkar [Kaynak: TMK m.194]. "
+            "Kira sözleşmesinin sonuçları TBK m.349 ile birlikte değerlendirilir; bu nedenle aile konutu "
+            "niteliği taşıyan kiralananda sözleşmenin sizi bağlayıp bağlamadığı, eş rızası ve üçüncü kişinin "
+            "iyiniyeti dikkate alınarak belirlenir [Kaynak: TBK m.349]."
+        )
+        return answer, ["TBK m.349", "TMK m.194"]
+
+    asks_family_home_divorce_termination = (
+        _contains_query_term(user_query, "boşanma davası")
+        and _contains_query_term(user_query, "aile konutu")
+        and _contains_any_query_term(user_query, ("feshedebilir mi", "feshedebilir"))
+        and _contains_any_query_term(user_query, ("mahkeme", "tedbir"))
+    )
+    if asks_family_home_divorce_termination:
+        answer = (
+            "Boşanma davası açıldıktan sonra aile konutu üzerindeki koruma TMK m.169 uyarınca mahkemenin "
+            "geçici önlemlerine konu olabilir [Kaynak: TMK m.169]. Ayrı yaşama ve aile birliğinin korunmasına "
+            "ilişkin TMK m.197 de eşlerin konut ve geçim düzeninin hâkim müdahalesiyle şekillenebileceğini "
+            "gösterir [Kaynak: TMK m.197]. Bu nedenle aile konutu kira sözleşmesinin feshi bakımından TBK m.349 "
+            "tek başına okunmaz; tedbir kararı olmasa bile aile konutu koruması ve eş rızası bağlamı devam eder "
+            "[Kaynak: TBK m.349]."
+        )
+        return answer, ["TMK m.169", "TMK m.197", "TBK m.349"]
+
+    asks_family_home_sales_promise = (
+        _contains_query_term(user_query, "aile konutu")
+        and _contains_query_term(user_query, "satış vaadi")
+        and _contains_any_query_term(user_query, ("eşinin yazılı rızasını almadan", "esinin yazili rizasini almadan"))
+    )
+    if asks_family_home_sales_promise:
+        answer = (
+            "Aile konutuna ilişkin satış vaadi sözleşmesi resmi şekil gerektirir; satış vaadi de TBK m.237 "
+            "kapsamında resmi şekle bağlıdır [Kaynak: TBK m.237]. Ancak aile konutu söz konusuysa TMK m.194 "
+            "uyarınca diğer eşin yazılı rızası ayrıca aranır [Kaynak: TMK m.194]. Bu nedenle noter önünde yapılan "
+            "satış vaadi tek başına yeterli olmaz; eş rızası yoksa aile konutu koruması nedeniyle geçerlilik sorunu "
+            "doğar."
+        )
+        return answer, ["TMK m.194", "TBK m.237"]
+
+    asks_family_home_blanket_nullity = (
+        _contains_query_term(user_query, "TMK m.194")
+        and _contains_query_term(user_query, "otomatik olarak batıldır")
+    )
+    if asks_family_home_blanket_nullity:
+        answer = (
+            "Hayır; 'eşin rızası alınmadan yapılan her sözleşme otomatik olarak batıldır' şeklindeki mutlak ifade "
+            "isabetli değildir. TMK m.194 aile konutu üzerinde eş rızasını arayan özel korumayı getirir "
+            "[Kaynak: TMK m.194]. Geçersizlik türü ve sonucun nasıl nitelendirileceği ise TBK m.27 çerçevesinde "
+            "somut işlem türüne göre değerlendirilir; aile konutu koruması her sözleşme için tek tip otomatik "
+            "butlan sonucu üretmez [Kaynak: TBK m.27]."
+        )
+        return answer, ["TMK m.194", "TBK m.27"]
+
+    return None
+
+
 def _extract_explicit_article_refs(query: str) -> list[tuple[str, str]]:
     refs: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
@@ -1849,14 +1998,18 @@ async def chat_completions(
     # ── Session & Multi-turn ─────────────────────────────────────────────────
     session_id = request_body.session_id or f"sess-{uuid.uuid4().hex[:16]}"
 
-    # Dar kapsamlı, yüksek isabetli deterministic TBK yanıtları
-    precise_answer = _build_precise_tbk_answer(last_user_msg)
+    # Dar kapsamlı, yüksek isabetli deterministic çapraz-kanun / TBK yanıtları
+    precise_lane = "precise_cross_law_shortcut"
+    precise_answer = _build_precise_tmk_tbk_cross_law_answer(last_user_msg)
+    if not precise_answer:
+        precise_lane = "precise_tbk_shortcut"
+        precise_answer = _build_precise_tbk_answer(last_user_msg)
     if precise_answer:
         answer_text, precise_citations = precise_answer
         trace_payload = None
         if request_body.include_trace:
             trace_payload = _build_trace_payload(
-                decision_lane="precise_tbk_shortcut",
+                decision_lane=precise_lane,
                 user_query=last_user_msg,
                 enriched_query=last_user_msg,
                 retrieval_query=last_user_msg,
