@@ -298,6 +298,29 @@ notes: |
   - Trace payload'i `mentioned_laws` ve `cross_law_mode` alanlariyla zenginlestirildi.
   - FAZ 2A focus subset diagnostic runner eklendi: `scripts/faz2a/run_focus_subset_eval.sh`
   - Runner dry-run PASS verdi; local gateway kapali oldugu icin bu turda sadece code/test/dry-run verification alindi.
+  - FAZ 2A Wave 6 acildi: anchored multi-source sorularda query-aware source-lock coverage mantigi eklendi.
+  - `chat.py` icinde `mal rejimi / borc verme` concept anchor'i daraltildi; generic `borc` sinyali artik `TMK-CL-027` gibi olum/katilma alacagi sorularini kirletmiyor.
+  - `orchestrator.py` icinde source-lock fallback artik `source_lock_target_citations` ile `2-4` priority chunk'a kadar cikiyor.
+  - Yeni `incomplete priority coverage` kurali eklendi; `3+` expected-source sorularda model dogru priority set'in eksik alt kumesini cite ederse fallback zorlanacak.
+  - Wave 6 regression testleri gecti: `py_compile` PASS, `api-gateway/.venv/bin/pytest api-gateway/tests/test_orchestrator_smoke.py api-gateway/tests/test_chat_router.py api-gateway/tests/test_llm_client.py -q` PASS
+  - Canli smoke lane'leri acildi: candidate `8038/8040`, baseline `8039/8041`
+  - `TMK-CL-027` smoke temizlendi; candidate artik `TBK m.77 + TMK m.226 + TMK m.240 + TMK m.499` uretiyor.
+  - `TMK-CL-028` smoke temizlendi; candidate artik `TBK m.19 + TBK m.285 + TMK m.561` uretiyor.
+  - `TMK-CL-013` smoke'ta family-home cluster 4-source fallback ile dogrulandi.
+  - Wave 6 interim rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_baseline_wave6_20260322_1930.json` -> src `73.6%`, hal `3.3%`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_candidate_wave6_20260322_1930.json` -> src `69.7%`, hal `3.3%`
+  - Interim run candidate'i gate'in `0.3pp` altinda birakti; bu nedenle source-lock coverage bir adim daha sikilastirildi.
+  - Final matched rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_baseline_wave6d_20260322_1946.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_candidate_wave6d_20260322_1946.json`
+  - Final summary:
+    - baseline -> citation `100.0%`, correct source `74.7%`, hallucination `3.3%`, refusal `96.7%`
+    - candidate -> citation `100.0%`, correct source `74.7%`, hallucination `3.3%`, refusal `100.0%`
+  - Candidate lane'de yukari tasinan kritik sorular: `TMK-CL-022`, `025`, `026`, `027`, `028`
+  - `tmk_cross_law` slice'i fresh matched baseline/candidate pair uzerinde tekrar kabul barini gecti.
+  - Wave 6 karar notu eklendi: `coordination/faz2a-wave6-source-lock-coverage-rerun-2026-03-22.md`
+  - FAZ 2A aktif sonraki hedef artik `tbk_critical` slice'i.
 
   ### Sonraki Beklenen Çıktı
   - explicit production cutover karari alinacaksa `baseline` lane ile `dgx1` promoted candidate arasinda ayrik rollout plani.

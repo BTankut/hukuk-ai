@@ -1066,6 +1066,7 @@ class TestLawFilterAndRetrieval:
         citations = [chunk.citation for chunk in orch_call.kwargs["retrieved_chunks"]]
         assert "TBK m.237" in citations
         assert "TMK m.706" in citations
+        assert orch_call.kwargs["source_lock_target_citations"] == 2
 
     def test_cross_law_questions_trigger_per_law_candidate_generation(self, mock_orchestrator):
         mock_retriever = MagicMock()
@@ -1148,6 +1149,7 @@ class TestLawFilterAndRetrieval:
         citations = [chunk.citation for chunk in orch_call.kwargs["retrieved_chunks"]]
         assert "TBK m.349" in citations
         assert "TMK m.194" in citations
+        assert orch_call.kwargs["source_lock_target_citations"] == 4
 
     def test_cross_law_concept_query_bypasses_scope_refusal_and_hits_retriever(self, mock_orchestrator):
         mock_retriever = MagicMock()
@@ -1449,6 +1451,72 @@ class TestLawFilterAndRetrieval:
         assert resp.status_code == 200
         trace = resp.json()["trace"]
         assert trace["query_signals"]["forced_article_refs"] == []
+
+    def test_death_regime_query_does_not_pull_interspousal_loan_refs(
+        self,
+        mock_orchestrator,
+    ):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        semantic_results = [
+            RetrievalResult(
+                chunk_id="tmk-226",
+                text="Sağ kalan eşin katılma alacağı tasfiyede dikkate alınır.",
+                score=0.93,
+                metadata={"law_short_name": "TMK", "madde_no": "226", "fikra_no": "1"},
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="hayatta kalan eş",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=(semantic_results, stats))
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": (
+                                "Eşlerden birinin ölümü halinde hayatta kalan eşin edinilmiş "
+                                "mallara katılma rejimi çerçevesinde borçlara karşı kişisel "
+                                "sorumluluğu nasıl belirlenir? Ölen eşin alacaklısı, TBK m.77 "
+                                "kapsamında sebepsiz zenginleşme iddiasıyla hayatta kalan eşin "
+                                "elde ettiği katılma alacağına başvurabilir mi?"
+                            ),
+                        }
+                    ],
+                    "include_trace": True,
+                },
+            )
+
+        assert resp.status_code == 200
+        orch_call = mock_orchestrator.answer.call_args
+        assert orch_call.kwargs["source_lock_target_citations"] == 4
+
+        trace = resp.json()["trace"]
+        assert trace["query_signals"]["forced_article_refs"] == [
+            {"law": "TBK", "madde": "77"},
+            {"law": "TMK", "madde": "226"},
+            {"law": "TMK", "madde": "240"},
+            {"law": "TMK", "madde": "499"},
+        ]
+        assert trace["query_signals"]["applied_expansions"] == [
+            "TBK m.77 TMK m.226 TMK m.240 TMK m.499 hayatta kalan eş katılma alacağı sebepsiz zenginleşme"
+        ]
 
     def test_no_retriever_still_works(self, client, mock_orchestrator):
         """Retriever yokken orchestrator boş chunk ile çağrılmalı."""

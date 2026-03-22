@@ -95,6 +95,8 @@ class RAGOrchestrator:
         self,
         query: str,
         retrieved_chunks: list[RetrievedChunk],
+        *,
+        source_lock_target_citations: int | None = None,
     ) -> OrchestratorResponse:
         """Sorguyu yanıtla.
 
@@ -124,6 +126,7 @@ class RAGOrchestrator:
             source_locked_answer = self._maybe_source_lock_answer(
                 answer=final_answer,
                 retrieved_chunks=retrieved_chunks,
+                source_lock_target_citations=source_lock_target_citations,
             )
             if source_locked_answer != final_answer:
                 final_answer = source_locked_answer
@@ -244,6 +247,33 @@ class RAGOrchestrator:
         return bool(overlap) and bool(missing_priority) and bool(extra_citations)
 
     @staticmethod
+    def _has_incomplete_priority_coverage(
+        citations: list[str],
+        priority_chunks: list[RetrievedChunk],
+        *,
+        required_count: int,
+    ) -> bool:
+        priority = {
+            RAGOrchestrator._normalize_citation(chunk.citation)
+            for chunk in priority_chunks
+            if chunk.citation
+        }
+        cited = {
+            RAGOrchestrator._normalize_citation(citation)
+            for citation in citations
+            if citation
+        }
+        if not priority or not cited:
+            return False
+
+        required_overlap = min(required_count, len(priority))
+        if required_overlap <= 2:
+            return False
+
+        overlap_count = len(priority & cited)
+        return 0 < overlap_count < required_overlap
+
+    @staticmethod
     def _build_chunk_excerpt(text: str, *, max_len: int = 220) -> str:
         compact = re.sub(r"\s+", " ", text).strip()
         if len(compact) <= max_len:
@@ -269,8 +299,10 @@ class RAGOrchestrator:
     def _build_source_locked_fallback(
         cls,
         chunks: list[RetrievedChunk],
+        *,
+        max_chunks: int = 2,
     ) -> str | None:
-        priority_chunks = cls._extract_priority_chunks(chunks)
+        priority_chunks = cls._extract_priority_chunks(chunks, max_chunks=max_chunks)
         if not priority_chunks:
             return None
 
@@ -289,11 +321,19 @@ class RAGOrchestrator:
         *,
         answer: str,
         retrieved_chunks: list[RetrievedChunk],
+        source_lock_target_citations: int | None = None,
     ) -> str:
         if not retrieved_chunks:
             return answer
 
-        priority_chunks = cls._extract_priority_chunks(retrieved_chunks)
+        max_priority_chunks = 2 if source_lock_target_citations is None else max(
+            2,
+            min(source_lock_target_citations, 4),
+        )
+        priority_chunks = cls._extract_priority_chunks(
+            retrieved_chunks,
+            max_chunks=max_priority_chunks,
+        )
         if not priority_chunks:
             return answer
 
@@ -303,9 +343,20 @@ class RAGOrchestrator:
             or not citations
             or not cls._has_priority_citation_overlap(citations, priority_chunks)
             or cls._has_partial_priority_mismatch(citations, priority_chunks)
+            or (
+                source_lock_target_citations is not None
+                and cls._has_incomplete_priority_coverage(
+                    citations,
+                    priority_chunks,
+                    required_count=max_priority_chunks,
+                )
+            )
         )
         if not needs_fallback:
             return answer
 
-        fallback = cls._build_source_locked_fallback(priority_chunks)
+        fallback = cls._build_source_locked_fallback(
+            priority_chunks,
+            max_chunks=max_priority_chunks,
+        )
         return fallback or answer

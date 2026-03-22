@@ -154,3 +154,76 @@ def test_orchestrator_source_locks_when_answer_mixes_one_priority_with_wrong_sou
     assert "source_lock_fallback" in response.guardrails_reasons
     assert "[Kaynak: TBK m.584]" in response.answer
     assert "[Kaynak: TMK m.185]" in response.answer
+
+
+def test_orchestrator_source_lock_can_expand_to_three_priority_chunks():
+    guardrails = DummyGuardrails()
+    llm = DummyPassthroughLLMClient(
+        "Bu konuda genel bir açıklama yapayım."
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="Nafaka yükümlülüğü zamanaşımına uğrar mı?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="TMK m.182 nafaka ve çocuk giderlerine katılmayı düzenler.",
+                    citation="TMK m.182",
+                ),
+                RetrievedChunk(
+                    text="TBK m.125 temerrüt sonrası seçimlik hakları düzenler.",
+                    citation="TBK m.125",
+                ),
+                RetrievedChunk(
+                    text="TBK m.131 feri hakların sona ermesini düzenler.",
+                    citation="TBK m.131",
+                ),
+            ],
+            source_lock_target_citations=3,
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["TMK m.182", "TBK m.125", "TBK m.131"]
+    assert "source_lock_fallback" in response.guardrails_reasons
+    assert "[Kaynak: TMK m.182]" in response.answer
+    assert "[Kaynak: TBK m.125]" in response.answer
+    assert "[Kaynak: TBK m.131]" in response.answer
+
+
+def test_orchestrator_source_lock_recovers_incomplete_priority_subset():
+    guardrails = DummyGuardrails()
+    llm = DummyPassthroughLLMClient(
+        "Muris muvazaası bakımından [Kaynak: TBK m.285] görünürde satış ve gizli bağış tartışılır. "
+        "[Kaynak: TBK m.285]"
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="Muris muvazaası nedeniyle dava açabilir miyim?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="TBK m.19 muvazaalı işlemleri düzenler.",
+                    citation="TBK m.19",
+                ),
+                RetrievedChunk(
+                    text="TBK m.285 bağışlama hükümlerini düzenler.",
+                    citation="TBK m.285",
+                ),
+                RetrievedChunk(
+                    text="TMK m.561 saklı pay ve tenkis bağlamını düzenler.",
+                    citation="TMK m.561",
+                ),
+            ],
+            source_lock_target_citations=3,
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["TBK m.19", "TBK m.285", "TMK m.561"]
+    assert "source_lock_fallback" in response.guardrails_reasons
+    assert "[Kaynak: TBK m.19]" in response.answer
+    assert "[Kaynak: TBK m.285]" in response.answer
+    assert "[Kaynak: TMK m.561]" in response.answer

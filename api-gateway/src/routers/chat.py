@@ -1371,7 +1371,11 @@ async def chat_completions(
             True,
         ),
         (
-            (("mal rejimi", "edinilmiş mallar", "edinilmiş mallara katılma"), ("borç", "ödünç", "sözleşme")),
+            (
+                ("mal rejimi", "edinilmiş mallar", "edinilmiş mallara katılma"),
+                ("eşler arasındaki", "esler arasindaki", "eşler arası", "esler arasi", "diğer eşe", "diger ese"),
+                ("ödünç", "odunc", "ödünç verme", "odunc verme", "borç verme", "borc verme", "borç vermesi", "borc vermesi"),
+            ),
             "TBK m.386 TMK m.202 TMK m.223 eşler arası borç verme mal rejimi",
             [("TBK", "386"), ("TMK", "202"), ("TMK", "223")],
             True,
@@ -1487,7 +1491,16 @@ async def chat_completions(
             True,
         ),
         (
-            ("mal rejimi", "ödünç", "odunc", "borç vermesi", "borc vermesi"),
+            (
+                "diğer eşe borç vermesi",
+                "diger ese borc vermesi",
+                "diğer eşe ödünç vermesi",
+                "diger ese odunc vermesi",
+                "eşler arası borç verme",
+                "esler arasi borc verme",
+                "eşler arası ödünç",
+                "esler arasi odunc",
+            ),
             "TBK m.386 TMK m.202 TMK m.223 eşler arası borç verme mal rejimi",
             True,
         ),
@@ -1562,6 +1575,8 @@ async def chat_completions(
                 retrieval_top_k = max(retrieval_top_k, 20)
 
     forced_article_refs = _dedupe_article_refs(forced_article_refs)
+    all_exact_article_refs = _dedupe_article_refs(explicit_article_refs + forced_article_refs)
+    source_lock_target_citations = len(all_exact_article_refs) or None
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     retrieved_chunks: list[RetrievedChunk] = []
@@ -1630,9 +1645,6 @@ async def chat_completions(
                             len(retrieved_chunks),
                         )
 
-                all_exact_article_refs = _dedupe_article_refs(
-                    explicit_article_refs + forced_article_refs
-                )
                 if all_exact_article_refs:
                     exact_chunks = _retrieve_explicit_article_chunks(
                         retriever=retriever,
@@ -1736,6 +1748,7 @@ async def chat_completions(
         orch_response = await orchestrator.answer(
             query=enriched_query,
             retrieved_chunks=retrieved_chunks,
+            source_lock_target_citations=source_lock_target_citations,
         )
     except Exception as exc:
         logger.error("Orchestrator hatası: %s", exc, exc_info=True)
