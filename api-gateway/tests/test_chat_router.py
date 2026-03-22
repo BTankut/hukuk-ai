@@ -249,6 +249,20 @@ class TestScopeRefusalDetection:
         )
         assert reason == "Türk Ceza Kanunu (TCK)"
 
+    def test_cross_law_family_query_does_not_trigger_scope_refusal(self):
+        reason = _detect_scope_refusal_reason(
+            "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira sözleşmesini "
+            "feshedebilir mi? Mahkeme tedbir kararının yokluğu bu durumu değiştirir mi?"
+        )
+        assert reason is None
+
+    def test_ttk_false_positive_substring_is_not_triggered_by_gercekte(self):
+        reason = _detect_scope_refusal_reason(
+            "Babam taşınmazını bana sattı; ancak gerçekte bağışlamak istediğini düşünüyorum. "
+            "Muris muvazaası nedeniyle dava açabilir miyim?"
+        )
+        assert reason is None
+
 
 class TestLawSignalParsing:
 
@@ -271,12 +285,34 @@ class TestLawSignalParsing:
         )
         assert laws == ["TBK", "TMK"]
 
+    def test_extract_law_mentions_infers_tbk_tmk_for_cross_law_concepts(self):
+        laws = _extract_law_mentions(
+            "Evli bir kişinin kefalet sözleşmesi yapmasında eş rızası şartı aile birliğinin "
+            "korunması ilkesiyle nasıl ilişkilidir?"
+        )
+        assert laws == ["TBK", "TMK"]
+
     def test_cross_law_retrieval_enabled_for_joint_scope_queries(self):
         laws = ["TBK", "TMK"]
         assert _should_use_cross_law_retrieval(
             "Paylı mülkiyette satış hükümleri ile TMK nasıl birlikte uygulanır?",
             laws,
         ) is True
+
+    def test_cross_law_retrieval_enabled_for_conceptual_joint_scope_queries(self):
+        laws = ["TBK", "TMK"]
+        assert _should_use_cross_law_retrieval(
+            "Eşin rızası alınmadan yapılan her sözleşme TMK m.194 gereği otomatik olarak "
+            "batıldır ifadesi hukuken doğru mudur?",
+            laws,
+        ) is True
+
+    def test_kefalet_scope_does_not_force_family_home_invalidity_anchor(self):
+        laws = ["TBK", "TMK"]
+        assert _should_use_cross_law_retrieval(
+            "Kefalet sözleşmesinde eşin rızası hangi durumlarda aranmaz?",
+            laws,
+        ) is False
 
 
 class TestPreciseDeterministicAnswers:
@@ -1070,6 +1106,55 @@ class TestLawFilterAndRetrieval:
         assert "TBK m.349" in citations
         assert "TMK m.194" in citations
 
+    def test_cross_law_concept_query_bypasses_scope_refusal_and_hits_retriever(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        results = [
+            RetrievalResult(
+                chunk_id="tbk-349",
+                text="Aile konutu kira feshi metni",
+                score=0.91,
+                metadata={"law_short_name": "TBK", "madde_no": "349", "fikra_no": "1"},
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="aile konutu",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=(results, stats))
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": (
+                                "Boşanma davası açıldıktan sonra eşlerden biri aile konutu kira "
+                                "sözleşmesini feshedebilir mi?"
+                            ),
+                        }
+                    ],
+                    "include_trace": True,
+                },
+            )
+
+        assert resp.status_code == 200
+        assert mock_retriever.retrieve.call_count >= 1
+        assert resp.json()["trace"]["generation_outcome"]["decision_lane"] == "rag"
+
     def test_trace_is_not_returned_by_default(self, mock_orchestrator):
         mock_retriever = MagicMock()
 
@@ -1161,12 +1246,166 @@ class TestLawFilterAndRetrieval:
         assert trace["query_signals"]["mentioned_laws"] == ["TBK"]
         assert trace["query_signals"]["cross_law_mode"] is False
         assert trace["query_signals"]["explicit_article_refs"] == [{"law": "TBK", "madde": "49"}]
+        assert trace["query_signals"]["forced_article_refs"] == []
         assert trace["retrieval"]["top_k_requested"] == 20
         assert trace["retrieval"]["top_k_effective"] == 20
         assert trace["retrieval"]["pre_rerank_chunks"][0]["source_id"] == "tbk-49-f1"
         assert trace["context_assembly"]["context_chunk_citations"] == ["TBK m.49"]
         assert "Haksız fiil metni" in trace["context_assembly"]["assembled_context"]
         assert trace["generation_outcome"]["verification"]["verdict"] == "pass"
+
+    def test_concept_anchor_rules_force_include_exact_articles(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        semantic_results = [
+            RetrievalResult(
+                chunk_id="semantic",
+                text="Muvazaa genel açıklaması",
+                score=0.9,
+                metadata={"law_short_name": "TBK", "madde_no": "18", "fikra_no": "1"},
+            )
+        ]
+        exact_tbk_19 = [
+            RetrievalResult(
+                chunk_id="tbk-19",
+                text="Muvazaa hükümleri",
+                score=0.95,
+                metadata={"law_short_name": "TBK", "madde_no": "19", "fikra_no": "1"},
+            )
+        ]
+        exact_tbk_285 = [
+            RetrievalResult(
+                chunk_id="tbk-285",
+                text="Bağışlama hükümleri",
+                score=0.94,
+                metadata={"law_short_name": "TBK", "madde_no": "285", "fikra_no": "1"},
+            )
+        ]
+        exact_tmk_561 = [
+            RetrievalResult(
+                chunk_id="tmk-561",
+                text="Miras hükmü",
+                score=0.93,
+                metadata={"law_short_name": "TMK", "madde_no": "561", "fikra_no": "1"},
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="muvazaa",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        exact_stats = RetrievalStats(
+            collection="test",
+            query_preview="muvazaa",
+            top_k=2,
+            filter_expr='metadata["madde_no"] == "19"',
+            hit_count=1,
+            latency_ms=2.0,
+        )
+        mock_retriever.retrieve = MagicMock(
+            side_effect=[
+                (semantic_results, stats),
+                (exact_tbk_19, exact_stats),
+                (exact_tbk_285, exact_stats),
+                (exact_tmk_561, exact_stats),
+            ]
+        )
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": (
+                                "Babam taşınmazını bana sattı; ancak gerçekte bağışlamak "
+                                "istediğini düşünüyorum. Muris muvazaası nedeniyle dava "
+                                "açabilir miyim?"
+                            ),
+                        }
+                    ],
+                    "include_trace": True,
+                },
+            )
+
+        assert resp.status_code == 200
+        assert mock_retriever.retrieve.call_count == 4
+        calls = mock_retriever.retrieve.call_args_list
+        assert calls[1].kwargs["metadata_filter"].law_short_name == "TBK"
+        assert calls[1].kwargs["metadata_filter"].madde_no == "19"
+        assert calls[2].kwargs["metadata_filter"].law_short_name == "TBK"
+        assert calls[2].kwargs["metadata_filter"].madde_no == "285"
+        assert calls[3].kwargs["metadata_filter"].law_short_name == "TMK"
+        assert calls[3].kwargs["metadata_filter"].madde_no == "561"
+        trace = resp.json()["trace"]
+        assert trace["query_signals"]["forced_article_refs"] == [
+            {"law": "TBK", "madde": "19"},
+            {"law": "TBK", "madde": "285"},
+            {"law": "TMK", "madde": "561"},
+        ]
+        assert trace["query_signals"]["applied_expansions"] == [
+            "TBK m.19 TBK m.285 TMK m.561 muris muvazaası görünürde satış gizli bağış ispat"
+        ]
+
+    def test_concept_anchor_rules_do_not_force_irrelevant_exact_articles(
+        self,
+        mock_orchestrator,
+    ):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        semantic_results = [
+            RetrievalResult(
+                chunk_id="tbk-584",
+                text="Kefalet hükümleri",
+                score=0.9,
+                metadata={"law_short_name": "TBK", "madde_no": "584", "fikra_no": "1"},
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="kefalet",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=(semantic_results, stats))
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "Eş rızası olmadan verilen kefaletin geçerlilik değerlendirmesi nasıl yapılır?",
+                        }
+                    ],
+                    "include_trace": True,
+                },
+            )
+
+        assert resp.status_code == 200
+        trace = resp.json()["trace"]
+        assert trace["query_signals"]["forced_article_refs"] == []
 
     def test_no_retriever_still_works(self, client, mock_orchestrator):
         """Retriever yokken orchestrator boş chunk ile çağrılmalı."""

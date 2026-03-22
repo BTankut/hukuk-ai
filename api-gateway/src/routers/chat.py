@@ -90,14 +90,100 @@ def _tr_lower(text: str) -> str:
     return text.translate(tr_map).lower()
 
 
+_TR_ASCII_FOLD_MAP = str.maketrans(
+    {
+        "ç": "c",
+        "ğ": "g",
+        "ı": "i",
+        "ö": "o",
+        "ş": "s",
+        "ü": "u",
+        "â": "a",
+        "î": "i",
+        "û": "u",
+    }
+)
+
+
+def _normalize_tr_text(text: str) -> str:
+    return _tr_lower(text).translate(_TR_ASCII_FOLD_MAP)
+
+
+_LAW_NAME_NORMALIZATION_NORMALIZED = {
+    _normalize_tr_text(key): value
+    for key, value in _LAW_NAME_NORMALIZATION.items()
+}
+
+
+def _contains_query_term(query: str, term: str) -> bool:
+    normalized_query = _normalize_tr_text(query)
+    normalized_term = _normalize_tr_text(term)
+    pattern = rf"(?<![a-z0-9]){re.escape(normalized_term)}(?![a-z0-9])"
+    return re.search(pattern, normalized_query) is not None
+
+
+def _contains_any_query_term(query: str, terms: tuple[str, ...] | list[str]) -> bool:
+    return any(_contains_query_term(query, term) for term in terms)
+
+
+def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
+    cross_law_signals: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+        (
+            ("aile konutu",),
+            ("kira", "kiralan", "kiracı", "kiraci", "fesih", "feshederse", "feshedebilir", "devir"),
+        ),
+        (
+            ("kefalet",),
+            ("eş rızası", "es rizasi", "aile birliği", "aile birligi"),
+        ),
+        (
+            ("paylı mülkiyet", "payli mulkiyet", "önalım", "onalim", "ön alım", "on alim"),
+            ("kira", "kiraya", "satış", "satis", "satıldı", "satildi", "paydaş", "paydas"),
+        ),
+        (
+            ("mal rejimi", "edinilmiş mallar", "edinilmis mallar", "edinilmiş mallara katılma"),
+            ("borç", "borc", "ödünç", "odunc", "sözleşme", "sozlesme"),
+        ),
+        (
+            ("haksız fiil", "haksiz fiil"),
+            ("boşanma", "bosanma", "tmk m.174"),
+        ),
+        (
+            ("muvazaa", "muris muvazaası", "muris muvazaasi"),
+            ("taşınmaz", "tasinmaz", "satış", "satis", "sattı", "satti", "bağış", "bagis"),
+        ),
+        (
+            ("velayet", "vasi", "yasal temsil"),
+            ("sözleşme", "sozlesme", "kira", "taşınmaz", "tasinmaz", "satış", "satis"),
+        ),
+        (
+            ("eşin rızası", "esin rizasi"),
+            ("sözleşme", "sozlesme", "batıldır", "batildir", "batıl", "batil", "geçersiz", "gecersiz"),
+        ),
+    )
+    return any(
+        _contains_any_query_term(user_query, left_terms)
+        and _contains_any_query_term(user_query, right_terms)
+        for left_terms, right_terms in cross_law_signals
+    )
+
+
+def _infer_law_mentions_from_concepts(query: str) -> list[str]:
+    if _looks_like_tbk_tmk_cross_law_query(query):
+        return ["TBK", "TMK"]
+    return []
+
+
 def _detect_scope_refusal_reason(user_query: str) -> str | None:
     """Kapsam dışı sorularda deterministic refusal nedeni döndür.
 
     Not: Faz 1 kapsamında TBK odaklı bir asistanız; aşağıdaki desenler
     doğrudan kapsam dışı kabul edilir.
     """
-    q = _tr_lower(user_query)
-    has_tbk_signal = ("tbk" in q) or ("borçlar kanunu" in q)
+    has_tbk_signal = _contains_any_query_term(user_query, ("tbk", "borçlar kanunu"))
+
+    if _looks_like_tbk_tmk_cross_law_query(user_query):
+        return None
 
     labor_oos_terms = [
         "kıdem tazminatı",
@@ -105,10 +191,10 @@ def _detect_scope_refusal_reason(user_query: str) -> str | None:
         "4857",
         "iş kanunu",
     ]
-    if any(term in q for term in labor_oos_terms):
+    if _contains_any_query_term(user_query, labor_oos_terms):
         return "İş Kanunu / çalışma hukuku"
 
-    tmk_signal = ("tmk" in q) or ("medeni kanun" in q)
+    tmk_signal = _contains_any_query_term(user_query, ("tmk", "medeni kanun"))
     tmk_domain_terms = [
         "anlaşmalı boşanma",
         "boşanma",
@@ -120,11 +206,11 @@ def _detect_scope_refusal_reason(user_query: str) -> str | None:
         "iyiniyet karinesi",
     ]
     if (tmk_signal and not has_tbk_signal) or (
-        any(term in q for term in tmk_domain_terms) and not has_tbk_signal
+        _contains_any_query_term(user_query, tmk_domain_terms) and not has_tbk_signal
     ):
         return "Türk Medeni Kanunu (TMK)"
 
-    ttk_signal = ("ttk" in q) or ("ticaret kanunu" in q)
+    ttk_signal = _contains_any_query_term(user_query, ("ttk", "ticaret kanunu"))
     ttk_domain_terms = [
         "anonim şirket",
         "asgari sermaye",
@@ -135,11 +221,11 @@ def _detect_scope_refusal_reason(user_query: str) -> str | None:
         "poliçe",
     ]
     if (ttk_signal and not has_tbk_signal) or (
-        any(term in q for term in ttk_domain_terms) and not has_tbk_signal
+        _contains_any_query_term(user_query, ttk_domain_terms) and not has_tbk_signal
     ):
         return "Türk Ticaret Kanunu (TTK)"
 
-    tck_signal = ("tck" in q) or ("ceza kanunu" in q)
+    tck_signal = _contains_any_query_term(user_query, ("tck", "ceza kanunu"))
     if tck_signal and not has_tbk_signal:
         return "Türk Ceza Kanunu (TCK)"
 
@@ -462,9 +548,14 @@ def _extract_law_mentions(query: str) -> list[str]:
 
     for match in _LAW_MENTION_RE.finditer(query):
         raw = match.group("law")
-        normalized_key = _tr_lower(raw)
-        code = _LAW_CODE_NORMALIZATION.get(raw.upper()) or _LAW_NAME_NORMALIZATION.get(normalized_key)
+        normalized_key = _normalize_tr_text(raw)
+        code = _LAW_CODE_NORMALIZATION.get(raw.upper()) or _LAW_NAME_NORMALIZATION_NORMALIZED.get(normalized_key)
         if code and code not in seen:
+            mentions.append(code)
+            seen.add(code)
+
+    for code in _infer_law_mentions_from_concepts(query):
+        if code not in seen:
             mentions.append(code)
             seen.add(code)
 
@@ -474,7 +565,6 @@ def _extract_law_mentions(query: str) -> list[str]:
 def _should_use_cross_law_retrieval(query: str, mentioned_laws: list[str]) -> bool:
     if len(mentioned_laws) < 2:
         return False
-    lowered = _tr_lower(query)
     cross_law_markers = (
         "birlikte",
         "hangi tbk",
@@ -484,8 +574,15 @@ def _should_use_cross_law_retrieval(query: str, mentioned_laws: list[str]) -> bo
         "ile birlikte",
         "birlikte değerlendirilir",
         "birlikte uygulanır",
+        "hangi hükümlere",
+        "hangi maddelerle",
+        "temellendirilir",
+        "ilişkilidir",
+        "temel farklar",
+        "batıldır",
+        "batildir",
     )
-    return any(marker in lowered for marker in cross_law_markers)
+    return _contains_any_query_term(query, cross_law_markers)
 
 
 def _dedupe_retrieved_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
@@ -500,6 +597,28 @@ def _dedupe_retrieved_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChun
         seen.add(key)
 
     return deduped
+
+
+def _dedupe_article_refs(refs: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    deduped: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for ref in refs:
+        if ref in seen:
+            continue
+        deduped.append(ref)
+        seen.add(ref)
+    return deduped
+
+
+def _append_unique_expansion(
+    retrieval_query: str,
+    applied_expansions: list[str],
+    expansion: str,
+) -> str:
+    if expansion in applied_expansions:
+        return retrieval_query
+    applied_expansions.append(expansion)
+    return f"{retrieval_query} {expansion}"
 
 
 def _retrieve_explicit_article_chunks(
@@ -609,6 +728,7 @@ def _build_trace_payload(
     mentioned_laws: list[str],
     cross_law_mode: bool,
     explicit_article_refs: list[tuple[str, str]],
+    forced_article_refs: list[tuple[str, str]],
     applied_expansions: list[str],
     top_k_requested: int,
     top_k_effective: int,
@@ -631,6 +751,10 @@ def _build_trace_payload(
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
+            ],
+            "forced_article_refs": [
+                {"law": law, "madde": madde}
+                for law, madde in forced_article_refs
             ],
             "applied_expansions": applied_expansions,
         },
@@ -1012,6 +1136,7 @@ async def chat_completions(
                 mentioned_laws=[],
                 cross_law_mode=False,
                 explicit_article_refs=[],
+                forced_article_refs=[],
                 applied_expansions=[],
                 top_k_requested=request_body.top_k,
                 top_k_effective=0,
@@ -1092,6 +1217,7 @@ async def chat_completions(
                 mentioned_laws=[],
                 cross_law_mode=False,
                 explicit_article_refs=[],
+                forced_article_refs=[],
                 applied_expansions=[],
                 top_k_requested=request_body.top_k,
                 top_k_effective=0,
@@ -1173,12 +1299,65 @@ async def chat_completions(
 
     # Terminoloji / eşanlamlı genişletmesi (Retrieval için)
     retrieval_query = last_user_msg
-    retrieval_query_lower = _tr_lower(retrieval_query)
     retrieval_top_k = request_body.top_k
     mentioned_laws = _extract_law_mentions(last_user_msg)
     cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
     explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
+    forced_article_refs: list[tuple[str, str]] = []
     applied_expansions: list[str] = []
+
+    concept_anchor_rules: list[
+        tuple[tuple[tuple[str, ...], ...], str, list[tuple[str, str]], bool]
+    ] = [
+        (
+            (("aile konutu",), ("kira", "fesih", "fesheder", "feshedebilir", "devir", "boşanma", "bosanma")),
+            "TBK m.349 TMK m.194 TMK m.169 TMK m.197 aile konutu boşanma kira fesih tedbir",
+            [("TBK", "349"), ("TMK", "194"), ("TMK", "169"), ("TMK", "197")],
+            True,
+        ),
+        (
+            (("kefalet",), ("eş rızası", "aile birliği", "aile birligi")),
+            "TBK m.584 TMK m.185 eş rızası aile birliği kefalet",
+            [("TBK", "584"), ("TMK", "185")],
+            True,
+        ),
+        (
+            (("paylı mülkiyet", "önalım", "ön alım"), ("satış", "satıldı", "paydaş", "paydas")),
+            "TBK m.207 TMK m.688 TMK m.691 TMK m.732 paylı mülkiyet önalım satış paydaş",
+            [("TBK", "207"), ("TMK", "688"), ("TMK", "691"), ("TMK", "732")],
+            True,
+        ),
+        (
+            (("malik olmayan",), ("kira", "kiraya", "kiracı", "kiraci")),
+            "TBK m.299 TMK m.683 malik olmayan kişinin kiraya vermesi kiracının korunması",
+            [("TBK", "299"), ("TMK", "683")],
+            True,
+        ),
+        (
+            (("mal rejimi", "edinilmiş mallar", "edinilmiş mallara katılma"), ("borç", "ödünç", "sözleşme")),
+            "TBK m.386 TMK m.202 TMK m.223 eşler arası borç verme mal rejimi",
+            [("TBK", "386"), ("TMK", "202"), ("TMK", "223")],
+            True,
+        ),
+        (
+            (("haksız fiil",), ("boşanma", "tmk m.174", "maddi tazminat")),
+            "TBK m.49 TBK m.72 TMK m.174 haksız fiil boşanma maddi tazminat temel farklar",
+            [("TBK", "49"), ("TBK", "72"), ("TMK", "174")],
+            True,
+        ),
+        (
+            (("muvazaa", "muris muvazaası"), ("taşınmaz", "sattı", "satış", "bağış", "bagis")),
+            "TBK m.19 TBK m.285 TMK m.561 muris muvazaası görünürde satış gizli bağış ispat",
+            [("TBK", "19"), ("TBK", "285"), ("TMK", "561")],
+            True,
+        ),
+        (
+            (("eşin rızası",), ("sözleşme", "batıldır", "batıl", "geçersiz")),
+            "TMK m.194 TBK m.27 eş rızası aile konutu sözleşme geçersizlik",
+            [("TMK", "194"), ("TBK", "27")],
+            True,
+        ),
+    ]
 
     expansion_rules: list[tuple[tuple[str, ...], str, bool]] = [
         (
@@ -1230,6 +1409,21 @@ async def chat_completions(
             True,
         ),
         (
+            ("muvazaa", "muris muvazaası", "muris muvazaasi", "bağışlamak", "bagislamak"),
+            "TBK m.19 TBK m.285 TMK m.561 muris muvazaası görünürde satış gizli bağış ispat",
+            True,
+        ),
+        (
+            ("haksız fiil", "haksiz fiil", "tmk m.174", "maddi tazminat davası", "maddi tazminat davasi"),
+            "TBK m.49 TMK m.174 haksız fiil boşanma maddi tazminat temel farklar",
+            True,
+        ),
+        (
+            ("eşin rızası", "esin rizasi", "batıldır", "batildir", "batıl", "batil", "geçersiz", "gecersiz"),
+            "TMK m.194 TBK m.27 eş rızası aile konutu sözleşme geçersizlik",
+            True,
+        ),
+        (
             ("ceza şartı", "ceza sarti", "cezai şart", "cezai sart", "cayma akçesi", "cayma akcesi", "cayma parası", "cayma parasi"),
             "TBK m.179 TBK m.180 TBK m.181 TBK m.182 ceza şartı cayma akçesi aşırı ceza indirimi",
             True,
@@ -1261,12 +1455,30 @@ async def chat_completions(
         ),
     ]
 
-    for triggers, expansion, boost_top_k in expansion_rules:
-        if any(trigger in retrieval_query_lower for trigger in triggers):
-            retrieval_query += f" {expansion}"
-            applied_expansions.append(expansion)
+    expansion_match_query = last_user_msg
+
+    for term_groups, expansion, exact_refs, boost_top_k in concept_anchor_rules:
+        if all(_contains_any_query_term(expansion_match_query, terms) for terms in term_groups):
+            retrieval_query = _append_unique_expansion(
+                retrieval_query,
+                applied_expansions,
+                expansion,
+            )
+            forced_article_refs.extend(exact_refs)
             if boost_top_k:
                 retrieval_top_k = max(retrieval_top_k, 20)
+
+    for triggers, expansion, boost_top_k in expansion_rules:
+        if _contains_any_query_term(expansion_match_query, triggers):
+            retrieval_query = _append_unique_expansion(
+                retrieval_query,
+                applied_expansions,
+                expansion,
+            )
+            if boost_top_k:
+                retrieval_top_k = max(retrieval_top_k, 20)
+
+    forced_article_refs = _dedupe_article_refs(forced_article_refs)
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     retrieved_chunks: list[RetrievedChunk] = []
@@ -1335,18 +1547,21 @@ async def chat_completions(
                             len(retrieved_chunks),
                         )
 
-                if explicit_article_refs:
+                all_exact_article_refs = _dedupe_article_refs(
+                    explicit_article_refs + forced_article_refs
+                )
+                if all_exact_article_refs:
                     exact_chunks = _retrieve_explicit_article_chunks(
                         retriever=retriever,
                         query=last_user_msg,
-                        article_refs=explicit_article_refs,
+                        article_refs=all_exact_article_refs,
                     )
                     if exact_chunks:
                         retrieved_chunks = _dedupe_retrieved_chunks(exact_chunks + retrieved_chunks)
                         logger.info(
                             "Retrieval exact-include: session=%s refs=%s added=%d total=%d",
                             session_id,
-                            explicit_article_refs,
+                            all_exact_article_refs,
                             len(exact_chunks),
                             len(retrieved_chunks),
                         )
@@ -1462,6 +1677,7 @@ async def chat_completions(
             mentioned_laws=mentioned_laws,
             cross_law_mode=cross_law_mode,
             explicit_article_refs=explicit_article_refs,
+            forced_article_refs=forced_article_refs,
             applied_expansions=applied_expansions,
             top_k_requested=request_body.top_k,
             top_k_effective=top_k_effective,

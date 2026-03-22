@@ -1,13 +1,26 @@
 # Wave State
-current_wave: faz1_5-decision-closure
-status: completed
-started_at: 2026-03-22T09:00:00+03:00
-last_activity: 2026-03-22T14:02:57+03:00
-last_eval: evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_post_promotion_cleanup_20260322.json
-next_action: "faz1.5 karari kapandi; siradaki resmi is retrieval/coverage fazini acmak"
+current_wave: faz2a-retrieval-coverage-requalification
+status: in_progress
+started_at: 2026-03-22T15:10:00+03:00
+last_activity: 2026-03-22T17:18:19+03:00
+last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_170327.json
+next_action: "tmk_cross_law icin retrieval-normalization dalgasi kilitlendi; siradaki is source-locking ve answer-discipline hardening"
 blockers:
-  - "promoted candidate ve preserved baseline v3-170 correct_source barini gecemedi; ana blocker retrieval/source-precision ve cross-law confusion"
+  - "fresh tmk_cross_law rerun'da candidate correct_source baseline'i gecemedi; ana blocker artik retrieval recall degil wrong-source ve answer-discipline"
+  - "candidate lane'de TMK-CL-002 generic assistant blob ve TMK-CL-015 timeout gozlendi"
 notes: |
+  ## FAZ 2A Durumu
+
+  - FAZ 2A kickoff/freeze kapandi; trace destekli fresh diagnostic lane'ler yeniden kuruldu.
+  - Turkce karakter uyumu artik tek tek keyword ekleyerek degil, merkezi normalizasyon yardimcilariyla yonetiliyor.
+  - Concept-anchor force-include retrieval dalgasi trace'e `forced_article_refs` olarak tasindi.
+  - Anchor kurallarinin mutasyona ugramis `retrieval_query` uzerinden zincirleme tetiklenme riski kapatildi.
+  - Fresh `tmk_cross_law` matched rerun sonuclari:
+    - baseline (`8018`): citation `80.0%`, correct source `46.9%`, hallucination `6.7%`, refusal `96.7%`
+    - candidate (`8019`): citation `93.1%`, correct source `46.6%`, hallucination `17.2%`, refusal `100.0%`, error `1`
+  - Sonuc: retrieval-normalization dalgasi candidate'i baseline ustune tasimadi; baskin kalan is source-locking / answer-discipline.
+  - Bu dalganin karar notu: `coordination/faz2a-wave2-normalized-anchor-rerun-2026-03-22.md`
+
   ## Faz 1.5 Kapanis Durumu
 
   - Steering karari: `NO-GO - Retrieval/Coverage first`
