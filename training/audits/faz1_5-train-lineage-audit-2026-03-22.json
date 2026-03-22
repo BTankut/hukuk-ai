@@ -1,0 +1,84 @@
+{
+  "report_name": "FAZ 1.5 Train Lineage Audit",
+  "date": "2026-03-22",
+  "scope": "canonical SFT train package lineage, reduction rationale, and separation proof",
+  "current_package": {
+    "train_file": "data/finetune/sft/final_train.jsonl",
+    "train_rows": 807,
+    "held_out_file": "data/finetune/eval/held_out_test.jsonl",
+    "held_out_rows": 22
+  },
+  "reduction_chain": {
+    "historical_snapshot_rows": 1076,
+    "exact_duplicates_removed": 26,
+    "held_out_contamination_removed": 127,
+    "canonical_duplicate_excess_removed": 116,
+    "final_rows": 807,
+    "intermediate_rows_after_first_two_filters": 923
+  },
+  "duplicate_inventory": {
+    "duplicate_groups": 24,
+    "duplicate_excess_rows": 116,
+    "all_rows_unique_outputs": 13,
+    "mixed_repeat_and_variant_outputs": 11
+  },
+  "canonicalization": {
+    "clusters_applied": 24,
+    "clusters_total": 24,
+    "manifest": "coordination/training-duplicate-final-canonicalization-2026-03-20.json",
+    "review_packet": "coordination/training-duplicate-review-packet-final-2026-03-20.md"
+  },
+  "source_provenance": {
+    "active_reconciled_master_files": 11,
+    "active_reconciled_master_rows": 1076,
+    "excluded_mirror_rows": 100,
+    "excluded_supplementary_active_rows": 0
+  },
+  "proofs": {
+    "train_held_out_overlap": 0,
+    "readiness_status": "READY",
+    "builder_dry_run_status": "PASS",
+    "byte_for_byte_rebuild": true
+  },
+  "categories": {
+    "duplicate": {
+      "status": "evidenced",
+      "notes": "24 clusters; 116 duplicate excess rows; no pure exact-answer-repeat cluster"
+    },
+    "near_duplicate": {
+      "status": "not_separately_quantified",
+      "notes": "Closest evidence is the 11 mixed repeat/variant clusters"
+    },
+    "held_out_leakage": {
+      "status": "evidenced",
+      "notes": "127 contamination rows removed; 807 train vs 22 held-out; overlap 0"
+    },
+    "out_of_scope": {
+      "status": "evidenced",
+      "notes": "pending-review, synthetic, supplementary-without-active-rows, and forbidden v1 path excluded"
+    },
+    "low_quality_or_malformed": {
+      "status": "not_separately_quantified",
+      "notes": "Builder skips malformed JSON, scaffolding, and empty-answer rows; no non-zero bucket reported"
+    },
+    "reviewer_rejection": {
+      "status": "partially_evidenced",
+      "notes": "Historical mirror marked include_in_training=0 and manual_escalation; no global rejection counter"
+    },
+    "merge_or_canonicalization": {
+      "status": "evidenced",
+      "notes": "24/24 canonical clusters applied and the builder reproduces the frozen package"
+    }
+  },
+  "evidence_paths": [
+    "coordination/pretrain-execution-package-2026-03-21.md",
+    "coordination/training-duplicate-inventory-2026-03-20.md",
+    "coordination/training-duplicate-cleanup-complete-2026-03-20.md",
+    "coordination/training-duplicate-final-canonicalization-2026-03-20.json",
+    "coordination/training-duplicate-review-packet-final-2026-03-20.md",
+    "scripts/build_training_dataset.py",
+    "scripts/check_training_readiness.py",
+    "data/finetune/sft/final_train.jsonl",
+    "data/finetune/eval/held_out_test.jsonl"
+  ]
+}
