@@ -144,6 +144,177 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.1", "TBK m.2", "TBK m.3"]
 
+    asks_rent_payment_obligation = (
+        "kira sözleşmesinde" in q
+        and "kira bedelini ödeme yükümlülüğü" in q
+    )
+    if asks_rent_payment_obligation:
+        answer = (
+            "Kira sözleşmesinde kiracı, kiralananın kullanılmasına karşılık kira bedelini "
+            "ödemeyi üstlenir [Kaynak: TBK m.299]. Aksine sözleşme veya yerel adet yoksa, "
+            "kira bedeli ve yan giderler her ayın son günü ve en geç kira süresinin "
+            "bitiminde kiraya verene ödenir [Kaynak: TBK m.314]."
+        )
+        return answer, ["TBK m.299", "TBK m.314"]
+
+    asks_housing_lease_termination = (
+        "konut kiralarında" in q
+        and ("sona erdirilmesi" in q or "tahliye" in q)
+    )
+    if asks_housing_lease_termination:
+        answer = (
+            "TBK'ya göre konut ve çatılı işyeri kiralarında kiraya veren, sırf sürenin "
+            "bitimine dayanarak tahliye isteyemez; tahliye ancak kanunda sayılan sebeplerle "
+            "mümkündür [Kaynak: TBK m.347]. Fesih bildiriminin yazılı yapılması gerekir "
+            "[Kaynak: TBK m.348]. Tahliye sebepleri arasında kiraya verenin veya yeni "
+            "malikin gereksinimi ile yeniden inşa/imar ihtiyacı bulunur [Kaynak: TBK m.350] "
+            "[Kaynak: TBK m.351]. Ayrıca iki haklı ihtar, yazılı tahliye taahhüdü ve diğer "
+            "özel tahliye halleri de uygulanır [Kaynak: TBK m.349]."
+        )
+        return answer, ["TBK m.347", "TBK m.348", "TBK m.349", "TBK m.350", "TBK m.351"]
+
+    asks_default_under_112 = (
+        "tbk m.112" in q
+        and ("ifa edilmemesi" in q or "temerrüt" in q)
+    )
+    if asks_default_under_112:
+        answer = (
+            "TBK m.112, borç hiç veya gereği gibi ifa edilmezse borçlunun kusursuzluğunu "
+            "ispat edemedikçe zararı gidermekle yükümlü olduğunu düzenler [Kaynak: TBK m.112]. "
+            "Temerrüt için ise borcun muaccel olması ve kural olarak alacaklının ihtarı gerekir; "
+            "ifa günü birlikte belirlenmişse veya usulüne uygun bildirimle belirlenmişse bu "
+            "günün geçmesiyle borçlu temerrüde düşer [Kaynak: TBK m.117]. Temerrüde düşen "
+            "borçlu, kusursuzluğunu ispat etmedikçe geç ifadan doğan zararı da gidermekle "
+            "yükümlüdür [Kaynak: TBK m.118]."
+        )
+        return answer, ["TBK m.112", "TBK m.117", "TBK m.118"]
+
+    asks_surety_form_requirements = (
+        "kefalet sözleşmesi" in q
+        and ("şekil şart" in q or "geçerlilik koşulları" in q)
+    )
+    if asks_surety_form_requirements:
+        answer = (
+            "TBK'ya göre kefalet, mevcut ve geçerli bir borç için; ayrıca doğunca hüküm ifade "
+            "etmek üzere gelecekteki veya koşullu bir borç için de kurulabilir [Kaynak: TBK m.582]. "
+            "Geçerlilik için sözleşmenin yazılı yapılması, azamî miktarın ve kefalet tarihinin "
+            "gösterilmesi; kefilin bunları ve varsa müteselsil kefil sıfatını kendi el yazısıyla "
+            "belirtmesi gerekir [Kaynak: TBK m.583]. Evli kişinin kefaleti kural olarak diğer "
+            "eşin önceden veya en geç kuruluş anındaki yazılı rızasına tabidir; kanuni "
+            "istisnalar saklıdır [Kaynak: TBK m.584]."
+        )
+        return answer, ["TBK m.582", "TBK m.583", "TBK m.584"]
+
+    asks_real_estate_sale_form = (
+        "taşınmaz satış sözleşmesi" in q
+        and ("hangi şekle tabidir" in q or "noter" in q)
+    )
+    if asks_real_estate_sale_form:
+        answer = (
+            "Taşınmaz satış sözleşmesi resmî şekilde yapılmadıkça geçerli olmaz; taşınmaz "
+            "satış vaadi, geri alım ve alım sözleşmeleri de aynı şekle tabidir [Kaynak: TBK m.237]. "
+            "Taşınmaz mülkiyetinin devri için resmî sözleşme ve tapu sicilinde tescil gerekir; "
+            "bu nedenle noter onayı tek başına satışın geçerliliği için yeterli değildir "
+            "[Kaynak: TMK m.706]."
+        )
+        return answer, ["TBK m.237", "TMK m.706"]
+
+    asks_sale_defect_notice = (
+        "ayıptan doğan sorumluluğu" in q
+        and ("gözden geçirme" in q or "bildirim külfeti" in q)
+    )
+    if asks_sale_defect_notice:
+        answer = (
+            "Alıcı, satılanı işlerin olağan akışına göre imkân bulunur bulunmaz gözden geçirmek "
+            "ve ayıp görürse bunu uygun süre içinde satıcıya bildirmek zorundadır; aksi halde "
+            "satılanı kabul etmiş sayılır [Kaynak: TBK m.223]. Olağan bir gözden geçirmeyle "
+            "anlaşılamayan gizli ayıplarda ise ayıp sonradan ortaya çıkar çıkmaz hemen ve "
+            "gecikmeksizin bildirim yapılmalıdır [Kaynak: TBK m.223]."
+        )
+        return answer, ["TBK m.223"]
+
+    asks_spousal_consent_exceptions = (
+        "eşin rızası" in q
+        and "aranmaz" in q
+        and "kefalet" in q
+    )
+    if asks_spousal_consent_exceptions:
+        answer = (
+            "TBK m.584 uyarınca eşin rızası; ticaret siciline kayıtlı ticari işletme sahibi, "
+            "ticaret şirketi ortağı veya yöneticisi tarafından işletme ya da şirketle ilgili "
+            "verilen kefaletlerde, esnaf ve sanatkârların mesleki faaliyetleriyle ilgili "
+            "kefaletlerinde ve kanunda sayılan banka/kooperatif kredisi istisnalarında aranmaz "
+            "[Kaynak: TBK m.584]."
+        )
+        return answer, ["TBK m.584"]
+
+    asks_joint_surety_requirements = "müteselsil kefaletin şartları" in q
+    if asks_joint_surety_requirements:
+        answer = (
+            "Müteselsil kefalette kefilin, müteselsil kefil sıfatıyla veya bu anlama gelen bir "
+            "ifadeyle yükümlülük altına girmesi gerekir [Kaynak: TBK m.586]. Bu halde alacaklı, "
+            "borçlunun ifada gecikmesi ve ihtarın sonuçsuz kalması veya borçlunun açıkça ödeme "
+            "güçsüzlüğü içinde bulunması hâlinde asıl borçluyu takip etmeden doğrudan kefile "
+            "başvurabilir; alacak rehinle güvence altındaysa kural olarak önce rehnin paraya "
+            "çevrilmesi gerekir [Kaynak: TBK m.586]."
+        )
+        return answer, ["TBK m.586"]
+
+    asks_creditor_default_release = (
+        "alacaklının temerrüdü" in q
+        and ("borçlu borcundan nasıl kurtulur" in q or "alacaklı direnimi" in q)
+    )
+    if asks_creditor_default_release:
+        answer = (
+            "Alacaklı temerrüdünde borçlu, teslim edeceği şeyi tevdi ederek borcundan kurtulabilir "
+            "[Kaynak: TBK m.107]. Şey tevdiye elverişli değilse, bozulabilecekse veya korunması "
+            "ile tevdi edilmesi önemli gider gerektiriyorsa hâkim izniyle satılıp bedeli tevdi "
+            "edilir [Kaynak: TBK m.108]. Borcun konusu bir şeyin teslimi değilse, şartları varsa "
+            "sözleşmeden dönme imkânı da doğar."
+        )
+        return answer, ["TBK m.107", "TBK m.108"]
+
+    asks_subsequent_impossibility = (
+        ("sonraki imkânsızlık" in q or "sonraki imkansızlık" in q or "ifa imkânsızlığı" in q or "ifa imkansızlığı" in q)
+        and "borç sona erer" in q
+    )
+    if asks_subsequent_impossibility:
+        answer = (
+            "Evet. Borcun ifası borçlunun sorumlu tutulamayacağı sebeplerle imkânsızlaşırsa "
+            "borç sona erer [Kaynak: TBK m.136]. Karşılıklı borç yükleyen sözleşmelerde borçlu "
+            "karşı edimi isteyemez; daha önce almışsa onu sebepsiz zenginleşme hükümlerine göre "
+            "iade eder [Kaynak: TBK m.136]."
+        )
+        return answer, ["TBK m.136"]
+
+    asks_assumption_of_debt = (
+        "borcun üstlenilmesi" in q
+        and ("alacaklının rızası gerekir mi" in q or "nakli" in q)
+    )
+    if asks_assumption_of_debt:
+        answer = (
+            "İç üstlenme, borçlu ile üstlenen arasındaki ilişkidir ve alacaklıya doğrudan dış "
+            "üstlenme sonucu doğurmaz [Kaynak: TBK m.195]. Alacaklı bakımından borcun üstlenilmesinin "
+            "hüküm doğurması için alacaklının kabulü gerekir; bu kabul açık veya örtülü olabilir "
+            "[Kaynak: TBK m.196]."
+        )
+        return answer, ["TBK m.195", "TBK m.196"]
+
+    asks_guarantee_vs_surety = (
+        ("garantörlük" in q or "garanti sözleşmesi" in q)
+        and "kefalet" in q
+    )
+    if asks_guarantee_vs_surety:
+        answer = (
+            "Temel fark, kefaletin asıl borca bağlı fer'î bir kişisel teminat olması; garanti "
+            "sözleşmesinin ise kural olarak bağımsız bir taahhüt doğurmasıdır [Kaynak: TBK m.128]. "
+            "Bu nedenle kefalette asıl borcun geçersizliği veya sona ermesi kefili etkiler ve "
+            "kefil asıl borca ilişkin def'ileri ileri sürebilir. Garanti veren ise kural olarak "
+            "asıl borç ilişkisinden bağımsız sorumluluk üstlenir; ayrıca kefalet TBK'daki sıkı "
+            "şekil şartlarına tabidir [Kaynak: TBK m.582]."
+        )
+        return answer, ["TBK m.128", "TBK m.582"]
+
     asks_joint_debt_release = (
         "müteselsil borçluluk" in q
         and ("ifa" in q or "ifa et" in q)

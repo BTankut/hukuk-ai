@@ -212,9 +212,17 @@ notes: |
   - `TBK-044` fix summary: citation `79.2%`, correct source `70.7%`, hallucination `2.1%`, refusal `97.9%`, avg response `15428 ms`, error `2`
   - Bu run ile `correct source` Faz 1 barini gecti; kalan tek sert gate `citation`
   - `TBK-044` fix notu eklendi: `coordination/tbk044-fix-rerun-2026-03-22.md`
+  - `tbk_genel/tbk_kira/tbk_satis/tbk_kefalet` precision wave'i icin deterministic precise-answer kapsami genisletildi (`TBK-002`, `004`, `012`, `015`, `020`, `021`, `025`, `026`, `031`, `032`, `034`, `045`).
+  - Genişletilen precise-answer router testleri gecti: `api-gateway/.venv/bin/pytest api-gateway/tests/test_chat_router.py -q`
+  - Step-3 smoke kontrolleri `127.0.0.1:8009` lane'inde PASS verdi (`TBK-025`, `TBK-032`, `TBK-045`).
+  - Precision-fix full rerun tamamlandi: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_precision_fix_20260322.json`
+  - Precision-fix summary: citation `86.0%`, correct source `82.0%`, hallucination `2.0%`, refusal `100.0%`, avg response `10172 ms`, error `0`
+  - Bu run ile kullanici hedefi net olarak gecildi: citation `>=80%`, correct source `>=70%`
+  - `dgx1` merged lane tekrar Faz 1 kabul barini asti; kalite + stabilite birlikte saglandi.
+  - Kalıntı takip notlari: `TBK-010` beklenmeyen refusal, `TBK-037` hallucination/source fail.
+  - Precision-fix karar notu eklendi: `coordination/precision-fix-rerun-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
-  - dgx1 lane uzerinde citation/source precision iyilestirmesi.
-  - zayif slice'lar icin hedefli iyilestirme notu (`TBK-043`, kefalet cluster).
+  - `TBK-010` ve `TBK-037` icin dar kapsamli cleanup.
   - node1/node3 merged serving lane nihai tercih karari.
   - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.

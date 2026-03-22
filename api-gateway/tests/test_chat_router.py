@@ -258,6 +258,76 @@ class TestPreciseDeterministicAnswers:
         assert citations == ["TBK m.166"]
         assert "TBK m.166" in answer
 
+    @pytest.mark.parametrize(
+        ("question", "expected_citations", "expected_fragments"),
+        [
+            (
+                "Kira sözleşmesinde kiracının kira bedelini ödeme yükümlülüğü TBK'nın hangi maddesinde düzenlenmektedir? Ödeme günü ve yeri nedir?",
+                ["TBK m.299", "TBK m.314"],
+                ["ayın son günü", "kiraya verene"],
+            ),
+            (
+                "TBK'ya göre kefalet sözleşmesi hangi şekil şartlarına tabidir ve geçerlilik koşulları nelerdir?",
+                ["TBK m.582", "TBK m.583", "TBK m.584"],
+                ["yazılı", "kendi el yazısıyla"],
+            ),
+            (
+                "TBK'ya göre taşınmaz satış sözleşmesi hangi şekle tabidir ve noter onayı gerekir mi?",
+                ["TBK m.237", "TMK m.706"],
+                ["resmî şekilde", "tapu sicilinde tescil"],
+            ),
+            (
+                "Satış sözleşmesinde satıcının ayıptan doğan sorumluluğu (ayıba karşı tekeffül) için alıcının gözden geçirme ve bildirim külfeti hangi sürelere tabidir?",
+                ["TBK m.223"],
+                ["gözden geçirmek", "hemen ve gecikmeksizin"],
+            ),
+            (
+                "Kefalet sözleşmesinde eşin rızası hangi durumlarda aranmaz?",
+                ["TBK m.584"],
+                ["ticaret siciline kayıtlı", "esnaf ve sanatkârlar"],
+            ),
+            (
+                "TBK'ya göre müteselsil kefaletin şartları nelerdir?",
+                ["TBK m.586"],
+                ["müteselsil kefil", "doğrudan kefile"],
+            ),
+            (
+                "Alacaklının temerrüdü (alacaklı direnimi) hâlinde borçlu borcundan nasıl kurtulur?",
+                ["TBK m.107", "TBK m.108"],
+                ["tevdi", "hâkim izniyle"],
+            ),
+            (
+                "Borçlunun sorumlu olmadığı sonraki imkânsızlık (ifa imkânsızlığı) durumunda borç sona erer mi?",
+                ["TBK m.136"],
+                ["sona erer", "sebepsiz zenginleşme"],
+            ),
+            (
+                "Borcun üstlenilmesi (nakli) sözleşmesinde alacaklının rızası gerekir mi?",
+                ["TBK m.195", "TBK m.196"],
+                ["alacaklının kabulü", "açık veya örtülü"],
+            ),
+            (
+                "Garantörlük (garanti sözleşmesi) ile kefalet sözleşmesi arasındaki temel fark nedir?",
+                ["TBK m.128", "TBK m.582"],
+                ["bağımsız", "fer'î"],
+            ),
+        ],
+    )
+    def test_precise_answers_cover_high_risk_eval_questions(
+        self,
+        question: str,
+        expected_citations: list[str],
+        expected_fragments: list[str],
+    ):
+        precise = _build_precise_tbk_answer(question)
+        assert precise is not None
+        answer, citations = precise
+        assert citations == expected_citations
+        for citation in expected_citations:
+            assert citation in answer
+        for fragment in expected_fragments:
+            assert fragment in answer
+
 
 # ---------------------------------------------------------------------------
 # _stream_sse_response Testleri
