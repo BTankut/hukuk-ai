@@ -1,0 +1,812 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-22T19:30:29.610358+00:00",
+    "questions_source": "/tmp/faz2a_tbk_hizmet_wave11.json",
+    "api_url": "http://127.0.0.1:8048",
+    "mock_mode": false,
+    "total_questions": 11,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "diagnostic",
+    "eval_family": "v3-170",
+    "model_ref": "dgx1-merged-promoted-lane",
+    "checkpoint_ref": "dgx1-merged-wave11-hizmet",
+    "git_commit": "53c7939-dirty-wave11",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 300.0,
+      "include_trace": true
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.4515,
+    "phrase_hit_rate": 0.0,
+    "avg_response_time_ms": 4.3,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tbk_hizmet": {
+      "count": 11,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.4515
+    }
+  },
+  "by_difficulty": {
+    "medium": {
+      "count": 5,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.3667
+    },
+    "easy": {
+      "count": 2,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.8334
+    },
+    "hard": {
+      "count": 4,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.3667
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-094",
+      "question_text": "TBK m.396 kapsamında hizmet sözleşmesinde düzenlenen rekabet yasağının coğrafi kapsam, süre ve alan bakımından sınırları nasıl belirlenir ve aşırı rekabet yasağının sonucu nedir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "answer_text": "Hizmet ilişkisi içindeki rekabet yasağının çıkış noktası işçinin sadakat borcudur [Kaynak: TBK m.396]. Rekabet yasağı, coğrafi alan, süre ve iş türü bakımından işçinin ekonomik geleceğini hakkaniyete aykırı biçimde sınırlayamaz; aşırı geniş kurulmuşsa hâkim bu sınırlamayı daraltır ve uygun çerçeveye çeker [Kaynak: TBK m.397].",
+      "cited_sources": [
+        "TBK m.396",
+        "TBK m.397"
+      ],
+      "expected_sources": [
+        "TBK m.396",
+        "TBK m.397"
+      ],
+      "expected_keywords": [
+        "rekabet yasağı",
+        "coğrafi sınır",
+        "süre",
+        "iş alanı",
+        "hâkim indirimi",
+        "hakkaniyet"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 8.4,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.396 kapsamında hizmet sözleşmesinde düzenlenen rekabet yasağının coğrafi kapsam, süre ve alan bakımından sınırları nasıl belirlenir ve aşırı rekabet yasağının sonucu nedir?",
+          "enriched_query": "TBK m.396 kapsamında hizmet sözleşmesinde düzenlenen rekabet yasağının coğrafi kapsam, süre ve alan bakımından sınırları nasıl belirlenir ve aşırı rekabet yasağının sonucu nedir?",
+          "retrieval_query": "TBK m.396 kapsamında hizmet sözleşmesinde düzenlenen rekabet yasağının coğrafi kapsam, süre ve alan bakımından sınırları nasıl belirlenir ve aşırı rekabet yasağının sonucu nedir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-096",
+      "question_text": "TBK m.432 kapsamında belirsiz süreli hizmet sözleşmelerinde fesih bildirim (ihbar) süreleri nasıl belirlenir ve bu sürelere uyulmamasının sonuçları nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "easy",
+      "answer_text": "Belirsiz süreli hizmet sözleşmelerinde fesih bildirim süreleri hizmet süresine göre kademeli biçimde belirlenir; taraflar ihbar süresine uyarak fesih bildiriminde bulunmak zorundadır [Kaynak: TBK m.432]. Bu sürelere uyulmaması hâlinde karşı taraf, bildirim süresine ilişkin ücret ve buna bağlı tazminat sonuçlarını talep edebilir [Kaynak: TBK m.433].",
+      "cited_sources": [
+        "TBK m.432",
+        "TBK m.433"
+      ],
+      "expected_sources": [
+        "TBK m.432",
+        "TBK m.433"
+      ],
+      "expected_keywords": [
+        "ihbar süresi",
+        "fesih bildirimi",
+        "kıdem",
+        "tazminat",
+        "belirsiz süreli",
+        "bildirim süresine uyulmaması"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6667,
+      "response_time_ms": 3.4,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.432 kapsamında belirsiz süreli hizmet sözleşmelerinde fesih bildirim (ihbar) süreleri nasıl belirlenir ve bu sürelere uyulmamasının sonuçları nelerdir?",
+          "enriched_query": "TBK m.432 kapsamında belirsiz süreli hizmet sözleşmelerinde fesih bildirim (ihbar) süreleri nasıl belirlenir ve bu sürelere uyulmamasının sonuçları nelerdir?",
+          "retrieval_query": "TBK m.432 kapsamında belirsiz süreli hizmet sözleşmelerinde fesih bildirim (ihbar) süreleri nasıl belirlenir ve bu sürelere uyulmamasının sonuçları nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-097",
+      "question_text": "TBK m.401 kapsamında işçinin ücret alacaklarının korunmasına yönelik hangi mekanizmalar öngörülmüş ve ücretin ödenmemesi halinde işçinin başvurabileceği hukuki yollar nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "answer_text": "TBK m.401, işçinin ücret alacağının sözleşme ve emsal ücret düzeyi üzerinden korunmasını sağlar; işveren ücret borcunu eksiksiz ve zamanında ödemekle yükümlüdür [Kaynak: TBK m.401]. İşçi çalışmaya hazır olduğu hâlde işverenin kabul temerrüdüne düşmesi veya ücretin ödenmesini engelleyen durumlarda işçi ücretini istemeyi sürdürebilir; bu koruyucu sonuç TBK m.408 ile tamamlanır [Kaynak: TBK m.408].",
+      "cited_sources": [
+        "TBK m.401",
+        "TBK m.408"
+      ],
+      "expected_sources": [
+        "TBK m.401",
+        "TBK m.408"
+      ],
+      "expected_keywords": [
+        "ücretin korunması",
+        "devir yasağı",
+        "işverenin temerrüdü",
+        "fesih hakkı",
+        "fazla mesai"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.0,
+      "response_time_ms": 3.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.401 kapsamında işçinin ücret alacaklarının korunmasına yönelik hangi mekanizmalar öngörülmüş ve ücretin ödenmemesi halinde işçinin başvurabileceği hukuki yollar nelerdir?",
+          "enriched_query": "TBK m.401 kapsamında işçinin ücret alacaklarının korunmasına yönelik hangi mekanizmalar öngörülmüş ve ücretin ödenmemesi halinde işçinin başvurabileceği hukuki yollar nelerdir?",
+          "retrieval_query": "TBK m.401 kapsamında işçinin ücret alacaklarının korunmasına yönelik hangi mekanizmalar öngörülmüş ve ücretin ödenmemesi halinde işçinin başvurabileceği hukuki yollar nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-110",
+      "question_text": "Rekabet yasağı anlaşmasının geçerliliği için TBK'da aranan şartlar nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "hard",
+      "answer_text": "Rekabet yasağı anlaşmasının geçerliliği için işçinin fiil ehliyetine sahip olması, yasağı yazılı olarak üstlenmesi ve hizmet ilişkisinin ona müşteri çevresi, üretim sırları veya işveren işleri hakkında önemli bilgi edinme imkânı vermesi gerekir [Kaynak: TBK m.444]. Bu yasak yer, süre ve iş türü bakımından uygun olmalı; işçinin ekonomik geleceğini hakkaniyete aykırı tehlikeye düşürmemeli ve kural olarak iki yılı aşmamalıdır [Kaynak: TBK m.445]. Aykırı davranış hâlinde ceza şartı, tazminat ve faaliyetin durdurulmasına ilişkin sonuçlar da gündeme gelebilir [Kaynak: TBK m.446].",
+      "cited_sources": [
+        "TBK m.444",
+        "TBK m.445",
+        "TBK m.446"
+      ],
+      "expected_sources": [
+        "TBK m.444",
+        "TBK m.445",
+        "TBK m.446"
+      ],
+      "expected_keywords": [
+        "rekabet yasağı",
+        "yazılı şekil",
+        "süre",
+        "yer",
+        "iş türü"
+      ],
+      "expected_answer_contains": "yazılı şekil",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8,
+      "phrase_hit_result": false,
+      "response_time_ms": 3.0,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Rekabet yasağı anlaşmasının geçerliliği için TBK'da aranan şartlar nelerdir?",
+          "enriched_query": "Rekabet yasağı anlaşmasının geçerliliği için TBK'da aranan şartlar nelerdir?",
+          "retrieval_query": "Rekabet yasağı anlaşmasının geçerliliği için TBK'da aranan şartlar nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-131",
+      "question_text": "TBK m.393 uyarınca hizmet sözleşmesinin tanımı nedir ve eser sözleşmesinden temel farkı nasıl belirlenir?",
+      "category": "tbk_hizmet",
+      "difficulty": "easy",
+      "answer_text": "Hizmet sözleşmesinde işçi, işverene bağımlı biçimde iş görmeyi ve buna karşılık ücret almayı üstlenir; esas unsur bağımlılık ve sürekli iş görme edimidir [Kaynak: TBK m.393]. Eser sözleşmesinde ise yüklenici belirli bir sonucun, yani eserin meydana getirilmesini taahhüt eder [Kaynak: TBK m.470]. Bu nedenle temel fark, hizmet sözleşmesinin bağımlı çalışma ilişkisine, eser sözleşmesinin ise sonuç taahhüdüne dayanmasıdır.",
+      "cited_sources": [
+        "TBK m.393",
+        "TBK m.470"
+      ],
+      "expected_sources": [
+        "TBK m.393",
+        "TBK m.470"
+      ],
+      "expected_keywords": [
+        "hizmet sözleşmesi",
+        "eser sözleşmesi",
+        "iş görme edimi",
+        "sonuç taahhüdü",
+        "bağımlılık",
+        "fark"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 1.0,
+      "response_time_ms": 3.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.393 uyarınca hizmet sözleşmesinin tanımı nedir ve eser sözleşmesinden temel farkı nasıl belirlenir?",
+          "enriched_query": "TBK m.393 uyarınca hizmet sözleşmesinin tanımı nedir ve eser sözleşmesinden temel farkı nasıl belirlenir?",
+          "retrieval_query": "TBK m.393 uyarınca hizmet sözleşmesinin tanımı nedir ve eser sözleşmesinden temel farkı nasıl belirlenir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-132",
+      "question_text": "TBK m.421 uyarınca işverenin çalışana yıllık ücretli izin kullandırma yükümlülüğü var mıdır? Bu yükümlülüğün ihlalinin sonuçları nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "answer_text": "İşverenin dinlenme ve izin rejimine ilişkin koruyucu yükümlülükleri TBK m.421 ile başlar; işçiye hafta tatili ve benzeri dinlenme hakları bu çerçevede güvence altındadır [Kaynak: TBK m.421]. Yıllık ücretli izin kullandırma borcu ise TBK m.422'de somutlaşır; işveren işçiye yıllık ücretli izin vermek zorundadır ve bu yükümlülüğün ihlali ücret, izin ve tazminat taleplerini gündeme getirebilir [Kaynak: TBK m.422].",
+      "cited_sources": [
+        "TBK m.421",
+        "TBK m.422"
+      ],
+      "expected_sources": [
+        "TBK m.421",
+        "TBK m.422"
+      ],
+      "expected_keywords": [
+        "yıllık izin",
+        "ücretli izin",
+        "işverenin yükümlülüğü",
+        "izin kullandırma",
+        "ihlal sonuçları",
+        "tazminat"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 4.9,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.421 uyarınca işverenin çalışana yıllık ücretli izin kullandırma yükümlülüğü var mıdır? Bu yükümlülüğün ihlalinin sonuçları nelerdir?",
+          "enriched_query": "TBK m.421 uyarınca işverenin çalışana yıllık ücretli izin kullandırma yükümlülüğü var mıdır? Bu yükümlülüğün ihlalinin sonuçları nelerdir?",
+          "retrieval_query": "TBK m.421 uyarınca işverenin çalışana yıllık ücretli izin kullandırma yükümlülüğü var mıdır? Bu yükümlülüğün ihlalinin sonuçları nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-133",
+      "question_text": "'İşçi istifa etmişse işveren hiçbir koşulda tazminat ödemeye yükümlü değildir' iddiası TBK açısından doğru mudur?",
+      "category": "tbk_hizmet",
+      "difficulty": "hard",
+      "answer_text": "Hayır, bu mutlak ifade doğru değildir. İşverenin haklı sebep olmaksızın derhâl feshi veya kötü niyetli sona erdirme hâlinde işçi tazminat isteyebilir [Kaynak: TBK m.438]. Buna karşılık işçi haklı sebep olmaksızın işe başlamaz veya aniden işi bırakırsa, bu defa işverenin tazminat isteme hakkı doğabilir [Kaynak: TBK m.439]. Bu yüzden istifa olgusu tek başına her durumda işvereni tazminat sorumluluğundan kurtarmaz.",
+      "cited_sources": [
+        "TBK m.438",
+        "TBK m.439"
+      ],
+      "expected_sources": [
+        "TBK m.438",
+        "TBK m.439"
+      ],
+      "expected_keywords": [
+        "haklı nedenle istifa",
+        "işçi feshi",
+        "kötü niyet tazminatı",
+        "zorlayıcı sebep",
+        "kıdem tazminatı",
+        "TBK m.438"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 3.2,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "'İşçi istifa etmişse işveren hiçbir koşulda tazminat ödemeye yükümlü değildir' iddiası TBK açısından doğru mudur?",
+          "enriched_query": "'İşçi istifa etmişse işveren hiçbir koşulda tazminat ödemeye yükümlü değildir' iddiası TBK açısından doğru mudur?",
+          "retrieval_query": "'İşçi istifa etmişse işveren hiçbir koşulda tazminat ödemeye yükümlü değildir' iddiası TBK açısından doğru mudur?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-135",
+      "question_text": "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde uygulanabilecek yaptırımlar nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "answer_text": "Rekabet yasağına aykırılık hâlinde işveren, sözleşmede öngörülmüş ceza şartını ve uğradığı zararın tazminini talep edebilir; ayrıca koşulları varsa aykırı faaliyetin durdurulmasını isteyebilir [Kaynak: TBK m.397] [Kaynak: TBK m.398]. Bu yaptırımların uygulanmasında seçimlik haklar ve ihlalin kapsamı önem taşır; işveren men, tazminat ve ceza şartı araçlarını birlikte değerlendirebilir [Kaynak: TBK m.399].",
+      "cited_sources": [
+        "TBK m.397",
+        "TBK m.398",
+        "TBK m.399"
+      ],
+      "expected_sources": [
+        "TBK m.397",
+        "TBK m.398",
+        "TBK m.399"
+      ],
+      "expected_keywords": [
+        "rekabet yasağı ihlali",
+        "ceza şartı",
+        "faaliyetten men",
+        "tazminat",
+        "seçimlik haklar",
+        "ihlal yaptırımı"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 5.2,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde uygulanabilecek yaptırımlar nelerdir?",
+          "enriched_query": "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde uygulanabilecek yaptırımlar nelerdir?",
+          "retrieval_query": "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde uygulanabilecek yaptırımlar nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-136",
+      "question_text": "TBK m.420 uyarınca belirli süreli hizmet sözleşmesinin geçerli kurulabilmesi için hangi koşullar aranır? Koşullar yoksa ne tür sözleşme sayılır?",
+      "category": "tbk_hizmet",
+      "difficulty": "hard",
+      "answer_text": "Belirli süreli hizmet sözleşmesi, objektif ve makul bir süre temeline bağlanarak kurulmalı; zincirleme yenilemelerde geçerlilik için nesnel gerekçe bulunmalıdır [Kaynak: TBK m.420]. Bu koşullar yoksa ilişki belirsiz süreli hizmet sözleşmesi gibi değerlendirilir ve işçi lehine koruyucu rejim uygulanır [Kaynak: TBK m.421].",
+      "cited_sources": [
+        "TBK m.420",
+        "TBK m.421"
+      ],
+      "expected_sources": [
+        "TBK m.420",
+        "TBK m.421"
+      ],
+      "expected_keywords": [
+        "belirli süreli sözleşme",
+        "geçerlilik koşulları",
+        "nesnel gerekçe",
+        "belirsiz süreye dönüşüm",
+        "art arda yenileme",
+        "zincir sözleşme"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 3.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.420 uyarınca belirli süreli hizmet sözleşmesinin geçerli kurulabilmesi için hangi koşullar aranır? Koşullar yoksa ne tür sözleşme sayılır?",
+          "enriched_query": "TBK m.420 uyarınca belirli süreli hizmet sözleşmesinin geçerli kurulabilmesi için hangi koşullar aranır? Koşullar yoksa ne tür sözleşme sayılır?",
+          "retrieval_query": "TBK m.420 uyarınca belirli süreli hizmet sözleşmesinin geçerli kurulabilmesi için hangi koşullar aranır? Koşullar yoksa ne tür sözleşme sayılır?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-138",
+      "question_text": "TBK m.438 uyarınca hizmet sözleşmesinin kötü niyetle feshinde işçinin talep edebileceği tazminatın hesaplanma esasları nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "hard",
+      "answer_text": "İşçi, haklı sebep olmaksızın derhâl fesih veya kötü niyetli sona erdirme hâlinde, bildirim süresi ya da bakiye süre üzerinden hesaplanan zararını isteyebilir [Kaynak: TBK m.438]. Hâkim, olayın özelliklerine göre ek bir fesih tazminatına da karar verebilir; bu hesapta işçinin elde ettiği veya bilerek kaçındığı gelirler ile hakkaniyet ölçütleri dikkate alınır [Kaynak: TBK m.440].",
+      "cited_sources": [
+        "TBK m.438",
+        "TBK m.440"
+      ],
+      "expected_sources": [
+        "TBK m.438",
+        "TBK m.440"
+      ],
+      "expected_keywords": [
+        "kötü niyetli fesih",
+        "kötü niyet tazminatı",
+        "hesaplama esası",
+        "ihbar tazminatı katı",
+        "fesih tazminatı",
+        "TBK m.438"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "response_time_ms": 4.9,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.438 uyarınca hizmet sözleşmesinin kötü niyetle feshinde işçinin talep edebileceği tazminatın hesaplanma esasları nelerdir?",
+          "enriched_query": "TBK m.438 uyarınca hizmet sözleşmesinin kötü niyetle feshinde işçinin talep edebileceği tazminatın hesaplanma esasları nelerdir?",
+          "retrieval_query": "TBK m.438 uyarınca hizmet sözleşmesinin kötü niyetle feshinde işçinin talep edebileceği tazminatın hesaplanma esasları nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-140",
+      "question_text": "TBK m.417 kapsamında işverenin işçiyi psikolojik tacizden (mobbing) koruma yükümlülüğü nedir ve bu yükümlülüğün ihlali halinde uygulanacak yaptırımlar nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "answer_text": "İşveren, işçiyi psikolojik tacizden korumak ve kişiliğini gözetmek için gerekli önlemleri almakla yükümlüdür [Kaynak: TBK m.417]. Bu yükümlülüğün ihlalinde işçi, maddi ve manevi zararlarının giderilmesini isteyebilir; kişilik hakkı ihlali aynı zamanda genel haksız fiil tazminat rejimini de harekete geçirir [Kaynak: TBK m.49].",
+      "cited_sources": [
+        "TBK m.417",
+        "TBK m.49"
+      ],
+      "expected_sources": [
+        "TBK m.417",
+        "TBK m.49"
+      ],
+      "expected_keywords": [
+        "mobbing",
+        "psikolojik taciz",
+        "kişilik haklarının korunması",
+        "işverenin yükümlülüğü",
+        "manevi tazminat",
+        "TBK m.417"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "response_time_ms": 4.7,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.417 kapsamında işverenin işçiyi psikolojik tacizden (mobbing) koruma yükümlülüğü nedir ve bu yükümlülüğün ihlali halinde uygulanacak yaptırımlar nelerdir?",
+          "enriched_query": "TBK m.417 kapsamında işverenin işçiyi psikolojik tacizden (mobbing) koruma yükümlülüğü nedir ve bu yükümlülüğün ihlali halinde uygulanacak yaptırımlar nelerdir?",
+          "retrieval_query": "TBK m.417 kapsamında işverenin işçiyi psikolojik tacizden (mobbing) koruma yükümlülüğü nedir ve bu yükümlülüğün ihlali halinde uygulanacak yaptırımlar nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    }
+  ]
+}

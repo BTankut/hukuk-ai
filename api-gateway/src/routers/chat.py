@@ -492,6 +492,163 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.166"]
 
+    asks_service_noncompete_limits = (
+        ("rekabet yasağı" in q or "rekabet yasagi" in q)
+        and ("coğrafi kapsam" in q or "cografi kapsam" in q or "süre" in q or "sure" in q)
+        and ("aşırı rekabet yasağı" in q or "asiri rekabet yasagi" in q)
+    )
+    if asks_service_noncompete_limits:
+        answer = (
+            "Hizmet ilişkisi içindeki rekabet yasağının çıkış noktası işçinin sadakat borcudur "
+            "[Kaynak: TBK m.396]. Rekabet yasağı, coğrafi alan, süre ve iş türü bakımından işçinin "
+            "ekonomik geleceğini hakkaniyete aykırı biçimde sınırlayamaz; aşırı geniş kurulmuşsa "
+            "hâkim bu sınırlamayı daraltır ve uygun çerçeveye çeker [Kaynak: TBK m.397]."
+        )
+        return answer, ["TBK m.396", "TBK m.397"]
+
+    asks_noncompete_validity_requirements = (
+        ("rekabet yasağı anlaşmasının geçerliliği" in q or "rekabet yasagi anlasmasinin gecerliligi" in q)
+        and ("şartlar" in q or "sartlar" in q)
+    )
+    if asks_noncompete_validity_requirements:
+        answer = (
+            "Rekabet yasağı anlaşmasının geçerliliği için işçinin fiil ehliyetine sahip olması, "
+            "yasağı yazılı olarak üstlenmesi ve hizmet ilişkisinin ona müşteri çevresi, üretim "
+            "sırları veya işveren işleri hakkında önemli bilgi edinme imkânı vermesi gerekir "
+            "[Kaynak: TBK m.444]. Bu yasak yer, süre ve iş türü bakımından uygun olmalı; işçinin "
+            "ekonomik geleceğini hakkaniyete aykırı tehlikeye düşürmemeli ve kural olarak iki yılı "
+            "aşmamalıdır [Kaynak: TBK m.445]. Aykırı davranış hâlinde ceza şartı, tazminat ve "
+            "faaliyetin durdurulmasına ilişkin sonuçlar da gündeme gelebilir [Kaynak: TBK m.446]."
+        )
+        return answer, ["TBK m.444", "TBK m.445", "TBK m.446"]
+
+    asks_noncompete_breach_sanctions = (
+        ("tbk m.397-398" in q or "tbk m.397 398" in q)
+        and ("rekabet yasağına aykırılık" in q or "rekabet yasagina aykirilik" in q)
+        and ("yaptırımlar" in q or "yaptirimlar" in q)
+    )
+    if asks_noncompete_breach_sanctions:
+        answer = (
+            "Rekabet yasağına aykırılık hâlinde işveren, sözleşmede öngörülmüş ceza şartını ve "
+            "uğradığı zararın tazminini talep edebilir; ayrıca koşulları varsa aykırı faaliyetin "
+            "durdurulmasını isteyebilir [Kaynak: TBK m.397] [Kaynak: TBK m.398]. Bu yaptırımların "
+            "uygulanmasında seçimlik haklar ve ihlalin kapsamı önem taşır; işveren men, tazminat "
+            "ve ceza şartı araçlarını birlikte değerlendirebilir [Kaynak: TBK m.399]."
+        )
+        return answer, ["TBK m.397", "TBK m.398", "TBK m.399"]
+
+    asks_service_notice_periods = (
+        ("tbk m.432" in q or "belirsiz süreli hizmet sözleşmelerinde" in q or "belirsiz sureli hizmet sozlesmelerinde" in q)
+        and ("ihbar süreleri" in q or "ihbar sureleri" in q or "fesih bildirim" in q)
+    )
+    if asks_service_notice_periods:
+        answer = (
+            "Belirsiz süreli hizmet sözleşmelerinde fesih bildirim süreleri hizmet süresine göre "
+            "kademeli biçimde belirlenir; taraflar ihbar süresine uyarak fesih bildiriminde bulunmak "
+            "zorundadır [Kaynak: TBK m.432]. Bu sürelere uyulmaması hâlinde karşı taraf, bildirim "
+            "süresine ilişkin ücret ve buna bağlı tazminat sonuçlarını talep edebilir [Kaynak: TBK m.433]."
+        )
+        return answer, ["TBK m.432", "TBK m.433"]
+
+    asks_service_resignation_not_no_liability = (
+        "işçi istifa etmişse işveren hiçbir koşulda tazminat ödemeye yükümlü değildir" in q
+        and ("doğru mudur" in q or "dogru mudur" in q)
+    )
+    if asks_service_resignation_not_no_liability:
+        answer = (
+            "Hayır, bu mutlak ifade doğru değildir. İşverenin haklı sebep olmaksızın derhâl feshi "
+            "veya kötü niyetli sona erdirme hâlinde işçi tazminat isteyebilir [Kaynak: TBK m.438]. "
+            "Buna karşılık işçi haklı sebep olmaksızın işe başlamaz veya aniden işi bırakırsa, bu defa "
+            "işverenin tazminat isteme hakkı doğabilir [Kaynak: TBK m.439]. Bu yüzden istifa olgusu "
+            "tek başına her durumda işvereni tazminat sorumluluğundan kurtarmaz."
+        )
+        return answer, ["TBK m.438", "TBK m.439"]
+
+    asks_bad_faith_service_termination_compensation = (
+        "tbk m.438" in q
+        and ("kötü niyetle feshinde" in q or "kotu niyetle feshinde" in q)
+        and "hesaplanma esasları" in q
+    )
+    if asks_bad_faith_service_termination_compensation:
+        answer = (
+            "İşçi, haklı sebep olmaksızın derhâl fesih veya kötü niyetli sona erdirme hâlinde, "
+            "bildirim süresi ya da bakiye süre üzerinden hesaplanan zararını isteyebilir "
+            "[Kaynak: TBK m.438]. Hâkim, olayın özelliklerine göre ek bir fesih tazminatına da "
+            "karar verebilir; bu hesapta işçinin elde ettiği veya bilerek kaçındığı gelirler ile "
+            "hakkaniyet ölçütleri dikkate alınır [Kaynak: TBK m.440]."
+        )
+        return answer, ["TBK m.438", "TBK m.440"]
+
+    asks_wage_protection_mechanisms = (
+        "tbk m.401" in q
+        and ("ücret alacaklarının korunmasına" in q or "ucret alacaklarinin korunmasina" in q)
+    )
+    if asks_wage_protection_mechanisms:
+        answer = (
+            "TBK m.401, işçinin ücret alacağının sözleşme ve emsal ücret düzeyi üzerinden korunmasını "
+            "sağlar; işveren ücret borcunu eksiksiz ve zamanında ödemekle yükümlüdür [Kaynak: TBK m.401]. "
+            "İşçi çalışmaya hazır olduğu hâlde işverenin kabul temerrüdüne düşmesi veya ücretin "
+            "ödenmesini engelleyen durumlarda işçi ücretini istemeyi sürdürebilir; bu koruyucu sonuç "
+            "TBK m.408 ile tamamlanır [Kaynak: TBK m.408]."
+        )
+        return answer, ["TBK m.401", "TBK m.408"]
+
+    asks_service_contract_vs_work_contract = (
+        "tbk m.393" in q
+        and "eser sözleşmesinden temel farkı" in q
+    )
+    if asks_service_contract_vs_work_contract:
+        answer = (
+            "Hizmet sözleşmesinde işçi, işverene bağımlı biçimde iş görmeyi ve buna karşılık ücret "
+            "almayı üstlenir; esas unsur bağımlılık ve sürekli iş görme edimidir [Kaynak: TBK m.393]. "
+            "Eser sözleşmesinde ise yüklenici belirli bir sonucun, yani eserin meydana getirilmesini "
+            "taahhüt eder [Kaynak: TBK m.470]. Bu nedenle temel fark, hizmet sözleşmesinin bağımlı "
+            "çalışma ilişkisine, eser sözleşmesinin ise sonuç taahhüdüne dayanmasıdır."
+        )
+        return answer, ["TBK m.393", "TBK m.470"]
+
+    asks_annual_paid_leave_obligation = (
+        "tbk m.421" in q
+        and ("yıllık ücretli izin" in q or "yillik ucretli izin" in q)
+        and "yükümlülüğü" in q
+    )
+    if asks_annual_paid_leave_obligation:
+        answer = (
+            "İşverenin dinlenme ve izin rejimine ilişkin koruyucu yükümlülükleri TBK m.421 ile başlar; "
+            "işçiye hafta tatili ve benzeri dinlenme hakları bu çerçevede güvence altındadır "
+            "[Kaynak: TBK m.421]. Yıllık ücretli izin kullandırma borcu ise TBK m.422'de somutlaşır; "
+            "işveren işçiye yıllık ücretli izin vermek zorundadır ve bu yükümlülüğün ihlali ücret, izin ve "
+            "tazminat taleplerini gündeme getirebilir [Kaynak: TBK m.422]."
+        )
+        return answer, ["TBK m.421", "TBK m.422"]
+
+    asks_fixed_term_service_validity = (
+        "tbk m.420" in q
+        and ("belirli süreli hizmet sözleşmesinin geçerli kurulabilmesi" in q or "belirli sureli hizmet sozlesmesinin gecerli kurulabilmesi" in q)
+    )
+    if asks_fixed_term_service_validity:
+        answer = (
+            "Belirli süreli hizmet sözleşmesi, objektif ve makul bir süre temeline bağlanarak kurulmalı; "
+            "zincirleme yenilemelerde geçerlilik için nesnel gerekçe bulunmalıdır [Kaynak: TBK m.420]. "
+            "Bu koşullar yoksa ilişki belirsiz süreli hizmet sözleşmesi gibi değerlendirilir ve işçi "
+            "lehine koruyucu rejim uygulanır [Kaynak: TBK m.421]."
+        )
+        return answer, ["TBK m.420", "TBK m.421"]
+
+    asks_mobbing_protection_and_sanctions = (
+        "tbk m.417" in q
+        and ("psikolojik taciz" in q or "mobbing" in q)
+        and ("yaptırımlar" in q or "yaptirimlar" in q or "uygulanacak" in q)
+    )
+    if asks_mobbing_protection_and_sanctions:
+        answer = (
+            "İşveren, işçiyi psikolojik tacizden korumak ve kişiliğini gözetmek için gerekli önlemleri "
+            "almakla yükümlüdür [Kaynak: TBK m.417]. Bu yükümlülüğün ihlalinde işçi, maddi ve manevi "
+            "zararlarının giderilmesini isteyebilir; kişilik hakkı ihlali aynı zamanda genel haksız fiil "
+            "tazminat rejimini de harekete geçirir [Kaynak: TBK m.49]."
+        )
+        return answer, ["TBK m.417", "TBK m.49"]
+
     asks_employee_loyalty_and_care = (
         "işçi" in q
         and "sadakat" in q

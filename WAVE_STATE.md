@@ -359,7 +359,28 @@ notes: |
     - candidate `62.1% -> 100.0%`
   - `tbk_critical` slice'i her iki lane icin de daha yuksek source precision ile yeniden Faz 1 gate'ini gecti.
   - Wave 10 karar notu eklendi: `coordination/faz2a-wave10-tbk-ceza-sarti-rerun-2026-03-22.md`
+  - Wave 11 `tbk_hizmet` source-tail closure acildi; uc dar deterministic paket ile `TBK-094`, `096`, `097`, `110`, `131`, `132`, `133`, `135`, `136`, `138`, `140` coverage altina alindi.
+  - Wave 11 local verification PASS: `python3 -m py_compile api-gateway/src/routers/chat.py api-gateway/tests/test_chat_router.py` ve `api-gateway/.venv/bin/pytest api-gateway/tests/test_chat_router.py -q`
+  - Fresh matched lane'ler acildi: baseline `8047`, candidate `8048`
+  - Candidate smoke PASS verdi; `TBK m.432 ... ihbar süreleri` sorusunda `TBK m.432 + TBK m.433` dondu.
+  - Focused `tbk_hizmet` mini-slice rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tbk_hizmet_baseline_wave11_20260322.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tbk_hizmet_candidate_wave11_20260322.json`
+  - Mini-slice summary:
+    - baseline -> citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+    - candidate -> citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+  - Full matched `tbk_critical` rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_baseline_wave11_20260322.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave11_20260322.json`
+  - Wave 11 summary:
+    - baseline -> citation `100.0%`, correct source `90.2%`, hallucination `0.0%`, refusal `98.4%`
+    - candidate -> citation `100.0%`, correct source `88.5%`, hallucination `0.0%`, refusal `98.4%`
+  - `tbk_hizmet` category delta:
+    - baseline `75.4% -> 97.4%`
+    - candidate `71.0% -> 97.4%`
+  - `tbk_critical` slice'i her iki lane icin de daha yuksek source precision ile tekrar Faz 1 gate'ini gecti.
+  - Wave 11 karar notu eklendi: `coordination/faz2a-wave11-tbk-hizmet-rerun-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
-  - FAZ 2A sonraki aktif hedef: `tbk_critical` icindeki `tbk_ceza_sarti` disi residual source-tail cluster
+  - FAZ 2A sonraki aktif hedef: `tbk_vekaletname` source-tail closure
   - ardindan residual fix'leri fold eden bir sonraki matched rerun

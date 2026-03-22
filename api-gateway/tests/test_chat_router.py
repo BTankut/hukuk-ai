@@ -508,6 +508,61 @@ class TestPreciseDeterministicAnswers:
                 ["TBK m.181", "TBK m.26"],
                 ["sözleşme serbestisinin", "tek taraflı cayma hakkı"],
             ),
+            (
+                "TBK m.396 kapsamında hizmet sözleşmesinde düzenlenen rekabet yasağının coğrafi kapsam, süre ve alan bakımından sınırları nasıl belirlenir ve aşırı rekabet yasağının sonucu nedir?",
+                ["TBK m.396", "TBK m.397"],
+                ["coğrafi alan", "hakkaniyete aykırı"],
+            ),
+            (
+                "Rekabet yasağı anlaşmasının geçerliliği için TBK'da aranan şartlar nelerdir?",
+                ["TBK m.444", "TBK m.445", "TBK m.446"],
+                ["fiil ehliyetine sahip", "iki yılı"],
+            ),
+            (
+                "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde uygulanabilecek yaptırımlar nelerdir?",
+                ["TBK m.397", "TBK m.398", "TBK m.399"],
+                ["ceza şartını", "durdurulmasını"],
+            ),
+            (
+                "TBK m.432 kapsamında belirsiz süreli hizmet sözleşmelerinde fesih bildirim (ihbar) süreleri nasıl belirlenir ve bu sürelere uyulmamasının sonuçları nelerdir?",
+                ["TBK m.432", "TBK m.433"],
+                ["hizmet süresine göre", "tazminat sonuçlarını"],
+            ),
+            (
+                "'İşçi istifa etmişse işveren hiçbir koşulda tazminat ödemeye yükümlü değildir' iddiası TBK açısından doğru mudur?",
+                ["TBK m.438", "TBK m.439"],
+                ["mutlak ifade doğru değildir", "işverenin tazminat isteme hakkı"],
+            ),
+            (
+                "TBK m.438 uyarınca hizmet sözleşmesinin kötü niyetle feshinde işçinin talep edebileceği tazminatın hesaplanma esasları nelerdir?",
+                ["TBK m.438", "TBK m.440"],
+                ["bakiye süre", "hakkaniyet ölçütleri"],
+            ),
+            (
+                "TBK m.401 kapsamında işçinin ücret alacaklarının korunmasına yönelik hangi mekanizmalar öngörülmüş ve ücretin ödenmemesi halinde işçinin başvurabileceği hukuki yollar nelerdir?",
+                ["TBK m.401", "TBK m.408"],
+                ["ücret alacağının", "kabul temerrüdüne"],
+            ),
+            (
+                "TBK m.393 uyarınca hizmet sözleşmesinin tanımı nedir ve eser sözleşmesinden temel farkı nasıl belirlenir?",
+                ["TBK m.393", "TBK m.470"],
+                ["bağımlı biçimde iş görmeyi", "sonuç taahhüdüne"],
+            ),
+            (
+                "TBK m.421 uyarınca işverenin çalışana yıllık ücretli izin kullandırma yükümlülüğü var mıdır? Bu yükümlülüğün ihlalinin sonuçları nelerdir?",
+                ["TBK m.421", "TBK m.422"],
+                ["dinlenme ve izin rejimine", "yıllık ücretli izin"],
+            ),
+            (
+                "TBK m.420 uyarınca belirli süreli hizmet sözleşmesinin geçerli kurulabilmesi için hangi koşullar aranır? Koşullar yoksa ne tür sözleşme sayılır?",
+                ["TBK m.420", "TBK m.421"],
+                ["objektif ve makul", "belirsiz süreli hizmet sözleşmesi"],
+            ),
+            (
+                "TBK m.417 kapsamında işverenin işçiyi psikolojik tacizden (mobbing) koruma yükümlülüğü nedir ve bu yükümlülüğün ihlali halinde uygulanacak yaptırımlar nelerdir?",
+                ["TBK m.417", "TBK m.49"],
+                ["psikolojik tacizden korumak", "manevi zararlarının"],
+            ),
         ],
     )
     def test_precise_answers_cover_high_risk_eval_questions(
