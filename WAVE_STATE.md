@@ -206,6 +206,12 @@ notes: |
   - Refusal-fix summary: citation `79.6%`, correct source `68.6%`, hallucination `6.1%`, refusal `100.0%`, avg response `16268 ms`, error `1`
   - `TBK-019` duzeldi, ama sonraki blocker `TBK-044` ve genel-law cluster hallucination/source drift oldu.
   - Refusal-fix notu eklendi: `coordination/refusal-fix-ttk-rerun-2026-03-22.md`
+  - `TBK-044` deterministic precise-answer ile `TBK m.166`'ya anchorlandi.
+  - `TBK-044` smoke PASS verdi; citation=`TBK m.166`
+  - `TBK-044` fix full rerun tamamlandi: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_tbk044_fix_20260322.json`
+  - `TBK-044` fix summary: citation `79.2%`, correct source `70.7%`, hallucination `2.1%`, refusal `97.9%`, avg response `15428 ms`, error `2`
+  - Bu run ile `correct source` Faz 1 barini gecti; kalan tek sert gate `citation`
+  - `TBK-044` fix notu eklendi: `coordination/tbk044-fix-rerun-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
   - dgx1 lane uzerinde citation/source precision iyilestirmesi.

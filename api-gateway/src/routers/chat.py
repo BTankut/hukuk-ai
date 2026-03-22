@@ -144,6 +144,19 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.1", "TBK m.2", "TBK m.3"]
 
+    asks_joint_debt_release = (
+        "müteselsil borçluluk" in q
+        and ("ifa" in q or "ifa et" in q)
+        and ("diğerlerini kurtar" in q or "digerlerini kurtar" in q)
+    )
+    if asks_joint_debt_release:
+        answer = (
+            "Evet. TBK m.166 uyarınca müteselsil borçlulardan biri borcun tamamını ifa ederse, "
+            "borç sona erer ve diğer müteselsil borçlular da alacaklıya karşı borçtan kurtulur "
+            "[Kaynak: TBK m.166]."
+        )
+        return answer, ["TBK m.166"]
+
     return None
 
 

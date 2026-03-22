@@ -32,6 +32,7 @@ from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
     ConversationMessage,
+    _build_precise_tbk_answer,
     _detect_scope_refusal_reason,
     _build_multiturn_query,
     _stream_sse_response,
@@ -244,6 +245,18 @@ class TestScopeRefusalDetection:
             "TCK m.141 neyi düzenler?"
         )
         assert reason == "Türk Ceza Kanunu (TCK)"
+
+
+class TestPreciseDeterministicAnswers:
+
+    def test_joint_debt_release_answer_anchors_to_tbk_166(self):
+        precise = _build_precise_tbk_answer(
+            "Müteselsil borçlulukta borçlulardan birinin ifası diğerlerini kurtarır mı?"
+        )
+        assert precise is not None
+        answer, citations = precise
+        assert citations == ["TBK m.166"]
+        assert "TBK m.166" in answer
 
 
 # ---------------------------------------------------------------------------
