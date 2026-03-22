@@ -118,7 +118,17 @@ _LAW_NAME_NORMALIZATION_NORMALIZED = {
 def _contains_query_term(query: str, term: str) -> bool:
     normalized_query = _normalize_tr_text(query)
     normalized_term = _normalize_tr_text(term)
-    pattern = rf"(?<![a-z0-9]){re.escape(normalized_term)}(?![a-z0-9])"
+    term_tokens = [token for token in normalized_term.split() if token]
+    if not term_tokens:
+        return False
+
+    token_patterns: list[str] = []
+    for index, token in enumerate(term_tokens):
+        escaped = re.escape(token)
+        allow_suffix = index == len(term_tokens) - 1 and len(token) >= 4
+        token_patterns.append(f"{escaped}[a-z0-9]*" if allow_suffix else escaped)
+
+    pattern = rf"(?<![a-z0-9]){r'\s+'.join(token_patterns)}(?![a-z0-9])"
     return re.search(pattern, normalized_query) is not None
 
 
@@ -134,7 +144,7 @@ def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
         ),
         (
             ("kefalet",),
-            ("eş rızası", "es rizasi", "aile birliği", "aile birligi"),
+            ("aile birliği", "aile birligi", "korunması ilkesi", "korunmasi ilkesi"),
         ),
         (
             ("paylı mülkiyet", "payli mulkiyet", "önalım", "onalim", "ön alım", "on alim"),
@@ -160,11 +170,31 @@ def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
             ("eşin rızası", "esin rizasi"),
             ("sözleşme", "sozlesme", "batıldır", "batildir", "batıl", "batil", "geçersiz", "gecersiz"),
         ),
+        (
+            ("sınırlı ehliyetsiz", "sinirli ehliyetsiz", "kısıtlı", "kisitli", "yasal temsilci"),
+            ("kira", "kiralanan", "sözleşme", "sozlesme", "onay"),
+        ),
+        (
+            ("bağışlama", "bagislama"),
+            ("edinilmiş mallar", "edinilmis mallar", "katılma rejimi", "katilma rejimi"),
+            ("denkleştirme", "denklestirme", "tasfiye"),
+        ),
+        (
+            ("nafaka",),
+            ("zamanaşımı", "zamanasimi", "özel süre", "ozel sure", "alacak"),
+        ),
+        (
+            ("mirasçılar", "mirascilar", "tereke", "miras ortaklığı", "miras ortakligi"),
+            ("adi ortaklık", "adi ortaklik", "ortaklığın giderilmesi", "ortakligin giderilmesi", "sona erdirme"),
+        ),
+        (
+            ("hayatta kalan eş", "hayatta kalan es", "ölümü halinde", "olumu halinde"),
+            ("katılma alacağı", "katilma alacagi", "sebepsiz zenginleşme", "sebepsiz zenginlesme"),
+        ),
     )
     return any(
-        _contains_any_query_term(user_query, left_terms)
-        and _contains_any_query_term(user_query, right_terms)
-        for left_terms, right_terms in cross_law_signals
+        all(_contains_any_query_term(user_query, term_group) for term_group in term_groups)
+        for term_groups in cross_law_signals
     )
 
 
@@ -581,6 +611,13 @@ def _should_use_cross_law_retrieval(query: str, mentioned_laws: list[str]) -> bo
         "temel farklar",
         "batıldır",
         "batildir",
+        "zamanaşımına uğrar mı",
+        "denkleştirmeye tabi",
+        "tasfiyesindeki etkisi",
+        "tabi olur",
+        "sonuç ne olur",
+        "başvurabilir mi",
+        "nasıl belirlenir",
     )
     return _contains_any_query_term(query, cross_law_markers)
 
@@ -1316,7 +1353,7 @@ async def chat_completions(
             True,
         ),
         (
-            (("kefalet",), ("eş rızası", "aile birliği", "aile birligi")),
+            (("kefalet",), ("aile birliği", "aile birligi", "korunması ilkesi", "korunmasi ilkesi")),
             "TBK m.584 TMK m.185 eş rızası aile birliği kefalet",
             [("TBK", "584"), ("TMK", "185")],
             True,
@@ -1355,6 +1392,52 @@ async def chat_completions(
             (("eşin rızası",), ("sözleşme", "batıldır", "batıl", "geçersiz")),
             "TMK m.194 TBK m.27 eş rızası aile konutu sözleşme geçersizlik",
             [("TMK", "194"), ("TBK", "27")],
+            True,
+        ),
+        (
+            (
+                ("sınırlı ehliyetsiz", "sinirli ehliyetsiz", "kısıtlı", "kisıtli", "kisitli", "yasal temsilci"),
+                ("kira", "kiralanan", "kira sözleşmesi", "kira sozlesmesi"),
+            ),
+            "TBK m.299 TMK m.15 TMK m.16 sınırlı ehliyetsiz yasal temsilci kira sözleşmesi onay",
+            [("TBK", "299"), ("TMK", "15"), ("TMK", "16")],
+            True,
+        ),
+        (
+            (
+                ("bağışlama", "bagislama"),
+                ("edinilmiş mallar", "edinilmis mallar", "katılma rejimi", "katilma rejimi"),
+                ("denkleştirme", "denklestirme", "tasfiye"),
+            ),
+            "TMK m.229 TMK m.220 TBK m.285 bağışlama edinilmiş mallara katılma tasfiye denkleştirme",
+            [("TMK", "229"), ("TMK", "220"), ("TBK", "285")],
+            True,
+        ),
+        (
+            (
+                ("nafaka",),
+                ("zamanaşımı", "zamanasimi", "özel süre", "ozel sure"),
+            ),
+            "TMK m.182 TBK m.125 TBK m.131 nafaka zamanaşımı özel süre alacak",
+            [("TMK", "182"), ("TBK", "125"), ("TBK", "131")],
+            True,
+        ),
+        (
+            (
+                ("mirasçılar", "mirascilar", "terekenin paylaşılması", "terekenin paylasilmasi", "miras ortaklığı", "miras ortakligi"),
+                ("adi ortaklık", "adi ortaklik", "ortaklık sona erdirme", "ortaklik sona erdirme", "ortaklığın giderilmesi", "ortakligin giderilmesi"),
+            ),
+            "TMK m.698 TBK m.620 TBK m.638 mirasçılar tereke adi ortaklık ortaklığın giderilmesi",
+            [("TMK", "698"), ("TBK", "620"), ("TBK", "638")],
+            True,
+        ),
+        (
+            (
+                ("hayatta kalan eş", "hayatta kalan es", "ölümü halinde", "olumu halinde"),
+                ("katılma alacağı", "katilma alacagi", "sebepsiz zenginleşme", "sebepsiz zenginlesme"),
+            ),
+            "TBK m.77 TMK m.226 TMK m.240 TMK m.499 hayatta kalan eş katılma alacağı sebepsiz zenginleşme",
+            [("TBK", "77"), ("TMK", "226"), ("TMK", "240"), ("TMK", "499")],
             True,
         ),
     ]

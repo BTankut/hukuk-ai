@@ -2,14 +2,28 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-22T18:09:40+03:00
-last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_175651.json
-next_action: "source-lock fallback kilitlendi; siradaki is query-aware excerpt/precision wave ile hallucination'i 10% altina indirmek"
+last_activity: 2026-03-22T19:10:00+03:00
+last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_185613.json
+next_action: "anchored cross-law sorularinda source-lock citation count'ini 3-4 kaynaga cikarmak; kalan blocker artik source coverage"
 blockers:
-  - "source-lock wave source precisioni yukseltti ama hem baseline hem candidate hallucination hala 10% ustunde"
-  - "candidate correct_source artik baseline'a cok yakin, ancak hala anlamli ustunluk yok"
+  - "candidate tmk_cross_law correct_source wave5 sonunda 62.8%; gate halen 70% altinda"
+  - "022/025 hallucination kapandi ama 3+ expected source cluster'larinda ucuncu/dorduncu kaynak eksik kaliyor"
 notes: |
   ## FAZ 2A Durumu
+
+  - Wave 5 inflection-aware matcher tamamladi:
+    - Turkce cekimli ifade sonlarinda (`katilma rejiminin`, `zamanaasimina`, `denklestirmeye`) kok/sonek toleransli eslesme aktif
+    - kisa-token false-positive guard korundu
+    - `kefalet + es rizasi` TMK anchor'i yeniden daraltilarak yalniz `aile birligi / korunmasi ilkesi` ailesine baglandi
+  - Wave 5 fresh rerun sonuclari:
+    - baseline (`8032`): citation `100.0%`, correct source `59.4%`, hallucination `3.3%`, refusal `100.0%`
+    - candidate (`8034`, t300 clean rerun): citation `100.0%`, correct source `62.8%`, hallucination `0.0%`, refusal `100.0%`
+  - En kritik kazanim:
+    - `TMK-CL-022` ve `TMK-CL-025` hallucination sinifindan cikti; forced-article trace'i artik doluyor
+  - Sonuc:
+    - retrieval precision / matcher sorunu buyuk olcude kapandi
+    - kalan ana blocker, anchored cross-law sorularda eksik 3./4. citation coverage
+  - Bu dalganin karar notu: `coordination/faz2a-wave5-inflection-matcher-rerun-2026-03-22.md`
 
   - FAZ 2A kickoff/freeze kapandi; trace destekli fresh diagnostic lane'ler yeniden kuruldu.
   - Turkce karakter uyumu artik tek tek keyword ekleyerek degil, merkezi normalizasyon yardimcilariyla yonetiliyor.

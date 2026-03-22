@@ -120,3 +120,37 @@ def test_orchestrator_source_locks_when_answer_cites_only_non_priority_source():
     assert response.answer.startswith("Bu soru bakımından doğrudan değerlendirilmesi gereken")
     assert "[Kaynak: TBK m.299]" in response.answer
     assert "[Kaynak: TMK m.683]" in response.answer
+
+
+def test_orchestrator_source_locks_when_answer_mixes_one_priority_with_wrong_sources():
+    guardrails = DummyGuardrails()
+    llm = DummyPassthroughLLMClient(
+        "Eş rızası gerekir. [Kaynak: TBK m.584] [Kaynak: TMK m.158] [Kaynak: TMK m.244]"
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="Evli bir kişinin kefalet sözleşmesi yapmasında eş rızası şartı aile birliğiyle nasıl ilişkilidir?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="TBK m.584 eşin yazılı rızası olmadan kefaletin geçerlilik kazanmayacağını düzenler.",
+                    citation="TBK m.584",
+                ),
+                RetrievedChunk(
+                    text="TMK m.185 eşlerin birlikte yaşama ve aile birliğini koruma yükümünü düzenler.",
+                    citation="TMK m.185",
+                ),
+                RetrievedChunk(
+                    text="TMK m.244 mal ayrılığı rejimine ilişkindir.",
+                    citation="TMK m.244",
+                ),
+            ],
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["TBK m.584", "TMK m.185"]
+    assert "source_lock_fallback" in response.guardrails_reasons
+    assert "[Kaynak: TBK m.584]" in response.answer
+    assert "[Kaynak: TMK m.185]" in response.answer

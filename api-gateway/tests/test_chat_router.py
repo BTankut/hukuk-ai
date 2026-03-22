@@ -32,6 +32,7 @@ from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
     ConversationMessage,
+    _contains_query_term,
     _extract_explicit_article_refs,
     _extract_law_mentions,
     _should_use_cross_law_retrieval,
@@ -266,6 +267,22 @@ class TestScopeRefusalDetection:
 
 class TestLawSignalParsing:
 
+    def test_contains_query_term_matches_inflected_turkish_phrase_endings(self):
+        assert _contains_query_term(
+            "Eşler arasında yapılan bağışlamanın edinilmiş mallara katılma rejiminin tasfiyesindeki etkisi nasıldır?",
+            "katılma rejimi",
+        ) is True
+        assert _contains_query_term(
+            "Nafaka yükümlülüğü zamanaşımına uğrar mı?",
+            "zamanaşımı",
+        ) is True
+
+    def test_contains_query_term_keeps_short_token_false_positive_guard(self):
+        assert _contains_query_term(
+            "Babam taşınmazını bana sattı; ancak gerçekte bağışlamak istediğini düşünüyorum.",
+            "çek",
+        ) is False
+
     def test_extract_explicit_article_refs_expands_ranges(self):
         refs = _extract_explicit_article_refs(
             "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde ne olur?"
@@ -292,6 +309,20 @@ class TestLawSignalParsing:
         )
         assert laws == ["TBK", "TMK"]
 
+    def test_extract_law_mentions_infers_tbk_tmk_for_nafaka_zamanasimi_family(self):
+        laws = _extract_law_mentions(
+            "Aile hukukunda öngörülen nafaka yükümlülüğü sözleşmeden doğan alacak gibi "
+            "zamanaşımına uğrar mı, özel bir süre var mıdır?"
+        )
+        assert laws == ["TBK", "TMK"]
+
+    def test_extract_law_mentions_infers_tbk_tmk_for_bagislama_tasfiye_family(self):
+        laws = _extract_law_mentions(
+            "Eşler arasında yapılan bağışlamanın edinilmiş mallara katılma rejiminin "
+            "tasfiyesindeki etkisi nasıldır? Bu bağışlama denkleştirmeye tabi midir?"
+        )
+        assert laws == ["TBK", "TMK"]
+
     def test_cross_law_retrieval_enabled_for_joint_scope_queries(self):
         laws = ["TBK", "TMK"]
         assert _should_use_cross_law_retrieval(
@@ -304,6 +335,14 @@ class TestLawSignalParsing:
         assert _should_use_cross_law_retrieval(
             "Eşin rızası alınmadan yapılan her sözleşme TMK m.194 gereği otomatik olarak "
             "batıldır ifadesi hukuken doğru mudur?",
+            laws,
+        ) is True
+
+    def test_cross_law_retrieval_enabled_for_nafaka_zamanasimi_family(self):
+        laws = ["TBK", "TMK"]
+        assert _should_use_cross_law_retrieval(
+            "Aile hukukunda öngörülen nafaka yükümlülüğü TBK'daki sözleşmeden doğan alacak "
+            "gibi zamanaşımına uğrar mı?",
             laws,
         ) is True
 
@@ -1070,6 +1109,10 @@ class TestLawFilterAndRetrieval:
                 (global_results, stats),
                 (tbk_results, stats),
                 (tmk_results, stats),
+                ([], stats),
+                ([], stats),
+                ([], stats),
+                ([], stats),
             ]
         )
         mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
@@ -1092,7 +1135,7 @@ class TestLawFilterAndRetrieval:
             )
 
         assert resp.status_code == 200
-        assert mock_retriever.retrieve.call_count == 3
+        assert mock_retriever.retrieve.call_count == 7
 
         first_call = mock_retriever.retrieve.call_args_list[0].kwargs
         second_call = mock_retriever.retrieve.call_args_list[1].kwargs

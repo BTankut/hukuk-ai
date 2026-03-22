@@ -223,6 +223,26 @@ class RAGOrchestrator:
         cited = {cls._normalize_citation(citation) for citation in citations if citation}
         return bool(priority & cited)
 
+    @classmethod
+    def _has_partial_priority_mismatch(
+        cls,
+        citations: list[str],
+        priority_chunks: list[RetrievedChunk],
+    ) -> bool:
+        priority = {
+            cls._normalize_citation(chunk.citation)
+            for chunk in priority_chunks
+            if chunk.citation
+        }
+        cited = {cls._normalize_citation(citation) for citation in citations if citation}
+        if len(priority) < 2 or not cited:
+            return False
+
+        overlap = priority & cited
+        missing_priority = priority - cited
+        extra_citations = cited - priority
+        return bool(overlap) and bool(missing_priority) and bool(extra_citations)
+
     @staticmethod
     def _build_chunk_excerpt(text: str, *, max_len: int = 220) -> str:
         compact = re.sub(r"\s+", " ", text).strip()
@@ -282,6 +302,7 @@ class RAGOrchestrator:
             cls._looks_like_generic_assistant_reply(answer)
             or not citations
             or not cls._has_priority_citation_overlap(citations, priority_chunks)
+            or cls._has_partial_priority_mismatch(citations, priority_chunks)
         )
         if not needs_fallback:
             return answer
