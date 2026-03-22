@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-03-22T06:39:43.760592+00:00",
+  "role": "post_train",
+  "eval_family": "faz1-50",
+  "model_ref": "hukuk_ai_sft_qwen35_807",
+  "checkpoint_ref": "dgx1_merged_8009_precision_fix",
+  "git_commit": "working_tree_precision_fix",
+  "runner": "eval_runner",
+  "train_package_sha": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+  "report_path": "evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_precision_fix_20260322.json",
+  "report_sha256": "c9dc747017d207635ddd49a58fff95670b15c7fa3f0d9e3447c779ac8b916390",
+  "report_meta": {
+    "generated_at": "2026-03-22T06:31:34.383259+00:00",
+    "questions_source": "configs/evaluation/test_questions.json",
+    "api_url": "http://127.0.0.1:8009",
+    "mock_mode": false,
+    "total_questions": 50,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "post_train",
+    "eval_family": "faz1-50",
+    "model_ref": "hukuk_ai_sft_qwen35_807",
+    "checkpoint_ref": "dgx1_merged_8009_precision_fix",
+    "git_commit": "working_tree_precision_fix",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 180.0
+    }
+  },
+  "notes": ""
+}

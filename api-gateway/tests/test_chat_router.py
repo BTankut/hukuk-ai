@@ -267,6 +267,11 @@ class TestPreciseDeterministicAnswers:
                 ["ayın son günü", "kiraya verene"],
             ),
             (
+                "Kira bedelinin yıllık artışında TBK hangi sınırlamayı öngörmektedir?",
+                ["TBK m.344"],
+                ["TÜFE", "on iki aylık ortalamalara göre değişim oranını"],
+            ),
+            (
                 "TBK'ya göre kefalet sözleşmesi hangi şekil şartlarına tabidir ve geçerlilik koşulları nelerdir?",
                 ["TBK m.582", "TBK m.583", "TBK m.584"],
                 ["yazılı", "kendi el yazısıyla"],
@@ -300,6 +305,11 @@ class TestPreciseDeterministicAnswers:
                 "Borçlunun sorumlu olmadığı sonraki imkânsızlık (ifa imkânsızlığı) durumunda borç sona erer mi?",
                 ["TBK m.136"],
                 ["sona erer", "sebepsiz zenginleşme"],
+            ),
+            (
+                "Geri alma hakkı saklı tutulan bağışlamada bağışlayan hangi hallerde bağışlamayı geri alabilir?",
+                ["TBK m.295"],
+                ["ağır bir suç", "yüklemeyi yerine getirmemişse"],
             ),
             (
                 "Borcun üstlenilmesi (nakli) sözleşmesinde alacaklının rızası gerekir mi?",

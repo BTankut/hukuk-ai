@@ -157,6 +157,20 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.299", "TBK m.314"]
 
+    asks_rent_increase_limit = (
+        "kira bedelinin yıllık artışında" in q
+        and "hangi sınırlamayı" in q
+    )
+    if asks_rent_increase_limit:
+        answer = (
+            "TBK m.344'e göre yenilenen kira dönemlerinde uygulanacak kira bedeline ilişkin "
+            "anlaşmalar, bir önceki kira yılında TÜFE on iki aylık ortalamalara göre değişim "
+            "oranını geçmemek koşuluyla geçerlidir [Kaynak: TBK m.344]. Taraflar anlaşmamışsa da "
+            "hâkim aynı üst sınırı dikkate alarak kira bedelini belirler; beş yıldan uzun süreli "
+            "konut ve diğer kira ilişkilerinde emsal kira bedelleri de gözetilir [Kaynak: TBK m.344]."
+        )
+        return answer, ["TBK m.344"]
+
     asks_housing_lease_termination = (
         "konut kiralarında" in q
         and ("sona erdirilmesi" in q or "tahliye" in q)
@@ -286,6 +300,20 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
             "iade eder [Kaynak: TBK m.136]."
         )
         return answer, ["TBK m.136"]
+
+    asks_donation_revocation = (
+        "geri alma hakkı saklı tutulan bağışlama" in q
+        and "bağışlamayı geri alabilir" in q
+    )
+    if asks_donation_revocation:
+        answer = (
+            "Bağışlayan, bağışlanan kendisine veya yakınlarından birine karşı ağır bir suç "
+            "işlemişse, bağışlayana ya da onun ailesinden bir kimseye karşı kanundan doğan aile "
+            "ödevlerine ve yükümlülüklerine önemli ölçüde aykırı davranmışsa veya yüklemeli "
+            "bağışlamada haklı bir sebep olmaksızın yüklemeyi yerine getirmemişse bağışlamayı geri "
+            "alabilir [Kaynak: TBK m.295]."
+        )
+        return answer, ["TBK m.295"]
 
     asks_assumption_of_debt = (
         "borcun üstlenilmesi" in q

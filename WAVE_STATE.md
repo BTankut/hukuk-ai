@@ -219,10 +219,21 @@ notes: |
   - Precision-fix summary: citation `86.0%`, correct source `82.0%`, hallucination `2.0%`, refusal `100.0%`, avg response `10172 ms`, error `0`
   - Bu run ile kullanici hedefi net olarak gecildi: citation `>=80%`, correct source `>=70%`
   - `dgx1` merged lane tekrar Faz 1 kabul barini asti; kalite + stabilite birlikte saglandi.
-  - Kalıntı takip notlari: `TBK-010` beklenmeyen refusal, `TBK-037` hallucination/source fail.
   - Precision-fix karar notu eklendi: `coordination/precision-fix-rerun-2026-03-22.md`
+  - Precision-fix run'i icin evidence manifest donduruldu: `evaluation/reports/evidence_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_precision_fix_20260322.json`
+  - Precision-fix promotion gate tekrar calistirildi ve `READY` verdi.
+  - `dgx1` merged lane cleanup'i icin deterministic precise-answer kapsami `TBK-010` ve `TBK-037` ile daha da genisletildi.
+  - Cleanup smoke kontrolleri `127.0.0.1:8010` lane'inde PASS verdi (`TBK-010`, `TBK-037`).
+  - Post-promotion cleanup full rerun tamamlandi: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_post_promotion_cleanup_20260322.json`
+  - Cleanup rerun summary: citation `88.0%`, correct source `86.0%`, hallucination `0.0%`, refusal `100.0%`, avg response `9116 ms`, error `0`
+  - Bu run, precision-fix artefact'ini da geride birakarak `dgx1` lane icin yeni resmi post-train artefact oldu.
+  - Cleanup run'i icin evidence manifest donduruldu: `evaluation/reports/evidence_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_post_promotion_cleanup_20260322.json`
+  - Cleanup promotion gate tekrar calistirildi ve `READY` verdi.
+  - Resmi promotion sonucu kaydi eklendi: `coordination/dgx1-posttrain-promotion-result-2026-03-22.md`
+  - Serving lane karari guncellendi: `dgx1` merged primary, `node3` merged fallback/debug.
+  - Serving lane karar notu eklendi: `coordination/dgx1-merged-serving-decision-2026-03-22.md`
+  - `dgx1` launcher varsayilan remote host'u IP'ye pinlendi: `scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh`
 
   ### Sonraki Beklenen Çıktı
-  - `TBK-010` ve `TBK-037` icin dar kapsamli cleanup.
-  - node1/node3 merged serving lane nihai tercih karari.
-  - promotion sonucu ile Faz 1 canli latency farkinin net karar kaydi.
+  - explicit production cutover karari alinacaksa `baseline` lane ile `dgx1` promoted candidate arasinda ayrik rollout plani.
+  - istenirse kalan dusuk-oncelikli slice'lar (`tbk_ceza_sarti`, `tbk_vekaletname`) icin ek precision wave.
