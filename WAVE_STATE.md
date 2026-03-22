@@ -2,12 +2,12 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-22T17:18:19+03:00
-last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_170327.json
-next_action: "tmk_cross_law icin retrieval-normalization dalgasi kilitlendi; siradaki is source-locking ve answer-discipline hardening"
+last_activity: 2026-03-22T18:09:40+03:00
+last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_175651.json
+next_action: "source-lock fallback kilitlendi; siradaki is query-aware excerpt/precision wave ile hallucination'i 10% altina indirmek"
 blockers:
-  - "fresh tmk_cross_law rerun'da candidate correct_source baseline'i gecemedi; ana blocker artik retrieval recall degil wrong-source ve answer-discipline"
-  - "candidate lane'de TMK-CL-002 generic assistant blob ve TMK-CL-015 timeout gozlendi"
+  - "source-lock wave source precisioni yukseltti ama hem baseline hem candidate hallucination hala 10% ustunde"
+  - "candidate correct_source artik baseline'a cok yakin, ancak hala anlamli ustunluk yok"
 notes: |
   ## FAZ 2A Durumu
 
@@ -20,6 +20,14 @@ notes: |
     - candidate (`8019`): citation `93.1%`, correct source `46.6%`, hallucination `17.2%`, refusal `100.0%`, error `1`
   - Sonuc: retrieval-normalization dalgasi candidate'i baseline ustune tasimadi; baskin kalan is source-locking / answer-discipline.
   - Bu dalganin karar notu: `coordination/faz2a-wave2-normalized-anchor-rerun-2026-03-22.md`
+  - Source-lock wave eklendi:
+    - LLM client stringified wrapper output'u parse ediyor
+    - orchestrator generic/no-citation cevaplarda top-priority chunk'lar uzerinden dar source-lock fallback uretiyor
+  - Fresh source-lock `tmk_cross_law` rerun sonuclari:
+    - baseline (`8020`): citation `100.0%`, correct source `56.0%`, hallucination `13.8%`, refusal `100.0%`, error `1`
+    - candidate (`8022`): citation `100.0%`, correct source `55.6%`, hallucination `13.3%`, refusal `100.0%`, error `0`
+  - Sonuc: source precision yaklasik `+9` puan iyilesti, no-citation/wrapper sinifi kapandi; ancak FAZ 2A hala acik cunku hallucination tavani asiliyor ve candidate baseline'i anlamli bicimde gecemiyor.
+  - Bu dalganin karar notu: `coordination/faz2a-wave3-source-lock-rerun-2026-03-22.md`
 
   ## Faz 1.5 Kapanis Durumu
 

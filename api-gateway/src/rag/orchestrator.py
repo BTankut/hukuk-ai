@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -9,6 +10,12 @@ from guardrails.pipeline import GuardrailsPipeline
 from llm.client import LLMClient
 
 logger = logging.getLogger(__name__)
+
+_GENERIC_ASSISTANT_HINTS = (
+    "hello! i'm your helpful ai assistant",
+    "what would you like to know or discuss today",
+    "ready to chat and share specific details",
+)
 
 
 @dataclass(slots=True)
@@ -113,6 +120,16 @@ class RAGOrchestrator:
         reasons = guardrails_result.reasons
         verification_dict: dict[str, Any] | None = None
 
+        if not blocked:
+            source_locked_answer = self._maybe_source_lock_answer(
+                answer=final_answer,
+                retrieved_chunks=retrieved_chunks,
+            )
+            if source_locked_answer != final_answer:
+                final_answer = source_locked_answer
+                citations = extract_citations(final_answer)
+                reasons = reasons + ["source_lock_fallback"]
+
         # Verification Engine (Backlog #6)
         if self._verification_engine and not blocked:
             context_dicts = [c.to_guardrails_dict() for c in retrieved_chunks]
@@ -159,3 +176,115 @@ class RAGOrchestrator:
             # numeric prefix KULLANILMIYOR — sadece kaynak etiketi.
             formatted.append(f"[Kaynak: {citation}]\n{chunk.text}")
         return "\n\n---\n\n".join(formatted)
+
+    @staticmethod
+    def _normalize_citation(citation: str) -> str:
+        normalized = citation.strip()
+        normalized = re.sub(r"\bmd\.\s*", "m.", normalized, flags=re.IGNORECASE)
+        normalized = re.sub(r"\bm\.\s*", "m.", normalized, flags=re.IGNORECASE)
+        normalized = re.sub(r"/f\.\d+$", "", normalized, flags=re.IGNORECASE)
+        return normalized
+
+    @staticmethod
+    def _looks_like_generic_assistant_reply(answer: str) -> bool:
+        lowered = answer.strip().lower()
+        return any(hint in lowered for hint in _GENERIC_ASSISTANT_HINTS)
+
+    @classmethod
+    def _extract_priority_chunks(
+        cls,
+        chunks: list[RetrievedChunk],
+        *,
+        max_chunks: int = 2,
+    ) -> list[RetrievedChunk]:
+        selected: list[RetrievedChunk] = []
+        seen: set[str] = set()
+        for chunk in chunks:
+            citation = cls._normalize_citation(chunk.citation)
+            if not citation or citation in seen:
+                continue
+            selected.append(chunk)
+            seen.add(citation)
+            if len(selected) >= max_chunks:
+                break
+        return selected
+
+    @classmethod
+    def _has_priority_citation_overlap(
+        cls,
+        citations: list[str],
+        priority_chunks: list[RetrievedChunk],
+    ) -> bool:
+        priority = {
+            cls._normalize_citation(chunk.citation)
+            for chunk in priority_chunks
+            if chunk.citation
+        }
+        cited = {cls._normalize_citation(citation) for citation in citations if citation}
+        return bool(priority & cited)
+
+    @staticmethod
+    def _build_chunk_excerpt(text: str, *, max_len: int = 220) -> str:
+        compact = re.sub(r"\s+", " ", text).strip()
+        if len(compact) <= max_len:
+            return compact
+
+        sentences = re.split(r"(?<=[.!?])\s+", compact)
+        excerpt = ""
+        for sentence in sentences:
+            if not sentence:
+                continue
+            candidate = f"{excerpt} {sentence}".strip()
+            if len(candidate) > max_len and excerpt:
+                break
+            excerpt = candidate
+            if len(excerpt) >= max_len:
+                break
+
+        if excerpt:
+            return excerpt[:max_len].rstrip()
+        return compact[:max_len].rstrip()
+
+    @classmethod
+    def _build_source_locked_fallback(
+        cls,
+        chunks: list[RetrievedChunk],
+    ) -> str | None:
+        priority_chunks = cls._extract_priority_chunks(chunks)
+        if not priority_chunks:
+            return None
+
+        intro = (
+            "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:"
+        )
+        lines = [intro]
+        for chunk in priority_chunks:
+            excerpt = cls._build_chunk_excerpt(chunk.text)
+            lines.append(f"- [Kaynak: {chunk.citation}] {excerpt}")
+        return "\n".join(lines)
+
+    @classmethod
+    def _maybe_source_lock_answer(
+        cls,
+        *,
+        answer: str,
+        retrieved_chunks: list[RetrievedChunk],
+    ) -> str:
+        if not retrieved_chunks:
+            return answer
+
+        priority_chunks = cls._extract_priority_chunks(retrieved_chunks)
+        if not priority_chunks:
+            return answer
+
+        citations = extract_citations(answer)
+        needs_fallback = (
+            cls._looks_like_generic_assistant_reply(answer)
+            or not citations
+            or not cls._has_priority_citation_overlap(citations, priority_chunks)
+        )
+        if not needs_fallback:
+            return answer
+
+        fallback = cls._build_source_locked_fallback(priority_chunks)
+        return fallback or answer

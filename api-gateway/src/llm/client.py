@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import ast
+import re
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Any, Sequence
 
 from config import Settings
 
@@ -14,6 +16,8 @@ class ChatMessage:
 
 class LLMClient:
     """DGX üzerinde çalışan OpenAI-compatible vLLM client wrapper'ı."""
+
+    _STRINGIFIED_RESPONSE_RE = re.compile(r"response=(\[[\s\S]*?\])\s+llm_output=")
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -44,7 +48,28 @@ class LLMClient:
             temperature=temperature,
             extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         )
-        return response.choices[0].message.content or ""
+        return self._extract_text(response.choices[0].message.content or "")
+
+    @classmethod
+    def _extract_text(cls, result: Any) -> str:
+        if isinstance(result, str):
+            match = cls._STRINGIFIED_RESPONSE_RE.search(result)
+            if match:
+                try:
+                    payload = ast.literal_eval(match.group(1))
+                except Exception:
+                    payload = None
+                if isinstance(payload, list):
+                    first = payload[0] if payload else None
+                    if isinstance(first, dict):
+                        content = first.get("content")
+                        if isinstance(content, str) and content.strip():
+                            return content
+            return result
+        content = getattr(result, "content", None)
+        if isinstance(content, str) and content.strip():
+            return content
+        return str(result)
 
     @staticmethod
     def _build_no_context_messages(query: str) -> list[ChatMessage]:

@@ -49,3 +49,22 @@ def test_generate_rag_draft_uses_refusal_prompt_without_context() -> None:
     assert "bilgi üretme" in messages[0].content
     assert "Kaynak olmadan yanıt verme" in messages[1].content
     assert "Kıdem tazminatı nasıl hesaplanır?" in messages[1].content
+
+
+def test_extract_text_parses_stringified_response_wrapper() -> None:
+    wrapped = (
+        "response=[{'role': 'assistant', 'content': \"TBK m.584 ve TMK m.185 birlikte "
+        "değerlendirilir. [Kaynak: TBK m.584] [Kaynak: TMK m.185]\"}] "
+        "llm_output=None output_data=None"
+    )
+
+    assert (
+        LLMClient._extract_text(wrapped)
+        == "TBK m.584 ve TMK m.185 birlikte değerlendirilir. [Kaynak: TBK m.584] [Kaynak: TMK m.185]"
+    )
+
+
+def test_extract_text_keeps_plain_string_response() -> None:
+    plain = "TBK m.49 haksız fiili düzenler. [Kaynak: TBK m.49]"
+
+    assert LLMClient._extract_text(plain) == plain
