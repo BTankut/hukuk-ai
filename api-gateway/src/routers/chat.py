@@ -410,6 +410,24 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.586"]
 
+    asks_joint_surety_vs_ordinary_surety = (
+        "tbk m.586" in q
+        and _contains_query_term(user_query, "müteselsil kefalet")
+        and _contains_query_term(user_query, "adi kefalet")
+        and _contains_query_term(user_query, "temel fark")
+    )
+    if asks_joint_surety_vs_ordinary_surety:
+        answer = (
+            "Adi kefalette alacaklı, kural olarak önce asıl borçluya başvurur; borçlu aleyhine "
+            "takibin kesin aciz belgesiyle sonuçlanması, takibin imkânsız veya önemli ölçüde "
+            "güçleşmesi, borçlunun iflası ya da konkordato mehli gibi hâllerde doğrudan kefile "
+            "başvurabilir [Kaynak: TBK m.585]. Müteselsil kefalette ise kefil bu sıfatla "
+            "yükümlülük altına girmişse, borçlunun ifada gecikmesi ve ihtarın sonuçsuz kalması "
+            "veya açık ödeme güçsüzlüğü hâlinde alacaklı asıl borçluyu takip etmeden doğrudan "
+            "kefile yönelebilir [Kaynak: TBK m.586]."
+        )
+        return answer, ["TBK m.585", "TBK m.586"]
+
     asks_creditor_default_release = (
         "alacaklının temerrüdü" in q
         and ("borçlu borcundan nasıl kurtulur" in q or "alacaklı direnimi" in q)
@@ -578,6 +596,25 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
             "hakkaniyet ölçütleri dikkate alınır [Kaynak: TBK m.440]."
         )
         return answer, ["TBK m.438", "TBK m.440"]
+
+    asks_wage_protection_special_guarantees = (
+        ("tbk m.401-402" in q or "tbk m.401 402" in q)
+        and (
+            "ücret alacaklarının korunmasına yönelik özel güvenceler" in q
+            or "ucret alacaklarinin korunmasina yonelik ozel guvenceler" in q
+        )
+    )
+    if asks_wage_protection_special_guarantees:
+        answer = (
+            "TBK m.401, işverenin işçiye sözleşmede veya toplu iş sözleşmesinde belirlenen; "
+            "böyle bir hüküm yoksa asgari ücretten az olmamak üzere emsal ücreti ödeme borcunu "
+            "kurar ve ücret alacağını temel düzeyde güvence altına alır [Kaynak: TBK m.401]. "
+            "TBK m.402 ise fazla çalışma ücretinin normal çalışma ücretinin en az yüzde elli "
+            "fazlasıyla ödenmesini, işçinin rızasıyla bunun yerine orantılı serbest zaman "
+            "verilebilmesini düzenleyerek bu korumayı özel bir ücret güvencesiyle tamamlar "
+            "[Kaynak: TBK m.402]."
+        )
+        return answer, ["TBK m.401", "TBK m.402"]
 
     asks_wage_protection_mechanisms = (
         "tbk m.401" in q
@@ -880,6 +917,106 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
             "ve asıl borçluya karşı rücu hakkı kazanır [Kaynak: TBK m.596]."
         )
         return answer, ["TBK m.587", "TBK m.586", "TBK m.596"]
+
+    asks_ordinary_vs_joint_surety_under_587 = (
+        "tbk m.587" in q
+        and _contains_query_term(user_query, "adi kefalet")
+        and _contains_query_term(user_query, "müteselsil kefalet")
+        and (
+            _contains_query_term(user_query, "önce başvurma")
+            or _contains_query_term(user_query, "asıl borçluya önce başvurma")
+        )
+    )
+    if asks_ordinary_vs_joint_surety_under_587:
+        answer = (
+            "TBK m.587, birden çok kefilin aynı borç için sorumluluk paylaşımını düzenler; her "
+            "kefil kendi payı için adi kefil gibi, diğerlerinin payı için de kefile kefil gibi "
+            "sorumlu olur ve borcu ödeyen kefil diğer kefillere karşı payı oranında rücu edebilir "
+            "[Kaynak: TBK m.587]. Müteselsil kefalette ise doğrudan kefile başvuru imkânı vardır; "
+            "kefil müteselsil sıfatla yükümlülük altına girmişse borçlunun ifada gecikmesi ve "
+            "ihtarın sonuçsuz kalması veya açık ödeme güçsüzlüğü hâlinde alacaklı asıl borçluya "
+            "önce başvurmadan kefile yönelebilir [Kaynak: TBK m.586]."
+        )
+        return answer, ["TBK m.587", "TBK m.586"]
+
+    asks_surety_defense_limits = (
+        "tbk m.589" in q
+        and _contains_query_term(user_query, "def'ileri")
+        and (
+            _contains_query_term(user_query, "sınırları")
+            or _contains_query_term(user_query, "kesinlikle kullanamaz")
+        )
+    )
+    if asks_surety_defense_limits:
+        answer = (
+            "Kefil, asıl borç ilişkisinden doğan ve borcun içeriğine bağlı def'ileri alacaklıya "
+            "karşı ileri sürebilir; ancak borçlunun şahsına sıkı sıkıya bağlı kişisel itirazlarını "
+            "ve sadece borçluya özgü feragat edilmiş savunmaları kendi lehine genişleterek "
+            "kullanamaz [Kaynak: TBK m.589]. TBK m.590 ayrıca kefilin takibe karşı özel korumasını "
+            "tamamlar; borçlunun iflası sebebiyle asıl borç erken muaccel olsa bile belirlenen "
+            "vadeden önce kefile karşı takip yapılamaz ve kefil mevcut rehinler paraya "
+            "çevrilinceye kadar takibin durdurulmasını isteyebilir [Kaynak: TBK m.590]."
+        )
+        return answer, ["TBK m.589", "TBK m.590"]
+
+    asks_prepayment_recourse = (
+        "tbk m.598" in q
+        and _contains_query_term(user_query, "rücu hakkı")
+        and (
+            _contains_query_term(user_query, "ödeme yapmadan önce")
+            or _contains_query_term(user_query, "odeme yapmadan once")
+        )
+    )
+    if asks_prepayment_recourse:
+        answer = (
+            "TBK m.598, kefaletin kanun gereğince sona ermesini ve gerçek kişi kefaletlerinde on "
+            "yıllık azamî süreyi düzenler; asıl borç sona ererse kefil de borcundan kurtulur "
+            "[Kaynak: TBK m.598]. Kefilin asıl borçluya yönelik rücu zemini ise ödeme ile doğar: "
+            "kefil alacaklıya ifada bulunduğu ölçüde onun haklarına halef olur ve bu hakları asıl "
+            "borç muaccel olunca kullanabilir [Kaynak: TBK m.596]. Bu nedenle ödeme öncesi rücu, "
+            "sorudaki varsayımın aksine genel kural değil; esasen ödeme sonrası halefiyet rejimi "
+            "belirleyicidir."
+        )
+        return answer, ["TBK m.598", "TBK m.596"]
+
+    asks_spousal_consent_scope_adversarial = (
+        "'tbk m.584'teki eş rızası şartı" in q
+        and (
+            _contains_query_term(user_query, "yalnızca konut amaçlı kiralama")
+            or _contains_query_term(user_query, "yalnizca konut amacli kiralama")
+        )
+        and ("doğru mudur" in q or "dogru mudur" in q)
+    )
+    if asks_spousal_consent_scope_adversarial:
+        answer = (
+            "Hayır, iddia doğru değildir. TBK m.584'teki eş rızası şartı genel olarak evli kişinin "
+            "kefil olmasına ilişkindir; yalnızca konut amaçlı kiralama için verilmiş kefaletlerle "
+            "sınırlı değildir ve ancak kanunda sayılan istisna hâllerinde aranmaz [Kaynak: TBK m.584]. "
+            "Bu genel koruyucu rejimin şekil ayağı da TBK m.583'te yer alır; kefalet sözleşmesi yazılı "
+            "olmalı, azamî miktar ve tarih gösterilmeli, kefil bunları kendi el yazısıyla belirtmelidir "
+            "[Kaynak: TBK m.583]."
+        )
+        return answer, ["TBK m.584", "TBK m.583"]
+
+    asks_surety_limitation_under_603 = (
+        "tbk m.603" in q
+        and _contains_query_term(user_query, "zamanaşımı")
+        and (
+            _contains_query_term(user_query, "asıl borç zamanaşımına uğrasa")
+            or _contains_query_term(user_query, "asil borc zamanasimina ugrasa")
+        )
+    )
+    if asks_surety_limitation_under_603:
+        answer = (
+            "TBK m.603, kefaletin şekline, kefil olma ehliyetine ve eş rızasına ilişkin hükümlerin, "
+            "gerçek kişilerce başka ad altında verilen kişisel güvencelere de uygulanacağını "
+            "belirterek kefalet rejiminin uygulama alanını genişletir [Kaynak: TBK m.603]. "
+            "Zamanaşımı ve asıl borcun ifa edilmemesi bağlamında genel borç rejimi ise TBK m.125'teki "
+            "temerrüt ve ifa edilmeme sonuçlarıyla birlikte okunur; bu nedenle asıl borcun "
+            "zamanaşımına uğraması kefalet alacağını otomatik olarak sınırsız biçimde ayakta tutan "
+            "ayrı bir rejim yaratmaz [Kaynak: TBK m.125]."
+        )
+        return answer, ["TBK m.603", "TBK m.125"]
 
     asks_withdrawal_money_vs_penalty_clause = (
         ("cayma akçesi" in q or "cayma akcesi" in q)

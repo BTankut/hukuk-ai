@@ -504,6 +504,41 @@ class TestPreciseDeterministicAnswers:
                 ["doğrudan kefile başvurabilir", "halef olur"],
             ),
             (
+                "TBK m.586 kapsamında müteselsil kefalette kefilin alacaklıya karşı sorumluluğu nasıl belirlenir ve adi kefaletle temel farkı nedir?",
+                ["TBK m.585", "TBK m.586"],
+                ["doğrudan kefile", "önce asıl borçluya başvurur"],
+            ),
+            (
+                "TBK m.401-402 kapsamında işçinin ücret alacaklarının korunmasına yönelik özel güvenceler nelerdir?",
+                ["TBK m.401", "TBK m.402"],
+                ["emsal ücreti", "yüzde elli fazlasıyla"],
+            ),
+            (
+                "TBK m.587 uyarınca adi kefalet ile müteselsil kefaletın farkı nedir? Adi kefalette alacaklının asıl borçluya önce başvurma zorunluluğu ne zaman geçerlidir?",
+                ["TBK m.587", "TBK m.586"],
+                ["kendi payı için adi kefil gibi", "asıl borçluya önce başvurmadan"],
+            ),
+            (
+                "TBK m.589 kapsamında kefilin asıl borçluya ait def'ileri kullanabilmesinin sınırları nelerdir? Hangi def'ileri kefil kesinlikle kullanamaz?",
+                ["TBK m.589", "TBK m.590"],
+                ["şahsına sıkı sıkıya bağlı", "takibin durdurulmasını"],
+            ),
+            (
+                "TBK m.598 kapsamında kefil, asıl borçlu ödeme yapmadan önce ona karşı hangi durumlarda rücu hakkını kullanabilir?",
+                ["TBK m.598", "TBK m.596"],
+                ["on yıllık azamî süreyi", "ödeme sonrası halefiyet"],
+            ),
+            (
+                "'TBK m.584'teki eş rızası şartı yalnızca konut amaçlı kiralama için verilen kefalet sözleşmelerinde uygulanır' iddiası doğru mudur?",
+                ["TBK m.584", "TBK m.583"],
+                ["genel olarak evli kişinin kefil olmasına", "kendi el yazısıyla"],
+            ),
+            (
+                "TBK m.603 kapsamında kefalet sözleşmesinden doğan alacaklarda zamanaşımı nasıl düzenlenmiştir? Asıl borç zamanaşımına uğrasa dahi kefalet alacağı devam eder mi?",
+                ["TBK m.603", "TBK m.125"],
+                ["uygulama alanını genişletir", "otomatik olarak sınırsız"],
+            ),
+            (
                 "Kiracım sözleşmeyi erken feshetti; sözleşmede 10.000 TL cezai şart var ama bu çok yüksek. Mahkeme bu miktarı indirebilir mi?",
                 ["TBK m.182", "TBK m.27"],
                 ["kendiliğinden indirir", "kesin hükümsüzdür"],

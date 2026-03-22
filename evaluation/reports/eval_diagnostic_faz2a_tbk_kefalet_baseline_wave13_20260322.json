@@ -1,0 +1,552 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-22T20:49:10.399410+00:00",
+    "questions_source": "/tmp/faz2a_tbk_kefalet_wave13.json",
+    "api_url": "http://127.0.0.1:8051",
+    "mock_mode": false,
+    "total_questions": 7,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "diagnostic",
+    "eval_family": "v3-170",
+    "model_ref": "gateway-api",
+    "checkpoint_ref": "dgx2-base-wave13",
+    "git_commit": "7447b56",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 180.0,
+      "include_trace": true
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.3238,
+    "phrase_hit_rate": 1.0,
+    "avg_response_time_ms": 6.0,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tbk_kefalet": {
+      "count": 6,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.2944
+    },
+    "tbk_hizmet": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.5
+    }
+  },
+  "by_difficulty": {
+    "medium": {
+      "count": 3,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.4778
+    },
+    "hard": {
+      "count": 4,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.2083
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-091",
+      "question_text": "TBK m.586 kapsamında müteselsil kefalette kefilin alacaklıya karşı sorumluluğu nasıl belirlenir ve adi kefaletle temel farkı nedir?",
+      "category": "tbk_kefalet",
+      "difficulty": "medium",
+      "answer_text": "Adi kefalette alacaklı, kural olarak önce asıl borçluya başvurur; borçlu aleyhine takibin kesin aciz belgesiyle sonuçlanması, takibin imkânsız veya önemli ölçüde güçleşmesi, borçlunun iflası ya da konkordato mehli gibi hâllerde doğrudan kefile başvurabilir [Kaynak: TBK m.585]. Müteselsil kefalette ise kefil bu sıfatla yükümlülük altına girmişse, borçlunun ifada gecikmesi ve ihtarın sonuçsuz kalması veya açık ödeme güçsüzlüğü hâlinde alacaklı asıl borçluyu takip etmeden doğrudan kefile yönelebilir [Kaynak: TBK m.586].",
+      "cited_sources": [
+        "TBK m.585",
+        "TBK m.586"
+      ],
+      "expected_sources": [
+        "TBK m.585",
+        "TBK m.586"
+      ],
+      "expected_keywords": [
+        "müteselsil kefalet",
+        "adi kefalet",
+        "rehnin paraya çevrilmesi",
+        "tartışma def'i",
+        "önce asıl borçlu"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6,
+      "response_time_ms": 12.0,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.586 kapsamında müteselsil kefalette kefilin alacaklıya karşı sorumluluğu nasıl belirlenir ve adi kefaletle temel farkı nedir?",
+          "enriched_query": "TBK m.586 kapsamında müteselsil kefalette kefilin alacaklıya karşı sorumluluğu nasıl belirlenir ve adi kefaletle temel farkı nedir?",
+          "retrieval_query": "TBK m.586 kapsamında müteselsil kefalette kefilin alacaklıya karşı sorumluluğu nasıl belirlenir ve adi kefaletle temel farkı nedir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-137",
+      "question_text": "TBK m.401-402 kapsamında işçinin ücret alacaklarının korunmasına yönelik özel güvenceler nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "answer_text": "TBK m.401, işverenin işçiye sözleşmede veya toplu iş sözleşmesinde belirlenen; böyle bir hüküm yoksa asgari ücretten az olmamak üzere emsal ücreti ödeme borcunu kurar ve ücret alacağını temel düzeyde güvence altına alır [Kaynak: TBK m.401]. TBK m.402 ise fazla çalışma ücretinin normal çalışma ücretinin en az yüzde elli fazlasıyla ödenmesini, işçinin rızasıyla bunun yerine orantılı serbest zaman verilebilmesini düzenleyerek bu korumayı özel bir ücret güvencesiyle tamamlar [Kaynak: TBK m.402].",
+      "cited_sources": [
+        "TBK m.401",
+        "TBK m.402"
+      ],
+      "expected_sources": [
+        "TBK m.401",
+        "TBK m.402"
+      ],
+      "expected_keywords": [
+        "ücret",
+        "ücretin korunması",
+        "asgari ücret",
+        "kefile devir yasağı",
+        "itiraz hakkı",
+        "ücret güvencesi"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.5,
+      "response_time_ms": 2.5,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.401-402 kapsamında işçinin ücret alacaklarının korunmasına yönelik özel güvenceler nelerdir?",
+          "enriched_query": "TBK m.401-402 kapsamında işçinin ücret alacaklarının korunmasına yönelik özel güvenceler nelerdir?",
+          "retrieval_query": "TBK m.401-402 kapsamında işçinin ücret alacaklarının korunmasına yönelik özel güvenceler nelerdir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-150",
+      "question_text": "TBK m.587 uyarınca adi kefalet ile müteselsil kefaletın farkı nedir? Adi kefalette alacaklının asıl borçluya önce başvurma zorunluluğu ne zaman geçerlidir?",
+      "category": "tbk_kefalet",
+      "difficulty": "medium",
+      "answer_text": "TBK m.587, birden çok kefilin aynı borç için sorumluluk paylaşımını düzenler; her kefil kendi payı için adi kefil gibi, diğerlerinin payı için de kefile kefil gibi sorumlu olur ve borcu ödeyen kefil diğer kefillere karşı payı oranında rücu edebilir [Kaynak: TBK m.587]. Müteselsil kefalette ise doğrudan kefile başvuru imkânı vardır; kefil müteselsil sıfatla yükümlülük altına girmişse borçlunun ifada gecikmesi ve ihtarın sonuçsuz kalması veya açık ödeme güçsüzlüğü hâlinde alacaklı asıl borçluya önce başvurmadan kefile yönelebilir [Kaynak: TBK m.586].",
+      "cited_sources": [
+        "TBK m.587",
+        "TBK m.586"
+      ],
+      "expected_sources": [
+        "TBK m.587",
+        "TBK m.586"
+      ],
+      "expected_keywords": [
+        "adi kefalet",
+        "müteselsil kefalet",
+        "tartışma def'i",
+        "önce asıl borçluya başvurma",
+        "fark",
+        "TBK m.587"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "response_time_ms": 6.5,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.587 uyarınca adi kefalet ile müteselsil kefaletın farkı nedir? Adi kefalette alacaklının asıl borçluya önce başvurma zorunluluğu ne zaman geçerlidir?",
+          "enriched_query": "TBK m.587 uyarınca adi kefalet ile müteselsil kefaletın farkı nedir? Adi kefalette alacaklının asıl borçluya önce başvurma zorunluluğu ne zaman geçerlidir?",
+          "retrieval_query": "TBK m.587 uyarınca adi kefalet ile müteselsil kefaletın farkı nedir? Adi kefalette alacaklının asıl borçluya önce başvurma zorunluluğu ne zaman geçerlidir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-151",
+      "question_text": "TBK m.589 kapsamında kefilin asıl borçluya ait def'ileri kullanabilmesinin sınırları nelerdir? Hangi def'ileri kefil kesinlikle kullanamaz?",
+      "category": "tbk_kefalet",
+      "difficulty": "hard",
+      "answer_text": "Kefil, asıl borç ilişkisinden doğan ve borcun içeriğine bağlı def'ileri alacaklıya karşı ileri sürebilir; ancak borçlunun şahsına sıkı sıkıya bağlı kişisel itirazlarını ve sadece borçluya özgü feragat edilmiş savunmaları kendi lehine genişleterek kullanamaz [Kaynak: TBK m.589]. TBK m.590 ayrıca kefilin takibe karşı özel korumasını tamamlar; borçlunun iflası sebebiyle asıl borç erken muaccel olsa bile belirlenen vadeden önce kefile karşı takip yapılamaz ve kefil mevcut rehinler paraya çevrilinceye kadar takibin durdurulmasını isteyebilir [Kaynak: TBK m.590].",
+      "cited_sources": [
+        "TBK m.589",
+        "TBK m.590"
+      ],
+      "expected_sources": [
+        "TBK m.589",
+        "TBK m.590"
+      ],
+      "expected_keywords": [
+        "kefilin def'ileri",
+        "asıl borçlu def'ileri",
+        "kişisel def'iler",
+        "kefilin kullanamayacağı def'iler",
+        "borçlu ehliyeti",
+        "TBK m.589"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 7.5,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.589 kapsamında kefilin asıl borçluya ait def'ileri kullanabilmesinin sınırları nelerdir? Hangi def'ileri kefil kesinlikle kullanamaz?",
+          "enriched_query": "TBK m.589 kapsamında kefilin asıl borçluya ait def'ileri kullanabilmesinin sınırları nelerdir? Hangi def'ileri kefil kesinlikle kullanamaz?",
+          "retrieval_query": "TBK m.589 kapsamında kefilin asıl borçluya ait def'ileri kullanabilmesinin sınırları nelerdir? Hangi def'ileri kefil kesinlikle kullanamaz?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-153",
+      "question_text": "TBK m.598 kapsamında kefil, asıl borçlu ödeme yapmadan önce ona karşı hangi durumlarda rücu hakkını kullanabilir?",
+      "category": "tbk_kefalet",
+      "difficulty": "hard",
+      "answer_text": "TBK m.598, kefaletin kanun gereğince sona ermesini ve gerçek kişi kefaletlerinde on yıllık azamî süreyi düzenler; asıl borç sona ererse kefil de borcundan kurtulur [Kaynak: TBK m.598]. Kefilin asıl borçluya yönelik rücu zemini ise ödeme ile doğar: kefil alacaklıya ifada bulunduğu ölçüde onun haklarına halef olur ve bu hakları asıl borç muaccel olunca kullanabilir [Kaynak: TBK m.596]. Bu nedenle ödeme öncesi rücu, sorudaki varsayımın aksine genel kural değil; esasen ödeme sonrası halefiyet rejimi belirleyicidir.",
+      "cited_sources": [
+        "TBK m.598",
+        "TBK m.596"
+      ],
+      "expected_sources": [
+        "TBK m.598",
+        "TBK m.596"
+      ],
+      "expected_keywords": [
+        "kefilin erken rücu hakkı",
+        "güvence talebi",
+        "asıl borçlunun durumu",
+        "rücu koşulları",
+        "ödeme öncesi rücu",
+        "TBK m.598"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "response_time_ms": 6.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.598 kapsamında kefil, asıl borçlu ödeme yapmadan önce ona karşı hangi durumlarda rücu hakkını kullanabilir?",
+          "enriched_query": "TBK m.598 kapsamında kefil, asıl borçlu ödeme yapmadan önce ona karşı hangi durumlarda rücu hakkını kullanabilir?",
+          "retrieval_query": "TBK m.598 kapsamında kefil, asıl borçlu ödeme yapmadan önce ona karşı hangi durumlarda rücu hakkını kullanabilir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-155",
+      "question_text": "'TBK m.584'teki eş rızası şartı yalnızca konut amaçlı kiralama için verilen kefalet sözleşmelerinde uygulanır' iddiası doğru mudur?",
+      "category": "tbk_kefalet",
+      "difficulty": "hard",
+      "answer_text": "Hayır, iddia doğru değildir. TBK m.584'teki eş rızası şartı genel olarak evli kişinin kefil olmasına ilişkindir; yalnızca konut amaçlı kiralama için verilmiş kefaletlerle sınırlı değildir ve ancak kanunda sayılan istisna hâllerinde aranmaz [Kaynak: TBK m.584]. Bu genel koruyucu rejimin şekil ayağı da TBK m.583'te yer alır; kefalet sözleşmesi yazılı olmalı, azamî miktar ve tarih gösterilmeli, kefil bunları kendi el yazısıyla belirtmelidir [Kaynak: TBK m.583].",
+      "cited_sources": [
+        "TBK m.584",
+        "TBK m.583"
+      ],
+      "expected_sources": [
+        "TBK m.584",
+        "TBK m.583"
+      ],
+      "expected_keywords": [
+        "eş rızası şartı",
+        "ticari kefalet",
+        "konut dışı kefalet",
+        "uygulama kapsamı",
+        "sınırlama yok",
+        "TBK m.584 genel uygulama"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 5.0,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "'TBK m.584'teki eş rızası şartı yalnızca konut amaçlı kiralama için verilen kefalet sözleşmelerinde uygulanır' iddiası doğru mudur?",
+          "enriched_query": "'TBK m.584'teki eş rızası şartı yalnızca konut amaçlı kiralama için verilen kefalet sözleşmelerinde uygulanır' iddiası doğru mudur?",
+          "retrieval_query": "'TBK m.584'teki eş rızası şartı yalnızca konut amaçlı kiralama için verilen kefalet sözleşmelerinde uygulanır' iddiası doğru mudur?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-156",
+      "question_text": "TBK m.603 kapsamında kefalet sözleşmesinden doğan alacaklarda zamanaşımı nasıl düzenlenmiştir? Asıl borç zamanaşımına uğrasa dahi kefalet alacağı devam eder mi?",
+      "category": "tbk_kefalet",
+      "difficulty": "hard",
+      "answer_text": "TBK m.603, kefaletin şekline, kefil olma ehliyetine ve eş rızasına ilişkin hükümlerin, gerçek kişilerce başka ad altında verilen kişisel güvencelere de uygulanacağını belirterek kefalet rejiminin uygulama alanını genişletir [Kaynak: TBK m.603]. Zamanaşımı ve asıl borcun ifa edilmemesi bağlamında genel borç rejimi ise TBK m.125'teki temerrüt ve ifa edilmeme sonuçlarıyla birlikte okunur; bu nedenle asıl borcun zamanaşımına uğraması kefalet alacağını otomatik olarak sınırsız biçimde ayakta tutan ayrı bir rejim yaratmaz [Kaynak: TBK m.125].",
+      "cited_sources": [
+        "TBK m.603",
+        "TBK m.125"
+      ],
+      "expected_sources": [
+        "TBK m.603",
+        "TBK m.125"
+      ],
+      "expected_keywords": [
+        "kefalet zamanaşımı",
+        "asıl borç zamanaşımı",
+        "kefilin bağımsız zamanaşımı",
+        "TBK m.603",
+        "feri borç",
+        "bağımlılık ilkesi"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 2.2,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.603 kapsamında kefalet sözleşmesinden doğan alacaklarda zamanaşımı nasıl düzenlenmiştir? Asıl borç zamanaşımına uğrasa dahi kefalet alacağı devam eder mi?",
+          "enriched_query": "TBK m.603 kapsamında kefalet sözleşmesinden doğan alacaklarda zamanaşımı nasıl düzenlenmiştir? Asıl borç zamanaşımına uğrasa dahi kefalet alacağı devam eder mi?",
+          "retrieval_query": "TBK m.603 kapsamında kefalet sözleşmesinden doğan alacaklarda zamanaşımı nasıl düzenlenmiştir? Asıl borç zamanaşımına uğrasa dahi kefalet alacağı devam eder mi?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    }
+  ]
+}

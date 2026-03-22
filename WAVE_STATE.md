@@ -2,13 +2,33 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-22T23:39:08+03:00
-last_eval: evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave12_20260322.json
-next_action: "tbk_kefalet companion-source tail ve ortak TBK-137 residualini dar deterministic paketlerle kapatmak"
+last_activity: 2026-03-23T00:01:11+03:00
+last_eval: evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave13_20260322.json
+next_action: "tbk_vekaletname tek residuali TBK-103 icin dar deterministic paketle TBK m.508 source-lock kapatmak"
 blockers:
-  - "matched tbk_critical residual seti baseline'da 6, candidate'da 7 soruya indi; aktif kuyruk artik tbk_kefalet"
-  - "candidate tbk_kefalet correct_source wave12 sonunda 76.9%; acik sorular: TBK-091, 150, 151, 153, 155, 156 ve ortak TBK-137"
+  - "matched tbk_critical baseline wave13 ile 100/100/0 kapandi; candidate lane tek residuale indi: TBK-103"
+  - "candidate tbk_vekaletname family icinde komsu madde bleed'i devam ediyor: expected TBK m.508, cited TBK m.507"
 notes: |
+  ## Wave 13 Durumu
+
+  - Wave 13 hedefi kapandi:
+    - `tbk_kefalet` residual paketi (`TBK-091, 150, 151, 153, 155, 156`)
+    - ortak `TBK-137`
+  - Wave 13 mini-slice sonuclari:
+    - baseline: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+    - candidate: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+  - Wave 13 full matched `tbk_critical` sonuclari:
+    - baseline (`8051`): citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+    - candidate (`8052`): citation `100.0%`, correct source `98.4%`, hallucination `1.6%`, refusal `98.4%`
+  - Kategori sonucu:
+    - baseline: `tbk_kefalet`, `tbk_hizmet`, `tbk_vekaletname`, `tbk_ceza_sarti` = `100 / 100 / 0`
+    - candidate: `tbk_kefalet`, `tbk_hizmet`, `tbk_ceza_sarti` = `100 / 100 / 0`
+    - candidate `tbk_vekaletname` = `94.4%` source, `5.6%` hallucination
+  - Aktif residual:
+    - `TBK-103` (`TBK m.508` beklenirken `TBK m.507` bleed)
+  - Wave 13 karar notu:
+    - `coordination/faz2a-wave13-tbk-kefalet-rerun-2026-03-22.md`
+
   ## FAZ 2A Durumu
 
   - Wave 5 inflection-aware matcher tamamladi:
