@@ -51,6 +51,8 @@ Diagnostic runs may opt into trace capture with `include_trace=true`. When enabl
   - `enriched_query`
   - `retrieval_query`
   - `law_filter`
+  - `mentioned_laws`
+  - `cross_law_mode`
   - `explicit_article_refs`
   - `applied_expansions`
 - `retrieval`

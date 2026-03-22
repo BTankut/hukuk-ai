@@ -256,6 +256,13 @@ notes: |
   - Chat API'ye optional trace kontrati eklendi: `include_trace=true` ile query/retrieval/context/verification trace'i response'a tasiniyor.
   - Eval runner'a optional trace passthrough eklendi; diagnostic run'lar artik ham rapora trace yazabilecek.
   - Yeni FAZ 2A trace regresyon testleri gecti: `api-gateway/.venv/bin/pytest tests/test_chat_router.py -q`, `api-gateway/.venv/bin/pytest tests/test_eval_runner.py -q`
+  - FAZ 2A Wave 1 query/retrieval precision dalgasi acildi: `coordination/faz2a-wave1-law-article-precision-2026-03-22.md`
+  - `chat.py` icinde law/article parsing guclendirildi; `TBK m.397-398` ve `TBK m.181, m.182 ve m.183` gibi article sequence'leri explicit force-include hattina giriyor.
+  - Coklu kanun sinyali tasiyan ve birlikte-degerlendirme marker'i olan sorular icin cross-law per-law candidate generation eklendi; global retrieval korunurken `TBK/TMK` bucket'lari da merge ediliyor.
+  - TMK cross-law ve TBK critical slice'lar icin low-risk lexical/article expansion kurallari eklendi.
+  - Trace payload'i `mentioned_laws` ve `cross_law_mode` alanlariyla zenginlestirildi.
+  - FAZ 2A focus subset diagnostic runner eklendi: `scripts/faz2a/run_focus_subset_eval.sh`
+  - Runner dry-run PASS verdi; local gateway kapali oldugu icin bu turda sadece code/test/dry-run verification alindi.
 
   ### Sonraki Beklenen Çıktı
   - explicit production cutover karari alinacaksa `baseline` lane ile `dgx1` promoted candidate arasinda ayrik rollout plani.

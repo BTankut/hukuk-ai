@@ -48,8 +48,17 @@ from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"])
+_LAW_TOKEN_PATTERN = r"TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK"
 _ARTICLE_REF_RE = re.compile(
-    r"\b(?P<law>TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK)\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    rf"\b(?P<law>{_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    re.IGNORECASE,
+)
+_ARTICLE_SEQUENCE_RE = re.compile(
+    rf"\b(?P<law>{_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<articles>\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?(?:\s*(?:,|ve|veya)\s*(?:m|md|madde)?\.?\s*\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?)*)",
+    re.IGNORECASE,
+)
+_LAW_MENTION_RE = re.compile(
+    rf"\b(?P<law>{_LAW_TOKEN_PATTERN}|Türk Borçlar Kanunu|Borçlar Kanunu|Türk Medeni Kanunu|Medeni Kanun|Türk Ceza Kanunu|Ceza Kanunu|Türk Ticaret Kanunu|Ticaret Kanunu|İcra ve İflas Kanunu)\b",
     re.IGNORECASE,
 )
 _LAW_CODE_NORMALIZATION = {
@@ -61,6 +70,17 @@ _LAW_CODE_NORMALIZATION = {
     "İİK": "İİK",
     "IİK": "İİK",
     "IIK": "İİK",
+}
+_LAW_NAME_NORMALIZATION = {
+    "türk borçlar kanunu": "TBK",
+    "borçlar kanunu": "TBK",
+    "türk medeni kanunu": "TMK",
+    "medeni kanun": "TMK",
+    "türk ceza kanunu": "TCK",
+    "ceza kanunu": "TCK",
+    "türk ticaret kanunu": "TTK",
+    "ticaret kanunu": "TTK",
+    "icra ve iflas kanunu": "İİK",
 }
 
 
@@ -363,6 +383,11 @@ def _extract_explicit_article_refs(query: str) -> list[tuple[str, str]]:
     refs: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
 
+    for ref in _extract_article_sequences(query):
+        if ref not in seen:
+            refs.append(ref)
+            seen.add(ref)
+
     for match in _ARTICLE_REF_RE.finditer(query):
         raw_law = match.group("law").upper()
         law = _LAW_CODE_NORMALIZATION.get(raw_law)
@@ -375,6 +400,92 @@ def _extract_explicit_article_refs(query: str) -> list[tuple[str, str]]:
             seen.add(ref)
 
     return refs
+
+
+def _expand_article_sequence(raw_articles: str) -> list[str]:
+    cleaned = re.sub(r"\b(?:m|md|madde)\.?\s*", "", raw_articles, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if not cleaned:
+        return []
+
+    tokens = [
+        token.strip()
+        for token in re.split(r"\s*(?:,|ve|veya)\s*", cleaned)
+        if token.strip()
+    ]
+    expanded: list[str] = []
+    seen: set[str] = set()
+
+    for token in tokens:
+        parts = [part.strip().lower() for part in re.split(r"\s*[-–]\s*", token) if part.strip()]
+        if len(parts) == 2 and all(part.isdigit() for part in parts):
+            start = int(parts[0])
+            end = int(parts[1])
+            step = 1 if start <= end else -1
+            for number in range(start, end + step, step):
+                value = str(number)
+                if value not in seen:
+                    expanded.append(value)
+                    seen.add(value)
+            continue
+
+        value = token.lower()
+        if value not in seen:
+            expanded.append(value)
+            seen.add(value)
+
+    return expanded
+
+
+def _extract_article_sequences(query: str) -> list[tuple[str, str]]:
+    refs: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    for match in _ARTICLE_SEQUENCE_RE.finditer(query):
+        raw_law = match.group("law").upper()
+        law = _LAW_CODE_NORMALIZATION.get(raw_law)
+        if law is None:
+            continue
+
+        for madde in _expand_article_sequence(match.group("articles")):
+            ref = (law, madde)
+            if ref not in seen:
+                refs.append(ref)
+                seen.add(ref)
+
+    return refs
+
+
+def _extract_law_mentions(query: str) -> list[str]:
+    mentions: list[str] = []
+    seen: set[str] = set()
+
+    for match in _LAW_MENTION_RE.finditer(query):
+        raw = match.group("law")
+        normalized_key = _tr_lower(raw)
+        code = _LAW_CODE_NORMALIZATION.get(raw.upper()) or _LAW_NAME_NORMALIZATION.get(normalized_key)
+        if code and code not in seen:
+            mentions.append(code)
+            seen.add(code)
+
+    return mentions
+
+
+def _should_use_cross_law_retrieval(query: str, mentioned_laws: list[str]) -> bool:
+    if len(mentioned_laws) < 2:
+        return False
+    lowered = _tr_lower(query)
+    cross_law_markers = (
+        "birlikte",
+        "hangi tbk",
+        "hangi tmk",
+        "nasıl birlikte",
+        "ile nasıl",
+        "ile birlikte",
+        "birlikte değerlendirilir",
+        "birlikte uygulanır",
+    )
+    return any(marker in lowered for marker in cross_law_markers)
 
 
 def _dedupe_retrieved_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
@@ -431,6 +542,41 @@ def _retrieve_explicit_article_chunks(
     return exact_chunks
 
 
+def _retrieve_law_bucket_chunks(
+    *,
+    retriever: Any,
+    query: str,
+    laws: list[str],
+    top_k: int,
+) -> list[RetrievedChunk]:
+    from rag.retriever import MetadataFilter
+
+    bucket_chunks: list[RetrievedChunk] = []
+    for law in laws:
+        try:
+            results, _stats = retriever.retrieve(
+                query=query,
+                top_k=top_k,
+                metadata_filter=MetadataFilter(law_short_name=law),
+            )
+        except Exception as exc:
+            logger.warning("Law-bucket retrieval bypass (law=%s): %s", law, exc)
+            continue
+
+        bucket_chunks.extend(
+            RetrievedChunk(
+                text=result.text,
+                citation=result.citation,
+                source=result.law_short_name,
+                score=result.score,
+                metadata=result.metadata,
+            )
+            for result in results
+        )
+
+    return bucket_chunks
+
+
 def _resolve_trace_source_id(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
     if metadata.get("source_id") is not None:
@@ -460,6 +606,8 @@ def _build_trace_payload(
     enriched_query: str,
     retrieval_query: str,
     law_filter: str | None,
+    mentioned_laws: list[str],
+    cross_law_mode: bool,
     explicit_article_refs: list[tuple[str, str]],
     applied_expansions: list[str],
     top_k_requested: int,
@@ -478,6 +626,8 @@ def _build_trace_payload(
             "enriched_query": enriched_query,
             "retrieval_query": retrieval_query,
             "law_filter": law_filter,
+            "mentioned_laws": mentioned_laws,
+            "cross_law_mode": cross_law_mode,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -859,6 +1009,8 @@ async def chat_completions(
                 enriched_query=last_user_msg,
                 retrieval_query=last_user_msg,
                 law_filter=request_body.law_filter,
+                mentioned_laws=[],
+                cross_law_mode=False,
                 explicit_article_refs=[],
                 applied_expansions=[],
                 top_k_requested=request_body.top_k,
@@ -937,6 +1089,8 @@ async def chat_completions(
                 enriched_query=last_user_msg,
                 retrieval_query=last_user_msg,
                 law_filter=request_body.law_filter,
+                mentioned_laws=[],
+                cross_law_mode=False,
                 explicit_article_refs=[],
                 applied_expansions=[],
                 top_k_requested=request_body.top_k,
@@ -1021,6 +1175,8 @@ async def chat_completions(
     retrieval_query = last_user_msg
     retrieval_query_lower = _tr_lower(retrieval_query)
     retrieval_top_k = request_body.top_k
+    mentioned_laws = _extract_law_mentions(last_user_msg)
+    cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
     explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
     applied_expansions: list[str] = []
 
@@ -1043,6 +1199,66 @@ async def chat_completions(
         (("icap",), "icap öneri", False),
         (("akdedilmesi",), "akdedilmesi kurulması", False),
         (("fesih",), "fesih sona erme", False),
+        (
+            ("aile konutu", "kiracı eş", "kiraci es"),
+            "TBK m.349 TMK m.194 aile konutu eş rızası kira feshi",
+            True,
+        ),
+        (
+            ("taşınmaz satış", "tasinmaz satis", "resmi şekil", "resmi sekil", "tapu", "tescil"),
+            "TBK m.237 TMK m.706 taşınmaz satışı resmi şekil tapu tescil",
+            True,
+        ),
+        (
+            ("paylı mülkiyet", "payli mulkiyet", "önalım", "onalim", "ön alım", "on alim"),
+            "TMK m.688 TMK m.691 TMK m.732 TBK m.207 paylı mülkiyet önalım paydaş satış",
+            True,
+        ),
+        (
+            ("kira sözleşmesinin devri", "kira sozlesmesinin devri", "kira sözleşmesi devri", "kira sozlesmesi devri"),
+            "TBK m.323 TBK m.349 TMK m.194 kira devri aile konutu boşanma",
+            True,
+        ),
+        (
+            ("malik olmayan", "malik olmayan kişinin", "malik olmayan kisinin"),
+            "TBK m.299 TMK m.683 malik olmayan kişinin kiraya vermesi kiracının korunması",
+            True,
+        ),
+        (
+            ("mal rejimi", "ödünç", "odunc", "borç vermesi", "borc vermesi"),
+            "TBK m.386 TMK m.202 TMK m.223 eşler arası borç verme mal rejimi",
+            True,
+        ),
+        (
+            ("ceza şartı", "ceza sarti", "cezai şart", "cezai sart", "cayma akçesi", "cayma akcesi", "cayma parası", "cayma parasi"),
+            "TBK m.179 TBK m.180 TBK m.181 TBK m.182 ceza şartı cayma akçesi aşırı ceza indirimi",
+            True,
+        ),
+        (
+            ("kefalet", "kefil", "adi kefalet", "müteselsil kefalet", "muteselsil kefalet"),
+            "TBK m.583 TBK m.584 TBK m.585 TBK m.586 TBK m.587 TBK m.589 TBK m.596 TBK m.600 TBK m.603 kefalet eş rızası defi zamanaşımı",
+            True,
+        ),
+        (
+            ("vekalet", "vekâlet", "vekil", "müvekkil", "muvekkil", "hesap verme", "talimat"),
+            "TBK m.504 TBK m.506 TBK m.507 TBK m.508 TBK m.512 TBK m.513 vekalet talimat hesap verme azil",
+            True,
+        ),
+        (
+            ("rekabet yasağı", "rekabet yasagi"),
+            "TBK m.396 TBK m.397 TBK m.398 TBK m.399 TBK m.444 TBK m.445 TBK m.446 rekabet yasağı hizmet sözleşmesi yaptırım",
+            True,
+        ),
+        (
+            ("ihbar süresi", "ihbar suresi", "fesih bildirimi", "belirsiz süreli hizmet", "belirsiz sureli hizmet"),
+            "TBK m.432 TBK m.433 hizmet sözleşmesi ihbar fesih bildirim",
+            True,
+        ),
+        (
+            ("yıllık ücretli izin", "yillik ucretli izin", "ücretli izin", "ucretli izin", "hafta tatili"),
+            "TBK m.421 TBK m.422 hizmet sözleşmesi hafta tatili ücretli izin",
+            True,
+        ),
     ]
 
     for triggers, expansion, boost_top_k in expansion_rules:
@@ -1100,6 +1316,24 @@ async def chat_completions(
                     stats.latency_ms,
                     "enabled" if _reranker_enabled else "disabled",
                 )
+
+                if cross_law_mode and not request_body.law_filter and len(mentioned_laws) >= 2:
+                    per_law_top_k = max(4, min(8, top_k_effective))
+                    law_bucket_chunks = _retrieve_law_bucket_chunks(
+                        retriever=retriever,
+                        query=retrieval_query,
+                        laws=mentioned_laws,
+                        top_k=per_law_top_k,
+                    )
+                    if law_bucket_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(law_bucket_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval law-buckets: session=%s laws=%s per_law_top_k=%d total=%d",
+                            session_id,
+                            mentioned_laws,
+                            per_law_top_k,
+                            len(retrieved_chunks),
+                        )
 
                 if explicit_article_refs:
                     exact_chunks = _retrieve_explicit_article_chunks(
@@ -1225,6 +1459,8 @@ async def chat_completions(
             enriched_query=enriched_query,
             retrieval_query=retrieval_query,
             law_filter=request_body.law_filter,
+            mentioned_laws=mentioned_laws,
+            cross_law_mode=cross_law_mode,
             explicit_article_refs=explicit_article_refs,
             applied_expansions=applied_expansions,
             top_k_requested=request_body.top_k,

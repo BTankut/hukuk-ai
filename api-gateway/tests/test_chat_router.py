@@ -32,6 +32,9 @@ from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
     ConversationMessage,
+    _extract_explicit_article_refs,
+    _extract_law_mentions,
+    _should_use_cross_law_retrieval,
     _build_precise_tbk_answer,
     _detect_scope_refusal_reason,
     _build_multiturn_query,
@@ -245,6 +248,35 @@ class TestScopeRefusalDetection:
             "TCK m.141 neyi düzenler?"
         )
         assert reason == "Türk Ceza Kanunu (TCK)"
+
+
+class TestLawSignalParsing:
+
+    def test_extract_explicit_article_refs_expands_ranges(self):
+        refs = _extract_explicit_article_refs(
+            "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde ne olur?"
+        )
+        assert ("TBK", "397") in refs
+        assert ("TBK", "398") in refs
+
+    def test_extract_explicit_article_refs_expands_lists(self):
+        refs = _extract_explicit_article_refs(
+            "TBK m.181, m.182 ve m.183 birlikte nasıl uygulanır?"
+        )
+        assert refs[:3] == [("TBK", "181"), ("TBK", "182"), ("TBK", "183")]
+
+    def test_extract_law_mentions_supports_names_and_codes(self):
+        laws = _extract_law_mentions(
+            "Türk Borçlar Kanunu ile TMK birlikte nasıl uygulanır?"
+        )
+        assert laws == ["TBK", "TMK"]
+
+    def test_cross_law_retrieval_enabled_for_joint_scope_queries(self):
+        laws = ["TBK", "TMK"]
+        assert _should_use_cross_law_retrieval(
+            "Paylı mülkiyette satış hükümleri ile TMK nasıl birlikte uygulanır?",
+            laws,
+        ) is True
 
 
 class TestPreciseDeterministicAnswers:
@@ -960,6 +992,84 @@ class TestLawFilterAndRetrieval:
         assert "TBK m.237" in citations
         assert "TMK m.706" in citations
 
+    def test_cross_law_questions_trigger_per_law_candidate_generation(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        global_results = [
+            RetrievalResult(
+                chunk_id="global-tbk",
+                text="Aile konutu kira metni",
+                score=0.91,
+                metadata={"law_short_name": "TBK", "madde_no": "349", "fikra_no": "1"},
+            )
+        ]
+        tbk_results = [
+            RetrievalResult(
+                chunk_id="tbk-349",
+                text="TBK aile konutu kira metni",
+                score=0.93,
+                metadata={"law_short_name": "TBK", "madde_no": "349", "fikra_no": "1"},
+            )
+        ]
+        tmk_results = [
+            RetrievalResult(
+                chunk_id="tmk-194",
+                text="TMK aile konutu metni",
+                score=0.92,
+                metadata={"law_short_name": "TMK", "madde_no": "194", "fikra_no": "1"},
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="aile konutu",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(
+            side_effect=[
+                (global_results, stats),
+                (tbk_results, stats),
+                (tmk_results, stats),
+            ]
+        )
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("RAG cevabı"))
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "Aile konutu olarak kullanılan kiralananda TBK ve TMK nasıl birlikte uygulanır?",
+                        }
+                    ],
+                },
+            )
+
+        assert resp.status_code == 200
+        assert mock_retriever.retrieve.call_count == 3
+
+        first_call = mock_retriever.retrieve.call_args_list[0].kwargs
+        second_call = mock_retriever.retrieve.call_args_list[1].kwargs
+        third_call = mock_retriever.retrieve.call_args_list[2].kwargs
+        assert first_call["metadata_filter"] is None
+        assert second_call["metadata_filter"].law_short_name == "TBK"
+        assert third_call["metadata_filter"].law_short_name == "TMK"
+
+        orch_call = mock_orchestrator.answer.call_args
+        citations = [chunk.citation for chunk in orch_call.kwargs["retrieved_chunks"]]
+        assert "TBK m.349" in citations
+        assert "TMK m.194" in citations
+
     def test_trace_is_not_returned_by_default(self, mock_orchestrator):
         mock_retriever = MagicMock()
 
@@ -1048,6 +1158,8 @@ class TestLawFilterAndRetrieval:
         assert resp.status_code == 200
         trace = resp.json()["trace"]
         assert trace["query_signals"]["user_query"] == "TBK m.49 nedir?"
+        assert trace["query_signals"]["mentioned_laws"] == ["TBK"]
+        assert trace["query_signals"]["cross_law_mode"] is False
         assert trace["query_signals"]["explicit_article_refs"] == [{"law": "TBK", "madde": "49"}]
         assert trace["retrieval"]["top_k_requested"] == 20
         assert trace["retrieval"]["top_k_effective"] == 20
