@@ -2,13 +2,32 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-23T00:01:11+03:00
-last_eval: evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave13_20260322.json
-next_action: "tbk_vekaletname tek residuali TBK-103 icin dar deterministic paketle TBK m.508 source-lock kapatmak"
+last_activity: 2026-03-23T00:23:00+03:00
+last_eval: evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave14_20260323.json
+next_action: "tmk_cross_law multi-source companion-source tailini residual cluster'lara ayirip ilk targeted closure wave'ini acmak"
 blockers:
-  - "matched tbk_critical baseline wave13 ile 100/100/0 kapandi; candidate lane tek residuale indi: TBK-103"
-  - "candidate tbk_vekaletname family icinde komsu madde bleed'i devam ediyor: expected TBK m.508, cited TBK m.507"
+  - "tbk_critical source/hallucination tail iki lane'de de kapandi; aktif kalite blocker artik tmk_cross_law family-level companion-source coverage"
+  - "tmk_cross_law setinde dogru citation geliyor ama cok soruda beklenen TMK/TBK ciftlerinden biri veya birkaci eksik kaliyor"
 notes: |
+  ## Wave 14 Durumu
+
+  - Wave 14 hedefi kapandi:
+    - `TBK-103` tek residuali (`TBK m.508`)
+  - Wave 14 mini-slice sonuclari:
+    - baseline: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+    - candidate: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+  - Wave 14 full matched `tbk_critical` sonuclari:
+    - baseline (`8053`): citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `98.4%`
+    - candidate (`8054`): citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `96.7%`
+  - Kategori sonucu:
+    - baseline: `tbk_kefalet`, `tbk_hizmet`, `tbk_vekaletname`, `tbk_ceza_sarti` = `100 / 100 / 0`
+    - candidate: `tbk_kefalet`, `tbk_hizmet`, `tbk_vekaletname`, `tbk_ceza_sarti` = `100 / 100 / 0`
+  - Sonuc:
+    - `tbk_critical` source/hallucination kuyruğu iki lane'de de kapandi
+    - FAZ 2A ana blocker artik `tmk_cross_law` multi-source companion-source coverage
+  - Wave 14 karar notu:
+    - `coordination/faz2a-wave14-tbk-103-rerun-2026-03-23.md`
+
   ## Wave 13 Durumu
 
   - Wave 13 hedefi kapandi:

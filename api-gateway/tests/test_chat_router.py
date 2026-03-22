@@ -469,6 +469,11 @@ class TestPreciseDeterministicAnswers:
                 ["vekâletin kapsamı", "müvekkili zarara uğratıyorsa"],
             ),
             (
+                "TBK m.508 uyarınca vekilin işi başkasına (alt vekil) bırakabilmesi hangi koşullara tabidir ve alt vekil aracılığıyla oluşan zarardan asıl vekilin sorumluluğu devam eder mi?",
+                ["TBK m.508"],
+                ["alt vekâlet", "alt vekil seçimi"],
+            ),
+            (
                 "Azil ve istifanın vekâlet sözleşmesine etkisi TBK'da nasıl düzenlenmiştir?",
                 ["TBK m.512", "TBK m.513"],
                 ["Azil ve istifa", "kendiliğinden sona ermesine yol açar"],

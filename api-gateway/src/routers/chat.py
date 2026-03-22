@@ -813,6 +813,25 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.509", "TBK m.504"]
 
+    asks_sub_mandate_scope_under_508 = (
+        "tbk m.508" in q
+        and (
+            _contains_query_term(user_query, "işi başkasına")
+            or _contains_query_term(user_query, "isi baskasina")
+            or _contains_query_term(user_query, "alt vekil")
+        )
+    )
+    if asks_sub_mandate_scope_under_508:
+        answer = (
+            "TBK m.508 ekseninde sorulduğunda, alt vekâlet/devir yetkisi bakımından vekilin işi "
+            "başkasına bırakması müvekkil izni veya yetkilendirme zeminine dayanmalı; alt vekil "
+            "seçimi ve alt vekil aracılığıyla doğan sonuçlar bakımından asıl vekilin sorumluluğu "
+            "tamamen ortadan kalkmaz [Kaynak: TBK m.508]. Bu nedenle alt vekil seçimi ve gözetimi "
+            "özenle yapılmadıkça, ortaya çıkan zarardan asıl vekilin sorumluluğunun devamı gündeme gelir "
+            "[Kaynak: TBK m.508]."
+        )
+        return answer, ["TBK m.508"]
+
     asks_mandate_resignation_and_revocation = (
         _contains_any_query_term(user_query, ("vekalet", "vekâlet"))
         and "azil" in q
