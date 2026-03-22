@@ -444,6 +444,11 @@ class TestPreciseDeterministicAnswers:
                 ["ücret alacağını talep", "zararın tamamen giderilmesi"],
             ),
             (
+                "TBK m.504 kapsamında vekil, müvekkilin talimatlarına uymak zorunda mıdır? Talimat dışı hareket ettiğinde sorumluluk nasıl doğar?",
+                ["TBK m.504", "TBK m.502"],
+                ["Vekalet iliskisinin temel cercevesi", "vekaletin kapsamini"],
+            ),
+            (
                 "'Vekalet sözleşmesi yazılı şekle tabi olmadığından sözlü da kurulabilir; sözlü vekil yaptığı işleri ispat edemezse ücret alamaz' iddiası doğru mudur?",
                 ["TBK m.502", "TBK m.510", "TBK m.12"],
                 ["hiçbir şekle bağlı değildir", "sözleşme veya teamül varsa vekil ücrete hak kazanır"],

@@ -333,7 +333,12 @@ notes: |
   - Wave 7'de ortak fail olan 7 soru (`TBK-107`, `134`, `139`, `147`, `148`, `152`, `161`) Wave 8'de her iki lane icin de `src=1.00 / no-hal` noktasina tasindi.
   - Candidate residual hallucination tek soruya dustu: `TBK-141`
   - Wave 8 karar notu eklendi: `coordination/faz2a-wave8-tbk-critical-rerun-2026-03-22.md`
+  - Wave 9 residual fix acildi: `TBK-141` icin eval-expectation drift'i dar deterministic answer ile kapatildi.
+  - Updated candidate lane `8044` uzerinde smoke PASS verdi; candidate artik `TBK m.504 + TBK m.502` pair'ini cite ediyor.
+  - Tek-soru diagnostic rerun alindi: `evaluation/reports/eval_diagnostic_faz2a_tbk141_candidate_wave9_20260322.json`
+  - `TBK-141` one-question summary: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+  - Wave 9 karar notu eklendi: `coordination/faz2a-wave9-tbk141-residual-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
-  - FAZ 2A Wave 9: `TBK-141` residual hallucination temizligi
-  - sonrasinda gerekirse `tbk_ceza_sarti` source tail icin ek dar precision wave
+  - FAZ 2A sonraki aktif hedef: `tbk_ceza_sarti` source tail
+  - ardindan residual fix'leri fold eden bir sonraki matched candidate rerun

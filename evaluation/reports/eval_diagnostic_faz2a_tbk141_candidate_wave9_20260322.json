@@ -1,0 +1,154 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-22T18:43:24.058573+00:00",
+    "questions_source": "/tmp/faz2a_tbk141_residual_candidate.json",
+    "api_url": "http://127.0.0.1:8044",
+    "mock_mode": false,
+    "total_questions": 1,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "diagnostic",
+    "eval_family": "v3-170",
+    "model_ref": "dgx1-merged-candidate",
+    "checkpoint_ref": "hukuk_ai_sft_qwen35_807_dgx1_merged_wave9_tbk141",
+    "git_commit": "6dad946",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.0,
+      "timeout_seconds": 120.0,
+      "include_trace": true
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.3333,
+    "phrase_hit_rate": 1.0,
+    "avg_response_time_ms": 8.3,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tbk_vekaletname": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.3333
+    }
+  },
+  "by_difficulty": {
+    "medium": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.3333
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-141",
+      "question_text": "TBK m.504 kapsamında vekil, müvekkilin talimatlarına uymak zorunda mıdır? Talimat dışı hareket ettiğinde sorumluluk nasıl doğar?",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "answer_text": "Vekalet iliskisinin temel cercevesi TBK m.502'de kurulur; vekil, vekalet verenin bir isini gormeyi veya islemini yapmayi ustlenir [Kaynak: TBK m.502]. TBK m.504 ise vekaletin kapsamini ve vekilin hangi hukuki islemleri yapmaya yetkili oldugunu belirler [Kaynak: TBK m.504]. Bu cercevede vekilin, muvekkilin verdigi is ve yetki sinirlari disina cikan talimat-disi hareketi sorumluluk dogurur; vekalet kapsami ve yetkisiz hareketten kaynaklanan zararlar vekile yukletilir.",
+      "cited_sources": [
+        "TBK m.504",
+        "TBK m.502"
+      ],
+      "expected_sources": [
+        "TBK m.504",
+        "TBK m.502"
+      ],
+      "expected_keywords": [
+        "vekil talimata uyma",
+        "talimat dışı hareket",
+        "müvekkil direktifi",
+        "sorumluluk",
+        "özen borcu",
+        "yetkisiz hareket"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.3333,
+      "response_time_ms": 8.3,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.504 kapsamında vekil, müvekkilin talimatlarına uymak zorunda mıdır? Talimat dışı hareket ettiğinde sorumluluk nasıl doğar?",
+          "enriched_query": "TBK m.504 kapsamında vekil, müvekkilin talimatlarına uymak zorunda mıdır? Talimat dışı hareket ettiğinde sorumluluk nasıl doğar?",
+          "retrieval_query": "TBK m.504 kapsamında vekil, müvekkilin talimatlarına uymak zorunda mıdır? Talimat dışı hareket ettiğinde sorumluluk nasıl doğar?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    }
+  ]
+}

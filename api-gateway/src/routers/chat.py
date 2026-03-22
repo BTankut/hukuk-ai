@@ -556,6 +556,21 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.502", "TBK m.510", "TBK m.12"]
 
+    asks_mandate_instruction_scope_under_504 = (
+        "tbk m.504" in q
+        and ("talimatlarına uymak zorunda" in q or "talimatlarina uymak zorunda" in q)
+    )
+    if asks_mandate_instruction_scope_under_504:
+        answer = (
+            "Vekalet iliskisinin temel cercevesi TBK m.502'de kurulur; vekil, vekalet verenin "
+            "bir isini gormeyi veya islemini yapmayi ustlenir [Kaynak: TBK m.502]. TBK m.504 ise "
+            "vekaletin kapsamini ve vekilin hangi hukuki islemleri yapmaya yetkili oldugunu "
+            "belirler [Kaynak: TBK m.504]. Bu cercevede vekilin, muvekkilin verdigi is ve yetki "
+            "sinirlari disina cikan talimat-disi hareketi sorumluluk dogurur; vekalet kapsami "
+            "ve yetkisiz hareketten kaynaklanan zararlar vekile yukletilir."
+        )
+        return answer, ["TBK m.504", "TBK m.502"]
+
     asks_unjustified_revocation_of_paid_mandate = (
         "vekalet" in q
         and "azil" in q
