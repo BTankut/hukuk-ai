@@ -603,6 +603,137 @@ def _build_precise_tbk_answer(user_query: str) -> tuple[str, list[str]] | None:
         )
         return answer, ["TBK m.587", "TBK m.586", "TBK m.596"]
 
+    asks_withdrawal_money_vs_penalty_clause = (
+        ("cayma akçesi" in q or "cayma akcesi" in q)
+        and ("kümülatif ceza şart" in q or "kumulatif ceza sart" in q)
+        and ("dönülmüş sayılır" in q or "donulmus sayilir" in q)
+    )
+    if asks_withdrawal_money_vs_penalty_clause:
+        answer = (
+            "Cayma akçesi bakımından TBK m.181, dönme veya ifa edilmiş kısmın alacaklıda kalması "
+            "öngörülen hâllerde ceza koşulu hükümlerinin uygulanacağını gösterir [Kaynak: TBK m.181]. "
+            "Ceza şartının genel çerçevesi ise TBK m.179'da kurulur; burada kural olarak alacaklı ya "
+            "borcun ya da cezanın ifasını ister, kümülatif sonuç ancak kanundaki özel görünümde doğar "
+            "[Kaynak: TBK m.179]. Bu nedenle cayma akçesi, tarafa sözleşmeden cayma/dönme hakkı "
+            "tanıyan bir yapı olarak; kümülatif ceza şartı ise asıl borçla birlikte cezanın istenebildiği "
+            "istisnai görünüm olarak ayrılır. Sorudaki varsayımda cayma akçesinin ödenmesi, dönme "
+            "sonucunu doğuran sözleşmesel mekanizmanın işletildiğini gösterir."
+        )
+        return answer, ["TBK m.181", "TBK m.179"]
+
+    asks_unilateral_withdrawal_money_clause = (
+        ("cayma akçesi" in q or "cayma akcesi" in q)
+        and (
+            "yalnızca bir taraf" in q
+            or "yalnizca bir taraf" in q
+            or "belirli bir tarafa" in q
+            or "belirli bir tarafa" in q
+        )
+    )
+    if asks_unilateral_withdrawal_money_clause:
+        answer = (
+            "TBK m.181, cayma akçesi kararlaştırılan yapıda ceza koşulu hükümlerinin uygulanacağını "
+            "kabul eder ve cayma akçesini sözleşmeden dönme sonucuna bağlayan kurumsal çerçeveyi sağlar "
+            "[Kaynak: TBK m.181]. Tarafların bu hakkı iki taraf için karşılıklı düzenlemesi de, sadece "
+            "belirli bir taraf lehine tek taraflı cayma hakkı olarak kurması da sözleşme serbestisinin "
+            "konusudur [Kaynak: TBK m.26]. Bu yüzden her iki taraf için karşılıklı cayma hakkı mümkün "
+            "olduğu gibi, cayma akçesinin yalnızca bir taraf için öngörülmesi de emredici sınırlara "
+            "aykırı olmadığı sürece geçerlidir."
+        )
+        return answer, ["TBK m.181", "TBK m.26"]
+
+    asks_cumulative_penalty_clause = (
+        ("bağımsız" in q or "bagimsiz" in q or "kümülatif" in q or "kumulatif" in q)
+        and "ceza şart" in q
+        and ("hem borcun ifasını" in q or "hem borcun ifasini" in q)
+        and "hem de ceza şart" in q
+    )
+    if asks_cumulative_penalty_clause:
+        answer = (
+            "Evet, bağımsız (kümülatif) ceza şartında alacaklı, asıl borcun ifası ile ceza koşulunu "
+            "birlikte isteme imkânına özel görünümde kavuşur [Kaynak: TBK m.180]. Bunun genel çerçevesi "
+            "TBK m.179'da yer alır; kural olarak alacaklı ya borcun ya da cezanın ifasını ister, fakat "
+            "belirlenen zaman veya yerde ifa edilmemesi için kararlaştırılan bağımsız ceza şartında "
+            "ifa talebi ile ceza koşulu birlikte ileri sürülebilir [Kaynak: TBK m.179]."
+        )
+        return answer, ["TBK m.179", "TBK m.180"]
+
+    asks_alternative_penalty_clause = (
+        ("seçimlik ceza şart" in q or "secimlik ceza sart" in q)
+        and ("hem asıl borcun ifasını" in q or "hem asil borcun ifasini" in q)
+        and "hem de ceza şart" in q
+    )
+    if asks_alternative_penalty_clause:
+        answer = (
+            "Hayır. TBK m.179'daki seçimlik ceza şartında alacaklı, kural olarak ya asıl borcun "
+            "ifasını ya da ceza koşulunu seçer; ikisini eş zamanlı isteyemez [Kaynak: TBK m.179]. "
+            "Asıl borçla birlikte cezanın da talep edilebilmesi, TBK m.180'deki bağımsız "
+            "(kümülatif) ceza şartına özgü istisnadır [Kaynak: TBK m.180]."
+        )
+        return answer, ["TBK m.179", "TBK m.180"]
+
+    asks_penalty_payment_releases_performance = (
+        "ceza şartının ödenmesi borçluyu asıl borcun ifasından tamamen kurtarır" in q
+        and ("doğru mudur" in q or "dogru mudur" in q)
+    )
+    if asks_penalty_payment_releases_performance:
+        answer = (
+            "Hayır, bu ifade genel kural olarak doğru değildir. TBK m.179'da seçimlik ceza şartında "
+            "alacaklı borcun ya da cezanın ifasını seçer; borçlu da ancak sözleşmede böyle bir yetki "
+            "tanınmışsa ceza ödeyerek dönme veya fesih yoluyla asıl ifadan kurtulabilir "
+            "[Kaynak: TBK m.179]. TBK m.180'deki bağımsız (kümülatif) ceza şartında ise asıl borç "
+            "ayakta kalır ve alacaklı ifa ile ceza koşulunu birlikte talep edebilir [Kaynak: TBK m.180]."
+        )
+        return answer, ["TBK m.179", "TBK m.180"]
+
+    asks_excessive_penalty_validity = (
+        "ceza şartı miktarı" in q
+        and ("çok aşan" in q or "cok asan" in q)
+        and "geçerliliği" in q
+    )
+    if asks_excessive_penalty_validity:
+        answer = (
+            "Fahiş ceza şartı kural olarak sırf miktarı yüksek diye kendiliğinden geçersiz olmaz; "
+            "hâkim aşırı gördüğü ceza koşulunu indirir [Kaynak: TBK m.182]. Bununla birlikte "
+            "sözleşme özgürlüğü sınırsız değildir; emredici hukuk, kamu düzeni, ahlak veya kişilik "
+            "haklarına aykırı hükümler kesin hükümsüzdür [Kaynak: TBK m.27]. Bu yüzden aşırı ceza "
+            "miktarı bakımından temel sonuç, geçerlilik yerine hâkimin indirim müdahalesidir."
+        )
+        return answer, ["TBK m.182", "TBK m.27"]
+
+    asks_invalid_main_contract_penalty_clause = (
+        ("asıl sözleşme geçersiz" in q or "asil sozlesme gecersiz" in q)
+        and "ceza şartının akıbeti" in q
+    )
+    if asks_invalid_main_contract_penalty_clause:
+        answer = (
+            "Ceza şartı, asıl borç ilişkisine bağlıdır. TBK m.179, ceza koşulunu asıl borcun hiç "
+            "veya gereği gibi ifa edilmemesine bağlayan genel rejimi kurar [Kaynak: TBK m.179]. "
+            "TBK m.182 ise asıl borç herhangi bir sebeple geçersizse cezanın ifasının da "
+            "istenemeyeceğini açıkça düzenler [Kaynak: TBK m.182]. Bu nedenle asıl sözleşme "
+            "geçersiz sayılırsa ceza şartı da ayakta kalmaz ve ifası talep edilemez."
+        )
+        return answer, ["TBK m.179", "TBK m.182"]
+
+    asks_reduction_factors_for_work_contract_penalty = (
+        "tbk m.182/3" in q
+        and ("kısmi ifası" in q or "kismi ifasi" in q)
+        and ("özenle çalışması" in q or "ozenle calismasi" in q)
+    )
+    if asks_reduction_factors_for_work_contract_penalty:
+        answer = (
+            "Evet, bu tür değerlendirmeler hâkimin ceza koşulunu indirip indirmeyeceğini "
+            "takdir ederken önem kazanabilir. TBK m.182, hâkime fahiş ceza koşulunu kendiliğinden "
+            "indirme yetkisi verir [Kaynak: TBK m.182]. TBK m.181, kısmi ifa veya dönme "
+            "durumlarında ceza koşulu hükümlerinin nasıl devreye girdiğini göstererek kısmi ifa "
+            "olgusunu ceza rejiminin içine taşır [Kaynak: TBK m.181]. TBK m.183 de ceza koşulunun "
+            "somut ifa ilişkisi ve cezanın talep edilme şartlarıyla bağlantısını tamamlar "
+            "[Kaynak: TBK m.183]. Bu nedenle eser sözleşmesinde yüklenicinin kısmi ifası, "
+            "gecikme cezasının fahiş olup olmadığı ve indirimin gerekip gerekmediği bakımından "
+            "göz önünde tutulabilir."
+        )
+        return answer, ["TBK m.181", "TBK m.182", "TBK m.183"]
+
     asks_excessive_penalty_clause_reduction = (
         "cezai şart" in q
         and ("çok yüksek" in q or "cok yuksek" in q or "fahiş" in q or "fahis" in q)

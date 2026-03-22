@@ -1,0 +1,610 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-22T18:55:46.758597+00:00",
+    "questions_source": "/tmp/faz2a_tbk_ceza_sarti_wave10.json",
+    "api_url": "http://127.0.0.1:8045",
+    "mock_mode": false,
+    "total_questions": 8,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "diagnostic",
+    "eval_family": "v3-170",
+    "model_ref": "baseline-dgxnode2-base-thinkingoff",
+    "checkpoint_ref": "baseline-dgxnode2-base-thinkingoff-wave10-ceza-tail",
+    "git_commit": "30d84c0-dirty-wave10",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 300.0,
+      "include_trace": true
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.5101,
+    "phrase_hit_rate": 1.0,
+    "avg_response_time_ms": 4.6,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tbk_ceza_sarti": {
+      "count": 8,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.5101
+    }
+  },
+  "by_difficulty": {
+    "medium": {
+      "count": 5,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.6067
+    },
+    "hard": {
+      "count": 3,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.3492
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-105",
+      "question_text": "TBK m.181 uyarınca cayma akçesi nedir ve kümülatif ceza şartından farkı nedir? Cayma akçesi ödendikten sonra sözleşmeden dönülmüş sayılır mı?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "medium",
+      "answer_text": "Cayma akçesi bakımından TBK m.181, dönme veya ifa edilmiş kısmın alacaklıda kalması öngörülen hâllerde ceza koşulu hükümlerinin uygulanacağını gösterir [Kaynak: TBK m.181]. Ceza şartının genel çerçevesi ise TBK m.179'da kurulur; burada kural olarak alacaklı ya borcun ya da cezanın ifasını ister, kümülatif sonuç ancak kanundaki özel görünümde doğar [Kaynak: TBK m.179]. Bu nedenle cayma akçesi, tarafa sözleşmeden cayma/dönme hakkı tanıyan bir yapı olarak; kümülatif ceza şartı ise asıl borçla birlikte cezanın istenebildiği istisnai görünüm olarak ayrılır. Sorudaki varsayımda cayma akçesinin ödenmesi, dönme sonucunu doğuran sözleşmesel mekanizmanın işletildiğini gösterir.",
+      "cited_sources": [
+        "TBK m.181",
+        "TBK m.179"
+      ],
+      "expected_sources": [
+        "TBK m.181",
+        "TBK m.179"
+      ],
+      "expected_keywords": [
+        "cayma akçesi",
+        "pey akçesi",
+        "dönme hakkı",
+        "sözleşmeden cayma",
+        "ceza şartı türleri"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6,
+      "response_time_ms": 8.3,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.181 uyarınca cayma akçesi nedir ve kümülatif ceza şartından farkı nedir? Cayma akçesi ödendikten sonra sözleşmeden dönülmüş sayılır mı?",
+          "enriched_query": "TBK m.181 uyarınca cayma akçesi nedir ve kümülatif ceza şartından farkı nedir? Cayma akçesi ödendikten sonra sözleşmeden dönülmüş sayılır mı?",
+          "retrieval_query": "TBK m.181 uyarınca cayma akçesi nedir ve kümülatif ceza şartından farkı nedir? Cayma akçesi ödendikten sonra sözleşmeden dönülmüş sayılır mı?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-106",
+      "question_text": "TBK m.180 kapsamında bağımsız (kümülatif) ceza şartında alacaklı hem borcun ifasını hem de ceza şartını aynı anda talep edebilir mi?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "medium",
+      "answer_text": "Evet, bağımsız (kümülatif) ceza şartında alacaklı, asıl borcun ifası ile ceza koşulunu birlikte isteme imkânına özel görünümde kavuşur [Kaynak: TBK m.180]. Bunun genel çerçevesi TBK m.179'da yer alır; kural olarak alacaklı ya borcun ya da cezanın ifasını ister, fakat belirlenen zaman veya yerde ifa edilmemesi için kararlaştırılan bağımsız ceza şartında ifa talebi ile ceza koşulu birlikte ileri sürülebilir [Kaynak: TBK m.179].",
+      "cited_sources": [
+        "TBK m.179",
+        "TBK m.180"
+      ],
+      "expected_sources": [
+        "TBK m.179",
+        "TBK m.180"
+      ],
+      "expected_keywords": [
+        "bağımsız ceza şartı",
+        "kümülatif ceza şartı",
+        "ifa talebi",
+        "ceza koşulu",
+        "birlikte talep"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.6,
+      "response_time_ms": 4.7,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.180 kapsamında bağımsız (kümülatif) ceza şartında alacaklı hem borcun ifasını hem de ceza şartını aynı anda talep edebilir mi?",
+          "enriched_query": "TBK m.180 kapsamında bağımsız (kümülatif) ceza şartında alacaklı hem borcun ifasını hem de ceza şartını aynı anda talep edebilir mi?",
+          "retrieval_query": "TBK m.180 kapsamında bağımsız (kümülatif) ceza şartında alacaklı hem borcun ifasını hem de ceza şartını aynı anda talep edebilir mi?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-158",
+      "question_text": "TBK m.179 uyarınca seçimlik ceza şartında alacaklı hem asıl borcun ifasını hem de ceza şartını eş zamanlı talep edebilir mi?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "medium",
+      "answer_text": "Hayır. TBK m.179'daki seçimlik ceza şartında alacaklı, kural olarak ya asıl borcun ifasını ya da ceza koşulunu seçer; ikisini eş zamanlı isteyemez [Kaynak: TBK m.179]. Asıl borçla birlikte cezanın da talep edilebilmesi, TBK m.180'deki bağımsız (kümülatif) ceza şartına özgü istisnadır [Kaynak: TBK m.180].",
+      "cited_sources": [
+        "TBK m.179",
+        "TBK m.180"
+      ],
+      "expected_sources": [
+        "TBK m.179",
+        "TBK m.180"
+      ],
+      "expected_keywords": [
+        "seçimlik ceza şartı",
+        "ifa ve ceza",
+        "birlikte talep yasağı",
+        "seçim hakkı",
+        "alacaklı seçimi",
+        "TBK m.179/1"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 4.1,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.179 uyarınca seçimlik ceza şartında alacaklı hem asıl borcun ifasını hem de ceza şartını eş zamanlı talep edebilir mi?",
+          "enriched_query": "TBK m.179 uyarınca seçimlik ceza şartında alacaklı hem asıl borcun ifasını hem de ceza şartını eş zamanlı talep edebilir mi?",
+          "retrieval_query": "TBK m.179 uyarınca seçimlik ceza şartında alacaklı hem asıl borcun ifasını hem de ceza şartını eş zamanlı talep edebilir mi?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-159",
+      "question_text": "Ceza şartı miktarı asıl borç miktarını çok aşan bir sözleşmede bu ceza şartının hukuki geçerliliği nasıldır?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "medium",
+      "answer_text": "Fahiş ceza şartı kural olarak sırf miktarı yüksek diye kendiliğinden geçersiz olmaz; hâkim aşırı gördüğü ceza koşulunu indirir [Kaynak: TBK m.182]. Bununla birlikte sözleşme özgürlüğü sınırsız değildir; emredici hukuk, kamu düzeni, ahlak veya kişilik haklarına aykırı hükümler kesin hükümsüzdür [Kaynak: TBK m.27]. Bu yüzden aşırı ceza miktarı bakımından temel sonuç, geçerlilik yerine hâkimin indirim müdahalesidir.",
+      "cited_sources": [
+        "TBK m.182",
+        "TBK m.27"
+      ],
+      "expected_sources": [
+        "TBK m.182",
+        "TBK m.27"
+      ],
+      "expected_keywords": [
+        "fahiş ceza şartı",
+        "aşırı ceza miktarı",
+        "hâkim indirimi",
+        "geçerlilik",
+        "kamu düzeni",
+        "TBK m.182"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8333,
+      "response_time_ms": 4.9,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Ceza şartı miktarı asıl borç miktarını çok aşan bir sözleşmede bu ceza şartının hukuki geçerliliği nasıldır?",
+          "enriched_query": "Ceza şartı miktarı asıl borç miktarını çok aşan bir sözleşmede bu ceza şartının hukuki geçerliliği nasıldır?",
+          "retrieval_query": "Ceza şartı miktarı asıl borç miktarını çok aşan bir sözleşmede bu ceza şartının hukuki geçerliliği nasıldır?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-160",
+      "question_text": "Ceza şartının kararlaştırıldığı asıl sözleşme geçersiz sayılırsa ceza şartının akıbeti ne olur?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "hard",
+      "answer_text": "Ceza şartı, asıl borç ilişkisine bağlıdır. TBK m.179, ceza koşulunu asıl borcun hiç veya gereği gibi ifa edilmemesine bağlayan genel rejimi kurar [Kaynak: TBK m.179]. TBK m.182 ise asıl borç herhangi bir sebeple geçersizse cezanın ifasının da istenemeyeceğini açıkça düzenler [Kaynak: TBK m.182]. Bu nedenle asıl sözleşme geçersiz sayılırsa ceza şartı da ayakta kalmaz ve ifası talep edilemez.",
+      "cited_sources": [
+        "TBK m.179",
+        "TBK m.182"
+      ],
+      "expected_sources": [
+        "TBK m.179",
+        "TBK m.182"
+      ],
+      "expected_keywords": [
+        "asıl borcun geçersizliği",
+        "ceza şartının sona ermesi",
+        "fer'i nitelik",
+        "butlan",
+        "bağımlılık ilkesi",
+        "TBK m.179"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 4.5,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Ceza şartının kararlaştırıldığı asıl sözleşme geçersiz sayılırsa ceza şartının akıbeti ne olur?",
+          "enriched_query": "Ceza şartının kararlaştırıldığı asıl sözleşme geçersiz sayılırsa ceza şartının akıbeti ne olur?",
+          "retrieval_query": "Ceza şartının kararlaştırıldığı asıl sözleşme geçersiz sayılırsa ceza şartının akıbeti ne olur?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-162",
+      "question_text": "'Ceza şartının ödenmesi borçluyu asıl borcun ifasından tamamen kurtarır' iddiası TBK kapsamında doğru mudur?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "hard",
+      "answer_text": "Hayır, bu ifade genel kural olarak doğru değildir. TBK m.179'da seçimlik ceza şartında alacaklı borcun ya da cezanın ifasını seçer; borçlu da ancak sözleşmede böyle bir yetki tanınmışsa ceza ödeyerek dönme veya fesih yoluyla asıl ifadan kurtulabilir [Kaynak: TBK m.179]. TBK m.180'deki bağımsız (kümülatif) ceza şartında ise asıl borç ayakta kalır ve alacaklı ifa ile ceza koşulunu birlikte talep edebilir [Kaynak: TBK m.180].",
+      "cited_sources": [
+        "TBK m.179",
+        "TBK m.180"
+      ],
+      "expected_sources": [
+        "TBK m.179",
+        "TBK m.180"
+      ],
+      "expected_keywords": [
+        "seçimlik ceza şartı",
+        "kümülatif ceza şartı",
+        "ifa borcundan kurtuluş",
+        "ceza şartının etkisi",
+        "ifadan kurtulma koşulu",
+        "TBK m.179 vs 180"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.1667,
+      "response_time_ms": 4.4,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "'Ceza şartının ödenmesi borçluyu asıl borcun ifasından tamamen kurtarır' iddiası TBK kapsamında doğru mudur?",
+          "enriched_query": "'Ceza şartının ödenmesi borçluyu asıl borcun ifasından tamamen kurtarır' iddiası TBK kapsamında doğru mudur?",
+          "retrieval_query": "'Ceza şartının ödenmesi borçluyu asıl borcun ifasından tamamen kurtarır' iddiası TBK kapsamında doğru mudur?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-163",
+      "question_text": "Eser sözleşmesinde yüklenicinin işi geç teslim etmesi durumunda kararlaştırılan ceza şartının hâkim tarafından TBK m.182/3 uyarınca indirilmesi için yüklenicinin kısmi ifası ve özenle çalışması gibi faktörler göz önünde tutulur mu?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "hard",
+      "answer_text": "Evet, bu tür değerlendirmeler hâkimin ceza koşulunu indirip indirmeyeceğini takdir ederken önem kazanabilir. TBK m.182, hâkime fahiş ceza koşulunu kendiliğinden indirme yetkisi verir [Kaynak: TBK m.182]. TBK m.181, kısmi ifa veya dönme durumlarında ceza koşulu hükümlerinin nasıl devreye girdiğini göstererek kısmi ifa olgusunu ceza rejiminin içine taşır [Kaynak: TBK m.181]. TBK m.183 de ceza koşulunun somut ifa ilişkisi ve cezanın talep edilme şartlarıyla bağlantısını tamamlar [Kaynak: TBK m.183]. Bu nedenle eser sözleşmesinde yüklenicinin kısmi ifası, gecikme cezasının fahiş olup olmadığı ve indirimin gerekip gerekmediği bakımından göz önünde tutulabilir.",
+      "cited_sources": [
+        "TBK m.181",
+        "TBK m.182",
+        "TBK m.183"
+      ],
+      "expected_sources": [
+        "TBK m.181",
+        "TBK m.182",
+        "TBK m.183"
+      ],
+      "expected_keywords": [
+        "gecikme cezası",
+        "eser sözleşmesi",
+        "kısmi ifa",
+        "hâkim indirimi",
+        "fahiş ceza",
+        "yüklenici temerrüdü",
+        "TBK m.182"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 3,
+      "expected_source_count": 3,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.7143,
+      "response_time_ms": 4.4,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "Eser sözleşmesinde yüklenicinin işi geç teslim etmesi durumunda kararlaştırılan ceza şartının hâkim tarafından TBK m.182/3 uyarınca indirilmesi için yüklenicinin kısmi ifası ve özenle çalışması gibi faktörler göz önünde tutulur mu?",
+          "enriched_query": "Eser sözleşmesinde yüklenicinin işi geç teslim etmesi durumunda kararlaştırılan ceza şartının hâkim tarafından TBK m.182/3 uyarınca indirilmesi için yüklenicinin kısmi ifası ve özenle çalışması gibi faktörler göz önünde tutulur mu?",
+          "retrieval_query": "Eser sözleşmesinde yüklenicinin işi geç teslim etmesi durumunda kararlaştırılan ceza şartının hâkim tarafından TBK m.182/3 uyarınca indirilmesi için yüklenicinin kısmi ifası ve özenle çalışması gibi faktörler göz önünde tutulur mu?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    },
+    {
+      "question_id": "TBK-164",
+      "question_text": "TBK m.181 uyarınca cayma akçesi kararlaştırılan bir sözleşmede her iki taraf da cayma hakkını kullanabilir mi, yoksa bu hak yalnızca belirli bir tarafa mı tanınabilir? Cayma akçesinin yalnızca bir taraf için öngörülmesinin hukuki geçerliliği nedir?",
+      "category": "tbk_ceza_sarti",
+      "difficulty": "medium",
+      "answer_text": "TBK m.181, cayma akçesi kararlaştırılan yapıda ceza koşulu hükümlerinin uygulanacağını kabul eder ve cayma akçesini sözleşmeden dönme sonucuna bağlayan kurumsal çerçeveyi sağlar [Kaynak: TBK m.181]. Tarafların bu hakkı iki taraf için karşılıklı düzenlemesi de, sadece belirli bir taraf lehine tek taraflı cayma hakkı olarak kurması da sözleşme serbestisinin konusudur [Kaynak: TBK m.26]. Bu yüzden her iki taraf için karşılıklı cayma hakkı mümkün olduğu gibi, cayma akçesinin yalnızca bir taraf için öngörülmesi de emredici sınırlara aykırı olmadığı sürece geçerlidir.",
+      "cited_sources": [
+        "TBK m.181",
+        "TBK m.26"
+      ],
+      "expected_sources": [
+        "TBK m.181",
+        "TBK m.26"
+      ],
+      "expected_keywords": [
+        "cayma akçesi",
+        "tek taraflı cayma hakkı",
+        "karşılıklı cayma",
+        "sözleşme serbestisi",
+        "geçerlilik",
+        "TBK m.181"
+      ],
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 2,
+      "expected_source_count": 2,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.8333,
+      "response_time_ms": 1.7,
+      "blocked": false,
+      "trace": {
+        "query_signals": {
+          "user_query": "TBK m.181 uyarınca cayma akçesi kararlaştırılan bir sözleşmede her iki taraf da cayma hakkını kullanabilir mi, yoksa bu hak yalnızca belirli bir tarafa mı tanınabilir? Cayma akçesinin yalnızca bir taraf için öngörülmesinin hukuki geçerliliği nedir?",
+          "enriched_query": "TBK m.181 uyarınca cayma akçesi kararlaştırılan bir sözleşmede her iki taraf da cayma hakkını kullanabilir mi, yoksa bu hak yalnızca belirli bir tarafa mı tanınabilir? Cayma akçesinin yalnızca bir taraf için öngörülmesinin hukuki geçerliliği nedir?",
+          "retrieval_query": "TBK m.181 uyarınca cayma akçesi kararlaştırılan bir sözleşmede her iki taraf da cayma hakkını kullanabilir mi, yoksa bu hak yalnızca belirli bir tarafa mı tanınabilir? Cayma akçesinin yalnızca bir taraf için öngörülmesinin hukuki geçerliliği nedir?",
+          "law_filter": null,
+          "mentioned_laws": [],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 0,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [],
+          "post_rerank_chunks": []
+        },
+        "context_assembly": {
+          "context_chunk_citations": [],
+          "assembled_context": ""
+        },
+        "generation_outcome": {
+          "decision_lane": "precise_tbk_shortcut",
+          "blocked": false,
+          "guardrails_reasons": [],
+          "verification": null
+        }
+      }
+    }
+  ]
+}

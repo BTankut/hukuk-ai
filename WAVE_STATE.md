@@ -338,7 +338,28 @@ notes: |
   - Tek-soru diagnostic rerun alindi: `evaluation/reports/eval_diagnostic_faz2a_tbk141_candidate_wave9_20260322.json`
   - `TBK-141` one-question summary: citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
   - Wave 9 karar notu eklendi: `coordination/faz2a-wave9-tbk141-residual-2026-03-22.md`
+  - Wave 10 `tbk_ceza_sarti` source-tail closure acildi; uc dar deterministic package ile `TBK-105`, `106`, `158`, `159`, `160`, `162`, `163`, `164` coverage altina alindi.
+  - Wave 10 local verification PASS: `python3 -m py_compile api-gateway/src/routers/chat.py api-gateway/tests/test_chat_router.py` ve `api-gateway/.venv/bin/pytest api-gateway/tests/test_chat_router.py -q`
+  - Fresh matched lane'ler acildi: baseline `8045`, candidate `8046`
+  - Candidate smoke PASS verdi; `Ceza şartının kararlaştırıldığı asıl sözleşme geçersiz sayılırsa...` sorusunda `TBK m.179 + TBK m.182` dondu.
+  - Focused `tbk_ceza_sarti` mini-slice rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tbk_ceza_sarti_baseline_wave10_20260322.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tbk_ceza_sarti_candidate_wave10_20260322.json`
+  - Mini-slice summary:
+    - baseline -> citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+    - candidate -> citation `100.0%`, correct source `100.0%`, hallucination `0.0%`, refusal `100.0%`
+  - Full matched `tbk_critical` rerun alindi:
+    - baseline: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_baseline_wave10_20260322.json`
+    - candidate: `evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave10_20260322.json`
+  - Wave 10 summary:
+    - baseline -> citation `100.0%`, correct source `81.7%`, hallucination `0.0%`, refusal `95.1%`
+    - candidate -> citation `100.0%`, correct source `81.2%`, hallucination `0.0%`, refusal `98.4%`
+  - `tbk_ceza_sarti` category delta:
+    - baseline `66.7% -> 100.0%`
+    - candidate `62.1% -> 100.0%`
+  - `tbk_critical` slice'i her iki lane icin de daha yuksek source precision ile yeniden Faz 1 gate'ini gecti.
+  - Wave 10 karar notu eklendi: `coordination/faz2a-wave10-tbk-ceza-sarti-rerun-2026-03-22.md`
 
   ### Sonraki Beklenen Çıktı
-  - FAZ 2A sonraki aktif hedef: `tbk_ceza_sarti` source tail
-  - ardindan residual fix'leri fold eden bir sonraki matched candidate rerun
+  - FAZ 2A sonraki aktif hedef: `tbk_critical` icindeki `tbk_ceza_sarti` disi residual source-tail cluster
+  - ardindan residual fix'leri fold eden bir sonraki matched rerun

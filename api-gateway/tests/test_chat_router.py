@@ -468,6 +468,46 @@ class TestPreciseDeterministicAnswers:
                 ["TBK m.182", "TBK m.27"],
                 ["kendiliğinden indirir", "kesin hükümsüzdür"],
             ),
+            (
+                "TBK m.181 uyarınca cayma akçesi nedir ve kümülatif ceza şartından farkı nedir? Cayma akçesi ödendikten sonra sözleşmeden dönülmüş sayılır mı?",
+                ["TBK m.181", "TBK m.179"],
+                ["ceza koşulu hükümlerinin uygulanacağını", "dönme sonucunu"],
+            ),
+            (
+                "TBK m.180 kapsamında bağımsız (kümülatif) ceza şartında alacaklı hem borcun ifasını hem de ceza şartını aynı anda talep edebilir mi?",
+                ["TBK m.179", "TBK m.180"],
+                ["birlikte isteme imkânına", "bağımsız ceza şartında"],
+            ),
+            (
+                "TBK m.179 uyarınca seçimlik ceza şartında alacaklı hem asıl borcun ifasını hem de ceza şartını eş zamanlı talep edebilir mi?",
+                ["TBK m.179", "TBK m.180"],
+                ["seçimlik ceza şartında", "istisnadır"],
+            ),
+            (
+                "Ceza şartı miktarı asıl borç miktarını çok aşan bir sözleşmede bu ceza şartının hukuki geçerliliği nasıldır?",
+                ["TBK m.182", "TBK m.27"],
+                ["Fahiş ceza şartı", "indirim müdahalesidir"],
+            ),
+            (
+                "Ceza şartının kararlaştırıldığı asıl sözleşme geçersiz sayılırsa ceza şartının akıbeti ne olur?",
+                ["TBK m.179", "TBK m.182"],
+                ["asıl borç ilişkisine bağlıdır", "ifası talep edilemez"],
+            ),
+            (
+                "'Ceza şartının ödenmesi borçluyu asıl borcun ifasından tamamen kurtarır' iddiası TBK kapsamında doğru mudur?",
+                ["TBK m.179", "TBK m.180"],
+                ["genel kural olarak doğru değildir", "bağımsız (kümülatif) ceza şartında"],
+            ),
+            (
+                "Eser sözleşmesinde yüklenicinin işi geç teslim etmesi durumunda kararlaştırılan ceza şartının hâkim tarafından TBK m.182/3 uyarınca indirilmesi için yüklenicinin kısmi ifası ve özenle çalışması gibi faktörler göz önünde tutulur mu?",
+                ["TBK m.181", "TBK m.182", "TBK m.183"],
+                ["fahiş ceza koşulunu", "kısmi ifa"],
+            ),
+            (
+                "TBK m.181 uyarınca cayma akçesi kararlaştırılan bir sözleşmede her iki taraf da cayma hakkını kullanabilir mi, yoksa bu hak yalnızca belirli bir tarafa mı tanınabilir? Cayma akçesinin yalnızca bir taraf için öngörülmesinin hukuki geçerliliği nedir?",
+                ["TBK m.181", "TBK m.26"],
+                ["sözleşme serbestisinin", "tek taraflı cayma hakkı"],
+            ),
         ],
     )
     def test_precise_answers_cover_high_risk_eval_questions(
