@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-03-22T08:58:26.988340+00:00",
+  "role": "post_train",
+  "eval_family": "v2-95",
+  "model_ref": "hukuk-ai-sft-qwen35-807",
+  "checkpoint_ref": "dgx1-merged-post-promotion-cleanup-20260322",
+  "git_commit": "0bbf7babf8d591bff130e9fa545a56662d05a340",
+  "runner": "evaluation/eval_runner.py",
+  "train_package_sha": "627756783d6d1fcf0cb2114c4e7231892938144d7f7f8e88a5ee055fd35bb355",
+  "report_path": "evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_post_promotion_cleanup_20260322.json",
+  "report_sha256": "062cb99206837e669707fd86edd50b89feb70673be4f3daf75ebf9bcfa85680d",
+  "report_meta": {
+    "generated_at": "2026-03-22T08:53:19.417564+00:00",
+    "questions_source": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions_v2_95.json",
+    "api_url": "http://127.0.0.1:8004",
+    "mock_mode": false,
+    "total_questions": 95,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "post_train",
+    "eval_family": "v2-95",
+    "model_ref": "hukuk-ai-sft-qwen35-807",
+    "checkpoint_ref": "dgx1-merged-post-promotion-cleanup-20260322",
+    "git_commit": "224f556",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.2,
+      "timeout_seconds": 180.0
+    }
+  },
+  "notes": ""
+}

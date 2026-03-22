@@ -49,6 +49,23 @@ The promoted `dgx1` lane has a valid post-train promotion record for `faz1-50`, 
 - No validated release-control matrix for auth, audit logging, Redis, token accounting, observability, alerting, or backup/restore.
 - No single decision package that can honestly say cutover is approved.
 
+## Concrete Release-Control Evidence
+
+| Heading | Repo Evidence | Current Read |
+| --- | --- | --- |
+| Auth | No request auth layer in the local gateway. Embedding client can send bearer auth upstream, but the main legal API does not enforce user auth. See [embedding.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/rag/embedding.py), [main.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/main.py) | Missing |
+| Audit logging | Session-scoped runtime logs exist in the chat router, but there is no separate immutable audit trail or user/action audit store. See [chat.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/routers/chat.py) | Partial |
+| PII masking | Guardrails + Presidio integration exists and can be enabled. See [actions.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/guardrails/actions.py), [config.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/config.py) | Partial |
+| Redis session store | Sessions are in-memory only via `ConversationStore`; no Redis-backed session persistence exists. See [chat.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/routers/chat.py) | Missing |
+| Token accounting | Gateway response `usage` is word-count based and `token_manager.py` explicitly says production should use `tiktoken` or HF tokenizer. See [chat.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/routers/chat.py), [token_manager.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/rag/token_manager.py) | Partial |
+| Observability | Health endpoints and runtime logs exist, but no Prometheus/metrics pipeline is evidenced in repo. See [main.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/main.py) | Partial |
+| Alerting | No repo-native alerting or notification integration is present for serving/runtime incidents | Missing |
+| API versioning | Only `/v1` surface exists; no `/v2` or contract version negotiation is present. See [main.py](/Users/btmacstudio/Projects/hukuk-ai/api-gateway/src/main.py) | Missing |
+| Keepalive / process supervision | Detached launcher and `dgx-vllm-ensure-running.sh` provide operator tools, but not a full supervised production service manager. See [detach_logged_job.py](/Users/btmacstudio/Projects/hukuk-ai/scripts/finetune/detach_logged_job.py), [dgx-vllm-ensure-running.sh](/Users/btmacstudio/Projects/hukuk-ai/scripts/dgx-vllm-ensure-running.sh) | Partial |
+| Backup / restore | No formal backup/restore runbook or automated restore evidence is present for vector store, model lane, or runtime state | Missing |
+| Smoke checks | Health/smoke scripts and smoke evidence exist across runtime recovery and DGX launch documents. See [runtime-bringup-recovery-2026-03-20.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/runtime-bringup-recovery-2026-03-20.md), [dgx1-merged-endpoint-bridge-2026-03-21.md](/Users/btmacstudio/Projects/hukuk-ai/coordination/dgx1-merged-endpoint-bridge-2026-03-21.md) | Present |
+| Rollback plan | Rehearsal path is being formalized, but no closed rollback proof existed at matrix creation time | Open |
+
 ## Decision Implication
 
 FAZ 1.5 should continue as a **decision gate**, not as a feature wave.
@@ -57,4 +74,3 @@ At the current repo state, the most defensible stance is:
 
 - `NO-GO` for production cutover
 - `Narrow GO` remains possible only if the missing matched evals and release-control proof are completed
-
