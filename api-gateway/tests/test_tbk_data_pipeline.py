@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 from data_pipeline.indexing import HashingEmbedder, InMemoryVectorStore, MilvusVectorStore, TBKIngestPipeline
 from data_pipeline.indexing.interfaces import VectorRecord
 from data_pipeline.loaders import TBKMevzuatLoader
+from data_pipeline.models import LawArticle, LawDocument
 from data_pipeline.processing import LegalChunker, LegalMetadataExtractor
 
 
@@ -72,11 +74,48 @@ def test_chunker_produces_madde_fikra_metadata_and_id_format():
     sample = chunks[0]
     assert sample.chunk_id.startswith("TBK_m")
     assert "_f" in sample.chunk_id
+    assert sample.metadata["law_no"] == "6098"
+    assert sample.metadata["law_short_name"] == "TBK"
     assert sample.metadata["kanun_no"] == "6098"
+    assert sample.metadata["kanun_kisa_adi"] == "TBK"
+    assert sample.metadata["source_id"].startswith("TBK m.")
+    assert sample.metadata["chunk_id"] == sample.chunk_id
+    assert sample.metadata["yururluk_baslangic"] is None
+    assert sample.metadata["yururluk_bitis"] is None
+    assert sample.metadata["mulga"] is None
     assert sample.metadata["hukuk_dali"] == "borclar_hukuku"
 
     parsed = LegalMetadataExtractor.parse_madde_no_from_text("TBK Madde 72 zamanaşımı")
     assert parsed == "72"
+
+
+def test_chunker_keeps_source_id_stable_across_split_parts():
+    document = LawDocument(
+        law_no="6098",
+        law_short_name="TBK",
+        law_name="Türk Borçlar Kanunu",
+        source_url=None,
+        fetched_at=datetime(2026, 3, 22, 12, 0, 0),
+        raw_text="",
+        articles=[
+            LawArticle(
+                madde_no="49",
+                heading="Haksız fiil",
+                body="(1) " + " ".join(["kelime"] * 120) + " (2) " + " ".join(["ikinci"] * 120),
+            )
+        ],
+    )
+    chunker = LegalChunker(max_words=30, overlap_words=5)
+
+    chunks = chunker.chunk_document(document)
+
+    assert len(chunks) > 1
+    assert len({chunk.metadata["source_id"] for chunk in chunks}) == 1
+    assert len({chunk.chunk_id for chunk in chunks}) == len(chunks)
+    assert all(chunk.metadata["chunk_id"] == chunk.chunk_id for chunk in chunks)
+    assert all(chunk.metadata["yururluk_baslangic"] is None for chunk in chunks)
+    assert all(chunk.metadata["yururluk_bitis"] is None for chunk in chunks)
+    assert all(chunk.metadata["mulga"] is None for chunk in chunks)
 
 
 def test_tbk_ingest_pipeline_smoke_chunk_count_matches_index_count():
@@ -119,7 +158,18 @@ def test_milvus_store_interface_contract_with_fake_client():
             id="TBK_m49_f1",
             text="örnek",
             embedding=[0.1, 0.2],
-            metadata={"kanun_no": "6098"},
+            metadata={
+                "source_id": "TBK m.49",
+                "law_no": "6098",
+                "law_short_name": "TBK",
+                "kanun_no": "6098",
+                "kanun_kisa_adi": "TBK",
+                "madde_no": "49",
+                "fikra_no": "1",
+                "yururluk_baslangic": None,
+                "yururluk_bitis": None,
+                "mulga": None,
+            },
         )
     ]
 
@@ -128,4 +178,5 @@ def test_milvus_store_interface_contract_with_fake_client():
     assert inserted == 1
     assert client.last_collection == "mevzuat"
     assert client.last_data[0]["id"] == "TBK_m49_f1"
+    assert client.last_data[0]["metadata"]["source_id"] == "TBK m.49"
     assert store.count(collection="mevzuat") == 1

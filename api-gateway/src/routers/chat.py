@@ -37,16 +37,26 @@ import re
 import time
 import uuid
 from collections import OrderedDict
+from datetime import datetime, timezone
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from faz2a_hardening import (
+    HardeningResult,
+    build_initial_answer_contract,
+    build_law_scope_signal,
+    canonicalize_source_id,
+    harden_answer,
+    normalize_query_text,
+    validate_trace_payload,
+)
 from observability import get_metrics_registry, looks_like_refusal
 from pydantic import BaseModel, Field
 
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from rag.token_manager import estimate_tokens
-from release_controls import append_audit_event, require_api_auth
+from release_controls import append_audit_event, export_trace_pack, require_api_auth
 from session_store import SessionStoreBackend, build_session_backend_from_env
 
 logger = logging.getLogger(__name__)
@@ -1581,6 +1591,14 @@ def _resolve_trace_source_id(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
     if metadata.get("source_id") is not None:
         return str(metadata["source_id"])
+    law_short_name = (
+        metadata.get("law_short_name")
+        or metadata.get("kanun_kisa_adi")
+        or chunk.source
+    )
+    madde_no = metadata.get("madde_no")
+    if law_short_name and madde_no:
+        return f"{law_short_name} m.{madde_no}"
     return chunk.citation
 
 
@@ -1596,15 +1614,74 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "law_short_name": metadata.get("law_short_name") or metadata.get("kanun_kisa_adi"),
         "madde_no": metadata.get("madde_no"),
         "fikra_no": metadata.get("fikra_no"),
+        "yururluk_baslangic": metadata.get("yururluk_baslangic"),
+        "yururluk_bitis": metadata.get("yururluk_bitis"),
+        "mulga": metadata.get("mulga"),
     }
+
+
+def _build_assembled_evidence(chunks: list[RetrievedChunk]) -> list[dict[str, Any]]:
+    evidence: list[dict[str, Any]] = []
+    for chunk in chunks:
+        item = _serialize_trace_chunk(chunk)
+        item["excerpt"] = chunk.text
+        evidence.append(item)
+    return evidence
+
+
+def _build_fallback_assembled_evidence(
+    source_ids: list[str],
+    *,
+    fallback_excerpt: str,
+) -> list[dict[str, Any]]:
+    evidence: list[dict[str, Any]] = []
+    for source_id in source_ids:
+        canonical = canonicalize_source_id(source_id) or source_id
+        law_short_name, _, article_part = canonical.partition(" ")
+        madde_no = article_part.replace("m.", "").strip() if article_part else None
+        evidence.append(
+            {
+                "source_id": canonical,
+                "citation": canonical,
+                "source": law_short_name or None,
+                "score": None,
+                "chunk_id": None,
+                "law_no": None,
+                "law_short_name": law_short_name or None,
+                "madde_no": madde_no or None,
+                "fikra_no": None,
+                "yururluk_baslangic": None,
+                "yururluk_bitis": None,
+                "mulga": None,
+                "excerpt": fallback_excerpt,
+            }
+        )
+    return evidence
+
+
+def _build_allowed_source_whitelist(chunks: list[RetrievedChunk]) -> list[str]:
+    whitelist: list[str] = []
+    seen: set[str] = set()
+    for chunk in chunks:
+        source_id = _resolve_trace_source_id(chunk)
+        if source_id in seen:
+            continue
+        whitelist.append(source_id)
+        seen.add(source_id)
+    return whitelist
 
 
 def _build_trace_payload(
     *,
+    request_id: str,
     decision_lane: str,
     user_query: str,
     enriched_query: str,
     retrieval_query: str,
+    question_normalized: str,
+    question_type: str,
+    target_date: str,
+    law_scope_signal: dict[str, Any],
     law_filter: str | None,
     mentioned_laws: list[str],
     cross_law_mode: bool,
@@ -1620,8 +1697,60 @@ def _build_trace_payload(
     blocked: bool,
     guardrails_reasons: list[str],
     verification: dict[str, Any] | None,
+    answer_contract: dict[str, Any],
+    model_cited_source_ids: list[str],
+    final_mode: str,
+    final_reason: str | None,
 ) -> dict[str, Any]:
-    return {
+    assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
+    if not assembled_evidence and model_cited_source_ids:
+        assembled_evidence = _build_fallback_assembled_evidence(
+            model_cited_source_ids,
+            fallback_excerpt=answer_contract.get("answer_text") or assembled_context or "",
+        )
+    allowed_source_whitelist = (
+        _build_allowed_source_whitelist(post_rerank_chunks)
+        if post_rerank_chunks
+        else [
+            canonicalize_source_id(item.get("source_id")) or str(item.get("source_id"))
+            for item in assembled_evidence
+            if item.get("source_id")
+        ]
+    )
+    payload = {
+        "request_id": request_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "question_raw": user_query,
+        "question_normalized": question_normalized,
+        "parsed_query": {
+            "enriched_query": enriched_query,
+            "retrieval_query": retrieval_query,
+            "law_filter": law_filter,
+            "mentioned_laws": mentioned_laws,
+            "explicit_article_refs": [
+                {"law": law, "madde": madde}
+                for law, madde in explicit_article_refs
+            ],
+            "forced_article_refs": [
+                {"law": law, "madde": madde}
+                for law, madde in forced_article_refs
+            ],
+            "applied_expansions": applied_expansions,
+        },
+        "law_scope_signal": law_scope_signal,
+        "question_type": question_type,
+        "target_date": target_date,
+        "retrieval_top_k": top_k_effective,
+        "rerank_list": [
+            _serialize_trace_chunk(chunk) for chunk in post_rerank_chunks
+        ],
+        "assembled_evidence": assembled_evidence,
+        "allowed_source_whitelist": allowed_source_whitelist,
+        "answer_contract": answer_contract,
+        "model_cited_source_ids": model_cited_source_ids,
+        "verifier_verdict": verification.get("verdict") if isinstance(verification, dict) else None,
+        "final_mode": final_mode,
+        "final_reason": final_reason,
         "query_signals": {
             "user_query": user_query,
             "enriched_query": enriched_query,
@@ -1653,14 +1782,19 @@ def _build_trace_payload(
         "context_assembly": {
             "context_chunk_citations": [chunk.citation for chunk in post_rerank_chunks],
             "assembled_context": assembled_context,
+            "assembled_evidence": assembled_evidence,
+            "allowed_source_whitelist": allowed_source_whitelist,
         },
         "generation_outcome": {
             "decision_lane": decision_lane,
             "blocked": blocked,
             "guardrails_reasons": guardrails_reasons,
             "verification": verification,
+            "final_mode": final_mode,
+            "final_reason": final_reason,
         },
     }
+    return validate_trace_payload(payload)
 
 
 # ---------------------------------------------------------------------------
@@ -1727,6 +1861,9 @@ class ChatCompletionResponse(BaseModel):
     blocked: bool = False
     guardrails_reasons: list[str] = Field(default_factory=list)
     verification: dict[str, Any] | None = None
+    final_mode: str | None = None
+    final_reason: str | None = None
+    answer_contract: dict[str, Any] | None = None
     trace: dict[str, Any] | None = None
 
 
@@ -1864,6 +2001,9 @@ async def _stream_sse_response(
     usage: ChatUsage | None = None,
     response_id: str | None = None,
     trace: dict[str, Any] | None = None,
+    final_mode: str | None = None,
+    final_reason: str | None = None,
+    answer_contract: dict[str, Any] | None = None,
     words_per_chunk: int = 5,
     delay_between_chunks: float = 0.02,
 ) -> AsyncGenerator[str, None]:
@@ -1926,6 +2066,12 @@ async def _stream_sse_response(
         meta_payload["trace"] = trace
     if usage is not None:
         meta_payload["usage"] = usage.model_dump()
+    if final_mode is not None:
+        meta_payload["final_mode"] = final_mode
+    if final_reason is not None:
+        meta_payload["final_reason"] = final_reason
+    if answer_contract is not None:
+        meta_payload["answer_contract"] = answer_contract
     yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
 
     # 5. Done sentinel
@@ -1985,6 +2131,126 @@ def _resolve_chat_usage(
             "upstream",
         )
     return _estimate_chat_usage(messages, answer_text), "estimated"
+
+
+def _export_trace_payload_or_raise(
+    *,
+    request_id: str,
+    trace_payload: dict[str, Any],
+) -> None:
+    export_trace_pack(request_id=request_id, payload=trace_payload)
+
+
+def _build_client_trace(
+    *,
+    include_trace: bool,
+    trace_payload: dict[str, Any],
+) -> dict[str, Any] | None:
+    return trace_payload if include_trace else None
+
+
+def _finalize_chat_response(
+    *,
+    request: Request,
+    request_body: ChatCompletionRequest,
+    store: ConversationStore,
+    session_id: str,
+    response_id: str,
+    user_message: str,
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    guardrails_reasons: list[str],
+    verification: dict[str, Any] | None,
+    trace_payload: dict[str, Any],
+    answer_contract: dict[str, Any],
+    final_mode: str,
+    final_reason: str | None,
+    upstream_usage: dict[str, int] | None,
+) -> Any:
+    _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
+
+    store.add_turn(session_id, user_message, answer_text)
+    usage, usage_source = _resolve_chat_usage(
+        messages=request_body.messages,
+        answer_text=answer_text,
+        upstream_usage=upstream_usage,
+    )
+
+    append_audit_event(
+        event_type="chat_completion",
+        request=request,
+        response_id=response_id,
+        session_id=session_id,
+        model=request_body.model,
+        stream=request_body.stream,
+        blocked=blocked,
+        citations=citations,
+        guardrails_reasons=guardrails_reasons,
+        usage=usage.model_dump(),
+        usage_source=usage_source,
+        message_count=len(request_body.messages),
+        user_message_chars=len(user_message),
+    )
+    get_metrics_registry().record_chat_outcome(
+        path=request.url.path,
+        model=request_body.model,
+        blocked=blocked,
+        is_refusal=looks_like_refusal(answer_text, blocked=blocked),
+        usage_source=usage_source,
+    )
+
+    client_trace = _build_client_trace(
+        include_trace=request_body.include_trace,
+        trace_payload=trace_payload,
+    )
+    if request_body.stream:
+        return StreamingResponse(
+            _stream_sse_response(
+                answer=answer_text,
+                session_id=session_id,
+                model=request_body.model,
+                citations=citations,
+                blocked=blocked,
+                guardrails_reasons=guardrails_reasons,
+                verification=verification,
+                usage=usage,
+                response_id=response_id,
+                trace=client_trace,
+                final_mode=final_mode,
+                final_reason=final_reason,
+                answer_contract=answer_contract,
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "X-Session-Id": session_id,
+            },
+        )
+
+    return ChatCompletionResponse(
+        id=response_id,
+        created=int(time.time()),
+        model=request_body.model,
+        choices=[
+            ChatChoice(
+                index=0,
+                message=ConversationMessage(role="assistant", content=answer_text),
+                finish_reason="stop",
+            )
+        ],
+        usage=usage,
+        session_id=session_id,
+        citations=citations,
+        blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        answer_contract=answer_contract,
+        trace=client_trace,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -2054,100 +2320,76 @@ async def chat_completions(
         precise_answer = _build_precise_tbk_answer(last_user_msg)
     if precise_answer:
         answer_text, precise_citations = precise_answer
-        trace_payload = None
-        if request_body.include_trace:
-            trace_payload = _build_trace_payload(
-                decision_lane=precise_lane,
-                user_query=last_user_msg,
-                enriched_query=last_user_msg,
-                retrieval_query=last_user_msg,
-                law_filter=request_body.law_filter,
-                mentioned_laws=[],
-                cross_law_mode=False,
-                explicit_article_refs=[],
-                forced_article_refs=[],
-                applied_expansions=[],
-                top_k_requested=request_body.top_k,
-                top_k_effective=0,
-                reranker_enabled=False,
-                pre_rerank_chunks=[],
-                post_rerank_chunks=[],
-                assembled_context="",
-                blocked=False,
-                guardrails_reasons=[],
-                verification=None,
-            )
-
-        store.add_turn(session_id, last_user_msg, answer_text)
-        usage, usage_source = _resolve_chat_usage(
-            messages=request_body.messages,
+        mentioned_laws = _extract_law_mentions(last_user_msg)
+        explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
+        synthetic_evidence = _build_fallback_assembled_evidence(
+            [citation for citation in precise_citations if canonicalize_source_id(citation)],
+            fallback_excerpt=answer_text,
+        )
+        synthetic_whitelist = [
+            str(item["source_id"])
+            for item in synthetic_evidence
+            if item.get("source_id")
+        ]
+        hardening = harden_answer(
             answer_text=answer_text,
-            upstream_usage=None,
-        )
-        append_audit_event(
-            event_type="chat_completion",
-            request=request,
-            response_id=response_id,
-            session_id=session_id,
-            model=request_body.model,
-            stream=request_body.stream,
-            blocked=False,
-            citations=precise_citations,
-            guardrails_reasons=[],
-            usage=usage.model_dump(),
-            usage_source=usage_source,
-            message_count=len(request_body.messages),
-            user_message_chars=len(last_user_msg),
-        )
-        get_metrics_registry().record_chat_outcome(
-            path=request.url.path,
-            model=request_body.model,
-            blocked=False,
-            is_refusal=looks_like_refusal(answer_text, blocked=False),
-            usage_source=usage_source,
-        )
-
-        model_name = request_body.model
-        if request_body.stream:
-            return StreamingResponse(
-                _stream_sse_response(
-                    answer=answer_text,
-                    session_id=session_id,
-                    model=model_name,
-                    citations=precise_citations,
-                    blocked=False,
-                    guardrails_reasons=[],
-                    verification=None,
-                    usage=usage,
-                    response_id=response_id,
-                    trace=trace_payload,
-                ),
-                media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "X-Accel-Buffering": "no",
-                    "X-Session-Id": session_id,
-                },
-            )
-
-        return ChatCompletionResponse(
-            id=response_id,
-            created=int(time.time()),
-            model=model_name,
-            choices=[
-                ChatChoice(
-                    index=0,
-                    message=ConversationMessage(role="assistant", content=answer_text),
-                    finish_reason="stop",
-                )
-            ],
-            usage=usage,
-            session_id=session_id,
             citations=precise_citations,
             blocked=False,
+            verification=None,
+            question_raw=last_user_msg,
+            mentioned_laws=mentioned_laws,
+            explicit_article_refs=explicit_article_refs,
+            law_filter=request_body.law_filter,
+            assembled_evidence=synthetic_evidence,
+            allowed_source_whitelist=synthetic_whitelist,
+        )
+        trace_payload = _build_trace_payload(
+            request_id=response_id,
+            decision_lane=precise_lane,
+            user_query=last_user_msg,
+            enriched_query=last_user_msg,
+            retrieval_query=last_user_msg,
+            question_normalized=normalize_query_text(last_user_msg),
+            question_type=hardening.question_type,
+            target_date=hardening.target_date,
+            law_scope_signal=hardening.law_scope_signal,
+            law_filter=request_body.law_filter,
+            mentioned_laws=mentioned_laws,
+            cross_law_mode=False,
+            explicit_article_refs=explicit_article_refs,
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+            pre_rerank_chunks=[],
+            post_rerank_chunks=[],
+            assembled_context="",
+            blocked=hardening.final_mode == "blocked",
             guardrails_reasons=[],
             verification=None,
-            trace=trace_payload,
+            answer_contract=hardening.answer_contract,
+            model_cited_source_ids=hardening.model_cited_source_ids,
+            final_mode=hardening.final_mode,
+            final_reason=hardening.final_reason,
+        )
+        return _finalize_chat_response(
+            request=request,
+            request_body=request_body,
+            store=store,
+            session_id=session_id,
+            response_id=response_id,
+            user_message=last_user_msg,
+            answer_text=hardening.answer_text,
+            citations=hardening.citations,
+            blocked=hardening.final_mode == "blocked",
+            guardrails_reasons=[],
+            verification=None,
+            trace_payload=trace_payload,
+            answer_contract=hardening.answer_contract,
+            final_mode=hardening.final_mode,
+            final_reason=hardening.final_reason,
+            upstream_usage=None,
         )
 
     # Deterministic kapsam-dışı refusal (low-risk hardening)
@@ -2158,101 +2400,67 @@ async def chat_completions(
             f"({scope_refusal_reason}). Elimdeki TBK kaynaklarıyla bu soruya yanıt veremiyorum. "
             "Lütfen ilgili mevzuat için uzman bir hukukçuya danışın."
         )
-        trace_payload = None
-        if request_body.include_trace:
-            trace_payload = _build_trace_payload(
-                decision_lane="scope_refusal_shortcut",
-                user_query=last_user_msg,
-                enriched_query=last_user_msg,
-                retrieval_query=last_user_msg,
-                law_filter=request_body.law_filter,
-                mentioned_laws=[],
-                cross_law_mode=False,
-                explicit_article_refs=[],
-                forced_article_refs=[],
-                applied_expansions=[],
-                top_k_requested=request_body.top_k,
-                top_k_effective=0,
-                reranker_enabled=False,
-                pre_rerank_chunks=[],
-                post_rerank_chunks=[],
-                assembled_context="",
-                blocked=False,
-                guardrails_reasons=[],
-                verification=None,
-            )
-
-        # Session kaydı
-        store.add_turn(session_id, last_user_msg, answer_text)
-        usage, usage_source = _resolve_chat_usage(
-            messages=request_body.messages,
+        mentioned_laws = _extract_law_mentions(last_user_msg)
+        explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
+        hardening = harden_answer(
             answer_text=answer_text,
-            upstream_usage=None,
-        )
-        append_audit_event(
-            event_type="chat_completion",
-            request=request,
-            response_id=response_id,
-            session_id=session_id,
-            model=request_body.model,
-            stream=request_body.stream,
-            blocked=False,
-            citations=[],
-            guardrails_reasons=[],
-            usage=usage.model_dump(),
-            usage_source=usage_source,
-            message_count=len(request_body.messages),
-            user_message_chars=len(last_user_msg),
-        )
-        get_metrics_registry().record_chat_outcome(
-            path=request.url.path,
-            model=request_body.model,
-            blocked=False,
-            is_refusal=looks_like_refusal(answer_text, blocked=False),
-            usage_source=usage_source,
-        )
-
-        model_name = request_body.model
-        if request_body.stream:
-            return StreamingResponse(
-                _stream_sse_response(
-                    answer=answer_text,
-                    session_id=session_id,
-                    model=model_name,
-                    citations=[],
-                    blocked=False,
-                    guardrails_reasons=[],
-                    verification=None,
-                    usage=usage,
-                    response_id=response_id,
-                    trace=trace_payload,
-                ),
-                media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "X-Accel-Buffering": "no",
-                    "X-Session-Id": session_id,
-                },
-            )
-
-        return ChatCompletionResponse(
-            id=response_id,
-            created=int(time.time()),
-            model=model_name,
-            choices=[
-                ChatChoice(
-                    index=0,
-                    message=ConversationMessage(role="assistant", content=answer_text),
-                    finish_reason="stop",
-                )
-            ],
-            usage=usage,
-            session_id=session_id,
             citations=[],
             blocked=False,
+            verification=None,
+            question_raw=last_user_msg,
+            mentioned_laws=mentioned_laws,
+            explicit_article_refs=explicit_article_refs,
+            law_filter=request_body.law_filter,
+            assembled_evidence=[],
+            allowed_source_whitelist=[],
+        )
+        trace_payload = _build_trace_payload(
+            request_id=response_id,
+            decision_lane="scope_refusal_shortcut",
+            user_query=last_user_msg,
+            enriched_query=last_user_msg,
+            retrieval_query=last_user_msg,
+            question_normalized=normalize_query_text(last_user_msg),
+            question_type=hardening.question_type,
+            target_date=hardening.target_date,
+            law_scope_signal=hardening.law_scope_signal,
+            law_filter=request_body.law_filter,
+            mentioned_laws=mentioned_laws,
+            cross_law_mode=False,
+            explicit_article_refs=explicit_article_refs,
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+            pre_rerank_chunks=[],
+            post_rerank_chunks=[],
+            assembled_context="",
+            blocked=hardening.final_mode == "blocked",
             guardrails_reasons=[],
             verification=None,
-            trace=trace_payload,
+            answer_contract=hardening.answer_contract,
+            model_cited_source_ids=hardening.model_cited_source_ids,
+            final_mode=hardening.final_mode,
+            final_reason=hardening.final_reason,
+        )
+        return _finalize_chat_response(
+            request=request,
+            request_body=request_body,
+            store=store,
+            session_id=session_id,
+            response_id=response_id,
+            user_message=last_user_msg,
+            answer_text=hardening.answer_text,
+            citations=hardening.citations,
+            blocked=hardening.final_mode == "blocked",
+            guardrails_reasons=[],
+            verification=None,
+            trace_payload=trace_payload,
+            answer_contract=hardening.answer_contract,
+            final_mode=hardening.final_mode,
+            final_reason=hardening.final_reason,
+            upstream_usage=None,
         )
 
     # Konuşma geçmişi: request'teki messages'ın son user mesajından öncekiler
@@ -2700,104 +2908,77 @@ async def chat_completions(
     blocked = orch_response.blocked
     guardrails_reasons = orch_response.guardrails_reasons
     verification = orch_response.verification
-    trace_payload = None
-    if request_body.include_trace:
-        trace_payload = _build_trace_payload(
-            decision_lane="rag",
-            user_query=last_user_msg,
-            enriched_query=enriched_query,
-            retrieval_query=retrieval_query,
-            law_filter=request_body.law_filter,
-            mentioned_laws=mentioned_laws,
-            cross_law_mode=cross_law_mode,
-            explicit_article_refs=explicit_article_refs,
-            forced_article_refs=forced_article_refs,
-            applied_expansions=applied_expansions,
-            top_k_requested=request_body.top_k,
-            top_k_effective=top_k_effective,
-            reranker_enabled=_reranker_enabled,
-            pre_rerank_chunks=pre_rerank_chunks,
-            post_rerank_chunks=post_rerank_chunks,
-            assembled_context=RAGOrchestrator._build_context(post_rerank_chunks),
-            blocked=blocked,
-            guardrails_reasons=guardrails_reasons,
-            verification=verification,
+    assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
+    allowed_source_whitelist = _build_allowed_source_whitelist(post_rerank_chunks)
+    if not assembled_evidence and citations:
+        assembled_evidence = _build_fallback_assembled_evidence(
+            citations,
+            fallback_excerpt=answer_text,
         )
-
-    # ── Session kaydet ────────────────────────────────────────────────────────
-    store.add_turn(session_id, last_user_msg, answer_text)
-    usage, usage_source = _resolve_chat_usage(
-        messages=request_body.messages,
+        allowed_source_whitelist = [
+            str(item["source_id"])
+            for item in assembled_evidence
+            if item.get("source_id")
+        ]
+    hardening = harden_answer(
         answer_text=answer_text,
-        upstream_usage=orch_response.usage,
-    )
-    append_audit_event(
-        event_type="chat_completion",
-        request=request,
-        response_id=response_id,
-        session_id=session_id,
-        model=request_body.model,
-        stream=request_body.stream,
-        blocked=blocked,
-        citations=citations,
-        guardrails_reasons=guardrails_reasons,
-        usage=usage.model_dump(),
-        usage_source=usage_source,
-        message_count=len(request_body.messages),
-        user_message_chars=len(last_user_msg),
-    )
-    get_metrics_registry().record_chat_outcome(
-        path=request.url.path,
-        model=request_body.model,
-        blocked=blocked,
-        is_refusal=looks_like_refusal(answer_text, blocked=blocked),
-        usage_source=usage_source,
-    )
-
-    model_name = request_body.model
-
-    # ── SSE Streaming Yanıt ───────────────────────────────────────────────────
-    if request_body.stream:
-        return StreamingResponse(
-            _stream_sse_response(
-                answer=answer_text,
-                session_id=session_id,
-                model=model_name,
-                citations=citations,
-                blocked=blocked,
-                guardrails_reasons=guardrails_reasons,
-                verification=verification,
-                usage=usage,
-                response_id=response_id,
-                trace=trace_payload,
-            ),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "X-Accel-Buffering": "no",  # Nginx proxy buffering'i devre dışı bırak
-                "X-Session-Id": session_id,
-            },
-        )
-
-    # ── Non-streaming JSON Yanıt ──────────────────────────────────────────────
-    return ChatCompletionResponse(
-        id=response_id,
-        created=int(time.time()),
-        model=model_name,
-        choices=[
-            ChatChoice(
-                index=0,
-                message=ConversationMessage(role="assistant", content=answer_text),
-                finish_reason="stop",
-            )
-        ],
-        usage=usage,
-        session_id=session_id,
         citations=citations,
         blocked=blocked,
+        verification=verification,
+        question_raw=last_user_msg,
+        mentioned_laws=mentioned_laws,
+        explicit_article_refs=explicit_article_refs,
+        law_filter=request_body.law_filter,
+        assembled_evidence=assembled_evidence,
+        allowed_source_whitelist=allowed_source_whitelist,
+    )
+    trace_payload = _build_trace_payload(
+        request_id=response_id,
+        decision_lane="rag",
+        user_query=last_user_msg,
+        enriched_query=enriched_query,
+        retrieval_query=retrieval_query,
+        question_normalized=normalize_query_text(last_user_msg),
+        question_type=hardening.question_type,
+        target_date=hardening.target_date,
+        law_scope_signal=hardening.law_scope_signal,
+        law_filter=request_body.law_filter,
+        mentioned_laws=mentioned_laws,
+        cross_law_mode=cross_law_mode,
+        explicit_article_refs=explicit_article_refs,
+        forced_article_refs=forced_article_refs,
+        applied_expansions=applied_expansions,
+        top_k_requested=request_body.top_k,
+        top_k_effective=top_k_effective,
+        reranker_enabled=_reranker_enabled,
+        pre_rerank_chunks=pre_rerank_chunks,
+        post_rerank_chunks=post_rerank_chunks,
+        assembled_context=RAGOrchestrator._build_context(post_rerank_chunks),
+        blocked=hardening.final_mode == "blocked",
         guardrails_reasons=guardrails_reasons,
         verification=verification,
-        trace=trace_payload,
+        answer_contract=hardening.answer_contract,
+        model_cited_source_ids=hardening.model_cited_source_ids,
+        final_mode=hardening.final_mode,
+        final_reason=hardening.final_reason,
+    )
+    return _finalize_chat_response(
+        request=request,
+        request_body=request_body,
+        store=store,
+        session_id=session_id,
+        response_id=response_id,
+        user_message=last_user_msg,
+        answer_text=hardening.answer_text,
+        citations=hardening.citations,
+        blocked=hardening.final_mode == "blocked",
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+        trace_payload=trace_payload,
+        answer_contract=hardening.answer_contract,
+        final_mode=hardening.final_mode,
+        final_reason=hardening.final_reason,
+        upstream_usage=orch_response.usage,
     )
 
 

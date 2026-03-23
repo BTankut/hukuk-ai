@@ -36,6 +36,13 @@ def audit_log_path() -> Path:
     return _project_root() / "runtime_logs" / "api_audit.jsonl"
 
 
+def trace_log_dir() -> Path:
+    raw = os.getenv("TRACE_LOG_DIR")
+    if raw:
+        return Path(raw)
+    return _project_root() / "logs" / "traces"
+
+
 def _configured_api_keys() -> set[str]:
     raw = os.getenv("API_AUTH_KEYS") or os.getenv("API_AUTH_TOKEN") or ""
     return {item.strip() for item in raw.split(",") if item.strip()}
@@ -131,3 +138,16 @@ def append_audit_event(
 
     get_metrics_registry().record_audit_event()
     return event
+
+
+def export_trace_pack(
+    *,
+    request_id: str,
+    payload: dict[str, Any],
+) -> Path:
+    path = trace_log_dir() / f"{request_id}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
+    return path

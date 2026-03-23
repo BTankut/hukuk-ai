@@ -28,10 +28,20 @@ class LegalChunker:
                 for idx, part in enumerate(parts, start=1):
                     suffix = "" if len(parts) == 1 else f"_p{idx}"
                     chunk_id = f"{document.law_short_name}_m{article.madde_no}_f{fikra_no}{suffix}"
+                    source_id = self.metadata_extractor.build_source_id(
+                        document=document,
+                        madde_no=article.madde_no,
+                        fikra_no=fikra_no,
+                    )
                     metadata = self.metadata_extractor.extract(
                         document=document,
                         madde_no=article.madde_no,
                         fikra_no=fikra_no,
+                        chunk_id=chunk_id,
+                        source_id=source_id,
+                        yururluk_baslangic=article.yururluk_baslangic,
+                        yururluk_bitis=article.yururluk_bitis,
+                        mulga=article.mulga,
                     )
                     metadata["article_heading"] = article.heading
                     metadata["chunk_part"] = idx

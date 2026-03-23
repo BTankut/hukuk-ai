@@ -86,6 +86,11 @@ def _make_app(mock_orch: Any = None, mock_retriever: Any = None) -> FastAPI:
     return app
 
 
+@pytest.fixture(autouse=True)
+def _trace_log_dir(tmp_path, monkeypatch):
+    monkeypatch.setenv("TRACE_LOG_DIR", str(tmp_path / "traces"))
+
+
 @pytest.fixture
 def mock_orchestrator():
     """Mock RAGOrchestrator."""
@@ -1684,7 +1689,12 @@ class TestLawFilterAndRetrieval:
         assert trace["retrieval"]["pre_rerank_chunks"][0]["source_id"] == "tbk-49-f1"
         assert trace["context_assembly"]["context_chunk_citations"] == ["TBK m.49"]
         assert "Haksız fiil metni" in trace["context_assembly"]["assembled_context"]
+        assert trace["context_assembly"]["assembled_evidence"][0]["source_id"] == "tbk-49-f1"
+        assert trace["context_assembly"]["assembled_evidence"][0]["excerpt"] == "Haksız fiil metni"
+        assert trace["context_assembly"]["allowed_source_whitelist"] == ["tbk-49-f1"]
         assert trace["generation_outcome"]["verification"]["verdict"] == "pass"
+        assert resp.json()["final_mode"] == "answer"
+        assert resp.json()["answer_contract"]["primary_source_id"] == "TBK m.49"
 
     def test_concept_anchor_rules_force_include_exact_articles(self, mock_orchestrator):
         mock_retriever = MagicMock()

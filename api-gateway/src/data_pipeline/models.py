@@ -2,7 +2,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, TypedDict
+
+
+class ChunkMetadata(TypedDict, total=False):
+    source_type: str
+    source_id: str
+    chunk_id: str
+    law_no: str
+    law_short_name: str
+    kanun_no: str
+    kanun_kisa_adi: str
+    kanun_adi: str
+    madde_no: str
+    fikra_no: str
+    yururluk_baslangic: str | None
+    yururluk_bitis: str | None
+    mulga: bool | None
+    hukuk_dali: str
+    kaynak_url: str | None
+    article_heading: str
+    chunk_part: int
+    chunk_part_total: int
 
 
 @dataclass(slots=True)
@@ -10,6 +31,9 @@ class LawArticle:
     madde_no: str
     heading: str
     body: str
+    yururluk_baslangic: str | None = None
+    yururluk_bitis: str | None = None
+    mulga: bool | None = None
 
 
 @dataclass(slots=True)
@@ -27,7 +51,7 @@ class LawDocument:
 class ChunkDocument:
     chunk_id: str
     text: str
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: ChunkMetadata = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -35,7 +59,7 @@ class IndexedDocument:
     doc_id: str
     text: str
     embedding: list[float]
-    metadata: dict[str, Any]
+    metadata: ChunkMetadata
 
 
 @dataclass(slots=True)
