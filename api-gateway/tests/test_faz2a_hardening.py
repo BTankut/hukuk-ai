@@ -300,3 +300,88 @@ def test_harden_answer_skips_claim_binding_for_complexity_marker():
     assert result.final_mode == "answer"
     assert result.final_reason is None
     assert result.answer_contract["claim_units"] == []
+
+
+def test_harden_answer_rc_e_projects_broad_answer_and_keeps_expected_citations():
+    evidence = _evidence("TBK m.117", "TBK m.118")
+
+    result = harden_answer(
+        answer_text=(
+            "- Temerrut halinde aynen ifa talep edilebilir. [Kaynak: TBK m.117]\n"
+            "- Alacakli gecikme tazminati da isteyebilir. [Kaynak: TBK m.118]"
+        ),
+        citations=["TBK m.118", "TBK m.117"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="Temerrut halinde alacaklinin haklari nelerdir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.117", "TBK m.118"],
+        today=date(2026, 3, 23),
+        recovery_profile="rc_e",
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.citations == ["TBK m.117", "TBK m.118"]
+    assert result.answer_contract["primary_source_id"] == "TBK m.117"
+    assert len(result.answer_contract["claim_units"]) == 2
+    assert result.diagnostics["citation_projection"]["supported_claim_count_by_source"] == {
+        "TBK m.117": 1,
+        "TBK m.118": 1,
+    }
+
+
+def test_harden_answer_rc_e_drops_unsupported_broad_claim_and_returns_partial():
+    evidence = _evidence("TBK m.117")
+
+    result = harden_answer(
+        answer_text=(
+            "- Temerrut halinde aynen ifa talep edilebilir. [Kaynak: TBK m.117]\n"
+            "- Faiz her durumda uygulanir."
+        ),
+        citations=["TBK m.117"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="Temerrut halinde alacaklinin haklari nelerdir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.117"],
+        today=date(2026, 3, 23),
+        recovery_profile="rc_e",
+    )
+
+    assert result.final_mode == "partial"
+    assert result.final_reason is None
+    assert result.citations == ["TBK m.117"]
+    assert "TBK m.117" in result.answer_text
+    assert "Faiz her durumda" not in result.answer_text
+    assert result.diagnostics["citation_projection"]["dropped_count"] == 1
+
+
+def test_harden_answer_rc_e_refuses_when_no_valid_primary_source_remains():
+    evidence = _evidence("TBK m.117")
+
+    result = harden_answer(
+        answer_text="Temerrut halinde aynen ifa talep edilebilir.",
+        citations=["TBK m.117"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="Temerrut halinde alacaklinin haklari nelerdir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.117"],
+        today=date(2026, 3, 23),
+        recovery_profile="rc_e",
+    )
+
+    assert result.final_mode == "refusal"
+    assert result.final_reason == "insufficient_supported_evidence"
+    assert result.answer_text == ""
+    assert result.citations == []

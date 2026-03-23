@@ -240,6 +240,9 @@ def _build_supported_projection(
 
 
 def expected_primary_source_id(question: dict[str, Any], rc_a_row: dict[str, Any]) -> str | None:
+    expected_sources = normalize_sources(question.get("expected_sources"))
+    if expected_sources:
+        return expected_sources[0]
     contract = rc_a_row.get("answer_contract") or {}
     primary = canonicalize_source_id(contract.get("primary_source_id"))
     if primary:
@@ -247,8 +250,7 @@ def expected_primary_source_id(question: dict[str, Any], rc_a_row: dict[str, Any
     cited_sources = normalize_sources(rc_a_row.get("cited_sources"))
     if cited_sources:
         return cited_sources[0]
-    expected_sources = normalize_sources(question.get("expected_sources"))
-    return expected_sources[0] if expected_sources else None
+    return None
 
 
 def quality_loss_reasons(*, expected_mode: str, rc_row: dict[str, Any]) -> list[str]:

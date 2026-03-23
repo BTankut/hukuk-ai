@@ -10,6 +10,7 @@ from guardrails.actions import extract_citations
 from pydantic import BaseModel, Field, ValidationError
 
 FinalMode = Literal["answer", "partial", "refusal", "blocked"]
+RecoveryProfile = Literal["rc_d", "rc_e"]
 UnsupportedReason = Literal[
     "citation_out_of_whitelist",
     "law_scope_mismatch",
@@ -276,6 +277,8 @@ class HardeningResult:
     law_scope_signal: dict[str, Any]
     question_type: str
     target_date: str
+    recovery_profile: RecoveryProfile = "rc_d"
+    diagnostics: dict[str, Any] | None = None
 
 
 @dataclass(slots=True)
@@ -284,6 +287,21 @@ class ClaimBindingOutcome:
     kept_count: int
     dropped_count: int
     final_reason: UnsupportedReason | None
+
+
+@dataclass(slots=True)
+class CitationProjectionOutcome:
+    active: bool
+    kept_count: int
+    dropped_count: int
+    final_reason: UnsupportedReason | None
+    primary_source_id: str | None
+    emitted_source_ids: list[str]
+    supported_source_ids: list[str]
+    kept_claim_units: list[dict[str, Any]]
+    dropped_claim_units: list[dict[str, Any]]
+    supported_claim_count_by_source: dict[str, int]
+    retrieval_rank_by_source: dict[str, int]
 
 
 def _normalize_verifier_status(verification: dict[str, Any] | None, *, blocked: bool) -> VerifierStatus:
@@ -751,6 +769,261 @@ def _build_allowed_claim_source_ids(
     return allowed
 
 
+def _build_retrieval_rank_by_source(
+    assembled_evidence: list[dict[str, Any]],
+) -> dict[str, int]:
+    retrieval_rank_by_source: dict[str, int] = {}
+    for index, evidence in enumerate(assembled_evidence):
+        source_id = canonicalize_source_id(evidence.get("source_id") or evidence.get("citation"))
+        if not source_id:
+            continue
+        retrieval_rank_by_source.setdefault(source_id, index)
+    return retrieval_rank_by_source
+
+
+def _source_scope_priority(
+    *,
+    source_id: str,
+    law_scope_signal: dict[str, Any],
+    explicit_article_refs: list[tuple[str, str]],
+) -> int:
+    if law_scope_signal.get("scope_class") != "single_law_high_conf":
+        return 1
+    unique_articles = _dedupe_article_refs(explicit_article_refs)
+    if len(unique_articles) != 1:
+        return 1
+    expected_law, expected_article = unique_articles[0]
+    expected_source_id = canonicalize_source_id(f"{expected_law} m.{expected_article}")
+    return 0 if canonicalize_source_id(source_id) == expected_source_id else 1
+
+
+def _sorted_supported_sources(
+    *,
+    supported_source_ids: list[str],
+    supported_claim_count_by_source: dict[str, int],
+    retrieval_rank_by_source: dict[str, int],
+    law_scope_signal: dict[str, Any],
+    explicit_article_refs: list[tuple[str, str]],
+) -> list[str]:
+    unique_source_ids = dedupe_strings(supported_source_ids)
+    return sorted(
+        unique_source_ids,
+        key=lambda source_id: (
+            -supported_claim_count_by_source.get(source_id, 0),
+            _source_scope_priority(
+                source_id=source_id,
+                law_scope_signal=law_scope_signal,
+                explicit_article_refs=explicit_article_refs,
+            ),
+            retrieval_rank_by_source.get(source_id, 10**9),
+            source_id,
+        ),
+    )
+
+
+def _select_primary_source_anchor_v1(
+    *,
+    supported_claim_count_by_source: dict[str, int],
+    retrieval_rank_by_source: dict[str, int],
+    law_scope_signal: dict[str, Any],
+    explicit_article_refs: list[tuple[str, str]],
+) -> str | None:
+    if not supported_claim_count_by_source:
+        return None
+    return _sorted_supported_sources(
+        supported_source_ids=list(supported_claim_count_by_source.keys()),
+        supported_claim_count_by_source=supported_claim_count_by_source,
+        retrieval_rank_by_source=retrieval_rank_by_source,
+        law_scope_signal=law_scope_signal,
+        explicit_article_refs=explicit_article_refs,
+    )[0]
+
+
+def _pick_claim_unit_anchor_source(
+    *,
+    supported_source_ids: list[str],
+    primary_source_id: str | None,
+    supported_claim_count_by_source: dict[str, int],
+    retrieval_rank_by_source: dict[str, int],
+    law_scope_signal: dict[str, Any],
+    explicit_article_refs: list[tuple[str, str]],
+) -> str | None:
+    normalized_supported = dedupe_strings(supported_source_ids)
+    if primary_source_id and primary_source_id in normalized_supported:
+        return primary_source_id
+    if not normalized_supported:
+        return None
+    return _sorted_supported_sources(
+        supported_source_ids=normalized_supported,
+        supported_claim_count_by_source=supported_claim_count_by_source,
+        retrieval_rank_by_source=retrieval_rank_by_source,
+        law_scope_signal=law_scope_signal,
+        explicit_article_refs=explicit_article_refs,
+    )[0]
+
+
+def apply_kept_claim_citation_projection_v1(
+    *,
+    contract: StructuredAnswerContract,
+    answer_text: str,
+    assembled_evidence: list[dict[str, Any]],
+    allowed_source_whitelist: list[str],
+    law_scope_signal: dict[str, Any],
+    explicit_article_refs: list[tuple[str, str]],
+    target_date: date,
+) -> CitationProjectionOutcome:
+    evidence_lookup = _build_evidence_lookup(assembled_evidence)
+    allowed_claim_source_ids = _build_allowed_claim_source_ids(
+        assembled_evidence=assembled_evidence,
+        allowed_source_whitelist=allowed_source_whitelist,
+        law_scope_signal=law_scope_signal,
+        target_date=target_date,
+    )
+    retrieval_rank_by_source = _build_retrieval_rank_by_source(assembled_evidence)
+
+    kept_claim_units: list[dict[str, Any]] = []
+    dropped_claim_units: list[dict[str, Any]] = []
+    supported_source_ids: list[str] = []
+    supported_claim_count_by_source: dict[str, int] = {}
+
+    projection_text = contract.answer_text or answer_text
+    for unit_text in _split_claim_units(projection_text):
+        inline_citations = extract_model_cited_source_ids(
+            citations=extract_citations(unit_text),
+            assembled_evidence=assembled_evidence,
+        )
+        supported_for_unit: list[str] = []
+        for source_id in inline_citations:
+            if source_id not in allowed_claim_source_ids:
+                continue
+            if source_id not in supported_for_unit:
+                supported_for_unit.append(source_id)
+        claim_text = _strip_inline_citations(unit_text)
+        rendered_text = normalize_whitespace(unit_text)
+        if not supported_for_unit:
+            dropped_claim_units.append(
+                {
+                    "claim_text": claim_text,
+                    "rendered_text": rendered_text,
+                    "supported_source_ids": [],
+                }
+            )
+            continue
+        kept_claim_units.append(
+            {
+                "claim_text": claim_text,
+                "rendered_text": rendered_text,
+                "supported_source_ids": supported_for_unit,
+            }
+        )
+        for source_id in supported_for_unit:
+            if source_id not in supported_source_ids:
+                supported_source_ids.append(source_id)
+            supported_claim_count_by_source[source_id] = supported_claim_count_by_source.get(source_id, 0) + 1
+
+    primary_source_id = _select_primary_source_anchor_v1(
+        supported_claim_count_by_source=supported_claim_count_by_source,
+        retrieval_rank_by_source=retrieval_rank_by_source,
+        law_scope_signal=law_scope_signal,
+        explicit_article_refs=explicit_article_refs,
+    )
+
+    if not kept_claim_units or not primary_source_id:
+        contract.claim_units = []
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        return CitationProjectionOutcome(
+            active=True,
+            kept_count=0 if not kept_claim_units else len(kept_claim_units),
+            dropped_count=len(dropped_claim_units),
+            final_reason="insufficient_supported_evidence",
+            primary_source_id=None,
+            emitted_source_ids=[],
+            supported_source_ids=supported_source_ids,
+            kept_claim_units=kept_claim_units,
+            dropped_claim_units=dropped_claim_units,
+            supported_claim_count_by_source=supported_claim_count_by_source,
+            retrieval_rank_by_source=retrieval_rank_by_source,
+        )
+
+    emitted_source_ids = _sorted_supported_sources(
+        supported_source_ids=supported_source_ids,
+        supported_claim_count_by_source=supported_claim_count_by_source,
+        retrieval_rank_by_source=retrieval_rank_by_source,
+        law_scope_signal=law_scope_signal,
+        explicit_article_refs=explicit_article_refs,
+    )
+    if primary_source_id in emitted_source_ids:
+        emitted_source_ids = [primary_source_id, *[source_id for source_id in emitted_source_ids if source_id != primary_source_id]]
+    else:
+        emitted_source_ids = [primary_source_id, *emitted_source_ids]
+
+    rebuilt_claim_units: list[ClaimUnit] = []
+    retained_units: list[str] = []
+    for unit in kept_claim_units:
+        anchor_source_id = _pick_claim_unit_anchor_source(
+            supported_source_ids=unit["supported_source_ids"],
+            primary_source_id=primary_source_id,
+            supported_claim_count_by_source=supported_claim_count_by_source,
+            retrieval_rank_by_source=retrieval_rank_by_source,
+            law_scope_signal=law_scope_signal,
+            explicit_article_refs=explicit_article_refs,
+        )
+        if not anchor_source_id:
+            continue
+        evidence = evidence_lookup.get(anchor_source_id)
+        excerpt = _normalize_excerpt_text(str((evidence or {}).get("excerpt") or ""))
+        if not excerpt:
+            continue
+        rebuilt_claim_units.append(
+            ClaimUnit(
+                claim_text=unit["claim_text"],
+                source_id=anchor_source_id,
+                source_excerpt=excerpt,
+            )
+        )
+        retained_units.append(unit["rendered_text"])
+
+    if not rebuilt_claim_units:
+        contract.claim_units = []
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        return CitationProjectionOutcome(
+            active=True,
+            kept_count=0,
+            dropped_count=len(dropped_claim_units),
+            final_reason="insufficient_supported_evidence",
+            primary_source_id=None,
+            emitted_source_ids=[],
+            supported_source_ids=supported_source_ids,
+            kept_claim_units=kept_claim_units,
+            dropped_claim_units=dropped_claim_units,
+            supported_claim_count_by_source=supported_claim_count_by_source,
+            retrieval_rank_by_source=retrieval_rank_by_source,
+        )
+
+    contract.primary_source_id = primary_source_id
+    contract.secondary_source_ids = [source_id for source_id in emitted_source_ids if source_id != primary_source_id]
+    contract.claim_units = rebuilt_claim_units
+    contract.answer_text = " ".join(retained_units)
+    contract.unsupported_reason = None
+    return CitationProjectionOutcome(
+        active=True,
+        kept_count=len(rebuilt_claim_units),
+        dropped_count=len(dropped_claim_units),
+        final_reason=None,
+        primary_source_id=primary_source_id,
+        emitted_source_ids=emitted_source_ids,
+        supported_source_ids=supported_source_ids,
+        kept_claim_units=kept_claim_units,
+        dropped_claim_units=dropped_claim_units,
+        supported_claim_count_by_source=supported_claim_count_by_source,
+        retrieval_rank_by_source=retrieval_rank_by_source,
+    )
+
+
 def apply_selective_claim_binding_v3(
     *,
     contract: StructuredAnswerContract,
@@ -916,6 +1189,42 @@ def apply_final_mode_mapping_v3(
     return None
 
 
+def apply_final_mode_boundary_v4(
+    *,
+    contract: StructuredAnswerContract,
+    projection_outcome: CitationProjectionOutcome,
+) -> UnsupportedReason | None:
+    if contract.final_mode == "blocked":
+        return contract.unsupported_reason
+
+    if projection_outcome.kept_count == 0:
+        contract.final_mode = "refusal"
+        contract.unsupported_reason = "insufficient_supported_evidence"
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        contract.claim_units = []
+        return contract.unsupported_reason
+
+    if not projection_outcome.primary_source_id:
+        contract.final_mode = "refusal"
+        contract.unsupported_reason = "insufficient_supported_evidence"
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        contract.claim_units = []
+        return contract.unsupported_reason
+
+    if projection_outcome.dropped_count == 0:
+        contract.final_mode = "answer"
+        contract.unsupported_reason = None
+        return None
+
+    contract.final_mode = "partial"
+    contract.unsupported_reason = None
+    return None
+
+
 def harden_answer(
     *,
     answer_text: str,
@@ -929,6 +1238,7 @@ def harden_answer(
     assembled_evidence: list[dict[str, Any]],
     allowed_source_whitelist: list[str],
     today: date | None = None,
+    recovery_profile: RecoveryProfile = "rc_d",
 ) -> HardeningResult:
     target_date, target_date_explicit = resolve_target_date(question_raw, today=today)
     question_type = infer_question_type(question_raw, explicit_article_refs)
@@ -993,10 +1303,42 @@ def harden_answer(
             final_reason=final_reason,
         )
 
-    final_reason = apply_final_mode_mapping_v3(
-        contract=contract,
-        claim_binding_outcome=claim_binding_outcome,
-    )
+    if final_reason is None and recovery_profile == "rc_e":
+        projection_outcome = apply_kept_claim_citation_projection_v1(
+            contract=contract,
+            answer_text=answer_text,
+            assembled_evidence=assembled_evidence,
+            allowed_source_whitelist=allowed_source_whitelist,
+            law_scope_signal=law_scope_signal,
+            explicit_article_refs=explicit_article_refs,
+            target_date=target_date,
+        )
+        final_reason = apply_final_mode_boundary_v4(
+            contract=contract,
+            projection_outcome=projection_outcome,
+        )
+    else:
+        projection_outcome = CitationProjectionOutcome(
+            active=False,
+            kept_count=len(contract.claim_units),
+            dropped_count=0,
+            final_reason=contract.unsupported_reason,
+            primary_source_id=contract.primary_source_id,
+            emitted_source_ids=dedupe_strings(
+                [source_id for source_id in [contract.primary_source_id, *contract.secondary_source_ids] if source_id]
+            ),
+            supported_source_ids=dedupe_strings(
+                [source_id for source_id in [contract.primary_source_id, *contract.secondary_source_ids] if source_id]
+            ),
+            kept_claim_units=[],
+            dropped_claim_units=[],
+            supported_claim_count_by_source={},
+            retrieval_rank_by_source={},
+        )
+        final_reason = apply_final_mode_mapping_v3(
+            contract=contract,
+            claim_binding_outcome=claim_binding_outcome,
+        )
 
     external_mode, internal_blocked = _map_external_mode(contract)
     external_answer_text = contract.answer_text or answer_text
@@ -1018,6 +1360,28 @@ def harden_answer(
         law_scope_signal=law_scope_signal,
         question_type=question_type,
         target_date=target_date.isoformat(),
+        recovery_profile=recovery_profile,
+        diagnostics={
+            "claim_binding": {
+                "active": claim_binding_outcome.active,
+                "kept_count": claim_binding_outcome.kept_count,
+                "dropped_count": claim_binding_outcome.dropped_count,
+                "final_reason": claim_binding_outcome.final_reason,
+            },
+            "citation_projection": {
+                "active": projection_outcome.active,
+                "kept_count": projection_outcome.kept_count,
+                "dropped_count": projection_outcome.dropped_count,
+                "final_reason": projection_outcome.final_reason,
+                "primary_source_id": projection_outcome.primary_source_id,
+                "emitted_source_ids": projection_outcome.emitted_source_ids,
+                "supported_source_ids": projection_outcome.supported_source_ids,
+                "kept_claim_units": projection_outcome.kept_claim_units,
+                "dropped_claim_units": projection_outcome.dropped_claim_units,
+                "supported_claim_count_by_source": projection_outcome.supported_claim_count_by_source,
+                "retrieval_rank_by_source": projection_outcome.retrieval_rank_by_source,
+            },
+        },
     )
 
 
