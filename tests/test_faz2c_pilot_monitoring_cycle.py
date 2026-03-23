@@ -59,6 +59,12 @@ def test_cycle_main_writes_full_bundle(tmp_path: Path, monkeypatch: object) -> N
             str(watch_root),
             "--output-dir",
             str(output_dir),
+            "--snapshot-path",
+            str(tmp_path / "faz2c_narrow_pilot_snapshot.json"),
+            "--canonical-rollup-path",
+            str(tmp_path / "faz2c_watch_rollup.json"),
+            "--canonical-status-report-path",
+            str(tmp_path / "faz2c_pilot_status_report.md"),
         ],
     )
 
@@ -69,6 +75,9 @@ def test_cycle_main_writes_full_bundle(tmp_path: Path, monkeypatch: object) -> N
     manifest = json.loads((cycle_dir / "cycle_manifest.json").read_text(encoding="utf-8"))
     rollup = json.loads((cycle_dir / "rollup.json").read_text(encoding="utf-8"))
     report = (cycle_dir / "pilot_status_report.md").read_text(encoding="utf-8")
+    canonical_snapshot = json.loads((tmp_path / "faz2c_narrow_pilot_snapshot.json").read_text(encoding="utf-8"))
+    canonical_rollup = json.loads((tmp_path / "faz2c_watch_rollup.json").read_text(encoding="utf-8"))
+    canonical_report = (tmp_path / "faz2c_pilot_status_report.md").read_text(encoding="utf-8")
     latest_manifest = json.loads((output_dir / "latest_cycle_manifest.json").read_text(encoding="utf-8"))
     latest_rollup = json.loads((output_dir / "latest_rollup.json").read_text(encoding="utf-8"))
     latest_index = json.loads((output_dir / "latest_cycle_index.json").read_text(encoding="utf-8"))
@@ -76,8 +85,13 @@ def test_cycle_main_writes_full_bundle(tmp_path: Path, monkeypatch: object) -> N
     watch_job_dir = watch_root / "narrow_pilot_watch_20260323T091500Z"
 
     assert manifest["final_read"] == "stay_on_promoted_lane"
+    assert manifest["snapshot_path"] == str(tmp_path / "faz2c_narrow_pilot_snapshot.json")
+    assert manifest["canonical_rollup_path"] == str(tmp_path / "faz2c_watch_rollup.json")
     assert manifest["latest_cycle_manifest_path"] == str(output_dir / "latest_cycle_manifest.json")
     assert rollup["job_count"] == 1
+    assert canonical_snapshot["captured_at"] == "2026-03-23T08:46:00Z"
+    assert canonical_rollup["latest_status"] == "clean"
+    assert canonical_report == report
     assert latest_manifest["cycle_dir"] == str(cycle_dir)
     assert latest_rollup["latest_status"] == "clean"
     assert latest_index["final_read"] == "stay_on_promoted_lane"
@@ -121,6 +135,12 @@ def test_cycle_main_returns_1_when_snapshot_turns_red(tmp_path: Path, monkeypatc
             str(watch_root),
             "--output-dir",
             str(output_dir),
+            "--snapshot-path",
+            str(tmp_path / "faz2c_narrow_pilot_snapshot.json"),
+            "--canonical-rollup-path",
+            str(tmp_path / "faz2c_watch_rollup.json"),
+            "--canonical-status-report-path",
+            str(tmp_path / "faz2c_pilot_status_report.md"),
         ],
     )
 
@@ -130,5 +150,7 @@ def test_cycle_main_returns_1_when_snapshot_turns_red(tmp_path: Path, monkeypatc
     cycle_dir = output_dir / "pilot_monitoring_cycle_20260323T091700Z"
     manifest = json.loads((cycle_dir / "cycle_manifest.json").read_text(encoding="utf-8"))
     latest_index = json.loads((output_dir / "latest_cycle_index.json").read_text(encoding="utf-8"))
+    canonical_rollup = json.loads((tmp_path / "faz2c_watch_rollup.json").read_text(encoding="utf-8"))
     assert manifest["final_read"] == "review_or_rollback_candidate"
     assert latest_index["final_read"] == "review_or_rollback_candidate"
+    assert canonical_rollup["rollback_job_count"] == 1

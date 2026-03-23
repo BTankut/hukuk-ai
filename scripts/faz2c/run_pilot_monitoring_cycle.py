@@ -47,6 +47,21 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("runtime_logs/faz2c_cycles"),
     )
+    parser.add_argument(
+        "--snapshot-path",
+        type=Path,
+        default=Path("runtime_logs/faz2c_narrow_pilot_snapshot.json"),
+    )
+    parser.add_argument(
+        "--canonical-rollup-path",
+        type=Path,
+        default=Path("runtime_logs/faz2c_watch_rollup.json"),
+    )
+    parser.add_argument(
+        "--canonical-status-report-path",
+        type=Path,
+        default=Path("runtime_logs/faz2c_pilot_status_report.md"),
+    )
     parser.add_argument("--label", default="pilot_monitoring_cycle")
     return parser
 
@@ -116,6 +131,8 @@ def main() -> int:
         latest_job_summary = json.loads(Path(rollup["latest_summary_path"]).read_text(encoding="utf-8"))
 
     latest_snapshot = samples[-1] if samples else None
+    if latest_snapshot is not None:
+        write_json(args.snapshot_path, latest_snapshot)
     status_report = build_report(
         snapshot=latest_snapshot,
         rollup=rollup,
@@ -123,6 +140,9 @@ def main() -> int:
     )
     status_report_path = cycle_dir / "pilot_status_report.md"
     status_report_path.write_text(status_report, encoding="utf-8")
+    write_json(args.canonical_rollup_path, rollup)
+    args.canonical_status_report_path.parent.mkdir(parents=True, exist_ok=True)
+    args.canonical_status_report_path.write_text(status_report, encoding="utf-8")
 
     latest_cycle_manifest_path = args.output_dir / "latest_cycle_manifest.json"
     latest_rollup_path = args.output_dir / "latest_rollup.json"
@@ -138,6 +158,9 @@ def main() -> int:
         "watch_manifest_path": str(watch_manifest_path),
         "rollup_path": str(rollup_path),
         "status_report_path": str(status_report_path),
+        "snapshot_path": str(args.snapshot_path),
+        "canonical_rollup_path": str(args.canonical_rollup_path),
+        "canonical_status_report_path": str(args.canonical_status_report_path),
         "latest_cycle_manifest_path": str(latest_cycle_manifest_path),
         "latest_rollup_path": str(latest_rollup_path),
         "latest_status_report_path": str(latest_status_report_path),

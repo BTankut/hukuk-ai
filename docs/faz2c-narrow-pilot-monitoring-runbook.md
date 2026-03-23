@@ -99,6 +99,11 @@ This command now refreshes stable latest surfaces alongside the timestamped bund
 - `runtime_logs/faz2c_cycles/latest_pilot_status_report.md`
 - `runtime_logs/faz2c_cycles/latest_cycle_index.json`
 
+It also refreshes the canonical operator surfaces so one integrated cycle keeps the top-level read current:
+- `runtime_logs/faz2c_narrow_pilot_snapshot.json`
+- `runtime_logs/faz2c_watch_rollup.json`
+- `runtime_logs/faz2c_pilot_status_report.md`
+
 ## What The Snapshot Checks
 - `GET /v1/health`
 - `GET /v1/metrics` before and after smoke
