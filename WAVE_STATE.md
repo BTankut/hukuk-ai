@@ -1,13 +1,24 @@
 # Wave State
-current_wave: faz2c-pilot-status-report
+current_wave: faz2c-monitoring-cycle
 status: completed
 started_at: 2026-03-23T11:10:39+03:00
-last_activity: 2026-03-23T12:22:07+03:00
+last_activity: 2026-03-23T12:26:21+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "Promoted lane dar kapsam pilotta aktif; status report green, siradaki resmi hareket yeni faz/rapor veya yeni archived job run'idir"
+next_action: "Promoted lane dar kapsam pilotta aktif; integrated cycle green, siradaki resmi hareket yeni faz/rapor veya periyodik cycle run'idir"
 blockers:
   - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
+  ## FAZ 2C Wave 7
+
+  - monitoring cycle kapandi:
+    - `scripts/faz2c/run_pilot_monitoring_cycle.py`
+    - `coordination/faz2c-wave7-monitoring-cycle-2026-03-23.md`
+  - live cycle sonucu:
+    - `final_read = stay_on_promoted_lane`
+    - `job_count = 2`
+    - `clean_job_count = 2`
+    - `rollback_job_count = 0`
+
   ## FAZ 2C Wave 6
 
   - pilot status report kapandi:
