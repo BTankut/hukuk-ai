@@ -2,13 +2,34 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-23T00:36:27+03:00
-last_eval: evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_candidate_wave15_20260323.json
-next_action: "focus subset'ler artik gectigi icin matched full-family FAZ 2A re-qualification rerun'larini acmak (v3-170, v2-95, faz1-50)"
+last_activity: 2026-03-23T08:03:14+03:00
+last_eval: evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_wave15_20260323.json
+next_action: "v3-170 matched rerun gate'i gecti; simdi v2-95 ve ardindan faz1-50 matched rerun'larini tamamlayip FAZ 2A steering paketini kapatmak"
 blockers:
-  - "tbk_critical ve tmk_cross_law focus subset'leri artik gate'i geciyor; aktif blocker subset onarimi degil, family-level re-qualification execution"
-  - "tmk_cross_law icinde bazi source-tail residual'lar kalsa da bunlar su an ancak full-family rerun sonucuna gore bir sonraki dalga adayidir"
+  - "tbk_critical ve tmk_cross_law focus subset'leri artik gate'i geciyor; aktif blocker artik yalnizca kalan family rerun execution (v2-95, faz1-50)"
+  - "v3-170 gate'i acildi; steering kapanisi icin tum ailelerin matched rerun'lari tamamlanmali"
 notes: |
+  ## Re-Qualification Durumu
+
+  - matched `v3-170` rerun baseline ve candidate icin tamamlandi
+  - baseline:
+    - citation `96.5%`
+    - correct source `84.4%`
+    - hallucination `5.3%`
+    - refusal `94.7%`
+  - candidate:
+    - citation `96.5%`
+    - correct source `83.8%`
+    - hallucination `4.7%`
+    - refusal `94.1%`
+  - onceki source-of-record'a gore iki lane de yaklasik `+18.8` puan correct-source iyilesmesi verdi
+  - `v3-170` artik FAZ 1.5 kapanisindaki ana no-go nedeni olmaktan cikti
+  - aktif siradaki is:
+    - `v2-95` matched rerun
+    - `faz1-50` matched rerun
+  - karar notu:
+    - `coordination/faz2a-requal-v3-170-rerun-2026-03-23.md`
+
   ## Wave 15 Durumu
 
   - Wave 15 hedefi kapandi:
