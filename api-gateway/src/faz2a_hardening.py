@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Literal
@@ -49,11 +50,16 @@ _FULL_DATE_PATTERNS = (
 )
 _YEAR_ONLY_RE = re.compile(r"\b(19|20)\d{2}\b")
 _NARROW_QUESTION_TYPE_SET = {"single_article", "definition", "elements", "procedure"}
+_SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[a-zçğıöşüâîû][.!?])\s+", re.IGNORECASE)
 _QUESTION_TYPE_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("definition", ("nedir", "ne demek", "tanımı", "tanimi")),
     ("elements", ("şartları", "sartlari", "unsurları", "unsurlari", "koşulları", "kosullari")),
     ("procedure", ("hangi sürede", "hangi surede", "usul", "süre", "sure", "ne zaman", "başvuru", "basvuru")),
 )
+_DEFINITION_PATTERNS = ("nedir", "tanımı nedir", "tanimi nedir", "ne demektir")
+_CONDITION_PATTERNS = ("şartları nelerdir", "sartlari nelerdir", "unsurları nelerdir", "unsurlari nelerdir", "hangi hallerde")
+_PROCEDURE_ACTION_HINTS = ("başvuru", "basvuru", "itiraz", "dava", "fesih", "ihbar", "ödeme", "odeme", "talep", "süre", "sure")
+_COMPLEXITY_MARKERS = ("karşılaştır", "karsilastir", "farkı", "farki", "istisna", "hariç", "haric", "veya", "ya da")
 
 
 def _tr_lower(text: str) -> str:
@@ -120,6 +126,18 @@ def dedupe_strings(values: list[str]) -> list[str]:
     return deduped
 
 
+def _dedupe_article_refs(values: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    deduped: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for law, madde in values:
+        item = (canonicalize_law_code(law), str(madde).lower())
+        if item in seen:
+            continue
+        deduped.append(item)
+        seen.add(item)
+    return deduped
+
+
 def resolve_target_date(question_raw: str, *, today: date | None = None) -> tuple[date, bool]:
     reference = today or date.today()
 
@@ -165,10 +183,15 @@ def build_law_scope_signal(
     explicit_article_refs: list[tuple[str, str]],
     law_filter: str | None,
     model_source_ids: list[str],
+    question_raw: str,
 ) -> dict[str, Any]:
-    expected_law_scope = dedupe_strings(
-        [*(canonicalize_law_code(law) for law, _ in explicit_article_refs), *(canonicalize_law_code(law) for law in mentioned_laws)]
+    explicit_law_scope = dedupe_strings(
+        [
+            *(canonicalize_law_code(law) for law, _ in explicit_article_refs),
+            *(canonicalize_law_code(law) for law in mentioned_laws),
+        ]
     )
+    expected_law_scope = list(explicit_law_scope)
     if law_filter:
         expected_law_scope = dedupe_strings([*expected_law_scope, canonicalize_law_code(law_filter)])
 
@@ -180,16 +203,22 @@ def build_law_scope_signal(
         ]
     )
 
-    single_law_question = len(expected_law_scope) == 1
-    multi_law_question = len(expected_law_scope) > 1
-    scope_ambiguous = not expected_law_scope and len(resolved_law_scope) != 1
+    if len(explicit_law_scope) == 1 and len(dedupe_strings(mentioned_laws)) <= 1:
+        scope_class = "single_law_high_conf"
+    elif len(explicit_law_scope) >= 2:
+        scope_class = "multi_law"
+    else:
+        scope_class = "ambiguous"
 
     return {
         "expected_law_scope": expected_law_scope or resolved_law_scope,
         "resolved_law_scope": resolved_law_scope,
-        "single_law_question": single_law_question,
-        "multi_law_question": multi_law_question,
-        "scope_ambiguous": scope_ambiguous,
+        "explicit_law_scope": explicit_law_scope,
+        "scope_class": scope_class,
+        "single_law_question": scope_class == "single_law_high_conf",
+        "multi_law_question": scope_class == "multi_law",
+        "scope_ambiguous": scope_class == "ambiguous",
+        "normalized_question": normalize_query_text(question_raw),
     }
 
 
@@ -241,6 +270,7 @@ class HardeningResult:
     citations: list[str]
     final_mode: FinalMode
     final_reason: UnsupportedReason | None
+    internal_blocked: bool
     answer_contract: dict[str, Any]
     model_cited_source_ids: list[str]
     law_scope_signal: dict[str, Any]
@@ -268,19 +298,94 @@ def _build_evidence_lookup(assembled_evidence: list[dict[str, Any]]) -> dict[str
     return lookup
 
 
+def _normalize_excerpt_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFC", str(text or ""))
+    normalized = normalized.replace("\r\n", "\n").replace("\r", "\n").replace("\n", " ")
+    return normalize_whitespace(normalized)
+
+
+def _extract_exact_source_tuple(item: dict[str, Any] | None) -> tuple[str, str, str | None] | None:
+    if not isinstance(item, dict):
+        return None
+
+    law = (
+        item.get("law_short_name")
+        or item.get("kanun_kisa_adi")
+        or extract_law_code_from_source_id(item.get("source_id"))
+        or extract_law_code_from_source_id(item.get("citation"))
+    )
+    madde = item.get("madde_no")
+    fikra = item.get("fikra_no")
+    if not law or not madde:
+        return None
+    return (
+        canonicalize_law_code(str(law)),
+        str(madde).lower(),
+        str(fikra).lower() if fikra not in {None, ""} else None,
+    )
+
+
+def _extract_citation_tuple(value: str | None) -> tuple[str, str, str | None] | None:
+    canonical = canonicalize_source_id(value)
+    if not canonical:
+        return None
+
+    law = extract_law_code_from_source_id(canonical)
+    article_match = re.search(r"m\.(\d+[a-z]?)", canonical, re.IGNORECASE)
+    if not law or not article_match:
+        return None
+
+    return (law, article_match.group(1).lower(), None)
+
+
+def _resolve_canonical_citation(
+    *,
+    citation: str,
+    assembled_evidence: list[dict[str, Any]],
+) -> str | None:
+    exact_source_id_index: dict[str, str] = {}
+    exact_hash_index: dict[str, str] = {}
+    exact_tuple_index: dict[tuple[str, str, str | None], str] = {}
+
+    for item in assembled_evidence:
+        source_id = canonicalize_source_id(item.get("source_id"))
+        if source_id:
+            exact_source_id_index[source_id] = source_id
+
+        source_hash = normalize_whitespace(str(item.get("source_hash") or ""))
+        if source_hash and source_id:
+            exact_hash_index[source_hash] = source_id
+
+        source_tuple = _extract_exact_source_tuple(item)
+        if source_tuple and source_id:
+            exact_tuple_index[source_tuple] = source_id
+
+    normalized_citation = normalize_whitespace(citation)
+    canonical_citation = canonicalize_source_id(normalized_citation)
+    if canonical_citation and canonical_citation in exact_source_id_index:
+        return exact_source_id_index[canonical_citation]
+
+    if normalized_citation in exact_hash_index:
+        return exact_hash_index[normalized_citation]
+
+    source_tuple = _extract_citation_tuple(normalized_citation)
+    if source_tuple and source_tuple in exact_tuple_index:
+        return exact_tuple_index[source_tuple]
+
+    return canonical_citation
+
+
 def extract_model_cited_source_ids(
     *,
     citations: list[str],
     assembled_evidence: list[dict[str, Any]],
 ) -> list[str]:
-    lookup = _build_evidence_lookup(assembled_evidence)
     resolved: list[str] = []
     for citation in citations:
-        normalized = canonicalize_source_id(citation)
-        if normalized and normalized in lookup:
-            source_id = canonicalize_source_id(lookup[normalized].get("source_id")) or normalized
-            resolved.append(source_id)
-            continue
+        normalized = _resolve_canonical_citation(
+            citation=citation,
+            assembled_evidence=assembled_evidence,
+        )
         if normalized:
             resolved.append(normalized)
     return dedupe_strings(resolved)
@@ -363,23 +468,52 @@ def apply_law_scope_validation(
     law_scope_signal: dict[str, Any],
 ) -> UnsupportedReason | None:
     expected = law_scope_signal.get("expected_law_scope", [])
-    resolved = contract.law_scope
+    source_ids = [
+        source_id
+        for source_id in [contract.primary_source_id, *contract.secondary_source_ids]
+        if source_id
+    ]
+    resolved = dedupe_strings(
+        [
+            law
+            for law in (
+                extract_law_code_from_source_id(source_id)
+                for source_id in source_ids
+            )
+            if law
+        ]
+    )
+    scope_class = law_scope_signal.get("scope_class")
 
-    if law_scope_signal.get("scope_ambiguous"):
-        contract.final_mode = "refusal"
-        contract.unsupported_reason = "insufficient_supported_evidence"
-        return contract.unsupported_reason
-
-    if law_scope_signal.get("single_law_question") and expected:
+    if scope_class == "single_law_high_conf" and expected:
         expected_law = expected[0]
-        if any(law != expected_law for law in resolved):
-            contract.final_mode = "blocked"
+        kept_sources = [
+            source_id
+            for source_id in source_ids
+            if extract_law_code_from_source_id(source_id) == expected_law
+        ]
+        if not kept_sources:
+            contract.primary_source_id = None
+            contract.secondary_source_ids = []
+            contract.law_scope = []
+            contract.final_mode = "refusal"
             contract.unsupported_reason = "law_scope_mismatch"
             return "law_scope_mismatch"
+        contract.primary_source_id = kept_sources[0]
+        contract.secondary_source_ids = kept_sources[1:]
+        contract.law_scope = [expected_law]
+        return contract.unsupported_reason
 
-    if law_scope_signal.get("multi_law_question"):
+    if scope_class == "multi_law":
         contract.law_scope = dedupe_strings([*expected, *resolved])
+        return contract.unsupported_reason
 
+    if len(resolved) == 1:
+        contract.law_scope = resolved
+        return contract.unsupported_reason
+
+    contract.final_mode = "refusal"
+    contract.unsupported_reason = "insufficient_supported_evidence"
     return contract.unsupported_reason
 
 
@@ -476,13 +610,13 @@ def apply_citation_whitelist_gate(
 
 
 def _split_claim_sentences(answer_text: str) -> list[str]:
-    plain = normalize_whitespace(answer_text)
+    plain = _normalize_excerpt_text(answer_text)
     if not plain:
         return []
 
     parts = [
         segment.strip()
-        for segment in re.split(r"(?<=[.!?])\s+", plain)
+        for segment in _SENTENCE_BOUNDARY_RE.split(plain)
         if segment.strip()
     ]
     if not parts:
@@ -494,15 +628,56 @@ def _strip_inline_citations(text: str) -> str:
     return normalize_whitespace(_INLINE_CITATION_RE.sub("", text))
 
 
+def _is_claim_binding_active(
+    *,
+    question_raw: str,
+    question_type: str,
+    explicit_article_refs: list[tuple[str, str]],
+    mentioned_laws: list[str],
+) -> bool:
+    normalized = normalize_query_text(question_raw)
+    unique_laws = dedupe_strings(
+        [
+            *(canonicalize_law_code(law) for law in mentioned_laws),
+            *(canonicalize_law_code(law) for law, _ in explicit_article_refs),
+        ]
+    )
+    unique_articles = _dedupe_article_refs(explicit_article_refs)
+    has_complexity_marker = any(marker in normalized for marker in _COMPLEXITY_MARKERS)
+
+    if question_type == "single_article":
+        return len(unique_laws) == 1 and len(unique_articles) == 1 and not has_complexity_marker
+    if question_type == "definition":
+        return any(pattern in normalized for pattern in _DEFINITION_PATTERNS)
+    if question_type == "elements":
+        return any(pattern in normalized for pattern in _CONDITION_PATTERNS)
+    if question_type == "procedure":
+        procedure_hits = sum(1 for hint in _PROCEDURE_ACTION_HINTS if hint in normalized)
+        return len(unique_laws) == 1 and len(unique_articles) == 1 and procedure_hits == 1
+    return False
+
+
 def apply_narrow_claim_binding(
     *,
     contract: StructuredAnswerContract,
     answer_text: str,
+    question_raw: str,
     question_type: str,
+    explicit_article_refs: list[tuple[str, str]],
+    mentioned_laws: list[str],
     assembled_evidence: list[dict[str, Any]],
     allowed_source_whitelist: list[str],
 ) -> UnsupportedReason | None:
     if not is_narrow_question_type(question_type):
+        contract.claim_units = []
+        return contract.unsupported_reason
+
+    if not _is_claim_binding_active(
+        question_raw=question_raw,
+        question_type=question_type,
+        explicit_article_refs=explicit_article_refs,
+        mentioned_laws=mentioned_laws,
+    ):
         contract.claim_units = []
         return contract.unsupported_reason
 
@@ -519,6 +694,7 @@ def apply_narrow_claim_binding(
     ]
 
     claim_units: list[ClaimUnit] = []
+    retained_sentences: list[str] = []
     for sentence in _split_claim_sentences(answer_text):
         inline_citations = extract_citations(sentence)
         if not inline_citations and len(fallback_source_ids) == 1:
@@ -530,22 +706,16 @@ def apply_narrow_claim_binding(
             )
 
         if not source_ids:
-            contract.final_mode = "blocked"
-            contract.unsupported_reason = "claim_support_missing"
-            return "claim_support_missing"
+            continue
 
         source_id = canonicalize_source_id(source_ids[0])
         if source_id is None or source_id not in whitelist:
-            contract.final_mode = "blocked"
-            contract.unsupported_reason = "claim_support_missing"
-            return "claim_support_missing"
+            continue
 
         evidence = evidence_lookup.get(source_id)
-        excerpt = normalize_whitespace(str((evidence or {}).get("excerpt") or ""))
+        excerpt = _normalize_excerpt_text(str((evidence or {}).get("excerpt") or ""))
         if not excerpt:
-            contract.final_mode = "blocked"
-            contract.unsupported_reason = "claim_support_missing"
-            return "claim_support_missing"
+            continue
 
         claim_units.append(
             ClaimUnit(
@@ -554,8 +724,22 @@ def apply_narrow_claim_binding(
                 source_excerpt=excerpt,
             )
         )
+        retained_sentences.append(normalize_whitespace(sentence))
 
+    if not claim_units:
+        contract.claim_units = []
+        contract.final_mode = "refusal"
+        contract.unsupported_reason = "claim_support_missing"
+        return "claim_support_missing"
+
+    supported_source_ids = dedupe_strings([unit.source_id for unit in claim_units])
+    contract.primary_source_id = supported_source_ids[0]
+    contract.secondary_source_ids = supported_source_ids[1:]
     contract.claim_units = claim_units
+    contract.answer_text = " ".join(retained_sentences)
+    if len(claim_units) < len(_split_claim_sentences(answer_text)):
+        contract.final_mode = "partial"
+        contract.unsupported_reason = None
     return contract.unsupported_reason
 
 
@@ -586,6 +770,13 @@ def build_external_refusal_text(reason: UnsupportedReason | None) -> str:
     return "Bu soru için doğrulanmış kaynaklarla yeterli destek bulunamadı."
 
 
+def _map_external_mode(contract: StructuredAnswerContract) -> tuple[FinalMode, bool]:
+    internal_blocked = contract.final_mode == "blocked"
+    if contract.final_mode == "blocked":
+        return "refusal", True
+    return contract.final_mode, internal_blocked
+
+
 def harden_answer(
     *,
     answer_text: str,
@@ -612,6 +803,7 @@ def harden_answer(
         explicit_article_refs=explicit_article_refs,
         law_filter=law_filter,
         model_source_ids=seed_source_ids,
+        question_raw=question_raw,
     )
     contract, model_cited_source_ids = build_initial_answer_contract(
         answer_text=answer_text,
@@ -623,9 +815,9 @@ def harden_answer(
     )
     contract, final_reason = validate_answer_contract_schema(contract)
     if final_reason is None:
-        final_reason = apply_law_scope_validation(
+        final_reason = apply_citation_whitelist_gate(
             contract=contract,
-            law_scope_signal=law_scope_signal,
+            allowed_source_whitelist=allowed_source_whitelist,
         )
     if final_reason is None:
         final_reason = apply_temporal_validity_policy(
@@ -636,32 +828,37 @@ def harden_answer(
             today=today,
         )
     if final_reason is None:
-        final_reason = apply_citation_whitelist_gate(
+        final_reason = apply_law_scope_validation(
             contract=contract,
-            allowed_source_whitelist=allowed_source_whitelist,
+            law_scope_signal=law_scope_signal,
         )
     if final_reason is None:
         final_reason = apply_narrow_claim_binding(
             contract=contract,
             answer_text=answer_text,
+            question_raw=question_raw,
             question_type=question_type,
+            explicit_article_refs=explicit_article_refs,
+            mentioned_laws=mentioned_laws,
             assembled_evidence=assembled_evidence,
             allowed_source_whitelist=allowed_source_whitelist,
         )
 
-    external_answer_text = answer_text
+    external_mode, internal_blocked = _map_external_mode(contract)
+    external_answer_text = contract.answer_text or answer_text
     external_citations = dedupe_strings(
         [source_id for source_id in [contract.primary_source_id, *contract.secondary_source_ids] if source_id]
     )
-    if contract.final_mode in {"blocked", "refusal"}:
+    if external_mode == "refusal":
         external_answer_text = build_external_refusal_text(final_reason)
         external_citations = []
 
     return HardeningResult(
         answer_text=external_answer_text,
         citations=external_citations,
-        final_mode=contract.final_mode,
+        final_mode=external_mode,
         final_reason=final_reason,
+        internal_blocked=internal_blocked,
         answer_contract=contract.model_dump(),
         model_cited_source_ids=model_cited_source_ids,
         law_scope_signal=law_scope_signal,

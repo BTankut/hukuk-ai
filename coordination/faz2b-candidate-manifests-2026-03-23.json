@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-03-23T16:30:00+03:00",
+  "reference": "docs/FAZ2B-CUTOVER-READINESS-CLOSURE-VE-KALITE-KORUMALI-SERTLESTIRME-ENTEGRASYON-TALIMATI-2026-03-23.md",
+  "candidates": [
+    {
+      "candidate_id": "rc-a-faz2a-requal-quality-anchor-20260323",
+      "git_commit": "f59b0b4",
+      "status": "frozen_quality_anchor",
+      "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+      "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+      "retrieval_config_hash": "d75b52ef51622aa3cbdabe7ea977d619064c1f8cecc327097299887683f62cf5",
+      "reranker_config_hash": "d6f4512248ed3371495cecae020d3f88a855b843adc0dd8ce6513a192a32cd8b",
+      "source_locking_version": "v1",
+      "delivery_controller_version": "rc-a-anchor-v1",
+      "release_control_version": "legacy-anchor-pre-official-faz2b",
+      "dataset_manifest_hash": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+      "scope_contract_version": "07cd4167e259d7af6dbe207ec16d203b99fe6aed8e331c8cc6699a8fe01d7f52",
+      "build_timestamp": "2026-03-23T09:30:00+00:00",
+      "quality_source_reports": {
+        "faz1_50": "evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json",
+        "v2_95": "evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_wave15_r2_20260323.json",
+        "v3_170": "evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_wave15_20260323.json"
+      }
+    },
+    {
+      "candidate_id": "rc-b-faz2a-extra-hardening-acceptance-20260323",
+      "git_commit": "8f9fcef",
+      "status": "frozen_acceptance_branch",
+      "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+      "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+      "retrieval_config_hash": "d75b52ef51622aa3cbdabe7ea977d619064c1f8cecc327097299887683f62cf5",
+      "reranker_config_hash": "d6f4512248ed3371495cecae020d3f88a855b843adc0dd8ce6513a192a32cd8b",
+      "source_locking_version": "v1",
+      "delivery_controller_version": "faz2a-hardening-v1",
+      "release_control_version": "unofficial-release-controls-wave3-carried",
+      "dataset_manifest_hash": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+      "scope_contract_version": "07cd4167e259d7af6dbe207ec16d203b99fe6aed8e331c8cc6699a8fe01d7f52",
+      "build_timestamp": "2026-03-23T13:16:57+00:00",
+      "acceptance_source_reports": {
+        "smoke": "evaluation/reports/faz2a-ek-sertlestirme-smoke-2026-03-23.md",
+        "family_eval": "evaluation/reports/faz2a-ek-sertlestirme-family-eval-2026-03-23.md",
+        "result_report": "docs/FAZ2A-EK-SERTLESTIRME-SONUC-RAPORU.md"
+      }
+    },
+    {
+      "candidate_id": "rc-c-faz2b-integrated-candidate-20260323",
+      "git_commit": "e9f5e7a",
+      "status": "planned",
+      "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+      "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+      "retrieval_config_hash": "d75b52ef51622aa3cbdabe7ea977d619064c1f8cecc327097299887683f62cf5",
+      "reranker_config_hash": "d6f4512248ed3371495cecae020d3f88a855b843adc0dd8ce6513a192a32cd8b",
+      "source_locking_version": "v1",
+      "delivery_controller_version": "delivery-controller-v2-planned",
+      "release_control_version": "official-faz2b-release-controls-planned",
+      "dataset_manifest_hash": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+      "scope_contract_version": "07cd4167e259d7af6dbe207ec16d203b99fe6aed8e331c8cc6699a8fe01d7f52",
+      "build_timestamp": "2026-03-23T16:30:00+03:00",
+      "definition": "RC-A + canonical citation normalization + delivery-controller v2 + release controls"
+    }
+  ]
+}

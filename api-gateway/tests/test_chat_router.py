@@ -1743,8 +1743,8 @@ class TestLawFilterAndRetrieval:
 
         assert resp.status_code == 200
         payload = resp.json()
-        assert payload["blocked"] is True
-        assert payload["final_mode"] == "blocked"
+        assert payload["blocked"] is False
+        assert payload["final_mode"] == "refusal"
         assert payload["final_reason"] == "law_scope_mismatch"
         assert payload["citations"] == []
         assert payload["answer_contract"]["unsupported_reason"] == "law_scope_mismatch"
@@ -1797,7 +1797,7 @@ class TestLawFilterAndRetrieval:
         assert resp.status_code == 200
         payload = resp.json()
         assert payload["blocked"] is True
-        assert payload["final_mode"] == "blocked"
+        assert payload["final_mode"] == "refusal"
         assert payload["final_reason"] == "citation_out_of_whitelist"
         assert payload["citations"] == []
         assert payload["answer_contract"]["unsupported_reason"] == "citation_out_of_whitelist"
