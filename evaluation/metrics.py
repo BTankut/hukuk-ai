@@ -244,6 +244,9 @@ class QuestionResult:
     response_time_ms: float = 0.0
     blocked: bool = False
     verification_verdict: str | None = None
+    final_mode: str | None = None
+    final_reason: str | None = None
+    answer_contract: dict[str, Any] | None = None
     error: str | None = None
     trace: dict[str, Any] | None = None
 
@@ -256,6 +259,9 @@ def compute_metrics(
     response_time_ms: float = 0.0,
     blocked: bool = False,
     verification: dict[str, Any] | None = None,
+    final_mode: str | None = None,
+    final_reason: str | None = None,
+    answer_contract: dict[str, Any] | None = None,
     error: str | None = None,
     trace: dict[str, Any] | None = None,
 ) -> QuestionResult:
@@ -320,6 +326,9 @@ def compute_metrics(
         response_time_ms=round(response_time_ms, 1),
         blocked=blocked,
         verification_verdict=v_verdict,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        answer_contract=answer_contract,
         error=error,
         trace=trace,
     )

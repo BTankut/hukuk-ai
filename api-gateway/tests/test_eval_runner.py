@@ -654,6 +654,19 @@ class TestReportMetadata:
             correct_source_rate=1.0,
             kw_coverage=1.0,
             refusal_correct=True,
+            final_mode="answer",
+            final_reason=None,
+            answer_contract={
+                "answer_text": "TBK m.1",
+                "primary_source_id": "TBK m.1",
+                "secondary_source_ids": [],
+                "law_scope": ["TBK"],
+                "source_validity": "active",
+                "unsupported_reason": None,
+                "verifier_status": "pass",
+                "final_mode": "answer",
+                "claim_units": [],
+            },
             trace={
                 "query_signals": {"user_query": "TBK m.1 nedir?"},
                 "retrieval": {"top_k_requested": 20},
@@ -669,6 +682,7 @@ class TestReportMetadata:
         )
 
         assert report["per_question"][0]["trace"]["query_signals"]["user_query"] == "TBK m.1 nedir?"
+        assert report["per_question"][0]["answer_contract"]["primary_source_id"] == "TBK m.1"
 
 
 class TestChatApiClient:
@@ -688,6 +702,9 @@ class TestChatApiClient:
                         "choices": [{"message": {"content": "Yanıt"}}],
                         "citations": ["TBK m.1"],
                         "blocked": False,
+                        "final_mode": "answer",
+                        "final_reason": None,
+                        "answer_contract": {"primary_source_id": "TBK m.1"},
                         "verification": {"verdict": "pass"},
                         "trace": {"query_signals": {"user_query": "TBK m.1 nedir?"}},
                     }
@@ -707,3 +724,5 @@ class TestChatApiClient:
 
         assert captured["payload"]["include_trace"] is True
         assert result["trace"]["query_signals"]["user_query"] == "TBK m.1 nedir?"
+        assert result["answer_contract"]["primary_source_id"] == "TBK m.1"
+        assert result["final_mode"] == "answer"

@@ -1696,6 +1696,59 @@ class TestLawFilterAndRetrieval:
         assert resp.json()["final_mode"] == "answer"
         assert resp.json()["answer_contract"]["primary_source_id"] == "TBK m.49"
 
+    def test_single_law_scope_mismatch_returns_blocked_refusal(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        results = [
+            RetrievalResult(
+                chunk_id="tmk-194",
+                text="Aile konutu metni",
+                score=0.9,
+                metadata={
+                    "source_id": "TMK m.194",
+                    "law_short_name": "TMK",
+                    "madde_no": "194",
+                    "fikra_no": "1",
+                },
+            )
+        ]
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="tbk",
+            top_k=20,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=(results, stats))
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(
+                "Aile konutu koruması vardır [Kaynak: TMK m.194]",
+                citations=["TMK m.194"],
+                verification={"verdict": "pass"},
+            )
+        )
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={"messages": [{"role": "user", "content": "TBK m.349 nedir?"}]},
+            )
+
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload["blocked"] is True
+        assert payload["final_mode"] == "blocked"
+        assert payload["final_reason"] == "law_scope_mismatch"
+        assert payload["citations"] == []
+        assert payload["answer_contract"]["unsupported_reason"] == "law_scope_mismatch"
+
     def test_concept_anchor_rules_force_include_exact_articles(self, mock_orchestrator):
         mock_retriever = MagicMock()
 

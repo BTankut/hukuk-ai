@@ -158,12 +158,18 @@ class ChatAPIClient:
             blocked = body.get("blocked", False)
             verification = body.get("verification")
             trace = body.get("trace")
+            final_mode = body.get("final_mode")
+            final_reason = body.get("final_reason")
+            answer_contract = body.get("answer_contract")
 
             return {
                 "answer_text": answer_text,
                 "citations": citations,
                 "blocked": blocked,
                 "verification": verification,
+                "final_mode": final_mode,
+                "final_reason": final_reason,
+                "answer_contract": answer_contract,
                 "trace": trace,
                 "response_time_ms": elapsed_ms,
                 "error": None,
@@ -177,6 +183,9 @@ class ChatAPIClient:
                 "citations": [],
                 "blocked": False,
                 "verification": None,
+                "final_mode": None,
+                "final_reason": None,
+                "answer_contract": None,
                 "trace": None,
                 "response_time_ms": 0.0,
                 "error": f"HTTP {e.code}: {err_body[:100]}",
@@ -188,6 +197,9 @@ class ChatAPIClient:
                 "citations": [],
                 "blocked": False,
                 "verification": None,
+                "final_mode": None,
+                "final_reason": None,
+                "answer_contract": None,
                 "trace": None,
                 "response_time_ms": 0.0,
                 "error": str(exc),
@@ -242,6 +254,9 @@ class MockChatClient:
                 "citations": [],
                 "blocked": False,
                 "verification": {"verdict": "pass", "hallucination_risk": 0.0},
+                "final_mode": "refusal",
+                "final_reason": "insufficient_supported_evidence",
+                "answer_contract": None,
                 "trace": None,
                 "response_time_ms": 12.5,
                 "error": None,
@@ -274,6 +289,9 @@ class MockChatClient:
                 "verdict": "pass" if citations else "warn",
                 "hallucination_risk": 0.1,
             },
+            "final_mode": "answer",
+            "final_reason": None,
+            "answer_contract": None,
             "trace": None,
             "response_time_ms": rng.uniform(80, 350),
             "error": None,
@@ -338,6 +356,9 @@ def run_evaluation(
                 "citations": [],
                 "blocked": False,
                 "verification": None,
+                "final_mode": None,
+                "final_reason": None,
+                "answer_contract": None,
                 "trace": None,
                 "response_time_ms": 0.0,
                 "error": str(exc),
@@ -350,6 +371,9 @@ def run_evaluation(
             response_time_ms=api_result["response_time_ms"],
             blocked=api_result["blocked"],
             verification=api_result["verification"],
+            final_mode=api_result.get("final_mode"),
+            final_reason=api_result.get("final_reason"),
+            answer_contract=api_result.get("answer_contract"),
             error=api_result["error"],
             trace=api_result.get("trace"),
         )
