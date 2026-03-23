@@ -1,13 +1,23 @@
 # Wave State
-current_wave: faz2c-watch-rollup
+current_wave: faz2c-pilot-status-report
 status: completed
 started_at: 2026-03-23T11:10:39+03:00
-last_activity: 2026-03-23T12:15:19+03:00
+last_activity: 2026-03-23T12:22:07+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "Promoted lane dar kapsam pilotta aktif; rollup green, siradaki resmi hareket yeni faz/rapor veya yeni archived job run'idir"
+next_action: "Promoted lane dar kapsam pilotta aktif; status report green, siradaki resmi hareket yeni faz/rapor veya yeni archived job run'idir"
 blockers:
   - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
+  ## FAZ 2C Wave 6
+
+  - pilot status report kapandi:
+    - `scripts/faz2c/build_pilot_status_report.py`
+    - `coordination/faz2c-wave6-status-report-2026-03-23.md`
+  - live report sonucu:
+    - latest rollup status `clean`
+    - latest snapshot rollback recommended `False`
+    - current live read `stay on promoted lane`
+
   ## FAZ 2C Wave 5
 
   - watch rollup kapandi:

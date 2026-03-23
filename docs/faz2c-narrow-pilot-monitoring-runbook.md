@@ -73,6 +73,15 @@ python3 scripts/faz2c/build_pilot_watch_rollup.py \
   --output-path runtime_logs/faz2c_watch_rollup.json
 ```
 
+## Status Report Command
+
+```bash
+python3 scripts/faz2c/build_pilot_status_report.py \
+  --snapshot-path runtime_logs/faz2c_narrow_pilot_snapshot.json \
+  --rollup-path runtime_logs/faz2c_watch_rollup.json \
+  --output-path runtime_logs/faz2c_pilot_status_report.md
+```
+
 ## What The Snapshot Checks
 - `GET /v1/health`
 - `GET /v1/metrics` before and after smoke
@@ -119,6 +128,8 @@ bash scripts/faz2c/run_controlled_rollback.sh
   - `runtime_logs/faz2c_watch_jobs/<label>_<timestamp>/manifest.json`
 - watch rollup:
   - `runtime_logs/faz2c_watch_rollup.json`
+- pilot status report:
+  - `runtime_logs/faz2c_pilot_status_report.md`
 - rollback summary if rollback is executed:
   - `runtime_logs/faz2c_controlled_rollback_summary.json`
 
