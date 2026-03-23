@@ -14,6 +14,19 @@ class ChatMessage:
     content: str
 
 
+@dataclass(slots=True)
+class TokenUsage:
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+
+
+@dataclass(slots=True)
+class LLMResult:
+    text: str
+    usage: TokenUsage | None = None
+
+
 class LLMClient:
     """DGX üzerinde çalışan OpenAI-compatible vLLM client wrapper'ı."""
 
@@ -40,7 +53,11 @@ class LLMClient:
         )
         return self._client
 
-    async def chat(self, messages: Sequence[ChatMessage], temperature: float = 0.1) -> str:
+    async def chat(
+        self,
+        messages: Sequence[ChatMessage],
+        temperature: float = 0.1,
+    ) -> LLMResult:
         client = self._get_client()
         response = await client.chat.completions.create(
             model=self.settings.dgx_model,
@@ -48,7 +65,10 @@ class LLMClient:
             temperature=temperature,
             extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         )
-        return self._extract_text(response.choices[0].message.content or "")
+        return LLMResult(
+            text=self._extract_text(response.choices[0].message.content or ""),
+            usage=self._extract_usage(response),
+        )
 
     @classmethod
     def _extract_text(cls, result: Any) -> str:
@@ -70,6 +90,30 @@ class LLMClient:
         if isinstance(content, str) and content.strip():
             return content
         return str(result)
+
+    @staticmethod
+    def _extract_usage(response: Any) -> TokenUsage | None:
+        usage = getattr(response, "usage", None)
+        if usage is None:
+            return None
+
+        prompt_tokens = getattr(usage, "prompt_tokens", None)
+        completion_tokens = getattr(usage, "completion_tokens", None)
+        total_tokens = getattr(usage, "total_tokens", None)
+
+        if isinstance(usage, dict):
+            prompt_tokens = usage.get("prompt_tokens")
+            completion_tokens = usage.get("completion_tokens")
+            total_tokens = usage.get("total_tokens")
+
+        if not all(isinstance(value, int) and value >= 0 for value in (prompt_tokens, completion_tokens, total_tokens)):
+            return None
+
+        return TokenUsage(
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+        )
 
     @staticmethod
     def _build_no_context_messages(query: str) -> list[ChatMessage]:
@@ -122,7 +166,7 @@ class LLMClient:
             ChatMessage(role="user", content=user_prompt),
         ]
 
-    async def generate_rag_draft(self, query: str, context: str) -> str:
+    async def generate_rag_draft(self, query: str, context: str) -> LLMResult | str:
         if not context or not context.strip():
             messages = self._build_no_context_messages(query)
         else:

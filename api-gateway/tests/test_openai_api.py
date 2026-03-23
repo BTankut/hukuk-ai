@@ -58,6 +58,18 @@ def test_models_endpoint(main_client):
     assert data["data"][0]["id"] == "hukuk-ai-poc"
 
 
+def test_models_endpoint_requires_auth_when_enabled(main_client, monkeypatch):
+    client, _ = main_client
+    monkeypatch.setenv("API_AUTH_ENABLED", "true")
+    monkeypatch.setenv("API_AUTH_KEYS", "secret-key")
+
+    denied = client.get("/v1/models")
+    assert denied.status_code == 401
+
+    allowed = client.get("/v1/models", headers={"X-API-Key": "secret-key"})
+    assert allowed.status_code == 200
+
+
 def test_chat_completions_non_streaming(main_client):
     client, mock_orch = main_client
     mock_orch.answer = AsyncMock(return_value=_mock_orch_response("TBK m.49 haksız fiili düzenler."))

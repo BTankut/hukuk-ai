@@ -44,6 +44,7 @@ class OrchestratorResponse:
     guardrails_reasons: list[str]
     # Verification engine sonucu (Backlog #6) — opsiyonel
     verification: dict[str, Any] | None = None
+    usage: dict[str, int] | None = None
 
 
 class RAGOrchestrator:
@@ -108,7 +109,18 @@ class RAGOrchestrator:
             OrchestratorResponse
         """
         context = self._build_context(retrieved_chunks)
-        draft = await self.llm_client.generate_rag_draft(query=query, context=context)
+        draft_result = await self.llm_client.generate_rag_draft(query=query, context=context)
+        draft_usage: dict[str, int] | None = None
+        if isinstance(draft_result, str):
+            draft = draft_result
+        else:
+            draft = draft_result.text
+            if draft_result.usage is not None:
+                draft_usage = {
+                    "prompt_tokens": draft_result.usage.prompt_tokens,
+                    "completion_tokens": draft_result.usage.completion_tokens,
+                    "total_tokens": draft_result.usage.total_tokens,
+                }
 
         guardrails_result = await self.guardrails.run(
             user_query=query,
@@ -164,6 +176,7 @@ class RAGOrchestrator:
             blocked=blocked,
             guardrails_reasons=reasons,
             verification=verification_dict,
+            usage=draft_usage,
         )
 
     @staticmethod

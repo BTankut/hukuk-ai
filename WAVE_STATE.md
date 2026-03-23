@@ -1,14 +1,29 @@
 # Wave State
-current_wave: faz2a-retrieval-coverage-requalification
-status: completed
-started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-23T10:12:03+03:00
+current_wave: faz2b-cutover-readiness-closure
+status: in_progress
+started_at: 2026-03-23T10:26:53+03:00
+last_activity: 2026-03-23T10:26:53+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "FAZ 2A steering paketi kapandi; sonraki resmi faz FAZ 2B cutover-readiness closure olmali"
+next_action: "FAZ 2B wave 1 kapandi; siradaki is PII masking proof, observability/alerting ve session persistence"
 blockers:
-  - "FAZ 2A blocker'lari kapandi; kalan blocker'lar artik bir sonraki fazdaki release-control ve cutover-readiness isleridir"
-  - "Bu wave icinde acik family rerun kalmadi"
+  - "Release-control must-close kalemleri acik: PII masking proof, session persistence, observability/alerting, backup/restore"
+  - "Cutover karari icin FAZ 2B steering paketi henuz olusmadi"
 notes: |
+  ## FAZ 2B Durumu
+
+  - yeni resmi faz basladi:
+    - `coordination/faz2b-implementation-plan-2026-03-23.md`
+  - wave 1 kapandi:
+    - auth enforcement
+    - append-only audit logging
+    - runtime-backed usage accounting
+  - wave 1 karar notu:
+    - `coordination/faz2b-release-controls-wave1-2026-03-23.md`
+  - sonraki dalga:
+    - PII masking release proof
+    - observability / alerting contract
+    - session persistence
+
   ## Re-Qualification Durumu
 
   - matched `faz1-50` rerun baseline ve candidate icin tamamlandi

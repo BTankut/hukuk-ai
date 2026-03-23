@@ -44,6 +44,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
+from rag.token_manager import estimate_tokens
+from release_controls import append_audit_event, require_api_auth
 
 logger = logging.getLogger(__name__)
 
@@ -1853,6 +1855,8 @@ async def _stream_sse_response(
     blocked: bool,
     guardrails_reasons: list[str],
     verification: dict[str, Any] | None,
+    usage: ChatUsage | None = None,
+    response_id: str | None = None,
     trace: dict[str, Any] | None = None,
     words_per_chunk: int = 5,
     delay_between_chunks: float = 0.02,
@@ -1866,7 +1870,7 @@ async def _stream_sse_response(
         4. Metadata chunk (hukuk-ai özel: citations, verification)
         5. [DONE]
     """
-    chunk_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+    chunk_id = response_id or f"chatcmpl-{uuid.uuid4().hex[:12]}"
     created = int(time.time())
 
     def _make_delta_chunk(delta: dict[str, Any], finish_reason: str | None = None) -> str:
@@ -1914,6 +1918,8 @@ async def _stream_sse_response(
     }
     if trace is not None:
         meta_payload["trace"] = trace
+    if usage is not None:
+        meta_payload["usage"] = usage.model_dump()
     yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
 
     # 5. Done sentinel
@@ -1941,6 +1947,40 @@ def _get_retriever(request: Request) -> Any | None:
     return getattr(request.app.state, "retriever", None)
 
 
+def _estimate_chat_usage(
+    messages: list[ConversationMessage],
+    answer_text: str,
+) -> ChatUsage:
+    prompt_tokens = sum(estimate_tokens(message.content) for message in messages)
+    completion_tokens = estimate_tokens(answer_text)
+    return ChatUsage(
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=prompt_tokens + completion_tokens,
+    )
+
+
+def _resolve_chat_usage(
+    *,
+    messages: list[ConversationMessage],
+    answer_text: str,
+    upstream_usage: dict[str, int] | None,
+) -> tuple[ChatUsage, str]:
+    if upstream_usage and all(
+        isinstance(upstream_usage.get(key), int) and upstream_usage[key] >= 0
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens")
+    ):
+        return (
+            ChatUsage(
+                prompt_tokens=upstream_usage["prompt_tokens"],
+                completion_tokens=upstream_usage["completion_tokens"],
+                total_tokens=upstream_usage["total_tokens"],
+            ),
+            "upstream",
+        )
+    return _estimate_chat_usage(messages, answer_text), "estimated"
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -1956,6 +1996,7 @@ async def chat_completions(
     request_body: ChatCompletionRequest,
     request: Request,
     store: ConversationStore = Depends(get_conversation_store),
+    _auth_subject: str = Depends(require_api_auth),
 ) -> Any:
     """OpenAI-uyumlu chat completions endpoint.
 
@@ -1997,6 +2038,7 @@ async def chat_completions(
 
     # ── Session & Multi-turn ─────────────────────────────────────────────────
     session_id = request_body.session_id or f"sess-{uuid.uuid4().hex[:16]}"
+    response_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
 
     # Dar kapsamlı, yüksek isabetli deterministic çapraz-kanun / TBK yanıtları
     precise_lane = "precise_cross_law_shortcut"
@@ -2031,6 +2073,26 @@ async def chat_completions(
             )
 
         store.add_turn(session_id, last_user_msg, answer_text)
+        usage, usage_source = _resolve_chat_usage(
+            messages=request_body.messages,
+            answer_text=answer_text,
+            upstream_usage=None,
+        )
+        append_audit_event(
+            event_type="chat_completion",
+            request=request,
+            response_id=response_id,
+            session_id=session_id,
+            model=request_body.model,
+            stream=request_body.stream,
+            blocked=False,
+            citations=precise_citations,
+            guardrails_reasons=[],
+            usage=usage.model_dump(),
+            usage_source=usage_source,
+            message_count=len(request_body.messages),
+            user_message_chars=len(last_user_msg),
+        )
 
         model_name = request_body.model
         if request_body.stream:
@@ -2043,6 +2105,8 @@ async def chat_completions(
                     blocked=False,
                     guardrails_reasons=[],
                     verification=None,
+                    usage=usage,
+                    response_id=response_id,
                     trace=trace_payload,
                 ),
                 media_type="text/event-stream",
@@ -2053,10 +2117,8 @@ async def chat_completions(
                 },
             )
 
-        prompt_tokens = sum(len(m.content.split()) for m in request_body.messages)
-        completion_tokens = len(answer_text.split())
         return ChatCompletionResponse(
-            id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
+            id=response_id,
             created=int(time.time()),
             model=model_name,
             choices=[
@@ -2066,11 +2128,7 @@ async def chat_completions(
                     finish_reason="stop",
                 )
             ],
-            usage=ChatUsage(
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                total_tokens=prompt_tokens + completion_tokens,
-            ),
+            usage=usage,
             session_id=session_id,
             citations=precise_citations,
             blocked=False,
@@ -2113,6 +2171,26 @@ async def chat_completions(
 
         # Session kaydı
         store.add_turn(session_id, last_user_msg, answer_text)
+        usage, usage_source = _resolve_chat_usage(
+            messages=request_body.messages,
+            answer_text=answer_text,
+            upstream_usage=None,
+        )
+        append_audit_event(
+            event_type="chat_completion",
+            request=request,
+            response_id=response_id,
+            session_id=session_id,
+            model=request_body.model,
+            stream=request_body.stream,
+            blocked=False,
+            citations=[],
+            guardrails_reasons=[],
+            usage=usage.model_dump(),
+            usage_source=usage_source,
+            message_count=len(request_body.messages),
+            user_message_chars=len(last_user_msg),
+        )
 
         model_name = request_body.model
         if request_body.stream:
@@ -2125,6 +2203,8 @@ async def chat_completions(
                     blocked=False,
                     guardrails_reasons=[],
                     verification=None,
+                    usage=usage,
+                    response_id=response_id,
                     trace=trace_payload,
                 ),
                 media_type="text/event-stream",
@@ -2135,10 +2215,8 @@ async def chat_completions(
                 },
             )
 
-        prompt_tokens = sum(len(m.content.split()) for m in request_body.messages)
-        completion_tokens = len(answer_text.split())
         return ChatCompletionResponse(
-            id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
+            id=response_id,
             created=int(time.time()),
             model=model_name,
             choices=[
@@ -2148,11 +2226,7 @@ async def chat_completions(
                     finish_reason="stop",
                 )
             ],
-            usage=ChatUsage(
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                total_tokens=prompt_tokens + completion_tokens,
-            ),
+            usage=usage,
             session_id=session_id,
             citations=[],
             blocked=False,
@@ -2632,6 +2706,26 @@ async def chat_completions(
 
     # ── Session kaydet ────────────────────────────────────────────────────────
     store.add_turn(session_id, last_user_msg, answer_text)
+    usage, usage_source = _resolve_chat_usage(
+        messages=request_body.messages,
+        answer_text=answer_text,
+        upstream_usage=orch_response.usage,
+    )
+    append_audit_event(
+        event_type="chat_completion",
+        request=request,
+        response_id=response_id,
+        session_id=session_id,
+        model=request_body.model,
+        stream=request_body.stream,
+        blocked=blocked,
+        citations=citations,
+        guardrails_reasons=guardrails_reasons,
+        usage=usage.model_dump(),
+        usage_source=usage_source,
+        message_count=len(request_body.messages),
+        user_message_chars=len(last_user_msg),
+    )
 
     model_name = request_body.model
 
@@ -2646,6 +2740,8 @@ async def chat_completions(
                 blocked=blocked,
                 guardrails_reasons=guardrails_reasons,
                 verification=verification,
+                usage=usage,
+                response_id=response_id,
                 trace=trace_payload,
             ),
             media_type="text/event-stream",
@@ -2657,11 +2753,8 @@ async def chat_completions(
         )
 
     # ── Non-streaming JSON Yanıt ──────────────────────────────────────────────
-    prompt_tokens = sum(len(m.content.split()) for m in request_body.messages)
-    completion_tokens = len(answer_text.split())
-
     return ChatCompletionResponse(
-        id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
+        id=response_id,
         created=int(time.time()),
         model=model_name,
         choices=[
@@ -2671,11 +2764,7 @@ async def chat_completions(
                 finish_reason="stop",
             )
         ],
-        usage=ChatUsage(
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_tokens=prompt_tokens + completion_tokens,
-        ),
+        usage=usage,
         session_id=session_id,
         citations=citations,
         blocked=blocked,
@@ -2690,8 +2779,10 @@ async def chat_completions(
     summary="Oturum geçmişini döndür",
 )
 async def get_session(
+    request: Request,
     session_id: str,
     store: ConversationStore = Depends(get_conversation_store),
+    _auth_subject: str = Depends(require_api_auth),
 ) -> dict[str, Any]:
     """Verilen session_id için konuşma geçmişini döndür."""
     history = store.get_history(session_id)
@@ -2707,8 +2798,10 @@ async def get_session(
     summary="Oturumu sil",
 )
 async def delete_session(
+    request: Request,
     session_id: str,
     store: ConversationStore = Depends(get_conversation_store),
+    _auth_subject: str = Depends(require_api_auth),
 ) -> dict[str, Any]:
     """Verilen session_id için konuşma oturumunu ve geçmişini sil."""
     deleted = store.clear_session(session_id)
@@ -2724,7 +2817,9 @@ async def delete_session(
     summary="Aktif oturum sayısı",
 )
 async def list_sessions(
+    request: Request,
     store: ConversationStore = Depends(get_conversation_store),
+    _auth_subject: str = Depends(require_api_auth),
 ) -> dict[str, Any]:
     """Aktif oturum sayısını ve limiti döndür."""
     return {

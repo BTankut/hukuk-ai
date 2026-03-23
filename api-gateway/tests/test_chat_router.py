@@ -57,6 +57,7 @@ def _make_orch_response(
     blocked: bool = False,
     reasons: list[str] | None = None,
     verification: dict | None = None,
+    usage: dict[str, int] | None = None,
 ) -> OrchestratorResponse:
     return OrchestratorResponse(
         answer=answer,
@@ -64,6 +65,7 @@ def _make_orch_response(
         blocked=blocked,
         guardrails_reasons=reasons or [],
         verification=verification,
+        usage=usage,
     )
 
 
@@ -876,6 +878,68 @@ class TestChatCompletionsNonStreaming:
         assert "completion_tokens" in usage
         assert "total_tokens" in usage
         assert usage["total_tokens"] == usage["prompt_tokens"] + usage["completion_tokens"]
+
+    def test_usage_prefers_orchestrator_usage(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(
+                usage={"prompt_tokens": 123, "completion_tokens": 45, "total_tokens": 168}
+            )
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "test soru"}]},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["usage"] == {
+            "prompt_tokens": 123,
+            "completion_tokens": 45,
+            "total_tokens": 168,
+        }
+
+    def test_chat_completions_requires_auth_when_enabled(self, mock_orchestrator, monkeypatch):
+        monkeypatch.setenv("API_AUTH_ENABLED", "true")
+        monkeypatch.setenv("API_AUTH_KEYS", "secret-key")
+        app = _make_app(mock_orch=mock_orchestrator)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={"messages": [{"role": "user", "content": "soru"}]},
+            )
+            assert resp.status_code == 401
+
+            ok = c.post(
+                "/v1/chat/completions",
+                headers={"Authorization": "Bearer secret-key"},
+                json={"messages": [{"role": "user", "content": "soru"}]},
+            )
+            assert ok.status_code == 200
+        app.dependency_overrides.clear()
+
+    def test_chat_completion_writes_audit_event(self, client, mock_orchestrator, monkeypatch, tmp_path):
+        audit_path = tmp_path / "audit.jsonl"
+        monkeypatch.setenv("AUDIT_LOG_ENABLED", "true")
+        monkeypatch.setenv("AUDIT_LOG_PATH", str(audit_path))
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(
+                usage={"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17}
+            )
+        )
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "test soru"}]},
+        )
+        assert resp.status_code == 200
+        assert audit_path.exists()
+        lines = audit_path.read_text(encoding="utf-8").strip().splitlines()
+        assert len(lines) == 1
+        event = json.loads(lines[0])
+        assert event["event_type"] == "chat_completion"
+        assert event["session_id"] == resp.json()["session_id"]
+        assert event["usage"] == {"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17}
+        assert event["usage_source"] == "upstream"
+        assert event["auth_subject"] == "anonymous"
 
     def test_400_on_empty_messages(self, client):
         resp = client.post(

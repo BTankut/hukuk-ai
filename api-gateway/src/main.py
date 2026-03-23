@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import os
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Request
 from pydantic import BaseModel, Field
 
 from config import get_settings
@@ -29,6 +29,7 @@ from guardrails.pipeline import GuardrailsPipeline
 from llm.client import LLMClient
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from api.openai import router as openai_router
+from release_controls import append_audit_event, require_api_auth
 from routers.chat import router as chat_router
 
 settings = get_settings()
@@ -152,13 +153,17 @@ async def health() -> dict[str, str]:
 
 
 @app.post("/v1/chat", response_model=ChatResponse, deprecated=True)
-async def chat_legacy(request: ChatRequest) -> ChatResponse:
+async def chat_legacy(
+    request_body: ChatRequest,
+    request: Request,
+    _auth_subject: str = Depends(require_api_auth),
+) -> ChatResponse:
     """Legacy chat endpoint — chunk'ları dışarıdan alır.
 
     Yeni entegrasyonlar için /v1/chat/completions kullanın.
     """
     response = await orchestrator.answer(
-        query=request.query,
+        query=request_body.query,
         retrieved_chunks=[
             RetrievedChunk(
                 text=item.text,
@@ -167,13 +172,29 @@ async def chat_legacy(request: ChatRequest) -> ChatResponse:
                 score=item.score,
                 metadata=item.metadata,
             )
-            for item in request.retrieved_chunks
+            for item in request_body.retrieved_chunks
         ],
     )
 
-    return ChatResponse(
+    chat_response = ChatResponse(
         answer=response.answer,
         citations=response.citations,
         blocked=response.blocked,
         guardrails_reasons=response.guardrails_reasons,
     )
+    append_audit_event(
+        event_type="legacy_chat",
+        request=request,
+        response_id=f"legacy-{int(os.times().elapsed * 1000)}",
+        session_id=None,
+        model=settings.dgx_model,
+        stream=False,
+        blocked=response.blocked,
+        citations=response.citations,
+        guardrails_reasons=response.guardrails_reasons,
+        usage=response.usage,
+        usage_source="upstream" if response.usage else "none",
+        message_count=1,
+        user_message_chars=len(request_body.query),
+    )
+    return chat_response
