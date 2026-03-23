@@ -163,3 +163,24 @@ def test_harden_answer_allows_historical_source_when_target_date_matches():
     assert result.final_mode == "answer"
     assert result.final_reason is None
     assert result.answer_contract["source_validity"] == "historical"
+
+
+def test_harden_answer_blocks_narrow_claim_when_multiple_sources_are_unbound():
+    evidence = _evidence("TBK m.49", "TBK m.50")
+
+    result = harden_answer(
+        answer_text="Haksız fiil ve tazminat değerlendirilir.",
+        citations=["TBK m.49", "TBK m.50"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="Haksız fiil nedir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.49", "TBK m.50"],
+        today=date(2026, 3, 23),
+    )
+
+    assert result.final_mode == "blocked"
+    assert result.final_reason == "claim_support_missing"
