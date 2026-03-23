@@ -1738,7 +1738,7 @@ class TestLawFilterAndRetrieval:
         with TestClient(app) as c:
             resp = c.post(
                 "/v1/chat/completions",
-                json={"messages": [{"role": "user", "content": "TBK m.349 nedir?"}]},
+                json={"messages": [{"role": "user", "content": "TBK m.349 nedir?"}], "include_trace": True},
             )
 
         assert resp.status_code == 200
@@ -1748,6 +1748,9 @@ class TestLawFilterAndRetrieval:
         assert payload["final_reason"] == "law_scope_mismatch"
         assert payload["citations"] == []
         assert payload["answer_contract"]["unsupported_reason"] == "law_scope_mismatch"
+        assert payload["answer_contract"]["final_mode"] == "refusal"
+        assert payload["trace"]["final_mode"] == "refusal"
+        assert payload["trace"]["answer_contract"]["final_mode"] == "refusal"
 
     def test_serialization_whitelist_violation_returns_blocked_refusal(self, mock_orchestrator):
         mock_retriever = MagicMock()
@@ -1801,6 +1804,7 @@ class TestLawFilterAndRetrieval:
         assert payload["final_reason"] == "citation_out_of_whitelist"
         assert payload["citations"] == []
         assert payload["answer_contract"]["unsupported_reason"] == "citation_out_of_whitelist"
+        assert payload["answer_contract"]["final_mode"] == "refusal"
 
     def test_concept_anchor_rules_force_include_exact_articles(self, mock_orchestrator):
         mock_retriever = MagicMock()

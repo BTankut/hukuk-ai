@@ -2146,7 +2146,39 @@ def _build_client_trace(
     include_trace: bool,
     trace_payload: dict[str, Any],
 ) -> dict[str, Any] | None:
-    return trace_payload if include_trace else None
+    if not include_trace:
+        return None
+
+    public_trace = dict(trace_payload)
+    public_trace["final_mode"] = _sanitize_public_final_mode(trace_payload.get("final_mode"))
+
+    answer_contract = trace_payload.get("answer_contract")
+    if isinstance(answer_contract, dict):
+        public_trace["answer_contract"] = _sanitize_public_answer_contract(answer_contract)
+
+    generation_outcome = trace_payload.get("generation_outcome")
+    if isinstance(generation_outcome, dict):
+        public_generation_outcome = dict(generation_outcome)
+        public_generation_outcome["final_mode"] = _sanitize_public_final_mode(
+            generation_outcome.get("final_mode")
+        )
+        public_trace["generation_outcome"] = public_generation_outcome
+
+    return public_trace
+
+
+def _sanitize_public_final_mode(final_mode: str | None) -> str | None:
+    if final_mode == "blocked":
+        return "refusal"
+    return final_mode
+
+
+def _sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> dict[str, Any] | None:
+    if answer_contract is None:
+        return None
+    sanitized = dict(answer_contract)
+    sanitized["final_mode"] = _sanitize_public_final_mode(answer_contract.get("final_mode"))
+    return sanitized
 
 
 def _finalize_chat_response(
@@ -2169,6 +2201,7 @@ def _finalize_chat_response(
     upstream_usage: dict[str, int] | None,
 ) -> Any:
     _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
+    public_answer_contract = _sanitize_public_answer_contract(answer_contract)
 
     store.add_turn(session_id, user_message, answer_text)
     usage, usage_source = _resolve_chat_usage(
@@ -2219,7 +2252,7 @@ def _finalize_chat_response(
                 trace=client_trace,
                 final_mode=final_mode,
                 final_reason=final_reason,
-                answer_contract=answer_contract,
+                answer_contract=public_answer_contract,
             ),
             media_type="text/event-stream",
             headers={
@@ -2248,7 +2281,7 @@ def _finalize_chat_response(
         verification=verification,
         final_mode=final_mode,
         final_reason=final_reason,
-        answer_contract=answer_contract,
+        answer_contract=public_answer_contract,
         trace=client_trace,
     )
 
