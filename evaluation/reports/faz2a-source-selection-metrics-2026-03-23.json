@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-03-23T13:16:57.464243+00:00",
+  "reports": [
+    {
+      "label": "faz1-50",
+      "report_path": "runtime_logs/faz2a_extra_hardening/eval_faz1_50_hardened_20260323.json",
+      "question_count": 50,
+      "retrieved_correct_source_at_k": 0.56,
+      "assembled_correct_source_present": 0.88,
+      "model_selected_correct_source": 0.7,
+      "whitelist_violation_rate": 0.0,
+      "law_scope_mismatch_rate": 0.06,
+      "temporal_mismatch_rate": 0.0
+    },
+    {
+      "label": "v2-95",
+      "report_path": "runtime_logs/faz2a_extra_hardening/eval_v2_95_hardened_t600_20260323.json",
+      "question_count": 95,
+      "retrieved_correct_source_at_k": 0.7263,
+      "assembled_correct_source_present": 0.8737,
+      "model_selected_correct_source": 0.7579,
+      "whitelist_violation_rate": 0.0,
+      "law_scope_mismatch_rate": 0.0737,
+      "temporal_mismatch_rate": 0.0
+    },
+    {
+      "label": "v3-170",
+      "report_path": "runtime_logs/faz2a_extra_hardening/eval_v3_170_hardened_t600_20260323.json",
+      "question_count": 170,
+      "retrieved_correct_source_at_k": 0.6176,
+      "assembled_correct_source_present": 0.9235,
+      "model_selected_correct_source": 0.8412,
+      "whitelist_violation_rate": 0.0,
+      "law_scope_mismatch_rate": 0.0647,
+      "temporal_mismatch_rate": 0.0
+    }
+  ],
+  "overall": {
+    "question_count": 315,
+    "retrieved_correct_source_at_k": 0.6412,
+    "assembled_correct_source_present": 0.9016,
+    "model_selected_correct_source": 0.7937,
+    "whitelist_violation_rate": 0.0,
+    "law_scope_mismatch_rate": 0.0667,
+    "temporal_mismatch_rate": 0.0
+  }
+}
