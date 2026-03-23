@@ -2,14 +2,29 @@
 current_wave: faz2b-cutover-readiness-closure
 status: in_progress
 started_at: 2026-03-23T10:26:53+03:00
-last_activity: 2026-03-23T10:36:22+03:00
+last_activity: 2026-03-23T10:41:54+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "FAZ 2B wave 2 kapandi; siradaki is keepalive/supervision, backup/restore ve cutover steering refresh"
+next_action: "FAZ 2B wave 3 kapandi; siradaki is steering refresh ve cutover-readiness recommendation"
 blockers:
-  - "Release-control must-close kalemleri acik: keepalive/supervision proof, backup/restore, steering refresh"
+  - "Release-control must-close kalemleri acik: steering refresh"
   - "Cutover karari icin FAZ 2B steering paketi henuz olusmadi"
 notes: |
   ## FAZ 2B Durumu
+
+  - wave 3 kapandi:
+    - keepalive / supervision proof
+    - bounded backup / restore proof
+  - wave 3 karar notu:
+    - `coordination/faz2b-wave3-ops-proof-2026-03-23.md`
+  - wave 3 runbook:
+    - `docs/faz2b-release-lane-backup-restore-runbook.md`
+  - bounded proof kosulari:
+    - supervision dry-run beklenen `restart_requested=true` sonucu verdi
+    - backup manifest ve restore summary uretildi:
+      - `/tmp/faz2b_release_backup_drill/dgx1_candidate_release_lane_20260323T074137Z/manifest.json`
+      - `/tmp/faz2b_release_backup_drill/restore/restore_summary.json`
+  - sonraki tek acik teknik is:
+    - steering refresh ve cutover-readiness recommendation
 
   - wave 2 kapandi:
     - PII masking release proof
