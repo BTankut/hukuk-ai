@@ -93,6 +93,12 @@ python3 scripts/faz2c/run_pilot_monitoring_cycle.py \
   --output-dir runtime_logs/faz2c_cycles
 ```
 
+This command now refreshes stable latest surfaces alongside the timestamped bundle:
+- `runtime_logs/faz2c_cycles/latest_cycle_manifest.json`
+- `runtime_logs/faz2c_cycles/latest_rollup.json`
+- `runtime_logs/faz2c_cycles/latest_pilot_status_report.md`
+- `runtime_logs/faz2c_cycles/latest_cycle_index.json`
+
 ## What The Snapshot Checks
 - `GET /v1/health`
 - `GET /v1/metrics` before and after smoke
@@ -145,6 +151,11 @@ bash scripts/faz2c/run_controlled_rollback.sh
   - `runtime_logs/faz2c_cycles/<label>_<timestamp>/cycle_manifest.json`
   - `runtime_logs/faz2c_cycles/<label>_<timestamp>/rollup.json`
   - `runtime_logs/faz2c_cycles/<label>_<timestamp>/pilot_status_report.md`
+- latest cycle aliases:
+  - `runtime_logs/faz2c_cycles/latest_cycle_manifest.json`
+  - `runtime_logs/faz2c_cycles/latest_rollup.json`
+  - `runtime_logs/faz2c_cycles/latest_pilot_status_report.md`
+  - `runtime_logs/faz2c_cycles/latest_cycle_index.json`
 - rollback summary if rollback is executed:
   - `runtime_logs/faz2c_controlled_rollback_summary.json`
 

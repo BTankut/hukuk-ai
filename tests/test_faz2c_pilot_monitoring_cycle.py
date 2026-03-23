@@ -69,12 +69,22 @@ def test_cycle_main_writes_full_bundle(tmp_path: Path, monkeypatch: object) -> N
     manifest = json.loads((cycle_dir / "cycle_manifest.json").read_text(encoding="utf-8"))
     rollup = json.loads((cycle_dir / "rollup.json").read_text(encoding="utf-8"))
     report = (cycle_dir / "pilot_status_report.md").read_text(encoding="utf-8")
+    latest_manifest = json.loads((output_dir / "latest_cycle_manifest.json").read_text(encoding="utf-8"))
+    latest_rollup = json.loads((output_dir / "latest_rollup.json").read_text(encoding="utf-8"))
+    latest_index = json.loads((output_dir / "latest_cycle_index.json").read_text(encoding="utf-8"))
+    latest_report = (output_dir / "latest_pilot_status_report.md").read_text(encoding="utf-8")
     watch_job_dir = watch_root / "narrow_pilot_watch_20260323T091500Z"
 
     assert manifest["final_read"] == "stay_on_promoted_lane"
+    assert manifest["latest_cycle_manifest_path"] == str(output_dir / "latest_cycle_manifest.json")
     assert rollup["job_count"] == 1
+    assert latest_manifest["cycle_dir"] == str(cycle_dir)
+    assert latest_rollup["latest_status"] == "clean"
+    assert latest_index["final_read"] == "stay_on_promoted_lane"
+    assert latest_index["cycle_manifest_path"] == str(cycle_dir / "cycle_manifest.json")
     assert watch_job_dir.exists()
     assert "stay on promoted lane" in report
+    assert latest_report == report
 
 
 def test_cycle_main_returns_1_when_snapshot_turns_red(tmp_path: Path, monkeypatch: object) -> None:
@@ -119,4 +129,6 @@ def test_cycle_main_returns_1_when_snapshot_turns_red(tmp_path: Path, monkeypatc
     assert result == 1
     cycle_dir = output_dir / "pilot_monitoring_cycle_20260323T091700Z"
     manifest = json.loads((cycle_dir / "cycle_manifest.json").read_text(encoding="utf-8"))
+    latest_index = json.loads((output_dir / "latest_cycle_index.json").read_text(encoding="utf-8"))
     assert manifest["final_read"] == "review_or_rollback_candidate"
+    assert latest_index["final_read"] == "review_or_rollback_candidate"

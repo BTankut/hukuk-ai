@@ -16,6 +16,11 @@ def _utc_stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+def _write_text_copy(source: Path, destination: Path) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the full FAZ 2C pilot monitoring cycle.")
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
@@ -119,6 +124,11 @@ def main() -> int:
     status_report_path = cycle_dir / "pilot_status_report.md"
     status_report_path.write_text(status_report, encoding="utf-8")
 
+    latest_cycle_manifest_path = args.output_dir / "latest_cycle_manifest.json"
+    latest_rollup_path = args.output_dir / "latest_rollup.json"
+    latest_status_report_path = args.output_dir / "latest_pilot_status_report.md"
+    latest_index_path = args.output_dir / "latest_cycle_index.json"
+
     cycle_manifest = {
         "label": args.label,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -128,6 +138,10 @@ def main() -> int:
         "watch_manifest_path": str(watch_manifest_path),
         "rollup_path": str(rollup_path),
         "status_report_path": str(status_report_path),
+        "latest_cycle_manifest_path": str(latest_cycle_manifest_path),
+        "latest_rollup_path": str(latest_rollup_path),
+        "latest_status_report_path": str(latest_status_report_path),
+        "latest_index_path": str(latest_index_path),
         "latest_snapshot_rollback_recommended": (
             latest_snapshot.get("rollback_recommended") if latest_snapshot else None
         ),
@@ -142,6 +156,25 @@ def main() -> int:
     }
     cycle_manifest_path = cycle_dir / "cycle_manifest.json"
     write_json(cycle_manifest_path, cycle_manifest)
+    _write_text_copy(cycle_manifest_path, latest_cycle_manifest_path)
+    _write_text_copy(rollup_path, latest_rollup_path)
+    _write_text_copy(status_report_path, latest_status_report_path)
+
+    latest_index = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "cycle_dir": str(cycle_dir),
+        "cycle_manifest_path": str(cycle_manifest_path),
+        "rollup_path": str(rollup_path),
+        "status_report_path": str(status_report_path),
+        "watch_job_dir": str(watch_job_dir),
+        "final_read": cycle_manifest["final_read"],
+        "latest_rollup_status": cycle_manifest["latest_rollup_status"],
+        "latest_snapshot_rollback_recommended": cycle_manifest["latest_snapshot_rollback_recommended"],
+        "latest_cycle_manifest_path": str(latest_cycle_manifest_path),
+        "latest_rollup_path": str(latest_rollup_path),
+        "latest_status_report_path": str(latest_status_report_path),
+    }
+    write_json(latest_index_path, latest_index)
 
     print(str(cycle_manifest_path))
     return 0 if cycle_manifest["final_read"] == "stay_on_promoted_lane" else 1
