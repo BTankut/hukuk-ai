@@ -10,7 +10,7 @@ from guardrails.actions import extract_citations
 from pydantic import BaseModel, Field, ValidationError
 
 FinalMode = Literal["answer", "partial", "refusal", "blocked"]
-RecoveryProfile = Literal["rc_d", "rc_e"]
+RecoveryProfile = Literal["rc_d", "rc_e", "rc_f"]
 UnsupportedReason = Literal[
     "citation_out_of_whitelist",
     "law_scope_mismatch",
@@ -61,6 +61,14 @@ _DEFINITION_PATTERNS = ("nedir", "tanımı nedir", "tanimi nedir", "ne demektir"
 _CONDITION_PATTERNS = ("şartları nelerdir", "sartlari nelerdir", "unsurları nelerdir", "unsurlari nelerdir", "hangi hallerde")
 _PROCEDURE_ACTION_HINTS = ("başvuru", "basvuru", "itiraz", "dava", "fesih", "ihbar", "ödeme", "odeme", "talep", "süre", "sure")
 _COMPLEXITY_MARKERS = ("karşılaştır", "karsilastir", "farkı", "farki", "istisna", "hariç", "haric", "veya", "ya da")
+_LAW_NO_BY_SHORT = {
+    "TBK": "6098",
+    "TMK": "4721",
+    "TCK": "5237",
+    "HMK": "6100",
+    "TTK": "6102",
+    "İİK": "2004",
+}
 
 
 def _tr_lower(text: str) -> str:
@@ -113,6 +121,100 @@ def extract_law_code_from_source_id(source_id: str | None) -> str | None:
         return None
     parts = normalized.split(" ", 1)
     return parts[0] if parts else None
+
+
+def infer_kanun_no(
+    *,
+    law_no: str | None = None,
+    law_short_name: str | None = None,
+    source_id: str | None = None,
+) -> str | None:
+    if law_no:
+        return str(law_no)
+    if law_short_name:
+        return _LAW_NO_BY_SHORT.get(canonicalize_law_code(law_short_name))
+    law_code = extract_law_code_from_source_id(source_id)
+    if law_code:
+        return _LAW_NO_BY_SHORT.get(canonicalize_law_code(law_code))
+    return None
+
+
+def canonical_norm_key(
+    *,
+    source_type: str | None = None,
+    kanun_no: str | None = None,
+    law_short_name: str | None = None,
+    source_id: str | None = None,
+    madde_no: str | None = None,
+    fikra_no: str | None = None,
+    yururluk_baslangic: str | None = None,
+    yururluk_bitis: str | None = None,
+    mulga: Any = None,
+) -> str:
+    canonical_source_id = canonicalize_source_id(source_id)
+    if madde_no in {None, ""} and canonical_source_id:
+        article_match = re.search(r"m\.(\d+[a-z]?)", canonical_source_id, re.IGNORECASE)
+        if article_match:
+            madde_no = article_match.group(1)
+    resolved_source_type = source_type or "norm"
+    resolved_kanun_no = infer_kanun_no(
+        law_no=kanun_no,
+        law_short_name=law_short_name,
+        source_id=canonical_source_id,
+    ) or "__"
+    resolved_madde_no = str(madde_no or "__").lower()
+    resolved_fikra_no = str(fikra_no).lower() if fikra_no not in {None, ""} else "__"
+    resolved_start = str(yururluk_baslangic) if yururluk_baslangic not in {None, ""} else "__"
+    resolved_end = str(yururluk_bitis) if yururluk_bitis not in {None, ""} else "__"
+    mulga_flag = "1" if mulga is True else "0"
+    return "|".join(
+        [
+            str(resolved_source_type),
+            resolved_kanun_no,
+            resolved_madde_no,
+            resolved_fikra_no,
+            resolved_start,
+            resolved_end,
+            mulga_flag,
+        ]
+    )
+
+
+def parse_canonical_norm_key(value: str | None) -> dict[str, str | None]:
+    if not value:
+        return {}
+    parts = str(value).split("|")
+    if len(parts) != 7:
+        return {}
+    source_type, kanun_no, madde_no, fikra_no, start, end, mulga_flag = parts
+    return {
+        "source_type": source_type or None,
+        "kanun_no": None if kanun_no in {"", "__"} else kanun_no,
+        "madde_no": None if madde_no in {"", "__"} else madde_no.lower(),
+        "fikra_no": None if fikra_no in {"", "__"} else fikra_no.lower(),
+        "yururluk_baslangic": None if start in {"", "__"} else start,
+        "yururluk_bitis": None if end in {"", "__"} else end,
+        "mulga_flag": mulga_flag or None,
+    }
+
+
+def canonical_norm_matches_target(
+    canonical_key: str | None,
+    *,
+    law_no: str | None,
+    article_no: str | None,
+    paragraph_no: str | None = None,
+) -> bool:
+    parsed = parse_canonical_norm_key(canonical_key)
+    if not parsed:
+        return False
+    if law_no and parsed.get("kanun_no") != str(law_no):
+        return False
+    if article_no and parsed.get("madde_no") != str(article_no).lower():
+        return False
+    if paragraph_no in {None, ""}:
+        return True
+    return parsed.get("fikra_no") == str(paragraph_no).lower()
 
 
 def dedupe_strings(values: list[str]) -> list[str]:
@@ -302,6 +404,7 @@ class CitationProjectionOutcome:
     dropped_claim_units: list[dict[str, Any]]
     supported_claim_count_by_source: dict[str, int]
     retrieval_rank_by_source: dict[str, int]
+    canonical_details: dict[str, Any] | None = None
 
 
 def _normalize_verifier_status(verification: dict[str, Any] | None, *, blocked: bool) -> VerifierStatus:
@@ -862,6 +965,406 @@ def _pick_claim_unit_anchor_source(
     )[0]
 
 
+def _canonical_norm_key_for_evidence(item: dict[str, Any]) -> str:
+    return canonical_norm_key(
+        source_type=item.get("source_type"),
+        kanun_no=item.get("law_no") or item.get("kanun_no"),
+        law_short_name=item.get("law_short_name") or item.get("kanun_kisa_adi"),
+        source_id=item.get("source_id") or item.get("citation"),
+        madde_no=item.get("madde_no"),
+        fikra_no=item.get("fikra_no"),
+        yururluk_baslangic=item.get("yururluk_baslangic"),
+        yururluk_bitis=item.get("yururluk_bitis"),
+        mulga=item.get("mulga"),
+    )
+
+
+def _canonical_norm_scope_specificity(canonical_key: str) -> int:
+    parsed = parse_canonical_norm_key(canonical_key)
+    return 1 if parsed.get("fikra_no") else 0
+
+
+def _best_source_rank(item: dict[str, Any], fallback_rank: int) -> int:
+    for field_name in ("source_rank", "rank"):
+        value = item.get(field_name)
+        if value not in {None, ""}:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                continue
+    return fallback_rank
+
+
+def _resolve_primary_parser_target(
+    explicit_article_refs: list[tuple[str, str]],
+) -> tuple[str | None, str | None, str | None]:
+    unique_refs = _dedupe_article_refs(explicit_article_refs)
+    if len(unique_refs) != 1:
+        return None, None, None
+    law_short_name, article_no = unique_refs[0]
+    return infer_kanun_no(law_short_name=law_short_name), article_no, None
+
+
+def _build_canonical_registry_v1(
+    *,
+    assembled_evidence: list[dict[str, Any]],
+    allowed_source_whitelist: list[str],
+    law_scope_signal: dict[str, Any],
+    target_date: date,
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    whitelist = {
+        canonicalize_source_id(source_id)
+        for source_id in allowed_source_whitelist
+        if canonicalize_source_id(source_id)
+    }
+    registry_candidates: dict[str, list[dict[str, Any]]] = {}
+    candidates_by_source_id: dict[str, list[dict[str, Any]]] = {}
+    for index, evidence in enumerate(assembled_evidence):
+        source_id = canonicalize_source_id(evidence.get("source_id") or evidence.get("citation"))
+        if not source_id or source_id not in whitelist:
+            continue
+        if not _passes_temporal_surface(evidence=evidence, target_date=target_date):
+            continue
+        if not _passes_law_scope_surface(source_id=source_id, law_scope_signal=law_scope_signal):
+            continue
+        canonical_key = _canonical_norm_key_for_evidence(evidence)
+        candidate = {
+            "canonical_norm_key": canonical_key,
+            "canonical_source_id": source_id,
+            "source_rank": _best_source_rank(evidence, index),
+            "source_id": source_id,
+            "source_excerpt": _normalize_excerpt_text(str(evidence.get("excerpt") or "")),
+            "evidence": evidence,
+        }
+        registry_candidates.setdefault(canonical_key, []).append(candidate)
+        candidates_by_source_id.setdefault(source_id, []).append(candidate)
+
+    registry: dict[str, dict[str, Any]] = {}
+    for canonical_key, candidates in registry_candidates.items():
+        chosen = sorted(
+            candidates,
+            key=lambda candidate: (
+                candidate["source_rank"],
+                candidate["source_id"],
+            ),
+        )[0]
+        registry[canonical_key] = {
+            "canonical_norm_key": canonical_key,
+            "canonical_source_id": chosen["canonical_source_id"],
+            "source_rank": chosen["source_rank"],
+            "source_excerpt": chosen["source_excerpt"],
+            "evidence": chosen["evidence"],
+            "scope_specificity": _canonical_norm_scope_specificity(canonical_key),
+        }
+    return registry, candidates_by_source_id
+
+
+def _rank_canonical_norm_key(
+    *,
+    canonical_key: str,
+    registry: dict[str, dict[str, Any]],
+    supported_claim_count_by_norm: dict[str, int],
+) -> tuple[int, int, int, str]:
+    registry_entry = registry[canonical_key]
+    return (
+        -supported_claim_count_by_norm.get(canonical_key, 0),
+        -int(registry_entry["scope_specificity"]),
+        int(registry_entry["source_rank"]),
+        str(registry_entry["canonical_source_id"]),
+    )
+
+
+def _select_primary_canonical_norm_v2(
+    *,
+    supported_claim_count_by_norm: dict[str, int],
+    registry: dict[str, dict[str, Any]],
+    explicit_article_refs: list[tuple[str, str]],
+) -> str | None:
+    if not supported_claim_count_by_norm:
+        return None
+    candidate_keys = list(supported_claim_count_by_norm.keys())
+    target_law_no, target_article_no, target_paragraph_no = _resolve_primary_parser_target(explicit_article_refs)
+    if target_law_no and target_article_no:
+        targeted_keys = [
+            canonical_key
+            for canonical_key in candidate_keys
+            if canonical_norm_matches_target(
+                canonical_key,
+                law_no=target_law_no,
+                article_no=target_article_no,
+                paragraph_no=target_paragraph_no,
+            )
+        ]
+        if targeted_keys:
+            candidate_keys = targeted_keys
+    return sorted(
+        candidate_keys,
+        key=lambda canonical_key: _rank_canonical_norm_key(
+            canonical_key=canonical_key,
+            registry=registry,
+            supported_claim_count_by_norm=supported_claim_count_by_norm,
+        ),
+    )[0]
+
+
+def _select_claim_anchor_canonical_norm_v2(
+    *,
+    supported_canonical_norm_keys: list[str],
+    primary_canonical_norm_key: str | None,
+    registry: dict[str, dict[str, Any]],
+    supported_claim_count_by_norm: dict[str, int],
+) -> str | None:
+    unique_keys = dedupe_strings(supported_canonical_norm_keys)
+    if primary_canonical_norm_key and primary_canonical_norm_key in unique_keys:
+        return primary_canonical_norm_key
+    if not unique_keys:
+        return None
+    return sorted(
+        unique_keys,
+        key=lambda canonical_key: _rank_canonical_norm_key(
+            canonical_key=canonical_key,
+            registry=registry,
+            supported_claim_count_by_norm=supported_claim_count_by_norm,
+        ),
+    )[0]
+
+
+def _build_citation_closure_controller_v2(
+    *,
+    primary_canonical_norm_key: str,
+    kept_claim_units: list[dict[str, Any]],
+    registry: dict[str, dict[str, Any]],
+    supported_claim_count_by_norm: dict[str, int],
+) -> list[str]:
+    coverage_by_norm: dict[str, set[int]] = {}
+    for index, unit in enumerate(kept_claim_units):
+        for canonical_key in unit.get("supported_canonical_norm_keys") or []:
+            coverage_by_norm.setdefault(canonical_key, set()).add(index)
+
+    emitted_keys: list[str] = [primary_canonical_norm_key]
+    covered_units = set(coverage_by_norm.get(primary_canonical_norm_key) or set())
+    all_units = set(range(len(kept_claim_units)))
+
+    while covered_units != all_units:
+        remaining_keys = [
+            canonical_key
+            for canonical_key in coverage_by_norm
+            if canonical_key not in emitted_keys
+            and (coverage_by_norm.get(canonical_key) or set()) - covered_units
+        ]
+        if not remaining_keys:
+            break
+        next_key = sorted(
+            remaining_keys,
+            key=lambda canonical_key: (
+                -len((coverage_by_norm.get(canonical_key) or set()) - covered_units),
+                *(
+                    _rank_canonical_norm_key(
+                        canonical_key=canonical_key,
+                        registry=registry,
+                        supported_claim_count_by_norm=supported_claim_count_by_norm,
+                    )
+                ),
+            ),
+        )[0]
+        emitted_keys.append(next_key)
+        covered_units.update(coverage_by_norm.get(next_key) or set())
+
+    return emitted_keys
+
+
+def apply_claim_to_norm_projection_v2(
+    *,
+    contract: StructuredAnswerContract,
+    answer_text: str,
+    assembled_evidence: list[dict[str, Any]],
+    allowed_source_whitelist: list[str],
+    law_scope_signal: dict[str, Any],
+    explicit_article_refs: list[tuple[str, str]],
+    target_date: date,
+) -> CitationProjectionOutcome:
+    registry, candidates_by_source_id = _build_canonical_registry_v1(
+        assembled_evidence=assembled_evidence,
+        allowed_source_whitelist=allowed_source_whitelist,
+        law_scope_signal=law_scope_signal,
+        target_date=target_date,
+    )
+    supported_source_ids: list[str] = []
+    supported_canonical_norm_keys: list[str] = []
+    supported_claim_count_by_norm: dict[str, int] = {}
+    kept_claim_units: list[dict[str, Any]] = []
+    dropped_claim_units: list[dict[str, Any]] = []
+    retrieval_rank_by_source = _build_retrieval_rank_by_source(assembled_evidence)
+
+    projection_text = answer_text or contract.answer_text
+    for unit_text in _split_claim_units(projection_text):
+        inline_citations = extract_model_cited_source_ids(
+            citations=extract_citations(unit_text),
+            assembled_evidence=assembled_evidence,
+        )
+        supported_for_unit: list[str] = []
+        supported_keys_for_unit: list[str] = []
+        for source_id in inline_citations:
+            for candidate in candidates_by_source_id.get(source_id) or []:
+                canonical_key = candidate["canonical_norm_key"]
+                canonical_source_id = candidate["canonical_source_id"]
+                if canonical_key not in supported_keys_for_unit:
+                    supported_keys_for_unit.append(canonical_key)
+                if canonical_source_id not in supported_for_unit:
+                    supported_for_unit.append(canonical_source_id)
+        claim_text = _strip_inline_citations(unit_text)
+        rendered_text = normalize_whitespace(unit_text)
+        if not supported_keys_for_unit:
+            dropped_claim_units.append(
+                {
+                    "claim_text": claim_text,
+                    "rendered_text": rendered_text,
+                    "supported_source_ids": [],
+                    "supported_canonical_norm_keys": [],
+                }
+            )
+            continue
+        kept_claim_units.append(
+            {
+                "claim_text": claim_text,
+                "rendered_text": rendered_text,
+                "supported_source_ids": supported_for_unit,
+                "supported_canonical_norm_keys": supported_keys_for_unit,
+            }
+        )
+        for canonical_source_id in supported_for_unit:
+            if canonical_source_id not in supported_source_ids:
+                supported_source_ids.append(canonical_source_id)
+        for canonical_key in supported_keys_for_unit:
+            if canonical_key not in supported_canonical_norm_keys:
+                supported_canonical_norm_keys.append(canonical_key)
+            supported_claim_count_by_norm[canonical_key] = supported_claim_count_by_norm.get(canonical_key, 0) + 1
+
+    primary_canonical_norm_key = _select_primary_canonical_norm_v2(
+        supported_claim_count_by_norm=supported_claim_count_by_norm,
+        registry=registry,
+        explicit_article_refs=explicit_article_refs,
+    )
+
+    if not kept_claim_units or not primary_canonical_norm_key:
+        contract.claim_units = []
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        return CitationProjectionOutcome(
+            active=True,
+            kept_count=0 if not kept_claim_units else len(kept_claim_units),
+            dropped_count=len(dropped_claim_units),
+            final_reason="insufficient_supported_evidence",
+            primary_source_id=None,
+            emitted_source_ids=[],
+            supported_source_ids=supported_source_ids,
+            kept_claim_units=kept_claim_units,
+            dropped_claim_units=dropped_claim_units,
+            supported_claim_count_by_source={},
+            retrieval_rank_by_source=retrieval_rank_by_source,
+            canonical_details={
+                "primary_canonical_norm_key": None,
+                "emitted_canonical_norm_keys": [],
+                "supported_canonical_norm_keys": supported_canonical_norm_keys,
+                "canonical_registry": registry,
+                "supported_claim_count_by_norm": supported_claim_count_by_norm,
+            },
+        )
+
+    emitted_canonical_norm_keys = _build_citation_closure_controller_v2(
+        primary_canonical_norm_key=primary_canonical_norm_key,
+        kept_claim_units=kept_claim_units,
+        registry=registry,
+        supported_claim_count_by_norm=supported_claim_count_by_norm,
+    )
+    emitted_source_ids = dedupe_strings(
+        [
+            registry[canonical_key]["canonical_source_id"]
+            for canonical_key in emitted_canonical_norm_keys
+            if canonical_key in registry
+        ]
+    )
+
+    rebuilt_claim_units: list[ClaimUnit] = []
+    retained_units: list[str] = []
+    for unit in kept_claim_units:
+        anchor_canonical_key = _select_claim_anchor_canonical_norm_v2(
+            supported_canonical_norm_keys=unit["supported_canonical_norm_keys"],
+            primary_canonical_norm_key=primary_canonical_norm_key,
+            registry=registry,
+            supported_claim_count_by_norm=supported_claim_count_by_norm,
+        )
+        if not anchor_canonical_key or anchor_canonical_key not in registry:
+            continue
+        registry_entry = registry[anchor_canonical_key]
+        excerpt = registry_entry.get("source_excerpt") or ""
+        if not excerpt:
+            continue
+        rebuilt_claim_units.append(
+            ClaimUnit(
+                claim_text=unit["claim_text"],
+                source_id=registry_entry["canonical_source_id"],
+                source_excerpt=excerpt,
+            )
+        )
+        retained_units.append(unit["rendered_text"])
+
+    if not rebuilt_claim_units:
+        contract.claim_units = []
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        return CitationProjectionOutcome(
+            active=True,
+            kept_count=0,
+            dropped_count=len(dropped_claim_units),
+            final_reason="insufficient_supported_evidence",
+            primary_source_id=None,
+            emitted_source_ids=[],
+            supported_source_ids=supported_source_ids,
+            kept_claim_units=kept_claim_units,
+            dropped_claim_units=dropped_claim_units,
+            supported_claim_count_by_source={},
+            retrieval_rank_by_source=retrieval_rank_by_source,
+            canonical_details={
+                "primary_canonical_norm_key": None,
+                "emitted_canonical_norm_keys": [],
+                "supported_canonical_norm_keys": supported_canonical_norm_keys,
+                "canonical_registry": registry,
+                "supported_claim_count_by_norm": supported_claim_count_by_norm,
+            },
+        )
+
+    contract.primary_source_id = registry[primary_canonical_norm_key]["canonical_source_id"]
+    contract.secondary_source_ids = [
+        source_id for source_id in emitted_source_ids if source_id != contract.primary_source_id
+    ]
+    contract.claim_units = rebuilt_claim_units
+    contract.answer_text = " ".join(retained_units)
+    contract.unsupported_reason = None
+    return CitationProjectionOutcome(
+        active=True,
+        kept_count=len(rebuilt_claim_units),
+        dropped_count=len(dropped_claim_units),
+        final_reason=None,
+        primary_source_id=contract.primary_source_id,
+        emitted_source_ids=emitted_source_ids,
+        supported_source_ids=supported_source_ids,
+        kept_claim_units=kept_claim_units,
+        dropped_claim_units=dropped_claim_units,
+        supported_claim_count_by_source={},
+        retrieval_rank_by_source=retrieval_rank_by_source,
+        canonical_details={
+            "primary_canonical_norm_key": primary_canonical_norm_key,
+            "emitted_canonical_norm_keys": emitted_canonical_norm_keys,
+            "supported_canonical_norm_keys": supported_canonical_norm_keys,
+            "canonical_registry": registry,
+            "supported_claim_count_by_norm": supported_claim_count_by_norm,
+        },
+    )
+
+
 def apply_kept_claim_citation_projection_v1(
     *,
     contract: StructuredAnswerContract,
@@ -1225,6 +1728,43 @@ def apply_final_mode_boundary_v4(
     return None
 
 
+def apply_canonical_support_mode_recovery_v1(
+    *,
+    contract: StructuredAnswerContract,
+    projection_outcome: CitationProjectionOutcome,
+) -> UnsupportedReason | None:
+    if contract.final_mode == "blocked":
+        return contract.unsupported_reason
+
+    if projection_outcome.kept_count == 0:
+        contract.final_mode = "refusal"
+        contract.unsupported_reason = "insufficient_supported_evidence"
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        contract.claim_units = []
+        return contract.unsupported_reason
+
+    primary_canonical_norm_key = ((projection_outcome.canonical_details or {}).get("primary_canonical_norm_key"))
+    if not primary_canonical_norm_key or not projection_outcome.primary_source_id:
+        contract.final_mode = "refusal"
+        contract.unsupported_reason = "insufficient_supported_evidence"
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
+        contract.claim_units = []
+        return contract.unsupported_reason
+
+    if projection_outcome.dropped_count == 0:
+        contract.final_mode = "answer"
+        contract.unsupported_reason = None
+        return None
+
+    contract.final_mode = "partial"
+    contract.unsupported_reason = None
+    return None
+
+
 def harden_answer(
     *,
     answer_text: str,
@@ -1303,20 +1843,35 @@ def harden_answer(
             final_reason=final_reason,
         )
 
-    if final_reason is None and recovery_profile == "rc_e":
-        projection_outcome = apply_kept_claim_citation_projection_v1(
-            contract=contract,
-            answer_text=answer_text,
-            assembled_evidence=assembled_evidence,
-            allowed_source_whitelist=allowed_source_whitelist,
-            law_scope_signal=law_scope_signal,
-            explicit_article_refs=explicit_article_refs,
-            target_date=target_date,
-        )
-        final_reason = apply_final_mode_boundary_v4(
-            contract=contract,
-            projection_outcome=projection_outcome,
-        )
+    if final_reason is None and recovery_profile in {"rc_e", "rc_f"}:
+        if recovery_profile == "rc_f":
+            projection_outcome = apply_claim_to_norm_projection_v2(
+                contract=contract,
+                answer_text=answer_text,
+                assembled_evidence=assembled_evidence,
+                allowed_source_whitelist=allowed_source_whitelist,
+                law_scope_signal=law_scope_signal,
+                explicit_article_refs=explicit_article_refs,
+                target_date=target_date,
+            )
+            final_reason = apply_canonical_support_mode_recovery_v1(
+                contract=contract,
+                projection_outcome=projection_outcome,
+            )
+        else:
+            projection_outcome = apply_kept_claim_citation_projection_v1(
+                contract=contract,
+                answer_text=answer_text,
+                assembled_evidence=assembled_evidence,
+                allowed_source_whitelist=allowed_source_whitelist,
+                law_scope_signal=law_scope_signal,
+                explicit_article_refs=explicit_article_refs,
+                target_date=target_date,
+            )
+            final_reason = apply_final_mode_boundary_v4(
+                contract=contract,
+                projection_outcome=projection_outcome,
+            )
     else:
         projection_outcome = CitationProjectionOutcome(
             active=False,
@@ -1334,6 +1889,7 @@ def harden_answer(
             dropped_claim_units=[],
             supported_claim_count_by_source={},
             retrieval_rank_by_source={},
+            canonical_details=None,
         )
         final_reason = apply_final_mode_mapping_v3(
             contract=contract,
@@ -1380,6 +1936,7 @@ def harden_answer(
                 "dropped_claim_units": projection_outcome.dropped_claim_units,
                 "supported_claim_count_by_source": projection_outcome.supported_claim_count_by_source,
                 "retrieval_rank_by_source": projection_outcome.retrieval_rank_by_source,
+                "canonical_details": projection_outcome.canonical_details,
             },
         },
     )
