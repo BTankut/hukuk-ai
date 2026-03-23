@@ -1,13 +1,38 @@
 # Wave State
-current_wave: faz2c-archived-monitoring-window
+current_wave: faz3-quality-recovery-gate
 status: completed
-started_at: 2026-03-23T12:36:26+03:00
-last_activity: 2026-03-23T12:42:31+03:00
-last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "Promoted lane dar kapsam pilotta aktif; archived monitoring window green, siradaki resmi hareket yeni faz/rapor veya daha uzun pilot window evidence paketidir"
+started_at: 2026-03-23T20:04:00+03:00
+last_activity: 2026-03-23T21:13:00+03:00
+last_eval: evaluation/reports/faz3-rc-d-family-eval-2026-03-23.json
+next_action: "FAZ 3 resmi olarak NO-GO ile kapandi; yeni resmi planner talimati gelmeden yeni cutover veya release-control isi acilmayacak"
 blockers:
-  - "Broad production / productization ayri faz olarak ele alinmali"
+  - "FAZ 3 full-family kalite kapisi kapanmadi"
+  - "Citation rate tum ailelerde gate altinda kaldi"
 notes: |
+  ## FAZ 3 Closure
+
+  - resmi FAZ 3 paketi kapandi:
+    - `docs/faz3-quality-recovery-gate-2026-03-23.md`
+    - `coordination/faz3-steering-decision-table-2026-03-23.md`
+    - `docs/FAZ3-GUARDRAIL-INTEGRATION-QUALITY-RECOVERY-SONUC-RAPORU-2026-03-23.md`
+  - blocker rerun sonucu:
+    - `false_refusal_after_guardrail = 4`
+    - `true_guardrail_block = 12`
+    - acceptance leak sayilari `0`
+    - `WP-6 = PASS`
+  - full-family sonuc:
+    - `faz1-50`: `82.0 / 74.7 / 6.0 / 94.0`
+    - `v2-95`: `87.4 / 80.7 / 8.4 / 97.9`
+    - `v3-170`: `92.9 / 83.2 / 4.7 / 98.8`
+    - acceptance leak cizgisi tum ailelerde korundu
+    - `WP-7 = FAIL`
+  - resmi karar:
+    - `NO-GO - Guardrail Quality Recovery`
+  - metod:
+    - `RC-A` answer/citation yuzeyi
+    - `RC-C` trace/context/whitelist/evidence yuzeyi
+    - `RC-D` hardening replay
+
   ## FAZ 2C Wave 10
 
   - archived monitoring window kapandi:
