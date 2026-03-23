@@ -278,6 +278,14 @@ class HardeningResult:
     target_date: str
 
 
+@dataclass(slots=True)
+class ClaimBindingOutcome:
+    active: bool
+    kept_count: int
+    dropped_count: int
+    final_reason: UnsupportedReason | None
+
+
 def _normalize_verifier_status(verification: dict[str, Any] | None, *, blocked: bool) -> VerifierStatus:
     if verification and verification.get("verdict") in {"pass", "warn", "fail"}:
         return verification["verdict"]
@@ -609,19 +617,42 @@ def apply_citation_whitelist_gate(
     return contract.unsupported_reason
 
 
-def _split_claim_sentences(answer_text: str) -> list[str]:
-    plain = _normalize_excerpt_text(answer_text)
+def _split_claim_units(answer_text: str) -> list[str]:
+    raw_text = str(answer_text or "")
+    if not raw_text.strip():
+        return []
+
+    lines = [line.rstrip() for line in raw_text.splitlines()]
+    list_items: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if re.match(r"^[-*]\s+", stripped):
+            item = re.sub(r"^[-*]\s+", "", stripped, count=1)
+            normalized = normalize_whitespace(item)
+            if normalized and not normalized.endswith(":"):
+                list_items.append(normalized)
+
+    if list_items:
+        return list_items
+
+    plain = _normalize_excerpt_text(raw_text)
     if not plain:
         return []
 
     parts = [
-        segment.strip()
-        for segment in _SENTENCE_BOUNDARY_RE.split(plain)
-        if segment.strip()
+        normalize_whitespace(segment)
+        for segment in re.split(r"(?<=[.;?!])\s+", plain)
+        if normalize_whitespace(segment)
     ]
-    if not parts:
-        return [plain]
-    return parts[:3]
+    merged_parts: list[str] = []
+    for part in parts:
+        if part.startswith("[Kaynak:") and merged_parts:
+            merged_parts[-1] = normalize_whitespace(f"{merged_parts[-1]} {part}")
+            continue
+        merged_parts.append(part)
+    return [part for part in merged_parts if not part.endswith(":")]
 
 
 def _strip_inline_citations(text: str) -> str:
@@ -648,16 +679,79 @@ def _is_claim_binding_active(
     if question_type == "single_article":
         return len(unique_laws) == 1 and len(unique_articles) == 1 and not has_complexity_marker
     if question_type == "definition":
-        return any(pattern in normalized for pattern in _DEFINITION_PATTERNS)
+        return (
+            len(unique_laws) == 1
+            and len(unique_articles) == 1
+            and any(pattern in normalized for pattern in _DEFINITION_PATTERNS)
+        )
     if question_type == "elements":
-        return any(pattern in normalized for pattern in _CONDITION_PATTERNS)
+        return (
+            len(unique_laws) == 1
+            and len(unique_articles) == 1
+            and any(pattern in normalized for pattern in _CONDITION_PATTERNS)
+        )
     if question_type == "procedure":
         procedure_hits = sum(1 for hint in _PROCEDURE_ACTION_HINTS if hint in normalized)
         return len(unique_laws) == 1 and len(unique_articles) == 1 and procedure_hits == 1
     return False
 
 
-def apply_narrow_claim_binding(
+def _passes_temporal_surface(
+    *,
+    evidence: dict[str, Any],
+    target_date: date,
+) -> bool:
+    start = _parse_optional_date(evidence.get("yururluk_baslangic"))
+    end = _parse_optional_date(evidence.get("yururluk_bitis"))
+    mulga = evidence.get("mulga")
+
+    if mulga is True:
+        return False
+    if start and target_date < start:
+        return False
+    if end and target_date > end:
+        return False
+    return True
+
+
+def _passes_law_scope_surface(
+    *,
+    source_id: str,
+    law_scope_signal: dict[str, Any],
+) -> bool:
+    scope_class = law_scope_signal.get("scope_class")
+    expected = law_scope_signal.get("expected_law_scope") or []
+    if scope_class != "single_law_high_conf" or not expected:
+        return True
+    return extract_law_code_from_source_id(source_id) == expected[0]
+
+
+def _build_allowed_claim_source_ids(
+    *,
+    assembled_evidence: list[dict[str, Any]],
+    allowed_source_whitelist: list[str],
+    law_scope_signal: dict[str, Any],
+    target_date: date,
+) -> set[str]:
+    whitelist = {
+        canonicalize_source_id(source_id)
+        for source_id in allowed_source_whitelist
+        if canonicalize_source_id(source_id)
+    }
+    allowed: set[str] = set()
+    for evidence in assembled_evidence:
+        source_id = canonicalize_source_id(evidence.get("source_id") or evidence.get("citation"))
+        if not source_id or source_id not in whitelist:
+            continue
+        if not _passes_temporal_surface(evidence=evidence, target_date=target_date):
+            continue
+        if not _passes_law_scope_surface(source_id=source_id, law_scope_signal=law_scope_signal):
+            continue
+        allowed.add(source_id)
+    return allowed
+
+
+def apply_selective_claim_binding_v3(
     *,
     contract: StructuredAnswerContract,
     answer_text: str,
@@ -667,10 +761,17 @@ def apply_narrow_claim_binding(
     mentioned_laws: list[str],
     assembled_evidence: list[dict[str, Any]],
     allowed_source_whitelist: list[str],
-) -> UnsupportedReason | None:
+    law_scope_signal: dict[str, Any],
+    target_date: date,
+) -> ClaimBindingOutcome:
     if not is_narrow_question_type(question_type):
         contract.claim_units = []
-        return contract.unsupported_reason
+        return ClaimBindingOutcome(
+            active=False,
+            kept_count=0,
+            dropped_count=0,
+            final_reason=contract.unsupported_reason,
+        )
 
     if not _is_claim_binding_active(
         question_raw=question_raw,
@@ -679,68 +780,80 @@ def apply_narrow_claim_binding(
         mentioned_laws=mentioned_laws,
     ):
         contract.claim_units = []
-        return contract.unsupported_reason
+        return ClaimBindingOutcome(
+            active=False,
+            kept_count=0,
+            dropped_count=0,
+            final_reason=contract.unsupported_reason,
+        )
 
     evidence_lookup = _build_evidence_lookup(assembled_evidence)
-    whitelist = {
-        canonicalize_source_id(source_id)
-        for source_id in allowed_source_whitelist
-        if canonicalize_source_id(source_id)
-    }
-    fallback_source_ids = [
-        source_id
-        for source_id in [contract.primary_source_id, *contract.secondary_source_ids]
-        if source_id
-    ]
+    allowed_claim_source_ids = _build_allowed_claim_source_ids(
+        assembled_evidence=assembled_evidence,
+        allowed_source_whitelist=allowed_source_whitelist,
+        law_scope_signal=law_scope_signal,
+        target_date=target_date,
+    )
 
     claim_units: list[ClaimUnit] = []
-    retained_sentences: list[str] = []
-    for sentence in _split_claim_sentences(answer_text):
-        inline_citations = extract_citations(sentence)
-        if not inline_citations and len(fallback_source_ids) == 1:
-            source_ids = fallback_source_ids
-        else:
-            source_ids = extract_model_cited_source_ids(
-                citations=inline_citations,
-                assembled_evidence=assembled_evidence,
-            )
-
-        if not source_ids:
+    retained_units: list[str] = []
+    kept_citation_order: list[str] = []
+    dropped_count = 0
+    for unit_text in _split_claim_units(answer_text):
+        inline_citations = extract_model_cited_source_ids(
+            citations=extract_citations(unit_text),
+            assembled_evidence=assembled_evidence,
+        )
+        supported_source_ids = [
+            source_id for source_id in inline_citations if source_id in allowed_claim_source_ids
+        ]
+        if not supported_source_ids:
+            dropped_count += 1
             continue
 
-        source_id = canonicalize_source_id(source_ids[0])
-        if source_id is None or source_id not in whitelist:
-            continue
-
+        source_id = supported_source_ids[0]
         evidence = evidence_lookup.get(source_id)
         excerpt = _normalize_excerpt_text(str((evidence or {}).get("excerpt") or ""))
         if not excerpt:
+            dropped_count += 1
             continue
 
         claim_units.append(
             ClaimUnit(
-                claim_text=_strip_inline_citations(sentence),
+                claim_text=_strip_inline_citations(unit_text),
                 source_id=source_id,
                 source_excerpt=excerpt,
             )
         )
-        retained_sentences.append(normalize_whitespace(sentence))
+        retained_units.append(normalize_whitespace(unit_text))
+        for supported_source_id in supported_source_ids:
+            if supported_source_id not in kept_citation_order:
+                kept_citation_order.append(supported_source_id)
 
     if not claim_units:
         contract.claim_units = []
-        contract.final_mode = "refusal"
+        contract.answer_text = ""
+        contract.primary_source_id = None
+        contract.secondary_source_ids = []
         contract.unsupported_reason = "claim_support_missing"
-        return "claim_support_missing"
+        return ClaimBindingOutcome(
+            active=True,
+            kept_count=0,
+            dropped_count=dropped_count,
+            final_reason="claim_support_missing",
+        )
 
-    supported_source_ids = dedupe_strings([unit.source_id for unit in claim_units])
-    contract.primary_source_id = supported_source_ids[0]
-    contract.secondary_source_ids = supported_source_ids[1:]
+    contract.primary_source_id = kept_citation_order[0]
+    contract.secondary_source_ids = kept_citation_order[1:]
     contract.claim_units = claim_units
-    contract.answer_text = " ".join(retained_sentences)
-    if len(claim_units) < len(_split_claim_sentences(answer_text)):
-        contract.final_mode = "partial"
-        contract.unsupported_reason = None
-    return contract.unsupported_reason
+    contract.answer_text = " ".join(retained_units)
+    contract.unsupported_reason = None
+    return ClaimBindingOutcome(
+        active=True,
+        kept_count=len(claim_units),
+        dropped_count=dropped_count,
+        final_reason=None,
+    )
 
 
 def build_external_refusal_text(reason: UnsupportedReason | None) -> str:
@@ -775,6 +888,32 @@ def _map_external_mode(contract: StructuredAnswerContract) -> tuple[FinalMode, b
     if contract.final_mode == "blocked":
         return "refusal", True
     return contract.final_mode, internal_blocked
+
+
+def apply_final_mode_mapping_v3(
+    *,
+    contract: StructuredAnswerContract,
+    claim_binding_outcome: ClaimBindingOutcome,
+) -> UnsupportedReason | None:
+    if contract.final_mode == "blocked":
+        return contract.unsupported_reason
+
+    if not claim_binding_outcome.active:
+        return contract.unsupported_reason
+
+    if claim_binding_outcome.kept_count == 0:
+        contract.final_mode = "refusal"
+        contract.unsupported_reason = "claim_support_missing"
+        return contract.unsupported_reason
+
+    if claim_binding_outcome.dropped_count == 0:
+        contract.final_mode = "answer"
+        contract.unsupported_reason = None
+        return None
+
+    contract.final_mode = "partial"
+    contract.unsupported_reason = None
+    return None
 
 
 def harden_answer(
@@ -833,7 +972,7 @@ def harden_answer(
             law_scope_signal=law_scope_signal,
         )
     if final_reason is None:
-        final_reason = apply_narrow_claim_binding(
+        claim_binding_outcome = apply_selective_claim_binding_v3(
             contract=contract,
             answer_text=answer_text,
             question_raw=question_raw,
@@ -842,7 +981,22 @@ def harden_answer(
             mentioned_laws=mentioned_laws,
             assembled_evidence=assembled_evidence,
             allowed_source_whitelist=allowed_source_whitelist,
+            law_scope_signal=law_scope_signal,
+            target_date=target_date,
         )
+        final_reason = claim_binding_outcome.final_reason
+    else:
+        claim_binding_outcome = ClaimBindingOutcome(
+            active=False,
+            kept_count=0,
+            dropped_count=0,
+            final_reason=final_reason,
+        )
+
+    final_reason = apply_final_mode_mapping_v3(
+        contract=contract,
+        claim_binding_outcome=claim_binding_outcome,
+    )
 
     external_mode, internal_blocked = _map_external_mode(contract)
     external_answer_text = contract.answer_text or answer_text
@@ -850,7 +1004,7 @@ def harden_answer(
         [source_id for source_id in [contract.primary_source_id, *contract.secondary_source_ids] if source_id]
     )
     if external_mode == "refusal":
-        external_answer_text = build_external_refusal_text(final_reason)
+        external_answer_text = ""
         external_citations = []
 
     return HardeningResult(

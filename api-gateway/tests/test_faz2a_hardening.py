@@ -50,6 +50,7 @@ def test_harden_answer_keeps_supported_answer_in_answer_mode():
     assert result.citations == ["TBK m.49"]
     assert result.answer_contract["primary_source_id"] == "TBK m.49"
     assert result.answer_contract["claim_units"][0]["source_id"] == "TBK m.49"
+    assert result.answer_text == "Haksız fiil sorumluluğu vardır. [Kaynak: TBK m.49]"
 
 
 def test_harden_answer_blocks_law_scope_mismatch():
@@ -72,6 +73,7 @@ def test_harden_answer_blocks_law_scope_mismatch():
     assert result.final_mode == "refusal"
     assert result.final_reason == "law_scope_mismatch"
     assert result.citations == []
+    assert result.answer_text == ""
     assert result.internal_blocked is False
 
 
@@ -95,10 +97,11 @@ def test_harden_answer_blocks_citation_out_of_whitelist():
     assert result.final_mode == "refusal"
     assert result.final_reason == "citation_out_of_whitelist"
     assert result.answer_contract["unsupported_reason"] == "citation_out_of_whitelist"
+    assert result.answer_text == ""
     assert result.internal_blocked is True
 
 
-def test_harden_answer_reuses_single_supported_source_for_narrow_claim():
+def test_harden_answer_requires_inline_citation_for_narrow_claim():
     evidence = _evidence("TBK m.49")
 
     result = harden_answer(
@@ -115,9 +118,10 @@ def test_harden_answer_reuses_single_supported_source_for_narrow_claim():
         today=date(2026, 3, 23),
     )
 
-    assert result.final_mode == "answer"
-    assert result.final_reason is None
-    assert result.answer_contract["claim_units"][0]["source_id"] == "TBK m.49"
+    assert result.final_mode == "refusal"
+    assert result.final_reason == "claim_support_missing"
+    assert result.answer_contract["claim_units"] == []
+    assert result.answer_text == ""
 
 
 def test_harden_answer_blocks_temporal_mismatch_for_current_question():
@@ -141,6 +145,7 @@ def test_harden_answer_blocks_temporal_mismatch_for_current_question():
     assert result.final_mode == "refusal"
     assert result.final_reason == "temporal_mismatch"
     assert result.answer_contract["source_validity"] == "repealed"
+    assert result.answer_text == ""
     assert result.internal_blocked is True
 
 
@@ -176,9 +181,9 @@ def test_harden_answer_blocks_narrow_claim_when_multiple_sources_are_unbound():
         citations=["TBK m.49", "TBK m.50"],
         blocked=False,
         verification={"verdict": "pass"},
-        question_raw="Haksız fiil nedir?",
+        question_raw="TBK m.49 nedir?",
         mentioned_laws=["TBK"],
-        explicit_article_refs=[],
+        explicit_article_refs=[("TBK", "49")],
         law_filter=None,
         assembled_evidence=evidence,
         allowed_source_whitelist=["TBK m.49", "TBK m.50"],
@@ -187,6 +192,7 @@ def test_harden_answer_blocks_narrow_claim_when_multiple_sources_are_unbound():
 
     assert result.final_mode == "refusal"
     assert result.final_reason == "claim_support_missing"
+    assert result.answer_text == ""
 
 
 def test_harden_answer_skips_claim_binding_for_broad_procedure_question_without_explicit_article():
@@ -241,3 +247,56 @@ def test_harden_answer_drops_out_of_scope_secondary_citations_for_single_law_hig
     assert result.citations == ["TBK m.237"]
     assert result.answer_contract["primary_source_id"] == "TBK m.237"
     assert result.answer_contract["secondary_source_ids"] == []
+
+
+def test_harden_answer_returns_partial_when_supported_and_unsupported_claim_units_mix():
+    evidence = _evidence("TBK m.49", "TBK m.50")
+
+    result = harden_answer(
+        answer_text=(
+            "- Haksız fiil sorumluluğu dogar. [Kaynak: TBK m.49]\n"
+            "- Faiz her durumda uygulanir. [Kaynak: TBK m.50]"
+        ),
+        citations=["TBK m.49"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="TBK m.49 nedir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[("TBK", "49")],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.49"],
+        today=date(2026, 3, 23),
+    )
+
+    assert result.final_mode == "partial"
+    assert result.final_reason is None
+    assert result.citations == ["TBK m.49"]
+    assert "TBK m.49" in result.answer_text
+    assert "TBK m.50" not in result.answer_text
+    assert len(result.answer_contract["claim_units"]) == 1
+
+
+def test_harden_answer_skips_claim_binding_for_complexity_marker():
+    evidence = _evidence("TBK m.49", "TBK m.50")
+
+    result = harden_answer(
+        answer_text=(
+            "Haksiz fiil sorumlulugu vardir [Kaynak: TBK m.49]. "
+            "Tazminat hesabinda ayri esaslar vardir [Kaynak: TBK m.50]."
+        ),
+        citations=["TBK m.49", "TBK m.50"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="TBK m.49 ile TBK m.50'yi karsilastir.",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[("TBK", "49"), ("TBK", "50")],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.49", "TBK m.50"],
+        today=date(2026, 3, 23),
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.answer_contract["claim_units"] == []
