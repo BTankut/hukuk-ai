@@ -2,14 +2,35 @@
 current_wave: faz2a-retrieval-coverage-requalification
 status: in_progress
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-23T08:03:14+03:00
-last_eval: evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_wave15_20260323.json
-next_action: "v3-170 matched rerun gate'i gecti; simdi v2-95 ve ardindan faz1-50 matched rerun'larini tamamlayip FAZ 2A steering paketini kapatmak"
+last_activity: 2026-03-23T09:56:15+03:00
+last_eval: evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_wave15_r2_20260323.json
+next_action: "v2-95 matched rerun gate'i gecti; simdi son aile olan faz1-50 matched rerun'ini tamamlayip FAZ 2A steering paketini kapatmak"
 blockers:
-  - "tbk_critical ve tmk_cross_law focus subset'leri artik gate'i geciyor; aktif blocker artik yalnizca kalan family rerun execution (v2-95, faz1-50)"
-  - "v3-170 gate'i acildi; steering kapanisi icin tum ailelerin matched rerun'lari tamamlanmali"
+  - "tbk_critical, tmk_cross_law, v3-170 ve v2-95 artik gate'i geciyor; aktif blocker artik yalnizca son family rerun execution (faz1-50)"
+  - "FAZ 2A steering kapanisi icin faz1-50 matched rerun source-of-record artefact'lari tamamlanmali"
 notes: |
   ## Re-Qualification Durumu
+
+  - matched `v2-95` rerun baseline ve candidate icin tamamlandi
+  - official source-of-record yalnizca monitored `r2` kosulari:
+    - `evaluation/reports/eval_baseline_v2-95_matched_dgxnode2_base_wave15_r2_20260323.json`
+    - `evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_wave15_r2_20260323.json`
+  - baseline:
+    - citation `94.7%`
+    - correct source `82.1%`
+    - hallucination `9.5%`
+    - refusal `93.7%`
+  - candidate:
+    - citation `94.7%`
+    - correct source `82.8%`
+    - hallucination `8.4%`
+    - refusal `92.6%`
+  - detached `wave15` draft kosular invalidated; kapanis notu monitored `r2` artefact'lariyla yapildi
+  - `v2-95` artik iki lane'de de family gate'ini geciyor
+  - aktif siradaki son is:
+    - `faz1-50` matched rerun
+  - karar notu:
+    - `coordination/faz2a-requal-v2-95-rerun-2026-03-23.md`
 
   - matched `v3-170` rerun baseline ve candidate icin tamamlandi
   - baseline:
@@ -24,7 +45,7 @@ notes: |
     - refusal `94.1%`
   - onceki source-of-record'a gore iki lane de yaklasik `+18.8` puan correct-source iyilesmesi verdi
   - `v3-170` artik FAZ 1.5 kapanisindaki ana no-go nedeni olmaktan cikti
-  - aktif siradaki is:
+  - o anki sonraki isler:
     - `v2-95` matched rerun
     - `faz1-50` matched rerun
   - karar notu:
