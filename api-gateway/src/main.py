@@ -20,13 +20,16 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 
 from fastapi import Depends, FastAPI, Request
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 from config import get_settings
 from guardrails.pipeline import GuardrailsPipeline
 from llm.client import LLMClient
+from observability import get_metrics_registry
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from api.openai import router as openai_router
 from release_controls import append_audit_event, require_api_auth
@@ -104,6 +107,24 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    started = time.perf_counter()
+    status_code = 500
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    finally:
+        elapsed_ms = (time.perf_counter() - started) * 1000.0
+        get_metrics_registry().record_http_request(
+            path=request.url.path,
+            method=request.method,
+            status_code=status_code,
+            latency_ms=elapsed_ms,
+        )
+
 # app.state: bileşenleri request handler'larına inject et
 app.state.orchestrator = orchestrator
 app.state.retriever = _build_retriever()
@@ -150,6 +171,14 @@ async def health() -> dict[str, str]:
         "retriever": "milvus" if app.state.retriever is not None else "none",
         "verification": "enabled" if _use_verification else "disabled",
     }
+
+
+@app.get("/v1/metrics", include_in_schema=False)
+async def metrics(
+    _request: Request,
+    _auth_subject: str = Depends(require_api_auth),
+) -> PlainTextResponse:
+    return PlainTextResponse(get_metrics_registry().render_prometheus())
 
 
 @app.post("/v1/chat", response_model=ChatResponse, deprecated=True)

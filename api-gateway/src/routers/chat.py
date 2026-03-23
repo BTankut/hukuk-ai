@@ -41,11 +41,13 @@ from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from observability import get_metrics_registry, looks_like_refusal
 from pydantic import BaseModel, Field
 
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from rag.token_manager import estimate_tokens
 from release_controls import append_audit_event, require_api_auth
+from session_store import SessionStoreBackend, build_session_backend_from_env
 
 logger = logging.getLogger(__name__)
 
@@ -1747,13 +1749,20 @@ class ConversationStore:
     MAX_SESSIONS: int = 500               # Maksimum aktif oturum sayısı
     MAX_MESSAGES_PER_SESSION: int = 40    # Maksimum mesaj sayısı (user+assistant turlar)
 
-    def __init__(self) -> None:
-        # key: session_id, value: list of {"role": ..., "content": ...}
-        self._sessions: OrderedDict[str, list[dict[str, str]]] = OrderedDict()
+    def __init__(self, backend: SessionStoreBackend | None = None) -> None:
+        self._backend = backend or build_session_backend_from_env(
+            max_sessions=self.MAX_SESSIONS,
+            max_messages_per_session=self.MAX_MESSAGES_PER_SESSION,
+        )
+
+    def _sync_limits(self) -> None:
+        self._backend.max_sessions = self.MAX_SESSIONS
+        self._backend.max_messages_per_session = self.MAX_MESSAGES_PER_SESSION
 
     def get_history(self, session_id: str) -> list[dict[str, str]]:
         """Oturum geçmişini döndür. Oturum yoksa boş liste."""
-        return list(self._sessions.get(session_id, []))
+        self._sync_limits()
+        return list(self._backend.get_history(session_id))
 
     def add_turn(
         self,
@@ -1762,38 +1771,35 @@ class ConversationStore:
         assistant_message: str,
     ) -> None:
         """Oturuma kullanıcı + asistan turu ekle."""
-        if session_id not in self._sessions:
-            # Kapasite aşılmışsa en eski oturumu sil
-            if len(self._sessions) >= self.MAX_SESSIONS:
-                self._sessions.popitem(last=False)
-            self._sessions[session_id] = []
-
-        history = self._sessions[session_id]
-        history.append({"role": "user", "content": user_message})
-        history.append({"role": "assistant", "content": assistant_message})
-
-        # Maksimum mesaj limitini uygula (ilk turları at, başlangıç context gider)
-        if len(history) > self.MAX_MESSAGES_PER_SESSION:
-            self._sessions[session_id] = history[-self.MAX_MESSAGES_PER_SESSION :]
-
-        # Bu oturumu "en yeni" konuma taşı
-        self._sessions.move_to_end(session_id)
+        self._sync_limits()
+        self._backend.add_turn(session_id, user_message, assistant_message)
 
     def clear_session(self, session_id: str) -> bool:
         """Oturumu sil. Var idiyse True döndür."""
-        return self._sessions.pop(session_id, None) is not None
+        self._sync_limits()
+        return self._backend.clear_session(session_id)
 
     def session_count(self) -> int:
         """Aktif oturum sayısı."""
-        return len(self._sessions)
+        self._sync_limits()
+        return self._backend.session_count()
 
 
-# Global singleton
-_conversation_store = ConversationStore()
+_conversation_store: ConversationStore | None = None
+_conversation_store_signature: tuple[str, str, str] | None = None
 
 
 def get_conversation_store() -> ConversationStore:
     """FastAPI Depends için ConversationStore factory."""
+    global _conversation_store, _conversation_store_signature
+    signature = (
+        os.getenv("SESSION_STORE_BACKEND", "memory"),
+        os.getenv("REDIS_URL", ""),
+        os.getenv("SESSION_STORE_NAMESPACE", "hukuk-ai"),
+    )
+    if _conversation_store is None or _conversation_store_signature != signature:
+        _conversation_store = ConversationStore()
+        _conversation_store_signature = signature
     return _conversation_store
 
 
@@ -2093,6 +2099,13 @@ async def chat_completions(
             message_count=len(request_body.messages),
             user_message_chars=len(last_user_msg),
         )
+        get_metrics_registry().record_chat_outcome(
+            path=request.url.path,
+            model=request_body.model,
+            blocked=False,
+            is_refusal=looks_like_refusal(answer_text, blocked=False),
+            usage_source=usage_source,
+        )
 
         model_name = request_body.model
         if request_body.stream:
@@ -2190,6 +2203,13 @@ async def chat_completions(
             usage_source=usage_source,
             message_count=len(request_body.messages),
             user_message_chars=len(last_user_msg),
+        )
+        get_metrics_registry().record_chat_outcome(
+            path=request.url.path,
+            model=request_body.model,
+            blocked=False,
+            is_refusal=looks_like_refusal(answer_text, blocked=False),
+            usage_source=usage_source,
         )
 
         model_name = request_body.model
@@ -2725,6 +2745,13 @@ async def chat_completions(
         usage_source=usage_source,
         message_count=len(request_body.messages),
         user_message_chars=len(last_user_msg),
+    )
+    get_metrics_registry().record_chat_outcome(
+        path=request.url.path,
+        model=request_body.model,
+        blocked=blocked,
+        is_refusal=looks_like_refusal(answer_text, blocked=blocked),
+        usage_source=usage_source,
     )
 
     model_name = request_body.model

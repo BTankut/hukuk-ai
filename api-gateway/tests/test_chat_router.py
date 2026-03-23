@@ -28,6 +28,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
+from observability import get_metrics_registry
 from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
@@ -45,6 +46,7 @@ from routers.chat import (
     router as chat_router,
 )
 from rag.orchestrator import OrchestratorResponse
+from session_store import RedisSessionBackend
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +186,71 @@ class TestConversationStore:
         h1.append({"role": "user", "content": "eklendi"})
         h2 = store.get_history("s1")
         assert len(h2) == 2  # Değişmemiş olmalı
+
+    def test_redis_backend_roundtrip_and_eviction(self):
+        class FakeRedis:
+            def __init__(self):
+                self.lists: dict[str, list[str]] = {}
+                self.sorted_sets: dict[str, dict[str, float]] = {}
+
+            def lrange(self, key, start, end):
+                values = self.lists.get(key, [])
+                if end == -1:
+                    end = len(values) - 1
+                return values[start : end + 1]
+
+            def rpush(self, key, *values):
+                self.lists.setdefault(key, []).extend(values)
+
+            def ltrim(self, key, start, end):
+                values = self.lists.get(key, [])
+                if start < 0:
+                    start = len(values) + start
+                if end < 0:
+                    end = len(values) + end
+                self.lists[key] = values[max(start, 0) : end + 1]
+
+            def zadd(self, key, mapping):
+                self.sorted_sets.setdefault(key, {}).update(mapping)
+
+            def zcard(self, key):
+                return len(self.sorted_sets.get(key, {}))
+
+            def zrange(self, key, start, end):
+                items = sorted(self.sorted_sets.get(key, {}).items(), key=lambda item: item[1])
+                if end == -1:
+                    end = len(items) - 1
+                return [member for member, _score in items[start : end + 1]]
+
+            def delete(self, key):
+                existed = key in self.lists
+                self.lists.pop(key, None)
+                return 1 if existed else 0
+
+            def zrem(self, key, member):
+                bucket = self.sorted_sets.get(key, {})
+                existed = member in bucket
+                bucket.pop(member, None)
+                return 1 if existed else 0
+
+        backend = RedisSessionBackend(
+            redis_url="redis://example",
+            namespace="test",
+            max_sessions=2,
+            max_messages_per_session=4,
+            client=FakeRedis(),
+        )
+        store = ConversationStore(backend=backend)
+        store.MAX_SESSIONS = 2
+        store.MAX_MESSAGES_PER_SESSION = 4
+
+        store.add_turn("s1", "soru1", "cevap1")
+        store.add_turn("s2", "soru2", "cevap2")
+        store.add_turn("s3", "soru3", "cevap3")
+
+        assert store.session_count() == 2
+        assert store.get_history("s1") == []
+        assert len(store.get_history("s3")) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -921,6 +988,7 @@ class TestChatCompletionsNonStreaming:
         audit_path = tmp_path / "audit.jsonl"
         monkeypatch.setenv("AUDIT_LOG_ENABLED", "true")
         monkeypatch.setenv("AUDIT_LOG_PATH", str(audit_path))
+        get_metrics_registry().reset()
         mock_orchestrator.answer = AsyncMock(
             return_value=_make_orch_response(
                 usage={"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17}
@@ -940,6 +1008,8 @@ class TestChatCompletionsNonStreaming:
         assert event["usage"] == {"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17}
         assert event["usage_source"] == "upstream"
         assert event["auth_subject"] == "anonymous"
+        metrics = get_metrics_registry().render_prometheus()
+        assert 'hukuk_ai_audit_events_total 1' in metrics
 
     def test_400_on_empty_messages(self, client):
         resp = client.post(

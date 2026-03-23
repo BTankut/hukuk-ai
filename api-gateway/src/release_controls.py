@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import HTTPException, Request
+from observability import get_metrics_registry
 
 
 def _to_bool(value: str | None, default: bool = False) -> bool:
@@ -128,4 +129,5 @@ def append_audit_event(
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(event, ensure_ascii=False) + "\n")
 
+    get_metrics_registry().record_audit_event()
     return event

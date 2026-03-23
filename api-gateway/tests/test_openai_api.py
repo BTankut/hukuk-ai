@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
+from observability import get_metrics_registry
 from rag.orchestrator import OrchestratorResponse
 
 
@@ -37,6 +38,7 @@ def main_client():
     mock_orch.answer = AsyncMock(return_value=_mock_orch_response())
 
     app.state.orchestrator = mock_orch
+    get_metrics_registry().reset()
 
     # Temiz store
     new_store = ConversationStore()
@@ -67,6 +69,28 @@ def test_models_endpoint_requires_auth_when_enabled(main_client, monkeypatch):
     assert denied.status_code == 401
 
     allowed = client.get("/v1/models", headers={"X-API-Key": "secret-key"})
+    assert allowed.status_code == 200
+
+
+def test_metrics_endpoint_reports_request_counters(main_client):
+    client, _ = main_client
+    client.get("/v1/health")
+    metrics = client.get("/v1/metrics")
+    assert metrics.status_code == 200
+    body = metrics.text
+    assert 'hukuk_ai_http_requests_total{path="/v1/health",method="GET",status="200"}' in body
+    assert "hukuk_ai_http_request_latency_ms_sum" in body
+
+
+def test_metrics_endpoint_requires_auth_when_enabled(main_client, monkeypatch):
+    client, _ = main_client
+    monkeypatch.setenv("API_AUTH_ENABLED", "true")
+    monkeypatch.setenv("API_AUTH_KEYS", "secret-key")
+
+    denied = client.get("/v1/metrics")
+    assert denied.status_code == 401
+
+    allowed = client.get("/v1/metrics", headers={"X-API-Key": "secret-key"})
     assert allowed.status_code == 200
 
 

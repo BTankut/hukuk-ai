@@ -2,14 +2,38 @@
 current_wave: faz2b-cutover-readiness-closure
 status: in_progress
 started_at: 2026-03-23T10:26:53+03:00
-last_activity: 2026-03-23T10:26:53+03:00
+last_activity: 2026-03-23T10:36:22+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "FAZ 2B wave 1 kapandi; siradaki is PII masking proof, observability/alerting ve session persistence"
+next_action: "FAZ 2B wave 2 kapandi; siradaki is keepalive/supervision, backup/restore ve cutover steering refresh"
 blockers:
-  - "Release-control must-close kalemleri acik: PII masking proof, session persistence, observability/alerting, backup/restore"
+  - "Release-control must-close kalemleri acik: keepalive/supervision proof, backup/restore, steering refresh"
   - "Cutover karari icin FAZ 2B steering paketi henuz olusmadi"
 notes: |
   ## FAZ 2B Durumu
+
+  - wave 2 kapandi:
+    - PII masking release proof
+    - session persistence abstraction
+    - observability / operator-check contract
+  - wave 2 karar notlari:
+    - `coordination/faz2b-release-controls-wave2-2026-03-23.md`
+    - `coordination/faz2b-operator-check-contract-2026-03-23.md`
+  - eklenen runtime yuzeyleri:
+    - `GET /v1/metrics`
+    - `api-gateway/src/observability.py`
+    - `api-gateway/src/session_store.py`
+  - wave 2 dogrulama:
+    - `python3 -m py_compile` gecti
+    - hedefli pytest paketi gecti:
+      - `api-gateway/tests/test_chat_router.py`
+      - `api-gateway/tests/test_openai_api.py`
+      - `api-gateway/tests/test_pii_release_proof.py`
+      - `api-gateway/tests/test_guardrails_pipeline_smoke.py`
+      - `api-gateway/tests/test_guardrails_config.py`
+  - sonraki dalga:
+    - keepalive / supervision proof
+    - backup / restore proof
+    - steering refresh
 
   - yeni resmi faz basladi:
     - `coordination/faz2b-implementation-plan-2026-03-23.md`
