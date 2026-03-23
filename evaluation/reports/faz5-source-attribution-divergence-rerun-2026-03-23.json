@@ -1,0 +1,31 @@
+{
+  "overall_pass": false,
+  "fixed_count": 0,
+  "current_row_count": 85,
+  "classes": [
+    {
+      "failure_class": "canonical_alias_mismatch",
+      "baseline_count": 0,
+      "rc_f_count": 0,
+      "passes": true
+    },
+    {
+      "failure_class": "target_law_or_article_priority_miss",
+      "baseline_count": 0,
+      "rc_f_count": 0,
+      "passes": true
+    },
+    {
+      "failure_class": "citation_projection_gap",
+      "baseline_count": 73,
+      "rc_f_count": 70,
+      "passes": false
+    },
+    {
+      "failure_class": "mode_drop_on_supported_canonical_source",
+      "baseline_count": 12,
+      "rc_f_count": 15,
+      "passes": false
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "overall_pass": false,
+  "classes": [
+    {
+      "failure_class": "citation_under_emission",
+      "baseline_count": 35,
+      "rc_f_count": 53,
+      "threshold": 18,
+      "passes": false
+    },
+    {
+      "failure_class": "wrong_primary_source_with_supported_answer",
+      "baseline_count": 43,
+      "rc_f_count": 48,
+      "threshold": 20,
+      "passes": false
+    },
+    {
+      "failure_class": "residual_false_refusal",
+      "baseline_count": 6,
+      "rc_f_count": 6,
+      "threshold": 4,
+      "passes": false
+    },
+    {
+      "failure_class": "residual_unsupported_answer",
+      "baseline_count": 1,
+      "rc_f_count": 1,
+      "threshold": 1,
+      "passes": true
+    }
+  ]
+}
