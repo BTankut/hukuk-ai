@@ -1,13 +1,25 @@
 # Wave State
-current_wave: faz2c-bounded-pilot-watch-proof
+current_wave: faz2c-timestamped-watch-job
 status: completed
 started_at: 2026-03-23T11:10:39+03:00
-last_activity: 2026-03-23T11:55:52+03:00
+last_activity: 2026-03-23T12:11:45+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "Promoted lane dar kapsam pilotta aktif; bounded watch green, siradaki resmi hareket yeni faz/rapor veya periyodik watch tekraridir"
+next_action: "Promoted lane dar kapsam pilotta aktif; archived watch job green, siradaki resmi hareket yeni faz/rapor veya periyodik operator run'idir"
 blockers:
   - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
+  ## FAZ 2C Wave 4
+
+  - timestamped watch job kapandi:
+    - `scripts/faz2c/run_narrow_pilot_watch_job.py`
+    - `coordination/faz2c-wave4-timestamped-watch-job-2026-03-23.md`
+  - live archived job sonucu:
+    - `sample_count = 2`
+    - `rollback_sample_count = 0`
+    - `final_status = clean`
+    - `avg_latency_ms = 9389.92`
+    - `max_latency_ms = 9472.84`
+
   ## FAZ 2C Wave 3
 
   - bounded pilot watch proof kapandi:

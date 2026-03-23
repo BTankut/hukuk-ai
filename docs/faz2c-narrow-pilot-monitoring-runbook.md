@@ -44,6 +44,27 @@ python3 scripts/faz2c/run_narrow_pilot_watch.py \
   --summary-path runtime_logs/faz2c_narrow_pilot_watch_summary.json
 ```
 
+## Timestamped Job Command
+
+```bash
+python3 scripts/faz2c/run_narrow_pilot_watch_job.py \
+  --base-url http://127.0.0.1:8000 \
+  --samples 3 \
+  --sleep-seconds 5 \
+  --output-dir runtime_logs/faz2c_watch_jobs
+```
+
+Optional with auth:
+
+```bash
+python3 scripts/faz2c/run_narrow_pilot_watch_job.py \
+  --base-url http://127.0.0.1:8000 \
+  --api-key "$API_KEY" \
+  --samples 3 \
+  --sleep-seconds 5 \
+  --output-dir runtime_logs/faz2c_watch_jobs
+```
+
 ## What The Snapshot Checks
 - `GET /v1/health`
 - `GET /v1/metrics` before and after smoke
@@ -84,6 +105,10 @@ bash scripts/faz2c/run_controlled_rollback.sh
   - `runtime_logs/faz2c_narrow_pilot_watch.jsonl`
 - bounded watch summary:
   - `runtime_logs/faz2c_narrow_pilot_watch_summary.json`
+- timestamped job bundle:
+  - `runtime_logs/faz2c_watch_jobs/<label>_<timestamp>/watch.jsonl`
+  - `runtime_logs/faz2c_watch_jobs/<label>_<timestamp>/summary.json`
+  - `runtime_logs/faz2c_watch_jobs/<label>_<timestamp>/manifest.json`
 - rollback summary if rollback is executed:
   - `runtime_logs/faz2c_controlled_rollback_summary.json`
 
