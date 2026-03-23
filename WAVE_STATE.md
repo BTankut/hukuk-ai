@@ -1,12 +1,11 @@
 # Wave State
 current_wave: faz2c-controlled-cutover-execution
-status: in_progress
+status: completed
 started_at: 2026-03-23T10:45:33+03:00
-last_activity: 2026-03-23T10:58:23+03:00
+last_activity: 2026-03-23T11:10:39+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "FAZ 2C wave 1 kapandi; siradaki is gercek live cutover penceresi"
+next_action: "Controlled cutover tamamlandi; siradaki resmi is narrow pilot monitoring veya rollback"
 blockers:
-  - "Gercek live cutover penceresi henuz execute edilmedi"
   - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
   ## FAZ 2C Durumu
@@ -28,8 +27,17 @@ notes: |
     - `bash -n scripts/faz2c/run_controlled_rollback.sh`
     - `bash scripts/faz2c/run_controlled_cutover.sh --dry-run`
     - `bash scripts/faz2c/run_controlled_rollback.sh --dry-run`
-  - siradaki tek aktif is:
-    - gercek live cutover penceresi
+  - live controlled cutover tamamlandi:
+    - `coordination/faz2c-live-cutover-2026-03-23.md`
+    - `runtime_logs/faz2c_controlled_cutover_summary.json`
+  - canli durum:
+    - `127.0.0.1:8000` promoted candidate alias
+    - `127.0.0.1:8004` candidate comparison lane
+    - rollback komutu hazir:
+      - `bash scripts/faz2c/run_controlled_rollback.sh`
+  - siradaki resmi secenek:
+    - narrow pilot monitoring
+    - veya rollback
 
   ## FAZ 2B Durumu
 
