@@ -134,3 +134,22 @@ def test_guardrails_extract_text_parses_dict_response_wrapper():
         "TBK m.49 uyarınca kusurlu ve hukuka aykırı fiille başkasına zarar veren, "
         "bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]"
     )
+
+
+def test_guardrails_extract_text_parses_object_response_list():
+    result = SimpleNamespace(
+        response=[
+            {
+                "role": "assistant",
+                "content": (
+                    "TBK m.49 uyarınca kusurlu ve hukuka aykırı fiille başkasına zarar veren, "
+                    "bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]"
+                ),
+            }
+        ]
+    )
+
+    assert GuardrailsPipeline._extract_text(result) == (
+        "TBK m.49 uyarınca kusurlu ve hukuka aykırı fiille başkasına zarar veren, "
+        "bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]"
+    )

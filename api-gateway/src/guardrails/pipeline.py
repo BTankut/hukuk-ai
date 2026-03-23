@@ -271,15 +271,23 @@ class GuardrailsPipeline:
             if isinstance(payload, list):
                 first = payload[0] if payload else None
                 if isinstance(first, dict):
-                    content = first.get("content")
-                    if isinstance(content, str) and content.strip():
-                        return content
+                        content = first.get("content")
+                        if isinstance(content, str) and content.strip():
+                            return content
             return result
+        if isinstance(result, list):
+            first = result[0] if result else None
+            if first is not None:
+                return cls._extract_text(first)
+            return ""
         if isinstance(result, dict):
             if "content" in result:
                 return cls._extract_text(result["content"])
             if "response" in result:
                 return cls._extract_text(result["response"])
+        response = getattr(result, "response", None)
+        if response is not None:
+            return cls._extract_text(response)
         content = getattr(result, "content", None)
         if content:
             return cls._extract_text(content)

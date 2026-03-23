@@ -1,13 +1,22 @@
 # Wave State
-current_wave: faz2c-narrow-pilot-monitoring
+current_wave: faz2c-closure-package
 status: completed
 started_at: 2026-03-23T11:10:39+03:00
-last_activity: 2026-03-23T11:35:15+03:00
+last_activity: 2026-03-23T11:45:52+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "Dar kapsam pilot gozetimi aktif; snapshot trigger bozulursa rollback, aksi halde bir sonraki resmi faz/rapor beklenir"
+next_action: "Promoted lane dar kapsam pilotta aktif; periyodik snapshot veya yeni resmi faz raporu beklenir"
 blockers:
   - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
+  ## FAZ 2C Closure
+
+  - FAZ 2C kapandi:
+    - `docs/FAZ2C-CONTROLLED-CUTOVER-EXECUTION-RAPORU-2026-03-23.md`
+    - `coordination/faz2c-closure-matrix-2026-03-23.md`
+    - `coordination/faz2c-steering-decision-table-2026-03-23.md`
+  - resmi execution-state karari:
+    - `Controlled cutover active -> stay on promoted lane under narrow-pilot boundary`
+
   ## Narrow Pilot Monitoring
 
   - wave 2 kapandi:
@@ -20,9 +29,9 @@ notes: |
     - cited smoke `pass`
     - audit/upstream/chat sayaçlari ilerledi
     - `refusal_delta = 0`
-    - latency `10425.85ms`
+    - latency `10357.38ms`
   - canli parser hardening:
-    - wrapper leakage `8000` live lane'de kapatildi
+    - `GenerationResponse(response=[...])` wrapper leakage `8000` live lane'de kapatildi
     - `api-gateway/src/llm/client.py`
     - `api-gateway/src/guardrails/pipeline.py`
 

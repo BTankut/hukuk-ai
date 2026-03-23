@@ -30,7 +30,7 @@
 - smoke:
   - cited legal answer returned cleanly
   - wrapper leakage fixed on live `8000` lane
-  - latency: `10425.85ms`
+  - latency: `10357.38ms`
 - metrics delta:
   - `audit_events_delta = 1`
   - `upstream_usage_delta = 1`
@@ -39,13 +39,14 @@
 
 ## Live parsing hardening
 - root issue:
-  - DGX/rails wrapper text could leak into final user-facing `content`
+  - NeMo `GenerationResponse(response=[...])` wrapper text could leak into final user-facing `content`
 - fix applied:
   - `api-gateway/src/llm/client.py`
   - `api-gateway/src/guardrails/pipeline.py`
 - protection added:
   - metadata-tail wrapper parsing
   - object/dict nested `content` and `response` parsing
+  - direct `GenerationResponse.response` list parsing
   - regression tests for those branches
 
 ## Decision
