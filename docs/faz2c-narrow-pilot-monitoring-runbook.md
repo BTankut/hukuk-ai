@@ -104,6 +104,23 @@ It also refreshes the canonical operator surfaces so one integrated cycle keeps 
 - `runtime_logs/faz2c_watch_rollup.json`
 - `runtime_logs/faz2c_pilot_status_report.md`
 
+## Archived Monitoring Window Command
+
+```bash
+python3 scripts/faz2c/run_pilot_monitoring_window.py \
+  --base-url http://127.0.0.1:8000 \
+  --cycles 2 \
+  --sleep-seconds 30 \
+  --cycle-samples 2 \
+  --cycle-sample-sleep-seconds 2 \
+  --window-output-dir runtime_logs/faz2c_window_jobs
+```
+
+This command chains multiple integrated cycles into one archived operator window and refreshes:
+- `runtime_logs/faz2c_window_jobs/latest_window_summary.json`
+- `runtime_logs/faz2c_window_jobs/latest_window_report.md`
+- `runtime_logs/faz2c_window_jobs/latest_window_manifest.json`
+
 ## What The Snapshot Checks
 - `GET /v1/health`
 - `GET /v1/metrics` before and after smoke
@@ -161,6 +178,15 @@ bash scripts/faz2c/run_controlled_rollback.sh
   - `runtime_logs/faz2c_cycles/latest_rollup.json`
   - `runtime_logs/faz2c_cycles/latest_pilot_status_report.md`
   - `runtime_logs/faz2c_cycles/latest_cycle_index.json`
+- archived monitoring window bundle:
+  - `runtime_logs/faz2c_window_jobs/<label>_<timestamp>/cycle_manifests.jsonl`
+  - `runtime_logs/faz2c_window_jobs/<label>_<timestamp>/window_summary.json`
+  - `runtime_logs/faz2c_window_jobs/<label>_<timestamp>/window_report.md`
+  - `runtime_logs/faz2c_window_jobs/<label>_<timestamp>/window_manifest.json`
+- latest window aliases:
+  - `runtime_logs/faz2c_window_jobs/latest_window_summary.json`
+  - `runtime_logs/faz2c_window_jobs/latest_window_report.md`
+  - `runtime_logs/faz2c_window_jobs/latest_window_manifest.json`
 - rollback summary if rollback is executed:
   - `runtime_logs/faz2c_controlled_rollback_summary.json`
 

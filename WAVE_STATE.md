@@ -1,13 +1,28 @@
 # Wave State
-current_wave: faz2c-canonical-monitoring-refresh
+current_wave: faz2c-archived-monitoring-window
 status: completed
-started_at: 2026-03-23T12:31:31+03:00
-last_activity: 2026-03-23T12:36:26+03:00
+started_at: 2026-03-23T12:36:26+03:00
+last_activity: 2026-03-23T12:42:31+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "Promoted lane dar kapsam pilotta aktif; canonical monitoring surfaces ve latest aliases birlikte green, siradaki resmi hareket yeni faz/rapor veya periyodik archived monitoring cycle run'idir"
+next_action: "Promoted lane dar kapsam pilotta aktif; archived monitoring window green, siradaki resmi hareket yeni faz/rapor veya daha uzun pilot window evidence paketidir"
 blockers:
   - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
+  ## FAZ 2C Wave 10
+
+  - archived monitoring window kapandi:
+    - `scripts/faz2c/run_pilot_monitoring_window.py`
+    - `coordination/faz2c-wave10-archived-window-2026-03-23.md`
+  - live archived window sonucu:
+    - `cycle_count_recorded = 2`
+    - `clean_cycle_count = 2`
+    - `final_status = clean`
+    - `latest_final_read = stay_on_promoted_lane`
+  - stable window aliases:
+    - `runtime_logs/faz2c_window_jobs/latest_window_summary.json`
+    - `runtime_logs/faz2c_window_jobs/latest_window_report.md`
+    - `runtime_logs/faz2c_window_jobs/latest_window_manifest.json`
+
   ## FAZ 2C Wave 9
 
   - canonical surface refresh kapandi:
