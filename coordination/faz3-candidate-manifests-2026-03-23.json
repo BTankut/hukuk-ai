@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-03-23T21:30:00+03:00",
+  "reference": "docs/FAZ3-ROTASYON-GUARDRAIL-INTEGRATION-QUALITY-RECOVERY-VE-REQUALIFICATION-TALIMATI-2026-03-23.md",
+  "candidates": [
+    {
+      "candidate_id": "rc-a-faz2a-requal-quality-anchor-20260323",
+      "git_commit": "f59b0b4",
+      "status": "frozen_quality_anchor",
+      "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+      "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+      "retrieval_config_hash": "d75b52ef51622aa3cbdabe7ea977d619064c1f8cecc327097299887683f62cf5",
+      "reranker_config_hash": "d6f4512248ed3371495cecae020d3f88a855b843adc0dd8ce6513a192a32cd8b",
+      "source_locking_version": "v1",
+      "citation_normalization_version": "canonical-citation-normalization-v1",
+      "law_scope_gate_version": "law-scope-gate-v2",
+      "claim_binding_version": "rc-a-anchor-v1",
+      "final_mode_mapping_version": "rc-a-anchor-v1",
+      "trace_contract_version": "trace-pack-v1",
+      "schema_contract_version": "structured-answer-contract-v1",
+      "dataset_manifest_hash": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+      "scope_contract_version": "07cd4167e259d7af6dbe207ec16d203b99fe6aed8e331c8cc6699a8fe01d7f52",
+      "build_timestamp": "2026-03-23T09:30:00+00:00",
+      "quality_source_reports": {
+        "faz1_50": "evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json",
+        "v2_95": "evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_wave15_r2_20260323.json",
+        "v3_170": "evaluation/reports/eval_post_train_v3-170_matched_dgx1_merged_wave15_20260323.json"
+      }
+    },
+    {
+      "candidate_id": "rc-c-faz2b-failed-guardrail-integration-20260323",
+      "git_commit": "ead9395",
+      "status": "frozen_failed_candidate",
+      "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+      "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+      "retrieval_config_hash": "d75b52ef51622aa3cbdabe7ea977d619064c1f8cecc327097299887683f62cf5",
+      "reranker_config_hash": "d6f4512248ed3371495cecae020d3f88a855b843adc0dd8ce6513a192a32cd8b",
+      "source_locking_version": "v1",
+      "citation_normalization_version": "canonical-citation-normalization-v1",
+      "law_scope_gate_version": "law-scope-gate-v2",
+      "claim_binding_version": "claim-binding-v2",
+      "final_mode_mapping_version": "final-mode-mapping-v2",
+      "trace_contract_version": "trace-pack-v1",
+      "schema_contract_version": "structured-answer-contract-v1",
+      "dataset_manifest_hash": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+      "scope_contract_version": "07cd4167e259d7af6dbe207ec16d203b99fe6aed8e331c8cc6699a8fe01d7f52",
+      "build_timestamp": "2026-03-23T18:00:00+03:00",
+      "failure_source_reports": {
+        "family_eval": "evaluation/reports/faz2b-rc-c-family-eval-2026-03-23.md",
+        "quality_gate": "docs/faz2b-quality-preserving-gate-2026-03-23.md",
+        "blocker": "coordination/faz2b-quality-preserving-blocker-2026-03-23.md",
+        "regression_diff": "evaluation/reports/faz2b-guardrail-regression-diff-rc-c-2026-03-23.jsonl"
+      }
+    },
+    {
+      "candidate_id": "rc-d-faz3-guardrail-quality-recovery-20260323",
+      "git_commit": "0db2f96",
+      "status": "planned",
+      "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+      "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+      "retrieval_config_hash": "d75b52ef51622aa3cbdabe7ea977d619064c1f8cecc327097299887683f62cf5",
+      "reranker_config_hash": "d6f4512248ed3371495cecae020d3f88a855b843adc0dd8ce6513a192a32cd8b",
+      "source_locking_version": "v1",
+      "citation_normalization_version": "canonical-citation-normalization-v1",
+      "law_scope_gate_version": "law-scope-gate-v2",
+      "claim_binding_version": "selective-claim-binding-v3-planned",
+      "final_mode_mapping_version": "final-mode-mapping-v3-planned",
+      "trace_contract_version": "trace-pack-v1",
+      "schema_contract_version": "structured-answer-contract-v1",
+      "dataset_manifest_hash": "1139008106af2bc655246b878d2dbc78bc6bad6a2e732fdb0caabd2f2fece3b0",
+      "scope_contract_version": "07cd4167e259d7af6dbe207ec16d203b99fe6aed8e331c8cc6699a8fe01d7f52",
+      "build_timestamp": "2026-03-23T21:30:00+03:00",
+      "definition": "RC-A + canonical citation normalization + schema/whitelist/temporal/law-scope hard-fail surface + selective claim-binding v3 + final-mode mapping v3 + trace/schema surface"
+    }
+  ]
+}
