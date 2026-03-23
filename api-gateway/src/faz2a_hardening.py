@@ -416,9 +416,7 @@ def apply_temporal_validity_policy(
     primary_evidence = evidence_lookup.get(canonicalize_source_id(contract.primary_source_id) or "")
     if primary_evidence is None:
         contract.source_validity = "unknown"
-        contract.final_mode = "blocked"
-        contract.unsupported_reason = "source_validity_unknown"
-        return "source_validity_unknown"
+        return contract.unsupported_reason
 
     start = _parse_optional_date(primary_evidence.get("yururluk_baslangic"))
     end = _parse_optional_date(primary_evidence.get("yururluk_bitis"))

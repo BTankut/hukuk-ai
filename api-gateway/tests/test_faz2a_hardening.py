@@ -116,3 +116,50 @@ def test_harden_answer_reuses_single_supported_source_for_narrow_claim():
     assert result.final_mode == "answer"
     assert result.final_reason is None
     assert result.answer_contract["claim_units"][0]["source_id"] == "TBK m.49"
+
+
+def test_harden_answer_blocks_temporal_mismatch_for_current_question():
+    evidence = _evidence("TBK m.49")
+    evidence[0]["yururluk_bitis"] = "2020-01-01"
+
+    result = harden_answer(
+        answer_text="Haksız fiil sorumluluğu vardır. [Kaynak: TBK m.49]",
+        citations=["TBK m.49"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="TBK m.49 nedir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[("TBK", "49")],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.49"],
+        today=date(2026, 3, 23),
+    )
+
+    assert result.final_mode == "blocked"
+    assert result.final_reason == "temporal_mismatch"
+    assert result.answer_contract["source_validity"] == "repealed"
+
+
+def test_harden_answer_allows_historical_source_when_target_date_matches():
+    evidence = _evidence("TBK m.49")
+    evidence[0]["yururluk_baslangic"] = "2000-01-01"
+    evidence[0]["yururluk_bitis"] = "2020-01-01"
+
+    result = harden_answer(
+        answer_text="2019 itibarıyla hüküm uygulanır. [Kaynak: TBK m.49]",
+        citations=["TBK m.49"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="2019 yılında TBK m.49 nasıldı?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[("TBK", "49")],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.49"],
+        today=date(2026, 3, 23),
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.answer_contract["source_validity"] == "historical"
