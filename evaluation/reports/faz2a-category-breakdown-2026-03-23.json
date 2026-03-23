@@ -1,0 +1,99 @@
+{
+  "families": [
+    {
+      "family": "faz1-50",
+      "taxonomy": {
+        "wrong source despite retrieved evidence": 9,
+        "retrieval miss": 4
+      },
+      "samples": {
+        "wrong source despite retrieved evidence": [
+          "TBK-003",
+          "TBK-006",
+          "TBK-007",
+          "TBK-008",
+          "TBK-009"
+        ],
+        "retrieval miss": [
+          "TBK-047",
+          "TBK-048",
+          "TBK-049",
+          "TBK-050"
+        ]
+      }
+    },
+    {
+      "family": "v2-95",
+      "taxonomy": {
+        "wrong source despite retrieved evidence": 20,
+        "over-refusal": 2,
+        "cross-law confusion": 4,
+        "unsupported question answered": 5
+      },
+      "samples": {
+        "wrong source despite retrieved evidence": [
+          "TBK-051",
+          "TBK-052",
+          "TBK-054",
+          "TBK-055",
+          "TBK-057"
+        ],
+        "over-refusal": [
+          "TBK-065",
+          "TBK-093"
+        ],
+        "cross-law confusion": [
+          "TMK-CL-003",
+          "TMK-CL-004",
+          "TMK-CL-007",
+          "TMK-CL-009"
+        ],
+        "unsupported question answered": [
+          "OOS-002",
+          "OOS-004",
+          "OOS-006",
+          "OOS-008",
+          "OOS-010"
+        ]
+      }
+    },
+    {
+      "family": "v3-170",
+      "taxonomy": {
+        "wrong source despite retrieved evidence": 34,
+        "over-refusal": 4,
+        "cross-law confusion": 9,
+        "unsupported question answered": 6
+      },
+      "samples": {
+        "wrong source despite retrieved evidence": [
+          "TBK-051",
+          "TBK-052",
+          "TBK-054",
+          "TBK-055",
+          "TBK-057"
+        ],
+        "over-refusal": [
+          "TBK-065",
+          "TBK-093",
+          "HAL-002",
+          "TBK-119"
+        ],
+        "cross-law confusion": [
+          "TMK-CL-003",
+          "TMK-CL-004",
+          "TMK-CL-007",
+          "TMK-CL-014",
+          "TMK-CL-015"
+        ],
+        "unsupported question answered": [
+          "OOS-002",
+          "OOS-004",
+          "OOS-006",
+          "OOS-008",
+          "OOS-010"
+        ]
+      }
+    }
+  ]
+}

@@ -148,6 +148,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--candidate-v3-170", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--json-output", required=True, type=Path)
+    parser.add_argument("--title", default="FAZ 1.5 Category Breakdown")
+    parser.add_argument("--date-label", default="2026-03-22")
+    parser.add_argument(
+        "--scope-label",
+        default="matched baseline vs promoted candidate across `faz1-50`, `v2-95`, `v3-170`",
+    )
     return parser.parse_args()
 
 
@@ -160,10 +166,10 @@ def main() -> int:
     ]
 
     markdown: list[str] = [
-        "# FAZ 1.5 Category Breakdown",
+        f"# {args.title}",
         "",
-        "**Date:** 2026-03-22  ",
-        "**Scope:** matched baseline vs promoted candidate across `faz1-50`, `v2-95`, `v3-170`",
+        f"**Date:** {args.date_label}  ",
+        f"**Scope:** {args.scope_label}",
         "",
     ]
     payload: dict[str, object] = {"families": []}

@@ -1,15 +1,36 @@
 # Wave State
 current_wave: faz2a-retrieval-coverage-requalification
-status: in_progress
+status: completed
 started_at: 2026-03-22T15:10:00+03:00
-last_activity: 2026-03-23T09:56:15+03:00
-last_eval: evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_wave15_r2_20260323.json
-next_action: "v2-95 matched rerun gate'i gecti; simdi son aile olan faz1-50 matched rerun'ini tamamlayip FAZ 2A steering paketini kapatmak"
+last_activity: 2026-03-23T10:12:03+03:00
+last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
+next_action: "FAZ 2A steering paketi kapandi; sonraki resmi faz FAZ 2B cutover-readiness closure olmali"
 blockers:
-  - "tbk_critical, tmk_cross_law, v3-170 ve v2-95 artik gate'i geciyor; aktif blocker artik yalnizca son family rerun execution (faz1-50)"
-  - "FAZ 2A steering kapanisi icin faz1-50 matched rerun source-of-record artefact'lari tamamlanmali"
+  - "FAZ 2A blocker'lari kapandi; kalan blocker'lar artik bir sonraki fazdaki release-control ve cutover-readiness isleridir"
+  - "Bu wave icinde acik family rerun kalmadi"
 notes: |
   ## Re-Qualification Durumu
+
+  - matched `faz1-50` rerun baseline ve candidate icin tamamlandi
+  - baseline:
+    - citation `88.0%`
+    - correct source `76.7%`
+    - hallucination `10.0%`
+    - refusal `100.0%`
+  - candidate:
+    - citation `88.0%`
+    - correct source `77.7%`
+    - hallucination `10.0%`
+    - refusal `100.0%`
+  - `faz1-50` ile birlikte `faz1-50`, `v2-95`, `v3-170` trio source-of-record olarak kapandi
+  - FAZ 2A category breakdown yenilendi:
+    - `evaluation/reports/faz2a-category-breakdown-2026-03-23.md`
+  - steering karari:
+    - `Re-Qualify Pass -> Cutover Readiness Closure`
+  - closure paketi:
+    - `coordination/faz2a-closure-matrix-2026-03-23.md`
+    - `coordination/faz2a-steering-decision-table-2026-03-23.md`
+    - `docs/FAZ2A-RETRIEVAL-COVERAGE-REQUALIFICATION-RAPORU-2026-03-23.md`
 
   - matched `v2-95` rerun baseline ve candidate icin tamamlandi
   - official source-of-record yalnizca monitored `r2` kosulari:
