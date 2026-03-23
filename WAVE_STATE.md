@@ -1,15 +1,29 @@
 # Wave State
 current_wave: faz2b-cutover-readiness-closure
-status: in_progress
+status: completed
 started_at: 2026-03-23T10:26:53+03:00
-last_activity: 2026-03-23T10:41:54+03:00
+last_activity: 2026-03-23T10:45:33+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "FAZ 2B wave 3 kapandi; siradaki is steering refresh ve cutover-readiness recommendation"
+next_action: "FAZ 2B kapandi; siradaki resmi is controlled cutover execution package"
 blockers:
-  - "Release-control must-close kalemleri acik: steering refresh"
-  - "Cutover karari icin FAZ 2B steering paketi henuz olusmadi"
+  - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
   ## FAZ 2B Durumu
+
+  - steering refresh kapandi:
+    - `coordination/faz2b-release-readiness-matrix-2026-03-23.md`
+    - `coordination/faz2b-closure-matrix-2026-03-23.md`
+    - `coordination/faz2b-steering-decision-table-2026-03-23.md`
+    - `docs/FAZ2B-CUTOVER-READINESS-CLOSURE-RAPORU-2026-03-23.md`
+  - resmi steering karari:
+    - `NARROW GO - controlled internal cutover / dar kapsam pilot`
+  - bu karar sunlari onaylar:
+    - re-qualified promoted lane ile kontrollu internal cutover
+    - dar kapsam pilot
+    - preserved baseline rollback
+  - bu karar sunlari onaylamaz:
+    - broad public production rollout
+    - customer appliance productization
 
   - wave 3 kapandi:
     - keepalive / supervision proof
