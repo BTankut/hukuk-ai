@@ -1,13 +1,31 @@
 # Wave State
-current_wave: faz2c-controlled-cutover-execution
+current_wave: faz2c-narrow-pilot-monitoring
 status: completed
-started_at: 2026-03-23T10:45:33+03:00
-last_activity: 2026-03-23T11:10:39+03:00
+started_at: 2026-03-23T11:10:39+03:00
+last_activity: 2026-03-23T11:35:15+03:00
 last_eval: evaluation/reports/eval_post_train_faz1-50_matched_dgx1_merged_wave15_20260323.json
-next_action: "Controlled cutover tamamlandi; siradaki resmi is narrow pilot monitoring veya rollback"
+next_action: "Dar kapsam pilot gozetimi aktif; snapshot trigger bozulursa rollback, aksi halde bir sonraki resmi faz/rapor beklenir"
 blockers:
   - "Broad production / productization ayri faz olarak ele alinmali"
 notes: |
+  ## Narrow Pilot Monitoring
+
+  - wave 2 kapandi:
+    - `scripts/faz2c/capture_narrow_pilot_snapshot.py`
+    - `docs/faz2c-narrow-pilot-monitoring-runbook.md`
+    - `coordination/faz2c-wave2-narrow-pilot-monitoring-2026-03-23.md`
+  - live snapshot sonucu:
+    - `rollback_recommended = false`
+    - health `ok`
+    - cited smoke `pass`
+    - audit/upstream/chat sayaçlari ilerledi
+    - `refusal_delta = 0`
+    - latency `10425.85ms`
+  - canli parser hardening:
+    - wrapper leakage `8000` live lane'de kapatildi
+    - `api-gateway/src/llm/client.py`
+    - `api-gateway/src/guardrails/pipeline.py`
+
   ## FAZ 2C Durumu
 
   - yeni resmi faz basladi:

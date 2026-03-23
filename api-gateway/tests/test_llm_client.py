@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 from config import Settings
 from llm.client import ChatMessage, LLMClient
@@ -68,3 +69,32 @@ def test_extract_text_keeps_plain_string_response() -> None:
     plain = "TBK m.49 haksız fiili düzenler. [Kaynak: TBK m.49]"
 
     assert LLMClient._extract_text(plain) == plain
+
+
+def test_extract_text_parses_wrapper_with_metadata_tail() -> None:
+    wrapped = (
+        "response=[{'role': 'assistant', 'content': 'TBK m.49 metnine göre kusurlu ve hukuka aykırı "
+        "fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]'}] "
+        "llm_output=None output_data=None log=None state=None tool_calls=None reasoning_content=None "
+        "llm_metadata={'response_metadata': {'token_usage': {'completion_tokens': 102}}}"
+    )
+
+    assert (
+        LLMClient._extract_text(wrapped)
+        == "TBK m.49 metnine göre kusurlu ve hukuka aykırı fiille başkasına zarar veren, bu zararı "
+        "gidermekle yükümlüdür. [Kaynak: TBK m.49]"
+    )
+
+
+def test_extract_text_parses_object_content_wrapper() -> None:
+    wrapped = (
+        "response=[{'role': 'assistant', 'content': 'TBK m.49 metnine göre kusurlu ve hukuka aykırı "
+        "fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]'}] "
+        "llm_output=None output_data=None log=None state=None"
+    )
+
+    assert (
+        LLMClient._extract_text(SimpleNamespace(content=wrapped))
+        == "TBK m.49 metnine göre kusurlu ve hukuka aykırı fiille başkasına zarar veren, bu zararı "
+        "gidermekle yükümlüdür. [Kaynak: TBK m.49]"
+    )

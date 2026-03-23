@@ -88,6 +88,12 @@ class GuardrailsPipeline:
         "unable to comply with that request",
     )
     _STRINGIFIED_RESPONSE_RE = re.compile(r"response=(\[[\s\S]*?\])\s+llm_output=")
+    _STRINGIFIED_RESPONSE_MARKERS = (
+        " llm_output=",
+        " output_data=",
+        " log=",
+        " state=",
+    )
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -231,29 +237,52 @@ class GuardrailsPipeline:
             return context["draft_answer"]
 
     @staticmethod
-    def _extract_text(result: Any) -> str:
+    def _safe_literal_list(payload_text: str) -> list[dict[str, Any]] | None:
+        try:
+            payload = ast.literal_eval(payload_text)
+        except Exception:
+            return None
+        return payload if isinstance(payload, list) else None
+
+    @classmethod
+    def _extract_stringified_response_payload(cls, result: str) -> list[dict[str, Any]] | None:
+        match = cls._STRINGIFIED_RESPONSE_RE.search(result)
+        if match:
+            return cls._safe_literal_list(match.group(1))
+
+        if not result.startswith("response="):
+            return None
+
+        start = len("response=")
+        end_positions = [
+            result.find(marker, start)
+            for marker in cls._STRINGIFIED_RESPONSE_MARKERS
+            if result.find(marker, start) != -1
+        ]
+        if not end_positions:
+            return None
+
+        return cls._safe_literal_list(result[start : min(end_positions)].strip())
+
+    @classmethod
+    def _extract_text(cls, result: Any) -> str:
         if isinstance(result, str):
-            match = GuardrailsPipeline._STRINGIFIED_RESPONSE_RE.search(result)
-            if match:
-                try:
-                    payload = ast.literal_eval(match.group(1))
-                except Exception:
-                    payload = None
-                if isinstance(payload, list):
-                    first = payload[0] if payload else None
-                    if isinstance(first, dict):
-                        content = first.get("content")
-                        if isinstance(content, str) and content.strip():
-                            return content
+            payload = cls._extract_stringified_response_payload(result)
+            if isinstance(payload, list):
+                first = payload[0] if payload else None
+                if isinstance(first, dict):
+                    content = first.get("content")
+                    if isinstance(content, str) and content.strip():
+                        return content
             return result
         if isinstance(result, dict):
             if "content" in result:
-                return str(result["content"])
+                return cls._extract_text(result["content"])
             if "response" in result:
-                return str(result["response"])
+                return cls._extract_text(result["response"])
         content = getattr(result, "content", None)
         if content:
-            return str(content)
+            return cls._extract_text(content)
         return str(result)
 
     def _deterministic_input_moderation_reason(self, query: str) -> str | None:

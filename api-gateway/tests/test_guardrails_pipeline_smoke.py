@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 from config import Settings
 from guardrails.pipeline import GuardrailsPipeline
@@ -93,3 +94,43 @@ def test_guardrails_pipeline_fail_opens_on_english_false_positive_refusal(monkey
     assert result.blocked is False
     assert result.answer.endswith("[Kaynak: TBK m.49]")
     assert "guardrails_fail_open_refusal_fallback" in result.reasons
+
+
+def test_guardrails_extract_text_parses_wrapper_with_metadata_tail():
+    wrapped = (
+        "response=[{'role': 'assistant', 'content': 'TBK m.49 uyarınca kusurlu ve hukuka aykırı "
+        "fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]'}] "
+        "llm_output=None output_data=None log=None state=None tool_calls=None reasoning_content=None "
+        "llm_metadata={'response_metadata': {'token_usage': {'completion_tokens': 42}}}"
+    )
+
+    assert GuardrailsPipeline._extract_text(wrapped) == (
+        "TBK m.49 uyarınca kusurlu ve hukuka aykırı fiille başkasına zarar veren, "
+        "bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]"
+    )
+
+
+def test_guardrails_extract_text_parses_object_content_wrapper():
+    wrapped = (
+        "response=[{'role': 'assistant', 'content': 'TBK m.49 uyarınca kusurlu ve hukuka aykırı "
+        "fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]'}] "
+        "llm_output=None output_data=None log=None state=None"
+    )
+
+    assert GuardrailsPipeline._extract_text(SimpleNamespace(content=wrapped)) == (
+        "TBK m.49 uyarınca kusurlu ve hukuka aykırı fiille başkasına zarar veren, "
+        "bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]"
+    )
+
+
+def test_guardrails_extract_text_parses_dict_response_wrapper():
+    wrapped = (
+        "response=[{'role': 'assistant', 'content': 'TBK m.49 uyarınca kusurlu ve hukuka aykırı "
+        "fiille başkasına zarar veren, bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]'}] "
+        "llm_output=None output_data=None log=None state=None"
+    )
+
+    assert GuardrailsPipeline._extract_text({"response": wrapped}) == (
+        "TBK m.49 uyarınca kusurlu ve hukuka aykırı fiille başkasına zarar veren, "
+        "bu zararı gidermekle yükümlüdür. [Kaynak: TBK m.49]"
+    )
