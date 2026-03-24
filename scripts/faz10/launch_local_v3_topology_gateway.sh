@@ -79,7 +79,7 @@ export TUNNEL_LOG_NAME="${TUNNEL_LOG_NAME:-${RC_SLUG}_${LEVEL_SLUG}_tunnel.log}"
 export TUNNEL_PID_NAME="${TUNNEL_PID_NAME:-${RC_SLUG}_${LEVEL_SLUG}_tunnel.pid}"
 export AUDIT_LOG_PATH="${AUDIT_LOG_PATH:-${REPO_ROOT}/runtime_logs/${RC_SLUG}_${LEVEL_SLUG}_audit.jsonl}"
 export TRACE_LOG_DIR="${TRACE_LOG_DIR:-${REPO_ROOT}/runtime_logs/${RC_SLUG}_${LEVEL_SLUG}_traces}"
-export SESSION_STORE_NAMESPACE="${SESSION_STORE_NAMESPACE:-hukuk-ai-${RC_SLUG}-${LEVEL_SLUG}}"
+export SESSION_STORE_NAMESPACE="${SESSION_STORE_NAMESPACE:-hukuk-ai-topology-${LEVEL_SLUG}}"
 export PARITY_TRACE_ENABLED="${PARITY_TRACE_ENABLED:-true}"
 export PARITY_TOPOLOGY_LABEL="${PARITY_TOPOLOGY_LABEL:-${TOPOLOGY_LEVEL}}"
 export PARITY_GENERATION_CACHE_POLICY="${PARITY_GENERATION_CACHE_POLICY:-off}"
@@ -158,5 +158,4 @@ if port_is_listening "${GATEWAY_PORT}"; then
 fi
 
 cd "${REPO_ROOT}"
-bash scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh
-wait_for_openai_models "${LOCAL_TUNNEL_PORT}" "${MODEL_NAME}"
+bash scripts/faz10/launch_local_runtime_gateway.sh

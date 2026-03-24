@@ -2572,11 +2572,14 @@ def _session_namespace_stage_payload(*, request: Request, session_id: str) -> di
     base_namespace = os.getenv("SESSION_STORE_NAMESPACE", "hukuk-ai")
     mode = os.getenv("PARITY_SESSION_NAMESPACE_MODE", "canonical")
     namespace = base_namespace
+    request_local_suffix = None
     if mode == "fresh_per_request":
-        namespace = f"{base_namespace}:{ensure_request_id(request)}"
+        request_local_suffix = "request_id"
+        namespace = f"{base_namespace}:<request-local>"
     return {
         "mode": mode,
         "namespace": namespace,
+        "request_local_suffix": request_local_suffix,
         "session_id_present": bool(session_id),
     }
 

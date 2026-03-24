@@ -44,4 +44,4 @@ export AUDIT_LOG_PATH="${AUDIT_LOG_PATH:-${REPO_ROOT}/runtime_logs/rc_k_audit.js
 export TRACE_LOG_DIR="${TRACE_LOG_DIR:-${REPO_ROOT}/runtime_logs/rc_k_traces}"
 
 cd "${REPO_ROOT}"
-bash scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh
+bash scripts/faz10/launch_local_runtime_gateway.sh

@@ -1,0 +1,2260 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-24T21:02:21.113474+00:00",
+    "questions_source": "/tmp/faz10_tbk051.json",
+    "api_url": "http://127.0.0.1:8152",
+    "mock_mode": false,
+    "total_questions": 1,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "diagnostic",
+    "eval_family": "faz10-v3-32-l0",
+    "model_ref": "rc_j_l0",
+    "checkpoint_ref": "rc-j-l0-20260324-v2",
+    "git_commit": "unknown",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.0,
+      "timeout_seconds": 180.0,
+      "include_trace": true,
+      "api_key_present": false
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 0.0,
+    "hallucination_rate": 1.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.4,
+    "phrase_hit_rate": 0.0,
+    "avg_response_time_ms": 16450.4,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 0.0,
+      "passes": false,
+      "status": "❌ BAŞARISIZ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 1.0,
+      "passes": false,
+      "status": "❌ BAŞARISIZ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": false,
+      "status": "❌ FAZ 1 KRİTERLERİ KARŞILANMADI"
+    }
+  },
+  "by_category": {
+    "tbk_genel": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 0.0,
+      "hallucination_rate": 1.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.4
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 0.0,
+      "hallucination_rate": 1.0,
+      "avg_keyword_coverage": 0.4
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-051",
+      "question_text": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+      "cited_sources": [
+        "TBK m.82",
+        "TBK m.156"
+      ],
+      "expected_sources": [
+        "TBK m.146",
+        "TBK m.149"
+      ],
+      "expected_keywords": [
+        "on yıl",
+        "zamanaşımı",
+        "muacceliyet",
+        "alacak",
+        "başlangıç"
+      ],
+      "expected_answer_contains": "on yıllık zamanaşımı",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 0,
+      "expected_source_count": 2,
+      "correct_source_rate": 0.0,
+      "is_hallucination": true,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.4,
+      "phrase_hit_result": false,
+      "response_time_ms": 16450.4,
+      "blocked": false,
+      "final_mode": "answer",
+      "answer_contract": {
+        "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+        "primary_source_id": "TBK m.82",
+        "secondary_source_ids": [
+          "TBK m.156"
+        ],
+        "law_scope": [
+          "TBK"
+        ],
+        "source_validity": "active",
+        "unsupported_reason": null,
+        "verifier_status": "warn",
+        "final_mode": "answer",
+        "claim_units": []
+      },
+      "trace": {
+        "request_id": "chatcmpl-9a6ace7f1072",
+        "timestamp": "2026-03-24T21:02:20.733920+00:00",
+        "question_raw": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+        "question_normalized": "tbk'ya gore genel sozlesmeden dogan alacaklarda zamanasimi suresi ne kadardir ve bu sure hangi andan itibaren islemeye baslar?",
+        "parsed_query": {
+          "enriched_query": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+          "retrieval_query": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+          "law_filter": null,
+          "mentioned_laws": [
+            "TBK"
+          ],
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "law_scope_signal": {
+          "expected_law_scope": [
+            "TBK"
+          ],
+          "resolved_law_scope": [
+            "TBK"
+          ],
+          "explicit_law_scope": [
+            "TBK"
+          ],
+          "scope_class": "single_law_high_conf",
+          "single_law_question": true,
+          "multi_law_question": false,
+          "scope_ambiguous": false,
+          "normalized_question": "tbk'ya gore genel sozlesmeden dogan alacaklarda zamanasimi suresi ne kadardir ve bu sure hangi andan itibaren islemeye baslar?"
+        },
+        "question_type": "procedure",
+        "target_date": "2026-03-25",
+        "retrieval_top_k": 20,
+        "rerank_list": [
+          {
+            "source_id": "TBK m.82",
+            "citation": "TBK m.82",
+            "source": "TBK",
+            "score": 0.8068142533302307,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "82",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.82",
+            "citation": "TBK m.82",
+            "source": "TBK",
+            "score": 0.8068142533302307,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "82",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.156",
+            "citation": "TBK m.156",
+            "source": "TBK",
+            "score": 0.8063119649887085,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "156",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.156",
+            "citation": "TBK m.156",
+            "source": "TBK",
+            "score": 0.8063119649887085,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "156",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.147",
+            "citation": "TBK m.147",
+            "source": "TBK",
+            "score": 0.8053884506225586,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "147",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.147",
+            "citation": "TBK m.147",
+            "source": "TBK",
+            "score": 0.8053884506225586,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "147",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.146",
+            "citation": "TBK m.146",
+            "source": "TBK",
+            "score": 0.8053522109985352,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "146",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.146",
+            "citation": "TBK m.146",
+            "source": "TBK",
+            "score": 0.8053520917892456,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "146",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.153",
+            "citation": "TBK m.153",
+            "source": "TBK",
+            "score": 0.801178514957428,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "153",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.153",
+            "citation": "TBK m.153",
+            "source": "TBK",
+            "score": 0.801178514957428,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "153",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.149",
+            "citation": "TBK m.149",
+            "source": "TBK",
+            "score": 0.796823263168335,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "149",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.149",
+            "citation": "TBK m.149",
+            "source": "TBK",
+            "score": 0.7968232035636902,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "149",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.231",
+            "citation": "TBK m.231",
+            "source": "TBK",
+            "score": 0.7967360615730286,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "231",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.231",
+            "citation": "TBK m.231",
+            "source": "TBK",
+            "score": 0.7967360615730286,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "231",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TMK m.493",
+            "citation": "TMK m.493",
+            "source": "TMK",
+            "score": 0.7950771450996399,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "493",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TMK m.493",
+            "citation": "TMK m.493",
+            "source": "TMK",
+            "score": 0.7950770854949951,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "493",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.157",
+            "citation": "TBK m.157",
+            "source": "TBK",
+            "score": 0.7938464879989624,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "157",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.157",
+            "citation": "TBK m.157",
+            "source": "TBK",
+            "score": 0.7938463091850281,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "157",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.72",
+            "citation": "TBK m.72",
+            "source": "TBK",
+            "score": 0.7925565242767334,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "72",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.72",
+            "citation": "TBK m.72",
+            "source": "TBK",
+            "score": 0.7925565242767334,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "72",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          }
+        ],
+        "assembled_evidence": [
+          {
+            "source_id": "TBK m.82",
+            "citation": "TBK m.82",
+            "source": "TBK",
+            "score": 0.8068142533302307,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "82",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak"
+          },
+          {
+            "source_id": "TBK m.82",
+            "citation": "TBK m.82",
+            "source": "TBK",
+            "score": 0.8068142533302307,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "82",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak"
+          },
+          {
+            "source_id": "TBK m.156",
+            "citation": "TBK m.156",
+            "source": "TBK",
+            "score": 0.8063119649887085,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "156",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır."
+          },
+          {
+            "source_id": "TBK m.156",
+            "citation": "TBK m.156",
+            "source": "TBK",
+            "score": 0.8063119649887085,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "156",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır."
+          },
+          {
+            "source_id": "TBK m.147",
+            "citation": "TBK m.147",
+            "source": "TBK",
+            "score": 0.8053884506225586,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "147",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar."
+          },
+          {
+            "source_id": "TBK m.147",
+            "citation": "TBK m.147",
+            "source": "TBK",
+            "score": 0.8053884506225586,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "147",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar."
+          },
+          {
+            "source_id": "TBK m.146",
+            "citation": "TBK m.146",
+            "source": "TBK",
+            "score": 0.8053522109985352,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "146",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir."
+          },
+          {
+            "source_id": "TBK m.146",
+            "citation": "TBK m.146",
+            "source": "TBK",
+            "score": 0.8053520917892456,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "146",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir."
+          },
+          {
+            "source_id": "TBK m.153",
+            "citation": "TBK m.153",
+            "source": "TBK",
+            "score": 0.801178514957428,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "153",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi"
+          },
+          {
+            "source_id": "TBK m.153",
+            "citation": "TBK m.153",
+            "source": "TBK",
+            "score": 0.801178514957428,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "153",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi"
+          },
+          {
+            "source_id": "TBK m.149",
+            "citation": "TBK m.149",
+            "source": "TBK",
+            "score": 0.796823263168335,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "149",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar."
+          },
+          {
+            "source_id": "TBK m.149",
+            "citation": "TBK m.149",
+            "source": "TBK",
+            "score": 0.7968232035636902,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "149",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar."
+          },
+          {
+            "source_id": "TBK m.231",
+            "citation": "TBK m.231",
+            "source": "TBK",
+            "score": 0.7967360615730286,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "231",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları"
+          },
+          {
+            "source_id": "TBK m.231",
+            "citation": "TBK m.231",
+            "source": "TBK",
+            "score": 0.7967360615730286,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "231",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları"
+          },
+          {
+            "source_id": "TMK m.493",
+            "citation": "TMK m.493",
+            "source": "TMK",
+            "score": 0.7950771450996399,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "493",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı"
+          },
+          {
+            "source_id": "TMK m.493",
+            "citation": "TMK m.493",
+            "source": "TMK",
+            "score": 0.7950770854949951,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "493",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı"
+          },
+          {
+            "source_id": "TBK m.157",
+            "citation": "TBK m.157",
+            "source": "TBK",
+            "score": 0.7938464879989624,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "157",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar."
+          },
+          {
+            "source_id": "TBK m.157",
+            "citation": "TBK m.157",
+            "source": "TBK",
+            "score": 0.7938463091850281,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "157",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar."
+          },
+          {
+            "source_id": "TBK m.72",
+            "citation": "TBK m.72",
+            "source": "TBK",
+            "score": 0.7925565242767334,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "72",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir."
+          },
+          {
+            "source_id": "TBK m.72",
+            "citation": "TBK m.72",
+            "source": "TBK",
+            "score": 0.7925565242767334,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "72",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir."
+          }
+        ],
+        "allowed_source_whitelist": [
+          "TBK m.82",
+          "TBK m.156",
+          "TBK m.147",
+          "TBK m.146",
+          "TBK m.153",
+          "TBK m.149",
+          "TBK m.231",
+          "TMK m.493",
+          "TBK m.157",
+          "TBK m.72"
+        ],
+        "answer_contract": {
+          "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+          "primary_source_id": "TBK m.82",
+          "secondary_source_ids": [
+            "TBK m.156"
+          ],
+          "law_scope": [
+            "TBK"
+          ],
+          "source_validity": "active",
+          "unsupported_reason": null,
+          "verifier_status": "warn",
+          "final_mode": "answer",
+          "claim_units": []
+        },
+        "model_cited_source_ids": [
+          "TBK m.82",
+          "TBK m.156"
+        ],
+        "verifier_verdict": null,
+        "final_mode": "answer",
+        "final_reason": null,
+        "query_signals": {
+          "user_query": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+          "enriched_query": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+          "retrieval_query": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+          "law_filter": null,
+          "mentioned_laws": [
+            "TBK"
+          ],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 20,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [
+            {
+              "source_id": "TBK m.82",
+              "citation": "TBK m.82",
+              "source": "TBK",
+              "score": 0.8068142533302307,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "82",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.82",
+              "citation": "TBK m.82",
+              "source": "TBK",
+              "score": 0.8068142533302307,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "82",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.156",
+              "citation": "TBK m.156",
+              "source": "TBK",
+              "score": 0.8063119649887085,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "156",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.156",
+              "citation": "TBK m.156",
+              "source": "TBK",
+              "score": 0.8063119649887085,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "156",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.147",
+              "citation": "TBK m.147",
+              "source": "TBK",
+              "score": 0.8053884506225586,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "147",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.147",
+              "citation": "TBK m.147",
+              "source": "TBK",
+              "score": 0.8053884506225586,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "147",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.146",
+              "citation": "TBK m.146",
+              "source": "TBK",
+              "score": 0.8053522109985352,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "146",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.146",
+              "citation": "TBK m.146",
+              "source": "TBK",
+              "score": 0.8053520917892456,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "146",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.153",
+              "citation": "TBK m.153",
+              "source": "TBK",
+              "score": 0.801178514957428,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "153",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.153",
+              "citation": "TBK m.153",
+              "source": "TBK",
+              "score": 0.801178514957428,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "153",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.149",
+              "citation": "TBK m.149",
+              "source": "TBK",
+              "score": 0.796823263168335,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "149",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.149",
+              "citation": "TBK m.149",
+              "source": "TBK",
+              "score": 0.7968232035636902,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "149",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.231",
+              "citation": "TBK m.231",
+              "source": "TBK",
+              "score": 0.7967360615730286,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "231",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.231",
+              "citation": "TBK m.231",
+              "source": "TBK",
+              "score": 0.7967360615730286,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "231",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.493",
+              "citation": "TMK m.493",
+              "source": "TMK",
+              "score": 0.7950771450996399,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "493",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.493",
+              "citation": "TMK m.493",
+              "source": "TMK",
+              "score": 0.7950770854949951,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "493",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.157",
+              "citation": "TBK m.157",
+              "source": "TBK",
+              "score": 0.7938464879989624,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "157",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.157",
+              "citation": "TBK m.157",
+              "source": "TBK",
+              "score": 0.7938463091850281,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "157",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.72",
+              "citation": "TBK m.72",
+              "source": "TBK",
+              "score": 0.7925565242767334,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "72",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.72",
+              "citation": "TBK m.72",
+              "source": "TBK",
+              "score": 0.7925565242767334,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "72",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            }
+          ],
+          "post_rerank_chunks": [
+            {
+              "source_id": "TBK m.82",
+              "citation": "TBK m.82",
+              "source": "TBK",
+              "score": 0.8068142533302307,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "82",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.82",
+              "citation": "TBK m.82",
+              "source": "TBK",
+              "score": 0.8068142533302307,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "82",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.156",
+              "citation": "TBK m.156",
+              "source": "TBK",
+              "score": 0.8063119649887085,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "156",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.156",
+              "citation": "TBK m.156",
+              "source": "TBK",
+              "score": 0.8063119649887085,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "156",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.147",
+              "citation": "TBK m.147",
+              "source": "TBK",
+              "score": 0.8053884506225586,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "147",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.147",
+              "citation": "TBK m.147",
+              "source": "TBK",
+              "score": 0.8053884506225586,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "147",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.146",
+              "citation": "TBK m.146",
+              "source": "TBK",
+              "score": 0.8053522109985352,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "146",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.146",
+              "citation": "TBK m.146",
+              "source": "TBK",
+              "score": 0.8053520917892456,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "146",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.153",
+              "citation": "TBK m.153",
+              "source": "TBK",
+              "score": 0.801178514957428,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "153",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.153",
+              "citation": "TBK m.153",
+              "source": "TBK",
+              "score": 0.801178514957428,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "153",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.149",
+              "citation": "TBK m.149",
+              "source": "TBK",
+              "score": 0.796823263168335,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "149",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.149",
+              "citation": "TBK m.149",
+              "source": "TBK",
+              "score": 0.7968232035636902,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "149",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.231",
+              "citation": "TBK m.231",
+              "source": "TBK",
+              "score": 0.7967360615730286,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "231",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.231",
+              "citation": "TBK m.231",
+              "source": "TBK",
+              "score": 0.7967360615730286,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "231",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.493",
+              "citation": "TMK m.493",
+              "source": "TMK",
+              "score": 0.7950771450996399,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "493",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.493",
+              "citation": "TMK m.493",
+              "source": "TMK",
+              "score": 0.7950770854949951,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "493",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.157",
+              "citation": "TBK m.157",
+              "source": "TBK",
+              "score": 0.7938464879989624,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "157",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.157",
+              "citation": "TBK m.157",
+              "source": "TBK",
+              "score": 0.7938463091850281,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "157",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.72",
+              "citation": "TBK m.72",
+              "source": "TBK",
+              "score": 0.7925565242767334,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "72",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.72",
+              "citation": "TBK m.72",
+              "source": "TBK",
+              "score": 0.7925565242767334,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "72",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            }
+          ]
+        },
+        "context_assembly": {
+          "context_chunk_citations": [
+            "TBK m.82",
+            "TBK m.82",
+            "TBK m.156",
+            "TBK m.156",
+            "TBK m.147",
+            "TBK m.147",
+            "TBK m.146",
+            "TBK m.146",
+            "TBK m.153",
+            "TBK m.153",
+            "TBK m.149",
+            "TBK m.149",
+            "TBK m.231",
+            "TBK m.231",
+            "TMK m.493",
+            "TMK m.493",
+            "TBK m.157",
+            "TBK m.157",
+            "TBK m.72",
+            "TBK m.72"
+          ],
+          "assembled_context": "[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir.",
+          "assembled_evidence": [
+            {
+              "source_id": "TBK m.82",
+              "citation": "TBK m.82",
+              "source": "TBK",
+              "score": 0.8068142533302307,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "82",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak"
+            },
+            {
+              "source_id": "TBK m.82",
+              "citation": "TBK m.82",
+              "source": "TBK",
+              "score": 0.8068142533302307,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "82",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak"
+            },
+            {
+              "source_id": "TBK m.156",
+              "citation": "TBK m.156",
+              "source": "TBK",
+              "score": 0.8063119649887085,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "156",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır."
+            },
+            {
+              "source_id": "TBK m.156",
+              "citation": "TBK m.156",
+              "source": "TBK",
+              "score": 0.8063119649887085,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "156",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır."
+            },
+            {
+              "source_id": "TBK m.147",
+              "citation": "TBK m.147",
+              "source": "TBK",
+              "score": 0.8053884506225586,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "147",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar."
+            },
+            {
+              "source_id": "TBK m.147",
+              "citation": "TBK m.147",
+              "source": "TBK",
+              "score": 0.8053884506225586,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "147",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar."
+            },
+            {
+              "source_id": "TBK m.146",
+              "citation": "TBK m.146",
+              "source": "TBK",
+              "score": 0.8053522109985352,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "146",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir."
+            },
+            {
+              "source_id": "TBK m.146",
+              "citation": "TBK m.146",
+              "source": "TBK",
+              "score": 0.8053520917892456,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "146",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir."
+            },
+            {
+              "source_id": "TBK m.153",
+              "citation": "TBK m.153",
+              "source": "TBK",
+              "score": 0.801178514957428,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "153",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi"
+            },
+            {
+              "source_id": "TBK m.153",
+              "citation": "TBK m.153",
+              "source": "TBK",
+              "score": 0.801178514957428,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "153",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi"
+            },
+            {
+              "source_id": "TBK m.149",
+              "citation": "TBK m.149",
+              "source": "TBK",
+              "score": 0.796823263168335,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "149",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar."
+            },
+            {
+              "source_id": "TBK m.149",
+              "citation": "TBK m.149",
+              "source": "TBK",
+              "score": 0.7968232035636902,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "149",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar."
+            },
+            {
+              "source_id": "TBK m.231",
+              "citation": "TBK m.231",
+              "source": "TBK",
+              "score": 0.7967360615730286,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "231",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları"
+            },
+            {
+              "source_id": "TBK m.231",
+              "citation": "TBK m.231",
+              "source": "TBK",
+              "score": 0.7967360615730286,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "231",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları"
+            },
+            {
+              "source_id": "TMK m.493",
+              "citation": "TMK m.493",
+              "source": "TMK",
+              "score": 0.7950771450996399,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "493",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı"
+            },
+            {
+              "source_id": "TMK m.493",
+              "citation": "TMK m.493",
+              "source": "TMK",
+              "score": 0.7950770854949951,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "493",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı"
+            },
+            {
+              "source_id": "TBK m.157",
+              "citation": "TBK m.157",
+              "source": "TBK",
+              "score": 0.7938464879989624,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "157",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar."
+            },
+            {
+              "source_id": "TBK m.157",
+              "citation": "TBK m.157",
+              "source": "TBK",
+              "score": 0.7938463091850281,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "157",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar."
+            },
+            {
+              "source_id": "TBK m.72",
+              "citation": "TBK m.72",
+              "source": "TBK",
+              "score": 0.7925565242767334,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "72",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir."
+            },
+            {
+              "source_id": "TBK m.72",
+              "citation": "TBK m.72",
+              "source": "TBK",
+              "score": 0.7925565242767334,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "72",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir."
+            }
+          ],
+          "allowed_source_whitelist": [
+            "TBK m.82",
+            "TBK m.156",
+            "TBK m.147",
+            "TBK m.146",
+            "TBK m.153",
+            "TBK m.149",
+            "TBK m.231",
+            "TMK m.493",
+            "TBK m.157",
+            "TBK m.72"
+          ]
+        },
+        "generation_outcome": {
+          "decision_lane": "rag",
+          "blocked": false,
+          "guardrails_reasons": [
+            "source_lock_fallback"
+          ],
+          "verification": null,
+          "final_mode": "answer",
+          "final_reason": null
+        },
+        "parity_trace": {
+          "stages": [
+            {
+              "stage": "raw_input_request",
+              "hash": "d0bcafa991582fedb90db8abc8e28baad1eafb2198cfbd95b8538de2266f9b5e",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?"
+                  }
+                ],
+                "stream": false,
+                "temperature": null,
+                "max_tokens": 512,
+                "session_id_present": false,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true
+              }
+            },
+            {
+              "stage": "normalized_request",
+              "hash": "8a205eb9222eb005ceeeb0553ba8ba82127f30927765ec5cfe286181642c1f53",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?"
+                  }
+                ],
+                "stream": false,
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true
+              }
+            },
+            {
+              "stage": "auth_enriched_request",
+              "hash": "8a205eb9222eb005ceeeb0553ba8ba82127f30927765ec5cfe286181642c1f53",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?"
+                  }
+                ],
+                "stream": false,
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true
+              }
+            },
+            {
+              "stage": "session_enriched_request",
+              "hash": "e60e8f2923246d4261779fd92c018ff910b8522005b85d2e183b5b76b025f35c",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?"
+                  }
+                ],
+                "stream": false,
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true,
+                "session_id_present": true,
+                "conversation_history": [],
+                "request_id_present": true,
+                "trace_id_present": true
+              }
+            },
+            {
+              "stage": "retrieval_input_payload",
+              "hash": "09717b7ec5b5164d337377340ee99c4b99072b32d4025fc9651932b0e3ce870f",
+              "payload": {
+                "query": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+                "top_k": 20,
+                "metadata_filter": null,
+                "mentioned_laws": [
+                  "TBK"
+                ],
+                "explicit_article_refs": [],
+                "forced_article_refs": [],
+                "applied_expansions": [],
+                "reranker_enabled": false
+              }
+            },
+            {
+              "stage": "retrieved_source_id_ordered_list",
+              "hash": "ce9413843b93a4b2755975c4daabcf1c1f17640009b3bb7b6bc5d30b36f21c43",
+              "payload": {
+                "ordered_source_id_list": [
+                  "TBK m.82",
+                  "TBK m.82",
+                  "TBK m.156",
+                  "TBK m.156",
+                  "TBK m.147",
+                  "TBK m.147",
+                  "TBK m.146",
+                  "TBK m.146",
+                  "TBK m.153",
+                  "TBK m.153",
+                  "TBK m.149",
+                  "TBK m.149",
+                  "TBK m.231",
+                  "TBK m.231",
+                  "TMK m.493",
+                  "TMK m.493",
+                  "TBK m.157",
+                  "TBK m.157",
+                  "TBK m.72",
+                  "TBK m.72"
+                ]
+              }
+            },
+            {
+              "stage": "assembly_payload",
+              "hash": "50769594b9a6c8701144f450aec8d0ee3ccd1b4d8990d97261e33c27aba62463",
+              "payload": {
+                "query": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+                "context": "[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir."
+              }
+            },
+            {
+              "stage": "model_request_payload",
+              "hash": "c8f39541364d2b721dd1c9a5feed9a921017d4f89eb991d87793c83ca3b5e942",
+              "payload": {
+                "model": "/models/merged_model_fabric_stage_20260321",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content": "Sen bir Türk hukuku asistanısın. YALNIZCA verilen KAYNAKLAR bölümünü kullan. Kaynakta bulunmayan bilgi, sonuç veya madde üretme.\n\nYanıtı üretmeden önce zihinsel olarak şu sırayı izle, fakat bu adımları kullanıcıya yazma:\n1. Sorunun gerçekten hangi kanun ailesine dayandığını belirle (TBK, TMK, TCK, HMK, TTK, İİK).\n2. Soru belirli bir maddeye atıf yapıyorsa ve o madde kaynaklarda varsa önce onu değerlendir.\n3. Her iddiayı yalnız gerçekten dayandığın kaynak maddelerle eşleştir.\n\nZorunlu kurallar:\n- Her hukuki iddiada en yakın ilgili '[Kaynak: X]' etiketini kullan.\n- Kanun prefixlerini asla karıştırma; TBK/TMK/TCK/HMK/TTK/İİK aynen korunmalı.\n- Komşu veya benzer maddeyi yalnız yakın olduğu için cite etme; sadece gerçekten dayandığın maddeyi yaz.\n- Cross-law sorularda cevap gerçekten iki kanuna dayanıyorsa her iki kanundan da açık kaynak göster; dayanmıyorsa gereksiz ikinci kanun ekleme.\n- Önce kısa sonucu ver, sonra en fazla üç kısa dayanak maddesiyle devam et.\n- Kaynak yetersizse açıkça bunu söyle ve tahmin yürütme."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Aşağıdaki kaynak metinlerini kullanarak soruyu yanıtla. Önce tek cümlelik sonucu ver. Ardından yalnız gerçekten dayandığın maddeleri '[Kaynak: X]' biçiminde göster. Soruda açık madde numarası geçiyorsa ve kaynaklarda varsa o maddeyi atlama.\n\nKAYNAKLAR:\n[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir.\n\nSORU:\nTBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?"
+                  }
+                ],
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "extra_body": {
+                  "chat_template_kwargs": {
+                    "enable_thinking": false
+                  }
+                },
+                "seed": 20260324
+              }
+            },
+            {
+              "stage": "generation_contract",
+              "hash": "4480b9c27f5038f744059c5140b3fd7a4037f56917fec10d94e177d8a3ae0d38",
+              "payload": {
+                "temperature": 0.1,
+                "top_p": null,
+                "top_k": null,
+                "max_tokens": 512,
+                "stop": null,
+                "seed": 20260324,
+                "retry_count": 0,
+                "timeout_seconds": 180.0,
+                "streaming": false,
+                "enable_thinking": false
+              }
+            },
+            {
+              "stage": "raw_answer_object",
+              "hash": "daf55a7f0be1d77be64d680c29b8dde0b00792f48bf5f3e6b870a3f2e8810f14",
+              "payload": {
+                "role": "assistant",
+                "content": "TBK m.146 uyarınca, kanunda aksine bir hüküm bulunmadıkça her alacak on yıllık zamanaşımına tabidir. TBK m.149'a göre zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar; alacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde ise zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar [Kaynak: TBK m.146] [Kaynak: TBK m.149].",
+                "extracted_text": "TBK m.146 uyarınca, kanunda aksine bir hüküm bulunmadıkça her alacak on yıllık zamanaşımına tabidir. TBK m.149'a göre zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar; alacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde ise zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar [Kaynak: TBK m.146] [Kaynak: TBK m.149].",
+                "finish_reason": "stop"
+              }
+            },
+            {
+              "stage": "response_envelope",
+              "hash": "df66561b7146a79c92dde6529917a0e96a9e70b729f3d495caf79418fc5e8d79",
+              "payload": {
+                "object": "chat.completion",
+                "model": "hukuk-lora",
+                "choices": [
+                  {
+                    "index": 0,
+                    "message": {
+                      "role": "assistant",
+                      "content": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır."
+                    },
+                    "finish_reason": "stop"
+                  }
+                ],
+                "citations": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "blocked": false,
+                "guardrails_reasons": [
+                  "source_lock_fallback"
+                ],
+                "verification": null,
+                "final_mode": "answer",
+                "final_reason": null,
+                "answer_contract": {
+                  "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                  "primary_source_id": "TBK m.82",
+                  "secondary_source_ids": [
+                    "TBK m.156"
+                  ],
+                  "law_scope": [
+                    "TBK"
+                  ],
+                  "source_validity": "active",
+                  "unsupported_reason": null,
+                  "verifier_status": "warn",
+                  "final_mode": "answer",
+                  "claim_units": []
+                }
+              }
+            },
+            {
+              "stage": "eval_client_parsed_object",
+              "hash": "67345bc6f1c2850b9e18abde86f4b9e5ce5dfa070f31afaf6d5ca67b47995bfc",
+              "payload": {
+                "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                "citations": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "blocked": false,
+                "verification": null,
+                "final_mode": "answer",
+                "final_reason": null,
+                "answer_contract": {
+                  "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                  "primary_source_id": "TBK m.82",
+                  "secondary_source_ids": [
+                    "TBK m.156"
+                  ],
+                  "law_scope": [
+                    "TBK"
+                  ],
+                  "source_validity": "active",
+                  "unsupported_reason": null,
+                  "verifier_status": "warn",
+                  "final_mode": "answer",
+                  "claim_units": []
+                }
+              }
+            },
+            {
+              "stage": "normalized_parity_object",
+              "hash": "b22384000de0f251d87e358ce53ff9caffe6c86027680be6f2514a2336981259",
+              "payload": {
+                "final_mode": "answer",
+                "answer_body": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                "refusal_body": "",
+                "refusal_reason": null,
+                "ordered_citation_list": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "ordered_source_id_list": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "ordered_canonical_norm_keys": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "visible_citation_projection": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ]
+              }
+            }
+          ],
+          "preprojection_hash": "daf55a7f0be1d77be64d680c29b8dde0b00792f48bf5f3e6b870a3f2e8810f14",
+          "normalized_parity_hash": "b22384000de0f251d87e358ce53ff9caffe6c86027680be6f2514a2336981259"
+        },
+        "v3_runtime_parity_trace": {
+          "schema_version": "faz10-v3-runtime-parity-trace-schema-v1",
+          "topology_label": "L0",
+          "stages": [
+            {
+              "stage": "normalized_request",
+              "hash": "8a205eb9222eb005ceeeb0553ba8ba82127f30927765ec5cfe286181642c1f53",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?"
+                  }
+                ],
+                "stream": false,
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true
+              }
+            },
+            {
+              "stage": "model_request_payload",
+              "hash": "c8f39541364d2b721dd1c9a5feed9a921017d4f89eb991d87793c83ca3b5e942",
+              "payload": {
+                "model": "/models/merged_model_fabric_stage_20260321",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content": "Sen bir Türk hukuku asistanısın. YALNIZCA verilen KAYNAKLAR bölümünü kullan. Kaynakta bulunmayan bilgi, sonuç veya madde üretme.\n\nYanıtı üretmeden önce zihinsel olarak şu sırayı izle, fakat bu adımları kullanıcıya yazma:\n1. Sorunun gerçekten hangi kanun ailesine dayandığını belirle (TBK, TMK, TCK, HMK, TTK, İİK).\n2. Soru belirli bir maddeye atıf yapıyorsa ve o madde kaynaklarda varsa önce onu değerlendir.\n3. Her iddiayı yalnız gerçekten dayandığın kaynak maddelerle eşleştir.\n\nZorunlu kurallar:\n- Her hukuki iddiada en yakın ilgili '[Kaynak: X]' etiketini kullan.\n- Kanun prefixlerini asla karıştırma; TBK/TMK/TCK/HMK/TTK/İİK aynen korunmalı.\n- Komşu veya benzer maddeyi yalnız yakın olduğu için cite etme; sadece gerçekten dayandığın maddeyi yaz.\n- Cross-law sorularda cevap gerçekten iki kanuna dayanıyorsa her iki kanundan da açık kaynak göster; dayanmıyorsa gereksiz ikinci kanun ekleme.\n- Önce kısa sonucu ver, sonra en fazla üç kısa dayanak maddesiyle devam et.\n- Kaynak yetersizse açıkça bunu söyle ve tahmin yürütme."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Aşağıdaki kaynak metinlerini kullanarak soruyu yanıtla. Önce tek cümlelik sonucu ver. Ardından yalnız gerçekten dayandığın maddeleri '[Kaynak: X]' biçiminde göster. Soruda açık madde numarası geçiyorsa ve kaynaklarda varsa o maddeyi atlama.\n\nKAYNAKLAR:\n[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.82]\nTBK m.82 - D. Zamanaşımı / Sebepsiz zenginleşmeden doğan istem hakkı, hak sahibinin\ngeri isteme hakkı olduğunu öğrendiği tarihten başlayarak iki yılın ve her hâlde zenginleşmenin gerçekleştiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Zenginleşme, zenginleşenin bir alacak hakkı kazanması suretiyle gerçekleşmişse diğer taraf, istem hakkı zamanaşımına uğramış olsa bile, her zaman bu borcunu ifadan kaçınabilir. İKİNCİ BÖLÜM Borç İlişkisinin Hükümleri BİRİNCİ AYIRIM Borçların İfası A. Genel olarak\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.156]\nTBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye\nbaşlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.147]\nTBK m.147 - II. Beş yıllık / Aşağıdaki alacaklar için beş yıllık zamanaşımı\nuygulanır: 1. Kira bedelleri, anapara faizleri ve ücret gibi diğer dönemsel edimler. 2. Otel, motel, pansiyon ve tatil köyü gibi yerlerdeki konaklama bedelleri ile lokanta ve benzeri yerlerdeki yeme içme bedelleri. 3. Küçük sanat işlerinden ve küçük çapta perakende satışlardan doğan alacaklar. 4. Bir ortaklıkta, ortaklık sözleşmesinden doğan ve ortakların birbirleri veya kendileri ile ortaklık arasındaki; bir ortaklığın müdürleri, temsilcileri, denetçileri ile ortaklık veya ortaklar arasındaki alacaklar. 5. Vekâlet, komisyon ve acentalık sözleşmelerinden, ticari simsarlık ücreti alacağı dışında, simsarlık sözleşmesinden doğan alacaklar. 6. Yüklenicinin yükümlülüklerini ağır kusuruyla hiç ya da gereği gibi ifa etmemesi dışında, eser sözleşmesinden doğan alacaklar.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.146]\nTBK m.146 - I. On yıllık zamanaşımı / Kanunda aksine bir\nhüküm bulunmadıkça, her alacak on yıllık zamanaşımına tabidir.\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.153]\nTBK m.153 - C. Zamanaşımının durması / Aşağıdaki durumlarda zamanaşımı işlemeye başlamaz,\nbaşlamışsa durur: 1. Velayet süresince, çocukların ana ve babalarından olan alacakları için. 2. Vesayet süresince, vesayet altında bulunanların vasiden veya vesayet işlemleri sebebiyle Devletten olan alacakları için. 3. Evlilik devam ettiği sürece, eşlerin diğerinden olan alacakları için. 4. Hizmet ilişkisi süresince, ev hizmetlilerinin onları çalıştıranlardan olan alacakları için. 5. Borçlu, alacak üzerinde intifa hakkına sahip olduğu sürece. 6. Alacağı, Türk mahkemelerinde ileri sürme imkânının bulunmadığı sürece. 7. Alacaklı ve borçlu sıfatının aynı kişide birleşmesinde, birleşmenin ileride geçmişe etkili olarak ortadan kalkması durumunda, bu durumun ortaya çıkmasına kadar geçecek sürece. Zamanaşımını durduran sebeplerin ortadan kalktığı günün bitiminde zamanaşımı işlemeye başlar veya durmadan önce başlamış olan işlemesini sürdürür. D. Zamanaşımının kesilmesi\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.149]\nTBK m.149 - 1. Genel olarak / Zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar.\nAlacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde, zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TBK m.231]\nTBK m.231 - 9. Zamanaşımı / Satıcı daha uzun bir süre için üstlenmiş olmadıkça,\nsatılanın ayıbından doğan sorumluluğa ilişkin her türlü dava, satılandaki ayıp daha sonra ortaya çıksa bile, satılanın alıcıya devrinden başlayarak iki yıl geçmekle zamanaşımına uğrar. Alıcının satılanın kendisine devrinden başlayarak iki yıl içinde bildirdiği ayıptan doğan def’i hakkı, bu sürenin geçmiş olmasıyla ortadan kalkmaz. Satıcı, satılanı ayıplı olarak devretmekte ağır kusurlu ise, iki yıllık zamanaşımı süresinden yararlanamaz. C. Alıcının borçları\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TMK m.493]\nTMK m.493 - Olağan zamanaşımı\nsüresi işlemeye başlamadan önce zarar gören tarafından bilinmesi veya anlaşılması olanağı bulunmayan bir hesap yanlışlığına veya bir sorumluluk sebebine dayanan tazminat davası, hesap yanlışlığının veya sorumluluk sebebinin öğrenilmesinden başlayarak bir yıl içinde açılabilir. Vesayetten doğan tazminat davaları, her hâlde kesin hesabın tebliğinin üzerinden on yıl geçmekle zamanaşımına uğrar. E. Vesayet altındaki kişinin alacağı\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.157]\nTBK m.157 - 2. Alacaklının fiili / Bir dava veya def’i yoluyla kesilmiş olan zamanaşımı,\ndava süresince tarafların yargılamaya ilişkin her işleminden veya hâkimin her kararından sonra yeniden işlemeye başlar. Zamanaşımı, icra takibiyle kesilmişse, alacağın takibine ilişkin her işlemden sonra yeniden işlemeye başlar. Zamanaşımı, iflas masasına başvurma sebebiyle kesilmişse, iflasa ilişkin hükümlere göre alacağın yeniden istenmesi imkânının doğumundan itibaren yeniden işlemeye başlar.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir.\n\n---\n\n[Kaynak: TBK m.72]\nTBK m.72 - I. Kural / Tazminat istemi, zarar görenin zararı ve tazminat\nyükümlüsünü öğrendiği tarihten başlayarak iki yılın ve her hâlde fiilin işlendiği tarihten başlayarak on yılın geçmesiyle zamanaşımına uğrar. Ancak, tazminat ceza kanunlarının daha uzun bir zamanaşımı öngördüğü cezayı gerektiren bir fiilden doğmuşsa, bu zamanaşımı uygulanır. Haksız fiil dolayısıyla zarar gören bakımından bir borç doğmuşsa zarar gören, haksız fiilden doğan tazminat istemi zamanaşımına uğramış olsa bile, her zaman bu borcu ifadan kaçınabilir.\n\nSORU:\nTBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?"
+                  }
+                ],
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "extra_body": {
+                  "chat_template_kwargs": {
+                    "enable_thinking": false
+                  }
+                },
+                "seed": 20260324
+              }
+            },
+            {
+              "stage": "generation_contract",
+              "hash": "4480b9c27f5038f744059c5140b3fd7a4037f56917fec10d94e177d8a3ae0d38",
+              "payload": {
+                "temperature": 0.1,
+                "top_p": null,
+                "top_k": null,
+                "max_tokens": 512,
+                "stop": null,
+                "seed": 20260324,
+                "retry_count": 0,
+                "timeout_seconds": 180.0,
+                "streaming": false,
+                "enable_thinking": false
+              }
+            },
+            {
+              "stage": "worker_assignment_tuple",
+              "hash": "b2870fbba9f1db794c39263a11478fda13d0554099c904c1f087221a45c0b62f",
+              "payload": {
+                "topology_label": "L0",
+                "process_mode": "fresh_process",
+                "fresh_client_per_request": true,
+                "hard_reset_after_request": false,
+                "worker_count": 1,
+                "pinned_worker_id": "worker-0",
+                "parallelism_enabled": false,
+                "failover_enabled": false
+              }
+            },
+            {
+              "stage": "session_namespace_after_payload_freeze",
+              "hash": "6e64d9025d4acbb0504ae53a3c21777394f56510b37712a1e610a86441d8e31d",
+              "payload": {
+                "mode": "fresh_per_request",
+                "namespace": "hukuk-ai-topology-l0:<request-local>",
+                "request_local_suffix": "request_id",
+                "session_id_present": true
+              }
+            },
+            {
+              "stage": "cache_namespace_or_cache_key",
+              "hash": "180b0b6e4c2ee1933589112ba494fce37eb2e0192efcf62b2012e92efaf4976e",
+              "payload": {
+                "policy": "off",
+                "namespace": null,
+                "cache_key": null
+              }
+            },
+            {
+              "stage": "generation_start_ordinal",
+              "hash": "1575fbf5a20ae99903c60891ccfad93ffb28b459b98cc9e31a6fc460a4751368",
+              "payload": {
+                "ordinal": 1,
+                "request_ordering": "serial",
+                "serial_execution": true
+              }
+            },
+            {
+              "stage": "first_token_id_hash",
+              "hash": "fa6ca8a236b2914b5116e7bb13d27ac786546a8c6832bd37e919b1b4283e345f",
+              "payload": {
+                "first_token_id_hash": "c23a6ffc86bf81eb8aad3a0c46f82b02ffeb8eaa7eff8e53df54e372eebd484a",
+                "source": "tokenizer",
+                "tokenizer_ref": "/Users/btmacstudio/.cache/huggingface/hub/models--Qwen--Qwen3-32B/snapshots/9216db5781bf21249d130ec9da846c4624c16137",
+                "token_count": 125
+              }
+            },
+            {
+              "stage": "raw_token_stream_hash",
+              "hash": "7c1e754693f054b63ba84894d3f99593994ab8117432432bc001c6637dc6fb27",
+              "payload": {
+                "raw_token_stream_hash": "9ace248f587a07c68180b2a149fe6a28b0f6802e30bb6f05a012fd11cbcd8307",
+                "source": "tokenizer",
+                "tokenizer_ref": "/Users/btmacstudio/.cache/huggingface/hub/models--Qwen--Qwen3-32B/snapshots/9216db5781bf21249d130ec9da846c4624c16137",
+                "token_count": 125
+              }
+            },
+            {
+              "stage": "raw_answer_object",
+              "hash": "daf55a7f0be1d77be64d680c29b8dde0b00792f48bf5f3e6b870a3f2e8810f14",
+              "payload": {
+                "role": "assistant",
+                "content": "TBK m.146 uyarınca, kanunda aksine bir hüküm bulunmadıkça her alacak on yıllık zamanaşımına tabidir. TBK m.149'a göre zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar; alacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde ise zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar [Kaynak: TBK m.146] [Kaynak: TBK m.149].",
+                "extracted_text": "TBK m.146 uyarınca, kanunda aksine bir hüküm bulunmadıkça her alacak on yıllık zamanaşımına tabidir. TBK m.149'a göre zamanaşımı, alacağın muaccel olmasıyla işlemeye başlar; alacağın muaccel olmasının bir bildirime bağlı olduğu hâllerde ise zamanaşımı bu bildirimin yapılabileceği günden işlemeye başlar [Kaynak: TBK m.146] [Kaynak: TBK m.149].",
+                "finish_reason": "stop"
+              }
+            },
+            {
+              "stage": "response_envelope",
+              "hash": "236f3ce68212422d949cc650e2df05d3cdd0e0850ac008e1472fd8786c7f08c8",
+              "payload": {
+                "object": "chat.completion",
+                "model": "hukuk-lora",
+                "choices": [
+                  {
+                    "index": 0,
+                    "message": {
+                      "role": "assistant",
+                      "content": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır."
+                    },
+                    "finish_reason": "stop"
+                  }
+                ],
+                "citations": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "blocked": false,
+                "guardrails_reasons": [],
+                "verification": null,
+                "final_mode": "answer",
+                "final_reason": null,
+                "answer_contract": {
+                  "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                  "primary_source_id": "TBK m.82",
+                  "secondary_source_ids": [
+                    "TBK m.156"
+                  ],
+                  "law_scope": [
+                    "TBK"
+                  ],
+                  "source_validity": "active",
+                  "unsupported_reason": null,
+                  "verifier_status": "warn",
+                  "final_mode": "answer",
+                  "claim_units": []
+                }
+              }
+            },
+            {
+              "stage": "eval_client_parsed_object",
+              "hash": "67345bc6f1c2850b9e18abde86f4b9e5ce5dfa070f31afaf6d5ca67b47995bfc",
+              "payload": {
+                "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                "citations": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "blocked": false,
+                "verification": null,
+                "final_mode": "answer",
+                "final_reason": null,
+                "answer_contract": {
+                  "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                  "primary_source_id": "TBK m.82",
+                  "secondary_source_ids": [
+                    "TBK m.156"
+                  ],
+                  "law_scope": [
+                    "TBK"
+                  ],
+                  "source_validity": "active",
+                  "unsupported_reason": null,
+                  "verifier_status": "warn",
+                  "final_mode": "answer",
+                  "claim_units": []
+                }
+              }
+            },
+            {
+              "stage": "normalized_parity_object",
+              "hash": "b22384000de0f251d87e358ce53ff9caffe6c86027680be6f2514a2336981259",
+              "payload": {
+                "final_mode": "answer",
+                "answer_body": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.82] TBK m.82 - D.\n- [Kaynak: TBK m.156] TBK m.156 - 1. Borcun ikrar edilmesi / Zamanaşımının kesilmesiyle, yeni bir süre işlemeye başlar. Borç bir senetle ikrar edilmiş veya bir mahkeme ya da hakem kararına bağlanmış ise, yeni süre her zaman on yıldır.",
+                "refusal_body": "",
+                "refusal_reason": null,
+                "ordered_citation_list": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "ordered_source_id_list": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "ordered_canonical_norm_keys": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ],
+                "visible_citation_projection": [
+                  "TBK m.82",
+                  "TBK m.156"
+                ]
+              }
+            }
+          ],
+          "preprojection_hash": "daf55a7f0be1d77be64d680c29b8dde0b00792f48bf5f3e6b870a3f2e8810f14",
+          "normalized_parity_hash": "b22384000de0f251d87e358ce53ff9caffe6c86027680be6f2514a2336981259"
+        }
+      }
+    }
+  ]
+}
