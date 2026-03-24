@@ -1,0 +1,21 @@
+[
+  {
+    "id": "TBK-005",
+    "question": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+    "category": "tbk_genel",
+    "difficulty": "easy",
+    "expected_sources": [
+      "TBK m.88"
+    ],
+    "expected_keywords": [
+      "yasal faiz",
+      "kanuni faiz",
+      "yıllık",
+      "yüzde",
+      "belirlenmemiş"
+    ],
+    "expected_answer_contains": "yasal faiz",
+    "refusal_expected": false,
+    "notes": "FAZ9 witness replay"
+  }
+]

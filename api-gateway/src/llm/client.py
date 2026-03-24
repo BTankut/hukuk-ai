@@ -25,6 +25,7 @@ class TokenUsage:
 class LLMResult:
     text: str
     usage: TokenUsage | None = None
+    trace: dict[str, Any] | None = None
 
 
 class LLMClient:
@@ -56,24 +57,81 @@ class LLMClient:
         self._client = AsyncOpenAI(
             base_url=self.settings.dgx_base_url,
             api_key=self.settings.dgx_api_key,
+            timeout=self.settings.dgx_request_timeout_seconds,
+            max_retries=self.settings.dgx_retry_count,
         )
         return self._client
+
+    def _resolve_max_tokens(self, max_tokens: int | None) -> int:
+        return max_tokens if isinstance(max_tokens, int) and max_tokens > 0 else self.settings.dgx_max_tokens_default
+
+    def _build_generation_contract(
+        self,
+        *,
+        temperature: float,
+        max_tokens: int,
+    ) -> dict[str, Any]:
+        return {
+            "temperature": temperature,
+            "top_p": self.settings.dgx_top_p,
+            "top_k": self.settings.dgx_top_k,
+            "max_tokens": max_tokens,
+            "stop": None,
+            "seed": self.settings.dgx_seed,
+            "retry_count": self.settings.dgx_retry_count,
+            "timeout_seconds": self.settings.dgx_request_timeout_seconds,
+            "streaming": False,
+            "enable_thinking": False,
+        }
+
+    def _build_request_payload(
+        self,
+        *,
+        messages: Sequence[ChatMessage],
+        temperature: float,
+        max_tokens: int,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "model": self.settings.dgx_model,
+            "messages": [{"role": m.role, "content": m.content} for m in messages],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
+        }
+        if self.settings.dgx_top_p is not None:
+            payload["top_p"] = self.settings.dgx_top_p
+        if self.settings.dgx_seed is not None:
+            payload["seed"] = self.settings.dgx_seed
+        if self.settings.dgx_top_k is not None:
+            payload["extra_body"]["top_k"] = self.settings.dgx_top_k
+        return payload
 
     async def chat(
         self,
         messages: Sequence[ChatMessage],
         temperature: float = 0.1,
+        max_tokens: int | None = None,
     ) -> LLMResult:
         client = self._get_client()
-        response = await client.chat.completions.create(
-            model=self.settings.dgx_model,
-            messages=[{"role": m.role, "content": m.content} for m in messages],
+        resolved_max_tokens = self._resolve_max_tokens(max_tokens)
+        generation_contract = self._build_generation_contract(
             temperature=temperature,
-            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+            max_tokens=resolved_max_tokens,
         )
+        request_payload = self._build_request_payload(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=resolved_max_tokens,
+        )
+        response = await client.chat.completions.create(**request_payload)
         return LLMResult(
             text=self._extract_text(response.choices[0].message.content or ""),
             usage=self._extract_usage(response),
+            trace={
+                "model_request_payload": request_payload,
+                "generation_contract": generation_contract,
+                "raw_answer_object": self._extract_raw_answer_object(response),
+            },
         )
 
     @classmethod
@@ -144,6 +202,23 @@ class LLMClient:
             total_tokens=total_tokens,
         )
 
+    @classmethod
+    def _extract_raw_answer_object(cls, response: Any) -> dict[str, Any]:
+        choices = getattr(response, "choices", None) or []
+        if not choices:
+            return {}
+
+        choice = choices[0]
+        message = getattr(choice, "message", None)
+        raw_content = getattr(message, "content", "") if message is not None else ""
+        extracted_text = cls._extract_text(raw_content if raw_content is not None else "")
+        return {
+            "role": getattr(message, "role", "assistant") if message is not None else "assistant",
+            "content": raw_content if isinstance(raw_content, str) else str(raw_content),
+            "extracted_text": extracted_text,
+            "finish_reason": getattr(choice, "finish_reason", None),
+        }
+
     @staticmethod
     def _build_no_context_messages(query: str) -> list[ChatMessage]:
         return [
@@ -195,9 +270,24 @@ class LLMClient:
             ChatMessage(role="user", content=user_prompt),
         ]
 
-    async def generate_rag_draft(self, query: str, context: str) -> LLMResult | str:
+    async def generate_rag_draft(
+        self,
+        query: str,
+        context: str,
+        *,
+        max_tokens: int | None = None,
+    ) -> LLMResult | str:
         if not context or not context.strip():
             messages = self._build_no_context_messages(query)
         else:
             messages = self._build_rag_messages(query, context)
-        return await self.chat(messages=messages, temperature=0.1)
+        result = await self.chat(messages=messages, temperature=0.1, max_tokens=max_tokens)
+        if isinstance(result, str):
+            return result
+        trace = dict(result.trace or {})
+        trace["assembly_payload"] = {
+            "query": query,
+            "context": context,
+        }
+        result.trace = trace
+        return result

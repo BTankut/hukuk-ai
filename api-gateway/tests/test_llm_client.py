@@ -10,10 +10,10 @@ from llm.client import ChatMessage, LLMClient
 class CapturingLLMClient(LLMClient):
     def __init__(self) -> None:
         super().__init__(Settings())
-        self.calls: list[tuple[list[ChatMessage], float]] = []
+        self.calls: list[tuple[list[ChatMessage], float, int | None]] = []
 
-    async def chat(self, messages, temperature: float = 0.1) -> str:  # type: ignore[override]
-        self.calls.append((list(messages), temperature))
+    async def chat(self, messages, temperature: float = 0.1, max_tokens: int | None = None) -> str:  # type: ignore[override]
+        self.calls.append((list(messages), temperature, max_tokens))
         return "ok"
 
 
@@ -27,8 +27,9 @@ def test_generate_rag_draft_uses_wave2_prompt_rules_with_context() -> None:
         )
     )
 
-    messages, temperature = client.calls[-1]
+    messages, temperature, max_tokens = client.calls[-1]
     assert temperature == 0.1
+    assert max_tokens is None
     assert len(messages) == 2
     assert messages[0].role == "system"
     assert "Kanun prefixlerini asla karıştırma" in messages[0].content
@@ -44,7 +45,8 @@ def test_generate_rag_draft_uses_refusal_prompt_without_context() -> None:
 
     asyncio.run(client.generate_rag_draft(query="Kıdem tazminatı nasıl hesaplanır?", context=""))
 
-    messages, _temperature = client.calls[-1]
+    messages, _temperature, max_tokens = client.calls[-1]
+    assert max_tokens is None
     assert len(messages) == 2
     assert messages[0].role == "system"
     assert "bilgi üretme" in messages[0].content
@@ -98,3 +100,61 @@ def test_extract_text_parses_object_content_wrapper() -> None:
         == "TBK m.49 metnine göre kusurlu ve hukuka aykırı fiille başkasına zarar veren, bu zararı "
         "gidermekle yükümlüdür. [Kaynak: TBK m.49]"
     )
+
+
+def test_build_request_payload_and_generation_contract_are_deterministic() -> None:
+    settings = Settings(
+        dgx_model="Qwen/test",
+        dgx_top_p=0.9,
+        dgx_top_k=40,
+        dgx_seed=3407,
+        dgx_request_timeout_seconds=123.0,
+        dgx_retry_count=0,
+    )
+    client = LLMClient(settings)
+    messages = [ChatMessage(role="user", content="TBK m.49 nedir?")]
+
+    request_payload = client._build_request_payload(messages=messages, temperature=0.1, max_tokens=256)
+    generation_contract = client._build_generation_contract(temperature=0.1, max_tokens=256)
+
+    assert request_payload["model"] == "Qwen/test"
+    assert request_payload["messages"] == [{"role": "user", "content": "TBK m.49 nedir?"}]
+    assert request_payload["temperature"] == 0.1
+    assert request_payload["max_tokens"] == 256
+    assert request_payload["top_p"] == 0.9
+    assert request_payload["seed"] == 3407
+    assert request_payload["extra_body"]["top_k"] == 40
+    assert request_payload["extra_body"]["chat_template_kwargs"]["enable_thinking"] is False
+    assert generation_contract == {
+        "temperature": 0.1,
+        "top_p": 0.9,
+        "top_k": 40,
+        "max_tokens": 256,
+        "stop": None,
+        "seed": 3407,
+        "retry_count": 0,
+        "timeout_seconds": 123.0,
+        "streaming": False,
+        "enable_thinking": False,
+    }
+
+
+def test_extract_raw_answer_object_keeps_unprojected_content() -> None:
+    response = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    role="assistant",
+                    content="response=[{'role': 'assistant', 'content': 'TBK m.49 [Kaynak: TBK m.49]'}] llm_output=None",
+                ),
+                finish_reason="stop",
+            )
+        ]
+    )
+
+    assert LLMClient._extract_raw_answer_object(response) == {
+        "role": "assistant",
+        "content": "response=[{'role': 'assistant', 'content': 'TBK m.49 [Kaynak: TBK m.49]'}] llm_output=None",
+        "extracted_text": "TBK m.49 [Kaynak: TBK m.49]",
+        "finish_reason": "stop",
+    }

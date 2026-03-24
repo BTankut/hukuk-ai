@@ -34,7 +34,21 @@ def test_attach_parity_trace_adds_stage_chain(monkeypatch: object) -> None:
     )
 
     trace_payload = _attach_parity_trace(
-        trace_payload={"question_raw": "TBK m.49 nedir?"},
+        trace_payload={
+            "question_raw": "TBK m.49 nedir?",
+            "retrieval": {
+                "post_rerank_chunks": [
+                    {"source_id": "TBK m.49"},
+                    {"source_id": "TBK m.50"},
+                ]
+            },
+            "context_assembly": {
+                "assembled_context": "[Kaynak: TBK m.49]\nMetin",
+                "allowed_source_whitelist": ["TBK m.49", "TBK m.50"],
+                "assembled_evidence": [{"source_id": "TBK m.49"}],
+            },
+            "parsed_query": {"enriched_query": "TBK m.49 nedir?"},
+        },
         request=_make_request(),
         request_body=request_body,
         session_id="sess-1",
@@ -52,16 +66,54 @@ def test_attach_parity_trace_adds_stage_chain(monkeypatch: object) -> None:
         },
         final_mode="answer",
         final_reason=None,
+        llm_trace={
+            "assembly_payload": {"query": "TBK m.49 nedir?", "context": "[Kaynak: TBK m.49]\nMetin"},
+            "model_request_payload": {
+                "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+                "messages": [{"role": "user", "content": "TBK m.49 nedir?"}],
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
+            },
+            "generation_contract": {
+                "temperature": 0.1,
+                "top_p": None,
+                "top_k": None,
+                "max_tokens": 512,
+                "stop": None,
+                "seed": None,
+                "retry_count": 0,
+                "timeout_seconds": 180.0,
+                "streaming": False,
+                "enable_thinking": False,
+            },
+            "raw_answer_object": {
+                "role": "assistant",
+                "content": "TBK m.49 [Kaynak: TBK m.49]",
+                "extracted_text": "TBK m.49 [Kaynak: TBK m.49]",
+                "finish_reason": "stop",
+            },
+        },
     )
 
     parity_trace = trace_payload["parity_trace"]
     assert parity_trace["preprojection_hash"]
+    assert parity_trace["normalized_parity_hash"]
     assert [item["stage"] for item in parity_trace["stages"]] == [
         "raw_input_request",
         "normalized_request",
-        "auth_session_trace_enriched_request",
-        "pre_answer_handler_payload",
+        "auth_enriched_request",
+        "session_enriched_request",
+        "retrieval_input_payload",
+        "retrieved_source_id_ordered_list",
+        "assembly_payload",
+        "model_request_payload",
+        "generation_contract",
         "raw_answer_object",
-        "visible_response_projection",
-        "api_response_envelope",
+        "response_envelope",
+        "eval_client_parsed_object",
+        "normalized_parity_object",
     ]
+    raw_stage = next(item for item in parity_trace["stages"] if item["stage"] == "raw_answer_object")
+    assert "ordered_source_id_list" not in raw_stage["payload"]
+    assert "visible_citation_projection" not in raw_stage["payload"]

@@ -45,6 +45,7 @@ class OrchestratorResponse:
     # Verification engine sonucu (Backlog #6) — opsiyonel
     verification: dict[str, Any] | None = None
     usage: dict[str, int] | None = None
+    llm_trace: dict[str, Any] | None = None
 
 
 class RAGOrchestrator:
@@ -98,6 +99,7 @@ class RAGOrchestrator:
         retrieved_chunks: list[RetrievedChunk],
         *,
         source_lock_target_citations: int | None = None,
+        max_tokens: int | None = None,
     ) -> OrchestratorResponse:
         """Sorguyu yanıtla.
 
@@ -109,8 +111,19 @@ class RAGOrchestrator:
             OrchestratorResponse
         """
         context = self._build_context(retrieved_chunks)
-        draft_result = await self.llm_client.generate_rag_draft(query=query, context=context)
+        if max_tokens is None:
+            draft_result = await self.llm_client.generate_rag_draft(
+                query=query,
+                context=context,
+            )
+        else:
+            draft_result = await self.llm_client.generate_rag_draft(
+                query=query,
+                context=context,
+                max_tokens=max_tokens,
+            )
         draft_usage: dict[str, int] | None = None
+        draft_trace: dict[str, Any] | None = None
         if isinstance(draft_result, str):
             draft = draft_result
         else:
@@ -121,6 +134,7 @@ class RAGOrchestrator:
                     "completion_tokens": draft_result.usage.completion_tokens,
                     "total_tokens": draft_result.usage.total_tokens,
                 }
+            draft_trace = draft_result.trace
 
         guardrails_result = await self.guardrails.run(
             user_query=query,
@@ -177,6 +191,7 @@ class RAGOrchestrator:
             guardrails_reasons=reasons,
             verification=verification_dict,
             usage=draft_usage,
+            llm_trace=draft_trace,
         )
 
     @staticmethod

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "TBK-003",
+    "question": "Haksız fiil nedeniyle tazminat davası açmak için TBK'da öngörülen zamanaşımı süresi nedir?",
+    "category": "tbk_haksiz_fiil",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.72",
+      "TBK m.146"
+    ],
+    "expected_keywords": [
+      "zamanaşımı",
+      "iki yıl",
+      "on yıl",
+      "öğrenme",
+      "haksız fiil",
+      "zararın öğrenildiği"
+    ],
+    "expected_answer_contains": "iki yıl",
+    "refusal_expected": false,
+    "notes": "FAZ9 witness pack A"
+  },
+  {
+    "id": "TBK-005",
+    "question": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+    "category": "tbk_genel",
+    "difficulty": "easy",
+    "expected_sources": [
+      "TBK m.88"
+    ],
+    "expected_keywords": [
+      "yasal faiz",
+      "kanuni faiz",
+      "yıllık",
+      "yüzde",
+      "belirlenmemiş"
+    ],
+    "expected_answer_contains": "yasal faiz",
+    "refusal_expected": false,
+    "notes": "FAZ9 witness pack A"
+  }
+]

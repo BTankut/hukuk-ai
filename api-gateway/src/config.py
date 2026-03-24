@@ -25,6 +25,17 @@ def _to_int(value: str | int | None, default: int) -> int:
         return default
 
 
+def _to_float(value: str | float | int | None, default: float | None) -> float | None:
+    if value is None:
+        return default
+    if isinstance(value, (float, int)):
+        return float(value)
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
 @dataclass(slots=True)
 class Settings:
     """API Gateway runtime ayarları (lightweight env loader)."""
@@ -37,6 +48,13 @@ class Settings:
     dgx_base_url: str = "http://192.168.12.243:30000/v1"
     dgx_model: str = "Qwen/Qwen3.5-35B-A3B-FP8"
     dgx_api_key: str = "not-needed"
+    dgx_temperature_default: float = 0.1
+    dgx_max_tokens_default: int = 512
+    dgx_top_p: float | None = None
+    dgx_top_k: int | None = None
+    dgx_seed: int | None = None
+    dgx_request_timeout_seconds: float = 180.0
+    dgx_retry_count: int = 0
 
     # Guardrails
     guardrails_enabled: bool = True
@@ -64,6 +82,13 @@ class Settings:
             "dgx_base_url": os.getenv("DGX_BASE_URL", "http://192.168.12.243:30000/v1"),
             "dgx_model": os.getenv("DGX_MODEL", "Qwen/Qwen3.5-35B-A3B-FP8"),
             "dgx_api_key": os.getenv("DGX_API_KEY", "not-needed"),
+            "dgx_temperature_default": _to_float(os.getenv("DGX_TEMPERATURE_DEFAULT"), 0.1),
+            "dgx_max_tokens_default": _to_int(os.getenv("DGX_MAX_TOKENS_DEFAULT"), 512),
+            "dgx_top_p": _to_float(os.getenv("DGX_TOP_P"), None),
+            "dgx_top_k": _to_int(os.getenv("DGX_TOP_K"), -1),
+            "dgx_seed": _to_int(os.getenv("DGX_SEED"), -1),
+            "dgx_request_timeout_seconds": _to_float(os.getenv("DGX_REQUEST_TIMEOUT_SECONDS"), 180.0),
+            "dgx_retry_count": _to_int(os.getenv("DGX_RETRY_COUNT"), 0),
             "guardrails_enabled": _to_bool(os.getenv("GUARDRAILS_ENABLED"), True),
             "guardrails_strict_mode": _to_bool(os.getenv("GUARDRAILS_STRICT_MODE"), False),
             "guardrails_config_dir": Path(os.getenv("GUARDRAILS_CONFIG_DIR", "guardrails")),
@@ -83,6 +108,10 @@ class Settings:
         }
 
         values.update(overrides)
+        if values["dgx_top_k"] is not None and int(values["dgx_top_k"]) < 0:
+            values["dgx_top_k"] = None
+        if values["dgx_seed"] is not None and int(values["dgx_seed"]) < 0:
+            values["dgx_seed"] = None
         for key, value in values.items():
             setattr(self, key, value)
 

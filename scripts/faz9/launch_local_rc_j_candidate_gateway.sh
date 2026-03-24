@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+DEFAULT_TOKENIZER_PATH="${HOME}/.cache/huggingface/hub/models--Qwen--Qwen3-32B/snapshots/9216db5781bf21249d130ec9da846c4624c16137"
+
+export RELEASE_LANE_ID="${RELEASE_LANE_ID:-rc_j}"
+export RELEASE_CONTROLS_STRICT="${RELEASE_CONTROLS_STRICT:-true}"
+export API_VERSION_LABEL="${API_VERSION_LABEL:-2026-03-24-rc-j}"
+export API_AUTH_ENABLED="${API_AUTH_ENABLED:-true}"
+export AUDIT_LOG_ENABLED="${AUDIT_LOG_ENABLED:-true}"
+export ALLOW_ANONYMOUS_INTERNAL_SMOKE="${ALLOW_ANONYMOUS_INTERNAL_SMOKE:-false}"
+export SESSION_STORE_BACKEND="${SESSION_STORE_BACKEND:-redis}"
+export SESSION_STORE_REDIS_REQUIRED="${SESSION_STORE_REDIS_REQUIRED:-true}"
+export SESSION_STORE_REDIS_PING_ON_STARTUP="${SESSION_STORE_REDIS_PING_ON_STARTUP:-true}"
+export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379/0}"
+export TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK="${TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK:-false}"
+export TOKEN_ACCOUNTING_TOKENIZER_PATH="${TOKEN_ACCOUNTING_TOKENIZER_PATH:-${DEFAULT_TOKENIZER_PATH}}"
+export PARITY_TRACE_ENABLED="${PARITY_TRACE_ENABLED:-true}"
+
+export GATEWAY_PORT="${GATEWAY_PORT:-8008}"
+export LOCAL_TUNNEL_PORT="${LOCAL_TUNNEL_PORT:-30018}"
+export LOG_NAME="${LOG_NAME:-rc_j_candidate_gateway.log}"
+export PID_NAME="${PID_NAME:-rc_j_candidate_gateway.pid}"
+export TUNNEL_LOG_NAME="${TUNNEL_LOG_NAME:-rc_j_candidate_tunnel.log}"
+export TUNNEL_PID_NAME="${TUNNEL_PID_NAME:-rc_j_candidate_tunnel.pid}"
+export AUDIT_LOG_PATH="${AUDIT_LOG_PATH:-${REPO_ROOT}/runtime_logs/rc_j_audit.jsonl}"
+export TRACE_LOG_DIR="${TRACE_LOG_DIR:-${REPO_ROOT}/runtime_logs/rc_j_traces}"
+export SESSION_STORE_NAMESPACE="${SESSION_STORE_NAMESPACE:-hukuk-ai-rc-j}"
+
+cd "${REPO_ROOT}"
+bash scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh

@@ -2276,6 +2276,88 @@ def _normalized_request_stage_payload(request_body: ChatCompletionRequest) -> di
     }
 
 
+def _auth_enriched_stage_payload(
+    *,
+    request_body: ChatCompletionRequest,
+    request: Request,
+) -> dict[str, Any]:
+    payload = _normalized_request_stage_payload(request_body)
+    payload["auth_subject"] = getattr(request.state, "auth_subject", None)
+    return payload
+
+
+def _session_enriched_stage_payload(
+    *,
+    request_body: ChatCompletionRequest,
+    request: Request,
+    session_id: str,
+    conversation_history: list[dict[str, str]],
+) -> dict[str, Any]:
+    payload = _normalized_request_stage_payload(request_body)
+    payload.update(
+        {
+            "session_id_present": bool(session_id),
+            "conversation_history": conversation_history,
+            "request_id_present": isinstance(getattr(request.state, "request_id", None), str),
+            "trace_id_present": isinstance(getattr(request.state, "trace_id", None), str),
+        }
+    )
+    return payload
+
+
+def _retrieval_input_stage_payload(
+    *,
+    pre_answer_payload: dict[str, Any],
+    law_filter: str | None,
+) -> dict[str, Any]:
+    return {
+        "query": pre_answer_payload.get("retrieval_query"),
+        "top_k": pre_answer_payload.get("top_k_effective"),
+        "metadata_filter": {"law_short_name": law_filter} if law_filter else None,
+        "mentioned_laws": pre_answer_payload.get("mentioned_laws") or [],
+        "explicit_article_refs": pre_answer_payload.get("explicit_article_refs") or [],
+        "forced_article_refs": pre_answer_payload.get("forced_article_refs") or [],
+        "applied_expansions": pre_answer_payload.get("applied_expansions") or [],
+        "reranker_enabled": bool(pre_answer_payload.get("reranker_enabled")),
+    }
+
+
+def _retrieved_source_id_stage_payload(trace_payload: dict[str, Any]) -> dict[str, Any]:
+    retrieval = trace_payload.get("retrieval") if isinstance(trace_payload, dict) else {}
+    chunks = retrieval.get("post_rerank_chunks") if isinstance(retrieval, dict) else []
+    ordered_source_ids: list[str] = []
+    if isinstance(chunks, list):
+        for item in chunks:
+            if not isinstance(item, dict):
+                continue
+            source_id = item.get("source_id")
+            if not isinstance(source_id, str) or not source_id.strip():
+                continue
+            ordered_source_ids.append(canonicalize_source_id(source_id) or source_id)
+    return {
+        "ordered_source_id_list": ordered_source_ids,
+    }
+
+
+def _assembly_payload_from_trace(trace_payload: dict[str, Any]) -> dict[str, Any]:
+    parsed_query = trace_payload.get("parsed_query") if isinstance(trace_payload, dict) else {}
+    context_assembly = trace_payload.get("context_assembly") if isinstance(trace_payload, dict) else {}
+    return {
+        "query": parsed_query.get("enriched_query") if isinstance(parsed_query, dict) else None,
+        "assembled_context": (
+            context_assembly.get("assembled_context") if isinstance(context_assembly, dict) else None
+        ),
+        "allowed_source_whitelist": (
+            context_assembly.get("allowed_source_whitelist") if isinstance(context_assembly, dict) else []
+        ),
+        "assembled_evidence_source_ids": [
+            item.get("source_id")
+            for item in (context_assembly.get("assembled_evidence") if isinstance(context_assembly, dict) else [])
+            if isinstance(item, dict) and item.get("source_id")
+        ],
+    }
+
+
 def _context_enriched_stage_payload(
     *,
     request: Request,
@@ -2331,26 +2413,15 @@ def _pre_answer_stage_payload(
 
 def _raw_answer_stage_payload(
     *,
-    answer_text: str,
-    citations: list[str],
-    blocked: bool,
-    guardrails_reasons: list[str],
-    verification: dict[str, Any] | None,
-    answer_contract: dict[str, Any] | None,
-    final_mode: str | None,
-    final_reason: str | None,
+    raw_answer_object: dict[str, Any] | None,
+    fallback_answer_text: str,
 ) -> dict[str, Any]:
-    projection = _extract_answer_source_ids(answer_contract=answer_contract, citations=citations)
+    if isinstance(raw_answer_object, dict) and raw_answer_object:
+        return raw_answer_object
     return {
-        "answer_text": answer_text,
-        "citations": citations,
-        "blocked": blocked,
-        "guardrails_reasons": guardrails_reasons,
-        "verification": verification,
-        "answer_contract": answer_contract,
-        "final_mode": final_mode,
-        "final_reason": final_reason,
-        **_source_projection_payload(projection),
+        "role": "assistant",
+        "content": fallback_answer_text,
+        "bypassed_model": True,
     }
 
 
@@ -2406,6 +2477,56 @@ def _response_envelope_stage_payload(
     }
 
 
+def _eval_client_parsed_stage_payload(
+    *,
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    verification: dict[str, Any] | None,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+) -> dict[str, Any]:
+    return {
+        "answer_text": answer_text,
+        "citations": list(citations),
+        "blocked": blocked,
+        "verification": verification,
+        "final_mode": final_mode,
+        "final_reason": final_reason,
+        "answer_contract": answer_contract,
+    }
+
+
+def _normalized_parity_stage_payload(
+    *,
+    answer_text: str,
+    citations: list[str],
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+) -> dict[str, Any]:
+    source_ids = _extract_answer_source_ids(answer_contract=answer_contract, citations=citations)
+    refusal_reason = None
+    if isinstance(answer_contract, dict):
+        unsupported_reason = answer_contract.get("unsupported_reason")
+        if isinstance(unsupported_reason, str) and unsupported_reason.strip():
+            refusal_reason = unsupported_reason
+    if refusal_reason is None:
+        refusal_reason = final_reason
+
+    return {
+        "final_mode": final_mode,
+        "answer_body": answer_text if final_mode != "refusal" else "",
+        "refusal_body": answer_text if final_mode == "refusal" else "",
+        "refusal_reason": refusal_reason,
+        "ordered_citation_list": list(citations),
+        "ordered_source_id_list": source_ids,
+        "ordered_canonical_norm_keys": [canonicalize_source_id(item) or item for item in source_ids],
+        "visible_citation_projection": list(citations),
+    }
+
+
 def _append_parity_stage(
     stages: list[dict[str, Any]],
     *,
@@ -2437,11 +2558,13 @@ def _attach_parity_trace(
     answer_contract: dict[str, Any] | None,
     final_mode: str | None,
     final_reason: str | None,
+    llm_trace: dict[str, Any] | None,
 ) -> dict[str, Any]:
     if not _parity_trace_enabled():
         return trace_payload
 
     stages: list[dict[str, Any]] = []
+    normalized_request_payload = _normalized_request_stage_payload(request_body)
     _append_parity_stage(
         stages,
         stage_name="raw_input_request",
@@ -2450,12 +2573,21 @@ def _attach_parity_trace(
     _append_parity_stage(
         stages,
         stage_name="normalized_request",
-        payload=_normalized_request_stage_payload(request_body),
+        payload=normalized_request_payload,
     )
     _append_parity_stage(
         stages,
-        stage_name="auth_session_trace_enriched_request",
-        payload=_context_enriched_stage_payload(
+        stage_name="auth_enriched_request",
+        payload=_auth_enriched_stage_payload(
+            request_body=request_body,
+            request=request,
+        ),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="session_enriched_request",
+        payload=_session_enriched_stage_payload(
+            request_body=request_body,
             request=request,
             session_id=session_id,
             conversation_history=conversation_history,
@@ -2463,18 +2595,35 @@ def _attach_parity_trace(
     )
     _append_parity_stage(
         stages,
-        stage_name="pre_answer_handler_payload",
-        payload=pre_answer_payload,
+        stage_name="retrieval_input_payload",
+        payload=_retrieval_input_stage_payload(
+            pre_answer_payload=pre_answer_payload,
+            law_filter=request_body.law_filter,
+        ),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="retrieved_source_id_ordered_list",
+        payload=_retrieved_source_id_stage_payload(trace_payload),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="assembly_payload",
+        payload=(llm_trace or {}).get("assembly_payload") or _assembly_payload_from_trace(trace_payload),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="model_request_payload",
+        payload=(llm_trace or {}).get("model_request_payload") or {},
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="generation_contract",
+        payload=(llm_trace or {}).get("generation_contract") or {},
     )
     raw_answer_payload = _raw_answer_stage_payload(
-        answer_text=answer_text,
-        citations=citations,
-        blocked=blocked,
-        guardrails_reasons=guardrails_reasons,
-        verification=verification,
-        answer_contract=answer_contract,
-        final_mode=final_mode,
-        final_reason=final_reason,
+        raw_answer_object=(llm_trace or {}).get("raw_answer_object"),
+        fallback_answer_text=answer_text,
     )
     _append_parity_stage(
         stages,
@@ -2483,18 +2632,7 @@ def _attach_parity_trace(
     )
     _append_parity_stage(
         stages,
-        stage_name="visible_response_projection",
-        payload=_visible_projection_stage_payload(
-            answer_text=answer_text,
-            citations=citations,
-            answer_contract=answer_contract,
-            final_mode=final_mode,
-            final_reason=final_reason,
-        ),
-    )
-    _append_parity_stage(
-        stages,
-        stage_name="api_response_envelope",
+        stage_name="response_envelope",
         payload=_response_envelope_stage_payload(
             request_body=request_body,
             answer_text=answer_text,
@@ -2507,11 +2645,36 @@ def _attach_parity_trace(
             final_reason=final_reason,
         ),
     )
+    _append_parity_stage(
+        stages,
+        stage_name="eval_client_parsed_object",
+        payload=_eval_client_parsed_stage_payload(
+            answer_text=answer_text,
+            citations=citations,
+            blocked=blocked,
+            verification=verification,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+        ),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="normalized_parity_object",
+        payload=_normalized_parity_stage_payload(
+            answer_text=answer_text,
+            citations=citations,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+        ),
+    )
 
     enriched_trace = dict(trace_payload)
     enriched_trace["parity_trace"] = {
         "stages": stages,
-        "preprojection_hash": raw_answer_payload and stages[4]["hash"],
+        "preprojection_hash": raw_answer_payload and stages[9]["hash"],
+        "normalized_parity_hash": stages[12]["hash"],
     }
     return enriched_trace
 
@@ -2536,7 +2699,9 @@ def _finalize_chat_response(
     final_mode: str,
     final_reason: str | None,
     upstream_usage: dict[str, int] | None,
+    llm_trace: dict[str, Any] | None,
 ) -> Any:
+    public_answer_contract = _sanitize_public_answer_contract(answer_contract)
     trace_payload = _attach_parity_trace(
         trace_payload=trace_payload,
         request=request,
@@ -2549,12 +2714,12 @@ def _finalize_chat_response(
         blocked=blocked,
         guardrails_reasons=guardrails_reasons,
         verification=verification,
-        answer_contract=answer_contract,
+        answer_contract=public_answer_contract,
         final_mode=final_mode,
         final_reason=final_reason,
+        llm_trace=llm_trace,
     )
     _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
-    public_answer_contract = _sanitize_public_answer_contract(answer_contract)
     request_id = ensure_request_id(request)
     trace_id = ensure_trace_id(request)
 
@@ -2823,6 +2988,7 @@ async def chat_completions(
             final_mode=hardening.final_mode,
             final_reason=hardening.final_reason,
             upstream_usage=None,
+            llm_trace=None,
         )
 
     # Deterministic kapsam-dışı refusal (low-risk hardening)
@@ -2915,6 +3081,7 @@ async def chat_completions(
             final_mode=hardening.final_mode,
             final_reason=hardening.final_reason,
             upstream_usage=None,
+            llm_trace=None,
         )
 
     # Konuşma geçmişi: request'teki messages'ın son user mesajından öncekiler
@@ -3349,6 +3516,7 @@ async def chat_completions(
             query=enriched_query,
             retrieved_chunks=retrieved_chunks,
             source_lock_target_citations=source_lock_target_citations,
+            max_tokens=request_body.max_tokens,
         )
     except Exception as exc:
         logger.error("Orchestrator hatası: %s", exc, exc_info=True)
@@ -3449,6 +3617,7 @@ async def chat_completions(
         final_mode=hardening.final_mode,
         final_reason=hardening.final_reason,
         upstream_usage=orch_response.usage,
+        llm_trace=orch_response.llm_trace,
     )
 
 
