@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -47,8 +48,16 @@ def _post_json(
     )
     if api_key:
         request.add_header("X-API-Key", api_key)
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return response.status, json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.status, json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            payload = {"error": body}
+        return exc.code, payload
 
 
 def _delete_json(url: str, *, api_key: str | None = None, timeout: float = 10.0) -> tuple[int, dict[str, Any]]:
@@ -86,6 +95,7 @@ def run_release_smoke_suite(
     api_key: str,
     model: str,
     cited_query: str,
+    continuity_query: str,
     refusal_query: str,
     expected_ref: str,
     session_id: str,
@@ -100,6 +110,7 @@ def run_release_smoke_suite(
     _, health = _fetch_json(f"{base_url}/v1/health", api_key=api_key, timeout=timeout)
     _, alerts = _fetch_json(f"{base_url}/v1/alerts", api_key=api_key, timeout=timeout)
 
+    cited_started_at = time.perf_counter()
     _, cited_response = _post_json(
         f"{base_url}/v1/chat/completions",
         api_key=api_key,
@@ -113,7 +124,26 @@ def run_release_smoke_suite(
             "session_id": session_id,
         },
     )
+    cited_latency_ms = (time.perf_counter() - cited_started_at) * 1000.0
 
+    continuity_started_at = time.perf_counter()
+    _, continuity_response = _post_json(
+        f"{base_url}/v1/chat/completions",
+        api_key=api_key,
+        timeout=timeout,
+        payload={
+            "model": model,
+            "messages": [{"role": "user", "content": continuity_query}],
+            "stream": False,
+            "use_verification": False,
+            "max_tokens": 96,
+            "session_id": session_id,
+        },
+    )
+    continuity_latency_ms = (time.perf_counter() - continuity_started_at) * 1000.0
+
+    refusal_session_id = f"{session_id}-refusal"
+    refusal_started_at = time.perf_counter()
     _, refusal_response = _post_json(
         f"{base_url}/v1/chat/completions",
         api_key=api_key,
@@ -123,10 +153,11 @@ def run_release_smoke_suite(
             "messages": [{"role": "user", "content": refusal_query}],
             "stream": False,
             "use_verification": False,
-            "max_tokens": 128,
-            "session_id": session_id,
+            "max_tokens": 96,
+            "session_id": refusal_session_id,
         },
     )
+    refusal_latency_ms = (time.perf_counter() - refusal_started_at) * 1000.0
 
     _, session_payload = _fetch_json(
         f"{base_url}/v1/sessions/{session_id}",
@@ -138,6 +169,11 @@ def run_release_smoke_suite(
 
     _, delete_payload = _delete_json(
         f"{base_url}/v1/sessions/{session_id}",
+        api_key=api_key,
+        timeout=timeout,
+    )
+    _delete_json(
+        f"{base_url}/v1/sessions/{refusal_session_id}",
         api_key=api_key,
         timeout=timeout,
     )
@@ -159,11 +195,15 @@ def run_release_smoke_suite(
         "hukuk_ai_chat_refusal_total",
     ) - metric_value(metrics_before, "hukuk_ai_chat_refusal_total")
 
-    history = session_payload.get("history") or []
+    history = session_payload.get("history")
+    if not isinstance(history, list):
+        history = session_payload.get("messages") or []
     cited_answer = ((cited_response.get("choices") or [{}])[0].get("message") or {}).get("content", "")
     cited_citations = cited_response.get("citations") or []
     refusal_answer = ((refusal_response.get("choices") or [{}])[0].get("message") or {}).get("content", "")
     refusal_mode = refusal_response.get("final_mode")
+    continuity_answer = ((continuity_response.get("choices") or [{}])[0].get("message") or {}).get("content", "")
+    latency_samples_ms = [cited_latency_ms, continuity_latency_ms, refusal_latency_ms]
 
     return {
         "health": health,
@@ -179,10 +219,18 @@ def run_release_smoke_suite(
             "expected_ref_found": expected_ref in cited_answer or expected_ref in " ".join(cited_citations),
         },
         "refusal_smoke": {
+            "status_code": 200 if refusal_response.get("choices") else refusal_response.get("status_code", 500),
             "answer_preview": refusal_answer[:240],
             "final_mode": refusal_mode,
             "blocked": refusal_response.get("blocked"),
+            "error": refusal_response.get("error"),
         },
+        "session_continuity": {
+            "continuity_answer_preview": continuity_answer[:240],
+            "final_mode": continuity_response.get("final_mode"),
+        },
+        "latencies_ms": latency_samples_ms,
+        "avg_latency_ms": sum(latency_samples_ms) / len(latency_samples_ms),
         "redis_session_continuity": {
             "session_id": session_id,
             "history_length": len(history),
@@ -214,8 +262,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="TBK m.49 uyarınca haksız fiilin genel şartları nelerdir? Kısa cevap ver.",
     )
     parser.add_argument(
+        "--continuity-query",
+        default="TBK m.49'u tek cümleyle tekrar özetle.",
+    )
+    parser.add_argument(
         "--refusal-query",
-        default="Bana pizza tarifi ver.",
+        default="Kıdem tazminatı nasıl hesaplanır?",
     )
     parser.add_argument("--expected-ref", default="TBK m.49")
     parser.add_argument("--session-id", default="faz7-smoke-session")
@@ -231,6 +283,7 @@ def main() -> int:
         api_key=args.api_key,
         model=args.model,
         cited_query=args.cited_query,
+        continuity_query=args.continuity_query,
         refusal_query=args.refusal_query,
         expected_ref=args.expected_ref,
         session_id=args.session_id,

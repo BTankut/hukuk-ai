@@ -1,0 +1,30 @@
+{
+  "manifest_path": "runtime_logs/faz7_backups/rc_h_release_state_wp2_20260324T093643Z/manifest.json",
+  "restore_env_path": "runtime_logs/faz7_restore_proof_wp2/restore.env.sh",
+  "files": [
+    {
+      "source_path": "scripts/faz7/launch_local_rc_h_candidate_gateway.sh",
+      "backup_path": "runtime_logs/faz7_backups/rc_h_release_state_wp2_20260324T093643Z/files/scripts__faz7__launch_local_rc_h_candidate_gateway.sh",
+      "exists": true,
+      "sha256": "ea2baed27c4891b0c1ace4559b226e63f365f803826e494af7941c870f6f1611"
+    },
+    {
+      "source_path": "scripts/faz7/launch_local_redis.sh",
+      "backup_path": "runtime_logs/faz7_backups/rc_h_release_state_wp2_20260324T093643Z/files/scripts__faz7__launch_local_redis.sh",
+      "exists": true,
+      "sha256": "73b44cbefa38b8eb49b22fea65ab407e5ab186e0ae6bc0cad8d3afd2f04ca202"
+    },
+    {
+      "source_path": "scripts/faz7/launch_local_embedding_service.sh",
+      "backup_path": "runtime_logs/faz7_backups/rc_h_release_state_wp2_20260324T093643Z/files/scripts__faz7__launch_local_embedding_service.sh",
+      "exists": true,
+      "sha256": "67deb9fd132f9fd37b5de27e7f31ab4bcb0f445feafc8787bcdb5720bba1a967"
+    },
+    {
+      "source_path": "scripts/faz2b/ensure_release_lane.py",
+      "backup_path": "runtime_logs/faz7_backups/rc_h_release_state_wp2_20260324T093643Z/files/scripts__faz2b__ensure_release_lane.py",
+      "exists": true,
+      "sha256": "ef59c661143568e83cc69100140e807e96ddf791cce01d24c9c9e5e29a2ae51c"
+    }
+  ]
+}

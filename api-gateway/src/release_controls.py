@@ -14,11 +14,16 @@ from observability import get_metrics_registry
 
 _TR_ID_RE = re.compile(r"\b\d{11}\b")
 _EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
-_PHONE_RE = re.compile(r"(?<!\d)(?:\+?90\s*)?(?:5\d{2}[\s-]*)?\d{3}[\s-]*\d{2}[\s-]*\d{2}(?!\d)")
+_PHONE_RE = re.compile(r"(?<!\d)(?:\+?90[\s-]*)?5\d{2}[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}(?!\d)")
 _IP_RE = re.compile(
-    r"\b(?:\d{1,3}\.){3}\d{1,3}\b|(?:(?:[A-F0-9]{0,4}:){2,7}[A-F0-9]{0,4})",
+    r"\b(?:\d{1,3}\.){3}\d{1,3}\b|(?<![:\w])::1(?![:\w])|(?<![:\w])(?:[A-F0-9]{1,4}:){3,7}[A-F0-9]{1,4}(?![:\w])",
     re.IGNORECASE,
 )
+_SAFE_ID_RE = re.compile(
+    r"^(?:req|trace)-[0-9a-f]{20}$|^chatcmpl-[0-9a-f]{12}$|^key-[0-9a-f]{12}$|^[0-9a-f]{64}$",
+    re.IGNORECASE,
+)
+_SAFE_TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$")
 
 
 def _to_bool(value: str | None, default: bool = False) -> bool:
@@ -168,6 +173,8 @@ def require_api_auth(request: Request) -> str:
 
 
 def _redact_string(value: str) -> str:
+    if _SAFE_ID_RE.fullmatch(value) or _SAFE_TIMESTAMP_RE.fullmatch(value):
+        return value
     redacted = _TR_ID_RE.sub("[TR_ID_REDACTED]", value)
     redacted = _EMAIL_RE.sub("[EMAIL_REDACTED]", redacted)
     redacted = _PHONE_RE.sub("[PHONE_REDACTED]", redacted)

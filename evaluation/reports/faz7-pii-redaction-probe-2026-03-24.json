@@ -1,0 +1,8 @@
+{
+  "question_raw": "Müvekkil [TR_ID_REDACTED] ve [EMAIL_REDACTED] için [PHONE_REDACTED] numarasını kontrol et.",
+  "answer_text": "Kayıtlı kimlik [TR_ID_REDACTED] ve e-posta [EMAIL_REDACTED], telefon [PHONE_REDACTED]",
+  "request_id": "req-1234567890abcdef1234",
+  "decision_timestamps": {
+    "request_started_at": "2026-03-24T09:40:00.123456+00:00"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "label": "rc_h_release_state_wp2",
+  "created_at": "20260324T093643Z",
+  "env": {
+    "RELEASE_LANE_ID": "rc_h",
+    "RELEASE_CONTROLS_STRICT": "true",
+    "API_AUTH_ENABLED": "true",
+    "AUDIT_LOG_ENABLED": "true",
+    "SESSION_STORE_BACKEND": "redis",
+    "SESSION_STORE_REDIS_REQUIRED": "true",
+    "REDIS_URL": "redis://127.0.0.1:6379/0",
+    "TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK": "false",
+    "TOKEN_ACCOUNTING_TOKENIZER_PATH": "/Users/btmacstudio/.cache/huggingface/hub/models--Qwen--Qwen3-32B/snapshots/9216db5781bf21249d130ec9da846c4624c16137"
+  },
+  "files": [
+    {
+      "source_path": "scripts/faz7/launch_local_rc_h_candidate_gateway.sh",
+      "backup_path": "files/scripts__faz7__launch_local_rc_h_candidate_gateway.sh",
+      "sha256": "ea2baed27c4891b0c1ace4559b226e63f365f803826e494af7941c870f6f1611",
+      "size_bytes": 1698
+    },
+    {
+      "source_path": "scripts/faz7/launch_local_redis.sh",
+      "backup_path": "files/scripts__faz7__launch_local_redis.sh",
+      "sha256": "73b44cbefa38b8eb49b22fea65ab407e5ab186e0ae6bc0cad8d3afd2f04ca202",
+      "size_bytes": 737
+    },
+    {
+      "source_path": "scripts/faz7/launch_local_embedding_service.sh",
+      "backup_path": "files/scripts__faz7__launch_local_embedding_service.sh",
+      "sha256": "67deb9fd132f9fd37b5de27e7f31ab4bcb0f445feafc8787bcdb5720bba1a967",
+      "size_bytes": 766
+    },
+    {
+      "source_path": "scripts/faz2b/ensure_release_lane.py",
+      "backup_path": "files/scripts__faz2b__ensure_release_lane.py",
+      "sha256": "ef59c661143568e83cc69100140e807e96ddf791cce01d24c9c9e5e29a2ae51c",
+      "size_bytes": 5198
+    }
+  ]
+}

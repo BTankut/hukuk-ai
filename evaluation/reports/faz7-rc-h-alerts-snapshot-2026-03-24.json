@@ -1,0 +1,1 @@
+{"lane_unhealthy":false,"audit_write_failure":false,"redis_unavailable":false,"token_accounting_failure":false,"backup_failure":false,"auth_failure_spike":false,"latency_regression_spike":false,"rollback_event":false,"p95_latency_ms":9633.659437997267,"lane":"rc_h","api_version":"2026-03-24-rc-h"}

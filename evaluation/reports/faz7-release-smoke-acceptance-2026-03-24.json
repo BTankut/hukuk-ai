@@ -1,0 +1,65 @@
+{
+  "health": {
+    "status": "ok",
+    "service": "hukuk-ai-api-gateway",
+    "lane": "rc_h",
+    "api_version": "2026-03-24-rc-h",
+    "guardrails": "enabled",
+    "retriever": "milvus",
+    "verification": "disabled"
+  },
+  "alerts": {
+    "lane_unhealthy": false,
+    "audit_write_failure": false,
+    "redis_unavailable": false,
+    "token_accounting_failure": false,
+    "backup_failure": false,
+    "auth_failure_spike": false,
+    "latency_regression_spike": false,
+    "rollback_event": false,
+    "p95_latency_ms": 17.058756237383925,
+    "lane": "rc_h",
+    "api_version": "2026-03-24-rc-h"
+  },
+  "auth": {
+    "unauthorized_status": 401,
+    "authorized_mode": "partial",
+    "auth_failure_delta": 1.0
+  },
+  "cited_smoke": {
+    "answer_preview": "Zarar verici fiili yasaklayan bir hukuk kuralı bulunmasa bile, ahlaka aykırı bir fiille başkasına kasten zarar veren de, bu zararı gidermekle yükümlüdür.\" [Kaynak: TBK m.49]",
+    "citations": [
+      "TBK m.49"
+    ],
+    "expected_ref_found": true
+  },
+  "refusal_smoke": {
+    "status_code": 200,
+    "answer_preview": "",
+    "final_mode": "refusal",
+    "blocked": false,
+    "error": null
+  },
+  "session_continuity": {
+    "continuity_answer_preview": "",
+    "final_mode": "refusal"
+  },
+  "redis_session_continuity": {
+    "session_id": "faz7-smoke-session",
+    "history_length": 4,
+    "delete_status": true
+  },
+  "metrics_delta": {
+    "audit_events_delta": 3.0,
+    "citation_delta": 1.0,
+    "refusal_delta": 0.0
+  },
+  "acceptance": {
+    "auth_enforced": true,
+    "cited_smoke_pass": true,
+    "refusal_smoke_pass": true,
+    "session_continuity_pass": true,
+    "audit_advancing": true,
+    "alerts_surface_present": true
+  }
+}

@@ -156,6 +156,15 @@ def test_run_release_smoke_suite_acceptance(monkeypatch: object) -> None:
             (
                 200,
                 {
+                    "choices": [{"message": {"content": "Tek cümlelik özet."}}],
+                    "citations": ["TBK m.49"],
+                    "final_mode": "answer",
+                    "blocked": False,
+                },
+            ),
+            (
+                200,
+                {
                     "choices": [{"message": {"content": "Kapsam dışı."}}],
                     "citations": [],
                     "final_mode": "refusal",
@@ -176,6 +185,7 @@ def test_run_release_smoke_suite_acceptance(monkeypatch: object) -> None:
         api_key="secret",
         model="hukuk-lora",
         cited_query="cited",
+        continuity_query="followup",
         refusal_query="refusal",
         expected_ref="TBK m.49",
         session_id="sess-1",
@@ -187,6 +197,8 @@ def test_run_release_smoke_suite_acceptance(monkeypatch: object) -> None:
     assert result["acceptance"]["refusal_smoke_pass"] is True
     assert result["acceptance"]["session_continuity_pass"] is True
     assert result["acceptance"]["audit_advancing"] is True
+    assert len(result["latencies_ms"]) == 3
+    assert result["avg_latency_ms"] >= 0
 
 
 def test_build_rc_h_manifest_inherits_answer_path_identity(tmp_path: Path) -> None:

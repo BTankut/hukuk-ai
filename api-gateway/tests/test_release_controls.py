@@ -79,6 +79,40 @@ def test_append_audit_event_redacts_pii_and_writes_hash_chain(
     payload = json.loads(line)
     assert payload["event_sha256"]
     assert payload["selected_lane"] == "rc_h"
+    assert payload["request_id"] == "req-1"
+    assert payload["decision_timestamps"]["decision_completed_at"] == "2026-03-24T00:00:00Z"
+
+
+def test_redact_persisted_payload_preserves_internal_ids_hashes_and_timestamps() -> None:
+    payload = controls.redact_persisted_payload(
+        {
+            "request_id": "req-1234567890abcdef1234",
+            "trace_id": "trace-abcdef1234567890abcd",
+            "response_id": "chatcmpl-1234abcd5678",
+            "event_sha256": "a" * 64,
+            "prev_event_sha256": "b" * 64,
+            "auth_subject": "key-123456abcdef",
+            "decision_timestamps": {
+                "request_started_at": "2026-03-24T09:25:00.123456+00:00",
+                "decision_completed_at": "2026-03-24T09:25:01.654321+00:00",
+            },
+            "session_id": "5551234567",
+            "question_raw": "Müvekkil 12345678901 ve test@example.com için 5551234567",
+        }
+    )
+
+    assert payload["request_id"] == "req-1234567890abcdef1234"
+    assert payload["trace_id"] == "trace-abcdef1234567890abcd"
+    assert payload["response_id"] == "chatcmpl-1234abcd5678"
+    assert payload["event_sha256"] == "a" * 64
+    assert payload["prev_event_sha256"] == "b" * 64
+    assert payload["auth_subject"] == "key-123456abcdef"
+    assert payload["decision_timestamps"]["request_started_at"] == "2026-03-24T09:25:00.123456+00:00"
+    assert payload["decision_timestamps"]["decision_completed_at"] == "2026-03-24T09:25:01.654321+00:00"
+    assert payload["session_id"] == "[PHONE_REDACTED]"
+    assert "[TR_ID_REDACTED]" in payload["question_raw"]
+    assert "[EMAIL_REDACTED]" in payload["question_raw"]
+    assert "[PHONE_REDACTED]" in payload["question_raw"]
 
 
 def test_export_trace_pack_redacts_persisted_payload(monkeypatch: object, tmp_path: Path) -> None:

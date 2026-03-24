@@ -1,0 +1,13 @@
+# HELP hukuk_ai_usage_source_total Total usage accounting sources.
+# TYPE hukuk_ai_usage_source_total counter
+hukuk_ai_usage_source_total{source="tokenizer"} 5
+hukuk_ai_usage_source_total{source="upstream"} 6
+# HELP hukuk_ai_audit_events_total Total structured audit events written.
+# TYPE hukuk_ai_audit_events_total counter
+hukuk_ai_audit_events_total 11
+# HELP hukuk_ai_auth_failure_total Total auth failures.
+# TYPE hukuk_ai_auth_failure_total counter
+hukuk_ai_auth_failure_total 2
+# HELP hukuk_ai_lane_health_state Lane health state (1=healthy, 0=unhealthy).
+# TYPE hukuk_ai_lane_health_state gauge
+hukuk_ai_lane_health_state{lane="rc_h"} 1

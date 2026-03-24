@@ -112,9 +112,7 @@ class TokenAccountingEngine:
         except Exception as exc:
             raise TokenAccountingError("Chat template tokenize edilemedi") from exc
 
-        if not isinstance(token_ids, list):
-            raise TokenAccountingError("Tokenizer beklenmeyen chat template sonucu üretti")
-        return len(token_ids)
+        return _token_sequence_length(token_ids, error_message="Tokenizer beklenmeyen chat template sonucu üretti")
 
     def count_text(self, text: str) -> int:
         if not isinstance(text, str):
@@ -123,9 +121,25 @@ class TokenAccountingEngine:
             token_ids = self._tokenizer.encode(text, add_special_tokens=False)
         except Exception as exc:
             raise TokenAccountingError("Metin tokenize edilemedi") from exc
-        if not isinstance(token_ids, list):
-            raise TokenAccountingError("Tokenizer beklenmeyen encode sonucu üretti")
+        return _token_sequence_length(token_ids, error_message="Tokenizer beklenmeyen encode sonucu üretti")
+
+
+def _token_sequence_length(token_ids: object, *, error_message: str) -> int:
+    if isinstance(token_ids, list):
         return len(token_ids)
+    shape = getattr(token_ids, "shape", None)
+    if isinstance(shape, tuple) and shape:
+        return int(shape[-1])
+    tolist = getattr(token_ids, "tolist", None)
+    if callable(tolist):
+        normalized = tolist()
+        if isinstance(normalized, list):
+            if normalized and isinstance(normalized[0], list):
+                return len(normalized[0])
+            return len(normalized)
+    if hasattr(token_ids, "__len__") and not isinstance(token_ids, (str, bytes, dict)):
+        return len(token_ids)  # type: ignore[arg-type]
+    raise TokenAccountingError(error_message)
 
 
 @lru_cache(maxsize=1)

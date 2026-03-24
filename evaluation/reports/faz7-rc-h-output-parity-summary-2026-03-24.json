@@ -1,0 +1,35 @@
+[
+  {
+    "family": "faz1-50",
+    "mismatch_count": 34,
+    "family_metric_delta_zero": false,
+    "metric_delta": {
+      "citation_rate": 0.0,
+      "correct_source_rate": -0.0766,
+      "hallucination_rate": 0.04,
+      "refusal_accuracy": -0.06
+    }
+  },
+  {
+    "family": "v2-95",
+    "mismatch_count": 82,
+    "family_metric_delta_zero": false,
+    "metric_delta": {
+      "citation_rate": 0.0164,
+      "correct_source_rate": -0.0718,
+      "hallucination_rate": 0.0463,
+      "refusal_accuracy": -0.0888
+    }
+  },
+  {
+    "family": "v3-170",
+    "mismatch_count": 118,
+    "family_metric_delta_zero": false,
+    "metric_delta": {
+      "citation_rate": -0.0017,
+      "correct_source_rate": -0.0365,
+      "hallucination_rate": 0.0128,
+      "refusal_accuracy": -0.0725
+    }
+  }
+]
