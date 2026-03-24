@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -10,6 +11,29 @@ import build_rc_j_manifest as manifest_builder  # noqa: E402
 import build_preprojection_gate as gate_builder  # noqa: E402
 import build_sentinel12_pack as sentinel_builder  # noqa: E402
 import build_tbk005_witness_forensics as witness_builder  # noqa: E402
+
+
+def _load_module(module_name: str, relative_path: str):
+    path = REPO_ROOT / relative_path
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+preprojection_summary_builder = _load_module(
+    "faz9_preprojection_summary_builder",
+    "scripts/faz9/build_preprojection_summary.py",
+)
+output_parity_summary_builder = _load_module(
+    "faz9_output_parity_summary_builder",
+    "scripts/faz9/build_output_parity_summary.py",
+)
+retention_gate_builder = _load_module(
+    "faz9_retention_gate_builder",
+    "scripts/faz9/build_release_controls_retention_gate.py",
+)
 
 
 def _question(question_id: str, stage_hashes: dict[str, str]) -> dict:
@@ -266,3 +290,127 @@ def test_build_preprojection_gate_preserves_duplicate_question_ids_by_occurrence
     assert summary["question_count"] == 2
     assert summary["compared_question_count"] == 2
     assert summary["model_request_payload_hash_mismatch_count"] == 1
+
+
+def test_build_preprojection_summary_aggregates_family_counters() -> None:
+    summary = preprojection_summary_builder.build_summary(
+        [
+            {
+                "eval_family": "faz1-50",
+                "question_count": 50,
+                "compared_question_count": 50,
+                "normalized_request_hash_mismatch_count": 0,
+                "model_request_payload_hash_mismatch_count": 0,
+                "generation_contract_hash_mismatch_count": 0,
+                "preprojection_hash_mismatch_count": 0,
+                "raw_answer_hash_mismatch_count": 0,
+                "parity_runtime_error_count": 0,
+            },
+            {
+                "eval_family": "v2-95",
+                "question_count": 95,
+                "compared_question_count": 94,
+                "normalized_request_hash_mismatch_count": 0,
+                "model_request_payload_hash_mismatch_count": 1,
+                "generation_contract_hash_mismatch_count": 0,
+                "preprojection_hash_mismatch_count": 0,
+                "raw_answer_hash_mismatch_count": 0,
+                "parity_runtime_error_count": 1,
+            },
+        ]
+    )
+
+    assert summary["family_count"] == 2
+    assert summary["question_count"] == 145
+    assert summary["compared_question_count"] == 144
+    assert summary["model_request_payload_hash_mismatch_count"] == 1
+    assert summary["parity_runtime_error_count"] == 1
+    assert summary["all_families_pass"] is False
+
+
+def test_build_output_parity_summary_counts_missing_question_as_error() -> None:
+    summary = output_parity_summary_builder.build_summary(
+        [
+            {
+                "reference_eval_family": "faz1-50",
+                "question_count": 50,
+                "mismatch_count": 0,
+                "family_metric_delta_zero": True,
+                "metric_delta": {
+                    "citation_rate": 0.0,
+                    "correct_source_rate": 0.0,
+                    "hallucination_rate": 0.0,
+                    "refusal_accuracy": 0.0,
+                },
+                "mismatches": [],
+            },
+            {
+                "reference_eval_family": "v2-95",
+                "question_count": 95,
+                "mismatch_count": 1,
+                "family_metric_delta_zero": False,
+                "metric_delta": {
+                    "citation_rate": 0.1,
+                    "correct_source_rate": 0.0,
+                    "hallucination_rate": 0.0,
+                    "refusal_accuracy": 0.0,
+                },
+                "mismatches": [{"question_id": "HAL-001", "kind": "missing_question"}],
+            },
+        ]
+    )
+
+    assert summary["family_count"] == 2
+    assert summary["question_count"] == 145
+    assert summary["parity_mismatch_count"] == 1
+    assert summary["parity_error_count"] == 1
+    assert summary["all_families_pass"] is False
+
+
+def test_build_release_controls_retention_gate_passes_when_all_controls_hold(tmp_path: Path) -> None:
+    restore_env = tmp_path / "restore.env.sh"
+    restore_env.write_text("export TEST=1\n", encoding="utf-8")
+    summary = retention_gate_builder.build_retention_summary(
+        smoke={
+            "acceptance": {
+                "auth_enforced": True,
+                "cited_smoke_pass": True,
+                "refusal_smoke_pass": True,
+                "session_continuity_pass": True,
+                "audit_advancing": True,
+                "alerts_surface_present": True,
+            }
+        },
+        pii_probe={
+            "question_raw": "Müvekkil [TR_ID_REDACTED] ve [EMAIL_REDACTED] için [PHONE_REDACTED]",
+            "answer_text": "Kimlik [TR_ID_REDACTED], e-posta [EMAIL_REDACTED], telefon [PHONE_REDACTED]",
+        },
+        alerts={
+            "lane_unhealthy": False,
+            "token_accounting_failure": False,
+        },
+        metrics={
+            ("hukuk_ai_usage_source_total", '{source="tokenizer"}'): 3.0,
+            ("hukuk_ai_usage_source_total", '{source="upstream"}'): 5.0,
+        },
+        headers={
+            "x-hukuk-ai-api-version": "2026-03-24-rc-j",
+            "x-hukuk-ai-lane": "rc_j",
+        },
+        supervision={
+            "gateway_pid_running": True,
+            "tunnel_pid_running": True,
+            "health_ok": True,
+            "metrics_ok": True,
+            "audit_log_exists": True,
+            "healthy": True,
+        },
+        backup_manifest={"files": [{"source_path": "a"}]},
+        restore_summary={
+            "restore_env_path": str(restore_env),
+            "files": [{"exists": True}],
+        },
+    )
+
+    assert summary["retention_matrix_result"] == "PASS"
+    assert all(row["result"] for row in summary["rows"])
