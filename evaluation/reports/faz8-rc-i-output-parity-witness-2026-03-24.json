@@ -1,0 +1,80 @@
+{
+  "reference_eval_family": "faz1-50-witness",
+  "candidate_eval_family": "faz1-50-witness",
+  "question_count": 2,
+  "mismatch_count": 1,
+  "metric_delta": {
+    "citation_rate": 0.0,
+    "correct_source_rate": 0.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 0.0
+  },
+  "family_metric_delta_zero": true,
+  "mismatches": [
+    {
+      "question_id": "TBK-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ],
+      "reference": {
+        "question_id": "TBK-005",
+        "final_mode": "answer",
+        "answer_body": "Faiz oranı sözleşmede belirlenmemişse, borcun türüne göre ya mevzuat hükümlerine ya da ödünç alma zamanında ve yerinde geçerli olan faiz oranına göre belirlenir.\n\n*   **Genel faiz borcu:** \"Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\" [Kaynak: TBK m.88]\n*   **Temerrüt faizi:** \"Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\" [Kaynak: TBK m.120]\n*   **Tüketim ödüncü:** \"Tüketim ödüncü sözleşmesinde faiz oranı belirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır.\" [Kaynak: TBK m.388]\n*   **Ticari olmayan tüketim ödüncü:** \"Ticari olmayan tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmış olmadıkça faiz istenemez.\" [Kaynak: TBK m.387]",
+        "refusal_body": "",
+        "refusal_reason": null,
+        "ordered_citation_list": [
+          "TBK m.88",
+          "TBK m.120",
+          "TBK m.388",
+          "TBK m.387"
+        ],
+        "ordered_source_id_list": [
+          "TBK m.88",
+          "TBK m.120",
+          "TBK m.388",
+          "TBK m.387"
+        ],
+        "ordered_canonical_norm_keys": [
+          "TBK m.88",
+          "TBK m.120",
+          "TBK m.388",
+          "TBK m.387"
+        ],
+        "visible_citation_projection": [
+          "TBK m.88",
+          "TBK m.120",
+          "TBK m.388",
+          "TBK m.387"
+        ]
+      },
+      "candidate": {
+        "question_id": "TBK-005",
+        "final_mode": "answer",
+        "answer_body": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+        "refusal_body": "",
+        "refusal_reason": null,
+        "ordered_citation_list": [
+          "TBK m.88",
+          "TBK m.120"
+        ],
+        "ordered_source_id_list": [
+          "TBK m.88",
+          "TBK m.120"
+        ],
+        "ordered_canonical_norm_keys": [
+          "TBK m.88",
+          "TBK m.120"
+        ],
+        "visible_citation_projection": [
+          "TBK m.88",
+          "TBK m.120"
+        ]
+      }
+    }
+  ]
+}

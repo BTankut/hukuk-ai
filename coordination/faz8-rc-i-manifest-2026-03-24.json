@@ -1,0 +1,52 @@
+{
+  "candidate_id": "rc-i-20260324",
+  "status": "release_candidate",
+  "inherits_from": "rc-g-faz6-accepted-20260323",
+  "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+  "checkpoint_ref": "rc-i-2026-03-24",
+  "git_commit": "868a1dd",
+  "runner_mode": "rc_i_runtime_release_controls_parity_safe",
+  "answer_path_identity": {
+    "claim_binding_version": "selective-claim-binding-v3",
+    "final_mode_mapping_version": "final-mode-mapping-v3",
+    "source_locking_version": "v1",
+    "citation_normalization_version": "canonical-citation-normalization-v1",
+    "law_scope_gate_version": "law-scope-gate-v2",
+    "trace_contract_version": "faz6-attribution-trace-schema-v1",
+    "schema_contract_version": "structured-answer-contract-v1"
+  },
+  "family_reports_reference": [
+    {
+      "family": "faz1-50",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_faz1-50_20260323.json",
+      "questions_source": "configs/evaluation/test_questions.json"
+    },
+    {
+      "family": "v2-95",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_v2-95_20260323.json",
+      "questions_source": "configs/evaluation/test_questions_v2_95.json"
+    },
+    {
+      "family": "v3-170",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_v3-170_20260323.json",
+      "questions_source": "configs/evaluation/test_questions_v3_170.json"
+    }
+  ],
+  "allowed_diff_surface": [
+    "api-gateway/src/release_controls.py",
+    "api-gateway/src/session_store.py",
+    "api-gateway/src/token_accounting.py",
+    "api-gateway/src/main.py",
+    "api-gateway/src/api/openai.py",
+    "api-gateway/src/routers/chat.py",
+    "api-gateway/src/observability.py",
+    "evaluation/eval_runner.py",
+    "scripts/faz8/build_rc_i_manifest.py",
+    "scripts/faz8/build_rc_h_parity_frontier.py",
+    "scripts/faz8/build_first_divergence_replay.py",
+    "scripts/faz8/build_preprojection_hash_gate.py",
+    "scripts/faz8/build_output_parity_summary.py"
+  ],
+  "answer_path_delta": []
+}

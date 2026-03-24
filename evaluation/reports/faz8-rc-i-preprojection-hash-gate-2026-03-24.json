@@ -1,0 +1,14 @@
+{
+  "eval_family": "faz1-50-witness",
+  "question_count": 2,
+  "preprojection_hash_mismatch_count": 1,
+  "raw_answer_hash_mismatch": 1,
+  "mismatches": [
+    {
+      "question_id": "TBK-005",
+      "kind": "raw_answer_hash_mismatch",
+      "reference_hash": "3c87a4952b8f9b0e37595797baca993648c617f09a6bbc8cf15969a8d9f730f4",
+      "candidate_hash": "e7818e0749d3ed8901c07a0c89103526b9cdc8d8f5f22983fa1bd211071a8a54"
+    }
+  ]
+}

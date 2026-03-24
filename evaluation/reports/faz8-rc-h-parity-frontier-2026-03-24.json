@@ -1,0 +1,2691 @@
+{
+  "frontier_total": 242,
+  "mismatch_total": 234,
+  "parity_runtime_error_total": 8,
+  "kind_breakdown": {
+    "normalized_output_mismatch": 234,
+    "parity_runtime_error": 8
+  },
+  "family_breakdown": [
+    {
+      "family": "faz1-50",
+      "frontier_total": 34,
+      "mismatch_total": 34,
+      "parity_runtime_error_total": 0
+    },
+    {
+      "family": "v2-95",
+      "frontier_total": 86,
+      "mismatch_total": 82,
+      "parity_runtime_error_total": 4
+    },
+    {
+      "family": "v3-170",
+      "frontier_total": 122,
+      "mismatch_total": 118,
+      "parity_runtime_error_total": 4
+    }
+  ],
+  "rows": [
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-003",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-006",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-007",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-008",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-009",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-011",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-013",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-014",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-016",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-017",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-018",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-019",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-022",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-023",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-024",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-027",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-028",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-029",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-030",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-033",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-035",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-036",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-038",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-039",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-040",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-041",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-042",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-043",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-046",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-047",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-048",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-049",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "faz1-50",
+      "question_id": "TBK-050",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-001",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-002",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-003",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-004",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-006",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-007",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-008",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-009",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "HAL-010",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-001",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-002",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-003",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-004",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-006",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "refusal_body",
+        "refusal_reason"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-006",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-007",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-008",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-009",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "OOS-010",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-051",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-052",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-053",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-054",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-055",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-056",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-057",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-058",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-059",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-060",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-061",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-062",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-063",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-064",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-065",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-066",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-067",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-068",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-069",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-070",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-071",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-072",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-073",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-074",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-075",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-076",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-077",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-078",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-079",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-080",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-081",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-082",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-083",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-084",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-085",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-086",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-087",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-088",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-089",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-090",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-092",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-093",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-095",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-098",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-099",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-100",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-104",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-108",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-108",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-109",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-111",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-112",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-112",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-113",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-114",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "refusal_body",
+        "refusal_reason",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TBK-114",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-001",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-002",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-003",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-004",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-006",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-007",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-008",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v2-95",
+      "question_id": "TMK-CL-010",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-001",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-002",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-003",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-004",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-006",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-007",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-008",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-009",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-010",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-011",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "HAL-012",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-001",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-002",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-003",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-004",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-006",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-007",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-008",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-009",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-010",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-011",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "OOS-012",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-051",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-052",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-053",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-054",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-054",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-055",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-056",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-057",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-058",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-059",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-060",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-061",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-062",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-063",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-064",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-064",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-065",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-066",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-067",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-068",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-069",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-070",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-071",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-072",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-073",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-074",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-075",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-076",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-077",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-078",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-079",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-080",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-081",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-082",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-083",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-084",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-085",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-086",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-087",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-088",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-089",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-090",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-092",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-093",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-095",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-098",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-099",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-100",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-104",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-108",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-109",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-111",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-111",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-112",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-113",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-114",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-114",
+      "kind": "parity_runtime_error",
+      "error": "timed out"
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-117",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-118",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-119",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-120",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-121",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-122",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-123",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-124",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-125",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-126",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-127",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-128",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-129",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-130",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-149",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "final_mode",
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-154",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-157",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-165",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TBK-166",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-001",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-002",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-003",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-004",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-005",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-006",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "refusal_body",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-007",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-008",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-010",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-014",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-015",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-017",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-020",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-021",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-022",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-023",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-024",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-025",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-026",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-027",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-028",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "answer_body",
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    },
+    {
+      "family": "v3-170",
+      "question_id": "TMK-CL-029",
+      "kind": "normalized_output_mismatch",
+      "fields": [
+        "ordered_citation_list",
+        "ordered_source_id_list",
+        "ordered_canonical_norm_keys",
+        "visible_citation_projection"
+      ]
+    }
+  ]
+}

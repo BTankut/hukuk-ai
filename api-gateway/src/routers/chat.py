@@ -30,6 +30,7 @@ Multi-turn Yönetimi:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -2230,6 +2231,291 @@ def _verification_has_hallucination_fail(verification: dict[str, Any] | None) ->
     return isinstance(risk, (int, float)) and risk > 0.5
 
 
+def _parity_trace_enabled() -> bool:
+    return os.getenv("PARITY_TRACE_ENABLED", "false").lower() in {"1", "true", "yes"}
+
+
+def _canonical_stage_payload(payload: Any) -> str:
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _hash_stage_payload(payload: Any) -> str:
+    return hashlib.sha256(_canonical_stage_payload(payload).encode("utf-8")).hexdigest()
+
+
+def _question_messages_payload(messages: list[ConversationMessage]) -> list[dict[str, str]]:
+    return [{"role": msg.role, "content": msg.content} for msg in messages]
+
+
+def _request_stage_payload(request_body: ChatCompletionRequest) -> dict[str, Any]:
+    return {
+        "model": request_body.model,
+        "messages": _question_messages_payload(request_body.messages),
+        "stream": request_body.stream,
+        "temperature": request_body.temperature,
+        "max_tokens": request_body.max_tokens,
+        "session_id_present": bool(request_body.session_id),
+        "law_filter": request_body.law_filter,
+        "use_verification": request_body.use_verification,
+        "top_k": request_body.top_k,
+        "include_trace": request_body.include_trace,
+    }
+
+
+def _normalized_request_stage_payload(request_body: ChatCompletionRequest) -> dict[str, Any]:
+    return {
+        "model": request_body.model,
+        "messages": _question_messages_payload(request_body.messages),
+        "stream": bool(request_body.stream),
+        "temperature": request_body.temperature if request_body.temperature is not None else 0.1,
+        "max_tokens": request_body.max_tokens if request_body.max_tokens is not None else 512,
+        "law_filter": request_body.law_filter,
+        "use_verification": bool(request_body.use_verification),
+        "top_k": int(request_body.top_k),
+        "include_trace": bool(request_body.include_trace),
+    }
+
+
+def _context_enriched_stage_payload(
+    *,
+    request: Request,
+    session_id: str,
+    conversation_history: list[dict[str, str]],
+) -> dict[str, Any]:
+    return {
+        "auth_subject": getattr(request.state, "auth_subject", None),
+        "session_id_present": bool(session_id),
+        "conversation_history": conversation_history,
+        "request_id_present": isinstance(getattr(request.state, "request_id", None), str),
+        "trace_id_present": isinstance(getattr(request.state, "trace_id", None), str),
+    }
+
+
+def _source_projection_payload(source_ids: list[str]) -> dict[str, Any]:
+    return {
+        "ordered_source_id_list": source_ids,
+        "ordered_canonical_norm_keys": [canonicalize_source_id(item) or item for item in source_ids],
+    }
+
+
+def _pre_answer_stage_payload(
+    *,
+    decision_lane: str,
+    user_message: str,
+    enriched_query: str,
+    retrieval_query: str,
+    conversation_history: list[dict[str, str]],
+    mentioned_laws: list[str],
+    explicit_article_refs: list[tuple[str, str]],
+    forced_article_refs: list[tuple[str, str]],
+    applied_expansions: list[str],
+    top_k_requested: int,
+    top_k_effective: int,
+    reranker_enabled: bool,
+) -> dict[str, Any]:
+    return {
+        "decision_lane": decision_lane,
+        "user_message": user_message,
+        "enriched_query": enriched_query,
+        "retrieval_query": retrieval_query,
+        "conversation_history": conversation_history,
+        "mentioned_laws": mentioned_laws,
+        "explicit_article_refs": explicit_article_refs,
+        "forced_article_refs": forced_article_refs,
+        "applied_expansions": applied_expansions,
+        "top_k_requested": top_k_requested,
+        "top_k_effective": top_k_effective,
+        "reranker_enabled": reranker_enabled,
+    }
+
+
+def _raw_answer_stage_payload(
+    *,
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    guardrails_reasons: list[str],
+    verification: dict[str, Any] | None,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+) -> dict[str, Any]:
+    projection = _extract_answer_source_ids(answer_contract=answer_contract, citations=citations)
+    return {
+        "answer_text": answer_text,
+        "citations": citations,
+        "blocked": blocked,
+        "guardrails_reasons": guardrails_reasons,
+        "verification": verification,
+        "answer_contract": answer_contract,
+        "final_mode": final_mode,
+        "final_reason": final_reason,
+        **_source_projection_payload(projection),
+    }
+
+
+def _visible_projection_stage_payload(
+    *,
+    answer_text: str,
+    citations: list[str],
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+) -> dict[str, Any]:
+    source_ids = _extract_answer_source_ids(answer_contract=answer_contract, citations=citations)
+    return {
+        "final_mode": final_mode,
+        "answer_body": answer_text if final_mode != "refusal" else "",
+        "refusal_body": answer_text if final_mode == "refusal" else "",
+        "refusal_reason": final_reason,
+        "ordered_citation_list": list(citations),
+        "visible_citation_projection": list(citations),
+        **_source_projection_payload(source_ids),
+    }
+
+
+def _response_envelope_stage_payload(
+    *,
+    request_body: ChatCompletionRequest,
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    guardrails_reasons: list[str],
+    verification: dict[str, Any] | None,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+) -> dict[str, Any]:
+    return {
+        "object": "chat.completion",
+        "model": request_body.model,
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": answer_text},
+                "finish_reason": "stop",
+            }
+        ],
+        "citations": list(citations),
+        "blocked": blocked,
+        "guardrails_reasons": list(guardrails_reasons),
+        "verification": verification,
+        "final_mode": final_mode,
+        "final_reason": final_reason,
+        "answer_contract": answer_contract,
+    }
+
+
+def _append_parity_stage(
+    stages: list[dict[str, Any]],
+    *,
+    stage_name: str,
+    payload: dict[str, Any],
+) -> None:
+    stages.append(
+        {
+            "stage": stage_name,
+            "hash": _hash_stage_payload(payload),
+            "payload": payload,
+        }
+    )
+
+
+def _attach_parity_trace(
+    *,
+    trace_payload: dict[str, Any],
+    request: Request,
+    request_body: ChatCompletionRequest,
+    session_id: str,
+    conversation_history: list[dict[str, str]],
+    pre_answer_payload: dict[str, Any],
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    guardrails_reasons: list[str],
+    verification: dict[str, Any] | None,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+) -> dict[str, Any]:
+    if not _parity_trace_enabled():
+        return trace_payload
+
+    stages: list[dict[str, Any]] = []
+    _append_parity_stage(
+        stages,
+        stage_name="raw_input_request",
+        payload=_request_stage_payload(request_body),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="normalized_request",
+        payload=_normalized_request_stage_payload(request_body),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="auth_session_trace_enriched_request",
+        payload=_context_enriched_stage_payload(
+            request=request,
+            session_id=session_id,
+            conversation_history=conversation_history,
+        ),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="pre_answer_handler_payload",
+        payload=pre_answer_payload,
+    )
+    raw_answer_payload = _raw_answer_stage_payload(
+        answer_text=answer_text,
+        citations=citations,
+        blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+        final_reason=final_reason,
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="raw_answer_object",
+        payload=raw_answer_payload,
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="visible_response_projection",
+        payload=_visible_projection_stage_payload(
+            answer_text=answer_text,
+            citations=citations,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+        ),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="api_response_envelope",
+        payload=_response_envelope_stage_payload(
+            request_body=request_body,
+            answer_text=answer_text,
+            citations=citations,
+            blocked=blocked,
+            guardrails_reasons=guardrails_reasons,
+            verification=verification,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+        ),
+    )
+
+    enriched_trace = dict(trace_payload)
+    enriched_trace["parity_trace"] = {
+        "stages": stages,
+        "preprojection_hash": raw_answer_payload and stages[4]["hash"],
+    }
+    return enriched_trace
+
+
 def _finalize_chat_response(
     *,
     request: Request,
@@ -2238,6 +2524,8 @@ def _finalize_chat_response(
     session_id: str,
     response_id: str,
     user_message: str,
+    conversation_history: list[dict[str, str]],
+    pre_answer_payload: dict[str, Any],
     answer_text: str,
     citations: list[str],
     blocked: bool,
@@ -2249,6 +2537,22 @@ def _finalize_chat_response(
     final_reason: str | None,
     upstream_usage: dict[str, int] | None,
 ) -> Any:
+    trace_payload = _attach_parity_trace(
+        trace_payload=trace_payload,
+        request=request,
+        request_body=request_body,
+        session_id=session_id,
+        conversation_history=conversation_history,
+        pre_answer_payload=pre_answer_payload,
+        answer_text=answer_text,
+        citations=citations,
+        blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+        final_reason=final_reason,
+    )
     _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
     public_answer_contract = _sanitize_public_answer_contract(answer_contract)
     request_id = ensure_request_id(request)
@@ -2430,6 +2734,11 @@ async def chat_completions(
         answer_text, precise_citations = precise_answer
         mentioned_laws = _extract_law_mentions(last_user_msg)
         explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
+        request_history = [
+            {"role": msg.role, "content": msg.content}
+            for msg in request_body.messages[:-1]
+            if msg.role in {"user", "assistant", "system"}
+        ]
         synthetic_evidence = _build_fallback_assembled_evidence(
             [citation for citation in precise_citations if canonicalize_source_id(citation)],
             fallback_excerpt=answer_text,
@@ -2481,6 +2790,20 @@ async def chat_completions(
             final_mode=hardening.final_mode,
             final_reason=hardening.final_reason,
         )
+        pre_answer_payload = _pre_answer_stage_payload(
+            decision_lane=precise_lane,
+            user_message=last_user_msg,
+            enriched_query=last_user_msg,
+            retrieval_query=last_user_msg,
+            conversation_history=request_history,
+            mentioned_laws=mentioned_laws,
+            explicit_article_refs=explicit_article_refs,
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+        )
         return _finalize_chat_response(
             request=request,
             request_body=request_body,
@@ -2488,6 +2811,8 @@ async def chat_completions(
             session_id=session_id,
             response_id=response_id,
             user_message=last_user_msg,
+            conversation_history=request_history,
+            pre_answer_payload=pre_answer_payload,
             answer_text=hardening.answer_text,
             citations=hardening.citations,
             blocked=hardening.internal_blocked,
@@ -2510,6 +2835,11 @@ async def chat_completions(
         )
         mentioned_laws = _extract_law_mentions(last_user_msg)
         explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
+        request_history = [
+            {"role": msg.role, "content": msg.content}
+            for msg in request_body.messages[:-1]
+            if msg.role in {"user", "assistant", "system"}
+        ]
         hardening = harden_answer(
             answer_text=answer_text,
             citations=[],
@@ -2552,6 +2882,20 @@ async def chat_completions(
             final_mode=hardening.final_mode,
             final_reason=hardening.final_reason,
         )
+        pre_answer_payload = _pre_answer_stage_payload(
+            decision_lane="scope_refusal_shortcut",
+            user_message=last_user_msg,
+            enriched_query=last_user_msg,
+            retrieval_query=last_user_msg,
+            conversation_history=request_history,
+            mentioned_laws=mentioned_laws,
+            explicit_article_refs=explicit_article_refs,
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+        )
         return _finalize_chat_response(
             request=request,
             request_body=request_body,
@@ -2559,6 +2903,8 @@ async def chat_completions(
             session_id=session_id,
             response_id=response_id,
             user_message=last_user_msg,
+            conversation_history=request_history,
+            pre_answer_payload=pre_answer_payload,
             answer_text=hardening.answer_text,
             citations=hardening.citations,
             blocked=hardening.internal_blocked,
@@ -3070,6 +3416,20 @@ async def chat_completions(
         final_mode=hardening.final_mode,
         final_reason=hardening.final_reason,
     )
+    pre_answer_payload = _pre_answer_stage_payload(
+        decision_lane="rag",
+        user_message=last_user_msg,
+        enriched_query=enriched_query,
+        retrieval_query=retrieval_query,
+        conversation_history=conversation_history,
+        mentioned_laws=mentioned_laws,
+        explicit_article_refs=explicit_article_refs,
+        forced_article_refs=forced_article_refs,
+        applied_expansions=applied_expansions,
+        top_k_requested=request_body.top_k,
+        top_k_effective=top_k_effective,
+        reranker_enabled=_reranker_enabled,
+    )
     return _finalize_chat_response(
         request=request,
         request_body=request_body,
@@ -3077,6 +3437,8 @@ async def chat_completions(
         session_id=session_id,
         response_id=response_id,
         user_message=last_user_msg,
+        conversation_history=conversation_history,
+        pre_answer_payload=pre_answer_payload,
         answer_text=hardening.answer_text,
         citations=hardening.citations,
         blocked=hardening.internal_blocked,
