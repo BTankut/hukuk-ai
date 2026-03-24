@@ -1,0 +1,3377 @@
+{
+  "generated_from": {
+    "faz3_failure_summary": {
+      "generated_at": "2026-03-24T07:41:30.667226+00:00",
+      "total_records": 85,
+      "by_family": {
+        "faz1-50": 11,
+        "v2-95": 27,
+        "v3-170": 47
+      },
+      "by_class": {
+        "citation_under_emission": 37,
+        "residual_false_refusal": 6,
+        "residual_unsupported_answer": 1,
+        "wrong_primary_source_with_supported_answer": 41
+      }
+    },
+    "faz5_legacy_summary": {
+      "generated_at": "2026-03-24T07:41:30.675795+00:00",
+      "total_records": 108,
+      "by_family": {
+        "faz1-50": 15,
+        "v2-95": 33,
+        "v3-170": 60
+      },
+      "by_class": {
+        "citation_under_emission": 53,
+        "residual_false_refusal": 6,
+        "residual_unsupported_answer": 1,
+        "wrong_primary_source_with_supported_answer": 48
+      }
+    },
+    "faz4_pack_path": "evaluation/reports/faz4-citation-family-failure-pack-2026-03-23.jsonl",
+    "faz5_divergence_pack_path": "evaluation/reports/faz5-source-attribution-divergence-pack-2026-03-23.jsonl"
+  },
+  "raw_input_counts": {
+    "faz3_family_quality_fail": 85,
+    "faz4_citation_failure_pack": 85,
+    "faz5_divergence_fail": 85,
+    "faz5_legacy_fail": 108,
+    "faz5_delta_changed": 84
+  },
+  "origin_counts": {
+    "faz3_family_quality_fail": 85,
+    "faz4_citation_failure_pack": 85,
+    "faz5_divergence_fail": 85,
+    "faz5_legacy_fail": 108,
+    "faz5_delta_changed": 84
+  },
+  "family_counts": {
+    "faz1-50": 15,
+    "v2-95": 33,
+    "v3-170": 60
+  },
+  "tracked_count": 108,
+  "dedupe_rule": "family + question_id",
+  "rows": [
+    {
+      "tracked_key": "faz1-50:TBK-001",
+      "family": "faz1-50",
+      "question_id": "TBK-001",
+      "question_text": "Türk Borçlar Kanunu'na göre bir sözleşmenin kurulması için hangi unsurlar gereklidir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.1",
+      "expected_sources": [
+        "TBK m.1",
+        "TBK m.2",
+        "TBK m.3"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-003",
+      "family": "faz1-50",
+      "question_id": "TBK-003",
+      "question_text": "Haksız fiil nedeniyle tazminat davası açmak için TBK'da öngörülen zamanaşımı süresi nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.72",
+      "expected_sources": [
+        "TBK m.72",
+        "TBK m.146"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz4_failure_class": "residual_false_refusal",
+        "faz4_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "residual_false_refusal"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-004",
+      "family": "faz1-50",
+      "question_id": "TBK-004",
+      "question_text": "TBK'ya göre konut kiralarında kira sözleşmesinin sona erdirilmesi (tahliye) hangi koşullara bağlıdır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.347",
+      "expected_sources": [
+        "TBK m.347",
+        "TBK m.348",
+        "TBK m.349",
+        "TBK m.350",
+        "TBK m.351"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-006",
+      "family": "faz1-50",
+      "question_id": "TBK-006",
+      "question_text": "TBK kapsamında ceza şartının (cayma akçesi) geçerliliği için hangi koşullar aranmaktadır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.179",
+      "expected_sources": [
+        "TBK m.179",
+        "TBK m.180",
+        "TBK m.182"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-007",
+      "family": "faz1-50",
+      "question_id": "TBK-007",
+      "question_text": "Vekâlet sözleşmesinde vekâletin sona erme halleri nelerdir? TBK'nın ilgili maddelerini belirtin.",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.512",
+      "expected_sources": [
+        "TBK m.512",
+        "TBK m.513",
+        "TBK m.514"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-008",
+      "family": "faz1-50",
+      "question_id": "TBK-008",
+      "question_text": "Hizmet sözleşmesinde işçinin haklı nedenle sözleşmeyi fesih hakkı TBK'nın hangi maddelerinde düzenlenmiştir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.435",
+      "expected_sources": [
+        "TBK m.435",
+        "TBK m.436"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-009",
+      "family": "faz1-50",
+      "question_id": "TBK-009",
+      "question_text": "TBK'ya göre genel zamanaşımı süresi kaç yıldır ve bu süre hangi tarihten itibaren işlemeye başlar?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.146",
+      "expected_sources": [
+        "TBK m.146",
+        "TBK m.149"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-011",
+      "family": "faz1-50",
+      "question_id": "TBK-011",
+      "question_text": "Haksız fiilde zarar görenin müterafik kusuru (ortak kusur) tazminatı nasıl etkiler?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.52",
+      "expected_sources": [
+        "TBK m.52"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz4_failure_class": "residual_false_refusal",
+        "faz4_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "residual_false_refusal"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-016",
+      "family": "faz1-50",
+      "question_id": "TBK-016",
+      "question_text": "Vekâlet sözleşmesinde vekilin özen yükümlülüğü ve hesap verme borcu TBK'nın hangi maddelerinde düzenlenmiştir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.505",
+      "expected_sources": [
+        "TBK m.505",
+        "TBK m.508"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-020",
+      "family": "faz1-50",
+      "question_id": "TBK-020",
+      "question_text": "TBK'ya göre taşınmaz satış sözleşmesi hangi şekle tabidir ve noter onayı gerekir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.237",
+      "expected_sources": [
+        "TBK m.237",
+        "TMK m.706"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-033",
+      "family": "faz1-50",
+      "question_id": "TBK-033",
+      "question_text": "Alacağın devri (temliki) sözleşmesinin geçerliliği hangi şekil şartına tabidir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.183",
+      "expected_sources": [
+        "TBK m.183",
+        "TBK m.184"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-035",
+      "family": "faz1-50",
+      "question_id": "TBK-035",
+      "question_text": "TBK'ya göre takasın şartları nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.143",
+      "expected_sources": [
+        "TBK m.143",
+        "TBK m.144"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-039",
+      "family": "faz1-50",
+      "question_id": "TBK-039",
+      "question_text": "Adi ortaklıkta ortakların idare hak ve yetkisi kime aittir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.625",
+      "expected_sources": [
+        "TBK m.625"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz4_failure_class": "residual_false_refusal",
+        "faz4_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "residual_false_refusal"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-042",
+      "family": "faz1-50",
+      "question_id": "TBK-042",
+      "question_text": "Sözleşmeden doğan hakların üçüncü kişiye etkisi (üçüncü kişi yararına sözleşme) nasıl işler?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.129",
+      "expected_sources": [
+        "TBK m.129"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "faz1-50:TBK-043",
+      "family": "faz1-50",
+      "question_id": "TBK-043",
+      "question_text": "Manevi tazminat istemi TBK'nın hangi maddesinde düzenlenmiştir ve hangi durumlarda talep edilebilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.56",
+      "expected_sources": [
+        "TBK m.56",
+        "TBK m.58"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:HAL-003",
+      "family": "v2-95",
+      "question_id": "HAL-003",
+      "question_text": "TBK m.223'teki ayıp ihbar süresi geçince alıcı TBK m.125'e dayanarak yine de dönme hakkı kullanabilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.223",
+      "expected_sources": [
+        "TBK m.223",
+        "TBK m.227",
+        "TBK m.125"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:HAL-004",
+      "family": "v2-95",
+      "question_id": "HAL-004",
+      "question_text": "TBK m.136 imkansızlık halinde borcu sona erdiriyorsa, aynı olayda TBK m.49 haksız fiil tazminatı hiç istenemez denebilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.136",
+      "expected_sources": [
+        "TBK m.136",
+        "TBK m.49"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:HAL-005",
+      "family": "v2-95",
+      "question_id": "HAL-005",
+      "question_text": "TBK m.512'ye göre vekilin azli her zaman mümkünse, bu durum TBK m.27 gereği emredici hukuk kuralı mıdır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.512",
+      "expected_sources": [
+        "TBK m.512",
+        "TBK m.27"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:HAL-006",
+      "family": "v2-95",
+      "question_id": "HAL-006",
+      "question_text": "TBK m.146'daki on yıllık zamanaşımı, TBK m.72'de açıkça yazan iki yıllık süreyi kendiliğinden bertaraf eder mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.146",
+      "expected_sources": [
+        "TBK m.146",
+        "TBK m.72"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:HAL-007",
+      "family": "v2-95",
+      "question_id": "HAL-007",
+      "question_text": "TBK m.321 alt kira yasağı varsa kiracı hiçbir koşulda kullanım hakkını devredemez demek doğru mu?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.321",
+      "expected_sources": [
+        "TBK m.321",
+        "TBK m.322"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:HAL-009",
+      "family": "v2-95",
+      "question_id": "HAL-009",
+      "question_text": "TBK'da 'm.999' diye bir maddeye dayanarak kira tespit davası açılabileceği söyleniyor; bu iddia doğru mu?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.344",
+      "expected_sources": [
+        "TBK m.344",
+        "TBK m.345"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-051",
+      "family": "v2-95",
+      "question_id": "TBK-051",
+      "question_text": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.125",
+      "expected_sources": [
+        "TBK m.125",
+        "TBK m.126"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-052",
+      "family": "v2-95",
+      "question_id": "TBK-052",
+      "question_text": "TBK'ya göre muaccel bir borcun borçlusunun temerrüde düşmesi için alacaklı tarafından ihtar yapılması zorunlu mudur? İstisna halleri nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.117",
+      "expected_sources": [
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-054",
+      "family": "v2-95",
+      "question_id": "TBK-054",
+      "question_text": "TBK'ya göre alacağın devri (temliki) nasıl gerçekleşir ve devrin borçluya bildirimi ne zaman hüküm doğurur?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.183",
+      "expected_sources": [
+        "TBK m.183",
+        "TBK m.184",
+        "TBK m.186"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-055",
+      "family": "v2-95",
+      "question_id": "TBK-055",
+      "question_text": "TBK'ya göre borcun üçüncü kişiye nakledilmesi hangi koşullara tabidir ve alacaklının rızası nasıl alınır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.196",
+      "expected_sources": [
+        "TBK m.196",
+        "TBK m.198",
+        "TBK m.201"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-057",
+      "family": "v2-95",
+      "question_id": "TBK-057",
+      "question_text": "TBK kapsamında takas (mahsup) hakkının kullanılabilmesi için hangi koşulların bir arada bulunması gerekir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.139",
+      "expected_sources": [
+        "TBK m.139",
+        "TBK m.140",
+        "TBK m.142"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-059",
+      "family": "v2-95",
+      "question_id": "TBK-059",
+      "question_text": "TBK'ya göre yanılma (hata) halinde sözleşmeyi bağlayıcı saymayan tarafın bu hakkı nasıl kullanılır ve öğrenmeden itibaren kaç yıl içinde kullanılmalıdır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.30",
+      "expected_sources": [
+        "TBK m.30",
+        "TBK m.31",
+        "TBK m.32"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-060",
+      "family": "v2-95",
+      "question_id": "TBK-060",
+      "question_text": "TBK m.26 ve m.27 kapsamında sözleşme özgürlüğünün hangi hallerde sınırlandığı ve butlan (kesin hükümsüzlük) yaptırımının uygulandığı durumlar nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.26",
+      "expected_sources": [
+        "TBK m.26",
+        "TBK m.27"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-061",
+      "family": "v2-95",
+      "question_id": "TBK-061",
+      "question_text": "TBK'ya göre zamanaşımı hangi hallerde kesilir ve kesilme sonrasında yeni zamanaşımı süresi nasıl işlemeye başlar?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.154",
+      "expected_sources": [
+        "TBK m.154",
+        "TBK m.156"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-062",
+      "family": "v2-95",
+      "question_id": "TBK-062",
+      "question_text": "TBK'ya göre müteselsil borçluların sorumluluğu nasıl belirlenir ve alacaklının birden fazla müteselsil borçluya karşı talep hakkı nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.162",
+      "expected_sources": [
+        "TBK m.162",
+        "TBK m.163",
+        "TBK m.167"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-063",
+      "family": "v2-95",
+      "question_id": "TBK-063",
+      "question_text": "TBK'ya göre yetkisiz temsilci adına yapılan sözleşmenin hukuki durumu nedir ve temsil olunan kişinin onay (icazet) vermesinin sözleşme üzerindeki etkisi nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.46",
+      "expected_sources": [
+        "TBK m.46",
+        "TBK m.47"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-064",
+      "family": "v2-95",
+      "question_id": "TBK-064",
+      "question_text": "TBK kapsamında alacaklı temerrüdünün (alacaklının temerrüdü) koşulları nelerdir ve borçlunun bu durumda sahip olduğu haklar nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.106",
+      "expected_sources": [
+        "TBK m.106",
+        "TBK m.107",
+        "TBK m.108"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-065",
+      "family": "v2-95",
+      "question_id": "TBK-065",
+      "question_text": "TBK m.126 uyarınca beş yıllık kısa zamanaşımına tabi olan alacak türleri hangileridir? Kiraya verene ait kira alacakları bu kapsamda değerlendirilebilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.126",
+      "expected_sources": [
+        "TBK m.126",
+        "TBK m.125"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-066",
+      "family": "v2-95",
+      "question_id": "TBK-066",
+      "question_text": "TBK'ya göre kiracı, kiralananı tamamen veya kısmen başkasına kiraya verebilir mi? Alt kiranın kiralayanın onayına tabi olduğu haller hangileridir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.322",
+      "expected_sources": [
+        "TBK m.322",
+        "TBK m.323"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-068",
+      "family": "v2-95",
+      "question_id": "TBK-068",
+      "question_text": "TBK m.315 uyarınca konut ve çatılı işyeri kiralarında kiracının kira bedelini ödememesi durumunda kiraya verenin fesih hakkını kullanabilmesi için hangi şartlar aranır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.315",
+      "expected_sources": [
+        "TBK m.315",
+        "TBK m.352"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-072",
+      "family": "v2-95",
+      "question_id": "TBK-072",
+      "question_text": "TBK'ya göre kira sözleşmesinin sona ermesi halinde kiracının kiralananı hangi durumda iade etmesi gerekir ve kiracının kiralananı iade borcuna ilişkin sorumluluk sınırları nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.334",
+      "expected_sources": [
+        "TBK m.334",
+        "TBK m.335"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-074",
+      "family": "v2-95",
+      "question_id": "TBK-074",
+      "question_text": "TBK m.56 kapsamında bedensel zarar halinde manevi tazminata hükmedilebilmesi için hangi koşullar aranır ve hâkim tazminat miktarını belirlerken hangi ölçütleri dikkate alır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.56",
+      "expected_sources": [
+        "TBK m.56",
+        "TBK m.54"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-079",
+      "family": "v2-95",
+      "question_id": "TBK-079",
+      "question_text": "TBK kapsamında taşınır satışında alıcının olağan inceleme süreci içinde fark etmesi gereken ayıpları bildirme yükümlülüğü nedir ve ihbar süresine uymamanın sonucu nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.223",
+      "expected_sources": [
+        "TBK m.223",
+        "TBK m.226"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-082",
+      "family": "v2-95",
+      "question_id": "TBK-082",
+      "question_text": "TBK'ya göre taşınır satışında teslimden sonra ortaya çıkan gizli ayıplarda alıcının ihbar yükümlülüğü nedir ve zamanaşımı süreleri nasıl işler?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.225",
+      "expected_sources": [
+        "TBK m.225",
+        "TBK m.231"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-083",
+      "family": "v2-95",
+      "question_id": "TBK-083",
+      "question_text": "TBK kapsamında alıcı, ayıplı maldan sözleşmeden dönme hakkını kullanırsa satıcının yükümlülükleri ve karşılıklı iade koşulları nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.227",
+      "expected_sources": [
+        "TBK m.227",
+        "TBK m.229"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-084",
+      "family": "v2-95",
+      "question_id": "TBK-084",
+      "question_text": "TBK m.471 kapsamında yüklenicinin eseri teslim borcu nasıl belirlenir? Yüklenici, işin kendi kusurundan kaynaklanmayan gecikmelerden sorumlu tutulabilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.471",
+      "expected_sources": [
+        "TBK m.471",
+        "TBK m.474"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-113",
+      "family": "v2-95",
+      "question_id": "TBK-113",
+      "question_text": "Vekilin yaptığı giderler ve avanslar bakımından vekâlet verenin ödeme yükümlülüğü hangi maddede düzenlenir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.510",
+      "expected_sources": [
+        "TBK m.510",
+        "TBK m.511"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TBK-114",
+      "family": "v2-95",
+      "question_id": "TBK-114",
+      "question_text": "Vekilin hesap verme ve aldığı şeyleri iade etme borcu hangi maddede yer alır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.508",
+      "expected_sources": [
+        "TBK m.508"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz4_failure_class": "residual_false_refusal",
+        "faz4_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "residual_false_refusal"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TMK-CL-003",
+      "family": "v2-95",
+      "question_id": "TMK-CL-003",
+      "question_text": "Paylı mülkiyette bir paydaşın taşınmazın tamamını kiraya vermesi halinde diğer paydaşların durumu hangi hükümlere göre değerlendirilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.299",
+      "expected_sources": [
+        "TBK m.299",
+        "TMK m.688",
+        "TMK m.691"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TMK-CL-004",
+      "family": "v2-95",
+      "question_id": "TMK-CL-004",
+      "question_text": "Taşınmaz satış sözleşmesinde resmi şekil zorunluluğu TBK ve TMK bakımından hangi maddelerle temellendirilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.237",
+      "expected_sources": [
+        "TBK m.237",
+        "TMK m.706"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TMK-CL-006",
+      "family": "v2-95",
+      "question_id": "TMK-CL-006",
+      "question_text": "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.27",
+      "expected_sources": [
+        "TBK m.27",
+        "TMK m.194",
+        "TMK m.1023"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz4_failure_class": "residual_false_refusal",
+        "faz4_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "residual_false_refusal"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TMK-CL-007",
+      "family": "v2-95",
+      "question_id": "TMK-CL-007",
+      "question_text": "Tapu sicilinin tutulmasından doğan zararlarda devlet sorumluluğu ile haksız fiil sorumluluğu nasıl birlikte ele alınır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.49",
+      "expected_sources": [
+        "TBK m.49",
+        "TMK m.1007"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v2-95:TMK-CL-009",
+      "family": "v2-95",
+      "question_id": "TMK-CL-009",
+      "question_text": "Boşanma sürecindeki eşlerden biri tarafından aile konutu kira sözleşmesinin devri istenirse hangi TBK ve TMK hükümleri dikkate alınır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.323",
+      "expected_sources": [
+        "TBK m.323",
+        "TMK m.194"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-003",
+      "family": "v3-170",
+      "question_id": "HAL-003",
+      "question_text": "TBK m.223'teki ayıp ihbar süresi geçince alıcı TBK m.125'e dayanarak yine de dönme hakkı kullanabilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.223",
+      "expected_sources": [
+        "TBK m.223",
+        "TBK m.227",
+        "TBK m.125"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-004",
+      "family": "v3-170",
+      "question_id": "HAL-004",
+      "question_text": "TBK m.136 imkansızlık halinde borcu sona erdiriyorsa, aynı olayda TBK m.49 haksız fiil tazminatı hiç istenemez denebilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.136",
+      "expected_sources": [
+        "TBK m.136",
+        "TBK m.49"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-005",
+      "family": "v3-170",
+      "question_id": "HAL-005",
+      "question_text": "TBK m.512'ye göre vekilin azli her zaman mümkünse, bu durum TBK m.27 gereği emredici hukuk kuralı mıdır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.512",
+      "expected_sources": [
+        "TBK m.512",
+        "TBK m.27"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-006",
+      "family": "v3-170",
+      "question_id": "HAL-006",
+      "question_text": "TBK m.146'daki on yıllık zamanaşımı, TBK m.72'de açıkça yazan iki yıllık süreyi kendiliğinden bertaraf eder mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.146",
+      "expected_sources": [
+        "TBK m.146",
+        "TBK m.72"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-007",
+      "family": "v3-170",
+      "question_id": "HAL-007",
+      "question_text": "TBK m.321 alt kira yasağı varsa kiracı hiçbir koşulda kullanım hakkını devredemez demek doğru mu?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.321",
+      "expected_sources": [
+        "TBK m.321",
+        "TBK m.322"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-008",
+      "family": "v3-170",
+      "question_id": "HAL-008",
+      "question_text": "TBK m.475'teki ayıplı eser hükümleri ile TBK m.219'daki ayıplı satış hükümleri tamamen aynı sonuçları mı doğurur?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.475",
+      "expected_sources": [
+        "TBK m.475",
+        "TBK m.219",
+        "TBK m.227"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-009",
+      "family": "v3-170",
+      "question_id": "HAL-009",
+      "question_text": "TBK'da 'm.999' diye bir maddeye dayanarak kira tespit davası açılabileceği söyleniyor; bu iddia doğru mu?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.344",
+      "expected_sources": [
+        "TBK m.344",
+        "TBK m.345"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-011",
+      "family": "v3-170",
+      "question_id": "HAL-011",
+      "question_text": "TBK m.125'teki on yıllık genel zamanaşımı süresi, TBK m.603'te ayrıca düzenlenmiş kefalet alacaklarına da doğrudan uygulanır mı?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.125",
+      "expected_sources": [
+        "TBK m.125",
+        "TBK m.603"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:HAL-012",
+      "family": "v3-170",
+      "question_id": "HAL-012",
+      "question_text": "TBK m.138'deki aşırı ifa güçlüğü ile TBK m.136'daki sonraki imkânsızlık aynı olayda birlikte uygulanabilir mi? Borçlu her iki maddeden de aynı anda yararlanabilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.136",
+      "expected_sources": [
+        "TBK m.136",
+        "TBK m.138"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:OOS-011",
+      "family": "v3-170",
+      "question_id": "OOS-011",
+      "question_text": "Vergi Usul Kanunu kapsamında re'sen vergi tarhiyatına karşı vergi mahkemesinde dava açma süresi kaç gündür?",
+      "expected_mode": "refusal",
+      "expected_primary_source_id": null,
+      "expected_sources": [],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "refusal_miss"
+        ],
+        "faz4_failure_class": "residual_unsupported_answer",
+        "faz4_quality_loss_reasons": [
+          "refusal_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "residual_unsupported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-051",
+      "family": "v3-170",
+      "question_id": "TBK-051",
+      "question_text": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.146",
+      "expected_sources": [
+        "TBK m.146",
+        "TBK m.149"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-052",
+      "family": "v3-170",
+      "question_id": "TBK-052",
+      "question_text": "TBK'ya göre muaccel bir borcun borçlusunun temerrüde düşmesi için alacaklı tarafından ihtar yapılması zorunlu mudur? İstisna halleri nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.117",
+      "expected_sources": [
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-054",
+      "family": "v3-170",
+      "question_id": "TBK-054",
+      "question_text": "TBK'ya göre alacağın devri (temliki) nasıl gerçekleşir ve devrin borçluya bildirimi ne zaman hüküm doğurur?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.183",
+      "expected_sources": [
+        "TBK m.183",
+        "TBK m.184",
+        "TBK m.186"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-055",
+      "family": "v3-170",
+      "question_id": "TBK-055",
+      "question_text": "TBK'ya göre borcun üçüncü kişiye nakledilmesi hangi koşullara tabidir ve alacaklının rızası nasıl alınır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.196",
+      "expected_sources": [
+        "TBK m.196",
+        "TBK m.197",
+        "TBK m.198",
+        "TBK m.200",
+        "TBK m.201"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-056",
+      "family": "v3-170",
+      "question_id": "TBK-056",
+      "question_text": "TBK'ya göre borçlunun kusuru olmaksızın borcun ifası imkânsız hale gelirse hukuki sonuçları nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.136",
+      "expected_sources": [
+        "TBK m.136",
+        "TBK m.137"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-057",
+      "family": "v3-170",
+      "question_id": "TBK-057",
+      "question_text": "TBK kapsamında takas (mahsup) hakkının kullanılabilmesi için hangi koşulların bir arada bulunması gerekir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.139",
+      "expected_sources": [
+        "TBK m.139",
+        "TBK m.140",
+        "TBK m.142"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-059",
+      "family": "v3-170",
+      "question_id": "TBK-059",
+      "question_text": "TBK'ya göre yanılma (hata) halinde sözleşmeyi bağlayıcı saymayan tarafın bu hakkı nasıl kullanılır ve öğrenmeden itibaren kaç yıl içinde kullanılmalıdır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.30",
+      "expected_sources": [
+        "TBK m.30",
+        "TBK m.31",
+        "TBK m.39"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-060",
+      "family": "v3-170",
+      "question_id": "TBK-060",
+      "question_text": "TBK m.26 ve m.27 kapsamında sözleşme özgürlüğünün hangi hallerde sınırlandığı ve butlan (kesin hükümsüzlük) yaptırımının uygulandığı durumlar nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.26",
+      "expected_sources": [
+        "TBK m.26",
+        "TBK m.27"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-061",
+      "family": "v3-170",
+      "question_id": "TBK-061",
+      "question_text": "TBK'ya göre zamanaşımı hangi hallerde kesilir ve kesilme sonrasında yeni zamanaşımı süresi nasıl işlemeye başlar?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.154",
+      "expected_sources": [
+        "TBK m.154",
+        "TBK m.156"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-062",
+      "family": "v3-170",
+      "question_id": "TBK-062",
+      "question_text": "TBK'ya göre müteselsil borçluların sorumluluğu nasıl belirlenir ve alacaklının birden fazla müteselsil borçluya karşı talep hakkı nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.162",
+      "expected_sources": [
+        "TBK m.162",
+        "TBK m.163",
+        "TBK m.164",
+        "TBK m.167"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-063",
+      "family": "v3-170",
+      "question_id": "TBK-063",
+      "question_text": "TBK'ya göre yetkisiz temsilci adına yapılan sözleşmenin hukuki durumu nedir ve temsil olunan kişinin onay (icazet) vermesinin sözleşme üzerindeki etkisi nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.46",
+      "expected_sources": [
+        "TBK m.46",
+        "TBK m.47"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-064",
+      "family": "v3-170",
+      "question_id": "TBK-064",
+      "question_text": "TBK kapsamında alacaklı temerrüdünün (alacaklının temerrüdü) koşulları nelerdir ve borçlunun bu durumda sahip olduğu haklar nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.106",
+      "expected_sources": [
+        "TBK m.106",
+        "TBK m.107",
+        "TBK m.108"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-065",
+      "family": "v3-170",
+      "question_id": "TBK-065",
+      "question_text": "TBK m.126 uyarınca beş yıllık kısa zamanaşımına tabi olan alacak türleri hangileridir? Kiraya verene ait kira alacakları bu kapsamda değerlendirilebilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.126",
+      "expected_sources": [
+        "TBK m.126",
+        "TBK m.125"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-066",
+      "family": "v3-170",
+      "question_id": "TBK-066",
+      "question_text": "TBK'ya göre kiracı, kiralananı tamamen veya kısmen başkasına kiraya verebilir mi? Alt kiranın kiralayanın onayına tabi olduğu haller hangileridir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.322",
+      "expected_sources": [
+        "TBK m.322",
+        "TBK m.323"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-068",
+      "family": "v3-170",
+      "question_id": "TBK-068",
+      "question_text": "TBK m.315 uyarınca konut ve çatılı işyeri kiralarında kiracının kira bedelini ödememesi durumunda kiraya verenin fesih hakkını kullanabilmesi için hangi şartlar aranır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.315",
+      "expected_sources": [
+        "TBK m.315",
+        "TBK m.352"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-072",
+      "family": "v3-170",
+      "question_id": "TBK-072",
+      "question_text": "TBK'ya göre kira sözleşmesinin sona ermesi halinde kiracının kiralananı hangi durumda iade etmesi gerekir ve kiracının kiralananı iade borcuna ilişkin sorumluluk sınırları nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.334",
+      "expected_sources": [
+        "TBK m.334",
+        "TBK m.335"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-074",
+      "family": "v3-170",
+      "question_id": "TBK-074",
+      "question_text": "TBK m.56 kapsamında bedensel zarar halinde manevi tazminata hükmedilebilmesi için hangi koşullar aranır ve hâkim tazminat miktarını belirlerken hangi ölçütleri dikkate alır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.56",
+      "expected_sources": [
+        "TBK m.56",
+        "TBK m.54"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-079",
+      "family": "v3-170",
+      "question_id": "TBK-079",
+      "question_text": "TBK kapsamında taşınır satışında alıcının olağan inceleme süreci içinde fark etmesi gereken ayıpları bildirme yükümlülüğü nedir ve ihbar süresine uymamanın sonucu nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.223",
+      "expected_sources": [
+        "TBK m.223",
+        "TBK m.226"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-082",
+      "family": "v3-170",
+      "question_id": "TBK-082",
+      "question_text": "TBK'ya göre taşınır satışında teslimden sonra ortaya çıkan gizli ayıplarda alıcının ihbar yükümlülüğü nedir ve zamanaşımı süreleri nasıl işler?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.223",
+      "expected_sources": [
+        "TBK m.223",
+        "TBK m.231"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-083",
+      "family": "v3-170",
+      "question_id": "TBK-083",
+      "question_text": "TBK kapsamında alıcı, ayıplı maldan sözleşmeden dönme hakkını kullanırsa satıcının yükümlülükleri ve karşılıklı iade koşulları nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.227",
+      "expected_sources": [
+        "TBK m.227",
+        "TBK m.229"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-084",
+      "family": "v3-170",
+      "question_id": "TBK-084",
+      "question_text": "TBK m.471 kapsamında yüklenicinin eseri teslim borcu nasıl belirlenir? Yüklenici, işin kendi kusurundan kaynaklanmayan gecikmelerden sorumlu tutulabilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.471",
+      "expected_sources": [
+        "TBK m.471",
+        "TBK m.474"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-116",
+      "family": "v3-170",
+      "question_id": "TBK-116",
+      "question_text": "TBK'ya göre sözleşme hangi anda kurulmuş sayılır? Hazır olmayanlar arasında öneri ve kabul bildiriminin karşı tarafa ulaşması yeterli midir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.1",
+      "expected_sources": [
+        "TBK m.1",
+        "TBK m.5",
+        "TBK m.10"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-117",
+      "family": "v3-170",
+      "question_id": "TBK-117",
+      "question_text": "TBK m.20-22 kapsamında genel işlem koşullarının sözleşmeye dahil edilmesinin ve denetiminin koşulları nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.20",
+      "expected_sources": [
+        "TBK m.20",
+        "TBK m.21",
+        "TBK m.22"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-118",
+      "family": "v3-170",
+      "question_id": "TBK-118",
+      "question_text": "TBK m.25 kapsamında genel işlem koşullarıyla hangi kurallara aykırı düzenleme yapılamaz ve bu düzenlemelerin yaptırımı nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.25",
+      "expected_sources": [
+        "TBK m.25",
+        "TBK m.20",
+        "TBK m.27"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-119",
+      "family": "v3-170",
+      "question_id": "TBK-119",
+      "question_text": "TBK m.36 kapsamında hileli davranışla sözleşmeye rıza gösteren tarafın iptal hakkı nasıl kullanılır, bu hak belirli bir süreye tabi midir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.36",
+      "expected_sources": [
+        "TBK m.36",
+        "TBK m.39"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-120",
+      "family": "v3-170",
+      "question_id": "TBK-120",
+      "question_text": "TBK m.43-44 kapsamında hâkimin tazminat miktarını indirebileceği haller nelerdir? Zarar görenin kusurunun dışında başka indirim nedenleri var mıdır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.43",
+      "expected_sources": [
+        "TBK m.43",
+        "TBK m.44",
+        "TBK m.51"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-121",
+      "family": "v3-170",
+      "question_id": "TBK-121",
+      "question_text": "Borçlum bana olan borcunu ödemediğinde, mahkemeye başvurmadan önce TBK kapsamında hangi yolları kullanabilirim?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.117",
+      "expected_sources": [
+        "TBK m.117",
+        "TBK m.118",
+        "TBK m.119"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-122",
+      "family": "v3-170",
+      "question_id": "TBK-122",
+      "question_text": "TBK m.155 kapsamında borcun tanınması (ikrar) zamanaşımını nasıl etkiler ve bu tanıma için belirli bir şekil koşulu aranır mı?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.154",
+      "expected_sources": [
+        "TBK m.154",
+        "TBK m.155"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-123",
+      "family": "v3-170",
+      "question_id": "TBK-123",
+      "question_text": "TBK'ya göre ibra sözleşmesinin geçerliliği için hangi koşullar aranır? Kısmi ibra hukuken mümkün müdür?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.132",
+      "expected_sources": [
+        "TBK m.132"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-124",
+      "family": "v3-170",
+      "question_id": "TBK-124",
+      "question_text": "TBK m.163 kapsamında yenileme (tecdit) ile borcun değiştirilmesi arasındaki temel fark nedir ve yenilemenin fer'i haklar üzerindeki etkisi nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.163",
+      "expected_sources": [
+        "TBK m.163",
+        "TBK m.164"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-125",
+      "family": "v3-170",
+      "question_id": "TBK-125",
+      "question_text": "Haksız zenginleşmeden doğan geri verme talebinde zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.77",
+      "expected_sources": [
+        "TBK m.77",
+        "TBK m.82"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-126",
+      "family": "v3-170",
+      "question_id": "TBK-126",
+      "question_text": "TBK'ya göre borcun ifa yeri ve ifa zamanına ilişkin genel kurallar nelerdir? Taraflar ifa yerini belirlememişse nasıl tespit edilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.89",
+      "expected_sources": [
+        "TBK m.89",
+        "TBK m.90"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-128",
+      "family": "v3-170",
+      "question_id": "TBK-128",
+      "question_text": "TBK m.100 kapsamında kısmi ifa halinde alacaklı ödemenin faize mi yoksa asıl borca mı mahsup edileceğini belirleyebilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.100",
+      "expected_sources": [
+        "TBK m.100",
+        "TBK m.101"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-129",
+      "family": "v3-170",
+      "question_id": "TBK-129",
+      "question_text": "TBK m.141 kapsamında seçimlik borçlarda seçim hakkı kime aittir ve bu hak nasıl kullanılır? Seçim hakkının kullanılmaması durumunda ne olur?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.141",
+      "expected_sources": [
+        "TBK m.141",
+        "TBK m.142"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-130",
+      "family": "v3-170",
+      "question_id": "TBK-130",
+      "question_text": "TBK m.107 kapsamında alacaklı temerrüdüne düşen alacaklıya karşı borçlunun borcunu ifa etmek için malı mahkeme veznesine veya yetkili bir yere depo etmesi mümkün müdür? Depo sonrasında hasar ve riziko kime geçer?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.107",
+      "expected_sources": [
+        "TBK m.107",
+        "TBK m.108"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-135",
+      "family": "v3-170",
+      "question_id": "TBK-135",
+      "question_text": "TBK m.397-398 kapsamında rekabet yasağına aykırılık halinde uygulanabilecek yaptırımlar nelerdir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.397",
+      "expected_sources": [
+        "TBK m.397",
+        "TBK m.398",
+        "TBK m.399"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-154",
+      "family": "v3-170",
+      "question_id": "TBK-154",
+      "question_text": "TBK m.600-601 uyarınca belirli süreli kefalet sözleşmesi sürenin dolmasıyla kendiliğinden sona erer mi? Süre dolsa da kefilin sorumluluğu devam edebilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.600",
+      "expected_sources": [
+        "TBK m.600",
+        "TBK m.601"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-165",
+      "family": "v3-170",
+      "question_id": "TBK-165",
+      "question_text": "TBK m.53 kapsamında haksız fiil davalarında hukuk hâkimi ceza mahkemesinin mahkûmiyet veya beraat kararıyla bağlı mıdır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.53",
+      "expected_sources": [
+        "TBK m.53",
+        "TBK m.74"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TBK-166",
+      "family": "v3-170",
+      "question_id": "TBK-166",
+      "question_text": "TBK m.355 uyarınca konut ve çatılı işyeri kiralarında kiracı aleyhine hangi sözleşme hükümleri geçersiz sayılır? Sözleşme özgürlüğünün sınırı nedir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.355",
+      "expected_sources": [
+        "TBK m.355",
+        "TBK m.26"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-003",
+      "family": "v3-170",
+      "question_id": "TMK-CL-003",
+      "question_text": "Paylı mülkiyette bir paydaşın taşınmazın tamamını kiraya vermesi halinde diğer paydaşların durumu hangi hükümlere göre değerlendirilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.299",
+      "expected_sources": [
+        "TBK m.299",
+        "TMK m.688",
+        "TMK m.691"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-004",
+      "family": "v3-170",
+      "question_id": "TMK-CL-004",
+      "question_text": "Taşınmaz satış sözleşmesinde resmi şekil zorunluluğu TBK ve TMK bakımından hangi maddelerle temellendirilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.237",
+      "expected_sources": [
+        "TBK m.237",
+        "TMK m.706"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "citation_under_emission",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "citation_under_emission"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-006",
+      "family": "v3-170",
+      "question_id": "TMK-CL-006",
+      "question_text": "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.27",
+      "expected_sources": [
+        "TBK m.27",
+        "TMK m.194",
+        "TMK m.1023"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz4_failure_class": "residual_false_refusal",
+        "faz4_quality_loss_reasons": [
+          "citation_miss",
+          "correct_source_miss",
+          "refusal_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "residual_false_refusal"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-007",
+      "family": "v3-170",
+      "question_id": "TMK-CL-007",
+      "question_text": "Tapu sicilinin tutulmasından doğan zararlarda devlet sorumluluğu ile haksız fiil sorumluluğu nasıl birlikte ele alınır?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TBK m.49",
+      "expected_sources": [
+        "TBK m.49",
+        "TMK m.1007"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-014",
+      "family": "v3-170",
+      "question_id": "TMK-CL-014",
+      "question_text": "Yasal mal rejimi olan edinilmiş mallara katılma rejiminde bir eşin sözleşmeden doğan borçları, diğer eşin kişisel mallarına etki eder mi? Eşin borcunu ödeyememesi halinde alacaklı TBK m.50 kapsamında tazminat talebinde bulunabilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TMK m.220",
+      "expected_sources": [
+        "TMK m.220",
+        "TMK m.222",
+        "TMK m.226",
+        "TBK m.50"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-015",
+      "family": "v3-170",
+      "question_id": "TMK-CL-015",
+      "question_text": "Velayet hakkına sahip bir ebeveyn, küçük çocuğu adına taşınmaz satış sözleşmesi yapabilir mi? Bu işlem için mahkeme onayı gerekli midir?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TMK m.342",
+      "expected_sources": [
+        "TMK m.342",
+        "TMK m.343",
+        "TBK m.16"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-017",
+      "family": "v3-170",
+      "question_id": "TMK-CL-017",
+      "question_text": "Bir eş, diğer eşin açık rızası olmadan onun adına bir sözleşme imzalarsa bu yetkisiz temsil midir? Onaylama ile geçerli hale gelebilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TMK m.189",
+      "expected_sources": [
+        "TMK m.189",
+        "TBK m.46",
+        "TBK m.47"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-019",
+      "family": "v3-170",
+      "question_id": "TMK-CL-019",
+      "question_text": "Mal ayrılığı rejimine tabi eşlerin birinin sözleşmeden doğan borcunu ifa edememesi halinde alacaklı diğer eşin mallarına başvurabilir mi? Alacaklının diğer eş adına vekil sıfatıyla işlem yapan kişiye karşı TBK m.504 kapsamındaki temsil yetkisi sınırlarını ileri sürmesi mümkün müdür?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TMK m.244",
+      "expected_sources": [
+        "TMK m.244",
+        "TMK m.245",
+        "TBK m.504"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-020",
+      "family": "v3-170",
+      "question_id": "TMK-CL-020",
+      "question_text": "Babam hayatını kaybetti ve küçük kardeşim için vasi atandı. Vasi, vasinin gözetimindeki çocuk adına banka hesabı açıp yatırım yapabilir mi? Vasinin bu işlemleri gerçekleştirirken TBK m.169 kapsamında alacağı devredip devredemeyeceği de değerlendirilmelidir.",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TMK m.449",
+      "expected_sources": [
+        "TMK m.449",
+        "TMK m.450",
+        "TMK m.342",
+        "TBK m.169"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": false
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "mode_drop_on_supported_canonical_source",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-028",
+      "family": "v3-170",
+      "question_id": "TMK-CL-028",
+      "question_text": "Babam taşınmazını bana sattı; ancak gerçekte bağışlamak istediğini düşünüyorum. Muris muvazaası nedeniyle dava açabilir miyim, bunu nasıl kanıtlarım?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TMK m.561",
+      "expected_sources": [
+        "TMK m.561",
+        "TBK m.19",
+        "TBK m.285"
+      ],
+      "reference_origin": "faz3_family_fail",
+      "source_origins": {
+        "faz3_family_quality_fail": false,
+        "faz4_citation_failure_pack": false,
+        "faz5_divergence_fail": false,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [],
+        "faz4_failure_class": null,
+        "faz4_quality_loss_reasons": [],
+        "faz5_divergence_class": null,
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    },
+    {
+      "tracked_key": "v3-170:TMK-CL-029",
+      "family": "v3-170",
+      "question_id": "TMK-CL-029",
+      "question_text": "Üvey çocuğun velayetini üstlenen kişi, çocuğun yasal temsilcisi sıfatıyla üçüncü kişilerle borç yüklendirici işlemler yapabilir mi?",
+      "expected_mode": "answer",
+      "expected_primary_source_id": "TMK m.335",
+      "expected_sources": [
+        "TMK m.335",
+        "TMK m.342",
+        "TBK m.16",
+        "TBK m.33"
+      ],
+      "reference_origin": "faz5_divergence",
+      "source_origins": {
+        "faz3_family_quality_fail": true,
+        "faz4_citation_failure_pack": true,
+        "faz5_divergence_fail": true,
+        "faz5_legacy_fail": true,
+        "faz5_delta_changed": true
+      },
+      "source_details": {
+        "faz3_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz4_failure_class": "wrong_primary_source_with_supported_answer",
+        "faz4_quality_loss_reasons": [
+          "correct_source_miss"
+        ],
+        "faz5_divergence_class": "citation_projection_gap",
+        "faz5_legacy_failure_class": "wrong_primary_source_with_supported_answer"
+      }
+    }
+  ],
+  "generated_at": "2026-03-24T07:41:30.808184+00:00",
+  "git_commit": "6ee6298"
+}

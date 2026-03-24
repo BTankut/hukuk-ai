@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from faz2a_hardening import canonicalize_source_id, harden_answer
+from faz2a_hardening import canonicalize_source_id, harden_answer, harden_answer_diagnostic
 
 
 def _evidence(*source_ids: str) -> list[dict[str, object]]:
@@ -305,7 +305,7 @@ def test_harden_answer_skips_claim_binding_for_complexity_marker():
 def test_harden_answer_rc_e_projects_broad_answer_and_keeps_expected_citations():
     evidence = _evidence("TBK m.117", "TBK m.118")
 
-    result = harden_answer(
+    result = harden_answer_diagnostic(
         answer_text=(
             "- Temerrut halinde aynen ifa talep edilebilir. [Kaynak: TBK m.117]\n"
             "- Alacakli gecikme tazminati da isteyebilir. [Kaynak: TBK m.118]"
@@ -337,7 +337,7 @@ def test_harden_answer_rc_e_projects_broad_answer_and_keeps_expected_citations()
 def test_harden_answer_rc_e_drops_unsupported_broad_claim_and_returns_partial():
     evidence = _evidence("TBK m.117")
 
-    result = harden_answer(
+    result = harden_answer_diagnostic(
         answer_text=(
             "- Temerrut halinde aynen ifa talep edilebilir. [Kaynak: TBK m.117]\n"
             "- Faiz her durumda uygulanir."
@@ -366,7 +366,7 @@ def test_harden_answer_rc_e_drops_unsupported_broad_claim_and_returns_partial():
 def test_harden_answer_rc_e_refuses_when_no_valid_primary_source_remains():
     evidence = _evidence("TBK m.117")
 
-    result = harden_answer(
+    result = harden_answer_diagnostic(
         answer_text="Temerrut halinde aynen ifa talep edilebilir.",
         citations=["TBK m.117"],
         blocked=False,
@@ -385,3 +385,81 @@ def test_harden_answer_rc_e_refuses_when_no_valid_primary_source_remains():
     assert result.final_reason == "insufficient_supported_evidence"
     assert result.answer_text == ""
     assert result.citations == []
+
+
+def test_harden_answer_rc_g_adds_missing_same_law_visible_citation():
+    evidence = _evidence("TBK m.117", "TBK m.118", "TBK m.119")
+
+    result = harden_answer_diagnostic(
+        answer_text="Temerrut halinde alacakli aynen ifa ve gecikme tazminati talep edebilir.",
+        citations=["TBK m.117"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="TBK'ya gore muaccel bir borcun borclusunun temerrude dusmesi icin ihtar zorunlu mudur? Istisna halleri nelerdir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.117", "TBK m.118", "TBK m.119"],
+        today=date(2026, 3, 23),
+        recovery_profile="rc_g",
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.citations[:2] == ["TBK m.117", "TBK m.118"]
+    assert result.answer_contract["primary_source_id"] == "TBK m.117"
+    assert "TBK m.118" in result.answer_contract["secondary_source_ids"]
+    assert result.diagnostics["visible_citation_projection"]["applied"] is True
+    assert "TBK m.118" in result.diagnostics["visible_citation_projection"]["added_source_ids"]
+
+
+def test_harden_answer_rc_g_adds_missing_cross_law_visible_citation_for_multi_law_question():
+    evidence = _evidence("TBK m.237", "TBK m.243", "TMK m.706")
+
+    result = harden_answer_diagnostic(
+        answer_text="Tasinmaz satis sozlesmesi resmi sekle tabidir.",
+        citations=["TBK m.237", "TBK m.243"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="Tasinmaz satis sozlesmesinde resmi sekil zorunlulugu TBK ve TMK bakimindan hangi maddelerle temellendirilir?",
+        mentioned_laws=["TBK", "TMK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.237", "TBK m.243", "TMK m.706"],
+        today=date(2026, 3, 23),
+        recovery_profile="rc_g",
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.citations[0] == "TBK m.237"
+    assert "TMK m.706" in result.citations
+    assert result.answer_contract["primary_source_id"] == "TBK m.237"
+    assert result.diagnostics["visible_citation_projection"]["applied"] is True
+    assert "TMK m.706" in result.diagnostics["visible_citation_projection"]["added_source_ids"]
+
+
+def test_harden_answer_rc_g_does_not_project_citations_for_refusal():
+    evidence = _evidence("TBK m.49", "TBK m.50")
+
+    result = harden_answer_diagnostic(
+        answer_text="",
+        citations=["TBK m.49"],
+        blocked=True,
+        verification={"verdict": "fail"},
+        question_raw="TBK m.49 nedir?",
+        mentioned_laws=["TBK"],
+        explicit_article_refs=[("TBK", "49")],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["TBK m.49", "TBK m.50"],
+        today=date(2026, 3, 23),
+        recovery_profile="rc_g",
+    )
+
+    assert result.final_mode == "refusal"
+    assert result.citations == []
+    assert result.diagnostics["visible_citation_projection"]["active"] is False
+    assert result.diagnostics["visible_citation_projection"]["applied"] is False

@@ -10,7 +10,7 @@ from guardrails.actions import extract_citations
 from pydantic import BaseModel, Field, ValidationError
 
 FinalMode = Literal["answer", "partial", "refusal", "blocked"]
-RecoveryProfile = Literal["rc_d", "rc_e", "rc_f"]
+RecoveryProfile = Literal["rc_d", "rc_e", "rc_f", "rc_g"]
 UnsupportedReason = Literal[
     "citation_out_of_whitelist",
     "law_scope_mismatch",
@@ -405,6 +405,15 @@ class CitationProjectionOutcome:
     supported_claim_count_by_source: dict[str, int]
     retrieval_rank_by_source: dict[str, int]
     canonical_details: dict[str, Any] | None = None
+
+
+@dataclass(slots=True)
+class VisibleCitationProjectionOutcome:
+    active: bool
+    applied: bool
+    added_source_ids: list[str]
+    final_citations: list[str]
+    skipped_reason: str | None = None
 
 
 def _normalize_verifier_status(verification: dict[str, Any] | None, *, blocked: bool) -> VerifierStatus:
@@ -884,6 +893,16 @@ def _build_retrieval_rank_by_source(
     return retrieval_rank_by_source
 
 
+def _extract_article_number(source_id: str | None) -> int | None:
+    normalized = canonicalize_source_id(source_id)
+    if not normalized:
+        return None
+    match = re.search(r"m\.(\d+)", normalized, re.IGNORECASE)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
 def _source_scope_priority(
     *,
     source_id: str,
@@ -963,6 +982,151 @@ def _pick_claim_unit_anchor_source(
         law_scope_signal=law_scope_signal,
         explicit_article_refs=explicit_article_refs,
     )[0]
+
+
+def _visible_citation_candidate_sort_key(
+    *,
+    source_id: str,
+    anchor_article_numbers: list[int],
+    retrieval_rank_by_source: dict[str, int],
+) -> tuple[int, int, int, str]:
+    candidate_article_number = _extract_article_number(source_id)
+    if candidate_article_number is None or not anchor_article_numbers:
+        article_distance = 10**6
+    else:
+        article_distance = min(abs(candidate_article_number - value) for value in anchor_article_numbers)
+    retrieval_rank = retrieval_rank_by_source.get(source_id, 10**6)
+    # Blend retrieval position with article proximity but keep ordering deterministic.
+    blended_score = (retrieval_rank // 2) + article_distance
+    return (blended_score, retrieval_rank, article_distance, source_id)
+
+
+def apply_visible_citation_projection_v1(
+    *,
+    contract: StructuredAnswerContract,
+    mentioned_laws: list[str],
+    explicit_article_refs: list[tuple[str, str]],
+    assembled_evidence: list[dict[str, Any]],
+    allowed_source_whitelist: list[str],
+    law_scope_signal: dict[str, Any],
+    target_date: date,
+) -> VisibleCitationProjectionOutcome:
+    if contract.final_mode in {"blocked", "refusal"}:
+        return VisibleCitationProjectionOutcome(
+            active=True,
+            applied=False,
+            added_source_ids=[],
+            final_citations=[],
+            skipped_reason="final_mode_ineligible",
+        )
+
+    primary_source_id = canonicalize_source_id(contract.primary_source_id)
+    if not primary_source_id:
+        return VisibleCitationProjectionOutcome(
+            active=True,
+            applied=False,
+            added_source_ids=[],
+            final_citations=[],
+            skipped_reason="primary_source_missing",
+        )
+
+    retrieval_rank_by_source = _build_retrieval_rank_by_source(assembled_evidence)
+    allowed_source_ids = sorted(
+        _build_allowed_claim_source_ids(
+            assembled_evidence=assembled_evidence,
+            allowed_source_whitelist=allowed_source_whitelist,
+            law_scope_signal=law_scope_signal,
+            target_date=target_date,
+        ),
+        key=lambda source_id: (retrieval_rank_by_source.get(source_id, 10**9), source_id),
+    )
+    if not allowed_source_ids:
+        return VisibleCitationProjectionOutcome(
+            active=True,
+            applied=False,
+            added_source_ids=[],
+            final_citations=dedupe_strings(
+                [source_id for source_id in [primary_source_id, *contract.secondary_source_ids] if source_id]
+            ),
+            skipped_reason="no_allowed_sources",
+        )
+
+    current_citations = dedupe_strings(
+        [source_id for source_id in [primary_source_id, *contract.secondary_source_ids] if source_id]
+    )
+    if primary_source_id not in current_citations:
+        current_citations = [primary_source_id, *current_citations]
+    current_law_codes = {
+        law_code
+        for law_code in (extract_law_code_from_source_id(source_id) for source_id in current_citations)
+        if law_code
+    }
+    current_article_numbers = [value for value in (_extract_article_number(source_id) for source_id in current_citations) if value is not None]
+
+    additions: list[str] = []
+    allowed_source_set = set(allowed_source_ids)
+
+    for law_code in dedupe_strings([canonicalize_law_code(law) for law in mentioned_laws if law]):
+        if law_code in current_law_codes:
+            continue
+        for source_id in allowed_source_ids:
+            if extract_law_code_from_source_id(source_id) != law_code:
+                continue
+            if source_id in current_citations or source_id in additions:
+                continue
+            additions.append(source_id)
+            break
+
+    for law_code, article_no in _dedupe_article_refs(explicit_article_refs):
+        explicit_source_id = canonicalize_source_id(f"{law_code} m.{article_no}")
+        if not explicit_source_id or explicit_source_id not in allowed_source_set:
+            continue
+        if explicit_source_id in current_citations or explicit_source_id in additions:
+            continue
+        additions.append(explicit_source_id)
+
+    same_law_codes = dedupe_strings(
+        [
+            law_code
+            for law_code in [extract_law_code_from_source_id(primary_source_id), *sorted(current_law_codes)]
+            if law_code
+        ]
+    )
+    for law_code in same_law_codes:
+        candidates = [
+            source_id
+            for source_id in allowed_source_ids
+            if extract_law_code_from_source_id(source_id) == law_code
+            and source_id not in current_citations
+            and source_id not in additions
+            and _extract_article_number(source_id) is not None
+        ]
+        candidates.sort(
+            key=lambda source_id: _visible_citation_candidate_sort_key(
+                source_id=source_id,
+                anchor_article_numbers=current_article_numbers,
+                retrieval_rank_by_source=retrieval_rank_by_source,
+            )
+        )
+        added_for_law = 0
+        for source_id in candidates:
+            additions.append(source_id)
+            added_for_law += 1
+            if added_for_law >= 3 or len(additions) >= 5:
+                break
+        if len(additions) >= 5:
+            break
+
+    final_citations = dedupe_strings([*current_citations, *additions])
+    contract.primary_source_id = primary_source_id
+    contract.secondary_source_ids = [source_id for source_id in final_citations if source_id != primary_source_id]
+    return VisibleCitationProjectionOutcome(
+        active=True,
+        applied=bool(additions),
+        added_source_ids=additions,
+        final_citations=final_citations,
+        skipped_reason=None if additions else "no_recoverable_projection",
+    )
 
 
 def _canonical_norm_key_for_evidence(item: dict[str, Any]) -> str:
@@ -1765,7 +1929,7 @@ def apply_canonical_support_mode_recovery_v1(
     return None
 
 
-def harden_answer(
+def _harden_answer_with_profile(
     *,
     answer_text: str,
     citations: list[str],
@@ -1896,6 +2060,27 @@ def harden_answer(
             claim_binding_outcome=claim_binding_outcome,
         )
 
+    if final_reason is None and recovery_profile == "rc_g":
+        visible_citation_projection = apply_visible_citation_projection_v1(
+            contract=contract,
+            mentioned_laws=mentioned_laws,
+            explicit_article_refs=explicit_article_refs,
+            assembled_evidence=assembled_evidence,
+            allowed_source_whitelist=allowed_source_whitelist,
+            law_scope_signal=law_scope_signal,
+            target_date=target_date,
+        )
+    else:
+        visible_citation_projection = VisibleCitationProjectionOutcome(
+            active=False,
+            applied=False,
+            added_source_ids=[],
+            final_citations=dedupe_strings(
+                [source_id for source_id in [contract.primary_source_id, *contract.secondary_source_ids] if source_id]
+            ),
+            skipped_reason=None,
+        )
+
     external_mode, internal_blocked = _map_external_mode(contract)
     external_answer_text = contract.answer_text or answer_text
     external_citations = dedupe_strings(
@@ -1938,7 +2123,79 @@ def harden_answer(
                 "retrieval_rank_by_source": projection_outcome.retrieval_rank_by_source,
                 "canonical_details": projection_outcome.canonical_details,
             },
+            "visible_citation_projection": {
+                "active": visible_citation_projection.active,
+                "applied": visible_citation_projection.applied,
+                "added_source_ids": visible_citation_projection.added_source_ids,
+                "final_citations": visible_citation_projection.final_citations,
+                "skipped_reason": visible_citation_projection.skipped_reason,
+            },
         },
+    )
+
+
+def harden_answer(
+    *,
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    verification: dict[str, Any] | None,
+    question_raw: str,
+    mentioned_laws: list[str],
+    explicit_article_refs: list[tuple[str, str]],
+    law_filter: str | None,
+    assembled_evidence: list[dict[str, Any]],
+    allowed_source_whitelist: list[str],
+    today: date | None = None,
+) -> HardeningResult:
+    """Runtime/public entrypoint locked to RC-D behavior."""
+
+    return _harden_answer_with_profile(
+        answer_text=answer_text,
+        citations=citations,
+        blocked=blocked,
+        verification=verification,
+        question_raw=question_raw,
+        mentioned_laws=mentioned_laws,
+        explicit_article_refs=explicit_article_refs,
+        law_filter=law_filter,
+        assembled_evidence=assembled_evidence,
+        allowed_source_whitelist=allowed_source_whitelist,
+        today=today,
+        recovery_profile="rc_d",
+    )
+
+
+def harden_answer_diagnostic(
+    *,
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    verification: dict[str, Any] | None,
+    question_raw: str,
+    mentioned_laws: list[str],
+    explicit_article_refs: list[tuple[str, str]],
+    law_filter: str | None,
+    assembled_evidence: list[dict[str, Any]],
+    allowed_source_whitelist: list[str],
+    today: date | None = None,
+    recovery_profile: RecoveryProfile = "rc_d",
+) -> HardeningResult:
+    """Diagnostic-only entrypoint for replaying historical RC profiles."""
+
+    return _harden_answer_with_profile(
+        answer_text=answer_text,
+        citations=citations,
+        blocked=blocked,
+        verification=verification,
+        question_raw=question_raw,
+        mentioned_laws=mentioned_laws,
+        explicit_article_refs=explicit_article_refs,
+        law_filter=law_filter,
+        assembled_evidence=assembled_evidence,
+        allowed_source_whitelist=allowed_source_whitelist,
+        today=today,
+        recovery_profile=recovery_profile,
     )
 
 

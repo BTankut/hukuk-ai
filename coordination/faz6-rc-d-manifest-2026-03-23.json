@@ -1,0 +1,43 @@
+{
+  "candidate_id": "rc-d-faz6-frozen-baseline-20260323",
+  "status": "frozen_reference",
+  "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+  "checkpoint_ref": "rc-d-offline-20260323",
+  "git_commit": "c52b568",
+  "runner_mode": "offline_rc_d_replay",
+  "claim_binding_version": "selective-claim-binding-v3",
+  "final_mode_mapping_version": "final-mode-mapping-v3",
+  "source_locking_version": "v1",
+  "citation_normalization_version": "canonical-citation-normalization-v1",
+  "law_scope_gate_version": "law-scope-gate-v2",
+  "trace_contract_version": "faz6-attribution-trace-schema-v1",
+  "schema_contract_version": "structured-answer-contract-v1",
+  "family_reports": [
+    {
+      "family": "faz1-50",
+      "report_path": "evaluation/reports/eval_faz3_rc_d_faz1-50_20260323.json",
+      "generated_at": "2026-03-23T18:12:57.171389+00:00",
+      "questions_source": "configs/evaluation/test_questions.json"
+    },
+    {
+      "family": "v2-95",
+      "report_path": "evaluation/reports/eval_faz3_rc_d_v2-95_20260323.json",
+      "generated_at": "2026-03-23T18:12:57.217058+00:00",
+      "questions_source": "configs/evaluation/test_questions_v2_95.json"
+    },
+    {
+      "family": "v3-170",
+      "report_path": "evaluation/reports/eval_faz3_rc_d_v3-170_20260323.json",
+      "generated_at": "2026-03-23T18:12:57.249276+00:00",
+      "questions_source": "configs/evaluation/test_questions_v3_170.json"
+    }
+  ],
+  "code_surface": [
+    "api-gateway/src/faz2a_hardening.py"
+  ],
+  "diagnostic_only_profiles": [
+    "rc_e",
+    "rc_f"
+  ]
+}

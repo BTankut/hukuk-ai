@@ -1,0 +1,152 @@
+{
+  "overall_pass": true,
+  "families": [
+    {
+      "family": "faz1-50",
+      "rc_d_summary": {
+        "citation_rate": 0.82,
+        "correct_source_rate": 0.7467,
+        "hallucination_rate": 0.06,
+        "refusal_accuracy": 0.94,
+        "avg_keyword_coverage": 0.4513,
+        "phrase_hit_rate": 0.4884,
+        "avg_response_time_ms": 10264.2,
+        "blocked_rate": 0.0
+      },
+      "rc_g_summary": {
+        "citation_rate": 0.86,
+        "correct_source_rate": 0.8333,
+        "hallucination_rate": 0.04,
+        "refusal_accuracy": 0.94,
+        "avg_keyword_coverage": 0.4847,
+        "phrase_hit_rate": 0.5116,
+        "avg_response_time_ms": 9374.8,
+        "blocked_rate": 0.0
+      },
+      "rc_d_error_count": 0,
+      "rc_g_error_count": 0,
+      "metric_results": {
+        "citation_rate": true,
+        "correct_source_rate": true,
+        "hallucination_rate": true,
+        "refusal_accuracy": true,
+        "error_count": true
+      },
+      "acceptance": {
+        "whitelist_violation_leak_count": 0,
+        "trace_coverage_rate": 1.0,
+        "schema_validation_pass_rate": 1.0,
+        "temporal_answer_leak_count": 0,
+        "law_scope_answer_leak_count": 0,
+        "claim_binding_answer_leak_count": 0
+      },
+      "acceptance_results": {
+        "whitelist_violation_leak_count": true,
+        "trace_coverage_rate": true,
+        "schema_validation_pass_rate": true,
+        "temporal_answer_leak_count": true,
+        "law_scope_answer_leak_count": true,
+        "claim_binding_answer_leak_count": true
+      },
+      "passes": true
+    },
+    {
+      "family": "v2-95",
+      "rc_d_summary": {
+        "citation_rate": 0.8737,
+        "correct_source_rate": 0.807,
+        "hallucination_rate": 0.0842,
+        "refusal_accuracy": 0.9789,
+        "avg_keyword_coverage": 0.2763,
+        "phrase_hit_rate": 0.4062,
+        "avg_response_time_ms": 22825.2,
+        "blocked_rate": 0.0
+      },
+      "rc_g_summary": {
+        "citation_rate": 0.8947,
+        "correct_source_rate": 0.8807,
+        "hallucination_rate": 0.0526,
+        "refusal_accuracy": 0.9789,
+        "avg_keyword_coverage": 0.3166,
+        "phrase_hit_rate": 0.4688,
+        "avg_response_time_ms": 14752.2,
+        "blocked_rate": 0.0
+      },
+      "rc_d_error_count": 0,
+      "rc_g_error_count": 0,
+      "metric_results": {
+        "citation_rate": true,
+        "correct_source_rate": true,
+        "hallucination_rate": true,
+        "refusal_accuracy": true,
+        "error_count": true
+      },
+      "acceptance": {
+        "whitelist_violation_leak_count": 0,
+        "trace_coverage_rate": 1.0,
+        "schema_validation_pass_rate": 1.0,
+        "temporal_answer_leak_count": 0,
+        "law_scope_answer_leak_count": 0,
+        "claim_binding_answer_leak_count": 0
+      },
+      "acceptance_results": {
+        "whitelist_violation_leak_count": true,
+        "trace_coverage_rate": true,
+        "schema_validation_pass_rate": true,
+        "temporal_answer_leak_count": true,
+        "law_scope_answer_leak_count": true,
+        "claim_binding_answer_leak_count": true
+      },
+      "passes": true
+    },
+    {
+      "family": "v3-170",
+      "rc_d_summary": {
+        "citation_rate": 0.9294,
+        "correct_source_rate": 0.8324,
+        "hallucination_rate": 0.0471,
+        "refusal_accuracy": 0.9882,
+        "avg_keyword_coverage": 0.2978,
+        "phrase_hit_rate": 0.4474,
+        "avg_response_time_ms": 16337.7,
+        "blocked_rate": 0.0
+      },
+      "rc_g_summary": {
+        "citation_rate": 0.9353,
+        "correct_source_rate": 0.8838,
+        "hallucination_rate": 0.0294,
+        "refusal_accuracy": 0.9882,
+        "avg_keyword_coverage": 0.316,
+        "phrase_hit_rate": 0.4737,
+        "avg_response_time_ms": 11657.8,
+        "blocked_rate": 0.0
+      },
+      "rc_d_error_count": 0,
+      "rc_g_error_count": 0,
+      "metric_results": {
+        "citation_rate": true,
+        "correct_source_rate": true,
+        "hallucination_rate": true,
+        "refusal_accuracy": true,
+        "error_count": true
+      },
+      "acceptance": {
+        "whitelist_violation_leak_count": 0,
+        "trace_coverage_rate": 1.0,
+        "schema_validation_pass_rate": 1.0,
+        "temporal_answer_leak_count": 0,
+        "law_scope_answer_leak_count": 0,
+        "claim_binding_answer_leak_count": 0
+      },
+      "acceptance_results": {
+        "whitelist_violation_leak_count": true,
+        "trace_coverage_rate": true,
+        "schema_validation_pass_rate": true,
+        "temporal_answer_leak_count": true,
+        "law_scope_answer_leak_count": true,
+        "claim_binding_answer_leak_count": true
+      },
+      "passes": true
+    }
+  ]
+}

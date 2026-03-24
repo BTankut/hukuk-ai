@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-03-24T07:41:39.216033+00:00",
+  "git_commit": "6ee6298",
+  "tracked_count": 108,
+  "taxonomy_primary_reason_total": 108,
+  "stage_first_loss_total": 108,
+  "family_breakdown_total": 108,
+  "family_breakdown": {
+    "faz1-50": 15,
+    "v2-95": 33,
+    "v3-170": 60
+  },
+  "unexplained_count": 0,
+  "reconciliation_closed": true
+}

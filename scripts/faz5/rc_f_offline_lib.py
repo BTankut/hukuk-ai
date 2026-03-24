@@ -16,7 +16,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "api-gateway" / "src"))
 sys.path.insert(0, str(PROJECT_ROOT / "evaluation"))
 
 from eval_runner import build_report  # noqa: E402
-from faz2a_hardening import harden_answer, normalize_query_text  # noqa: E402
+from faz2a_hardening import harden_answer_diagnostic, normalize_query_text  # noqa: E402
 from metrics import QuestionResult, aggregate_metrics, compute_metrics  # noqa: E402
 
 
@@ -106,7 +106,7 @@ def replay_rc_f_row(
     verification = generation_outcome.get("verification")
     blocked = bool(generation_outcome.get("blocked", False))
 
-    result = harden_answer(
+    result = harden_answer_diagnostic(
         answer_text=str(rc_a_row.get("answer_text") or ""),
         citations=list(rc_a_row.get("cited_sources") or []),
         blocked=blocked,
