@@ -1,0 +1,14 @@
+{
+  "eval_family": "test_questions_faz9_faz1_witness_pack_a",
+  "reference_checkpoint_ref": "rc-g-faz9-witness-pack-a-refreeze",
+  "candidate_checkpoint_ref": "rc-j-faz9-witness-pack-a",
+  "question_count": 2,
+  "compared_question_count": 2,
+  "normalized_request_hash_mismatch_count": 0,
+  "model_request_payload_hash_mismatch_count": 0,
+  "generation_contract_hash_mismatch_count": 0,
+  "preprojection_hash_mismatch_count": 0,
+  "raw_answer_hash_mismatch_count": 0,
+  "parity_runtime_error_count": 0,
+  "mismatches": []
+}

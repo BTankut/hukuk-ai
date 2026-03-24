@@ -18,6 +18,17 @@ from faz9_lib import (
 )
 
 
+def _runtime_error_summary(*, question_id: str, notes: str) -> dict[str, Any]:
+    return {
+        "question_id": question_id,
+        "unexplained_count": 0,
+        "first_divergence_stage": "model_request_payload",
+        "primary_reason": "parity_runtime_error",
+        "stage_rows": [],
+        "notes": notes,
+    }
+
+
 def build_witness_forensics(
     *,
     reference_report: dict[str, Any],
@@ -38,6 +49,16 @@ def build_witness_forensics(
 
     reference_stages = stage_map(reference_question)
     candidate_stages = stage_map(candidate_question)
+    if reference_stages and not candidate_stages:
+        return _runtime_error_summary(
+            question_id=question_id,
+            notes="candidate parity trace missing or runtime failed before stage capture",
+        )
+    if candidate_stages and not reference_stages:
+        return _runtime_error_summary(
+            question_id=question_id,
+            notes="reference parity trace missing or runtime failed before stage capture",
+        )
     stage_rows: list[dict[str, Any]] = []
     first_divergence_stage: str | None = None
     primary_reason: str | None = None
@@ -69,6 +90,14 @@ def build_witness_forensics(
     if first_divergence_stage is None:
         first_divergence_stage = "none"
         primary_reason = "none"
+    elif (
+        first_divergence_stage == "raw_answer_object"
+        and reference_stages.get("model_request_payload", {}).get("hash")
+        == candidate_stages.get("model_request_payload", {}).get("hash")
+        and reference_stages.get("generation_contract", {}).get("hash")
+        == candidate_stages.get("generation_contract", {}).get("hash")
+    ):
+        primary_reason = "raw_generation_nondeterminism"
 
     return {
         "question_id": question_id,

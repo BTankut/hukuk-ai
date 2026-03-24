@@ -1,0 +1,237 @@
+[
+  {
+    "id": "TBK-003",
+    "question": "Haksız fiil nedeniyle tazminat davası açmak için TBK'da öngörülen zamanaşımı süresi nedir?",
+    "category": "tbk_haksiz_fiil",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.72",
+      "TBK m.146"
+    ],
+    "expected_keywords": [
+      "zamanaşımı",
+      "iki yıl",
+      "on yıl",
+      "öğrenme",
+      "haksız fiil",
+      "zararın öğrenildiği"
+    ],
+    "expected_answer_contains": "iki yıl",
+    "refusal_expected": false,
+    "notes": "Haksız fiil zamanaşımı — TBK m.72: 2 yıl / 10 yıl"
+  },
+  {
+    "id": "TBK-005",
+    "question": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+    "category": "tbk_genel",
+    "difficulty": "easy",
+    "expected_sources": [
+      "TBK m.88"
+    ],
+    "expected_keywords": [
+      "yasal faiz",
+      "kanuni faiz",
+      "yıllık",
+      "yüzde",
+      "belirlenmemiş"
+    ],
+    "expected_answer_contains": "yasal faiz",
+    "refusal_expected": false,
+    "notes": "Yasal faiz oranı — TBK m.88"
+  },
+  {
+    "id": "TBK-006",
+    "question": "TBK kapsamında ceza şartının (cayma akçesi) geçerliliği için hangi koşullar aranmaktadır?",
+    "category": "tbk_ceza_sarti",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.179",
+      "TBK m.180",
+      "TBK m.182"
+    ],
+    "expected_keywords": [
+      "ceza şartı",
+      "cayma akçesi",
+      "geçerlilik",
+      "asıl borç",
+      "indirim",
+      "fahiş"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Ceza şartı — TBK m.179-182"
+  },
+  {
+    "id": "TBK-007",
+    "question": "Vekâlet sözleşmesinde vekâletin sona erme halleri nelerdir? TBK'nın ilgili maddelerini belirtin.",
+    "category": "tbk_vekaletname",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.512",
+      "TBK m.513",
+      "TBK m.514"
+    ],
+    "expected_keywords": [
+      "vekâlet",
+      "sona erme",
+      "azil",
+      "istifa",
+      "ölüm",
+      "ehliyetsizlik",
+      "iflas"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Vekâletin sona ermesi — TBK m.512-514"
+  },
+  {
+    "id": "HAL-001",
+    "question": "TBK m.344'teki kira artış sınırlaması, TBK m.72'deki haksız fiil zamanaşımını da otomatik olarak değiştirir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.344",
+      "TBK m.72"
+    ],
+    "expected_keywords": [
+      "kira artışı",
+      "haksız fiil",
+      "zamanaşımı",
+      "ilişkisiz hükümler"
+    ],
+    "expected_answer_contains": "doğrudan bir bağlantı yoktur",
+    "refusal_expected": false,
+    "notes": "İlişkisiz maddeler arasında sahte bağ"
+  },
+  {
+    "id": "HAL-002",
+    "question": "TBK m.583'e göre eş rızası olmadan yapılan kefalet, TBK m.584 yürürlüğe girmeden önce de kesin hükümsüz müydü?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.583",
+      "TBK m.584"
+    ],
+    "expected_keywords": [
+      "kefalet",
+      "eş rızası",
+      "yürürlük",
+      "zaman bakımından uygulama"
+    ],
+    "expected_answer_contains": "m.584",
+    "refusal_expected": false,
+    "notes": "Zaman bakımından uygulama tuzağı"
+  },
+  {
+    "id": "HAL-003",
+    "question": "TBK m.223'teki ayıp ihbar süresi geçince alıcı TBK m.125'e dayanarak yine de dönme hakkı kullanabilir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.223",
+      "TBK m.227",
+      "TBK m.125"
+    ],
+    "expected_keywords": [
+      "ayıp ihbarı",
+      "satış",
+      "genel hüküm-özel hüküm"
+    ],
+    "expected_answer_contains": "özel hüküm",
+    "refusal_expected": false,
+    "notes": "Genel/özel hüküm çatışması"
+  },
+  {
+    "id": "HAL-004",
+    "question": "TBK m.136 imkansızlık halinde borcu sona erdiriyorsa, aynı olayda TBK m.49 haksız fiil tazminatı hiç istenemez denebilir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.136",
+      "TBK m.49"
+    ],
+    "expected_keywords": [
+      "imkansızlık",
+      "haksız fiil",
+      "ayrı sorumluluk rejimi"
+    ],
+    "expected_answer_contains": "ayrı değerlendirilir",
+    "refusal_expected": false,
+    "notes": "Farklı sorumluluk rejimleri"
+  },
+  {
+    "id": "HAL-001",
+    "question": "TBK m.344'teki kira artış sınırlaması, TBK m.72'deki haksız fiil zamanaşımını da otomatik olarak değiştirir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.344",
+      "TBK m.72"
+    ],
+    "expected_keywords": [
+      "kira artışı",
+      "haksız fiil",
+      "zamanaşımı",
+      "ilişkisiz hükümler"
+    ],
+    "expected_answer_contains": "doğrudan bir bağlantı yoktur",
+    "refusal_expected": false,
+    "notes": "İlişkisiz maddeler arasında sahte bağ"
+  },
+  {
+    "id": "HAL-002",
+    "question": "TBK m.583'e göre eş rızası olmadan yapılan kefalet, TBK m.584 yürürlüğe girmeden önce de kesin hükümsüz müydü?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.583",
+      "TBK m.584"
+    ],
+    "expected_keywords": [
+      "kefalet",
+      "eş rızası",
+      "yürürlük",
+      "zaman bakımından uygulama"
+    ],
+    "expected_answer_contains": "m.584",
+    "refusal_expected": false,
+    "notes": "Zaman bakımından uygulama tuzağı"
+  },
+  {
+    "id": "HAL-003",
+    "question": "TBK m.223'teki ayıp ihbar süresi geçince alıcı TBK m.125'e dayanarak yine de dönme hakkı kullanabilir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.223",
+      "TBK m.227",
+      "TBK m.125"
+    ],
+    "expected_keywords": [
+      "ayıp ihbarı",
+      "satış",
+      "genel hüküm-özel hüküm"
+    ],
+    "expected_answer_contains": "özel hüküm",
+    "refusal_expected": false,
+    "notes": "Genel/özel hüküm çatışması"
+  },
+  {
+    "id": "HAL-004",
+    "question": "TBK m.136 imkansızlık halinde borcu sona erdiriyorsa, aynı olayda TBK m.49 haksız fiil tazminatı hiç istenemez denebilir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.136",
+      "TBK m.49"
+    ],
+    "expected_keywords": [
+      "imkansızlık",
+      "haksız fiil",
+      "ayrı sorumluluk rejimi"
+    ],
+    "expected_answer_contains": "ayrı değerlendirilir",
+    "refusal_expected": false,
+    "notes": "Farklı sorumluluk rejimleri"
+  }
+]

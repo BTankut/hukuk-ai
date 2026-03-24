@@ -365,6 +365,7 @@ class TracePack(BaseModel):
     retrieval: dict[str, Any]
     context_assembly: dict[str, Any]
     generation_outcome: dict[str, Any]
+    parity_trace: dict[str, Any] | None = None
 
 
 @dataclass(slots=True)

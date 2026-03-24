@@ -1,0 +1,2021 @@
+{
+  "report_meta": {
+    "generated_at": "2026-03-24T14:43:40.235574+00:00",
+    "questions_source": "configs/evaluation/test_questions_faz9_tbk005_witness.json",
+    "api_url": "http://127.0.0.1:8112",
+    "mock_mode": false,
+    "total_questions": 1,
+    "error_count": 0,
+    "schema_version": 2,
+    "runner": "eval_runner",
+    "report_role": "evaluation",
+    "eval_family": "test_questions_faz9_tbk005_witness",
+    "model_ref": "gateway-api",
+    "checkpoint_ref": "bind-l2-faz9-tbk005-v2",
+    "git_commit": "unknown",
+    "config_fingerprint": {
+      "law_filter": null,
+      "verification_enabled": true,
+      "category_filter": null,
+      "delay_seconds": 0.5,
+      "timeout_seconds": 180.0,
+      "include_trace": true,
+      "api_key_present": true
+    }
+  },
+  "summary": {
+    "citation_rate": 1.0,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "avg_keyword_coverage": 0.2,
+    "phrase_hit_rate": 0.0,
+    "avg_response_time_ms": 22584.3,
+    "blocked_rate": 0.0
+  },
+  "faz1_criteria": {
+    "citation_rate": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "correct_source_rate": {
+      "threshold": 0.7,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "hallucination_rate": {
+      "threshold": 0.1,
+      "operator": "≤",
+      "actual": 0.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "refusal_accuracy": {
+      "threshold": 0.8,
+      "operator": "≥",
+      "actual": 1.0,
+      "passes": true,
+      "status": "✅ GEÇTİ"
+    },
+    "overall": {
+      "passes": true,
+      "status": "✅ FAZ 1 KABULEDİLDİ"
+    }
+  },
+  "by_category": {
+    "tbk_genel": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "avg_keyword_coverage": 0.2
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "count": 1,
+      "citation_rate": 1.0,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "avg_keyword_coverage": 0.2
+    }
+  },
+  "per_question": [
+    {
+      "question_id": "TBK-005",
+      "question_text": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+      "cited_sources": [
+        "TBK m.88",
+        "TBK m.120"
+      ],
+      "expected_sources": [
+        "TBK m.88"
+      ],
+      "expected_keywords": [
+        "yasal faiz",
+        "kanuni faiz",
+        "yıllık",
+        "yüzde",
+        "belirlenmemiş"
+      ],
+      "expected_answer_contains": "yasal faiz",
+      "refusal_expected": false,
+      "has_citation": true,
+      "correct_source_overlap": 1,
+      "expected_source_count": 1,
+      "correct_source_rate": 1.0,
+      "is_hallucination": false,
+      "is_refusal": false,
+      "refusal_correct": true,
+      "kw_coverage": 0.2,
+      "phrase_hit_result": false,
+      "response_time_ms": 22584.3,
+      "blocked": false,
+      "final_mode": "answer",
+      "answer_contract": {
+        "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+        "primary_source_id": "TBK m.88",
+        "secondary_source_ids": [
+          "TBK m.120"
+        ],
+        "law_scope": [
+          "TBK"
+        ],
+        "source_validity": "active",
+        "unsupported_reason": null,
+        "verifier_status": "warn",
+        "final_mode": "answer",
+        "claim_units": []
+      },
+      "trace": {
+        "request_id": "chatcmpl-1f564c031aaf",
+        "timestamp": "2026-03-24T14:43:40.208793+00:00",
+        "question_raw": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+        "question_normalized": "faiz orani sozlesmede belirlenmemisse tbk'ya gore hangi faiz orani uygulanir?",
+        "parsed_query": {
+          "enriched_query": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+          "retrieval_query": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+          "law_filter": null,
+          "mentioned_laws": [
+            "TBK"
+          ],
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "law_scope_signal": {
+          "expected_law_scope": [
+            "TBK"
+          ],
+          "resolved_law_scope": [
+            "TBK"
+          ],
+          "explicit_law_scope": [
+            "TBK"
+          ],
+          "scope_class": "single_law_high_conf",
+          "single_law_question": true,
+          "multi_law_question": false,
+          "scope_ambiguous": false,
+          "normalized_question": "faiz orani sozlesmede belirlenmemisse tbk'ya gore hangi faiz orani uygulanir?"
+        },
+        "question_type": "general",
+        "target_date": "2026-03-24",
+        "retrieval_top_k": 20,
+        "rerank_list": [
+          {
+            "source_id": "TBK m.88",
+            "citation": "TBK m.88",
+            "source": "TBK",
+            "score": 0.835148811340332,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "88",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.88",
+            "citation": "TBK m.88",
+            "source": "TBK",
+            "score": 0.835148811340332,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "88",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.120",
+            "citation": "TBK m.120",
+            "source": "TBK",
+            "score": 0.8228152990341187,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "120",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.120",
+            "citation": "TBK m.120",
+            "source": "TBK",
+            "score": 0.8228151798248291,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "120",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.388",
+            "citation": "TBK m.388",
+            "source": "TBK",
+            "score": 0.8179938197135925,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "388",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.388",
+            "citation": "TBK m.388",
+            "source": "TBK",
+            "score": 0.817993700504303,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "388",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.387",
+            "citation": "TBK m.387",
+            "source": "TBK",
+            "score": 0.804445743560791,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "387",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.387",
+            "citation": "TBK m.387",
+            "source": "TBK",
+            "score": 0.804445743560791,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "387",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TMK m.852",
+            "citation": "TMK m.852",
+            "source": "TMK",
+            "score": 0.8030285835266113,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "852",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TMK m.852",
+            "citation": "TMK m.852",
+            "source": "TMK",
+            "score": 0.8030285835266113,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "852",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TMK m.851",
+            "citation": "TMK m.851",
+            "source": "TMK",
+            "score": 0.8000994920730591,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "851",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TMK m.851",
+            "citation": "TMK m.851",
+            "source": "TMK",
+            "score": 0.8000994920730591,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "851",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.121",
+            "citation": "TBK m.121",
+            "source": "TBK",
+            "score": 0.8000333905220032,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "121",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.121",
+            "citation": "TBK m.121",
+            "source": "TBK",
+            "score": 0.8000333905220032,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "121",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.138",
+            "citation": "TBK m.138",
+            "source": "TBK",
+            "score": 0.7943480610847473,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "138",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.138",
+            "citation": "TBK m.138",
+            "source": "TBK",
+            "score": 0.7943480610847473,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "138",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.122",
+            "citation": "TBK m.122",
+            "source": "TBK",
+            "score": 0.7926358580589294,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "122",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.122",
+            "citation": "TBK m.122",
+            "source": "TBK",
+            "score": 0.7926357388496399,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "122",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.181",
+            "citation": "TBK m.181",
+            "source": "TBK",
+            "score": 0.7902070879936218,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "181",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          },
+          {
+            "source_id": "TBK m.181",
+            "citation": "TBK m.181",
+            "source": "TBK",
+            "score": 0.790207028388977,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "181",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null
+          }
+        ],
+        "assembled_evidence": [
+          {
+            "source_id": "TBK m.88",
+            "citation": "TBK m.88",
+            "source": "TBK",
+            "score": 0.835148811340332,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "88",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz."
+          },
+          {
+            "source_id": "TBK m.88",
+            "citation": "TBK m.88",
+            "source": "TBK",
+            "score": 0.835148811340332,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "88",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz."
+          },
+          {
+            "source_id": "TBK m.120",
+            "citation": "TBK m.120",
+            "source": "TBK",
+            "score": 0.8228152990341187,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "120",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi"
+          },
+          {
+            "source_id": "TBK m.120",
+            "citation": "TBK m.120",
+            "source": "TBK",
+            "score": 0.8228151798248291,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "120",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi"
+          },
+          {
+            "source_id": "TBK m.388",
+            "citation": "TBK m.388",
+            "source": "TBK",
+            "score": 0.8179938197135925,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "388",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz."
+          },
+          {
+            "source_id": "TBK m.388",
+            "citation": "TBK m.388",
+            "source": "TBK",
+            "score": 0.817993700504303,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "388",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz."
+          },
+          {
+            "source_id": "TBK m.387",
+            "citation": "TBK m.387",
+            "source": "TBK",
+            "score": 0.804445743560791,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "387",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir."
+          },
+          {
+            "source_id": "TBK m.387",
+            "citation": "TBK m.387",
+            "source": "TBK",
+            "score": 0.804445743560791,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "387",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir."
+          },
+          {
+            "source_id": "TMK m.852",
+            "citation": "TMK m.852",
+            "source": "TMK",
+            "score": 0.8030285835266113,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "852",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme"
+          },
+          {
+            "source_id": "TMK m.852",
+            "citation": "TMK m.852",
+            "source": "TMK",
+            "score": 0.8030285835266113,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "852",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme"
+          },
+          {
+            "source_id": "TMK m.851",
+            "citation": "TMK m.851",
+            "source": "TMK",
+            "score": 0.8000994920730591,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "851",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz"
+          },
+          {
+            "source_id": "TMK m.851",
+            "citation": "TMK m.851",
+            "source": "TMK",
+            "score": 0.8000994920730591,
+            "chunk_id": null,
+            "law_no": "4721",
+            "law_short_name": "TMK",
+            "madde_no": "851",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz"
+          },
+          {
+            "source_id": "TBK m.121",
+            "citation": "TBK m.121",
+            "source": "TBK",
+            "score": 0.8000333905220032,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "121",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez."
+          },
+          {
+            "source_id": "TBK m.121",
+            "citation": "TBK m.121",
+            "source": "TBK",
+            "score": 0.8000333905220032,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "121",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez."
+          },
+          {
+            "source_id": "TBK m.138",
+            "citation": "TBK m.138",
+            "source": "TBK",
+            "score": 0.7943480610847473,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "138",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları"
+          },
+          {
+            "source_id": "TBK m.138",
+            "citation": "TBK m.138",
+            "source": "TBK",
+            "score": 0.7943480610847473,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "138",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları"
+          },
+          {
+            "source_id": "TBK m.122",
+            "citation": "TBK m.122",
+            "source": "TBK",
+            "score": 0.7926358580589294,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "122",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder."
+          },
+          {
+            "source_id": "TBK m.122",
+            "citation": "TBK m.122",
+            "source": "TBK",
+            "score": 0.7926357388496399,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "122",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder."
+          },
+          {
+            "source_id": "TBK m.181",
+            "citation": "TBK m.181",
+            "source": "TBK",
+            "score": 0.7902070879936218,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "181",
+            "fikra_no": "",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır."
+          },
+          {
+            "source_id": "TBK m.181",
+            "citation": "TBK m.181",
+            "source": "TBK",
+            "score": 0.790207028388977,
+            "chunk_id": null,
+            "law_no": "6098",
+            "law_short_name": "TBK",
+            "madde_no": "181",
+            "fikra_no": "1",
+            "yururluk_baslangic": null,
+            "yururluk_bitis": null,
+            "mulga": null,
+            "excerpt": "TBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır."
+          }
+        ],
+        "allowed_source_whitelist": [
+          "TBK m.88",
+          "TBK m.120",
+          "TBK m.388",
+          "TBK m.387",
+          "TMK m.852",
+          "TMK m.851",
+          "TBK m.121",
+          "TBK m.138",
+          "TBK m.122",
+          "TBK m.181"
+        ],
+        "answer_contract": {
+          "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+          "primary_source_id": "TBK m.88",
+          "secondary_source_ids": [
+            "TBK m.120"
+          ],
+          "law_scope": [
+            "TBK"
+          ],
+          "source_validity": "active",
+          "unsupported_reason": null,
+          "verifier_status": "warn",
+          "final_mode": "answer",
+          "claim_units": []
+        },
+        "model_cited_source_ids": [
+          "TBK m.88",
+          "TBK m.120"
+        ],
+        "verifier_verdict": null,
+        "final_mode": "answer",
+        "final_reason": null,
+        "query_signals": {
+          "user_query": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+          "enriched_query": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+          "retrieval_query": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+          "law_filter": null,
+          "mentioned_laws": [
+            "TBK"
+          ],
+          "cross_law_mode": false,
+          "explicit_article_refs": [],
+          "forced_article_refs": [],
+          "applied_expansions": []
+        },
+        "retrieval": {
+          "top_k_requested": 20,
+          "top_k_effective": 20,
+          "reranker_enabled": false,
+          "pre_rerank_chunks": [
+            {
+              "source_id": "TBK m.88",
+              "citation": "TBK m.88",
+              "source": "TBK",
+              "score": 0.835148811340332,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "88",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.88",
+              "citation": "TBK m.88",
+              "source": "TBK",
+              "score": 0.835148811340332,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "88",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.120",
+              "citation": "TBK m.120",
+              "source": "TBK",
+              "score": 0.8228152990341187,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "120",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.120",
+              "citation": "TBK m.120",
+              "source": "TBK",
+              "score": 0.8228151798248291,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "120",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.388",
+              "citation": "TBK m.388",
+              "source": "TBK",
+              "score": 0.8179938197135925,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "388",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.388",
+              "citation": "TBK m.388",
+              "source": "TBK",
+              "score": 0.817993700504303,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "388",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.387",
+              "citation": "TBK m.387",
+              "source": "TBK",
+              "score": 0.804445743560791,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "387",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.387",
+              "citation": "TBK m.387",
+              "source": "TBK",
+              "score": 0.804445743560791,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "387",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.852",
+              "citation": "TMK m.852",
+              "source": "TMK",
+              "score": 0.8030285835266113,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "852",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.852",
+              "citation": "TMK m.852",
+              "source": "TMK",
+              "score": 0.8030285835266113,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "852",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.851",
+              "citation": "TMK m.851",
+              "source": "TMK",
+              "score": 0.8000994920730591,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "851",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.851",
+              "citation": "TMK m.851",
+              "source": "TMK",
+              "score": 0.8000994920730591,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "851",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.121",
+              "citation": "TBK m.121",
+              "source": "TBK",
+              "score": 0.8000333905220032,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "121",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.121",
+              "citation": "TBK m.121",
+              "source": "TBK",
+              "score": 0.8000333905220032,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "121",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.138",
+              "citation": "TBK m.138",
+              "source": "TBK",
+              "score": 0.7943480610847473,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "138",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.138",
+              "citation": "TBK m.138",
+              "source": "TBK",
+              "score": 0.7943480610847473,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "138",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.122",
+              "citation": "TBK m.122",
+              "source": "TBK",
+              "score": 0.7926358580589294,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "122",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.122",
+              "citation": "TBK m.122",
+              "source": "TBK",
+              "score": 0.7926357388496399,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "122",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.181",
+              "citation": "TBK m.181",
+              "source": "TBK",
+              "score": 0.7902070879936218,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "181",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.181",
+              "citation": "TBK m.181",
+              "source": "TBK",
+              "score": 0.790207028388977,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "181",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            }
+          ],
+          "post_rerank_chunks": [
+            {
+              "source_id": "TBK m.88",
+              "citation": "TBK m.88",
+              "source": "TBK",
+              "score": 0.835148811340332,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "88",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.88",
+              "citation": "TBK m.88",
+              "source": "TBK",
+              "score": 0.835148811340332,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "88",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.120",
+              "citation": "TBK m.120",
+              "source": "TBK",
+              "score": 0.8228152990341187,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "120",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.120",
+              "citation": "TBK m.120",
+              "source": "TBK",
+              "score": 0.8228151798248291,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "120",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.388",
+              "citation": "TBK m.388",
+              "source": "TBK",
+              "score": 0.8179938197135925,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "388",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.388",
+              "citation": "TBK m.388",
+              "source": "TBK",
+              "score": 0.817993700504303,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "388",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.387",
+              "citation": "TBK m.387",
+              "source": "TBK",
+              "score": 0.804445743560791,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "387",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.387",
+              "citation": "TBK m.387",
+              "source": "TBK",
+              "score": 0.804445743560791,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "387",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.852",
+              "citation": "TMK m.852",
+              "source": "TMK",
+              "score": 0.8030285835266113,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "852",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.852",
+              "citation": "TMK m.852",
+              "source": "TMK",
+              "score": 0.8030285835266113,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "852",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.851",
+              "citation": "TMK m.851",
+              "source": "TMK",
+              "score": 0.8000994920730591,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "851",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TMK m.851",
+              "citation": "TMK m.851",
+              "source": "TMK",
+              "score": 0.8000994920730591,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "851",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.121",
+              "citation": "TBK m.121",
+              "source": "TBK",
+              "score": 0.8000333905220032,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "121",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.121",
+              "citation": "TBK m.121",
+              "source": "TBK",
+              "score": 0.8000333905220032,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "121",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.138",
+              "citation": "TBK m.138",
+              "source": "TBK",
+              "score": 0.7943480610847473,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "138",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.138",
+              "citation": "TBK m.138",
+              "source": "TBK",
+              "score": 0.7943480610847473,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "138",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.122",
+              "citation": "TBK m.122",
+              "source": "TBK",
+              "score": 0.7926358580589294,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "122",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.122",
+              "citation": "TBK m.122",
+              "source": "TBK",
+              "score": 0.7926357388496399,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "122",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.181",
+              "citation": "TBK m.181",
+              "source": "TBK",
+              "score": 0.7902070879936218,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "181",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            },
+            {
+              "source_id": "TBK m.181",
+              "citation": "TBK m.181",
+              "source": "TBK",
+              "score": 0.790207028388977,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "181",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null
+            }
+          ]
+        },
+        "context_assembly": {
+          "context_chunk_citations": [
+            "TBK m.88",
+            "TBK m.88",
+            "TBK m.120",
+            "TBK m.120",
+            "TBK m.388",
+            "TBK m.388",
+            "TBK m.387",
+            "TBK m.387",
+            "TMK m.852",
+            "TMK m.852",
+            "TMK m.851",
+            "TMK m.851",
+            "TBK m.121",
+            "TBK m.121",
+            "TBK m.138",
+            "TBK m.138",
+            "TBK m.122",
+            "TBK m.122",
+            "TBK m.181",
+            "TBK m.181"
+          ],
+          "assembled_context": "[Kaynak: TBK m.88]\nTBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz.\n\n---\n\n[Kaynak: TBK m.88]\nTBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz.\n\n---\n\n[Kaynak: TBK m.120]\nTBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi\n\n---\n\n[Kaynak: TBK m.120]\nTBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi\n\n---\n\n[Kaynak: TBK m.388]\nTBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz.\n\n---\n\n[Kaynak: TBK m.388]\nTBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz.\n\n---\n\n[Kaynak: TBK m.387]\nTBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir.\n\n---\n\n[Kaynak: TBK m.387]\nTBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir.\n\n---\n\n[Kaynak: TMK m.852]\nTMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme\n\n---\n\n[Kaynak: TMK m.852]\nTMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme\n\n---\n\n[Kaynak: TMK m.851]\nTMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz\n\n---\n\n[Kaynak: TMK m.851]\nTMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz\n\n---\n\n[Kaynak: TBK m.121]\nTBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez.\n\n---\n\n[Kaynak: TBK m.121]\nTBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez.\n\n---\n\n[Kaynak: TBK m.138]\nTBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları\n\n---\n\n[Kaynak: TBK m.138]\nTBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları\n\n---\n\n[Kaynak: TBK m.122]\nTBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder.\n\n---\n\n[Kaynak: TBK m.122]\nTBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder.\n\n---\n\n[Kaynak: TBK m.181]\nTBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır.\n\n---\n\n[Kaynak: TBK m.181]\nTBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır.",
+          "assembled_evidence": [
+            {
+              "source_id": "TBK m.88",
+              "citation": "TBK m.88",
+              "source": "TBK",
+              "score": 0.835148811340332,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "88",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz."
+            },
+            {
+              "source_id": "TBK m.88",
+              "citation": "TBK m.88",
+              "source": "TBK",
+              "score": 0.835148811340332,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "88",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz."
+            },
+            {
+              "source_id": "TBK m.120",
+              "citation": "TBK m.120",
+              "source": "TBK",
+              "score": 0.8228152990341187,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "120",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi"
+            },
+            {
+              "source_id": "TBK m.120",
+              "citation": "TBK m.120",
+              "source": "TBK",
+              "score": 0.8228151798248291,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "120",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi"
+            },
+            {
+              "source_id": "TBK m.388",
+              "citation": "TBK m.388",
+              "source": "TBK",
+              "score": 0.8179938197135925,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "388",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz."
+            },
+            {
+              "source_id": "TBK m.388",
+              "citation": "TBK m.388",
+              "source": "TBK",
+              "score": 0.817993700504303,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "388",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz."
+            },
+            {
+              "source_id": "TBK m.387",
+              "citation": "TBK m.387",
+              "source": "TBK",
+              "score": 0.804445743560791,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "387",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir."
+            },
+            {
+              "source_id": "TBK m.387",
+              "citation": "TBK m.387",
+              "source": "TBK",
+              "score": 0.804445743560791,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "387",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir."
+            },
+            {
+              "source_id": "TMK m.852",
+              "citation": "TMK m.852",
+              "source": "TMK",
+              "score": 0.8030285835266113,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "852",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme"
+            },
+            {
+              "source_id": "TMK m.852",
+              "citation": "TMK m.852",
+              "source": "TMK",
+              "score": 0.8030285835266113,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "852",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme"
+            },
+            {
+              "source_id": "TMK m.851",
+              "citation": "TMK m.851",
+              "source": "TMK",
+              "score": 0.8000994920730591,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "851",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz"
+            },
+            {
+              "source_id": "TMK m.851",
+              "citation": "TMK m.851",
+              "source": "TMK",
+              "score": 0.8000994920730591,
+              "chunk_id": null,
+              "law_no": "4721",
+              "law_short_name": "TMK",
+              "madde_no": "851",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz"
+            },
+            {
+              "source_id": "TBK m.121",
+              "citation": "TBK m.121",
+              "source": "TBK",
+              "score": 0.8000333905220032,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "121",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez."
+            },
+            {
+              "source_id": "TBK m.121",
+              "citation": "TBK m.121",
+              "source": "TBK",
+              "score": 0.8000333905220032,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "121",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez."
+            },
+            {
+              "source_id": "TBK m.138",
+              "citation": "TBK m.138",
+              "source": "TBK",
+              "score": 0.7943480610847473,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "138",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları"
+            },
+            {
+              "source_id": "TBK m.138",
+              "citation": "TBK m.138",
+              "source": "TBK",
+              "score": 0.7943480610847473,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "138",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları"
+            },
+            {
+              "source_id": "TBK m.122",
+              "citation": "TBK m.122",
+              "source": "TBK",
+              "score": 0.7926358580589294,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "122",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder."
+            },
+            {
+              "source_id": "TBK m.122",
+              "citation": "TBK m.122",
+              "source": "TBK",
+              "score": 0.7926357388496399,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "122",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder."
+            },
+            {
+              "source_id": "TBK m.181",
+              "citation": "TBK m.181",
+              "source": "TBK",
+              "score": 0.7902070879936218,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "181",
+              "fikra_no": "",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır."
+            },
+            {
+              "source_id": "TBK m.181",
+              "citation": "TBK m.181",
+              "source": "TBK",
+              "score": 0.790207028388977,
+              "chunk_id": null,
+              "law_no": "6098",
+              "law_short_name": "TBK",
+              "madde_no": "181",
+              "fikra_no": "1",
+              "yururluk_baslangic": null,
+              "yururluk_bitis": null,
+              "mulga": null,
+              "excerpt": "TBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır."
+            }
+          ],
+          "allowed_source_whitelist": [
+            "TBK m.88",
+            "TBK m.120",
+            "TBK m.388",
+            "TBK m.387",
+            "TMK m.852",
+            "TMK m.851",
+            "TBK m.121",
+            "TBK m.138",
+            "TBK m.122",
+            "TBK m.181"
+          ]
+        },
+        "generation_outcome": {
+          "decision_lane": "rag",
+          "blocked": false,
+          "guardrails_reasons": [
+            "source_lock_fallback"
+          ],
+          "verification": null,
+          "final_mode": "answer",
+          "final_reason": null
+        },
+        "parity_trace": {
+          "stages": [
+            {
+              "stage": "raw_input_request",
+              "hash": "a3f810b827020be7bb036706dd096cb607e3282c497a9fa25eeca0bc0c7b2886",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?"
+                  }
+                ],
+                "stream": false,
+                "temperature": null,
+                "max_tokens": 512,
+                "session_id_present": false,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true
+              }
+            },
+            {
+              "stage": "normalized_request",
+              "hash": "2043bd4629510a36cda0a5c34d5bd3ae35711220f9fa4a6e03ec0c853395bdcd",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?"
+                  }
+                ],
+                "stream": false,
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true
+              }
+            },
+            {
+              "stage": "auth_enriched_request",
+              "hash": "27f942bee19302056e034280b22936edb99244423fdf1a088ef4545290954e57",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?"
+                  }
+                ],
+                "stream": false,
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true,
+                "auth_subject": "key-bb169e5f30b5"
+              }
+            },
+            {
+              "stage": "session_enriched_request",
+              "hash": "9346f25e8c7251cf9740d2480796d2a2e523cd1bc2bf6a6de1cab0ef367dd335",
+              "payload": {
+                "model": "hukuk-lora",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?"
+                  }
+                ],
+                "stream": false,
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "law_filter": null,
+                "use_verification": true,
+                "top_k": 20,
+                "include_trace": true,
+                "session_id_present": true,
+                "conversation_history": [],
+                "request_id_present": true,
+                "trace_id_present": true
+              }
+            },
+            {
+              "stage": "retrieval_input_payload",
+              "hash": "4acd5b67af3199261f04787a07ce64ada98eda049acee54078b2d442cfb4ec88",
+              "payload": {
+                "query": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+                "top_k": 20,
+                "metadata_filter": null,
+                "mentioned_laws": [
+                  "TBK"
+                ],
+                "explicit_article_refs": [],
+                "forced_article_refs": [],
+                "applied_expansions": [],
+                "reranker_enabled": false
+              }
+            },
+            {
+              "stage": "retrieved_source_id_ordered_list",
+              "hash": "7fccfa517b3874ea70a1c41d4d69a47d9e975c08986ee81cb0fade9b0d1c7768",
+              "payload": {
+                "ordered_source_id_list": [
+                  "TBK m.88",
+                  "TBK m.88",
+                  "TBK m.120",
+                  "TBK m.120",
+                  "TBK m.388",
+                  "TBK m.388",
+                  "TBK m.387",
+                  "TBK m.387",
+                  "TMK m.852",
+                  "TMK m.852",
+                  "TMK m.851",
+                  "TMK m.851",
+                  "TBK m.121",
+                  "TBK m.121",
+                  "TBK m.138",
+                  "TBK m.138",
+                  "TBK m.122",
+                  "TBK m.122",
+                  "TBK m.181",
+                  "TBK m.181"
+                ]
+              }
+            },
+            {
+              "stage": "assembly_payload",
+              "hash": "b850e342e4bcf1b6936b5ba014bc22ee560a1a8d7630f4b05502934cc68d6561",
+              "payload": {
+                "query": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+                "context": "[Kaynak: TBK m.88]\nTBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz.\n\n---\n\n[Kaynak: TBK m.88]\nTBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz.\n\n---\n\n[Kaynak: TBK m.120]\nTBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi\n\n---\n\n[Kaynak: TBK m.120]\nTBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi\n\n---\n\n[Kaynak: TBK m.388]\nTBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz.\n\n---\n\n[Kaynak: TBK m.388]\nTBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz.\n\n---\n\n[Kaynak: TBK m.387]\nTBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir.\n\n---\n\n[Kaynak: TBK m.387]\nTBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir.\n\n---\n\n[Kaynak: TMK m.852]\nTMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme\n\n---\n\n[Kaynak: TMK m.852]\nTMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme\n\n---\n\n[Kaynak: TMK m.851]\nTMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz\n\n---\n\n[Kaynak: TMK m.851]\nTMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz\n\n---\n\n[Kaynak: TBK m.121]\nTBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez.\n\n---\n\n[Kaynak: TBK m.121]\nTBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez.\n\n---\n\n[Kaynak: TBK m.138]\nTBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları\n\n---\n\n[Kaynak: TBK m.138]\nTBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları\n\n---\n\n[Kaynak: TBK m.122]\nTBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder.\n\n---\n\n[Kaynak: TBK m.122]\nTBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder.\n\n---\n\n[Kaynak: TBK m.181]\nTBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır.\n\n---\n\n[Kaynak: TBK m.181]\nTBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır."
+              }
+            },
+            {
+              "stage": "model_request_payload",
+              "hash": "fd1bcec6180fa6ede53f4390f65073822969b4d97c8bcd3be6de5f6e8646d20d",
+              "payload": {
+                "model": "/models/merged_model_fabric_stage_20260321",
+                "messages": [
+                  {
+                    "role": "system",
+                    "content": "Sen bir Türk hukuku asistanısın. YALNIZCA verilen KAYNAKLAR bölümünü kullan. Kaynakta bulunmayan bilgi, sonuç veya madde üretme.\n\nYanıtı üretmeden önce zihinsel olarak şu sırayı izle, fakat bu adımları kullanıcıya yazma:\n1. Sorunun gerçekten hangi kanun ailesine dayandığını belirle (TBK, TMK, TCK, HMK, TTK, İİK).\n2. Soru belirli bir maddeye atıf yapıyorsa ve o madde kaynaklarda varsa önce onu değerlendir.\n3. Her iddiayı yalnız gerçekten dayandığın kaynak maddelerle eşleştir.\n\nZorunlu kurallar:\n- Her hukuki iddiada en yakın ilgili '[Kaynak: X]' etiketini kullan.\n- Kanun prefixlerini asla karıştırma; TBK/TMK/TCK/HMK/TTK/İİK aynen korunmalı.\n- Komşu veya benzer maddeyi yalnız yakın olduğu için cite etme; sadece gerçekten dayandığın maddeyi yaz.\n- Cross-law sorularda cevap gerçekten iki kanuna dayanıyorsa her iki kanundan da açık kaynak göster; dayanmıyorsa gereksiz ikinci kanun ekleme.\n- Önce kısa sonucu ver, sonra en fazla üç kısa dayanak maddesiyle devam et.\n- Kaynak yetersizse açıkça bunu söyle ve tahmin yürütme."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Aşağıdaki kaynak metinlerini kullanarak soruyu yanıtla. Önce tek cümlelik sonucu ver. Ardından yalnız gerçekten dayandığın maddeleri '[Kaynak: X]' biçiminde göster. Soruda açık madde numarası geçiyorsa ve kaynaklarda varsa o maddeyi atlama.\n\nKAYNAKLAR:\n[Kaynak: TBK m.88]\nTBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz.\n\n---\n\n[Kaynak: TBK m.88]\nTBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı,\nsözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık faiz oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde elli fazlasını aşamaz.\n\n---\n\n[Kaynak: TBK m.120]\nTBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi\n\n---\n\n[Kaynak: TBK m.120]\nTBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı,\nsözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir. Sözleşme ile kararlaştırılacak yıllık temerrüt faizi oranı, birinci fıkra uyarınca belirlenen yıllık faiz oranının yüzde yüz fazlasını aşamaz. Akdî faiz oranı kararlaştırılmakla birlikte sözleşmede temerrüt faizi kararlaştırılmamışsa ve yıllık akdî faiz oranı da birinci fıkrada belirtilen faiz oranından fazla ise, temerrüt faizi oranı hakkında akdî faiz oranı geçerli olur. b. Faizlerde, iratlarda ve bağışlamada temerrüt faizi\n\n---\n\n[Kaynak: TBK m.388]\nTBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz.\n\n---\n\n[Kaynak: TBK m.388]\nTBK m.388 - 2. Faize ilişkin özel / Tüketim ödüncü sözleşmesinde faiz oranı\nbelirlenmemişse, kural olarak ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır. Sözleşmede aksine bir hüküm yoksa, belirlenen faiz, yıllık olarak ödenir. Faizin anaparaya eklenerek birlikte yeniden faiz yürütülmesi kararlaştırılamaz.\n\n---\n\n[Kaynak: TBK m.387]\nTBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir.\n\n---\n\n[Kaynak: TBK m.387]\nTBK m.387 - 1. Genel olarak / Ticari olmayan tüketim ödüncü sözleşmesinde,\ntaraflarca kararlaştırılmış olmadıkça faiz istenemez. Ticari tüketim ödüncü sözleşmesinde, taraflarca kararlaştırılmamış olsa bile faiz istenebilir.\n\n---\n\n[Kaynak: TMK m.852]\nTMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme\n\n---\n\n[Kaynak: TMK m.852]\nTMK m.852 - Sınırlayıcı hükümler saklı kalmak kaydıyla, taraflar faiz oranını\ndiledikleri gibi kararlaştırabilirler. III. Taşınmaz 1. Rehne konu olabilme\n\n---\n\n[Kaynak: TMK m.851]\nTMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz\n\n---\n\n[Kaynak: TMK m.851]\nTMK m.851 - Taşınmaz rehni,\nmiktarı Türk parası ile gösterilen belli bir alacak için kurulabilir. Alacağın miktarının belli olmaması hâlinde, alacaklının bütün istemlerini karşılayacak şekilde taşınmazın güvence altına alacağı üst sınır taraflarca belirtilir. Yurt içinde veya dışında faaliyette bulunan kredi kuruluşlarınca yabancı para üzerinden veya yabancı para ölçüsü ile verilen kredileri güvence altına almak için yabancı para üzerinden taşınmaz rehni kurulabilir. Bu hâlde her derecenin ifade ettiği miktar, rehin konusu alacağın tespit edildiği para türü üzerinden gösterilir. Ancak, aynı derecede birden fazla para türü kullanılarak rehin kurulamaz. Yabancı para üzerinden kurulan rehne ait bir derecenin boşalması hâlinde, yerine, tescil edileceği tarihteki karşılığı Türk parası veya yabancı para üzerinden rehin kurulabilir. Türk parası ile kurulmuş bir rehne ait derecenin boşalması hâlinde ise, yerine tescil edileceği tarihteki karşılığı yabancı para üzerinden rehin kurulabilir. Yabancı veya Türk parası karşılıklarının hesabında hesap günündeki Türkiye Cumhuriyet Merkez Bankasının döviz alış kuru esas alınır. Rehin haklarının hangi yabancı paralar üzerinden kurulabileceği Cumhurbaşkanınca belirlenir. [37] 2. Faiz\n\n---\n\n[Kaynak: TBK m.121]\nTBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez.\n\n---\n\n[Kaynak: TBK m.121]\nTBK m.121 - Faiz veya irat borcunu ya da bağışladığı bir miktar\nparayı ödemekte temerrüde düşen borçlu, icra takibine girişildiği veya dava açıldığı günden başlayarak, temerrüt faizi ödemekle yükümlüdür. Buna aykırı olarak yapılan anlaşmalar, ceza koşulu hükümlerine tabi olur. Temerrüt faizine, ayrıca temerrüt faizi yürütülemez.\n\n---\n\n[Kaynak: TBK m.138]\nTBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları\n\n---\n\n[Kaynak: TBK m.138]\nTBK m.138 - III. Aşırı ifa güçlüğü / Sözleşmenin yapıldığı sırada taraflarca öngörülmeyen ve\nöngörülmesi de beklenmeyen olağanüstü bir durum, borçludan kaynaklanmayan bir sebeple ortaya çıkar ve sözleşmenin yapıldığı sırada mevcut olguları, kendisinden ifanın istenmesini dürüstlük kurallarına aykırı düşecek derecede borçlu aleyhine değiştirir ve borçlu da borcunu henüz ifa etmemiş veya ifanın aşırı ölçüde güçleşmesinden doğan haklarını saklı tutarak ifa etmiş olursa borçlu, hâkimden sözleşmenin yeni koşullara uyarlanmasını isteme, bu mümkün olmadığı takdirde sözleşmeden dönme hakkına sahiptir. Sürekli edimli sözleşmelerde borçlu, kural olarak dönme hakkının yerine fesih hakkını kullanır. Bu madde hükmü yabancı para borçlarında da uygulanır. F. Takas I. Koşulları\n\n---\n\n[Kaynak: TBK m.122]\nTBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder.\n\n---\n\n[Kaynak: TBK m.122]\nTBK m.122 - 3. Aşkın zarar / Alacaklı, temerrüt faizini aşan bir zarara uğramış\nolursa, borçlu kendisinin hiçbir kusuru bulunmadığını ispat etmedikçe, bu zararı da gidermekle yükümlüdür. Temerrüt faizini aşan zarar miktarı görülmekte olan davada belirlenebiliyorsa, davacının istemi üzerine hâkim, esas hakkında karar verirken bu zararın miktarına da hükmeder.\n\n---\n\n[Kaynak: TBK m.181]\nTBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır.\n\n---\n\n[Kaynak: TBK m.181]\nTBK m.181 - 3. Kısmi ifanın yanması / Ceza koşuluna ilişkin hükümler, dönme durumunda ifa\nedilmiş olan kısmın alacaklıya kalacağını öngören sözleşmelere de uygulanır. Taksitle satışa ilişkin hükümler saklıdır.\n\nSORU:\nFaiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?"
+                  }
+                ],
+                "temperature": 0.1,
+                "max_tokens": 512,
+                "extra_body": {
+                  "chat_template_kwargs": {
+                    "enable_thinking": false
+                  }
+                },
+                "seed": 3407
+              }
+            },
+            {
+              "stage": "generation_contract",
+              "hash": "b9c78124fa0aee734fd57f19fff7d3130c2f7469fc731cf45eda1dc26fd92cab",
+              "payload": {
+                "temperature": 0.1,
+                "top_p": null,
+                "top_k": null,
+                "max_tokens": 512,
+                "stop": null,
+                "seed": 3407,
+                "retry_count": 0,
+                "timeout_seconds": 180.0,
+                "streaming": false,
+                "enable_thinking": false
+              }
+            },
+            {
+              "stage": "raw_answer_object",
+              "hash": "f4343ddff915a64b10a72621830c9981252341841f8d75ded4bf93efc5b55d78",
+              "payload": {
+                "role": "assistant",
+                "content": "Faiz oranı sözleşmede belirlenmemişse, TBK m.88 hükmü uyarınca faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenen oran uygulanır; sözleşme ile kararlaştırılacak yıllık faiz oranı, bu oranın yüzde elli fazlasını aşamaz [Kaynak: TBK m.88].\n\nAyrıca, tüketim ödüncü sözleşmesinde faiz oranı belirlenmemişse, ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır [Kaynak: TBK m.388]. Ticari olmayan tüketim ödüncü sözleşmesinde taraflarca kararlaştırılmamışsa faiz istenemez [Kaynak: TBK m.387]. Taşınmaz rehni sözleşmelerinde ise sınırlayıcı hükümler saklı kalmak kaydıyla taraflar faiz oranını diledikleri gibi kararlaştırabilirler [Kaynak: TMK m.852].",
+                "extracted_text": "Faiz oranı sözleşmede belirlenmemişse, TBK m.88 hükmü uyarınca faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenen oran uygulanır; sözleşme ile kararlaştırılacak yıllık faiz oranı, bu oranın yüzde elli fazlasını aşamaz [Kaynak: TBK m.88].\n\nAyrıca, tüketim ödüncü sözleşmesinde faiz oranı belirlenmemişse, ödünç alma zamanında ve yerinde o tür ödünçlerde geçerli olan faiz oranı uygulanır [Kaynak: TBK m.388]. Ticari olmayan tüketim ödüncü sözleşmesinde taraflarca kararlaştırılmamışsa faiz istenemez [Kaynak: TBK m.387]. Taşınmaz rehni sözleşmelerinde ise sınırlayıcı hükümler saklı kalmak kaydıyla taraflar faiz oranını diledikleri gibi kararlaştırabilirler [Kaynak: TMK m.852].",
+                "finish_reason": "stop"
+              }
+            },
+            {
+              "stage": "response_envelope",
+              "hash": "a8ba2445acc7db16e8b9cab757f5d044e3f5eb32c3c8e3f3963b741de6f689f6",
+              "payload": {
+                "object": "chat.completion",
+                "model": "hukuk-lora",
+                "choices": [
+                  {
+                    "index": 0,
+                    "message": {
+                      "role": "assistant",
+                      "content": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir."
+                    },
+                    "finish_reason": "stop"
+                  }
+                ],
+                "citations": [
+                  "TBK m.88",
+                  "TBK m.120"
+                ],
+                "blocked": false,
+                "guardrails_reasons": [
+                  "source_lock_fallback"
+                ],
+                "verification": null,
+                "final_mode": "answer",
+                "final_reason": null,
+                "answer_contract": {
+                  "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+                  "primary_source_id": "TBK m.88",
+                  "secondary_source_ids": [
+                    "TBK m.120"
+                  ],
+                  "law_scope": [
+                    "TBK"
+                  ],
+                  "source_validity": "active",
+                  "unsupported_reason": null,
+                  "verifier_status": "warn",
+                  "final_mode": "answer",
+                  "claim_units": []
+                }
+              }
+            },
+            {
+              "stage": "eval_client_parsed_object",
+              "hash": "e8b455d0858e4420fe725f0d0cfba7e3d356fc599573a89e18bea20c99937131",
+              "payload": {
+                "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+                "citations": [
+                  "TBK m.88",
+                  "TBK m.120"
+                ],
+                "blocked": false,
+                "verification": null,
+                "final_mode": "answer",
+                "final_reason": null,
+                "answer_contract": {
+                  "answer_text": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+                  "primary_source_id": "TBK m.88",
+                  "secondary_source_ids": [
+                    "TBK m.120"
+                  ],
+                  "law_scope": [
+                    "TBK"
+                  ],
+                  "source_validity": "active",
+                  "unsupported_reason": null,
+                  "verifier_status": "warn",
+                  "final_mode": "answer",
+                  "claim_units": []
+                }
+              }
+            },
+            {
+              "stage": "normalized_parity_object",
+              "hash": "23034d5264feea6a9bc019397bdb3749df2afd9255189fa47d0ae8589c318a77",
+              "payload": {
+                "final_mode": "answer",
+                "answer_body": "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- [Kaynak: TBK m.88] TBK m.88 - 5. Faiz / Faiz ödeme borcunda uygulanacak yıllık faiz oranı, sözleşmede kararlaştırılmamışsa faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.\n- [Kaynak: TBK m.120] TBK m.120 - 2. Temerrüt faizi / Uygulanacak yıllık temerrüt faizi oranı, sözleşmede kararlaştırılmamışsa, faiz borcunun doğduğu tarihte yürürlükte olan mevzuat hükümlerine göre belirlenir.",
+                "refusal_body": "",
+                "refusal_reason": null,
+                "ordered_citation_list": [
+                  "TBK m.88",
+                  "TBK m.120"
+                ],
+                "ordered_source_id_list": [
+                  "TBK m.88",
+                  "TBK m.120"
+                ],
+                "ordered_canonical_norm_keys": [
+                  "TBK m.88",
+                  "TBK m.120"
+                ],
+                "visible_citation_projection": [
+                  "TBK m.88",
+                  "TBK m.120"
+                ]
+              }
+            }
+          ],
+          "preprojection_hash": "f4343ddff915a64b10a72621830c9981252341841f8d75ded4bf93efc5b55d78",
+          "normalized_parity_hash": "23034d5264feea6a9bc019397bdb3749df2afd9255189fa47d0ae8589c318a77"
+        }
+      }
+    }
+  ]
+}

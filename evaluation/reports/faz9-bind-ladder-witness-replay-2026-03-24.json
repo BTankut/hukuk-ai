@@ -1,0 +1,30 @@
+{
+  "question_id": "TBK-005",
+  "ladder_row_count": 3,
+  "first_divergence_level": "L2",
+  "first_divergence_stage": "auth_enriched_request",
+  "primary_reason": "auth_visibility_leak",
+  "rows": [
+    {
+      "ladder_level": "L0",
+      "first_divergence_stage": "none",
+      "primary_reason": "none",
+      "unexplained_count": 0,
+      "parity_match": true
+    },
+    {
+      "ladder_level": "L1",
+      "first_divergence_stage": "none",
+      "primary_reason": "none",
+      "unexplained_count": 0,
+      "parity_match": true
+    },
+    {
+      "ladder_level": "L2",
+      "first_divergence_stage": "auth_enriched_request",
+      "primary_reason": "auth_visibility_leak",
+      "unexplained_count": 0,
+      "parity_match": false
+    }
+  ]
+}

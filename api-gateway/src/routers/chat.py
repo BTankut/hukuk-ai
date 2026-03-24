@@ -2281,9 +2281,8 @@ def _auth_enriched_stage_payload(
     request_body: ChatCompletionRequest,
     request: Request,
 ) -> dict[str, Any]:
-    payload = _normalized_request_stage_payload(request_body)
-    payload["auth_subject"] = getattr(request.state, "auth_subject", None)
-    return payload
+    _ = request
+    return _normalized_request_stage_payload(request_body)
 
 
 def _session_enriched_stage_payload(
