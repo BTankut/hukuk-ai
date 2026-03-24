@@ -56,8 +56,21 @@ from pydantic import BaseModel, Field
 
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from rag.token_manager import estimate_tokens
-from release_controls import append_audit_event, export_trace_pack, require_api_auth
+from release_controls import (
+    api_version_label,
+    append_audit_event,
+    ensure_request_id,
+    ensure_trace_id,
+    export_trace_pack,
+    release_lane_id,
+    require_api_auth,
+)
 from session_store import SessionStoreBackend, build_session_backend_from_env
+from token_accounting import (
+    TokenAccountingError,
+    resolve_token_usage,
+    token_accounting_fallback_allowed,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -2118,19 +2131,25 @@ def _resolve_chat_usage(
     answer_text: str,
     upstream_usage: dict[str, int] | None,
 ) -> tuple[ChatUsage, str]:
-    if upstream_usage and all(
-        isinstance(upstream_usage.get(key), int) and upstream_usage[key] >= 0
-        for key in ("prompt_tokens", "completion_tokens", "total_tokens")
-    ):
+    try:
+        resolved = resolve_token_usage(
+            messages=messages,
+            answer_text=answer_text,
+            upstream_usage=upstream_usage,
+        )
         return (
             ChatUsage(
-                prompt_tokens=upstream_usage["prompt_tokens"],
-                completion_tokens=upstream_usage["completion_tokens"],
-                total_tokens=upstream_usage["total_tokens"],
+                prompt_tokens=resolved.prompt_tokens,
+                completion_tokens=resolved.completion_tokens,
+                total_tokens=resolved.total_tokens,
             ),
-            "upstream",
+            resolved.source,
         )
-    return _estimate_chat_usage(messages, answer_text), "estimated"
+    except TokenAccountingError:
+        get_metrics_registry().record_token_accounting_failure()
+        if not token_accounting_fallback_allowed():
+            raise
+        return _estimate_chat_usage(messages, answer_text), "estimated"
 
 
 def _export_trace_payload_or_raise(
@@ -2181,6 +2200,36 @@ def _sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> 
     return sanitized
 
 
+def _extract_answer_source_ids(
+    *,
+    answer_contract: dict[str, Any] | None,
+    citations: list[str],
+) -> list[str]:
+    source_ids: list[str] = []
+    if isinstance(answer_contract, dict):
+        primary = answer_contract.get("primary_source_id")
+        if isinstance(primary, str) and primary.strip():
+            source_ids.append(primary.strip())
+        secondary = answer_contract.get("secondary_source_ids")
+        if isinstance(secondary, list):
+            for item in secondary:
+                if isinstance(item, str) and item.strip():
+                    source_ids.append(item.strip())
+    if source_ids:
+        return source_ids
+    return [item for item in citations if isinstance(item, str) and item.strip()]
+
+
+def _verification_has_hallucination_fail(verification: dict[str, Any] | None) -> bool:
+    if not isinstance(verification, dict):
+        return False
+    verdict = verification.get("verdict")
+    if isinstance(verdict, str) and verdict.lower() == "fail":
+        return True
+    risk = verification.get("hallucination_risk")
+    return isinstance(risk, (int, float)) and risk > 0.5
+
+
 def _finalize_chat_response(
     *,
     request: Request,
@@ -2202,6 +2251,8 @@ def _finalize_chat_response(
 ) -> Any:
     _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
     public_answer_contract = _sanitize_public_answer_contract(answer_contract)
+    request_id = ensure_request_id(request)
+    trace_id = ensure_trace_id(request)
 
     store.add_turn(session_id, user_message, answer_text)
     usage, usage_source = _resolve_chat_usage(
@@ -2209,10 +2260,21 @@ def _finalize_chat_response(
         answer_text=answer_text,
         upstream_usage=upstream_usage,
     )
+    source_ids = _extract_answer_source_ids(answer_contract=answer_contract, citations=citations)
+    latency_ms = (time.perf_counter() - getattr(request.state, "request_started_at", time.perf_counter())) * 1000.0
+    decision_timestamps = {
+        "request_started_at": datetime.fromtimestamp(
+            getattr(request.state, "request_wall_started_at", time.time()),
+            tz=timezone.utc,
+        ).isoformat(),
+        "decision_completed_at": datetime.now(timezone.utc).isoformat(),
+    }
 
     append_audit_event(
         event_type="chat_completion",
         request=request,
+        request_id=request_id,
+        trace_id=trace_id,
         response_id=response_id,
         session_id=session_id,
         model=request_body.model,
@@ -2224,6 +2286,17 @@ def _finalize_chat_response(
         usage_source=usage_source,
         message_count=len(request_body.messages),
         user_message_chars=len(user_message),
+        selected_lane=release_lane_id(),
+        final_mode=final_mode,
+        refusal_reason=final_reason,
+        source_ids=source_ids,
+        latency_ms=latency_ms,
+        token_accounting={
+            "usage": usage.model_dump(),
+            "source": usage_source,
+        },
+        decision_timestamps=decision_timestamps,
+        api_version=api_version_label(),
     )
     get_metrics_registry().record_chat_outcome(
         path=request.url.path,
@@ -2231,6 +2304,8 @@ def _finalize_chat_response(
         blocked=blocked,
         is_refusal=looks_like_refusal(answer_text, blocked=blocked),
         usage_source=usage_source,
+        citation_count=len(citations),
+        hallucination_fail=_verification_has_hallucination_fail(verification),
     )
 
     client_trace = _build_client_trace(

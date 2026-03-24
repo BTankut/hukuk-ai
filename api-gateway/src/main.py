@@ -21,9 +21,10 @@ from __future__ import annotations
 import logging
 import os
 import time
+import uuid
 
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from config import get_settings
@@ -32,7 +33,15 @@ from llm.client import LLMClient
 from observability import get_metrics_registry
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from api.openai import router as openai_router
-from release_controls import append_audit_event, require_api_auth
+from release_controls import (
+    api_version_label,
+    append_audit_event,
+    ensure_request_id,
+    ensure_trace_id,
+    release_lane_id,
+    require_api_auth,
+    version_headers,
+)
 from routers.chat import router as chat_router
 
 settings = get_settings()
@@ -110,11 +119,16 @@ app = FastAPI(
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
+    request.state.request_started_at = time.perf_counter()
+    request.state.request_wall_started_at = time.time()
+    request.state.request_id = request.headers.get("X-Request-ID") or f"req-{uuid.uuid4().hex[:20]}"
+    request.state.trace_id = f"trace-{uuid.uuid4().hex[:20]}"
     started = time.perf_counter()
     status_code = 500
     try:
         response = await call_next(request)
         status_code = response.status_code
+        response.headers.update(version_headers(request=request))
         return response
     finally:
         elapsed_ms = (time.perf_counter() - started) * 1000.0
@@ -128,6 +142,7 @@ async def metrics_middleware(request: Request, call_next):
 # app.state: bileşenleri request handler'larına inject et
 app.state.orchestrator = orchestrator
 app.state.retriever = _build_retriever()
+get_metrics_registry().set_lane_health_state(lane=release_lane_id(), healthy=True)
 
 # ── Router'lar ─────────────────────────────────────────────────────────────────
 
@@ -167,6 +182,8 @@ async def health() -> dict[str, str]:
     return {
         "status": "ok",
         "service": settings.app_name,
+        "lane": release_lane_id(),
+        "api_version": api_version_label(),
         "guardrails": "enabled" if settings.guardrails_enabled else "disabled",
         "retriever": "milvus" if app.state.retriever is not None else "none",
         "verification": "enabled" if _use_verification else "disabled",
@@ -179,6 +196,17 @@ async def metrics(
     _auth_subject: str = Depends(require_api_auth),
 ) -> PlainTextResponse:
     return PlainTextResponse(get_metrics_registry().render_prometheus())
+
+
+@app.get("/v1/alerts", include_in_schema=False)
+async def alerts(
+    request: Request,
+    _auth_subject: str = Depends(require_api_auth),
+) -> JSONResponse:
+    payload = get_metrics_registry().alerts_snapshot()
+    payload["lane"] = release_lane_id()
+    payload["api_version"] = api_version_label()
+    return JSONResponse(payload, headers=version_headers(request=request))
 
 
 @app.post("/v1/chat", response_model=ChatResponse, deprecated=True)
@@ -214,6 +242,8 @@ async def chat_legacy(
     append_audit_event(
         event_type="legacy_chat",
         request=request,
+        request_id=ensure_request_id(request),
+        trace_id=ensure_trace_id(request),
         response_id=f"legacy-{int(os.times().elapsed * 1000)}",
         session_id=None,
         model=settings.dgx_model,
@@ -225,5 +255,18 @@ async def chat_legacy(
         usage_source="upstream" if response.usage else "none",
         message_count=1,
         user_message_chars=len(request_body.query),
+        selected_lane=release_lane_id(),
+        final_mode="blocked" if response.blocked else "answer",
+        refusal_reason=response.guardrails_reasons[0] if response.guardrails_reasons else None,
+        source_ids=response.citations,
+        latency_ms=(time.perf_counter() - getattr(request.state, "request_started_at", time.perf_counter())) * 1000.0,
+        decision_timestamps={
+            "request_started_at": time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ",
+                time.gmtime(getattr(request.state, "request_wall_started_at", time.time())),
+            ),
+            "decision_completed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        },
+        api_version=api_version_label(),
     )
     return chat_response

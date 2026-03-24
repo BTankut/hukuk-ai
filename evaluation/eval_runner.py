@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 import urllib.error
@@ -102,12 +103,14 @@ class ChatAPIClient:
         law_filter: str | None = None,  # Recall fix: None → TBK+TMK her ikisi de retrieve edilir
         use_verification: bool = True,
         include_trace: bool = False,
+        api_key: str | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.law_filter = law_filter
         self.use_verification = use_verification
         self.include_trace = include_trace
+        self.api_key = api_key
 
     def chat(
         self,
@@ -146,6 +149,8 @@ class ChatAPIClient:
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
+            if self.api_key:
+                req.add_header("X-API-Key", self.api_key)
             t0 = time.perf_counter()
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 elapsed_ms = (time.perf_counter() - t0) * 1000
@@ -571,6 +576,11 @@ def main() -> int:
         help="API zaman aşımı süresi saniye (varsayılan: 60.0)",
     )
     parser.add_argument(
+        "--api-key",
+        default=os.getenv("EVAL_API_KEY"),
+        help="Opsiyonel X-API-Key değeri (varsayılan: EVAL_API_KEY env).",
+    )
+    parser.add_argument(
         "--eval-family",
         default=None,
         help="Eval family label to embed in report metadata (defaults to inference from question file name).",
@@ -645,6 +655,7 @@ def main() -> int:
             law_filter=args.law_filter,
             use_verification=not args.no_verification,
             include_trace=args.include_trace,
+            api_key=args.api_key,
         )
 
     # ── Değerlendirme ─────────────────────────────────────────────────────────
@@ -678,6 +689,7 @@ def main() -> int:
             "delay_seconds": args.delay,
             "timeout_seconds": args.timeout,
             "include_trace": args.include_trace,
+            "api_key_present": bool(args.api_key),
         },
     )
 
