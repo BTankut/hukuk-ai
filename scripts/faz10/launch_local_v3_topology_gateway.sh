@@ -8,16 +8,61 @@ RC_KIND="${RC_KIND:-rc_j}"
 TOPOLOGY_LEVEL="${TOPOLOGY_LEVEL:-L0}"
 RC_SLUG="$(printf '%s' "${RC_KIND}" | tr '[:upper:]' '[:lower:]')"
 LEVEL_SLUG="$(printf '%s' "${TOPOLOGY_LEVEL}" | tr '[:upper:]' '[:lower:]')"
+MODEL_NAME="${MODEL_NAME:-/models/merged_model_fabric_stage_20260321}"
+
+port_is_listening() {
+  local port="$1"
+  (echo >"/dev/tcp/127.0.0.1/${port}") >/dev/null 2>&1
+}
+
+wait_for_openai_models() {
+  local port="$1"
+  local model_name="$2"
+  local probe_result=""
+  local attempt=0
+  while [ "${attempt}" -lt 20 ]; do
+    probe_result="$(curl -sS --max-time 5 "http://127.0.0.1:${port}/v1/models" || true)"
+    if [ -n "${probe_result}" ] && printf '%s' "${probe_result}" | grep -F "\"id\":\"${model_name}\"" >/dev/null 2>&1; then
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 1
+  done
+  echo "[FAIL] Upstream model probe failed on 127.0.0.1:${port} for ${model_name}" >&2
+  if [ -n "${probe_result}" ]; then
+    echo "${probe_result}" >&2
+  fi
+  return 1
+}
+
+case "${RC_KIND}" in
+  rc_g|RC_G)
+    GATEWAY_PORT_BASE=8121
+    LOCAL_TUNNEL_PORT_BASE=30031
+    ;;
+  rc_j|RC_J)
+    GATEWAY_PORT_BASE=8131
+    LOCAL_TUNNEL_PORT_BASE=30131
+    ;;
+  rc_k|RC_K)
+    GATEWAY_PORT_BASE=8141
+    LOCAL_TUNNEL_PORT_BASE=30231
+    ;;
+  *)
+    echo "[FAIL] Unknown RC_KIND=${RC_KIND}" >&2
+    exit 1
+    ;;
+esac
 
 case "${TOPOLOGY_LEVEL}" in
-  L0) GATEWAY_PORT_DEFAULT=8121; LOCAL_TUNNEL_PORT_DEFAULT=30031 ;;
-  L1) GATEWAY_PORT_DEFAULT=8122; LOCAL_TUNNEL_PORT_DEFAULT=30032 ;;
-  L2) GATEWAY_PORT_DEFAULT=8123; LOCAL_TUNNEL_PORT_DEFAULT=30033 ;;
-  L3) GATEWAY_PORT_DEFAULT=8124; LOCAL_TUNNEL_PORT_DEFAULT=30034 ;;
-  L4) GATEWAY_PORT_DEFAULT=8125; LOCAL_TUNNEL_PORT_DEFAULT=30035 ;;
-  L5) GATEWAY_PORT_DEFAULT=8126; LOCAL_TUNNEL_PORT_DEFAULT=30036 ;;
-  L6) GATEWAY_PORT_DEFAULT=8127; LOCAL_TUNNEL_PORT_DEFAULT=30037 ;;
-  L7) GATEWAY_PORT_DEFAULT=8128; LOCAL_TUNNEL_PORT_DEFAULT=30038 ;;
+  L0) GATEWAY_PORT_DEFAULT="${GATEWAY_PORT_BASE}"; LOCAL_TUNNEL_PORT_DEFAULT="${LOCAL_TUNNEL_PORT_BASE}" ;;
+  L1) GATEWAY_PORT_DEFAULT="$((GATEWAY_PORT_BASE + 1))"; LOCAL_TUNNEL_PORT_DEFAULT="$((LOCAL_TUNNEL_PORT_BASE + 1))" ;;
+  L2) GATEWAY_PORT_DEFAULT="$((GATEWAY_PORT_BASE + 2))"; LOCAL_TUNNEL_PORT_DEFAULT="$((LOCAL_TUNNEL_PORT_BASE + 2))" ;;
+  L3) GATEWAY_PORT_DEFAULT="$((GATEWAY_PORT_BASE + 3))"; LOCAL_TUNNEL_PORT_DEFAULT="$((LOCAL_TUNNEL_PORT_BASE + 3))" ;;
+  L4) GATEWAY_PORT_DEFAULT="$((GATEWAY_PORT_BASE + 4))"; LOCAL_TUNNEL_PORT_DEFAULT="$((LOCAL_TUNNEL_PORT_BASE + 4))" ;;
+  L5) GATEWAY_PORT_DEFAULT="$((GATEWAY_PORT_BASE + 5))"; LOCAL_TUNNEL_PORT_DEFAULT="$((LOCAL_TUNNEL_PORT_BASE + 5))" ;;
+  L6) GATEWAY_PORT_DEFAULT="$((GATEWAY_PORT_BASE + 6))"; LOCAL_TUNNEL_PORT_DEFAULT="$((LOCAL_TUNNEL_PORT_BASE + 6))" ;;
+  L7) GATEWAY_PORT_DEFAULT="$((GATEWAY_PORT_BASE + 7))"; LOCAL_TUNNEL_PORT_DEFAULT="$((LOCAL_TUNNEL_PORT_BASE + 7))" ;;
   *)
     echo "[FAIL] Unknown TOPOLOGY_LEVEL=${TOPOLOGY_LEVEL}" >&2
     exit 1
@@ -49,6 +94,7 @@ export DGX_REQUEST_TIMEOUT_SECONDS="${DGX_REQUEST_TIMEOUT_SECONDS:-180}"
 
 export RELEASE_CONTROLS_STRICT=false
 export API_AUTH_ENABLED=false
+export API_AUTH_KEYS="${API_AUTH_KEYS:-faz10-internal-key}"
 export AUDIT_LOG_ENABLED=false
 export ALLOW_ANONYMOUS_INTERNAL_SMOKE=true
 export SESSION_STORE_BACKEND=memory
@@ -101,5 +147,16 @@ case "${TOPOLOGY_LEVEL}" in
     ;;
 esac
 
+if port_is_listening "${LOCAL_TUNNEL_PORT}"; then
+  echo "[FAIL] LOCAL_TUNNEL_PORT=${LOCAL_TUNNEL_PORT} already in use" >&2
+  exit 1
+fi
+
+if port_is_listening "${GATEWAY_PORT}"; then
+  echo "[FAIL] GATEWAY_PORT=${GATEWAY_PORT} already in use" >&2
+  exit 1
+fi
+
 cd "${REPO_ROOT}"
 bash scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh
+wait_for_openai_models "${LOCAL_TUNNEL_PORT}" "${MODEL_NAME}"
