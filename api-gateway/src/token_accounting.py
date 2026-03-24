@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 from rag.token_manager import estimate_tokens
 
@@ -123,6 +125,24 @@ class TokenAccountingEngine:
             raise TokenAccountingError("Metin tokenize edilemedi") from exc
         return _token_sequence_length(token_ids, error_message="Tokenizer beklenmeyen encode sonucu üretti")
 
+    def encode_text_ids(self, text: str) -> list[int]:
+        if not isinstance(text, str):
+            raise TokenAccountingError("Yanıt metni tokenizer accounting için geçersiz")
+        try:
+            token_ids = self._tokenizer.encode(text, add_special_tokens=False)
+        except Exception as exc:
+            raise TokenAccountingError("Metin tokenize edilemedi") from exc
+        if isinstance(token_ids, list):
+            return [int(item) for item in token_ids]
+        tolist = getattr(token_ids, "tolist", None)
+        if callable(tolist):
+            normalized = tolist()
+            if isinstance(normalized, list):
+                if normalized and isinstance(normalized[0], list):
+                    return [int(item) for item in normalized[0]]
+                return [int(item) for item in normalized]
+        raise TokenAccountingError("Tokenizer beklenmeyen encode sonucu uretti")
+
 
 def _token_sequence_length(token_ids: object, *, error_message: str) -> int:
     if isinstance(token_ids, list):
@@ -194,3 +214,34 @@ def resolve_token_usage(
         total_tokens=prompt_tokens + completion_tokens,
         source="estimated",
     )
+
+
+def _hash_token_id_sequence(token_ids: list[int]) -> str:
+    canonical = json.dumps(token_ids, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def build_text_token_trace(text: str) -> dict[str, Any]:
+    engine = _get_engine()
+    token_ids: list[int]
+    source: str
+    tokenizer_ref: str | None = None
+
+    if engine is not None:
+        token_ids = engine.encode_text_ids(text)
+        source = "tokenizer"
+        tokenizer_ref = engine.tokenizer_path
+    elif _token_accounting_fallback_allowed():
+        token_ids = [ord(char) for char in text]
+        source = "utf8_codepoint_fallback"
+    else:
+        raise TokenAccountingError("Tokenizer-backed token trace gerekli ama tokenizer bulunamadi")
+
+    first_token_ids = token_ids[:1]
+    return {
+        "source": source,
+        "tokenizer_ref": tokenizer_ref,
+        "token_count": len(token_ids),
+        "first_token_id_hash": _hash_token_id_sequence(first_token_ids),
+        "raw_token_stream_hash": _hash_token_id_sequence(token_ids),
+    }

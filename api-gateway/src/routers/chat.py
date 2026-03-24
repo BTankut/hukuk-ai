@@ -39,6 +39,7 @@ import time
 import uuid
 from collections import OrderedDict
 from datetime import datetime, timezone
+from itertools import count
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -69,11 +70,13 @@ from release_controls import (
 from session_store import SessionStoreBackend, build_session_backend_from_env
 from token_accounting import (
     TokenAccountingError,
+    build_text_token_trace,
     resolve_token_usage,
     token_accounting_fallback_allowed,
 )
 
 logger = logging.getLogger(__name__)
+_GENERATION_START_ORDINAL = count(1)
 
 router = APIRouter(tags=["chat"])
 _LAW_TOKEN_PATTERN = r"TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK"
@@ -2235,6 +2238,13 @@ def _parity_trace_enabled() -> bool:
     return os.getenv("PARITY_TRACE_ENABLED", "false").lower() in {"1", "true", "yes"}
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
 def _canonical_stage_payload(payload: Any) -> str:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
@@ -2541,6 +2551,214 @@ def _append_parity_stage(
     )
 
 
+def _v3_parity_topology_label() -> str:
+    return (os.getenv("PARITY_TOPOLOGY_LABEL") or "canonical").strip() or "canonical"
+
+
+def _worker_assignment_stage_payload() -> dict[str, Any]:
+    return {
+        "topology_label": _v3_parity_topology_label(),
+        "process_mode": os.getenv("PARITY_PROCESS_MODE", "shared_process"),
+        "fresh_client_per_request": _env_flag("PARITY_FRESH_CLIENT_PER_REQUEST", False),
+        "hard_reset_after_request": _env_flag("PARITY_HARD_RESET_AFTER_REQUEST", False),
+        "worker_count": int(os.getenv("PARITY_WORKER_COUNT", "1")),
+        "pinned_worker_id": os.getenv("PARITY_PINNED_WORKER_ID", "worker-0"),
+        "parallelism_enabled": _env_flag("PARITY_PARALLELISM_ENABLED", False),
+        "failover_enabled": _env_flag("PARITY_FAILOVER_ENABLED", False),
+    }
+
+
+def _session_namespace_stage_payload(*, request: Request, session_id: str) -> dict[str, Any]:
+    base_namespace = os.getenv("SESSION_STORE_NAMESPACE", "hukuk-ai")
+    mode = os.getenv("PARITY_SESSION_NAMESPACE_MODE", "canonical")
+    namespace = base_namespace
+    if mode == "fresh_per_request":
+        namespace = f"{base_namespace}:{ensure_request_id(request)}"
+    return {
+        "mode": mode,
+        "namespace": namespace,
+        "session_id_present": bool(session_id),
+    }
+
+
+def _cache_namespace_stage_payload(*, model_request_payload: dict[str, Any]) -> dict[str, Any]:
+    policy = os.getenv("PARITY_GENERATION_CACHE_POLICY", "off")
+    namespace = None if policy == "off" else os.getenv("PARITY_GENERATION_CACHE_NAMESPACE", "canonical")
+    cache_key = None
+    if policy != "off":
+        cache_key = _hash_stage_payload(
+            {
+                "namespace": namespace,
+                "model_request_payload": model_request_payload,
+            }
+        )
+    return {
+        "policy": policy,
+        "namespace": namespace,
+        "cache_key": cache_key,
+    }
+
+
+def _generation_start_ordinal_stage_payload() -> dict[str, Any]:
+    return {
+        "ordinal": next(_GENERATION_START_ORDINAL),
+        "request_ordering": os.getenv("PARITY_REQUEST_ORDERING", "serial"),
+        "serial_execution": os.getenv("PARITY_REQUEST_ORDERING", "serial") == "serial",
+    }
+
+
+def _raw_generation_hash_payloads(raw_answer_payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    text = raw_answer_payload.get("extracted_text") or raw_answer_payload.get("content") or ""
+    try:
+        token_trace = build_text_token_trace(text if isinstance(text, str) else str(text))
+    except TokenAccountingError as exc:
+        token_trace = {
+            "source": "error",
+            "tokenizer_ref": None,
+            "token_count": 0,
+            "first_token_id_hash": None,
+            "raw_token_stream_hash": None,
+            "error": str(exc),
+        }
+    first_token_payload = {
+        "first_token_id_hash": token_trace.get("first_token_id_hash"),
+        "source": token_trace.get("source"),
+        "tokenizer_ref": token_trace.get("tokenizer_ref"),
+        "token_count": token_trace.get("token_count"),
+    }
+    raw_stream_payload = {
+        "raw_token_stream_hash": token_trace.get("raw_token_stream_hash"),
+        "source": token_trace.get("source"),
+        "tokenizer_ref": token_trace.get("tokenizer_ref"),
+        "token_count": token_trace.get("token_count"),
+    }
+    if token_trace.get("error"):
+        first_token_payload["error"] = token_trace["error"]
+        raw_stream_payload["error"] = token_trace["error"]
+    return first_token_payload, raw_stream_payload
+
+
+def _build_v3_runtime_parity_trace(
+    *,
+    request: Request,
+    request_body: ChatCompletionRequest,
+    session_id: str,
+    answer_text: str,
+    citations: list[str],
+    blocked: bool,
+    verification: dict[str, Any] | None,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+    llm_trace: dict[str, Any] | None,
+) -> dict[str, Any]:
+    model_request_payload = (llm_trace or {}).get("model_request_payload") or {}
+    generation_contract = (llm_trace or {}).get("generation_contract") or {}
+    raw_answer_payload = _raw_answer_stage_payload(
+        raw_answer_object=(llm_trace or {}).get("raw_answer_object"),
+        fallback_answer_text=answer_text,
+    )
+    first_token_payload, raw_stream_payload = _raw_generation_hash_payloads(raw_answer_payload)
+
+    stages: list[dict[str, Any]] = []
+    _append_parity_stage(
+        stages,
+        stage_name="normalized_request",
+        payload=_normalized_request_stage_payload(request_body),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="model_request_payload",
+        payload=model_request_payload,
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="generation_contract",
+        payload=generation_contract,
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="worker_assignment_tuple",
+        payload=_worker_assignment_stage_payload(),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="session_namespace_after_payload_freeze",
+        payload=_session_namespace_stage_payload(request=request, session_id=session_id),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="cache_namespace_or_cache_key",
+        payload=_cache_namespace_stage_payload(model_request_payload=model_request_payload),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="generation_start_ordinal",
+        payload=_generation_start_ordinal_stage_payload(),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="first_token_id_hash",
+        payload=first_token_payload,
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="raw_token_stream_hash",
+        payload=raw_stream_payload,
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="raw_answer_object",
+        payload=raw_answer_payload,
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="response_envelope",
+        payload=_response_envelope_stage_payload(
+            request_body=request_body,
+            answer_text=answer_text,
+            citations=citations,
+            blocked=blocked,
+            guardrails_reasons=[],
+            verification=verification,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+        ),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="eval_client_parsed_object",
+        payload=_eval_client_parsed_stage_payload(
+            answer_text=answer_text,
+            citations=citations,
+            blocked=blocked,
+            verification=verification,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+        ),
+    )
+    _append_parity_stage(
+        stages,
+        stage_name="normalized_parity_object",
+        payload=_normalized_parity_stage_payload(
+            answer_text=answer_text,
+            citations=citations,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+        ),
+    )
+    return {
+        "schema_version": "faz10-v3-runtime-parity-trace-schema-v1",
+        "topology_label": _v3_parity_topology_label(),
+        "stages": stages,
+        "preprojection_hash": stages[9]["hash"],
+        "normalized_parity_hash": stages[12]["hash"],
+    }
+
+
 def _attach_parity_trace(
     *,
     trace_payload: dict[str, Any],
@@ -2675,6 +2893,19 @@ def _attach_parity_trace(
         "preprojection_hash": raw_answer_payload and stages[9]["hash"],
         "normalized_parity_hash": stages[12]["hash"],
     }
+    enriched_trace["v3_runtime_parity_trace"] = _build_v3_runtime_parity_trace(
+        request=request,
+        request_body=request_body,
+        session_id=session_id,
+        answer_text=answer_text,
+        citations=citations,
+        blocked=blocked,
+        verification=verification,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        llm_trace=llm_trace,
+    )
     return enriched_trace
 
 

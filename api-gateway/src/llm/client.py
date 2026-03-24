@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import re
 from dataclasses import dataclass
 from typing import Any, Sequence
@@ -44,7 +45,7 @@ class LLMClient:
         self._client = None
 
     def _get_client(self):
-        if self._client is not None:
+        if self._client is not None and not self._fresh_client_per_request():
             return self._client
 
         try:
@@ -54,13 +55,41 @@ class LLMClient:
                 "openai paketi bulunamadı. `pip install -e .` sonrası tekrar deneyin."
             ) from exc
 
-        self._client = AsyncOpenAI(
+        client = AsyncOpenAI(
             base_url=self.settings.dgx_base_url,
             api_key=self.settings.dgx_api_key,
             timeout=self.settings.dgx_request_timeout_seconds,
             max_retries=self.settings.dgx_retry_count,
         )
-        return self._client
+        if not self._fresh_client_per_request():
+            self._client = client
+        return client
+
+    @staticmethod
+    def _fresh_client_per_request() -> bool:
+        return os.getenv("PARITY_FRESH_CLIENT_PER_REQUEST", "false").lower() in {"1", "true", "yes", "on"}
+
+    @staticmethod
+    def _hard_reset_after_request() -> bool:
+        return os.getenv("PARITY_HARD_RESET_AFTER_REQUEST", "false").lower() in {"1", "true", "yes", "on"}
+
+    async def _reset_client(self, client: Any | None) -> None:
+        close_target = client or self._client
+        if close_target is None:
+            return
+        aclose = getattr(close_target, "aclose", None)
+        close = getattr(close_target, "close", None)
+        try:
+            if callable(aclose):
+                await aclose()
+            elif callable(close):
+                maybe_result = close()
+                if hasattr(maybe_result, "__await__"):
+                    await maybe_result
+        except Exception:
+            pass
+        if close_target is self._client:
+            self._client = None
 
     def _resolve_max_tokens(self, max_tokens: int | None) -> int:
         return max_tokens if isinstance(max_tokens, int) and max_tokens > 0 else self.settings.dgx_max_tokens_default
@@ -123,16 +152,20 @@ class LLMClient:
             temperature=temperature,
             max_tokens=resolved_max_tokens,
         )
-        response = await client.chat.completions.create(**request_payload)
-        return LLMResult(
-            text=self._extract_text(response.choices[0].message.content or ""),
-            usage=self._extract_usage(response),
-            trace={
-                "model_request_payload": request_payload,
-                "generation_contract": generation_contract,
-                "raw_answer_object": self._extract_raw_answer_object(response),
-            },
-        )
+        try:
+            response = await client.chat.completions.create(**request_payload)
+            return LLMResult(
+                text=self._extract_text(response.choices[0].message.content or ""),
+                usage=self._extract_usage(response),
+                trace={
+                    "model_request_payload": request_payload,
+                    "generation_contract": generation_contract,
+                    "raw_answer_object": self._extract_raw_answer_object(response),
+                },
+            )
+        finally:
+            if self._fresh_client_per_request() or self._hard_reset_after_request():
+                await self._reset_client(client)
 
     @classmethod
     def _extract_text(cls, result: Any) -> str:
