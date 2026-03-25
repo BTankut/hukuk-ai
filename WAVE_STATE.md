@@ -782,3 +782,23 @@ notes: |
   - FAZ 2A sonraki aktif hedef: `tbk_kefalet` source-tail closure
   - ortak `TBK-137` residualini ayni dalgada kapatmak
   - ardindan residual fix'leri fold eden bir sonraki matched rerun
+
+## 2026-03-25 — FAZ10 WP-4 Replay Closure
+
+- FAZ10 topology ladder resume fix pushlandi: `ca9cb7b` `faz10: allow ladder resume across diagnostic fails`
+- `RC-G` ve `RC-J` icin `L0 -> L7` `v3-32` ladder tamamlandi
+- replay ciktilari uretildi:
+  - `evaluation/reports/faz10-v3-32-topology-ladder-replay-2026-03-24.md`
+  - `coordination/faz10-v3-32-first-break-table-2026-03-24.md`
+  - `coordination/faz10-v3-32-reconciliation-table-2026-03-24.md`
+- replay ozeti:
+  - `tracked_count = 32`
+  - `first_break_assigned_count = 0`
+  - `primary_reason_assigned_count = 0`
+  - `unexplained_count = 32`
+- yorum:
+  - `RC-G` ve `RC-J` arasindaki onceki `v3-170` preprojection mismatch, FAZ10 `v3-32` frontier pack uzerinde yeniden uretilemedi
+  - bu nedenle formal localization gate kapanmadi
+- resmi karar:
+  - `NO-GO - Non-Reproducible Preprojection Frontier`
+  - `WP-5` ve sonrasi `NOT AUTHORIZED`

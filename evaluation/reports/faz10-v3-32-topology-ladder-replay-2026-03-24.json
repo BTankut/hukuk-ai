@@ -1,0 +1,3021 @@
+{
+  "tracked_count": 32,
+  "first_break_assigned_count": 0,
+  "primary_reason_assigned_count": 0,
+  "unexplained_count": 32,
+  "reason_histogram": {},
+  "replay_rows": [
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-051",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L0",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L1",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L2",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L3",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L4",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L5",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L6",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": "L7",
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "mismatch_stages": [],
+      "stage_field_diffs": {},
+      "notes": null
+    }
+  ],
+  "first_break_rows": [
+    {
+      "question_id": "TBK-051",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-052",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-053",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-054",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-055",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-056",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-057",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-058",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-059",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-060",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-061",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-062",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-063",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-064",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-065",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-066",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-067",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-068",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-069",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-070",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-071",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-072",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-073",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-075",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-077",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-079",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-080",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-081",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-082",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-083",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-084",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    },
+    {
+      "question_id": "TBK-085",
+      "topology_level": null,
+      "first_break_stage": null,
+      "primary_reason": null,
+      "mismatch_stage_count": 0,
+      "notes": "no_drift_observed_in_ladder"
+    }
+  ],
+  "reconciliation_rows": [
+    {
+      "question_id": "TBK-051",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-052",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-053",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-054",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-055",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-056",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-057",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-058",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-059",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-060",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-061",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-062",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-063",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-064",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-065",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-066",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-067",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-068",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-069",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-070",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-071",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-072",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-073",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-075",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-077",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-079",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-080",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-081",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-082",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-083",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-084",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    },
+    {
+      "question_id": "TBK-085",
+      "first_break_topology": null,
+      "first_break_stage": null,
+      "primary_reason": null
+    }
+  ]
+}
