@@ -5,25 +5,42 @@
   "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
   "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
   "checkpoint_ref": "rc-l-2026-03-25",
-  "git_commit": "40bc87e",
-  "runner_mode": "rc_l_authoritative_output_repair_gate_safe",
+  "git_commit": "194aa8307f6d33e1868c95f6d02d9561787c1e22",
+  "runner_mode": "rc_l_authoritative_output_repair_gate",
   "answer_path_identity": {
     "claim_binding_version": "selective-claim-binding-v3",
     "final_mode_mapping_version": "final-mode-mapping-v3",
     "source_locking_version": "v1",
     "citation_normalization_version": "canonical-citation-normalization-v1",
     "law_scope_gate_version": "law-scope-gate-v2",
-    "trace_contract_version": "faz14-authoritative-output-repair-schema-v1",
+    "trace_contract_version": "faz9-model-visible-surface-trace-schema-v1",
     "schema_contract_version": "structured-answer-contract-v1"
   },
+  "family_reports_reference": [
+    {
+      "family": "faz1-50",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_faz1-50_20260323.json",
+      "questions_source": "configs/evaluation/test_questions.json"
+    },
+    {
+      "family": "v2-95",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_v2-95_20260323.json",
+      "questions_source": "configs/evaluation/test_questions_v2_95.json"
+    },
+    {
+      "family": "v3-170",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_v3-170_20260323.json",
+      "questions_source": "configs/evaluation/test_questions_v3_170.json"
+    }
+  ],
   "allowed_diff_surface": [
-    "api-gateway/src/routers/chat.py",
-    "scripts/faz14/*"
+    "final_mode_mapping_hash",
+    "blocked_reason_set_hash",
+    "response_envelope_hash",
+    "serialized_output_hash"
   ],
   "allowed_diff_surface_notes": [
-    "v3 runtime response-envelope projection parity",
-    "localized final-mode and blocked-reason projection repair",
-    "no upstream authority or answer-body drift"
+    "projection-only repair surface from RC-J diagnostic freeze"
   ],
   "answer_path_delta": []
 }

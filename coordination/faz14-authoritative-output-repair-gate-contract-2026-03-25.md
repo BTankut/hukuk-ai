@@ -2,51 +2,24 @@
 
 Tarih: 2026-03-25
 
-## Frontier
+Targeted gate:
+- `WP-4A` yalniz sabit 6 satirlik `v3-170` frontier uzerinde kosar.
+- `WP-4A PASS` icin tum mismatch alanlari `0`, `runtime_error_count = 0`, `mismatch_count = 0`, `changed_field_outside_contract_count = 0` olmali.
 
-- targeted repair gate yalnız `TBK-051, TBK-054, TBK-055, TBK-057, TBK-058, TBK-061`
-- ordinals = `1, 4, 5, 7, 8, 11`
+Full-family gate:
+- `WP-5A` yalniz `WP-4A PASS` ise acilir.
+- `WP-5A PASS` icin tum ailelerde:
+  - `mismatch_count = 0`
+  - tum mismatch alanlari `0`
+  - `family_metric_delta_zero = true`
+  - `runtime_error_count = 0`
+- `v3-170` icin su upstream authority alanlari ayrica `0` kalmak zorundadir:
+  - `normalized_request_hash_mismatch_count`
+  - `model_request_payload_hash_mismatch_count`
+  - `generation_contract_hash_mismatch_count`
+  - `preprojection_anchor_mismatch_count`
 
-## Upstream Immutability
-
-Bu alanlar targeted ve full-family gate boyunca sıfır mismatch kalacaktır:
-
-- `normalized_request_hash`
-- `model_request_payload_hash`
-- `generation_contract_hash`
-- `preprojection_anchor_hash`
-- `cited_projection_hash`
-- `citation_set_projection_hash`
-- `final_answer_payload_hash`
-- `answer_body_hash`
-- `citation_body_hash`
-- `refusal_body_hash`
-
-## Allowed Changed Field Set
-
-- `final_mode_mapping_hash`
-- `blocked_reason_set_hash`
-- `response_envelope_hash`
-- `serialized_output_hash`
-
-## Targeted Gate Kuralı
-
-`WP-4A = PASS` ancak şu şartlarla mümkündür:
-
-- tüm mismatch sayaçları `0`
-- `runtime_error_count = 0`
-- `mismatch_count = 0`
-- `changed_field_outside_contract_count = 0`
-
-## Full-Family Gate Kuralı
-
-`WP-5A = PASS` ancak tüm ailelerde:
-
-- tüm mismatch alanları `0`
-- `mismatch_count = 0`
-- `family_metric_delta_zero = true`
-
-## Failure Localization Kuralı
-
-- `first_divergence_stage ∈ {O0, O1, O2, O3, O4, O5, O8}` ise `repair_surface_breach`
-- `unexplained_count > 0` ise `WP-6 = FAIL`
+Localization gate:
+- `WP-6` yalniz `WP-4A FAIL` veya `WP-5A FAIL` ise acilir.
+- `unexplained_count > 0` ise `WP-6 FAIL`.
+- `first_divergence_stage ∈ {O0, O1, O2, O3, O4, O5, O8}` ise `repair_surface_breach`.

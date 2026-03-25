@@ -12,6 +12,7 @@ Zorunlu alanlar:
 - `lane_id`
 - `first_run_authoritative`
 - `runtime_error`
+- `error_type`
 - `error_rerun_used`
 - `effective_view_member`
 - `normalized_request_hash`
@@ -28,11 +29,11 @@ Zorunlu alanlar:
 - `answer_body_hash`
 - `citation_body_hash`
 - `refusal_body_hash`
-- `first_divergence_stage`
-- `primary_reason`
+- `changed_field_set`
+- `changed_field_outside_contract`
 
 Not:
 
-- candidate-effective view aynı row içinde tutulur.
-- referans tarafı `reference_*` alanları ile aynı row içinde taşınır.
-- targeted ve full-family gate yalnız authoritative effective view üzerinden hesaplanır.
+- authoritative row candidate-effective view yuzeyini tasir.
+- reference tarafi ayni row icinde `reference_*` prefiksi ile saklanir.
+- `changed_field_set` yalniz `RC-J -> RC-L` containment kontrolu icin kullanilir.

@@ -2,17 +2,26 @@
 
 Tarih: 2026-03-25
 
-`RC-J -> RC-L` diff containment kuralı:
+Degisebilir alanlar:
 
-- `allowed_changed_field_set ⊆ {final_mode_mapping_hash, blocked_reason_set_hash, response_envelope_hash, serialized_output_hash}`
+- `final_mode_mapping_hash`
+- `blocked_reason_set_hash`
+- `response_envelope_hash`
+- `serialized_output_hash`
 
-Bu küme dışında değişen herhangi bir alan:
+Degismemesi zorunlu alanlar:
 
-- `repair_surface_breach`
-- `WP-4A auto fail`
+- `normalized_request_hash`
+- `model_request_payload_hash`
+- `generation_contract_hash`
+- `preprojection_anchor_hash`
+- `cited_projection_hash`
+- `citation_set_projection_hash`
+- `final_answer_payload_hash`
+- `answer_body_hash`
+- `citation_body_hash`
+- `refusal_body_hash`
 
-olarak kabul edilir.
+Kural:
 
-Kapanış kuralı:
-
-- `final_mode_mapping_hash`, `blocked_reason_set_hash`, `response_envelope_hash`, `serialized_output_hash` dışında hiçbir hash veya body alanı değişmeyecektir.
+- izinli alanlar disinda herhangi bir diff `repair_surface_breach` sayilir.

@@ -27,6 +27,12 @@ export TUNNEL_PID_NAME="${TUNNEL_PID_NAME:-rc_l_candidate_tunnel.pid}"
 export AUDIT_LOG_PATH="${AUDIT_LOG_PATH:-${REPO_ROOT}/runtime_logs/rc_l_audit.jsonl}"
 export TRACE_LOG_DIR="${TRACE_LOG_DIR:-${REPO_ROOT}/runtime_logs/rc_l_traces}"
 export SESSION_STORE_NAMESPACE="${SESSION_STORE_NAMESPACE:-hukuk-ai-rc-l}"
+export FAZ14_REMOTE_HOST="${FAZ14_REMOTE_HOST:-btankut@192.168.12.243}"
+export REMOTE_HOST="${FAZ14_REMOTE_HOST}"
+export FAZ14_REMOTE_VLLM_PORT="${FAZ14_REMOTE_VLLM_PORT:-30000}"
+export REMOTE_VLLM_PORT="${FAZ14_REMOTE_VLLM_PORT}"
+export FAZ14_MODEL_NAME="${FAZ14_MODEL_NAME:-/models/merged_model_fabric_stage_20260321}"
+export MODEL_NAME="${FAZ14_MODEL_NAME}"
 
 cd "${REPO_ROOT}"
 bash scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh

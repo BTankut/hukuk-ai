@@ -1,0 +1,15 @@
+{
+  "frontier_count": 217,
+  "first_divergence_assigned_count": 217,
+  "primary_reason_assigned_count": 217,
+  "unexplained_count": 0,
+  "stage_histogram": {
+    "model_request_payload_hash": 216,
+    "final_mode_mapping_hash": 1
+  },
+  "reason_histogram": {
+    "repair_surface_breach": 216,
+    "final_mode_mapping_delta": 1
+  },
+  "repair_surface_breach_count": 216
+}

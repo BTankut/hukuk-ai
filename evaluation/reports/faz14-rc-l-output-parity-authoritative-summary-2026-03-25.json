@@ -1,0 +1,49 @@
+{
+  "family_count": 3,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "output_parity_repair_cleared": false,
+      "mismatch_count": 29,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": false,
+      "metric_delta": {
+        "citation_delta": 0.0,
+        "correct_source_delta": -0.03,
+        "hallucination_delta": 0.02,
+        "refusal_delta": 0.0,
+        "error_delta": 0.0
+      }
+    },
+    {
+      "family_id": "v2-95",
+      "output_parity_repair_cleared": false,
+      "mismatch_count": 76,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": false,
+      "metric_delta": {
+        "citation_delta": 0.0,
+        "correct_source_delta": -0.0105263158,
+        "hallucination_delta": 0.0105263158,
+        "refusal_delta": 0.0,
+        "error_delta": 0.0
+      }
+    },
+    {
+      "family_id": "v3-170",
+      "output_parity_repair_cleared": false,
+      "mismatch_count": 112,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": false,
+      "metric_delta": {
+        "citation_delta": 0.0,
+        "correct_source_delta": -0.0025488235,
+        "hallucination_delta": 0.0,
+        "refusal_delta": -0.0058823529,
+        "error_delta": 0.0
+      }
+    }
+  ],
+  "all_families_pass": false,
+  "report_hash": "b8674ffd000b500329b60a0261e53caca0e790ae49b367d3348677681263b777"
+}

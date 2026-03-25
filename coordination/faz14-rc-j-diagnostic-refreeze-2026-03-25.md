@@ -2,21 +2,13 @@
 
 Tarih: 2026-03-25
 
-Referans:
-- `coordination/faz13-rc-j-output-parity-authority-refreeze-2026-03-25.md`
-- `coordination/faz9-rc-j-manifest-2026-03-24.json`
+Diagnostic refreeze kaynagi:
+- `evaluation/reports/faz13-rc-j-output-parity-authoritative-faz1-50-2026-03-25.json`
+- `evaluation/reports/faz13-rc-j-output-parity-authoritative-v2-95-2026-03-25.json`
+- `evaluation/reports/faz13-rc-j-output-parity-authoritative-v3-170-2026-03-25.json`
+- `evaluation/reports/eval_faz11_rc_j_v3_170_authority_20260325.json`
 
-## Tek-Hakikat
-
-- `RC-J` rolü = `frozen diagnostic candidate`
-- `candidate_id = rc-j-20260324`
-- `checkpoint_ref = rc-j-2026-03-24`
-- `runner_mode = rc_j_model_visible_surface_parity_safe`
-- authoritative frontier = `TBK-051, TBK-054, TBK-055, TBK-057, TBK-058, TBK-061`
-- ordinals = `1, 4, 5, 7, 8, 11`
-
-## Kural
-
-- `RC-J` yerinde patch edilmeyecek.
-- `RC-J`, FAZ14 boyunca yalnız forensic kaynak ve diff containment referansı olarak kullanılacak.
-- yeni repair candidate yalnız `RC-L` olabilir.
+Rol:
+- `RC-J` yalniz diagnostic diff containment ve repair-surface kontrolu icin tutulur.
+- `RC-J -> RC-L` diff containment tablosu bu refreeze ustunden uretilir.
+- `RC-J` yeni authority referansi sayilmaz.

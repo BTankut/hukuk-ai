@@ -1,0 +1,10 @@
+# FAZ14 Output Parity Repair Reconciliation
+
+- frontier_count = `217`
+- first_divergence_assigned_count = `217`
+- primary_reason_assigned_count = `217`
+- unexplained_count = `0`
+- stage_histogram_total = `217`
+- reason_histogram_total = `217`
+- repair_surface_breach_count = `216`
+- localization_pass = `true`
