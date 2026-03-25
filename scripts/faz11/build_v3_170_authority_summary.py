@@ -75,21 +75,22 @@ def build_authority_summary(
         effective_rc_j_question = rc_j_question
         effective_rc_g_process_id = rc_g_gateway_pid
         effective_rc_j_process_id = rc_j_gateway_pid
-        effective_first_run_authoritative = True
+        rc_g_rerun_used = False
+        rc_j_rerun_used = False
 
         if rc_g_runtime_error and question_id in rc_g_rerun_questions:
             effective_rc_g_question = rc_g_rerun_questions[question_id]
             effective_rc_g_process_id = rc_g_rerun_gateway_pid
-            effective_first_run_authoritative = False
+            rc_g_rerun_used = True
         if rc_j_runtime_error and question_id in rc_j_rerun_questions:
             effective_rc_j_question = rc_j_rerun_questions[question_id]
             effective_rc_j_process_id = rc_j_rerun_gateway_pid
-            effective_first_run_authoritative = False
+            rc_j_rerun_used = True
 
         effective_rc_g_runtime_error, effective_rc_g_error_type = runtime_error_row(effective_rc_g_question)
         effective_rc_j_runtime_error, effective_rc_j_error_type = runtime_error_row(effective_rc_j_question)
-        runtime_error = int(effective_rc_g_runtime_error or effective_rc_j_runtime_error)
-        if runtime_error:
+        effective_runtime_error = int(effective_rc_g_runtime_error or effective_rc_j_runtime_error)
+        if effective_runtime_error:
             counts["parity_runtime_error_count"] += 1
 
         normalized_request_hash_mismatch = int(
@@ -123,40 +124,63 @@ def build_authority_summary(
             effective_rc_j_question,
             "session_namespace_after_payload_freeze",
         ).get("namespace")
-        error_type = effective_rc_g_error_type or effective_rc_j_error_type
+        first_run_runtime_error = int(rc_g_runtime_error or rc_j_runtime_error)
+        first_run_error_type = rc_g_error_type or rc_j_error_type
+        effective_error_type = effective_rc_g_error_type or effective_rc_j_error_type
 
         authority_row = {
             "run_id": run_id,
             "family_id": family_id,
             "question_id": question_id,
             "ordinal_index": ordinal_index,
-            "worker_id": worker_id if isinstance(worker_id, str) else None,
-            "process_id": effective_rc_j_process_id,
-            "session_namespace": session_namespace if isinstance(session_namespace, str) else None,
-            "normalized_request_hash": stage_hash(effective_rc_j_question, "normalized_request"),
-            "model_request_payload_hash": stage_hash(effective_rc_j_question, "model_request_payload"),
-            "generation_contract_hash": stage_hash(effective_rc_j_question, "generation_contract"),
-            "preprojection_hash": preprojection_hash(effective_rc_j_question),
-            "raw_answer_hash": stage_hash(effective_rc_j_question, "raw_answer_object"),
-            "runtime_error": runtime_error,
-            "error_type": error_type,
-            "error_retry_used": 0,
-            "first_run_authoritative": effective_first_run_authoritative,
-            "reference_process_id": effective_rc_g_process_id,
+            "worker_id": stage_payload(rc_j_question, "worker_assignment_tuple").get("pinned_worker_id"),
+            "process_id": rc_j_gateway_pid,
+            "session_namespace": stage_payload(
+                rc_j_question,
+                "session_namespace_after_payload_freeze",
+            ).get("namespace"),
+            "normalized_request_hash": stage_hash(rc_j_question, "normalized_request"),
+            "model_request_payload_hash": stage_hash(rc_j_question, "model_request_payload"),
+            "generation_contract_hash": stage_hash(rc_j_question, "generation_contract"),
+            "preprojection_hash": preprojection_hash(rc_j_question),
+            "raw_answer_hash": stage_hash(rc_j_question, "raw_answer_object"),
+            "runtime_error": first_run_runtime_error,
+            "error_type": first_run_error_type,
+            "error_retry_used": int(rc_g_rerun_used or rc_j_rerun_used),
+            "first_run_authoritative": True,
+            "effective_worker_id": worker_id if isinstance(worker_id, str) else None,
+            "effective_process_id": effective_rc_j_process_id,
+            "effective_session_namespace": session_namespace if isinstance(session_namespace, str) else None,
+            "effective_normalized_request_hash": stage_hash(effective_rc_j_question, "normalized_request"),
+            "effective_model_request_payload_hash": stage_hash(effective_rc_j_question, "model_request_payload"),
+            "effective_generation_contract_hash": stage_hash(effective_rc_j_question, "generation_contract"),
+            "effective_preprojection_hash": preprojection_hash(effective_rc_j_question),
+            "effective_raw_answer_hash": stage_hash(effective_rc_j_question, "raw_answer_object"),
+            "effective_runtime_error": effective_runtime_error,
+            "effective_error_type": effective_error_type,
+            "effective_first_run_clean": int(not rc_g_rerun_used and not rc_j_rerun_used),
+            "reference_process_id": rc_g_gateway_pid,
             "reference_session_namespace": stage_payload(
-                effective_rc_g_question,
+                rc_g_question,
                 "session_namespace_after_payload_freeze",
             ).get("namespace"),
             "reference_worker_id": stage_payload(
-                effective_rc_g_question,
+                rc_g_question,
                 "worker_assignment_tuple",
             ).get("pinned_worker_id"),
+            "reference_error_retry_used": int(rc_g_rerun_used),
+            "candidate_error_retry_used": int(rc_j_rerun_used),
+            "reference_effective_process_id": effective_rc_g_process_id,
+            "reference_effective_session_namespace": stage_payload(
+                effective_rc_g_question,
+                "session_namespace_after_payload_freeze",
+            ).get("namespace"),
         }
         authoritative_rows.append(authority_row)
 
         mismatch_present = any(
             [
-                runtime_error,
+                effective_runtime_error,
                 normalized_request_hash_mismatch,
                 model_request_payload_hash_mismatch,
                 generation_contract_hash_mismatch,
@@ -170,8 +194,11 @@ def build_authority_summary(
                 {
                     "question_id": question_id,
                     "ordinal_index": ordinal_index,
-                    "runtime_error": runtime_error,
-                    "error_type": error_type,
+                    "runtime_error": effective_runtime_error,
+                    "error_type": effective_error_type,
+                    "first_run_runtime_error": first_run_runtime_error,
+                    "first_run_error_type": first_run_error_type,
+                    "error_retry_used": int(rc_g_rerun_used or rc_j_rerun_used),
                     "normalized_request_hash_mismatch": normalized_request_hash_mismatch,
                     "model_request_payload_hash_mismatch": model_request_payload_hash_mismatch,
                     "generation_contract_hash_mismatch": generation_contract_hash_mismatch,
@@ -225,6 +252,9 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# FAZ11 RC-J V3-170 Authoritative First Run",
         "",
+        "- gate_basis = `first_run + allowed_error_rerun_effective_view`",
+        "- first_run_rows_preserved = `true`",
+        "",
         f"- run_id = `{summary['run_id']}`",
         f"- family_id = `{summary['family_id']}`",
         f"- question_count = `{summary['question_count']}`",
@@ -251,6 +281,11 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
         f"- candidate_checkpoint_ref = `{summary['candidate_report_meta'].get('checkpoint_ref')}`",
         f"- reference_api_url = `{summary['reference_report_meta'].get('api_url')}`",
         f"- candidate_api_url = `{summary['candidate_report_meta'].get('api_url')}`",
+        "",
+        "## First-Run and Rerun Accounting",
+        "",
+        "- first-run authority satirlari overwrite edilmedi",
+        "- mismatch ve parity gate sayaclari, yalniz runtime_error veren kayitlar icin izinli tek error-rerun ile hesaplandi",
         "",
         "## Mismatch Sample",
         "",
@@ -281,15 +316,15 @@ def render_mismatch_table_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# FAZ11 V3-170 Authoritative Mismatch Table",
         "",
-        "| ordinal_index | question_id | normalized_request | model_request_payload | generation_contract | preprojection | raw_answer | runtime_error | error_type |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| ordinal_index | question_id | normalized_request | model_request_payload | generation_contract | preprojection | raw_answer | runtime_error | error_type | first_run_runtime_error | error_retry_used |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     if not summary["mismatch_rows"]:
-        lines.append("| - | - | - | - | - | - | - | - | no mismatch |")
+        lines.append("| - | - | - | - | - | - | - | - | no mismatch | - | - |")
     else:
         for row in summary["mismatch_rows"]:
             lines.append(
-                f"| {row['ordinal_index']} | {row['question_id']} | {row['normalized_request_hash_mismatch']} | {row['model_request_payload_hash_mismatch']} | {row['generation_contract_hash_mismatch']} | {row['preprojection_hash_mismatch']} | {row['raw_answer_hash_mismatch']} | {row['runtime_error']} | {row.get('error_type') or '-'} |"
+                f"| {row['ordinal_index']} | {row['question_id']} | {row['normalized_request_hash_mismatch']} | {row['model_request_payload_hash_mismatch']} | {row['generation_contract_hash_mismatch']} | {row['preprojection_hash_mismatch']} | {row['raw_answer_hash_mismatch']} | {row['runtime_error']} | {row.get('error_type') or '-'} | {row.get('first_run_runtime_error', 0)} | {row.get('error_retry_used', 0)} |"
             )
     lines.append("")
     return "\n".join(lines)

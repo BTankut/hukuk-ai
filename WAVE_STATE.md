@@ -802,3 +802,32 @@ notes: |
 - resmi karar:
   - `NO-GO - Non-Reproducible Preprojection Frontier`
   - `WP-5` ve sonrasi `NOT AUTHORIZED`
+
+## 2026-03-25 — FAZ11 Authority Recapture Closure
+
+- FAZ11 authority contract foundation pushlandi: `295102b` `faz11: freeze authority contract foundation`
+- `RC-G` full first-run authoritative kaydi korundu:
+  - `evaluation/reports/eval_faz11_rc_g_v3_170_authority_20260325.json`
+  - `error_count = 158`
+- `RC-G` icin yalniz runtime-error veren `158` ordinalde tek error-rerun alindi:
+  - `evaluation/reports/eval_faz11_rc_g_v3_170_authority_error_rerun_20260325.json`
+  - `error_count = 0`
+- `RC-J` canonical full first-run temiz kapandi:
+  - `evaluation/reports/eval_faz11_rc_j_v3_170_authority_20260325.json`
+  - `error_count = 0`
+- authority summary cikti:
+  - `evaluation/reports/faz11-rc-j-v3-170-authoritative-first-run-2026-03-25.md`
+  - `coordination/faz11-v3-170-authoritative-mismatch-table-2026-03-25.md`
+- authority gate ozeti:
+  - `normalized_request_hash_mismatch_count = 0`
+  - `model_request_payload_hash_mismatch_count = 0`
+  - `generation_contract_hash_mismatch_count = 0`
+  - `preprojection_hash_mismatch_count = 0`
+  - `raw_answer_hash_mismatch_count = 0`
+  - `parity_runtime_error_count = 0`
+  - `authoritative_mismatch_count = 0`
+- resmi karar:
+  - `PASS - V3-170 Preprojection Drift Cleared`
+  - `WP-4`, `WP-5`, `WP-6` -> `NOT AUTHORIZED`
+- sonraki resmi is:
+  - `RC-J output parity reopen`

@@ -27,6 +27,7 @@ Tarih: 2026-03-25
 
 - `ordinal_index`, canonical `configs/evaluation/test_questions_v3_170.json` sirasindan gelir
 - `process_id`, lane gateway pid dosyasindan alinir
-- `runtime_error`, per-question error alani veya trace yoklugu ile normalize edilir
-- `error_retry_used`, authority contract geregi `0` kalir; retry yetkisi authority run icinde acilmaz
+- `runtime_error`, first-run authority satirinda ilk kosunun runtime durumunu tasir
+- `error_retry_used`, yalniz plannerin izin verdigi tek error-rerun ilgili kayit icin kullanildiysa `1` olur
 - authority tablo satirlari sirasi `ordinal_index asc` olur
+- allowed error-rerun varsa first-run satiri overwrite edilmez; etkili gate hesaplari ayrik `effective_*` alanlari ile tutulur

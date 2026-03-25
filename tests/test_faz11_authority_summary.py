@@ -163,8 +163,12 @@ class Faz11AuthoritySummaryTests(unittest.TestCase):
         self.assertEqual(summary["reference_error_rerun_row_count"], 1)
         self.assertEqual(summary["parity_runtime_error_count"], 0)
         self.assertEqual(summary["authoritative_mismatch_count"], 0)
-        self.assertFalse(summary["authoritative_rows"][0]["first_run_authoritative"])
-        self.assertEqual(summary["authoritative_rows"][0]["reference_process_id"], "303")
+        self.assertTrue(summary["authoritative_rows"][0]["first_run_authoritative"])
+        self.assertEqual(summary["authoritative_rows"][0]["runtime_error"], 1)
+        self.assertEqual(summary["authoritative_rows"][0]["error_retry_used"], 1)
+        self.assertEqual(summary["authoritative_rows"][0]["reference_process_id"], "101")
+        self.assertEqual(summary["authoritative_rows"][0]["reference_effective_process_id"], "303")
+        self.assertEqual(summary["authoritative_rows"][0]["effective_runtime_error"], 0)
 
     def test_id_only_question_bank_is_normalized_for_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
