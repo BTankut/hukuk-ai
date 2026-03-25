@@ -128,3 +128,21 @@ def test_frontier_and_localization_from_single_mismatch(tmp_path: Path) -> None:
     replay, reconciliation = build_localization(frontier)
     assert replay["frontier_count"] == 1
     assert reconciliation["localization_pass"] is True
+
+
+def test_localization_counts_unexplained_reason() -> None:
+    frontier = {
+        "rows": [
+            {
+                "family_id": "faz1-50",
+                "question_id": "Q1",
+                "ordinal_index": 1,
+                "first_divergence_stage": "preprojection_hash",
+                "primary_reason": "unexplained_post_preprojection_drift",
+            }
+        ]
+    }
+    replay, reconciliation = build_localization(frontier)
+    assert replay["primary_reason_assigned_count"] == 1
+    assert replay["unexplained_count"] == 1
+    assert reconciliation["localization_pass"] is False

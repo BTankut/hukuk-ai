@@ -27,6 +27,8 @@ def build_localization(frontier_pack: dict[str, Any]) -> tuple[dict[str, Any], d
             stage_counts[stage] += 1
         if isinstance(reason, str) and reason in PRIMARY_REASONS:
             reason_counts[reason] += 1
+            if reason == "unexplained_post_preprojection_drift":
+                unexplained_rows.append(row)
         else:
             unexplained_rows.append(row)
 
