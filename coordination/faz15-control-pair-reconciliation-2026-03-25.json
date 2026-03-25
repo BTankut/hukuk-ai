@@ -1,0 +1,63 @@
+{
+  "control_pair_authority_match": false,
+  "control_pair_breach_in_f0_f12": false,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "mismatch_count": 1,
+      "family_metric_delta_zero": true,
+      "actual": {
+        "mismatch_count": 1,
+        "family_metric_delta_zero": true
+      },
+      "mismatch_stage_histogram": {
+        "final_answer_payload_hash": 1
+      },
+      "pass": false,
+      "failures": [
+        "mismatch_count: expected=0 actual=1"
+      ]
+    },
+    {
+      "family_id": "v2-95",
+      "mismatch_count": 0,
+      "family_metric_delta_zero": true,
+      "actual": {
+        "mismatch_count": 0,
+        "family_metric_delta_zero": true
+      },
+      "mismatch_stage_histogram": {},
+      "pass": true,
+      "failures": []
+    },
+    {
+      "family_id": "v3-170",
+      "mismatch_count": 0,
+      "family_metric_delta_zero": true,
+      "actual": {
+        "mismatch_count": 0,
+        "family_metric_delta_zero": true,
+        "final_mode_mapping_hash_mismatch_count": 0,
+        "blocked_reason_set_mismatch_count": 0,
+        "response_envelope_hash_mismatch_count": 0,
+        "normalized_request_hash_mismatch_count": 0,
+        "model_request_payload_hash_mismatch_count": 0,
+        "generation_contract_hash_mismatch_count": 0,
+        "preprojection_anchor_mismatch_count": 0,
+        "cited_projection_hash_mismatch_count": 0,
+        "citation_set_projection_hash_mismatch_count": 0,
+        "final_answer_payload_hash_mismatch_count": 0,
+        "serialized_output_hash_mismatch_count": 0
+      },
+      "mismatch_stage_histogram": {},
+      "pass": false,
+      "failures": [
+        "mismatch_count: expected=6 actual=0",
+        "final_mode_mapping_hash_mismatch_count: expected=6 actual=0",
+        "blocked_reason_set_mismatch_count: expected=6 actual=0",
+        "response_envelope_hash_mismatch_count: expected=6 actual=0"
+      ]
+    }
+  ],
+  "report_hash": "4441eab3c708841b185422ad2ac50a71767eaeabc88742ecdedfb721752c04ab"
+}

@@ -148,3 +148,15 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz15/build_repair_surface_breach
   --table-title "FAZ15 Breach First Divergence Table" \
   --mapping-title "FAZ15 Breach Root Cause Mapping" \
   --reconciliation-title "FAZ15 Breach Reconciliation"
+
+run_python_allow_nonzero "${REPO_ROOT}/scripts/faz15/build_final_report_pack.py" \
+  --control-summary-json "${REPO_ROOT}/evaluation/reports/faz15-rc-g-vs-rc-j-control-authority-summary-2026-03-25.json" \
+  --context-contrast-json "${REPO_ROOT}/evaluation/reports/faz15-targeted-vs-full-family-context-contrast-2026-03-25.json" \
+  --breach-summary-json "${REPO_ROOT}/evaluation/reports/faz15-rc-l-repair-surface-breach-summary-2026-03-25.json" \
+  --breach-reconciliation-json "${REPO_ROOT}/coordination/faz15-breach-reconciliation-2026-03-25.json" \
+  --pack-output-md "${REPO_ROOT}/coordination/faz15-rc-l-repair-surface-breach-pack-2026-03-25.md" \
+  --steering-output-md "${REPO_ROOT}/coordination/faz15-steering-decision-table-2026-03-25.md" \
+  --report-output-md "${REPO_ROOT}/docs/FAZ15-RC-L-DISCARD-VE-REPAIR-SURFACE-BREACH-FORENSICS-RAPORU-2026-03-25.md" \
+  --pack-title "FAZ15 RC-L Repair Surface Breach Pack" \
+  --steering-title "FAZ15 Steering Decision Table" \
+  --report-title "FAZ15 RC-L Discard ve Repair Surface Breach Forensics Raporu"

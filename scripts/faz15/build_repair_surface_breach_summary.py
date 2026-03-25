@@ -30,6 +30,7 @@ def _infer_row(
     rc_g_vs_rc_l: dict[str, Any] | None,
     rc_j_vs_rc_l: dict[str, Any] | None,
     control_pair_authority_match: bool,
+    control_pair_breach_in_f0_f12: bool,
     context_shift_ids: set[str],
 ) -> dict[str, Any]:
     o_stage_left = rc_g_vs_rc_l.get("first_divergence_stage") if rc_g_vs_rc_l else None
@@ -51,7 +52,7 @@ def _infer_row(
         f_stage = "question_batch_context_hash"
         primary_reason = "batch_context_delta"
         root_cause_class = "full_family_context_breach"
-    elif not control_pair_authority_match and o_stage in {
+    elif (not control_pair_authority_match) and control_pair_breach_in_f0_f12 and o_stage in {
         "normalized_request_hash",
         "model_request_payload_hash",
         "generation_contract_hash",
@@ -123,6 +124,7 @@ def build_outputs(
         if isinstance(row, dict) and row.get("stage_shift")
     }
     control_pair_authority_match = bool(control_summary.get("control_pair_authority_match"))
+    control_pair_breach_in_f0_f12 = bool(control_summary.get("control_pair_breach_in_f0_f12"))
 
     union_keys = sorted(set(rc_g_index) | set(rc_j_index), key=lambda item: (item[0], item[1]))
     rows = []
@@ -143,6 +145,7 @@ def build_outputs(
             rc_g_vs_rc_l=rc_g_index.get((family_id, question_id)),
             rc_j_vs_rc_l=rc_j_index.get((family_id, question_id)),
             control_pair_authority_match=control_pair_authority_match,
+            control_pair_breach_in_f0_f12=control_pair_breach_in_f0_f12,
             context_shift_ids=context_shift_ids,
         )
         rows.append(row)
@@ -202,6 +205,7 @@ def build_outputs(
     next_official_work = NEXT_WORK_BY_ROOT_CAUSE.get(dominant_root_cause_class, "manual steering required")
     reconciliation = {
         "control_pair_authority_match": control_pair_authority_match,
+        "control_pair_breach_in_f0_f12": control_pair_breach_in_f0_f12,
         "targeted_vs_full_family_context_shift_detected": bool(
             context_contrast.get("targeted_vs_full_family_context_shift_detected")
         ),
@@ -286,6 +290,7 @@ def render_reconciliation_md(reconciliation: dict[str, Any], *, title: str) -> s
         f"# {title}",
         "",
         f"- control_pair_authority_match = `{str(reconciliation['control_pair_authority_match']).lower()}`",
+        f"- control_pair_breach_in_f0_f12 = `{str(reconciliation['control_pair_breach_in_f0_f12']).lower()}`",
         f"- targeted_vs_full_family_context_shift_detected = `{str(reconciliation['targeted_vs_full_family_context_shift_detected']).lower()}`",
         f"- frontier_count = `{reconciliation['frontier_count']}`",
         f"- unexplained_count = `{reconciliation['unexplained_count']}`",

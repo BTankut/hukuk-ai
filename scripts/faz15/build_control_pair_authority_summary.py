@@ -37,6 +37,15 @@ EXPECTED_BY_FAMILY = {
     },
 }
 
+UPSTREAM_CONTROL_STAGES = {
+    "normalized_request_hash",
+    "model_request_payload_hash",
+    "generation_contract_hash",
+    "preprojection_anchor_hash",
+    "cited_projection_hash",
+    "citation_set_projection_hash",
+}
+
 
 def family_pass(report: dict[str, Any]) -> tuple[bool, list[str]]:
     family_id = str(report["family_id"])
@@ -51,8 +60,17 @@ def family_pass(report: dict[str, Any]) -> tuple[bool, list[str]]:
 
 def build_outputs(reports: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any]]:
     family_rows = []
+    control_pair_breach_in_f0_f12 = False
     for report in sorted(reports, key=lambda item: item["family_id"]):
         passed, failures = family_pass(report)
+        mismatch_stage_histogram: dict[str, int] = {}
+        for mismatch_row in report.get("mismatch_rows", []):
+            stage = mismatch_row.get("first_divergence_stage")
+            if not stage:
+                continue
+            mismatch_stage_histogram[stage] = mismatch_stage_histogram.get(stage, 0) + 1
+            if stage in UPSTREAM_CONTROL_STAGES:
+                control_pair_breach_in_f0_f12 = True
         family_rows.append(
             {
                 "family_id": report["family_id"],
@@ -62,6 +80,7 @@ def build_outputs(reports: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[s
                     key: report.get(key)
                     for key in EXPECTED_BY_FAMILY[str(report["family_id"])].keys()
                 },
+                "mismatch_stage_histogram": mismatch_stage_histogram,
                 "pass": passed,
                 "failures": failures,
             }
@@ -70,10 +89,12 @@ def build_outputs(reports: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[s
         "family_count": len(family_rows),
         "families": family_rows,
         "control_pair_authority_match": all(row["pass"] for row in family_rows),
+        "control_pair_breach_in_f0_f12": control_pair_breach_in_f0_f12,
     }
     summary["report_hash"] = stable_hash(summary)
     reconciliation = {
         "control_pair_authority_match": summary["control_pair_authority_match"],
+        "control_pair_breach_in_f0_f12": summary["control_pair_breach_in_f0_f12"],
         "families": family_rows,
     }
     reconciliation["report_hash"] = stable_hash(reconciliation)
@@ -86,6 +107,7 @@ def render_summary_md(summary: dict[str, Any], *, title: str) -> str:
         "",
         f"- family_count = `{summary['family_count']}`",
         f"- control_pair_authority_match = `{str(summary['control_pair_authority_match']).lower()}`",
+        f"- control_pair_breach_in_f0_f12 = `{str(summary['control_pair_breach_in_f0_f12']).lower()}`",
         "",
         "| family | pass | mismatch_count | family_metric_delta_zero |",
         "| --- | --- | ---: | --- |",
@@ -104,6 +126,7 @@ def render_reconciliation_md(reconciliation: dict[str, Any], *, title: str) -> s
         f"# {title}",
         "",
         f"- control_pair_authority_match = `{str(reconciliation['control_pair_authority_match']).lower()}`",
+        f"- control_pair_breach_in_f0_f12 = `{str(reconciliation['control_pair_breach_in_f0_f12']).lower()}`",
         "",
     ]
     for row in reconciliation["families"]:
