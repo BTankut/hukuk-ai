@@ -1,0 +1,70 @@
+{
+  "targeted_pack_count": 6,
+  "full_family_slice_count": 6,
+  "targeted_mismatch_count": 0,
+  "full_family_slice_mismatch_count": 6,
+  "targeted_first_divergence_assigned_count": 6,
+  "full_family_slice_first_divergence_assigned_count": 6,
+  "stage_relocation_count": 6,
+  "same_question_same_stage_count": 0,
+  "same_question_stage_shift_count": 6,
+  "unexplained_count": 0,
+  "targeted_vs_full_family_context_shift_detected": true,
+  "rows": [
+    {
+      "question_id": "TBK-051",
+      "ordinal_index": 1,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-054",
+      "ordinal_index": 2,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-055",
+      "ordinal_index": 3,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-057",
+      "ordinal_index": 4,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-058",
+      "ordinal_index": 5,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-061",
+      "ordinal_index": 6,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    }
+  ],
+  "report_hash": "260cbb2e2fb97a7a439c129d4479502bde469d2eb3ba21a40b1d63c026b4d8d1"
+}

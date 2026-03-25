@@ -32,7 +32,7 @@ def build_outputs(*, targeted_report: dict[str, Any], full_family_report: dict[s
     stage_shift_count = 0
 
     for ordinal_index, question_id in enumerate(TARGETED_QUESTION_IDS, start=1):
-        targeted_member = ("v3-170", question_id) in targeted_rows or ("v3-170", question_id) not in targeted_rows
+        targeted_member = ("v3-170", question_id) in targeted_rows
         full_member = ("v3-170", question_id) in full_rows
         targeted_stage = MATCH_STAGE
         full_stage = full_mismatch.get(question_id, {}).get("first_divergence_stage") or MATCH_STAGE

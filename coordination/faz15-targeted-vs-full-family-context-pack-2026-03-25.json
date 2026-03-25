@@ -1,0 +1,69 @@
+{
+  "targeted_pack_count": 6,
+  "full_family_slice_count": 6,
+  "targeted_question_ids": [
+    "TBK-051",
+    "TBK-054",
+    "TBK-055",
+    "TBK-057",
+    "TBK-058",
+    "TBK-061"
+  ],
+  "rows": [
+    {
+      "question_id": "TBK-051",
+      "ordinal_index": 1,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-054",
+      "ordinal_index": 2,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-055",
+      "ordinal_index": 3,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-057",
+      "ordinal_index": 4,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-058",
+      "ordinal_index": 5,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    },
+    {
+      "question_id": "TBK-061",
+      "ordinal_index": 6,
+      "targeted_mode_member": 0,
+      "full_family_slice_member": 1,
+      "targeted_first_divergence_stage": "authoritative_match",
+      "full_family_first_divergence_stage": "model_request_payload_hash",
+      "stage_shift": 1
+    }
+  ],
+  "report_hash": "b483aef8970d555b89300b0b41da816a4256b33fcdbc21905c9885c3d738f65c"
+}
