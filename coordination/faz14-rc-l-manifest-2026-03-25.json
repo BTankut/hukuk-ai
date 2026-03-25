@@ -1,0 +1,29 @@
+{
+  "candidate_id": "rc-l-20260325",
+  "status": "repair_candidate",
+  "inherits_from": "rc-j-20260324",
+  "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+  "checkpoint_ref": "rc-l-2026-03-25",
+  "git_commit": "40bc87e",
+  "runner_mode": "rc_l_authoritative_output_repair_gate_safe",
+  "answer_path_identity": {
+    "claim_binding_version": "selective-claim-binding-v3",
+    "final_mode_mapping_version": "final-mode-mapping-v3",
+    "source_locking_version": "v1",
+    "citation_normalization_version": "canonical-citation-normalization-v1",
+    "law_scope_gate_version": "law-scope-gate-v2",
+    "trace_contract_version": "faz14-authoritative-output-repair-schema-v1",
+    "schema_contract_version": "structured-answer-contract-v1"
+  },
+  "allowed_diff_surface": [
+    "api-gateway/src/routers/chat.py",
+    "scripts/faz14/*"
+  ],
+  "allowed_diff_surface_notes": [
+    "v3 runtime response-envelope projection parity",
+    "localized final-mode and blocked-reason projection repair",
+    "no upstream authority or answer-body drift"
+  ],
+  "answer_path_delta": []
+}

@@ -49,6 +49,7 @@ from faz2a_hardening import (
     build_initial_answer_contract,
     build_law_scope_signal,
     canonicalize_source_id,
+    dedupe_strings,
     harden_answer,
     normalize_query_text,
     validate_trace_payload,
@@ -113,6 +114,7 @@ _LAW_NAME_NORMALIZATION = {
     "ticaret kanunu": "TTK",
     "icra ve iflas kanunu": "İİK",
 }
+_INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
 
 
 def _tr_lower(text: str) -> str:
@@ -2466,6 +2468,11 @@ def _response_envelope_stage_payload(
     final_mode: str | None,
     final_reason: str | None,
 ) -> dict[str, Any]:
+    projected_guardrails_reasons = _project_rc_l_guardrails_reasons(
+        answer_text=answer_text,
+        citations=citations,
+        guardrails_reasons=guardrails_reasons,
+    )
     return {
         "object": "chat.completion",
         "model": request_body.model,
@@ -2478,12 +2485,44 @@ def _response_envelope_stage_payload(
         ],
         "citations": list(citations),
         "blocked": blocked,
-        "guardrails_reasons": list(guardrails_reasons),
+        "guardrails_reasons": projected_guardrails_reasons,
         "verification": verification,
         "final_mode": final_mode,
         "final_reason": final_reason,
         "answer_contract": answer_contract,
     }
+
+
+def _extract_inline_citation_ids(answer_text: str) -> list[str]:
+    extracted: list[str] = []
+    for raw_citation in _INLINE_CITATION_RE.findall(answer_text or ""):
+        canonical = canonicalize_source_id(raw_citation)
+        if canonical:
+            extracted.append(canonical)
+    return dedupe_strings(extracted)
+
+
+def _project_rc_l_guardrails_reasons(
+    *,
+    answer_text: str,
+    citations: list[str],
+    guardrails_reasons: list[str],
+) -> list[str]:
+    projected = dedupe_strings(list(guardrails_reasons))
+    if release_lane_id().lower() != "rc_l":
+        return projected
+
+    inline_citations = _extract_inline_citation_ids(answer_text)
+    visible_citations = dedupe_strings(
+        [canonicalize_source_id(citation) or citation for citation in citations]
+    )
+    if not inline_citations or not visible_citations:
+        return projected
+
+    visible_set = set(visible_citations)
+    if any(citation not in visible_set for citation in inline_citations):
+        projected.append("source_lock_fallback")
+    return dedupe_strings(projected)
 
 
 def _eval_client_parsed_stage_payload(
@@ -2649,6 +2688,7 @@ def _build_v3_runtime_parity_trace(
     answer_text: str,
     citations: list[str],
     blocked: bool,
+    guardrails_reasons: list[str],
     verification: dict[str, Any] | None,
     answer_contract: dict[str, Any] | None,
     final_mode: str | None,
@@ -2722,7 +2762,7 @@ def _build_v3_runtime_parity_trace(
             answer_text=answer_text,
             citations=citations,
             blocked=blocked,
-            guardrails_reasons=[],
+            guardrails_reasons=guardrails_reasons,
             verification=verification,
             answer_contract=answer_contract,
             final_mode=final_mode,
@@ -2903,6 +2943,7 @@ def _attach_parity_trace(
         answer_text=answer_text,
         citations=citations,
         blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
         verification=verification,
         answer_contract=answer_contract,
         final_mode=final_mode,

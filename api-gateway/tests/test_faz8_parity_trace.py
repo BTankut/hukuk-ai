@@ -7,6 +7,7 @@ from routers.chat import (
     ChatCompletionRequest,
     ConversationMessage,
     _attach_parity_trace,
+    _response_envelope_stage_payload,
 )
 
 
@@ -122,6 +123,57 @@ def test_attach_parity_trace_adds_stage_chain(monkeypatch: object) -> None:
     assert "visible_citation_projection" not in raw_stage["payload"]
 
 
+def test_attach_parity_trace_keeps_guardrail_reasons_in_v3_runtime_trace(monkeypatch: object) -> None:
+    monkeypatch.setenv("PARITY_TRACE_ENABLED", "true")
+    request_body = ChatCompletionRequest(
+        messages=[ConversationMessage(role="user", content="TBK m.49 nedir?")],
+        include_trace=True,
+    )
+
+    trace_payload = _attach_parity_trace(
+        trace_payload={
+            "question_raw": "TBK m.49 nedir?",
+            "retrieval": {"post_rerank_chunks": [{"source_id": "TBK m.49"}]},
+            "context_assembly": {
+                "assembled_context": "[Kaynak: TBK m.49]\nMetin",
+                "allowed_source_whitelist": ["TBK m.49"],
+                "assembled_evidence": [{"source_id": "TBK m.49"}],
+            },
+            "parsed_query": {"enriched_query": "TBK m.49 nedir?"},
+        },
+        request=_make_request(),
+        request_body=request_body,
+        session_id="sess-1",
+        conversation_history=[],
+        pre_answer_payload={"decision_lane": "rag", "user_message": "TBK m.49 nedir?"},
+        answer_text="TBK m.49 [Kaynak: TBK m.49]",
+        citations=["TBK m.49"],
+        blocked=False,
+        guardrails_reasons=["source_lock_fallback"],
+        verification=None,
+        answer_contract={
+            "primary_source_id": "TBK m.49",
+            "secondary_source_ids": [],
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        llm_trace={
+            "model_request_payload": {"model": "Qwen/Qwen3.5-35B-A3B-FP8"},
+            "generation_contract": {"max_tokens": 512, "enable_thinking": False},
+            "raw_answer_object": {
+                "role": "assistant",
+                "content": "TBK m.49 [Kaynak: TBK m.49]",
+                "extracted_text": "TBK m.49 [Kaynak: TBK m.49]",
+            },
+        },
+    )
+
+    v3_trace = trace_payload["v3_runtime_parity_trace"]
+    response_stage = next(item for item in v3_trace["stages"] if item["stage"] == "response_envelope")
+    assert response_stage["payload"]["guardrails_reasons"] == ["source_lock_fallback"]
+
+
 def test_validate_trace_payload_keeps_parity_trace() -> None:
     payload = validate_trace_payload(
         {
@@ -152,3 +204,53 @@ def test_validate_trace_payload_keeps_parity_trace() -> None:
         }
     )
     assert payload["parity_trace"]["preprojection_hash"] == "abc"
+
+
+def test_response_envelope_projects_source_lock_reason_for_rc_l(monkeypatch: object) -> None:
+    monkeypatch.setenv("RELEASE_LANE_ID", "rc_l")
+    request_body = ChatCompletionRequest(
+        messages=[ConversationMessage(role="user", content="TBK'ya gore cevap ver")],
+    )
+
+    payload = _response_envelope_stage_payload(
+        request_body=request_body,
+        answer_text=(
+            "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n"
+            "- [Kaynak: TMK m.890] ...\n"
+            "- [Kaynak: TBK m.117] ..."
+        ),
+        citations=["TBK m.117"],
+        blocked=False,
+        guardrails_reasons=[],
+        verification=None,
+        answer_contract={"primary_source_id": "TBK m.117", "secondary_source_ids": []},
+        final_mode="answer",
+        final_reason=None,
+    )
+
+    assert payload["guardrails_reasons"] == ["source_lock_fallback"]
+
+
+def test_response_envelope_keeps_default_projection_for_non_rc_l(monkeypatch: object) -> None:
+    monkeypatch.setenv("RELEASE_LANE_ID", "rc_j")
+    request_body = ChatCompletionRequest(
+        messages=[ConversationMessage(role="user", content="TBK'ya gore cevap ver")],
+    )
+
+    payload = _response_envelope_stage_payload(
+        request_body=request_body,
+        answer_text=(
+            "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n"
+            "- [Kaynak: TMK m.890] ...\n"
+            "- [Kaynak: TBK m.117] ..."
+        ),
+        citations=["TBK m.117"],
+        blocked=False,
+        guardrails_reasons=[],
+        verification=None,
+        answer_contract={"primary_source_id": "TBK m.117", "secondary_source_ids": []},
+        final_mode="answer",
+        final_reason=None,
+    )
+
+    assert payload["guardrails_reasons"] == []
