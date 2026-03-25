@@ -1,123 +1,40 @@
 # Wave State
-current_wave: faz3-quality-recovery-gate
+current_wave: faz13-output-parity-authority-forensics-recapture
 status: completed
-started_at: 2026-03-23T20:04:00+03:00
-last_activity: 2026-03-23T21:13:00+03:00
-last_eval: evaluation/reports/faz3-rc-d-family-eval-2026-03-23.json
-next_action: "FAZ 3 resmi olarak NO-GO ile kapandi; yeni resmi planner talimati gelmeden yeni cutover veya release-control isi acilmayacak"
+started_at: 2026-03-25T15:10:00+03:00
+last_activity: 2026-03-25T16:40:00+03:00
+last_eval: evaluation/reports/faz13-rc-j-output-parity-authoritative-summary-2026-03-25.json
+next_action: "FAZ13 resmi olarak localized NO-GO ile kapandi; yeni resmi planner talimati gelmeden repair gate veya sonraki faz acilmayacak"
 blockers:
-  - "FAZ 3 full-family kalite kapisi kapanmadi"
-  - "Citation rate tum ailelerde gate altinda kaldi"
+  - "v3-170 authority replay icinde 6 output parity mismatch kaldi"
+  - "mismatch yuzeyi final_mode_mapping / blocked_reason / response_envelope katmaninda toplandi"
 notes: |
-  ## FAZ 3 Closure
+  ## FAZ13 Closure
 
-  - resmi FAZ 3 paketi kapandi:
-    - `docs/faz3-quality-recovery-gate-2026-03-23.md`
-    - `coordination/faz3-steering-decision-table-2026-03-23.md`
-    - `docs/FAZ3-GUARDRAIL-INTEGRATION-QUALITY-RECOVERY-SONUC-RAPORU-2026-03-23.md`
-  - blocker rerun sonucu:
-    - `false_refusal_after_guardrail = 4`
-    - `true_guardrail_block = 12`
-    - acceptance leak sayilari `0`
-    - `WP-6 = PASS`
-  - full-family sonuc:
-    - `faz1-50`: `82.0 / 74.7 / 6.0 / 94.0`
-    - `v2-95`: `87.4 / 80.7 / 8.4 / 97.9`
-    - `v3-170`: `92.9 / 83.2 / 4.7 / 98.8`
-    - acceptance leak cizgisi tum ailelerde korundu
-    - `WP-7 = FAIL`
+  - resmi FAZ13 paketi kapandi:
+    - `docs/FAZ13-OUTPUT-PARITY-AUTHORITY-FORENSICS-RECAPTURE-RAPORU-2026-03-25.md`
+    - `coordination/faz13-steering-decision-table-2026-03-25.md`
+    - `evaluation/reports/faz13-rc-j-output-parity-authoritative-summary-2026-03-25.md`
+  - authoritative full-family sonuc:
+    - `faz1-50`: `mismatch_count = 0`
+    - `v2-95`: `mismatch_count = 0`
+    - `v3-170`: `mismatch_count = 6`
+  - v3-170 frozen upstream alanlari korundu:
+    - `normalized_request_hash_mismatch_count = 0`
+    - `model_request_payload_hash_mismatch_count = 0`
+    - `generation_contract_hash_mismatch_count = 0`
+    - `preprojection_anchor_mismatch_count = 0`
+  - authoritative frontier/localization sonucu:
+    - `frontier_count = 6`
+    - `first_divergence_assigned_count = 6`
+    - `primary_reason_assigned_count = 6`
+    - `unexplained_count = 0`
+    - `stage_histogram.final_mode_mapping_hash = 6`
+    - `reason_histogram.final_mode_mapping_delta = 6`
   - resmi karar:
-    - `NO-GO - Guardrail Quality Recovery`
-  - metod:
-    - `RC-A` answer/citation yuzeyi
-    - `RC-C` trace/context/whitelist/evidence yuzeyi
-    - `RC-D` hardening replay
-
-  ## FAZ 2C Wave 10
-
-  - archived monitoring window kapandi:
-    - `scripts/faz2c/run_pilot_monitoring_window.py`
-    - `coordination/faz2c-wave10-archived-window-2026-03-23.md`
-  - live archived window sonucu:
-    - `cycle_count_recorded = 2`
-    - `clean_cycle_count = 2`
-    - `final_status = clean`
-    - `latest_final_read = stay_on_promoted_lane`
-  - stable window aliases:
-    - `runtime_logs/faz2c_window_jobs/latest_window_summary.json`
-    - `runtime_logs/faz2c_window_jobs/latest_window_report.md`
-    - `runtime_logs/faz2c_window_jobs/latest_window_manifest.json`
-
-  ## FAZ 2C Wave 9
-
-  - canonical surface refresh kapandi:
-    - `scripts/faz2c/run_pilot_monitoring_cycle.py`
-    - `coordination/faz2c-wave9-canonical-surface-refresh-2026-03-23.md`
-  - integrated cycle artik top-level operator yuzeylerini de yeniliyor:
-    - `runtime_logs/faz2c_narrow_pilot_snapshot.json`
-    - `runtime_logs/faz2c_watch_rollup.json`
-    - `runtime_logs/faz2c_pilot_status_report.md`
-  - latest live cycle sonucu:
-    - `final_read = stay_on_promoted_lane`
-    - `job_count = 4`
-    - `latest_status = clean`
-    - latest snapshot latency `9152.60ms`
-
-  ## FAZ 2C Wave 8
-
-  - latest monitoring surface kapandi:
-    - `scripts/faz2c/run_pilot_monitoring_cycle.py`
-    - `coordination/faz2c-wave8-latest-surface-2026-03-23.md`
-  - stable operator aliases canli lane'de yenilendi:
-    - `runtime_logs/faz2c_cycles/latest_cycle_manifest.json`
-    - `runtime_logs/faz2c_cycles/latest_rollup.json`
-    - `runtime_logs/faz2c_cycles/latest_pilot_status_report.md`
-    - `runtime_logs/faz2c_cycles/latest_cycle_index.json`
-  - latest live cycle sonucu:
-    - `final_read = stay_on_promoted_lane`
-    - `latest_status = clean`
-    - latest snapshot latency `9145.24ms`
-    - archived watch `job_count = 3`
-
-  ## FAZ 2C Wave 7
-
-  - monitoring cycle kapandi:
-    - `scripts/faz2c/run_pilot_monitoring_cycle.py`
-    - `coordination/faz2c-wave7-monitoring-cycle-2026-03-23.md`
-  - live cycle sonucu:
-    - `final_read = stay_on_promoted_lane`
-    - `job_count = 2`
-    - `clean_job_count = 2`
-    - `rollback_job_count = 0`
-
-  ## FAZ 2C Wave 6
-
-  - pilot status report kapandi:
-    - `scripts/faz2c/build_pilot_status_report.py`
-    - `coordination/faz2c-wave6-status-report-2026-03-23.md`
-  - live report sonucu:
-    - latest rollup status `clean`
-    - latest snapshot rollback recommended `False`
-    - current live read `stay on promoted lane`
-
-  ## FAZ 2C Wave 5
-
-  - watch rollup kapandi:
-    - `scripts/faz2c/build_pilot_watch_rollup.py`
-    - `coordination/faz2c-wave5-watch-rollup-2026-03-23.md`
-  - live rollup sonucu:
-    - `job_count = 1`
-    - `clean_job_count = 1`
-    - `rollback_job_count = 0`
-    - `latest_status = clean`
-    - `avg_latency_ms = 9389.92`
-
-  ## FAZ 2C Wave 4
-
-  - timestamped watch job kapandi:
-    - `scripts/faz2c/run_narrow_pilot_watch_job.py`
-    - `coordination/faz2c-wave4-timestamped-watch-job-2026-03-23.md`
-  - live archived job sonucu:
+    - `NO-GO - Output Parity Authority Drift Localized`
+  - sonraki resmi is:
+    - `authoritative output parity repair gate`
     - `sample_count = 2`
     - `rollback_sample_count = 0`
     - `final_status = clean`

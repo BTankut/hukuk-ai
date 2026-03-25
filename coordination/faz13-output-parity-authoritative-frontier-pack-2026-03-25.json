@@ -1,0 +1,107 @@
+{
+  "frontier_count": 6,
+  "authoritative_mismatch_ordinals": [
+    1,
+    4,
+    5,
+    7,
+    8,
+    11
+  ],
+  "authoritative_mismatch_question_ids": [
+    "TBK-051",
+    "TBK-054",
+    "TBK-055",
+    "TBK-057",
+    "TBK-058",
+    "TBK-061"
+  ],
+  "family_breakdown": {
+    "faz1-50": 0,
+    "v2-95": 0,
+    "v3-170": 6
+  },
+  "first_divergence_assigned_count": 6,
+  "primary_reason_assigned_count": 6,
+  "unexplained_count": 0,
+  "stage_histogram": {
+    "final_mode_mapping_hash": 6
+  },
+  "reason_histogram": {
+    "final_mode_mapping_delta": 6
+  },
+  "rows": [
+    {
+      "family_id": "v3-170",
+      "question_id": "TBK-051",
+      "ordinal_index": 1,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta",
+      "reference_runtime_error": 0,
+      "candidate_runtime_error": 0,
+      "reference_error_rerun_used": 0,
+      "candidate_error_rerun_used": 0,
+      "effective_view_member": 1
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "TBK-054",
+      "ordinal_index": 4,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta",
+      "reference_runtime_error": 0,
+      "candidate_runtime_error": 0,
+      "reference_error_rerun_used": 0,
+      "candidate_error_rerun_used": 0,
+      "effective_view_member": 1
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "TBK-055",
+      "ordinal_index": 5,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta",
+      "reference_runtime_error": 0,
+      "candidate_runtime_error": 0,
+      "reference_error_rerun_used": 0,
+      "candidate_error_rerun_used": 0,
+      "effective_view_member": 1
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "TBK-057",
+      "ordinal_index": 7,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta",
+      "reference_runtime_error": 0,
+      "candidate_runtime_error": 0,
+      "reference_error_rerun_used": 0,
+      "candidate_error_rerun_used": 0,
+      "effective_view_member": 1
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "TBK-058",
+      "ordinal_index": 8,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta",
+      "reference_runtime_error": 0,
+      "candidate_runtime_error": 0,
+      "reference_error_rerun_used": 0,
+      "candidate_error_rerun_used": 0,
+      "effective_view_member": 1
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "TBK-061",
+      "ordinal_index": 11,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta",
+      "reference_runtime_error": 0,
+      "candidate_runtime_error": 0,
+      "reference_error_rerun_used": 0,
+      "candidate_error_rerun_used": 0,
+      "effective_view_member": 1
+    }
+  ]
+}

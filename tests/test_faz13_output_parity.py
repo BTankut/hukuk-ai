@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.faz13.build_authoritative_mismatch_table import build_table
 from scripts.faz13.build_authoritative_frontier_pack import build_frontier_pack
 from scripts.faz13.build_authoritative_localization import build_localization
 from scripts.faz13.build_authoritative_output_parity_report import build_report
@@ -147,6 +148,25 @@ class Faz13OutputParityTests(unittest.TestCase):
         self.assertEqual(pack["frontier_count"], 2)
         self.assertEqual(replay["unexplained_count"], 0)
         self.assertTrue(reconciliation["localization_pass"])
+
+    def test_mismatch_table_collects_rows(self) -> None:
+        report = {
+            "family_id": "v3-170",
+            "mismatch_rows": [
+                {
+                    "family_id": "v3-170",
+                    "question_id": "Q9",
+                    "ordinal_index": 9,
+                    "final_mode_mapping_hash_mismatch": 1,
+                    "first_divergence_stage": "final_mode_mapping_hash",
+                    "primary_reason": "final_mode_mapping_delta",
+                }
+            ],
+        }
+        table = build_table([report])
+        self.assertEqual(table["mismatch_count"], 1)
+        self.assertEqual(table["family_breakdown"]["v3-170"], 1)
+        self.assertEqual(table["rows"][0]["primary_reason"], "final_mode_mapping_delta")
 
 
 if __name__ == "__main__":
