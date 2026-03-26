@@ -1,0 +1,32 @@
+{
+  "frontier_count": 1,
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-027",
+      "ordinal_index": 27,
+      "reference_runtime_error": 0,
+      "candidate_runtime_error": 0,
+      "reference_error_rerun_used": 0,
+      "candidate_error_rerun_used": 0,
+      "effective_view_member": 1,
+      "normalized_request_hash_mismatch": 0,
+      "model_request_payload_hash_mismatch": 0,
+      "generation_contract_hash_mismatch": 0,
+      "preprojection_anchor_mismatch": 0,
+      "cited_projection_hash_mismatch": 0,
+      "citation_set_projection_hash_mismatch": 0,
+      "final_mode_mapping_hash_mismatch": 0,
+      "blocked_reason_set_mismatch": 0,
+      "final_answer_payload_hash_mismatch": 1,
+      "response_envelope_hash_mismatch": 1,
+      "serialized_output_hash_mismatch": 1,
+      "first_divergence_stage": "final_answer_payload_hash",
+      "primary_reason": "response_envelope_projection_delta",
+      "answer_body_hash_mismatch": 1,
+      "citation_body_hash_mismatch": 0,
+      "refusal_body_hash_mismatch": 0
+    }
+  ],
+  "report_hash": "3fd9d8681c2ddb575e359e90c685437a12a90a54b2826af9497522756e821dd8"
+}

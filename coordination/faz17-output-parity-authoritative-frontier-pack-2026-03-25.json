@@ -1,0 +1,12 @@
+{
+  "frontier_count": 1,
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-027",
+      "ordinal_index": 27,
+      "first_divergence_stage": "final_answer_payload_hash"
+    }
+  ],
+  "report_hash": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b"
+}

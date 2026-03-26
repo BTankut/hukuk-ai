@@ -1,0 +1,18 @@
+{
+  "frontier_count": 1,
+  "authorized_record_count": 0,
+  "changed_record_outside_authorized_set_count": 1,
+  "rc_j_vs_rc_m_runtime_error_count": 0,
+  "changed_field_outside_contract_count": 0,
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-027",
+      "ordinal_index": 27,
+      "diagnostic_runtime_error": 0,
+      "changed_field_set": [],
+      "changed_field_outside_contract": [],
+      "diagnostic_mismatch_present": false
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "frontier_count": 1,
+  "first_divergence_assigned_count": 1,
+  "primary_reason_assigned_count": 1,
+  "classification_assigned_count": 1,
+  "unexplained_count": 0,
+  "authorized_record_count": 0,
+  "changed_record_outside_authorized_set_count": 1,
+  "upstream_breach_count": 0,
+  "localized_authorized_downstream_drift_count": 0,
+  "output_parity_surface_breach_count": 1,
+  "rc_j_vs_rc_m_runtime_error_count": 0,
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-027",
+      "ordinal_index": 27,
+      "first_divergence_stage": "final_answer_payload_hash",
+      "primary_reason": "response_envelope_projection_delta",
+      "authorized_record": false,
+      "upstream_breach": false,
+      "classification": "output_parity_surface_breach",
+      "changed_field_set": [],
+      "changed_field_outside_contract": []
+    }
+  ]
+}
