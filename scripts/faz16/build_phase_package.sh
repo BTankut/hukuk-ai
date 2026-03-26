@@ -112,6 +112,7 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz14/build_v3_frontier_subset.py
 
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_rc_m_manifest.py" \
   --rc-j-manifest "${REPO_ROOT}/coordination/faz9-rc-j-manifest-2026-03-24.json" \
+  --authority-summary-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-${DATE_TAG}.json" \
   --git-commit "${GIT_COMMIT}" \
   --manifest-output-json "${REPO_ROOT}/coordination/faz16-rc-m-manifest-${DATE_TAG}.json" \
   --diff-contract-output-md "${REPO_ROOT}/coordination/faz16-rc-j-to-rc-m-diff-surface-contract-${DATE_TAG}.md" \

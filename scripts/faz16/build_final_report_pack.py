@@ -8,6 +8,22 @@ from typing import Any
 from faz16_lib import NEXT_WORK_BY_DECISION, load_json, write_json
 
 
+def wp3_manifest_pass(*, wp2_summary: dict[str, Any], wp3_manifest: dict[str, Any] | None) -> bool:
+    if wp3_manifest is None:
+        return False
+    return (
+        wp3_manifest.get("build_from") == "RC-J"
+        and wp3_manifest.get("answer_path_delta") == []
+        and wp3_manifest.get("request_surface_delta") == []
+        and wp3_manifest.get("model_visible_surface_delta") == []
+        and wp3_manifest.get("retrieval_surface_delta") == []
+        and wp3_manifest.get("release_controls_delta") == []
+        and int(wp3_manifest.get("runtime_error_count", 1)) == 0
+        and bool(wp3_manifest.get("authority_snapshot_frozen"))
+        and wp3_manifest.get("authority_snapshot_report_hash") == wp2_summary.get("report_hash")
+    )
+
+
 def decide(
     *,
     wp2_summary: dict[str, Any],
@@ -18,9 +34,10 @@ def decide(
     wp6_candidate_gate: dict[str, Any] | None,
     wp6_replacement_gate: dict[str, Any] | None,
 ) -> tuple[str, str]:
+    wp3_pass = wp3_manifest_pass(wp2_summary=wp2_summary, wp3_manifest=wp3_manifest)
     if not bool(wp2_summary.get("wp2_pass")):
         decision = "NO-GO - Control Authority Unstable"
-    elif wp3_manifest is None:
+    elif not wp3_pass:
         decision = "NO-GO - Build Surface Isolation Failed"
     elif wp4_candidate_gate is None or wp4_replacement_gate is None:
         decision = "NO-GO - Replacement Repair Ineffective"
@@ -35,15 +52,7 @@ def decide(
     elif not bool(wp6_candidate_gate.get("gate_pass")) or not bool(wp6_replacement_gate.get("gate_pass")):
         decision = "NO-GO - Build Surface Isolation Failed"
     else:
-        manifest_ok = (
-            wp3_manifest.get("build_from") == "RC-J"
-            and wp3_manifest.get("answer_path_delta") == []
-            and wp3_manifest.get("request_surface_delta") == []
-            and wp3_manifest.get("model_visible_surface_delta") == []
-            and wp3_manifest.get("retrieval_surface_delta") == []
-            and wp3_manifest.get("release_controls_delta") == []
-        )
-        decision = "PASS - Replacement Build Surface Isolated" if manifest_ok else "NO-GO - Build Surface Isolation Failed"
+        decision = "PASS - Replacement Build Surface Isolated"
     return decision, NEXT_WORK_BY_DECISION[decision]
 
 
@@ -70,6 +79,7 @@ def render_steering_md(
     wp6_candidate_gate: dict[str, Any] | None,
     wp6_replacement_gate: dict[str, Any] | None,
 ) -> str:
+    wp3_pass = wp3_manifest_pass(wp2_summary=wp2_summary, wp3_manifest=wp3_manifest)
     return "\n".join(
         [
             f"# {title}",
@@ -78,7 +88,7 @@ def render_steering_md(
             "| --- | --- | --- | --- |",
             "| `WP-1` | `PASS` | refreeze/build contract artefact'lari tamam | faz authority kuruldu |",
             f"| `WP-2` | `{wp_status(bool(wp2_summary.get('wp2_pass')))}` | `runtime_error_count={wp2_summary.get('runtime_error_count')}`, `control_pair_breach_in_f0_f12={str(bool(wp2_summary.get('control_pair_breach_in_f0_f12'))).lower()}` | current authority snapshot donduruldu |",
-            f"| `WP-3` | `{gate_status({'gate_pass': True} if wp3_manifest is not None else None)}` | `build_from={(wp3_manifest or {}).get('build_from')}`, `runtime_error_count={(wp3_manifest or {}).get('runtime_error_count')}` | RC-M manifest ve build proof durumu kayda gecti |",
+            f"| `WP-3` | `{gate_status({'gate_pass': wp3_pass} if wp3_manifest is not None else None)}` | `build_from={(wp3_manifest or {}).get('build_from')}`, `runtime_error_count={(wp3_manifest or {}).get('runtime_error_count')}`, `authority_snapshot_report_hash_match={str(((wp3_manifest or {}).get('authority_snapshot_report_hash') == wp2_summary.get('report_hash'))).lower() if wp3_manifest is not None else 'n/a'}` | RC-M manifest ve build proof durumu kayda gecti |",
             f"| `WP-4` | `{('PASS' if (wp4_candidate_gate is not None and wp4_replacement_gate is not None and bool(wp4_candidate_gate.get('gate_pass')) and bool(wp4_replacement_gate.get('gate_pass'))) else ('FAIL' if (wp4_candidate_gate is not None and wp4_replacement_gate is not None) else 'NOT AUTHORIZED'))}` | candidate `gate_pass={str(bool((wp4_candidate_gate or {}).get('gate_pass'))).lower() if wp4_candidate_gate is not None else 'n/a'}`, replacement `gate_pass={str(bool((wp4_replacement_gate or {}).get('gate_pass'))).lower() if wp4_replacement_gate is not None else 'n/a'}` | targeted 6 gate sonucu kayda gecti |",
             f"| `WP-5` | `{gate_status(wp5_gate)}` | `repair_surface_breach_count={(wp5_gate or {}).get('repair_surface_breach_count', 'n/a')}` | breach sentinel-16 gate sonucu kayda gecti |",
             f"| `WP-6` | `{('PASS' if (wp6_candidate_gate is not None and wp6_replacement_gate is not None and bool(wp6_candidate_gate.get('gate_pass')) and bool(wp6_replacement_gate.get('gate_pass'))) else ('FAIL' if (wp6_candidate_gate is not None and wp6_replacement_gate is not None) else 'NOT AUTHORIZED'))}` | candidate `gate_pass={str(bool((wp6_candidate_gate or {}).get('gate_pass'))).lower() if wp6_candidate_gate is not None else 'n/a'}`, replacement `gate_pass={str(bool((wp6_replacement_gate or {}).get('gate_pass'))).lower() if wp6_replacement_gate is not None else 'n/a'}` | full-family replacement isolation sonucu kayda gecti |",
@@ -105,12 +115,14 @@ def render_report_md(
     decision: str,
     next_work: str,
     wp2_summary: dict[str, Any],
+    wp3_manifest: dict[str, Any] | None,
     wp4_candidate_gate: dict[str, Any] | None,
     wp4_replacement_gate: dict[str, Any] | None,
     wp5_gate: dict[str, Any] | None,
     wp6_candidate_gate: dict[str, Any] | None,
     wp6_replacement_gate: dict[str, Any] | None,
 ) -> str:
+    wp3_pass = wp3_manifest_pass(wp2_summary=wp2_summary, wp3_manifest=wp3_manifest)
     return "\n".join(
         [
             f"# {title}",
@@ -129,6 +141,7 @@ def render_report_md(
             "## Gate Sonuclari",
             "",
             f"- `WP-2 = {wp_status(bool(wp2_summary.get('wp2_pass')))} `",
+            f"- `WP-3 = {wp_status(wp3_pass) if wp3_manifest is not None else 'NOT AUTHORIZED'} `",
             f"- `WP-4 candidate gate = {gate_status(wp4_candidate_gate)} `",
             f"- `WP-4 replacement gate = {gate_status(wp4_replacement_gate)} `",
             f"- `WP-5 = {gate_status(wp5_gate)} `",
@@ -225,6 +238,7 @@ def main() -> int:
             decision=decision,
             next_work=next_work,
             wp2_summary=wp2_summary,
+            wp3_manifest=wp3_manifest,
             wp4_candidate_gate=wp4_candidate_gate,
             wp4_replacement_gate=wp4_replacement_gate,
             wp5_gate=wp5_gate,

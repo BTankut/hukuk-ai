@@ -11,6 +11,8 @@ from faz16_lib import TARGETED_QUESTION_IDS, load_json, write_json
 def build_manifest(
     *,
     rc_j_manifest: dict[str, Any],
+    authority_summary: dict[str, Any] | None,
+    authority_summary_source: str | None,
     candidate_id: str,
     checkpoint_ref: str,
     git_commit: str,
@@ -25,6 +27,9 @@ def build_manifest(
         "checkpoint_ref": checkpoint_ref,
         "git_commit": git_commit,
         "runner_mode": "rc_m_replacement_build_surface_isolation_gate",
+        "authority_snapshot_source": authority_summary_source,
+        "authority_snapshot_report_hash": (authority_summary or {}).get("report_hash"),
+        "authority_snapshot_frozen": bool((authority_summary or {}).get("authority_snapshot_frozen")),
         "answer_path_identity": rc_j_manifest.get("answer_path_identity", {}),
         "family_reports_reference": rc_j_manifest.get("family_reports_reference", []),
         "allowed_diff_surface": [
@@ -78,6 +83,9 @@ def render_build_proof_md(manifest: dict[str, Any], *, title: str) -> str:
         f"- build_from = `{manifest['build_from']}`",
         f"- checkpoint_ref = `{manifest['checkpoint_ref']}`",
         f"- git_commit = `{manifest['git_commit']}`",
+        f"- authority_snapshot_source = `{manifest.get('authority_snapshot_source')}`",
+        f"- authority_snapshot_report_hash = `{manifest.get('authority_snapshot_report_hash')}`",
+        f"- authority_snapshot_frozen = `{manifest.get('authority_snapshot_frozen')}`",
         f"- answer_path_delta = `{manifest['answer_path_delta']}`",
         f"- request_surface_delta = `{manifest['request_surface_delta']}`",
         f"- model_visible_surface_delta = `{manifest['model_visible_surface_delta']}`",
@@ -92,6 +100,7 @@ def render_build_proof_md(manifest: dict[str, Any], *, title: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build FAZ16 RC-M manifest and proof.")
     parser.add_argument("--rc-j-manifest", type=Path, required=True)
+    parser.add_argument("--authority-summary-json", type=Path)
     parser.add_argument("--candidate-id", default="rc-m-20260325")
     parser.add_argument("--checkpoint-ref", default="rc-m-2026-03-25")
     parser.add_argument("--git-commit", required=True)
@@ -100,8 +109,11 @@ def main() -> int:
     parser.add_argument("--build-proof-output-md", type=Path, required=True)
     args = parser.parse_args()
 
+    authority_summary = load_json(args.authority_summary_json) if args.authority_summary_json else None
     manifest = build_manifest(
         rc_j_manifest=load_json(args.rc_j_manifest),
+        authority_summary=authority_summary,
+        authority_summary_source=str(args.authority_summary_json) if args.authority_summary_json else None,
         candidate_id=args.candidate_id,
         checkpoint_ref=args.checkpoint_ref,
         git_commit=args.git_commit,

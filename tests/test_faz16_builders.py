@@ -9,7 +9,8 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "faz16"))
 from build_breach_sentinel_16 import build_pack
 from build_candidate_isolation_gate import build_gate as build_candidate_gate
 from build_current_authority_summary import build_summary
-from build_final_report_pack import decide
+from build_final_report_pack import decide, wp3_manifest_pass
+from build_rc_m_manifest import build_manifest
 from build_replacement_gate import build_full_gate, build_targeted_gate
 
 
@@ -180,3 +181,35 @@ def test_final_report_decision_allows_early_control_authority_stop() -> None:
     )
     assert decision == "NO-GO - Control Authority Unstable"
     assert next_work == "rc-g-vs-rc-j current authority recapture repeatability forensics"
+
+
+def test_wp3_manifest_requires_current_authority_hash_match() -> None:
+    wp2_summary = {"report_hash": "authority-hash"}
+    manifest = {
+        "build_from": "RC-J",
+        "answer_path_delta": [],
+        "request_surface_delta": [],
+        "model_visible_surface_delta": [],
+        "retrieval_surface_delta": [],
+        "release_controls_delta": [],
+        "runtime_error_count": 0,
+        "authority_snapshot_frozen": True,
+        "authority_snapshot_report_hash": "authority-hash",
+    }
+    assert wp3_manifest_pass(wp2_summary=wp2_summary, wp3_manifest=manifest) is True
+    manifest["authority_snapshot_report_hash"] = "stale-hash"
+    assert wp3_manifest_pass(wp2_summary=wp2_summary, wp3_manifest=manifest) is False
+
+
+def test_rc_m_manifest_captures_authority_snapshot_reference() -> None:
+    manifest = build_manifest(
+        rc_j_manifest={"candidate_id": "rc-j", "base_model_id": "base", "adapter_id": "adapter"},
+        authority_summary={"report_hash": "authority-hash", "authority_snapshot_frozen": True},
+        authority_summary_source="evaluation/reports/faz16-summary.json",
+        candidate_id="rc-m",
+        checkpoint_ref="rc-m-ref",
+        git_commit="abc123",
+    )
+    assert manifest["build_from"] == "RC-J"
+    assert manifest["authority_snapshot_report_hash"] == "authority-hash"
+    assert manifest["authority_snapshot_frozen"] is True
