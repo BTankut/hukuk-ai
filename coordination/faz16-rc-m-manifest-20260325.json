@@ -6,8 +6,11 @@
   "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
   "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
   "checkpoint_ref": "rc-m-2026-03-25",
-  "git_commit": "08537460e5fbe0fbde963f5fc98134b770059ead",
+  "git_commit": "774933d51cce8f121c41f6289d48765779b18d57",
   "runner_mode": "rc_m_replacement_build_surface_isolation_gate",
+  "authority_snapshot_source": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-20260325.json",
+  "authority_snapshot_report_hash": "2e8a267ec1a4cd2807683db18cf08ccd4b7e75c11232edb43db36ae65e344c8e",
+  "authority_snapshot_frozen": true,
   "answer_path_identity": {
     "claim_binding_version": "selective-claim-binding-v3",
     "final_mode_mapping_version": "final-mode-mapping-v3",

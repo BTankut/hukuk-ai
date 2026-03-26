@@ -1,0 +1,28 @@
+{
+  "report_count": 3,
+  "runtime_error_count": 0,
+  "family_metric_delta_zero": true,
+  "new_frontier_count_outside_authority_snapshot": 0,
+  "new_stage_count_outside_authority_snapshot": 0,
+  "repair_surface_breach_count": 0,
+  "unexplained_count": 0,
+  "family_breakdown": {
+    "faz1-50": {
+      "mismatch_count": 1,
+      "new_frontier_count_outside_authority_snapshot": 0,
+      "new_stage_count_outside_authority_snapshot": 0
+    },
+    "v2-95": {
+      "mismatch_count": 0,
+      "new_frontier_count_outside_authority_snapshot": 0,
+      "new_stage_count_outside_authority_snapshot": 0
+    },
+    "v3-170": {
+      "mismatch_count": 0,
+      "new_frontier_count_outside_authority_snapshot": 0,
+      "new_stage_count_outside_authority_snapshot": 0
+    }
+  },
+  "gate_pass": true,
+  "report_hash": "37964970977d1eb261b6cd8290e184dabe05dcba79789e87b7d716edf29b9f0f"
+}

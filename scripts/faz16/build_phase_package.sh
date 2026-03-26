@@ -12,7 +12,8 @@ run_python_allow_nonzero() {
   if [ "${exit_code}" -ne 0 ]; then
     echo "[INFO] builder returned nonzero (kept for gate flow): ${exit_code} :: $*" >&2
   fi
-  return "${exit_code}"
+  RUN_PYTHON_LAST_EXIT_CODE="${exit_code}"
+  return 0
 }
 
 emit_final_pack() {
@@ -84,7 +85,7 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_current_authority_sum
   --summary-output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-${DATE_TAG}.json" \
   --summary-output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-${DATE_TAG}.md" \
   --title "FAZ16 RC-G vs RC-J Control Authority Current Summary"
-wp2_exit=$?
+wp2_exit="${RUN_PYTHON_LAST_EXIT_CODE}"
 
 if [ "${wp2_exit}" -ne 0 ]; then
   emit_final_pack
@@ -148,7 +149,7 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_candidate_isolation_g
   --table-output-md "${REPO_ROOT}/coordination/faz16-targeted-replacement-diff-table-${DATE_TAG}.md" \
   --summary-title "FAZ16 RC-J vs RC-M Targeted Build Surface Isolation Gate" \
   --table-title "FAZ16 Targeted Replacement Diff Table"
-wp4_candidate_exit=$?
+wp4_candidate_exit="${RUN_PYTHON_LAST_EXIT_CODE}"
 
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz14/build_output_repair_report.py" \
   --run-id "faz16_rc_g_vs_rc_m_targeted_v3" \
@@ -168,7 +169,7 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_replacement_gate.py" 
   --summary-output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-summary-${DATE_TAG}.json" \
   --summary-output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-${DATE_TAG}.md" \
   --summary-title "FAZ16 RC-G vs RC-M Targeted Replacement Gate"
-wp4_replacement_exit=$?
+wp4_replacement_exit="${RUN_PYTHON_LAST_EXIT_CODE}"
 
 if [ "${wp4_candidate_exit}" -ne 0 ] || [ "${wp4_replacement_exit}" -ne 0 ]; then
   emit_final_pack \
@@ -219,7 +220,7 @@ for report in "${sentinel_reports[@]}"; do
   candidate_gate_args+=(--report-json "${report}")
 done
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_candidate_isolation_gate.py" "${candidate_gate_args[@]}"
-wp5_exit=$?
+wp5_exit="${RUN_PYTHON_LAST_EXIT_CODE}"
 
 if [ "${wp5_exit}" -ne 0 ]; then
   emit_final_pack \
@@ -290,7 +291,7 @@ for report in "${full_candidate_reports[@]}"; do
   full_candidate_args+=(--report-json "${report}")
 done
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_candidate_isolation_gate.py" "${full_candidate_args[@]}"
-wp6_candidate_exit=$?
+wp6_candidate_exit="${RUN_PYTHON_LAST_EXIT_CODE}"
 
 replacement_args=(
   --summary-output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-full-family-replacement-summary-${DATE_TAG}.json"
@@ -307,7 +308,7 @@ for report in "${authority_reports[@]}"; do
   replacement_args+=(--authority-report-json "${report}")
 done
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_replacement_gate.py" "${replacement_args[@]}"
-wp6_replacement_exit=$?
+wp6_replacement_exit="${RUN_PYTHON_LAST_EXIT_CODE}"
 
 emit_final_pack \
   --wp3-manifest-json "${REPO_ROOT}/coordination/faz16-rc-m-manifest-${DATE_TAG}.json" \

@@ -1,0 +1,37 @@
+{
+  "family_count": 3,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "mismatch_count": 1,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {
+        "final_answer_payload_hash": 1
+      },
+      "pass": true
+    },
+    {
+      "family_id": "v2-95",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "pass": true
+    },
+    {
+      "family_id": "v3-170",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "pass": true
+    }
+  ],
+  "runtime_error_count": 0,
+  "control_pair_breach_in_f0_f12": false,
+  "family_metric_delta_zero": true,
+  "authority_snapshot_frozen": true,
+  "wp2_pass": true,
+  "report_hash": "2e8a267ec1a4cd2807683db18cf08ccd4b7e75c11232edb43db36ae65e344c8e"
+}

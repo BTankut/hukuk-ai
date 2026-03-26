@@ -1,0 +1,9 @@
+{
+  "report_count": 1,
+  "runtime_error_count": 0,
+  "mismatch_count": 0,
+  "changed_field_outside_contract_count": 0,
+  "family_metric_delta_zero": true,
+  "gate_pass": true,
+  "report_hash": "7d7874d2aba85cc30e3a46e22099018c33016f4beefeaf82af9a7be404d058e2"
+}

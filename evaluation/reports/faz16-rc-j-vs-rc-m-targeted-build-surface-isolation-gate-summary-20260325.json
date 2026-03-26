@@ -1,0 +1,37 @@
+{
+  "report_count": 1,
+  "question_count": 6,
+  "runtime_error_count": 0,
+  "mismatch_count": 0,
+  "normalized_request_hash_mismatch_count": 0,
+  "model_request_payload_hash_mismatch_count": 0,
+  "generation_contract_hash_mismatch_count": 0,
+  "preprojection_anchor_mismatch_count": 0,
+  "cited_projection_hash_mismatch_count": 0,
+  "citation_set_projection_hash_mismatch_count": 0,
+  "final_mode_mapping_hash_mismatch_count": 0,
+  "blocked_reason_set_mismatch_count": 0,
+  "response_envelope_hash_mismatch_count": 0,
+  "changed_field_outside_contract_count": 0,
+  "changed_record_outside_authorized_set_count": 0,
+  "repair_surface_breach_count": 0,
+  "allowed_changed_field_set": [
+    "blocked_reason_set_hash",
+    "final_mode_mapping_hash",
+    "response_envelope_hash"
+  ],
+  "allowed_changed_record_set": [
+    "TBK-051",
+    "TBK-054",
+    "TBK-055",
+    "TBK-057",
+    "TBK-058",
+    "TBK-061"
+  ],
+  "family_breakdown": {
+    "v3-170": 0
+  },
+  "changed_field_outside_contract": [],
+  "gate_pass": true,
+  "report_hash": "8af2f58f9a3ea98d2b5e6f8ed92a3d067b2b3bb14228bd9c2107279d4e30024d"
+}
