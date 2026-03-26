@@ -6,7 +6,7 @@
   "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
   "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
   "checkpoint_ref": "rc-m-2026-03-25",
-  "git_commit": "fc3f02f6511b47cebf18862e638db718cbb35437",
+  "git_commit": "08537460e5fbe0fbde963f5fc98134b770059ead",
   "runner_mode": "rc_m_replacement_build_surface_isolation_gate",
   "answer_path_identity": {
     "claim_binding_version": "selective-claim-binding-v3",
@@ -47,6 +47,7 @@
   "model_visible_surface_delta": [],
   "retrieval_surface_delta": [],
   "release_controls_delta": [],
+  "runtime_error_count": 0,
   "allowed_changed_record_set": [
     "TBK-051",
     "TBK-054",

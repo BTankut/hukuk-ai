@@ -124,6 +124,11 @@ GATEWAY_PID_FILE="${REPO_ROOT}/runtime_logs/faz16_${RC_KIND}_${RUN_LABEL}_gatewa
 TUNNEL_PID_FILE="${REPO_ROOT}/runtime_logs/faz16_${RC_KIND}_${RUN_LABEL}_tunnel.pid"
 REDIS_PID_FILE="${REPO_ROOT}/runtime_logs/faz16_${RC_KIND}_${RUN_LABEL}_redis.pid"
 
+if report_is_complete "${OUTPUT_PATH}" "${EXPECTED_COUNT}"; then
+  echo "[INFO] complete report already exists, skipping ${OUTPUT_PATH}"
+  exit 0
+fi
+
 if port_is_listening "${GATEWAY_PORT}"; then
   echo "[FAIL] build-surface gateway port already in use: ${GATEWAY_PORT}" >&2
   exit 1
@@ -195,4 +200,3 @@ fi
 
 echo "[FAIL] ${RC_KIND} ${RUN_LABEL} did not produce a complete report: ${OUTPUT_PATH}" >&2
 exit 1
-
