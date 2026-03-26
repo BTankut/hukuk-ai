@@ -1,0 +1,58 @@
+{
+  "candidate_id": "rc-m-20260325",
+  "status": "replacement_candidate",
+  "inherits_from": "rc-j-20260324",
+  "build_from": "RC-J",
+  "base_model_id": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "adapter_id": "hukuk-ai-sft-qwen35-807 -> dgx1-merged-post-promotion-cleanup-20260322",
+  "checkpoint_ref": "rc-m-2026-03-25",
+  "git_commit": "fc3f02f6511b47cebf18862e638db718cbb35437",
+  "runner_mode": "rc_m_replacement_build_surface_isolation_gate",
+  "answer_path_identity": {
+    "claim_binding_version": "selective-claim-binding-v3",
+    "final_mode_mapping_version": "final-mode-mapping-v3",
+    "source_locking_version": "v1",
+    "citation_normalization_version": "canonical-citation-normalization-v1",
+    "law_scope_gate_version": "law-scope-gate-v2",
+    "trace_contract_version": "faz9-model-visible-surface-trace-schema-v1",
+    "schema_contract_version": "structured-answer-contract-v1"
+  },
+  "family_reports_reference": [
+    {
+      "family": "faz1-50",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_faz1-50_20260323.json",
+      "questions_source": "configs/evaluation/test_questions.json"
+    },
+    {
+      "family": "v2-95",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_v2-95_20260323.json",
+      "questions_source": "configs/evaluation/test_questions_v2_95.json"
+    },
+    {
+      "family": "v3-170",
+      "report_path": "evaluation/reports/eval_faz6_rc_g_v3-170_20260323.json",
+      "questions_source": "configs/evaluation/test_questions_v3_170.json"
+    }
+  ],
+  "allowed_diff_surface": [
+    "final_mode_mapping_hash",
+    "blocked_reason_set_hash",
+    "response_envelope_hash"
+  ],
+  "allowed_diff_surface_notes": [
+    "replacement build-surface isolation from frozen RC-J authority snapshot"
+  ],
+  "answer_path_delta": [],
+  "request_surface_delta": [],
+  "model_visible_surface_delta": [],
+  "retrieval_surface_delta": [],
+  "release_controls_delta": [],
+  "allowed_changed_record_set": [
+    "TBK-051",
+    "TBK-054",
+    "TBK-055",
+    "TBK-057",
+    "TBK-058",
+    "TBK-061"
+  ]
+}

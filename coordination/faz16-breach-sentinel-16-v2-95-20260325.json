@@ -1,0 +1,119 @@
+[
+  {
+    "question_id": "HAL-001",
+    "id": "HAL-001",
+    "question": "TBK m.344'teki kira artış sınırlaması, TBK m.72'deki haksız fiil zamanaşımını da otomatik olarak değiştirir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.344",
+      "TBK m.72"
+    ],
+    "expected_keywords": [
+      "kira artışı",
+      "haksız fiil",
+      "zamanaşımı",
+      "ilişkisiz hükümler"
+    ],
+    "expected_answer_contains": "doğrudan bir bağlantı yoktur",
+    "refusal_expected": false,
+    "notes": "İlişkisiz maddeler arasında sahte bağ"
+  },
+  {
+    "question_id": "HAL-002",
+    "id": "HAL-002",
+    "question": "TBK m.583'e göre eş rızası olmadan yapılan kefalet, TBK m.584 yürürlüğe girmeden önce de kesin hükümsüz müydü?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.583",
+      "TBK m.584"
+    ],
+    "expected_keywords": [
+      "kefalet",
+      "eş rızası",
+      "yürürlük",
+      "zaman bakımından uygulama"
+    ],
+    "expected_answer_contains": "m.584",
+    "refusal_expected": false,
+    "notes": "Zaman bakımından uygulama tuzağı"
+  },
+  {
+    "question_id": "HAL-003",
+    "id": "HAL-003",
+    "question": "TBK m.223'teki ayıp ihbar süresi geçince alıcı TBK m.125'e dayanarak yine de dönme hakkı kullanabilir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.223",
+      "TBK m.227",
+      "TBK m.125"
+    ],
+    "expected_keywords": [
+      "ayıp ihbarı",
+      "satış",
+      "genel hüküm-özel hüküm"
+    ],
+    "expected_answer_contains": "özel hüküm",
+    "refusal_expected": false,
+    "notes": "Genel/özel hüküm çatışması"
+  },
+  {
+    "question_id": "HAL-004",
+    "id": "HAL-004",
+    "question": "TBK m.136 imkansızlık halinde borcu sona erdiriyorsa, aynı olayda TBK m.49 haksız fiil tazminatı hiç istenemez denebilir mi?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.136",
+      "TBK m.49"
+    ],
+    "expected_keywords": [
+      "imkansızlık",
+      "haksız fiil",
+      "ayrı sorumluluk rejimi"
+    ],
+    "expected_answer_contains": "ayrı değerlendirilir",
+    "refusal_expected": false,
+    "notes": "Farklı sorumluluk rejimleri"
+  },
+  {
+    "question_id": "HAL-005",
+    "id": "HAL-005",
+    "question": "TBK m.512'ye göre vekilin azli her zaman mümkünse, bu durum TBK m.27 gereği emredici hukuk kuralı mıdır?",
+    "category": "hal_prone",
+    "difficulty": "hard",
+    "expected_sources": [
+      "TBK m.512",
+      "TBK m.27"
+    ],
+    "expected_keywords": [
+      "azil",
+      "emredici hüküm",
+      "sözleşme serbestisi"
+    ],
+    "expected_answer_contains": "her zaman azil",
+    "refusal_expected": false,
+    "notes": "Normlar arası yanlış genelleme"
+  },
+  {
+    "question_id": "HAL-006",
+    "id": "HAL-006",
+    "question": "TBK m.146'daki on yıllık zamanaşımı, TBK m.72'de açıkça yazan iki yıllık süreyi kendiliğinden bertaraf eder mi?",
+    "category": "hal_prone",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.146",
+      "TBK m.72"
+    ],
+    "expected_keywords": [
+      "genel süre",
+      "özel süre",
+      "haksız fiil"
+    ],
+    "expected_answer_contains": "özel süre uygulanır",
+    "refusal_expected": false,
+    "notes": "Genel-özel süre karışıklığı"
+  }
+]

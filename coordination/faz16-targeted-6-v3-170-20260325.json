@@ -1,0 +1,133 @@
+[
+  {
+    "question_id": "TBK-051",
+    "id": "TBK-051",
+    "question": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+    "category": "tbk_genel",
+    "difficulty": "easy",
+    "expected_sources": [
+      "TBK m.146",
+      "TBK m.149"
+    ],
+    "expected_keywords": [
+      "on yıl",
+      "zamanaşımı",
+      "muacceliyet",
+      "alacak",
+      "başlangıç"
+    ],
+    "expected_answer_contains": "on yıllık zamanaşımı",
+    "refusal_expected": false,
+    "notes": "Genel zamanaşımı süresi — TBK m.125"
+  },
+  {
+    "question_id": "TBK-054",
+    "id": "TBK-054",
+    "question": "TBK'ya göre alacağın devri (temliki) nasıl gerçekleşir ve devrin borçluya bildirimi ne zaman hüküm doğurur?",
+    "category": "tbk_genel",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.183",
+      "TBK m.184",
+      "TBK m.186"
+    ],
+    "expected_keywords": [
+      "alacağın devri",
+      "temlik",
+      "yazılı bildirim",
+      "borçlu",
+      "iyiniyet",
+      "yan haklar"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Alacağın devri koşulları — TBK m.183-186"
+  },
+  {
+    "question_id": "TBK-055",
+    "id": "TBK-055",
+    "question": "TBK'ya göre borcun üçüncü kişiye nakledilmesi hangi koşullara tabidir ve alacaklının rızası nasıl alınır?",
+    "category": "tbk_genel",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.196",
+      "TBK m.197",
+      "TBK m.198",
+      "TBK m.200",
+      "TBK m.201"
+    ],
+    "expected_keywords": [
+      "borcun nakli",
+      "alacaklı rızası",
+      "borç üstlenme",
+      "iç üstlenme",
+      "dış üstlenme"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Borcun nakli koşulları — TBK m.196-201"
+  },
+  {
+    "question_id": "TBK-057",
+    "id": "TBK-057",
+    "question": "TBK kapsamında takas (mahsup) hakkının kullanılabilmesi için hangi koşulların bir arada bulunması gerekir?",
+    "category": "tbk_genel",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.139",
+      "TBK m.140",
+      "TBK m.142"
+    ],
+    "expected_keywords": [
+      "takas",
+      "muacceliyet",
+      "karşılıklı alacak",
+      "aynı nitelik",
+      "yasak haller"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Takas koşulları — TBK m.139-146"
+  },
+  {
+    "question_id": "TBK-058",
+    "id": "TBK-058",
+    "question": "TBK'ya göre alacaklı borçlunun kısmi ifasını kabul etmek zorunda mıdır? Bu konudaki genel kural nedir?",
+    "category": "tbk_genel",
+    "difficulty": "easy",
+    "expected_sources": [
+      "TBK m.84"
+    ],
+    "expected_keywords": [
+      "kısmi ifa",
+      "bütün borç",
+      "kabul zorunluluğu",
+      "alacaklı",
+      "bölünebilir borç"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Kısmi ifa kuralı — TBK m.84"
+  },
+  {
+    "question_id": "TBK-061",
+    "id": "TBK-061",
+    "question": "TBK'ya göre zamanaşımı hangi hallerde kesilir ve kesilme sonrasında yeni zamanaşımı süresi nasıl işlemeye başlar?",
+    "category": "tbk_genel",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.154",
+      "TBK m.156"
+    ],
+    "expected_keywords": [
+      "zamanaşımı kesilmesi",
+      "dava açma",
+      "borcun kabulü",
+      "icra takibi",
+      "yeni süre"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Zamanaşımının kesilmesi — TBK m.154-156"
+  }
+]

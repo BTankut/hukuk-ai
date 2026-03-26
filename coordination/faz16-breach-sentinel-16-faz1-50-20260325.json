@@ -1,0 +1,91 @@
+[
+  {
+    "question_id": "TBK-003",
+    "id": "TBK-003",
+    "question": "Haksız fiil nedeniyle tazminat davası açmak için TBK'da öngörülen zamanaşımı süresi nedir?",
+    "category": "tbk_haksiz_fiil",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.72",
+      "TBK m.146"
+    ],
+    "expected_keywords": [
+      "zamanaşımı",
+      "iki yıl",
+      "on yıl",
+      "öğrenme",
+      "haksız fiil",
+      "zararın öğrenildiği"
+    ],
+    "expected_answer_contains": "iki yıl",
+    "refusal_expected": false,
+    "notes": "Haksız fiil zamanaşımı — TBK m.72: 2 yıl / 10 yıl"
+  },
+  {
+    "question_id": "TBK-005",
+    "id": "TBK-005",
+    "question": "Faiz oranı sözleşmede belirlenmemişse TBK'ya göre hangi faiz oranı uygulanır?",
+    "category": "tbk_genel",
+    "difficulty": "easy",
+    "expected_sources": [
+      "TBK m.88"
+    ],
+    "expected_keywords": [
+      "yasal faiz",
+      "kanuni faiz",
+      "yıllık",
+      "yüzde",
+      "belirlenmemiş"
+    ],
+    "expected_answer_contains": "yasal faiz",
+    "refusal_expected": false,
+    "notes": "Yasal faiz oranı — TBK m.88"
+  },
+  {
+    "question_id": "TBK-006",
+    "id": "TBK-006",
+    "question": "TBK kapsamında ceza şartının (cayma akçesi) geçerliliği için hangi koşullar aranmaktadır?",
+    "category": "tbk_ceza_sarti",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.179",
+      "TBK m.180",
+      "TBK m.182"
+    ],
+    "expected_keywords": [
+      "ceza şartı",
+      "cayma akçesi",
+      "geçerlilik",
+      "asıl borç",
+      "indirim",
+      "fahiş"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Ceza şartı — TBK m.179-182"
+  },
+  {
+    "question_id": "TBK-007",
+    "id": "TBK-007",
+    "question": "Vekâlet sözleşmesinde vekâletin sona erme halleri nelerdir? TBK'nın ilgili maddelerini belirtin.",
+    "category": "tbk_vekaletname",
+    "difficulty": "medium",
+    "expected_sources": [
+      "TBK m.512",
+      "TBK m.513",
+      "TBK m.514"
+    ],
+    "expected_keywords": [
+      "vekâlet",
+      "sona erme",
+      "azil",
+      "istifa",
+      "ölüm",
+      "ehliyetsizlik",
+      "iflas"
+    ],
+    "expected_answer_contains": null,
+    "refusal_expected": false,
+    "notes": "Vekâletin sona ermesi — TBK m.512-514"
+  }
+]

@@ -1,0 +1,150 @@
+{
+  "selection_rule": {
+    "sort": [
+      "family ASC",
+      "record_id ASC"
+    ],
+    "take": {
+      "faz1-50": 4,
+      "v2-95": 6,
+      "v3-170": 6
+    }
+  },
+  "count": 16,
+  "family_breakdown": {
+    "faz1-50": 4,
+    "v2-95": 6,
+    "v3-170": 6
+  },
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-003",
+      "ordinal_index": 3,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-005",
+      "ordinal_index": 5,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-006",
+      "ordinal_index": 6,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-007",
+      "ordinal_index": 7,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v2-95",
+      "question_id": "HAL-001",
+      "ordinal_index": 86,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v2-95",
+      "question_id": "HAL-002",
+      "ordinal_index": 87,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v2-95",
+      "question_id": "HAL-003",
+      "ordinal_index": 88,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v2-95",
+      "question_id": "HAL-004",
+      "ordinal_index": 89,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v2-95",
+      "question_id": "HAL-005",
+      "ordinal_index": 90,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v2-95",
+      "question_id": "HAL-006",
+      "ordinal_index": 91,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "HAL-001",
+      "ordinal_index": 86,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "HAL-002",
+      "ordinal_index": 87,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "HAL-003",
+      "ordinal_index": 88,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "HAL-004",
+      "ordinal_index": 89,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "HAL-005",
+      "ordinal_index": 90,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    },
+    {
+      "family_id": "v3-170",
+      "question_id": "HAL-006",
+      "ordinal_index": 91,
+      "first_divergence_stage_f": "model_request_payload_hash",
+      "primary_reason": "manifest_materialization_delta",
+      "root_cause_class": "rc_l_build_surface_breach"
+    }
+  ],
+  "report_hash": "863e26999e8cb5efa1a1bbf9a132dc42070705b39fea658e45b2cc6065f7ac9e"
+}
