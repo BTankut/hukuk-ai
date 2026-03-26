@@ -109,8 +109,8 @@ run_rc_m_lane \
   "${REPO_ROOT}/evaluation/reports/eval_faz16_rc_m_v3_170_breach_sentinel_${DATE_TAG}.json" \
   "rc-m-breach-sentinel-v3-170-${DATE_TAG}" \
   "faz16_rc_m_breach_sentinel_v3_170" \
-  8151 \
-  30161
+  8241 \
+  30241
 
 run_rc_m_lane \
   faz1-50 \
@@ -118,8 +118,8 @@ run_rc_m_lane \
   "${REPO_ROOT}/evaluation/reports/eval_faz16_rc_m_faz1_50_full_family_${DATE_TAG}.json" \
   "rc-m-full-family-faz1-50-${DATE_TAG}" \
   "faz16_rc_m_full_faz1_50" \
-  8152 \
-  30162
+  8242 \
+  30242
 
 run_rc_m_lane \
   v2-95 \
@@ -127,8 +127,8 @@ run_rc_m_lane \
   "${REPO_ROOT}/evaluation/reports/eval_faz16_rc_m_v2_95_full_family_${DATE_TAG}.json" \
   "rc-m-full-family-v2-95-${DATE_TAG}" \
   "faz16_rc_m_full_v2_95" \
-  8153 \
-  30163
+  8243 \
+  30243
 
 run_rc_m_lane \
   v3-170 \
@@ -136,8 +136,8 @@ run_rc_m_lane \
   "${REPO_ROOT}/evaluation/reports/eval_faz16_rc_m_v3_170_full_family_${DATE_TAG}.json" \
   "rc-m-full-family-v3-170-${DATE_TAG}" \
   "faz16_rc_m_full_v3_170" \
-  8154 \
-  30164
+  8244 \
+  30244
 
 DATE_TAG="${DATE_TAG}" \
 PYTHON_BIN=python3 \
