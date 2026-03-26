@@ -1,0 +1,51 @@
+{
+  "reference_name": "faz19",
+  "candidate_pair": "rc_g_vs_rc_j",
+  "families": [
+    {
+      "family_name": "faz1-50",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "1cf092398d92e8ac5333ef4b2eb04bb9ee1ff8e0cb9d91622306ce79df2c2ebd",
+      "reference_pack_hash": "ebd8e5e87b308ddd36f2206c0834dc2d4768ef9635517dd43d6631ada368d832"
+    },
+    {
+      "family_name": "v2-95",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "e00a163d6e0b2e06dbb5adc79021e56ff70e84bb633306e5e65313b4732f70a1",
+      "reference_pack_hash": "ebd8e5e87b308ddd36f2206c0834dc2d4768ef9635517dd43d6631ada368d832"
+    },
+    {
+      "family_name": "v3-170",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "a043435262ae9e76f58c139c6435305b8bf79dc95a2de08f546013dd10096171",
+      "reference_pack_hash": "ebd8e5e87b308ddd36f2206c0834dc2d4768ef9635517dd43d6631ada368d832"
+    }
+  ],
+  "reference_pack_hash": "ebd8e5e87b308ddd36f2206c0834dc2d4768ef9635517dd43d6631ada368d832",
+  "reference_pack_integrity_pass": true,
+  "reference_pack_contradiction_count": 0
+}

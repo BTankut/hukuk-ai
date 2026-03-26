@@ -1,0 +1,61 @@
+{
+  "reference_name": "faz18",
+  "candidate_pair": "rc_g_vs_rc_j",
+  "families": [
+    {
+      "family_name": "faz1-50",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 1,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {
+        "final_answer_payload_hash": 1
+      },
+      "mismatch_question_ids": [
+        "TBK-027"
+      ],
+      "mismatch_ordinals": [
+        27
+      ],
+      "first_divergence_stage_set": [
+        "final_answer_payload_hash"
+      ],
+      "reason_histogram": {
+        "response_envelope_projection_delta": 1
+      },
+      "authoritative_summary_hash": "a464be7f518a4959bec69e892ce651ebeff3a2d1570bab1f907cd8790cb7559d",
+      "reference_pack_hash": "71fe7ee42c55b189a425d9784c27674832a347713f06533b48d922e3c1ffd83c"
+    },
+    {
+      "family_name": "v2-95",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "e00a163d6e0b2e06dbb5adc79021e56ff70e84bb633306e5e65313b4732f70a1",
+      "reference_pack_hash": "71fe7ee42c55b189a425d9784c27674832a347713f06533b48d922e3c1ffd83c"
+    },
+    {
+      "family_name": "v3-170",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "a043435262ae9e76f58c139c6435305b8bf79dc95a2de08f546013dd10096171",
+      "reference_pack_hash": "71fe7ee42c55b189a425d9784c27674832a347713f06533b48d922e3c1ffd83c"
+    }
+  ],
+  "reference_pack_hash": "71fe7ee42c55b189a425d9784c27674832a347713f06533b48d922e3c1ffd83c",
+  "reference_pack_integrity_pass": true,
+  "reference_pack_contradiction_count": 0
+}

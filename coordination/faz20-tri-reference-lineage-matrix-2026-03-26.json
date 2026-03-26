@@ -1,0 +1,81 @@
+{
+  "lineage_stage_labels": {
+    "H0": "candidate_freeze_manifest_hash",
+    "H1": "model_bundle_hash",
+    "H2": "prompt_guardrail_bundle_hash",
+    "H3": "projection_surface_bundle_hash",
+    "H4": "runtime_image_digest",
+    "H5": "dependency_lock_hash",
+    "H6": "evaluator_bundle_hash",
+    "H7": "family_pack_hash",
+    "H8": "run_contract_hash",
+    "H9": "clean_lane_contract_hash",
+    "H10": "per_ordinal_fingerprint_set_hash",
+    "H11": "authoritative_summary_hash"
+  },
+  "rows": [
+    {
+      "reference_name": "faz13",
+      "reference_pack_hash": "98dfa0d4cd925953fd4c5a0a501192cbac008193e670f237102c2bc3d1fc3230",
+      "surface_breach_stage_set": [],
+      "recording_only_stage_set": [],
+      "stage_values": {
+        "H0": "d86066b8ff07e6c85078e632a26d23d74b841bd2d44dd236338922e90dcf8e0e",
+        "H1": "97ff7625d7e0f5f9635405eb6a03834cc23231c8604958cd269302d0d53118b9",
+        "H2": "ca2d7b6d1ba8b1aae2e854c02873d52db3a21d53dddeb962c0c9a44fb44285a1",
+        "H3": "0cdbf64173b81e3609f28c4e56c6362b894e715ed7232ec417bc9a346e88772e",
+        "H4": "addfe2bf62c39da2f1e31bd55b4653ca24995abf74eeb720bc58895a55d62784",
+        "H5": "928f69b236f1a9703732674101288ab5f242ea491d87cd193187d3f3d392abcd",
+        "H6": "f5242bc977f5bd3140c1e47667ec6f7f23053e6d522759d2fed6f176b9f65cec",
+        "H7": "beef3fb63c6e2d16e5ea7fe0fb3a8d0a4b44d026bb54cec973b906bf6cbd9f56",
+        "H8": "9bcfe31e653db452b84d6285102be4181e06f77f889995a7035c09a20944efa7",
+        "H9": "9cb48ca886fd04161f677f512b5379296b2d107f1f3664897f8590b701355a42",
+        "H10": "__replay_materialization_pending__",
+        "H11": "__replay_materialization_pending__"
+      }
+    },
+    {
+      "reference_name": "faz18",
+      "reference_pack_hash": "71fe7ee42c55b189a425d9784c27674832a347713f06533b48d922e3c1ffd83c",
+      "surface_breach_stage_set": [],
+      "recording_only_stage_set": [],
+      "stage_values": {
+        "H0": "d86066b8ff07e6c85078e632a26d23d74b841bd2d44dd236338922e90dcf8e0e",
+        "H1": "97ff7625d7e0f5f9635405eb6a03834cc23231c8604958cd269302d0d53118b9",
+        "H2": "ca2d7b6d1ba8b1aae2e854c02873d52db3a21d53dddeb962c0c9a44fb44285a1",
+        "H3": "0cdbf64173b81e3609f28c4e56c6362b894e715ed7232ec417bc9a346e88772e",
+        "H4": "addfe2bf62c39da2f1e31bd55b4653ca24995abf74eeb720bc58895a55d62784",
+        "H5": "928f69b236f1a9703732674101288ab5f242ea491d87cd193187d3f3d392abcd",
+        "H6": "f5242bc977f5bd3140c1e47667ec6f7f23053e6d522759d2fed6f176b9f65cec",
+        "H7": "beef3fb63c6e2d16e5ea7fe0fb3a8d0a4b44d026bb54cec973b906bf6cbd9f56",
+        "H8": "ee3ac853c37ef10c91665fc1af8a22551e8d3c958f6d4f9337d246e5bbc40414",
+        "H9": "4e844c5af20eaf559f39530bec42ec4ab6a9dbbb0206f9d7e564629ca47bf3ab",
+        "H10": "__replay_materialization_pending__",
+        "H11": "__replay_materialization_pending__"
+      }
+    },
+    {
+      "reference_name": "faz19",
+      "reference_pack_hash": "ebd8e5e87b308ddd36f2206c0834dc2d4768ef9635517dd43d6631ada368d832",
+      "surface_breach_stage_set": [],
+      "recording_only_stage_set": [],
+      "stage_values": {
+        "H0": "d86066b8ff07e6c85078e632a26d23d74b841bd2d44dd236338922e90dcf8e0e",
+        "H1": "97ff7625d7e0f5f9635405eb6a03834cc23231c8604958cd269302d0d53118b9",
+        "H2": "ca2d7b6d1ba8b1aae2e854c02873d52db3a21d53dddeb962c0c9a44fb44285a1",
+        "H3": "0cdbf64173b81e3609f28c4e56c6362b894e715ed7232ec417bc9a346e88772e",
+        "H4": "addfe2bf62c39da2f1e31bd55b4653ca24995abf74eeb720bc58895a55d62784",
+        "H5": "928f69b236f1a9703732674101288ab5f242ea491d87cd193187d3f3d392abcd",
+        "H6": "f5242bc977f5bd3140c1e47667ec6f7f23053e6d522759d2fed6f176b9f65cec",
+        "H7": "beef3fb63c6e2d16e5ea7fe0fb3a8d0a4b44d026bb54cec973b906bf6cbd9f56",
+        "H8": "5dab278007ded8f3d029926a8751fcf9295c2ce52399529541af2f843d148311",
+        "H9": "dd7c4fd626866ee9091f8d774c76e973bc86875c38652bd204d5a88452542d52",
+        "H10": "__replay_materialization_pending__",
+        "H11": "__replay_materialization_pending__"
+      }
+    }
+  ],
+  "surface_breach_stage_set": [],
+  "recording_only_stage_set": [],
+  "report_hash": "d0df9209143c8ea288312012d60f35d511fef6df4e29e4d82df5b9e5ee9e6b82"
+}
