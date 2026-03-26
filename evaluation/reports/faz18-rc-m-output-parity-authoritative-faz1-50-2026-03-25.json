@@ -1,0 +1,12 @@
+{
+  "status": "NOT AUTHORIZED",
+  "reason": "WP-3 FAIL",
+  "source_report_path": "/Users/btmacstudio/Projects/hukuk-ai/evaluation/reports/faz17-rc-m-output-parity-authoritative-faz1-50-2026-03-25.json",
+  "family_id": "faz1-50",
+  "question_count": 50,
+  "runtime_error_count": 0,
+  "mismatch_count": 1,
+  "family_metric_delta_zero": true,
+  "gate_pass": false,
+  "report_hash": "76a57f929fd98cc44fc8c2b706b80786d1cfdcd1667988da5b62e691ae19eb58"
+}

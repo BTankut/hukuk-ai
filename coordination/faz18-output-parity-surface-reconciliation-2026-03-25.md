@@ -1,0 +1,7 @@
+# FAZ18 Output Parity Surface Reconciliation
+
+- wp3_status = `FAIL`
+- wp4_status = `NOT AUTHORIZED`
+- wp5_status = `NOT AUTHORIZED`
+- official_decision = `NO-GO - Current Authority Unstable`
+- next_official_work = `current authority recapture`

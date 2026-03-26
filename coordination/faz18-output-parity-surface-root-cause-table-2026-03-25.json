@@ -1,0 +1,18 @@
+{
+  "status": "NOT AUTHORIZED",
+  "reason": "WP-3 FAIL",
+  "frontier_count": 1,
+  "rows": [
+    {
+      "frontier_record_id": "faz1-50/TBK-027/27",
+      "frontier_family": "faz1-50",
+      "frontier_ordinal": 27,
+      "question_id": "TBK-027",
+      "first_divergence_stage_f": "final_answer_payload_hash",
+      "first_divergence_stage_o": "final_answer_payload_hash",
+      "primary_reason": "response_envelope_projection_delta",
+      "status": "NOT AUTHORIZED"
+    }
+  ],
+  "report_hash": "ca76cd072c94d455d44ef349ad9f75449340fd209fe9cbac43173e4bef3e3b6f"
+}

@@ -1,0 +1,51 @@
+{
+  "family_count": 3,
+  "control_pair_runtime_error_count": 0,
+  "control_pair_authority_match": false,
+  "control_pair_breach_in_f0_f12": false,
+  "family_metric_delta_zero": true,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "mismatch_count": 1,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {
+        "final_answer_payload_hash": 1
+      },
+      "pass": false,
+      "failures": [
+        "mismatch_count: expected=0 actual=1",
+        "response_envelope_hash_mismatch_count: expected=0 actual=1"
+      ],
+      "breach_in_f0_f12": false
+    },
+    {
+      "family_id": "v2-95",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "pass": true,
+      "failures": [],
+      "breach_in_f0_f12": false
+    },
+    {
+      "family_id": "v3-170",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "pass": false,
+      "failures": [
+        "mismatch_count: expected=6 actual=0",
+        "final_mode_mapping_hash_mismatch_count: expected=6 actual=0",
+        "blocked_reason_set_mismatch_count: expected=6 actual=0",
+        "response_envelope_hash_mismatch_count: expected=6 actual=0"
+      ],
+      "breach_in_f0_f12": false
+    }
+  ],
+  "wp3_pass": false,
+  "report_hash": "5401498651673e599fde12031bb59d7423f255a4ef188c227e1ba553502c718e"
+}

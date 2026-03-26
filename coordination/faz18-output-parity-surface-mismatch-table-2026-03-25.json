@@ -1,0 +1,17 @@
+{
+  "status": "NOT AUTHORIZED",
+  "reason": "WP-3 FAIL",
+  "frontier_count": 1,
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-027",
+      "ordinal_index": 27,
+      "first_divergence_stage_f": "final_answer_payload_hash",
+      "first_divergence_stage_o": "final_answer_payload_hash",
+      "primary_reason": "response_envelope_projection_delta",
+      "status": "NOT AUTHORIZED"
+    }
+  ],
+  "report_hash": "e7938935c2d44f5bb98a4dbb0ad431725a687aa7ac19d05eb7ff3ed485d35f55"
+}

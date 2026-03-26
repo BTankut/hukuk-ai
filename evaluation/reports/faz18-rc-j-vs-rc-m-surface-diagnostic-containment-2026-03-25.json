@@ -1,0 +1,20 @@
+{
+  "status": "NOT AUTHORIZED",
+  "reason": "WP-3 FAIL",
+  "frontier_count": 1,
+  "rc_j_vs_rc_m_runtime_error_count": 0,
+  "changed_record_outside_authorized_set_count": 1,
+  "changed_field_outside_contract_count": 0,
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "question_id": "TBK-027",
+      "ordinal_index": 27,
+      "diagnostic_runtime_error": 0,
+      "changed_field_set": [],
+      "changed_field_outside_contract": [],
+      "diagnostic_mismatch_present": false
+    }
+  ],
+  "report_hash": "e41339d9b6f6a6ebce51e9029141463eba7d83c3f8f8b14657461cfc21f1c65b"
+}
