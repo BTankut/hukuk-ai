@@ -1,0 +1,99 @@
+{
+  "historical_authority_restored": false,
+  "current_instability_snapshot_confirmed": false,
+  "current_authority_contract_breach": false,
+  "historical_rows": [
+    {
+      "family_id": "faz1-50",
+      "match": true,
+      "mismatched_fields": [],
+      "stable_mismatch_count": 0,
+      "reference_mismatch_count": 0,
+      "stable_stage_histogram": {},
+      "reference_stage_histogram": {},
+      "stable_question_ids": [],
+      "reference_question_ids": []
+    },
+    {
+      "family_id": "v2-95",
+      "match": true,
+      "mismatched_fields": [],
+      "stable_mismatch_count": 0,
+      "reference_mismatch_count": 0,
+      "stable_stage_histogram": {},
+      "reference_stage_histogram": {},
+      "stable_question_ids": [],
+      "reference_question_ids": []
+    },
+    {
+      "family_id": "v3-170",
+      "match": false,
+      "mismatched_fields": [
+        "mismatch_count",
+        "mismatch_stage_histogram",
+        "mismatch_question_ids",
+        "mismatch_ordinals"
+      ],
+      "stable_mismatch_count": 0,
+      "reference_mismatch_count": 6,
+      "stable_stage_histogram": {},
+      "reference_stage_histogram": {
+        "final_mode_mapping_hash": 6
+      },
+      "stable_question_ids": [],
+      "reference_question_ids": [
+        "TBK-051",
+        "TBK-054",
+        "TBK-055",
+        "TBK-057",
+        "TBK-058",
+        "TBK-061"
+      ]
+    }
+  ],
+  "snapshot_rows": [
+    {
+      "family_id": "faz1-50",
+      "match": false,
+      "mismatched_fields": [
+        "mismatch_count",
+        "mismatch_stage_histogram",
+        "mismatch_question_ids",
+        "mismatch_ordinals"
+      ],
+      "stable_mismatch_count": 0,
+      "reference_mismatch_count": 1,
+      "stable_stage_histogram": {},
+      "reference_stage_histogram": {
+        "final_answer_payload_hash": 1
+      },
+      "stable_question_ids": [],
+      "reference_question_ids": [
+        "TBK-027"
+      ]
+    },
+    {
+      "family_id": "v2-95",
+      "match": true,
+      "mismatched_fields": [],
+      "stable_mismatch_count": 0,
+      "reference_mismatch_count": 0,
+      "stable_stage_histogram": {},
+      "reference_stage_histogram": {},
+      "stable_question_ids": [],
+      "reference_question_ids": []
+    },
+    {
+      "family_id": "v3-170",
+      "match": true,
+      "mismatched_fields": [],
+      "stable_mismatch_count": 0,
+      "reference_mismatch_count": 0,
+      "stable_stage_histogram": {},
+      "reference_stage_histogram": {},
+      "stable_question_ids": [],
+      "reference_question_ids": []
+    }
+  ],
+  "report_hash": "54378664e950155e5840867d461dd2ed0b35dcdb5482e0dd0da4035491d94e47"
+}

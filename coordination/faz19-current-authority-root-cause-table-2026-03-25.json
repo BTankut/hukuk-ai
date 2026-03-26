@@ -1,0 +1,62 @@
+{
+  "frontier_count": 6,
+  "dominant_stage": "final_mode_mapping_hash",
+  "dominant_reason": "final_mode_mapping_delta",
+  "rows": [
+    {
+      "frontier_key": "v3-170/control_pair/001",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-051",
+      "ordinal_index": 1,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/004",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-054",
+      "ordinal_index": 4,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/005",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-055",
+      "ordinal_index": 5,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/007",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-057",
+      "ordinal_index": 7,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/008",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-058",
+      "ordinal_index": 8,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/011",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-061",
+      "ordinal_index": 11,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    }
+  ],
+  "report_hash": "120e3c1f85d5995edf543f57363c999f8363bed508f5a769085d45e7765610d2"
+}

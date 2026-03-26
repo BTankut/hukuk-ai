@@ -1,0 +1,169 @@
+{
+  "capture_id": "capture_b",
+  "family_count": 3,
+  "control_pair_runtime_error_count": 0,
+  "control_pair_breach_in_o0_o5": false,
+  "control_pair_breach_in_f0_f12": false,
+  "family_metric_delta_zero": true,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-faz1-50-20260325.json",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "breach_in_o0_o5": false,
+      "breach_in_f0_f12": false
+    },
+    {
+      "family_id": "v2-95",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-v2-95-20260325.json",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "breach_in_o0_o5": false,
+      "breach_in_f0_f12": false
+    },
+    {
+      "family_id": "v3-170",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-v3-170-20260325.json",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "breach_in_o0_o5": false,
+      "breach_in_f0_f12": false
+    }
+  ],
+  "candidate_fingerprints": [
+    {
+      "capture_id": "capture_b",
+      "family_id": "faz1-50",
+      "candidate_kind": "rc_g",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-faz1-50-20260325.json",
+      "checkpoint_ref": "rc-g-faz19-capture_b-faz1_50-first-run-20260325",
+      "lane_id": "rc_g",
+      "row_count": 50,
+      "runtime_error_count": 0,
+      "error_rerun_row_count": 0,
+      "worker_ids": [
+        "worker-0"
+      ],
+      "process_ids": [],
+      "session_namespaces": [
+        "faz19-capture_b-faz1-50-rc_g"
+      ],
+      "cache_namespaces": [],
+      "fingerprint_hash": "35d68f0a9f0d0162bd3a95cd69b5079333e7e9b9e31aa94f66b10bcbf6165e6f"
+    },
+    {
+      "capture_id": "capture_b",
+      "family_id": "faz1-50",
+      "candidate_kind": "rc_j",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-faz1-50-20260325.json",
+      "checkpoint_ref": "rc-j-faz19-capture_b-faz1_50-first-run-20260325",
+      "lane_id": "rc_j",
+      "row_count": 50,
+      "runtime_error_count": 0,
+      "error_rerun_row_count": 0,
+      "worker_ids": [
+        "worker-0"
+      ],
+      "process_ids": [],
+      "session_namespaces": [
+        "faz19-capture_b-faz1-50-rc_j"
+      ],
+      "cache_namespaces": [],
+      "fingerprint_hash": "35d68f0a9f0d0162bd3a95cd69b5079333e7e9b9e31aa94f66b10bcbf6165e6f"
+    },
+    {
+      "capture_id": "capture_b",
+      "family_id": "v2-95",
+      "candidate_kind": "rc_g",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-v2-95-20260325.json",
+      "checkpoint_ref": "rc-g-faz19-capture_b-v2_95-first-run-20260325",
+      "lane_id": "rc_g",
+      "row_count": 95,
+      "runtime_error_count": 0,
+      "error_rerun_row_count": 0,
+      "worker_ids": [
+        "worker-0"
+      ],
+      "process_ids": [],
+      "session_namespaces": [
+        "faz19-capture_b-v2-95-rc_g"
+      ],
+      "cache_namespaces": [],
+      "fingerprint_hash": "d01947f7c3caf3d3dd0da487df63a620ec0641ee1fc8ff8bf005131e2bae3b95"
+    },
+    {
+      "capture_id": "capture_b",
+      "family_id": "v2-95",
+      "candidate_kind": "rc_j",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-v2-95-20260325.json",
+      "checkpoint_ref": "rc-j-faz19-capture_b-v2_95-first-run-20260325",
+      "lane_id": "rc_j",
+      "row_count": 95,
+      "runtime_error_count": 0,
+      "error_rerun_row_count": 0,
+      "worker_ids": [
+        "worker-0"
+      ],
+      "process_ids": [],
+      "session_namespaces": [
+        "faz19-capture_b-v2-95-rc_j"
+      ],
+      "cache_namespaces": [],
+      "fingerprint_hash": "d01947f7c3caf3d3dd0da487df63a620ec0641ee1fc8ff8bf005131e2bae3b95"
+    },
+    {
+      "capture_id": "capture_b",
+      "family_id": "v3-170",
+      "candidate_kind": "rc_g",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-v3-170-20260325.json",
+      "checkpoint_ref": "rc-g-faz19-capture_b-v3_170-first-run-20260325",
+      "lane_id": "rc_g",
+      "row_count": 170,
+      "runtime_error_count": 0,
+      "error_rerun_row_count": 0,
+      "worker_ids": [
+        "worker-0"
+      ],
+      "process_ids": [],
+      "session_namespaces": [
+        "faz19-capture_b-v3-170-rc_g"
+      ],
+      "cache_namespaces": [],
+      "fingerprint_hash": "b220d3704a63aae147db521cc4f06f3297755f67d158733605e352ab9e72e8f5"
+    },
+    {
+      "capture_id": "capture_b",
+      "family_id": "v3-170",
+      "candidate_kind": "rc_j",
+      "report_path": "evaluation/reports/faz19-control-authority-capture_b-v3-170-20260325.json",
+      "checkpoint_ref": "rc-j-faz19-capture_b-v3_170-first-run-20260325",
+      "lane_id": "rc_j",
+      "row_count": 170,
+      "runtime_error_count": 0,
+      "error_rerun_row_count": 0,
+      "worker_ids": [
+        "worker-0"
+      ],
+      "process_ids": [],
+      "session_namespaces": [
+        "faz19-capture_b-v3-170-rc_j"
+      ],
+      "cache_namespaces": [],
+      "fingerprint_hash": "b220d3704a63aae147db521cc4f06f3297755f67d158733605e352ab9e72e8f5"
+    }
+  ],
+  "report_hash": "28e41fd5a94b8b40f11a235c21bcfba07c1ec34eb2c197117a0b10716ebb8e6d"
+}

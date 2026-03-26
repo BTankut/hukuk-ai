@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "frontier_count": 6,
+  "first_divergence_assigned_count": 6,
+  "primary_reason_assigned_count": 6,
+  "unexplained_count": 0,
+  "dominant_stage": "final_mode_mapping_hash",
+  "dominant_reason": "final_mode_mapping_delta",
+  "stage_histogram": {
+    "final_mode_mapping_hash": 6
+  },
+  "reason_histogram": {
+    "final_mode_mapping_delta": 6
+  },
+  "rows": [
+    {
+      "frontier_key": "v3-170/control_pair/001",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-051",
+      "ordinal_index": 1,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/004",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-054",
+      "ordinal_index": 4,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/005",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-055",
+      "ordinal_index": 5,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/007",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-057",
+      "ordinal_index": 7,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/008",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-058",
+      "ordinal_index": 8,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    },
+    {
+      "frontier_key": "v3-170/control_pair/011",
+      "family_id": "v3-170",
+      "candidate_kind": "control_pair",
+      "question_id": "TBK-061",
+      "ordinal_index": 11,
+      "first_divergence_stage": "final_mode_mapping_hash",
+      "primary_reason": "final_mode_mapping_delta"
+    }
+  ],
+  "report_hash": "d4a8ce2ea91d3bd32ccff438883aa2d03e50d57b99e07ed03665600c85aaf29d"
+}

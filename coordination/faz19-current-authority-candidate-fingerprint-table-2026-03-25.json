@@ -1,0 +1,59 @@
+{
+  "rows": [
+    {
+      "family_id": "faz1-50",
+      "candidate_kind": "rc_g",
+      "match": true,
+      "fingerprint_hash_a": "35d68f0a9f0d0162bd3a95cd69b5079333e7e9b9e31aa94f66b10bcbf6165e6f",
+      "fingerprint_hash_b": "35d68f0a9f0d0162bd3a95cd69b5079333e7e9b9e31aa94f66b10bcbf6165e6f",
+      "row_count_a": 50,
+      "row_count_b": 50
+    },
+    {
+      "family_id": "faz1-50",
+      "candidate_kind": "rc_j",
+      "match": true,
+      "fingerprint_hash_a": "35d68f0a9f0d0162bd3a95cd69b5079333e7e9b9e31aa94f66b10bcbf6165e6f",
+      "fingerprint_hash_b": "35d68f0a9f0d0162bd3a95cd69b5079333e7e9b9e31aa94f66b10bcbf6165e6f",
+      "row_count_a": 50,
+      "row_count_b": 50
+    },
+    {
+      "family_id": "v2-95",
+      "candidate_kind": "rc_g",
+      "match": true,
+      "fingerprint_hash_a": "d01947f7c3caf3d3dd0da487df63a620ec0641ee1fc8ff8bf005131e2bae3b95",
+      "fingerprint_hash_b": "d01947f7c3caf3d3dd0da487df63a620ec0641ee1fc8ff8bf005131e2bae3b95",
+      "row_count_a": 95,
+      "row_count_b": 95
+    },
+    {
+      "family_id": "v2-95",
+      "candidate_kind": "rc_j",
+      "match": true,
+      "fingerprint_hash_a": "d01947f7c3caf3d3dd0da487df63a620ec0641ee1fc8ff8bf005131e2bae3b95",
+      "fingerprint_hash_b": "d01947f7c3caf3d3dd0da487df63a620ec0641ee1fc8ff8bf005131e2bae3b95",
+      "row_count_a": 95,
+      "row_count_b": 95
+    },
+    {
+      "family_id": "v3-170",
+      "candidate_kind": "rc_g",
+      "match": true,
+      "fingerprint_hash_a": "b220d3704a63aae147db521cc4f06f3297755f67d158733605e352ab9e72e8f5",
+      "fingerprint_hash_b": "b220d3704a63aae147db521cc4f06f3297755f67d158733605e352ab9e72e8f5",
+      "row_count_a": 170,
+      "row_count_b": 170
+    },
+    {
+      "family_id": "v3-170",
+      "candidate_kind": "rc_j",
+      "match": true,
+      "fingerprint_hash_a": "b220d3704a63aae147db521cc4f06f3297755f67d158733605e352ab9e72e8f5",
+      "fingerprint_hash_b": "b220d3704a63aae147db521cc4f06f3297755f67d158733605e352ab9e72e8f5",
+      "row_count_a": 170,
+      "row_count_b": 170
+    }
+  ],
+  "report_hash": "be7805258b5b65f83fd68a5e085b68d6660b2a7471443c2e3be2b3dc511c0ead"
+}
