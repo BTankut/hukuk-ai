@@ -12,6 +12,22 @@ run_python_allow_nonzero() {
   if [ "${exit_code}" -ne 0 ]; then
     echo "[INFO] builder returned nonzero (kept for gate flow): ${exit_code} :: $*" >&2
   fi
+  return "${exit_code}"
+}
+
+emit_final_pack() {
+  local extra_args=("$@")
+  run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_final_report_pack.py" \
+    --wp2-summary-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-${DATE_TAG}.json" \
+    --steering-output-md "${REPO_ROOT}/coordination/faz16-steering-decision-table-${DATE_TAG}.md" \
+    --reconciliation-output-json "${REPO_ROOT}/coordination/faz16-replacement-build-surface-isolation-reconciliation-${DATE_TAG}.json" \
+    --reconciliation-output-md "${REPO_ROOT}/coordination/faz16-replacement-build-surface-isolation-reconciliation-${DATE_TAG}.md" \
+    --next-work-output-json "${REPO_ROOT}/coordination/faz16-next-official-work-${DATE_TAG}.json" \
+    --next-work-output-md "${REPO_ROOT}/coordination/faz16-next-official-work-${DATE_TAG}.md" \
+    --report-output-md "${REPO_ROOT}/docs/FAZ16-REPLACEMENT-BUILD-SURFACE-ISOLATION-GATE-RAPORU-2026-03-25.md" \
+    --steering-title "FAZ16 Steering Decision Table" \
+    --report-title "FAZ16 Replacement Build Surface Isolation Gate Raporu" \
+    "${extra_args[@]}"
 }
 
 questions_path_for_family() {
@@ -68,6 +84,12 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_current_authority_sum
   --summary-output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-${DATE_TAG}.json" \
   --summary-output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-${DATE_TAG}.md" \
   --title "FAZ16 RC-G vs RC-J Control Authority Current Summary"
+wp2_exit=$?
+
+if [ "${wp2_exit}" -ne 0 ]; then
+  emit_final_pack
+  exit 1
+fi
 
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_breach_sentinel_16.py" \
   --first-divergence-table "${REPO_ROOT}/coordination/faz15-breach-first-divergence-table-2026-03-25.json" \
@@ -108,7 +130,7 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz14/build_output_repair_report.
   --reference-run-label rc_j \
   --candidate-run-label rc_m \
   --output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-targeted-build-surface-isolation-gate-${DATE_TAG}.json" \
-  --output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-targeted-build-surface-isolation-gate-${DATE_TAG}.md" \
+  --output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-targeted-build-surface-isolation-gate-detail-${DATE_TAG}.md" \
   --title "FAZ16 RC-J vs RC-M Targeted Build Surface Isolation Gate"
 
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_candidate_isolation_gate.py" \
@@ -125,17 +147,19 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_candidate_isolation_g
   --table-output-md "${REPO_ROOT}/coordination/faz16-targeted-replacement-diff-table-${DATE_TAG}.md" \
   --summary-title "FAZ16 RC-J vs RC-M Targeted Build Surface Isolation Gate" \
   --table-title "FAZ16 Targeted Replacement Diff Table"
+wp4_candidate_exit=$?
 
-run_python_allow_nonzero "${REPO_ROOT}/scripts/faz13/build_authoritative_output_parity_report.py" \
+run_python_allow_nonzero "${REPO_ROOT}/scripts/faz14/build_output_repair_report.py" \
   --run-id "faz16_rc_g_vs_rc_m_targeted_v3" \
   --family-id v3-170 \
   --questions-path "${targeted_questions}" \
   --reference-report "${REPO_ROOT}/evaluation/reports/eval_faz16_rc_g_v3_170_control_current_first_run_${DATE_TAG}.json" \
   --candidate-report "${rc_m_targeted_report}" \
+  --diagnostic-report "${REPO_ROOT}/evaluation/reports/eval_faz16_rc_j_v3_170_control_current_first_run_${DATE_TAG}.json" \
   --reference-run-label rc_g \
   --candidate-run-label rc_m \
   --output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-${DATE_TAG}.json" \
-  --output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-${DATE_TAG}.md" \
+  --output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-detail-${DATE_TAG}.md" \
   --title "FAZ16 RC-G vs RC-M Targeted Replacement Gate"
 
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_replacement_gate.py" \
@@ -143,6 +167,15 @@ run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_replacement_gate.py" 
   --summary-output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-summary-${DATE_TAG}.json" \
   --summary-output-md "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-${DATE_TAG}.md" \
   --summary-title "FAZ16 RC-G vs RC-M Targeted Replacement Gate"
+wp4_replacement_exit=$?
+
+if [ "${wp4_candidate_exit}" -ne 0 ] || [ "${wp4_replacement_exit}" -ne 0 ]; then
+  emit_final_pack \
+    --wp3-manifest-json "${REPO_ROOT}/coordination/faz16-rc-m-manifest-${DATE_TAG}.json" \
+    --wp4-candidate-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-targeted-build-surface-isolation-gate-summary-${DATE_TAG}.json" \
+    --wp4-replacement-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-summary-${DATE_TAG}.json"
+  exit 1
+fi
 
 sentinel_reports=()
 for family in faz1-50 v2-95 v3-170; do
@@ -185,6 +218,16 @@ for report in "${sentinel_reports[@]}"; do
   candidate_gate_args+=(--report-json "${report}")
 done
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_candidate_isolation_gate.py" "${candidate_gate_args[@]}"
+wp5_exit=$?
+
+if [ "${wp5_exit}" -ne 0 ]; then
+  emit_final_pack \
+    --wp3-manifest-json "${REPO_ROOT}/coordination/faz16-rc-m-manifest-${DATE_TAG}.json" \
+    --wp4-candidate-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-targeted-build-surface-isolation-gate-summary-${DATE_TAG}.json" \
+    --wp4-replacement-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-summary-${DATE_TAG}.json" \
+    --wp5-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-breach-sentinel-16-build-surface-gate-${DATE_TAG}.json"
+  exit 1
+fi
 
 full_candidate_reports=()
 full_replacement_reports=()
@@ -246,6 +289,7 @@ for report in "${full_candidate_reports[@]}"; do
   full_candidate_args+=(--report-json "${report}")
 done
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_candidate_isolation_gate.py" "${full_candidate_args[@]}"
+wp6_candidate_exit=$?
 
 replacement_args=(
   --summary-output-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-full-family-replacement-summary-${DATE_TAG}.json"
@@ -262,21 +306,16 @@ for report in "${authority_reports[@]}"; do
   replacement_args+=(--authority-report-json "${report}")
 done
 run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_replacement_gate.py" "${replacement_args[@]}"
+wp6_replacement_exit=$?
 
-run_python_allow_nonzero "${REPO_ROOT}/scripts/faz16/build_final_report_pack.py" \
-  --wp2-summary-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-j-control-authority-current-summary-${DATE_TAG}.json" \
+emit_final_pack \
   --wp3-manifest-json "${REPO_ROOT}/coordination/faz16-rc-m-manifest-${DATE_TAG}.json" \
   --wp4-candidate-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-targeted-build-surface-isolation-gate-summary-${DATE_TAG}.json" \
   --wp4-replacement-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-targeted-replacement-gate-summary-${DATE_TAG}.json" \
   --wp5-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-breach-sentinel-16-build-surface-gate-${DATE_TAG}.json" \
   --wp6-candidate-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-j-vs-rc-m-full-family-build-surface-summary-${DATE_TAG}.json" \
-  --wp6-replacement-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-full-family-replacement-summary-${DATE_TAG}.json" \
-  --steering-output-md "${REPO_ROOT}/coordination/faz16-steering-decision-table-${DATE_TAG}.md" \
-  --reconciliation-output-json "${REPO_ROOT}/coordination/faz16-replacement-build-surface-isolation-reconciliation-${DATE_TAG}.json" \
-  --reconciliation-output-md "${REPO_ROOT}/coordination/faz16-replacement-build-surface-isolation-reconciliation-${DATE_TAG}.md" \
-  --next-work-output-json "${REPO_ROOT}/coordination/faz16-next-official-work-${DATE_TAG}.json" \
-  --next-work-output-md "${REPO_ROOT}/coordination/faz16-next-official-work-${DATE_TAG}.md" \
-  --report-output-md "${REPO_ROOT}/docs/FAZ16-REPLACEMENT-BUILD-SURFACE-ISOLATION-GATE-RAPORU-2026-03-25.md" \
-  --steering-title "FAZ16 Steering Decision Table" \
-  --report-title "FAZ16 Replacement Build Surface Isolation Gate Raporu"
+  --wp6-replacement-gate-json "${REPO_ROOT}/evaluation/reports/faz16-rc-g-vs-rc-m-full-family-replacement-summary-${DATE_TAG}.json"
 
+if [ "${wp6_candidate_exit}" -ne 0 ] || [ "${wp6_replacement_exit}" -ne 0 ]; then
+  exit 1
+fi

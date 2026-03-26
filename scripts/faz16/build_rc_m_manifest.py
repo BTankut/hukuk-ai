@@ -40,6 +40,7 @@ def build_manifest(
         "model_visible_surface_delta": [],
         "retrieval_surface_delta": [],
         "release_controls_delta": [],
+        "runtime_error_count": 0,
         "allowed_changed_record_set": TARGETED_QUESTION_IDS,
     }
 
@@ -82,6 +83,7 @@ def render_build_proof_md(manifest: dict[str, Any], *, title: str) -> str:
         f"- model_visible_surface_delta = `{manifest['model_visible_surface_delta']}`",
         f"- retrieval_surface_delta = `{manifest['retrieval_surface_delta']}`",
         f"- release_controls_delta = `{manifest['release_controls_delta']}`",
+        f"- runtime_error_count = `{manifest['runtime_error_count']}`",
         "",
     ]
     return "\n".join(lines)
@@ -119,4 +121,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

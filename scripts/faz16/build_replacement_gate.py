@@ -14,14 +14,20 @@ def build_targeted_gate(reports: list[dict[str, Any]]) -> dict[str, Any]:
         for report in reports
     )
     mismatch_count = sum(int(report.get("mismatch_count", 0)) for report in reports)
+    changed_field_outside_contract_count = sum(
+        int(report.get("changed_field_outside_contract_count", 0)) for report in reports
+    )
     family_metric_delta_zero = all(bool(report.get("family_metric_delta_zero")) for report in reports)
     gate = {
         "report_count": len(reports),
         "runtime_error_count": runtime_error_count,
         "mismatch_count": mismatch_count,
+        "changed_field_outside_contract_count": changed_field_outside_contract_count,
         "family_metric_delta_zero": family_metric_delta_zero,
-        "changed_field_outside_contract_count": 0,
-        "gate_pass": runtime_error_count == 0 and mismatch_count == 0 and family_metric_delta_zero,
+        "gate_pass": runtime_error_count == 0
+        and mismatch_count == 0
+        and changed_field_outside_contract_count == 0
+        and family_metric_delta_zero,
     }
     gate["report_hash"] = stable_hash(gate)
     return gate
@@ -193,4 +199,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

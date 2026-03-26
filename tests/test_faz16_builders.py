@@ -9,6 +9,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "faz16"))
 from build_breach_sentinel_16 import build_pack
 from build_candidate_isolation_gate import build_gate as build_candidate_gate
 from build_current_authority_summary import build_summary
+from build_final_report_pack import decide
 from build_replacement_gate import build_full_gate, build_targeted_gate
 
 
@@ -143,8 +144,39 @@ def test_replacement_targeted_gate_passes_with_zero_mismatch() -> None:
                 "reference_runtime_error_count": 0,
                 "candidate_runtime_error_count": 0,
                 "mismatch_count": 0,
+                "changed_field_outside_contract_count": 0,
                 "family_metric_delta_zero": True,
             }
         ]
     )
     assert gate["gate_pass"] is True
+
+
+def test_replacement_targeted_gate_fails_on_outside_contract_field() -> None:
+    gate = build_targeted_gate(
+        [
+            {
+                "reference_runtime_error_count": 0,
+                "candidate_runtime_error_count": 0,
+                "mismatch_count": 0,
+                "changed_field_outside_contract_count": 1,
+                "family_metric_delta_zero": True,
+            }
+        ]
+    )
+    assert gate["gate_pass"] is False
+    assert gate["changed_field_outside_contract_count"] == 1
+
+
+def test_final_report_decision_allows_early_control_authority_stop() -> None:
+    decision, next_work = decide(
+        wp2_summary={"wp2_pass": False},
+        wp3_manifest=None,
+        wp4_candidate_gate=None,
+        wp4_replacement_gate=None,
+        wp5_gate=None,
+        wp6_candidate_gate=None,
+        wp6_replacement_gate=None,
+    )
+    assert decision == "NO-GO - Control Authority Unstable"
+    assert next_work == "rc-g-vs-rc-j current authority recapture repeatability forensics"
