@@ -1,0 +1,8 @@
+{
+  "status": "NOT AUTHORIZED",
+  "reason": "surface_breach_non_reproducible_under_canonical_current_authority",
+  "frontier_count": 0,
+  "rc_j_vs_rc_m_runtime_error_count": 0,
+  "rows": [],
+  "report_hash": "ab972fb77cacb69d87801ee23f80c12eb4f2f682c3c4e062084db6ab596ecc5a"
+}

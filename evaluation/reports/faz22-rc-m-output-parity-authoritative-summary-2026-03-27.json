@@ -1,0 +1,36 @@
+{
+  "family_count": 3,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "question_count": 50,
+      "runtime_error_count": 0,
+      "mismatch_count": 0,
+      "family_metric_delta_zero": true,
+      "upstream_mismatch_count": 0
+    },
+    {
+      "family_id": "v2-95",
+      "question_count": 95,
+      "runtime_error_count": 0,
+      "mismatch_count": 0,
+      "family_metric_delta_zero": true,
+      "upstream_mismatch_count": 0
+    },
+    {
+      "family_id": "v3-170",
+      "question_count": 170,
+      "runtime_error_count": 0,
+      "mismatch_count": 0,
+      "family_metric_delta_zero": true,
+      "upstream_mismatch_count": 0
+    }
+  ],
+  "runtime_error_count": 0,
+  "authoritative_summary_mismatch_count": 0,
+  "output_parity_surface_breach_count": 0,
+  "localized_authorized_downstream_drift_count": 0,
+  "frontier_candidate_count": 0,
+  "wp4_pass": false,
+  "report_hash": "b17d480ea10e069bbb4fab104e00e9f97d4227c899ff2b8847554290b1d05b19"
+}

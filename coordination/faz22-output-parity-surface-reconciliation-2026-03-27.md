@@ -1,0 +1,24 @@
+# FAZ22 Output Parity Surface Reconciliation
+
+- wp1_status = `PASS`
+- wp2_status = `PASS`
+- wp3_status = `PASS`
+- wp4_status = `FAIL`
+- wp5_status = `NOT AUTHORIZED`
+- control_pair_runtime_error_count = `0`
+- control_pair_authority_match = `True`
+- current_authority_contract_breach = `False`
+- control_pair_breach_in_f0_f12 = `False`
+- authoritative_summary_runtime_error_count = `0`
+- authoritative_summary_mismatch_count = `0`
+- output_parity_surface_breach_count = `0`
+- localized_authorized_downstream_drift_count = `0`
+- frontier_candidate_count = `0`
+- frontier_count = `0`
+- first_divergence_assigned_count = `0`
+- primary_reason_assigned_count = `0`
+- root_cause_class_assigned_count = `0`
+- unexplained_count = `0`
+- rc_j_vs_rc_m_runtime_error_count = `0`
+- official_decision = `NO-GO - RC-M Surface Breach Non-Reproducible Under Canonical Current Authority`
+- next_official_work = `rc-m authoritative summary truth reconciliation under canonical current authority`

@@ -1,0 +1,39 @@
+{
+  "family_count": 3,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "pass": true,
+      "failures": []
+    },
+    {
+      "family_id": "v2-95",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "pass": true,
+      "failures": []
+    },
+    {
+      "family_id": "v3-170",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "pass": true,
+      "failures": []
+    }
+  ],
+  "control_pair_runtime_error_count": 0,
+  "control_pair_authority_match": true,
+  "current_authority_contract_breach": false,
+  "control_pair_breach_in_f0_f12": false,
+  "family_metric_delta_zero": true,
+  "wp3_pass": true,
+  "report_hash": "98bb26e006f0ed88ef771f557021084712a1b381a1a468ef30435d3c202a0a12"
+}
