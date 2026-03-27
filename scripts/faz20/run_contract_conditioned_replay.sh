@@ -217,6 +217,45 @@ run_candidate_family() {
   fi
 }
 
+build_pair_report() {
+  local replay_kind="$1"
+  local family_id="$2"
+  local questions_path="$3"
+  local rc_g_prefix="$4"
+  local rc_j_prefix="$5"
+
+  local output_json="${REPO_ROOT}/evaluation/reports/faz20-${replay_kind}-${family_id}-${DATE_TAG}.json"
+  local output_md="${REPO_ROOT}/evaluation/reports/faz20-${replay_kind}-${family_id}-${DATE_TAG}.md"
+
+  if [ -f "${output_json}" ]; then
+    echo "[INFO] parity report already exists, skipping ${output_json}"
+    return 0
+  fi
+
+  local -a cmd=(
+    python3 "${REPO_ROOT}/scripts/faz13/build_authoritative_output_parity_report.py"
+    --run-id "faz20-${replay_kind}-${family_id}-${DATE_TAG}"
+    --family-id "${family_id}"
+    --questions-path "${questions_path}"
+    --reference-report "${rc_g_prefix}_first_run.json"
+    --candidate-report "${rc_j_prefix}_first_run.json"
+    --reference-run-label "rc_g"
+    --candidate-run-label "rc_j"
+    --output-json "${output_json}"
+    --output-md "${output_md}"
+    --title "FAZ20 ${replay_kind^^} ${family_id} Contract Conditioned Replay"
+  )
+
+  if [ -f "${rc_g_prefix}_error_rerun.json" ]; then
+    cmd+=(--reference-rerun-report "${rc_g_prefix}_error_rerun.json")
+  fi
+  if [ -f "${rc_j_prefix}_error_rerun.json" ]; then
+    cmd+=(--candidate-rerun-report "${rc_j_prefix}_error_rerun.json")
+  fi
+
+  "${cmd[@]}"
+}
+
 case "${REPLAY_KIND}" in
   faz13)
     RC_G_GATEWAY_PORT=8139
@@ -271,17 +310,5 @@ for FAMILY_ID in faz1-50 v2-95 v3-170; do
   run_candidate_family "${REPLAY_KIND}" "${FAMILY_ID}" rc_g "${QUESTIONS_PATH}" "${RC_G_PREFIX}" "${EXPECTED_COUNT}" "${RC_G_GATEWAY_PORT}" "${RC_G_TUNNEL_PORT}"
   run_candidate_family "${REPLAY_KIND}" "${FAMILY_ID}" rc_j "${QUESTIONS_PATH}" "${RC_J_PREFIX}" "${EXPECTED_COUNT}" "${RC_J_GATEWAY_PORT}" "${RC_J_TUNNEL_PORT}"
 
-  python3 "${REPO_ROOT}/scripts/faz13/build_authoritative_output_parity_report.py" \
-    --run-id "faz20-${REPLAY_KIND}-${FAMILY_ID}-${DATE_TAG}" \
-    --family-id "${FAMILY_ID}" \
-    --questions-path "${QUESTIONS_PATH}" \
-    --reference-report "${RC_G_PREFIX}_first_run.json" \
-    --candidate-report "${RC_J_PREFIX}_first_run.json" \
-    --reference-rerun-report "${RC_G_PREFIX}_error_rerun.json" \
-    --candidate-rerun-report "${RC_J_PREFIX}_error_rerun.json" \
-    --reference-run-label "rc_g" \
-    --candidate-run-label "rc_j" \
-    --output-json "${REPO_ROOT}/evaluation/reports/faz20-${REPLAY_KIND}-${FAMILY_ID}-${DATE_TAG}.json" \
-    --output-md "${REPO_ROOT}/evaluation/reports/faz20-${REPLAY_KIND}-${FAMILY_ID}-${DATE_TAG}.md" \
-    --title "FAZ20 ${REPLAY_KIND^^} ${FAMILY_ID} Contract Conditioned Replay"
+  build_pair_report "${REPLAY_KIND}" "${FAMILY_ID}" "${QUESTIONS_PATH}" "${RC_G_PREFIX}" "${RC_J_PREFIX}"
 done

@@ -1,0 +1,72 @@
+{
+  "frontier_count": 2,
+  "first_divergence_assigned_count": 2,
+  "primary_reason_assigned_count": 2,
+  "unexplained_count": 0,
+  "dominant_stage": "H10",
+  "dominant_reason": "authority_summary_materialization_delta",
+  "rows": [
+    {
+      "replay_name": "faz13",
+      "reference_name": "faz13",
+      "family_name": "v3-170",
+      "match": false,
+      "replay_mismatch_count": 0,
+      "reference_mismatch_count": 6,
+      "replay_mismatch_question_ids": [],
+      "reference_mismatch_question_ids": [
+        "TBK-051",
+        "TBK-054",
+        "TBK-055",
+        "TBK-057",
+        "TBK-058",
+        "TBK-061"
+      ],
+      "replay_mismatch_ordinals": [],
+      "reference_mismatch_ordinals": [
+        1,
+        4,
+        5,
+        7,
+        8,
+        11
+      ],
+      "replay_stage_histogram": {},
+      "reference_stage_histogram": {
+        "final_mode_mapping_hash": 6
+      },
+      "replay_reason_histogram": {},
+      "reference_reason_histogram": {
+        "final_mode_mapping_delta": 6
+      },
+      "first_divergence_stage": "H10",
+      "primary_reason": "authority_summary_materialization_delta"
+    },
+    {
+      "replay_name": "faz18",
+      "reference_name": "faz18",
+      "family_name": "faz1-50",
+      "match": false,
+      "replay_mismatch_count": 0,
+      "reference_mismatch_count": 1,
+      "replay_mismatch_question_ids": [],
+      "reference_mismatch_question_ids": [
+        "TBK-027"
+      ],
+      "replay_mismatch_ordinals": [],
+      "reference_mismatch_ordinals": [
+        27
+      ],
+      "replay_stage_histogram": {},
+      "reference_stage_histogram": {
+        "final_answer_payload_hash": 1
+      },
+      "replay_reason_histogram": {},
+      "reference_reason_histogram": {
+        "response_envelope_projection_delta": 1
+      },
+      "first_divergence_stage": "H10",
+      "primary_reason": "authority_summary_materialization_delta"
+    }
+  ]
+}

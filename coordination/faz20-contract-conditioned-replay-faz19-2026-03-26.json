@@ -1,0 +1,153 @@
+{
+  "replay_name": "faz19",
+  "reference_name": "faz19",
+  "families": [
+    {
+      "family_name": "faz1-50",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "f87212eb4403fd40bb2c8f5eaed8965b9107b75306aa1fdbdf88cb26f8e8a120",
+      "per_ordinal_fingerprint_set_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "family_name": "v2-95",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "30aa59564e2ab6d2cf3e9b0c48cb0aa80118b87f7740262a368687ce0e469f0f",
+      "per_ordinal_fingerprint_set_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "family_name": "v3-170",
+      "candidate_pair": "rc_g_vs_rc_j",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "authoritative_summary_hash": "e31dcd894c8bc74558f77cdb69b737586f3e5c10666ee9415976d4b64f5b47cb",
+      "per_ordinal_fingerprint_set_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ],
+  "runtime_error_count": 0,
+  "family_metric_delta_zero": true,
+  "breach_in_h0_h9": false,
+  "breach_in_h0_h9_stage_set": [],
+  "breach_in_h10_h11": true,
+  "breach_in_h10_h11_stage_set": [
+    "H10",
+    "H11"
+  ],
+  "reference_match": true,
+  "reference_mismatch_count": 0,
+  "first_divergence_stage": "H10",
+  "primary_reason": "stable_current_truth_canonical",
+  "unexplained_count": 0,
+  "comparison_rows": [
+    {
+      "family_name": "faz1-50",
+      "match": true,
+      "mismatched_fields": [],
+      "replay": {
+        "mismatch_count": 0,
+        "runtime_error_count": 0,
+        "family_metric_delta_zero": true,
+        "mismatch_stage_histogram": {},
+        "mismatch_question_ids": [],
+        "mismatch_ordinals": [],
+        "first_divergence_stage_set": [],
+        "reason_histogram": {}
+      },
+      "reference": {
+        "mismatch_count": 0,
+        "runtime_error_count": 0,
+        "family_metric_delta_zero": true,
+        "mismatch_stage_histogram": {},
+        "mismatch_question_ids": [],
+        "mismatch_ordinals": [],
+        "first_divergence_stage_set": [],
+        "reason_histogram": {}
+      },
+      "breach_in_h10_h11": [
+        "H10",
+        "H11"
+      ]
+    },
+    {
+      "family_name": "v2-95",
+      "match": true,
+      "mismatched_fields": [],
+      "replay": {
+        "mismatch_count": 0,
+        "runtime_error_count": 0,
+        "family_metric_delta_zero": true,
+        "mismatch_stage_histogram": {},
+        "mismatch_question_ids": [],
+        "mismatch_ordinals": [],
+        "first_divergence_stage_set": [],
+        "reason_histogram": {}
+      },
+      "reference": {
+        "mismatch_count": 0,
+        "runtime_error_count": 0,
+        "family_metric_delta_zero": true,
+        "mismatch_stage_histogram": {},
+        "mismatch_question_ids": [],
+        "mismatch_ordinals": [],
+        "first_divergence_stage_set": [],
+        "reason_histogram": {}
+      },
+      "breach_in_h10_h11": [
+        "H10",
+        "H11"
+      ]
+    },
+    {
+      "family_name": "v3-170",
+      "match": true,
+      "mismatched_fields": [],
+      "replay": {
+        "mismatch_count": 0,
+        "runtime_error_count": 0,
+        "family_metric_delta_zero": true,
+        "mismatch_stage_histogram": {},
+        "mismatch_question_ids": [],
+        "mismatch_ordinals": [],
+        "first_divergence_stage_set": [],
+        "reason_histogram": {}
+      },
+      "reference": {
+        "mismatch_count": 0,
+        "runtime_error_count": 0,
+        "family_metric_delta_zero": true,
+        "mismatch_stage_histogram": {},
+        "mismatch_question_ids": [],
+        "mismatch_ordinals": [],
+        "first_divergence_stage_set": [],
+        "reason_histogram": {}
+      },
+      "breach_in_h10_h11": [
+        "H10",
+        "H11"
+      ]
+    }
+  ],
+  "authoritative_summary_hash": "f8b9889f6e8617588967e9ee3daaa1a2d5fe347322dacb23a397bd1aeb8d7c7f",
+  "report_hash": "fa174967c388c68761dde4cf54301f684eb44f78ecb708c2c7105ba24f9b53fd"
+}

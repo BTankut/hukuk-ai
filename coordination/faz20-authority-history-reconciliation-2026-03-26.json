@@ -1,0 +1,18 @@
+{
+  "wp3_pass": true,
+  "wp4_pass": true,
+  "wp5_pass": true,
+  "reference_pack_integrity_pass": true,
+  "reference_pack_contradiction_count": 0,
+  "surface_breach_stage_set": [],
+  "recording_only_stage_set": [],
+  "replay_19_reference_match": true,
+  "frontier_count": 2,
+  "first_divergence_assigned_count": 2,
+  "primary_reason_assigned_count": 2,
+  "unexplained_count": 0,
+  "dominant_stage": "H10",
+  "dominant_reason": "authority_summary_materialization_delta",
+  "official_decision": "PASS - Current Authority Canonicalization Authorized",
+  "next_official_work": "current authority canonicalization gate"
+}
