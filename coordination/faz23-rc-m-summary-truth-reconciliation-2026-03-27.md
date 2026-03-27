@@ -1,0 +1,29 @@
+# FAZ23 RC-M Summary Truth Reconciliation
+
+- wp1_status = `PASS`
+- wp2_status = `PASS`
+- wp3_status = `PASS`
+- wp4_status = `PASS`
+- wp5_status = `PASS`
+- reference_pack_integrity_pass = `true`
+- reference_pack_contradiction_count = `0`
+- historical_summary_mismatch_count = `1`
+- current_summary_mismatch_count = `0`
+- historical_surface_breach_count = `1`
+- current_surface_breach_count = `0`
+- historical_frontier_candidate_count = `1`
+- current_frontier_candidate_count = `0`
+- reconciliation_stage = `R4`
+- primary_reason = `historical_summary_truth_reclassified_to_archive_after_canonical_current_authority_adoption`
+- root_cause_class = `historical_summary_truth_reclassified_to_archive`
+- current_summary_truth_adopted = `true`
+- historical_summary_archive_reclassified = `true`
+- surface_breach_from_history_reintroduced = `false`
+- historical_summary_channel = `diagnostic_only`
+- frontier_count = `NOT APPLICABLE`
+- first_divergence_assigned_count = `NOT APPLICABLE`
+- primary_reason_assigned_count = `NOT APPLICABLE`
+- rc_j_vs_rc_m_runtime_error_count = `NOT APPLICABLE`
+- unexplained_count = `0`
+- official_decision = `PASS - RC-M Authoritative Summary Truth Reconciled Under Canonical Current Authority`
+- next_official_work = `rc-m discard archival closure under canonical current authority`
