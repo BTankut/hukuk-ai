@@ -1,0 +1,33 @@
+# FAZ25 Next Implementation Contract
+
+- next_candidate_id = `RC-N`
+- next_candidate_base = `RC-G`
+- next_candidate_control = `RC-J`
+- next_candidate_status = `reserved_not_built`
+- next_phase_scope = `release_controls_closure_only_under_canonical_current_authority`
+- must_close_release_controls_source = `faz1_5 + faz7 sources_of_record`
+- allowed_diff_surface = `release_controls_boundary_only`
+- answer_path_delta_allowed = `false`
+- retrieval_change_allowed = `false`
+- prompt_change_allowed = `false`
+- model_change_allowed = `false`
+- guardrail_change_allowed = `false`
+- corpus_change_allowed = `false`
+- database_expansion_allowed = `false`
+- cutover_authorized_in_next_phase = `false`
+- pilot_authorized_in_next_phase = `false`
+- parity_gate_required = `true`
+- release_controls_retention_required = `true`
+- must_close_release_controls_count = `10`
+- must_close_release_controls_exact_set_source_path = `coordination/faz1_5-production-readiness-matrix-2026-03-22.md + coordination/faz7-production-readiness-matrix-v2-2026-03-24.md`
+- must_close_release_controls_exact_set =
+  - `mandatory auth`
+  - `immutable audit logging`
+  - `persisted PII redaction`
+  - `Redis session persistence`
+  - `tokenizer-backed accounting`
+  - `observability / alerting`
+  - `API versioning`
+  - `process supervision`
+  - `backup / restore`
+  - `one-command release smoke`
