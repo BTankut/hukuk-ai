@@ -1,0 +1,89 @@
+{
+  "rows": [
+    {
+      "consumer_name": "current_authority_gate",
+      "consumer_scope": "official current authority gate",
+      "primary_reference": "canonical_current_authority_ref",
+      "primary_reference_source": "faz19 stable current truth",
+      "secondary_reference": "historical_archive_ref",
+      "secondary_reference_source": "faz13 historical authority + faz18 instability snapshot",
+      "comparison_order": "current_canonical -> historical_archive",
+      "current_channel": "authoritative",
+      "history_channel": "diagnostic_only",
+      "allowed_history_stage_set": [
+        "H10",
+        "H11"
+      ],
+      "blocked_history_stage_set": [
+        "H0-H9"
+      ],
+      "canonical_current_truth_match_required": true,
+      "surface_breach_from_history_reintroduced": false,
+      "notes": "Current gate decisions are taken from canonical current authority first."
+    },
+    {
+      "consumer_name": "control_pair_authoritative_comparison",
+      "consumer_scope": "rc_g_vs_rc_j authoritative comparison",
+      "primary_reference": "canonical_current_authority_ref",
+      "primary_reference_source": "faz19 stable current truth",
+      "secondary_reference": "historical_archive_ref",
+      "secondary_reference_source": "faz13 historical authority + faz18 instability snapshot",
+      "comparison_order": "current_canonical -> historical_archive",
+      "current_channel": "authoritative",
+      "history_channel": "diagnostic_only",
+      "allowed_history_stage_set": [
+        "H10",
+        "H11"
+      ],
+      "blocked_history_stage_set": [
+        "H0-H9"
+      ],
+      "canonical_current_truth_match_required": true,
+      "surface_breach_from_history_reintroduced": false,
+      "notes": "Historical rows stay explanatory only and cannot replace the current reference."
+    },
+    {
+      "consumer_name": "frontier_localization",
+      "consumer_scope": "frontier localization and replay interpretation",
+      "primary_reference": "canonical_current_authority_ref",
+      "primary_reference_source": "faz19 stable current truth",
+      "secondary_reference": "historical_archive_ref",
+      "secondary_reference_source": "faz13 historical authority + faz18 instability snapshot",
+      "comparison_order": "current_canonical -> historical_archive",
+      "current_channel": "authoritative",
+      "history_channel": "diagnostic_only",
+      "allowed_history_stage_set": [
+        "H10",
+        "H11"
+      ],
+      "blocked_history_stage_set": [
+        "H0-H9"
+      ],
+      "canonical_current_truth_match_required": true,
+      "surface_breach_from_history_reintroduced": false,
+      "notes": "Historical archive remains available only to explain prior FAZ13/FAZ18 differences."
+    },
+    {
+      "consumer_name": "output_parity_reopen",
+      "consumer_scope": "future output parity reopen under canonical current authority",
+      "primary_reference": "canonical_current_authority_ref",
+      "primary_reference_source": "faz19 stable current truth",
+      "secondary_reference": "historical_archive_ref",
+      "secondary_reference_source": "faz13 historical authority + faz18 instability snapshot",
+      "comparison_order": "current_canonical -> historical_archive",
+      "current_channel": "authoritative",
+      "history_channel": "diagnostic_only",
+      "allowed_history_stage_set": [
+        "H10",
+        "H11"
+      ],
+      "blocked_history_stage_set": [
+        "H0-H9"
+      ],
+      "canonical_current_truth_match_required": true,
+      "surface_breach_from_history_reintroduced": false,
+      "notes": "Historical mismatch rows cannot be promoted back into current parity breach state."
+    }
+  ],
+  "report_hash": "d8a7c31878ecb8eed712e2542734e91644a9c467186c8329ba31d97db5b5c077"
+}

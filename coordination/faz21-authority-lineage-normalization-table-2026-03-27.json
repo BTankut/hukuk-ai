@@ -1,0 +1,50 @@
+{
+  "rows": [
+    {
+      "reference_name": "canonical_current_authority_ref",
+      "family_name": "faz1-50",
+      "classification": "current_canonical",
+      "first_divergence_stage": null,
+      "primary_reason": "stable_current_truth_canonical",
+      "history_only": false,
+      "surface_breach": false
+    },
+    {
+      "reference_name": "canonical_current_authority_ref",
+      "family_name": "v2-95",
+      "classification": "current_canonical",
+      "first_divergence_stage": null,
+      "primary_reason": "stable_current_truth_canonical",
+      "history_only": false,
+      "surface_breach": false
+    },
+    {
+      "reference_name": "canonical_current_authority_ref",
+      "family_name": "v3-170",
+      "classification": "current_canonical",
+      "first_divergence_stage": null,
+      "primary_reason": "stable_current_truth_canonical",
+      "history_only": false,
+      "surface_breach": false
+    },
+    {
+      "reference_name": "faz13",
+      "family_name": "v3-170",
+      "classification": "historical_archive",
+      "first_divergence_stage": "H10",
+      "primary_reason": "authority_summary_materialization_delta",
+      "history_only": true,
+      "surface_breach": false
+    },
+    {
+      "reference_name": "faz18",
+      "family_name": "faz1-50",
+      "classification": "historical_archive",
+      "first_divergence_stage": "H10",
+      "primary_reason": "authority_summary_materialization_delta",
+      "history_only": true,
+      "surface_breach": false
+    }
+  ],
+  "report_hash": "867fdfd1e8b924a1bf09e32b43b8a6de33e93a5e5e43b699ff33a4fd50b578bc"
+}

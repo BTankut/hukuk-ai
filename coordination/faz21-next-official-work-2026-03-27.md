@@ -1,0 +1,4 @@
+# FAZ21 Next Official Work
+
+- official_decision = `PASS - Current Authority Canonicalized`
+- next_official_work = `rc-m discard and output-parity surface forensics reopen under canonical current authority`

@@ -1,0 +1,47 @@
+{
+  "reference_name": "canonical_current_authority_ref",
+  "source_reference": "faz19",
+  "control_pair": "rc_g_vs_rc_j",
+  "control_pair_runtime_error_count": 0,
+  "surface_breach_stage_set": [],
+  "current_authority_contract_breach": false,
+  "families": [
+    {
+      "family_name": "faz1-50",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "current_authority_contract_breach": false
+    },
+    {
+      "family_name": "v2-95",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "current_authority_contract_breach": false
+    },
+    {
+      "family_name": "v3-170",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "mismatch_stage_histogram": {},
+      "mismatch_question_ids": [],
+      "mismatch_ordinals": [],
+      "first_divergence_stage_set": [],
+      "reason_histogram": {},
+      "current_authority_contract_breach": false
+    }
+  ],
+  "report_hash": "a8ee1cd87026ac8abe90609126ad99297caf830e80efb80527e7eba8139ae093"
+}
