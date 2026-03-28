@@ -1,0 +1,15 @@
+{
+  "candidate_id": "RC-N",
+  "base_candidate": "RC-G",
+  "control_candidate": "RC-J",
+  "candidate_status": "release_controls_candidate",
+  "diagnostic_only": false,
+  "promotable": false,
+  "repairable": false,
+  "current_evaluable": true,
+  "allowed_diff_surface": "release_controls_boundary_only",
+  "answer_path_delta_allowed": false,
+  "cutover_authorized": false,
+  "pilot_authorized": false,
+  "report_hash": "3dc42a0c41363ea85d26c33c5206968b233cc4308d26fccec4b836d971d50ee9"
+}

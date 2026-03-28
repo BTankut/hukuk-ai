@@ -1,0 +1,36 @@
+{
+  "manifest_path": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz26_backups/faz26_rc_n_release_state_20260328T101149Z/manifest.json",
+  "restore_env_path": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz26_restore/restore.env.sh",
+  "files": [
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/scripts/faz26/launch_local_rc_n_candidate_gateway.sh",
+      "backup_path": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz26_backups/faz26_rc_n_release_state_20260328T101149Z/files/Users__btmacstudio__Projects__hukuk-ai__scripts__faz26__launch_local_rc_n_candidate_gateway.sh",
+      "exists": true,
+      "sha256": "4f4fd89c7cfaa2312c6c1d6c99964291024ae333edd44257a6a8e5a7270ccb91"
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_manifest_seed.json",
+      "backup_path": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz26_backups/faz26_rc_n_release_state_20260328T101149Z/files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_manifest_seed.json",
+      "exists": true,
+      "sha256": "2f40726071322a14a875f4eb6ce5cb18f4acdaeae397ee33880dba25460d373b"
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_audit.jsonl",
+      "backup_path": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz26_backups/faz26_rc_n_release_state_20260328T101149Z/files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_audit.jsonl",
+      "exists": true,
+      "sha256": "fe8eaa874a5db23160283ca21023ff3d1b4dc00b02b9066b22c0bc44e13f6d32"
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_redis_snapshot.json",
+      "backup_path": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz26_backups/faz26_rc_n_release_state_20260328T101149Z/files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_redis_snapshot.json",
+      "exists": true,
+      "sha256": "e7a47b78e05a241ec76a1e9fb4b39f4a43f5f917f0c93fb19172cfd25c57289f"
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_observability_config.json",
+      "backup_path": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz26_backups/faz26_rc_n_release_state_20260328T101149Z/files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_observability_config.json",
+      "exists": true,
+      "sha256": "2a6546bb410cf343ac1c853311abffe7ee77414fe92239c134198a9ee4913b25"
+    }
+  ]
+}

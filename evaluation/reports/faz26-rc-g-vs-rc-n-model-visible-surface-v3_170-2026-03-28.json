@@ -1,0 +1,956 @@
+{
+  "family_id": "v3-170",
+  "question_count": 170,
+  "compared_question_count": 170,
+  "model_request_payload_hash_mismatch_count": 0,
+  "retrieval_request_hash_mismatch_count": 0,
+  "assembled_context_hash_mismatch_count": 0,
+  "preprojection_hash_mismatch_count": 94,
+  "raw_answer_hash_mismatch_count": 94,
+  "runtime_error_count": 0,
+  "first_break_stage_assigned_count": 94,
+  "primary_reason_assigned_count": 94,
+  "unexplained_count": 0,
+  "mismatch_rows": [
+    {
+      "question_id": "HAL-001",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-002",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-003",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-004",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-005",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-006",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-007",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-008",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-009",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-010",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-011",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "HAL-012",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "OOS-002",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "OOS-004",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "OOS-006",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "OOS-008",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "OOS-010",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "OOS-011",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-054",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-055",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-056",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-057",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-058",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-059",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-060",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-062",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-063",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-064",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-066",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-067",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-068",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-069",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-070",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-071",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-072",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-073",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-074",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-075",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-077",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-079",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-080",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-081",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-082",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-083",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-084",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-085",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-088",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-090",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-092",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-093",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-095",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-098",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-099",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-100",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-104",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-111",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-112",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-114",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-117",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-118",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-119",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-120",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-121",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-122",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-123",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-124",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-125",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-126",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-128",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-129",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-149",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-154",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-157",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TBK-166",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-002",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-004",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-005",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-007",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-008",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-010",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-014",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-015",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-017",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-019",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-020",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-021",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-022",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-023",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-024",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-025",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-026",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-027",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-028",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "question_id": "TMK-CL-029",
+      "first_break_stage": "preprojection_hash",
+      "primary_reason": "preprojection_hash_drift",
+      "runtime_error": false,
+      "mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    }
+  ]
+}

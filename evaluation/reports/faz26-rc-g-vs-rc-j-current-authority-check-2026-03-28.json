@@ -1,0 +1,33 @@
+{
+  "control_pair_reference": "canonical_current_authority_ref",
+  "control_pair_authority_match": true,
+  "current_authority_contract_breach": false,
+  "surface_breach_from_history_reintroduced": false,
+  "current_canonical_authority_adopted": true,
+  "canonicalization_gate_pass": true,
+  "control_pair_runtime_error_count": 0,
+  "families": [
+    {
+      "family_name": "faz1-50",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "pass": true
+    },
+    {
+      "family_name": "v2-95",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "pass": true
+    },
+    {
+      "family_name": "v3-170",
+      "mismatch_count": 0,
+      "runtime_error_count": 0,
+      "family_metric_delta_zero": true,
+      "pass": true
+    }
+  ],
+  "wp3_control_gate_pass": true
+}

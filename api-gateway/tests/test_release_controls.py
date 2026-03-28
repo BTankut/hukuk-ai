@@ -80,6 +80,9 @@ def test_append_audit_event_redacts_pii_and_writes_hash_chain(
     assert payload["event_sha256"]
     assert payload["selected_lane"] == "rc_h"
     assert payload["request_id"] == "req-1"
+    assert payload["auth_principal"] == "key-123"
+    assert payload["citation_list"] == ["TBK m.49"]
+    assert payload["latency"] == 123.0
     assert payload["decision_timestamps"]["decision_completed_at"] == "2026-03-24T00:00:00Z"
 
 

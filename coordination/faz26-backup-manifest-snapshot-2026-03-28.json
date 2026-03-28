@@ -1,0 +1,47 @@
+{
+  "label": "faz26_rc_n_release_state",
+  "created_at": "20260328T101149Z",
+  "env": {
+    "RELEASE_LANE_ID": null,
+    "RELEASE_CONTROLS_STRICT": null,
+    "API_VERSION_LABEL": null,
+    "API_AUTH_ENABLED": null,
+    "AUDIT_LOG_ENABLED": null,
+    "SESSION_STORE_BACKEND": null,
+    "SESSION_STORE_REDIS_REQUIRED": null,
+    "REDIS_URL": null,
+    "TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK": null
+  },
+  "files": [
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/scripts/faz26/launch_local_rc_n_candidate_gateway.sh",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__scripts__faz26__launch_local_rc_n_candidate_gateway.sh",
+      "sha256": "4f4fd89c7cfaa2312c6c1d6c99964291024ae333edd44257a6a8e5a7270ccb91",
+      "size_bytes": 1829
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_manifest_seed.json",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_manifest_seed.json",
+      "sha256": "2f40726071322a14a875f4eb6ce5cb18f4acdaeae397ee33880dba25460d373b",
+      "size_bytes": 200
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_audit.jsonl",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_audit.jsonl",
+      "sha256": "fe8eaa874a5db23160283ca21023ff3d1b4dc00b02b9066b22c0bc44e13f6d32",
+      "size_bytes": 434031
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_redis_snapshot.json",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_redis_snapshot.json",
+      "sha256": "e7a47b78e05a241ec76a1e9fb4b39f4a43f5f917f0c93fb19172cfd25c57289f",
+      "size_bytes": 270787
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz26_rc_n_observability_config.json",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz26_rc_n_observability_config.json",
+      "sha256": "2a6546bb410cf343ac1c853311abffe7ee77414fe92239c134198a9ee4913b25",
+      "size_bytes": 137
+    }
+  ]
+}
