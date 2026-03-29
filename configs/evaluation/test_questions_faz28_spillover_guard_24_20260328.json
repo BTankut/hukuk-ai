@@ -1,0 +1,507 @@
+{
+  "questions": [
+    {
+      "id": "faz1-50::TBK-001",
+      "source_question_id": "TBK-001",
+      "authority_family_id": "faz1-50",
+      "question": "Türk Borçlar Kanunu'na göre bir sözleşmenin kurulması için hangi unsurlar gereklidir?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.1",
+        "TBK m.2",
+        "TBK m.3"
+      ],
+      "expected_keywords": [
+        "öneri",
+        "kabul",
+        "icap",
+        "irade",
+        "beyan",
+        "karşılıklı"
+      ],
+      "expected_answer_contains": "icap ve kabul",
+      "refusal_expected": false,
+      "notes": "Temel sözleşme kurulumu — TBK m.1 (icap-kabul)",
+      "family_ordinal": 1
+    },
+    {
+      "id": "faz1-50::TBK-002",
+      "source_question_id": "TBK-002",
+      "authority_family_id": "faz1-50",
+      "question": "Kira sözleşmesinde kiracının kira bedelini ödeme yükümlülüğü TBK'nın hangi maddesinde düzenlenmektedir? Ödeme günü ve yeri nedir?",
+      "category": "tbk_kira",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.314",
+        "TBK m.299"
+      ],
+      "expected_keywords": [
+        "kira bedeli",
+        "ödeme",
+        "ayın son günü",
+        "kiracı",
+        "kiraya veren"
+      ],
+      "expected_answer_contains": "ayın son günü",
+      "refusal_expected": false,
+      "notes": "Kira ödeme zamanı ve yeri — TBK m.314",
+      "family_ordinal": 2
+    },
+    {
+      "id": "faz1-50::TBK-003",
+      "source_question_id": "TBK-003",
+      "authority_family_id": "faz1-50",
+      "question": "Haksız fiil nedeniyle tazminat davası açmak için TBK'da öngörülen zamanaşımı süresi nedir?",
+      "category": "tbk_haksiz_fiil",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.72",
+        "TBK m.146"
+      ],
+      "expected_keywords": [
+        "zamanaşımı",
+        "iki yıl",
+        "on yıl",
+        "öğrenme",
+        "haksız fiil",
+        "zararın öğrenildiği"
+      ],
+      "expected_answer_contains": "iki yıl",
+      "refusal_expected": false,
+      "notes": "Haksız fiil zamanaşımı — TBK m.72: 2 yıl / 10 yıl",
+      "family_ordinal": 3
+    },
+    {
+      "id": "faz1-50::TBK-004",
+      "source_question_id": "TBK-004",
+      "authority_family_id": "faz1-50",
+      "question": "TBK'ya göre konut kiralarında kira sözleşmesinin sona erdirilmesi (tahliye) hangi koşullara bağlıdır?",
+      "category": "tbk_kira",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.347",
+        "TBK m.348",
+        "TBK m.349",
+        "TBK m.350",
+        "TBK m.351"
+      ],
+      "expected_keywords": [
+        "tahliye",
+        "konut",
+        "bildirme süresi",
+        "fesih",
+        "kiraya veren",
+        "ihtiyaç",
+        "kira dönemi"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Konut kirası sona erme — TBK m.347-351 kapsamı",
+      "family_ordinal": 4
+    },
+    {
+      "id": "v2-95::OOS-001",
+      "source_question_id": "OOS-001",
+      "authority_family_id": "v2-95",
+      "question": "TCK'ya göre kasten yaralama suçunun basit ve nitelikli halleri nelerdir?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TCK",
+        "kasten yaralama",
+        "nitelikli hal"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ceza hukuku kapsamı dışında",
+      "family_ordinal": 11
+    },
+    {
+      "id": "v2-95::OOS-003",
+      "source_question_id": "OOS-003",
+      "authority_family_id": "v2-95",
+      "question": "TTK'ya göre anonim şirket yönetim kurulu kaç kişiden oluşur ve görev süresi nedir?",
+      "category": "out_of_scope",
+      "difficulty": "easy",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TTK",
+        "anonim şirket",
+        "yönetim kurulu"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ticaret hukuku kapsamı dışında",
+      "family_ordinal": 13
+    },
+    {
+      "id": "v2-95::OOS-005",
+      "source_question_id": "OOS-005",
+      "authority_family_id": "v2-95",
+      "question": "TCK'da hırsızlık suçunda etkin pişmanlık hükümleri nasıl uygulanır?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TCK",
+        "hırsızlık",
+        "etkin pişmanlık"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ceza hukuku kapsamı dışında",
+      "family_ordinal": 15
+    },
+    {
+      "id": "v2-95::OOS-007",
+      "source_question_id": "OOS-007",
+      "authority_family_id": "v2-95",
+      "question": "TTK'da limited şirkette ortaklıktan çıkarma davası hangi şartlarda açılır?",
+      "category": "out_of_scope",
+      "difficulty": "hard",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TTK",
+        "limited şirket",
+        "ortaklıktan çıkarma"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ticaret hukuku kapsamı dışında",
+      "family_ordinal": 17
+    },
+    {
+      "id": "v2-95::OOS-009",
+      "source_question_id": "OOS-009",
+      "authority_family_id": "v2-95",
+      "question": "TCK'da zincirleme suç hükümlerinin uygulanma şartları nelerdir?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TCK",
+        "zincirleme suç"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ceza hukuku kapsamı dışında",
+      "family_ordinal": 19
+    },
+    {
+      "id": "v2-95::TBK-051",
+      "source_question_id": "TBK-051",
+      "authority_family_id": "v2-95",
+      "question": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.125",
+        "TBK m.126"
+      ],
+      "expected_keywords": [
+        "on yıl",
+        "zamanaşımı",
+        "muacceliyet",
+        "alacak",
+        "başlangıç"
+      ],
+      "expected_answer_contains": "on yıllık zamanaşımı",
+      "refusal_expected": false,
+      "notes": "Genel zamanaşımı süresi — TBK m.125",
+      "family_ordinal": 21
+    },
+    {
+      "id": "v2-95::TBK-052",
+      "source_question_id": "TBK-052",
+      "authority_family_id": "v2-95",
+      "question": "TBK'ya göre muaccel bir borcun borçlusunun temerrüde düşmesi için alacaklı tarafından ihtar yapılması zorunlu mudur? İstisna halleri nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "expected_keywords": [
+        "temerrüt",
+        "ihtar",
+        "muacceliyet",
+        "belirli vade",
+        "istisnalar"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Borçlu temerrüdü ihtar şartı ve istisnaları — TBK m.117-118",
+      "family_ordinal": 22
+    },
+    {
+      "id": "v2-95::TBK-053",
+      "source_question_id": "TBK-053",
+      "authority_family_id": "v2-95",
+      "question": "TBK m.138 kapsamında sözleşmenin kurulmasından sonra ortaya çıkan aşırı ifa güçlüğünde tarafların hakları nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.138"
+      ],
+      "expected_keywords": [
+        "aşırı ifa güçlüğü",
+        "uyarlama",
+        "fesih",
+        "öngörülemeyen",
+        "sözleşmenin değişen koşullara uyarlanması"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Clausula rebus sic stantibus — TBK m.138",
+      "family_ordinal": 23
+    },
+    {
+      "id": "v3-170::OOS-001",
+      "source_question_id": "OOS-001",
+      "authority_family_id": "v3-170",
+      "question": "TCK'ya göre kasten yaralama suçunun basit ve nitelikli halleri nelerdir?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TCK",
+        "kasten yaralama",
+        "nitelikli hal"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ceza hukuku kapsamı dışında",
+      "family_ordinal": 13
+    },
+    {
+      "id": "v3-170::OOS-003",
+      "source_question_id": "OOS-003",
+      "authority_family_id": "v3-170",
+      "question": "TTK'ya göre anonim şirket yönetim kurulu kaç kişiden oluşur ve görev süresi nedir?",
+      "category": "out_of_scope",
+      "difficulty": "easy",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TTK",
+        "anonim şirket",
+        "yönetim kurulu"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ticaret hukuku kapsamı dışında",
+      "family_ordinal": 15
+    },
+    {
+      "id": "v3-170::OOS-005",
+      "source_question_id": "OOS-005",
+      "authority_family_id": "v3-170",
+      "question": "TCK'da hırsızlık suçunda etkin pişmanlık hükümleri nasıl uygulanır?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TCK",
+        "hırsızlık",
+        "etkin pişmanlık"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ceza hukuku kapsamı dışında",
+      "family_ordinal": 17
+    },
+    {
+      "id": "v3-170::OOS-007",
+      "source_question_id": "OOS-007",
+      "authority_family_id": "v3-170",
+      "question": "TTK'da limited şirkette ortaklıktan çıkarma davası hangi şartlarda açılır?",
+      "category": "out_of_scope",
+      "difficulty": "hard",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TTK",
+        "limited şirket",
+        "ortaklıktan çıkarma"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ticaret hukuku kapsamı dışında",
+      "family_ordinal": 19
+    },
+    {
+      "id": "v3-170::OOS-009",
+      "source_question_id": "OOS-009",
+      "authority_family_id": "v3-170",
+      "question": "TCK'da zincirleme suç hükümlerinin uygulanma şartları nelerdir?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TCK",
+        "zincirleme suç"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ceza hukuku kapsamı dışında",
+      "family_ordinal": 21
+    },
+    {
+      "id": "v3-170::OOS-012",
+      "source_question_id": "OOS-012",
+      "authority_family_id": "v3-170",
+      "question": "Türk Ticaret Kanunu kapsamında anonim şirketlerde pay sahiplerinin bilgi alma ve inceleme hakları nasıl düzenlenmiştir?",
+      "category": "out_of_scope",
+      "difficulty": "medium",
+      "expected_sources": [],
+      "expected_keywords": [
+        "TTK",
+        "anonim şirket",
+        "pay sahibi",
+        "bilgi alma hakkı"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": true,
+      "notes": "Ticaret hukuku — sistem kapsamı dışında",
+      "family_ordinal": 24
+    },
+    {
+      "id": "v3-170::TBK-051",
+      "source_question_id": "TBK-051",
+      "authority_family_id": "v3-170",
+      "question": "TBK'ya göre genel sözleşmeden doğan alacaklarda zamanaşımı süresi ne kadardır ve bu süre hangi andan itibaren işlemeye başlar?",
+      "category": "tbk_genel",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.146",
+        "TBK m.149"
+      ],
+      "expected_keywords": [
+        "on yıl",
+        "zamanaşımı",
+        "muacceliyet",
+        "alacak",
+        "başlangıç"
+      ],
+      "expected_answer_contains": "on yıllık zamanaşımı",
+      "refusal_expected": false,
+      "notes": "Genel zamanaşımı süresi — TBK m.125",
+      "family_ordinal": 25
+    },
+    {
+      "id": "v3-170::TBK-052",
+      "source_question_id": "TBK-052",
+      "authority_family_id": "v3-170",
+      "question": "TBK'ya göre muaccel bir borcun borçlusunun temerrüde düşmesi için alacaklı tarafından ihtar yapılması zorunlu mudur? İstisna halleri nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.117",
+        "TBK m.118"
+      ],
+      "expected_keywords": [
+        "temerrüt",
+        "ihtar",
+        "muacceliyet",
+        "belirli vade",
+        "istisnalar"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Borçlu temerrüdü ihtar şartı ve istisnaları — TBK m.117-118",
+      "family_ordinal": 26
+    },
+    {
+      "id": "v3-170::TBK-053",
+      "source_question_id": "TBK-053",
+      "authority_family_id": "v3-170",
+      "question": "TBK m.138 kapsamında sözleşmenin kurulmasından sonra ortaya çıkan aşırı ifa güçlüğünde tarafların hakları nelerdir?",
+      "category": "tbk_genel",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.138"
+      ],
+      "expected_keywords": [
+        "aşırı ifa güçlüğü",
+        "uyarlama",
+        "fesih",
+        "öngörülemeyen",
+        "sözleşmenin değişen koşullara uyarlanması"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Clausula rebus sic stantibus — TBK m.138",
+      "family_ordinal": 27
+    },
+    {
+      "id": "v3-170::TBK-061",
+      "source_question_id": "TBK-061",
+      "authority_family_id": "v3-170",
+      "question": "TBK'ya göre zamanaşımı hangi hallerde kesilir ve kesilme sonrasında yeni zamanaşımı süresi nasıl işlemeye başlar?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.154",
+        "TBK m.156"
+      ],
+      "expected_keywords": [
+        "zamanaşımı kesilmesi",
+        "dava açma",
+        "borcun kabulü",
+        "icra takibi",
+        "yeni süre"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Zamanaşımının kesilmesi — TBK m.154-156",
+      "family_ordinal": 35
+    },
+    {
+      "id": "v3-170::TBK-065",
+      "source_question_id": "TBK-065",
+      "authority_family_id": "v3-170",
+      "question": "TBK m.126 uyarınca beş yıllık kısa zamanaşımına tabi olan alacak türleri hangileridir? Kiraya verene ait kira alacakları bu kapsamda değerlendirilebilir mi?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.126",
+        "TBK m.125"
+      ],
+      "expected_keywords": [
+        "beş yıl",
+        "kısa zamanaşımı",
+        "kira alacağı",
+        "ücret",
+        "faiz",
+        "düzenli ödemeler"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Kısa zamanaşımı türleri — TBK m.126",
+      "family_ordinal": 39
+    },
+    {
+      "id": "v3-170::TBK-076",
+      "source_question_id": "TBK-076",
+      "authority_family_id": "v3-170",
+      "question": "TBK m.66 kapsamında işverenin çalıştırdığı kişinin üçüncü kişilere verdiği zarardan sorumluluğu nasıl belirlenir? Bu sorumluluktan kurtulmak mümkün müdür?",
+      "category": "tbk_haksiz_fiil",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.66"
+      ],
+      "expected_keywords": [
+        "adam çalıştıranın sorumluluğu",
+        "işveren sorumluluğu",
+        "kurtuluş beyyinesi",
+        "özen",
+        "seçim",
+        "talimat"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Adam çalıştıranın sorumluluğu — TBK m.66",
+      "family_ordinal": 50
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "gateway_pid": 29375,
+  "gateway_pid_running": true,
+  "tunnel_pid": 29356,
+  "tunnel_pid_running": true,
+  "health_ok": true,
+  "metrics_ok": true,
+  "audit_log_exists": true,
+  "healthy": true,
+  "restart_requested": false,
+  "restart_executed": false,
+  "errors": []
+}

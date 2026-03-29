@@ -37,6 +37,8 @@ import os
 import re
 import time
 import uuid
+import urllib.error
+import urllib.request
 from collections import OrderedDict
 from datetime import datetime, timezone
 from itertools import count
@@ -2158,6 +2160,263 @@ def _resolve_chat_usage(
         return _estimate_chat_usage(messages, answer_text), "estimated"
 
 
+def _canonical_snapshot_messages(
+    *,
+    conversation_history: list[dict[str, str]],
+    last_user_message: str,
+) -> list[dict[str, str]]:
+    messages: list[dict[str, str]] = []
+    for item in conversation_history:
+        role = item.get("role")
+        content = item.get("content")
+        if role in {"user", "assistant", "system"} and isinstance(content, str):
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": last_user_message})
+    return messages
+
+
+def _build_canonical_request_snapshot(
+    *,
+    request_body: ChatCompletionRequest,
+    conversation_history: list[dict[str, str]],
+    last_user_message: str,
+) -> dict[str, Any]:
+    return {
+        "model": request_body.model,
+        "messages": _canonical_snapshot_messages(
+            conversation_history=conversation_history,
+            last_user_message=last_user_message,
+        ),
+        "stream": False,
+        "temperature": request_body.temperature,
+        "max_tokens": request_body.max_tokens,
+        "law_filter": request_body.law_filter,
+        "use_verification": request_body.use_verification,
+        "top_k": request_body.top_k,
+        "include_trace": request_body.include_trace,
+    }
+
+
+def _post_canonical_answer_path_request(
+    *,
+    base_url: str,
+    payload: dict[str, Any],
+    timeout_seconds: float,
+) -> dict[str, Any]:
+    request = urllib.request.Request(
+        f"{base_url}/v1/chat/completions",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            body = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"canonical answer path HTTP {exc.code}: {body}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"canonical answer path unavailable: {exc}") from exc
+
+    if not isinstance(body, dict):
+        raise RuntimeError("canonical answer path invalid JSON body")
+    return body
+
+
+async def _proxy_canonical_answer_path(
+    *,
+    request_body: ChatCompletionRequest,
+    conversation_history: list[dict[str, str]],
+    last_user_message: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    base_url = _canonical_answer_path_base_url()
+    if not base_url:
+        raise HTTPException(
+            status_code=503,
+            detail="RC-O boundary proxy etkin ama RELEASE_CANONICAL_ANSWER_PATH_BASE_URL tanımlı değil",
+        )
+
+    snapshot = _build_canonical_request_snapshot(
+        request_body=request_body,
+        conversation_history=conversation_history,
+        last_user_message=last_user_message,
+    )
+    response = await asyncio.to_thread(
+        _post_canonical_answer_path_request,
+        base_url=base_url,
+        payload=snapshot,
+        timeout_seconds=_boundary_proxy_timeout_seconds(),
+    )
+    return snapshot, response
+
+
+def _finalize_boundary_proxy_response(
+    *,
+    request: Request,
+    request_body: ChatCompletionRequest,
+    store: ConversationStore,
+    session_id: str,
+    user_message: str,
+    canonical_snapshot: dict[str, Any],
+    proxy_response: dict[str, Any],
+) -> Any:
+    response_id = proxy_response.get("id")
+    if not isinstance(response_id, str) or not response_id.strip():
+        response_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+
+    created = proxy_response.get("created")
+    if not isinstance(created, int):
+        created = int(time.time())
+
+    choices = proxy_response.get("choices") or []
+    message_payload = ((choices[0] if choices else {}).get("message") or {}) if isinstance(choices, list) else {}
+    answer_text = message_payload.get("content")
+    if not isinstance(answer_text, str):
+        raise HTTPException(status_code=502, detail="Canonical answer path invalid assistant payload")
+
+    citations = proxy_response.get("citations") or []
+    if not isinstance(citations, list):
+        citations = []
+    citations = [item for item in citations if isinstance(item, str)]
+
+    blocked = bool(proxy_response.get("blocked"))
+    guardrails_reasons = proxy_response.get("guardrails_reasons") or []
+    if not isinstance(guardrails_reasons, list):
+        guardrails_reasons = []
+    guardrails_reasons = [item for item in guardrails_reasons if isinstance(item, str)]
+
+    verification = proxy_response.get("verification")
+    if not isinstance(verification, dict):
+        verification = None
+
+    answer_contract = proxy_response.get("answer_contract")
+    if not isinstance(answer_contract, dict):
+        answer_contract = None
+
+    final_mode = proxy_response.get("final_mode")
+    if not isinstance(final_mode, str):
+        final_mode = None
+    final_reason = proxy_response.get("final_reason")
+    if final_reason is not None and not isinstance(final_reason, str):
+        final_reason = None
+
+    trace_payload = proxy_response.get("trace")
+    if not isinstance(trace_payload, dict):
+        trace_payload = {}
+    if trace_payload:
+        _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
+
+    store.add_turn(session_id, user_message, answer_text)
+    snapshot_messages = [
+        ConversationMessage(role=item["role"], content=item["content"])
+        for item in canonical_snapshot.get("messages", [])
+        if isinstance(item, dict)
+        and isinstance(item.get("role"), str)
+        and isinstance(item.get("content"), str)
+    ]
+    usage, usage_source = _resolve_chat_usage(
+        messages=snapshot_messages,
+        answer_text=answer_text,
+        upstream_usage=None,
+    )
+    request_id = ensure_request_id(request)
+    trace_id = ensure_trace_id(request)
+    source_ids = _extract_answer_source_ids(answer_contract=answer_contract, citations=citations)
+    latency_ms = (time.perf_counter() - getattr(request.state, "request_started_at", time.perf_counter())) * 1000.0
+    decision_timestamps = {
+        "request_started_at": datetime.fromtimestamp(
+            getattr(request.state, "request_wall_started_at", time.time()),
+            tz=timezone.utc,
+        ).isoformat(),
+        "decision_completed_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    append_audit_event(
+        event_type="chat_completion",
+        request=request,
+        request_id=request_id,
+        trace_id=trace_id,
+        response_id=response_id,
+        session_id=session_id,
+        model=request_body.model,
+        stream=request_body.stream,
+        blocked=blocked,
+        citations=citations,
+        guardrails_reasons=guardrails_reasons,
+        usage=usage.model_dump(),
+        usage_source=usage_source,
+        message_count=len(snapshot_messages),
+        user_message_chars=len(user_message),
+        selected_lane=release_lane_id(),
+        final_mode=final_mode,
+        refusal_reason=final_reason,
+        source_ids=source_ids,
+        latency_ms=latency_ms,
+        token_accounting={"usage": usage.model_dump(), "source": usage_source},
+        decision_timestamps=decision_timestamps,
+        api_version=api_version_label(),
+    )
+    get_metrics_registry().record_chat_outcome(
+        path=request.url.path,
+        model=request_body.model,
+        blocked=blocked,
+        is_refusal=looks_like_refusal(answer_text, blocked=blocked),
+        usage_source=usage_source,
+        citation_count=len(citations),
+        hallucination_fail=_verification_has_hallucination_fail(verification),
+    )
+
+    client_trace = trace_payload if request_body.include_trace else None
+    public_answer_contract = _sanitize_public_answer_contract(answer_contract)
+    if request_body.stream:
+        return StreamingResponse(
+            _stream_sse_response(
+                answer=answer_text,
+                session_id=session_id,
+                model=request_body.model,
+                citations=citations,
+                blocked=blocked,
+                guardrails_reasons=guardrails_reasons,
+                verification=verification,
+                usage=usage,
+                response_id=response_id,
+                trace=client_trace,
+                final_mode=final_mode,
+                final_reason=final_reason,
+                answer_contract=public_answer_contract,
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "X-Session-Id": session_id,
+            },
+        )
+
+    return ChatCompletionResponse(
+        id=response_id,
+        created=created,
+        model=request_body.model,
+        choices=[
+            ChatChoice(
+                index=0,
+                message=ConversationMessage(role="assistant", content=answer_text),
+                finish_reason="stop",
+            )
+        ],
+        usage=usage,
+        session_id=session_id,
+        citations=citations,
+        blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        answer_contract=public_answer_contract,
+        trace=client_trace,
+    )
+
+
 def _export_trace_payload_or_raise(
     *,
     request_id: str,
@@ -2245,6 +2504,25 @@ def _env_flag(name: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.lower() in {"1", "true", "yes", "on"}
+
+
+def _release_controls_boundary_proxy_enabled() -> bool:
+    return _env_flag("RELEASE_CONTROLS_BOUNDARY_PROXY_ENABLED", False)
+
+
+def _canonical_answer_path_base_url() -> str | None:
+    raw = (os.getenv("RELEASE_CANONICAL_ANSWER_PATH_BASE_URL") or "").strip()
+    if not raw:
+        return None
+    return raw.rstrip("/")
+
+
+def _boundary_proxy_timeout_seconds() -> float:
+    raw = (os.getenv("RELEASE_BOUNDARY_PROXY_TIMEOUT_SECONDS") or "").strip()
+    try:
+        return float(raw) if raw else 180.0
+    except ValueError:
+        return 180.0
 
 
 def _canonical_stage_payload(payload: Any) -> str:
@@ -3368,6 +3646,22 @@ async def chat_completions(
     conversation_history = request_history
     if not conversation_history:
         conversation_history = store.get_history(session_id)
+
+    if _release_controls_boundary_proxy_enabled():
+        canonical_snapshot, proxy_response = await _proxy_canonical_answer_path(
+            request_body=request_body,
+            conversation_history=conversation_history,
+            last_user_message=last_user_msg,
+        )
+        return _finalize_boundary_proxy_response(
+            request=request,
+            request_body=request_body,
+            store=store,
+            session_id=session_id,
+            user_message=last_user_msg,
+            canonical_snapshot=canonical_snapshot,
+            proxy_response=proxy_response,
+        )
 
     # Multi-turn sorgu oluştur
     enriched_query = _build_multiturn_query(

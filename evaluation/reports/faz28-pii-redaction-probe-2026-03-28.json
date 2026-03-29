@@ -1,0 +1,12 @@
+{
+  "request_id": "req-f3c021b3eb6f486f8ab6",
+  "response_id": "chatcmpl-6b6045da03e9",
+  "audit_log_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz28_rc_o_audit.jsonl",
+  "trace_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz28_rc_o_traces/chatcmpl-6b6045da03e9.json",
+  "persisted_redaction_pass": false,
+  "pii_leak_found": true,
+  "redaction_tokens_present": false,
+  "audit_has_auth_principal": true,
+  "audit_has_citation_list": true,
+  "audit_has_latency": true
+}

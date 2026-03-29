@@ -1,0 +1,58 @@
+{
+  "family_count": 3,
+  "question_count": 315,
+  "all_families_pass": false,
+  "families": [
+    {
+      "family_id": "faz1-50",
+      "question_count": 50,
+      "model_request_payload_hash_mismatch_count": 0,
+      "retrieval_request_hash_mismatch_count": 0,
+      "assembled_context_hash_mismatch_count": 0,
+      "preprojection_hash_mismatch_count": 18,
+      "raw_answer_hash_mismatch_count": 18,
+      "runtime_error_count": 0,
+      "first_break_stage_assigned_count": 18,
+      "primary_reason_assigned_count": 18,
+      "unexplained_count": 0,
+      "pass": false
+    },
+    {
+      "family_id": "v2-95",
+      "question_count": 95,
+      "model_request_payload_hash_mismatch_count": 0,
+      "retrieval_request_hash_mismatch_count": 0,
+      "assembled_context_hash_mismatch_count": 0,
+      "preprojection_hash_mismatch_count": 61,
+      "raw_answer_hash_mismatch_count": 61,
+      "runtime_error_count": 0,
+      "first_break_stage_assigned_count": 61,
+      "primary_reason_assigned_count": 61,
+      "unexplained_count": 0,
+      "pass": false
+    },
+    {
+      "family_id": "v3-170",
+      "question_count": 170,
+      "model_request_payload_hash_mismatch_count": 0,
+      "retrieval_request_hash_mismatch_count": 0,
+      "assembled_context_hash_mismatch_count": 0,
+      "preprojection_hash_mismatch_count": 95,
+      "raw_answer_hash_mismatch_count": 95,
+      "runtime_error_count": 0,
+      "first_break_stage_assigned_count": 95,
+      "primary_reason_assigned_count": 95,
+      "unexplained_count": 0,
+      "pass": false
+    }
+  ],
+  "model_request_payload_hash_mismatch_count": 0,
+  "retrieval_request_hash_mismatch_count": 0,
+  "assembled_context_hash_mismatch_count": 0,
+  "preprojection_hash_mismatch_count": 174,
+  "raw_answer_hash_mismatch_count": 174,
+  "runtime_error_count": 0,
+  "first_break_stage_assigned_count": 174,
+  "primary_reason_assigned_count": 174,
+  "unexplained_count": 0
+}
