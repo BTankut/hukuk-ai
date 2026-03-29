@@ -1,0 +1,410 @@
+{
+  "questions": [
+    {
+      "id": "faz1-50::TBK-007",
+      "source_question_id": "TBK-007",
+      "authority_family_id": "faz1-50",
+      "question": "Vekâlet sözleşmesinde vekâletin sona erme halleri nelerdir? TBK'nın ilgili maddelerini belirtin.",
+      "category": "tbk_vekaletname",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.512",
+        "TBK m.513",
+        "TBK m.514"
+      ],
+      "expected_keywords": [
+        "vekâlet",
+        "sona erme",
+        "azil",
+        "istifa",
+        "ölüm",
+        "ehliyetsizlik",
+        "iflas"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Vekâletin sona ermesi — TBK m.512-514",
+      "family_ordinal": 2,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "faz1-50::TBK-046",
+      "source_question_id": "TBK-046",
+      "authority_family_id": "faz1-50",
+      "question": "Kira sözleşmesinde kiralananın kullanım hakkı (alt kira) bir başkasına devredilebilir mi?",
+      "category": "tbk_kira",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.322"
+      ],
+      "expected_keywords": [
+        "alt kira",
+        "kullanım hakkı",
+        "onay",
+        "yazılı rıza",
+        "konut"
+      ],
+      "expected_answer_contains": "yazılı rıza",
+      "refusal_expected": false,
+      "notes": "Alt kira",
+      "family_ordinal": 16,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v2-95::TBK-065",
+      "source_question_id": "TBK-065",
+      "authority_family_id": "v2-95",
+      "question": "TBK m.126 uyarınca beş yıllık kısa zamanaşımına tabi olan alacak türleri hangileridir? Kiraya verene ait kira alacakları bu kapsamda değerlendirilebilir mi?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.126",
+        "TBK m.125"
+      ],
+      "expected_keywords": [
+        "beş yıl",
+        "kısa zamanaşımı",
+        "kira alacağı",
+        "ücret",
+        "faiz",
+        "düzenli ödemeler"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Kısa zamanaşımı türleri — TBK m.126",
+      "family_ordinal": 24,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v2-95::TBK-067",
+      "source_question_id": "TBK-067",
+      "authority_family_id": "v2-95",
+      "question": "TBK kapsamında konut kiralarında alınan güvence bedelinin (depozito) kiracıya iadesi hangi koşullara bağlıdır ve güvence bedelinin üst sınırı ne kadardır?",
+      "category": "tbk_kira",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.342"
+      ],
+      "expected_keywords": [
+        "güvence bedeli",
+        "depozito",
+        "üç aylık kira",
+        "iade",
+        "banka",
+        "mahkeme"
+      ],
+      "expected_answer_contains": "üç aylık kira",
+      "refusal_expected": false,
+      "notes": "Güvence bedeli üst sınırı ve iade — TBK m.342",
+      "family_ordinal": 26,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v2-95::TBK-098",
+      "source_question_id": "TBK-098",
+      "authority_family_id": "v2-95",
+      "question": "TBK m.394 kapsamında işverenin işçilere eşit davranma borcu hangi durumları kapsamaktadır ve bu yükümlülüğün ihlali halinde işçinin talep ettiği haklar nelerdir?",
+      "category": "tbk_hizmet",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.394"
+      ],
+      "expected_keywords": [
+        "eşit davranma",
+        "ayrımcılık",
+        "haksız işlem",
+        "tazminat",
+        "yaptırım",
+        "işveren"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Eşit davranma borcu — TBK m.394",
+      "family_ordinal": 45,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v2-95::TBK-114",
+      "source_question_id": "TBK-114",
+      "authority_family_id": "v2-95",
+      "question": "Vekilin hesap verme ve aldığı şeyleri iade etme borcu hangi maddede yer alır?",
+      "category": "tbk_vekaletname",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.508"
+      ],
+      "expected_keywords": [
+        "hesap verme",
+        "iade",
+        "vekil"
+      ],
+      "expected_answer_contains": "hesap verme",
+      "refusal_expected": false,
+      "notes": "Hesap verme borcu",
+      "family_ordinal": 50,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::HAL-003",
+      "source_question_id": "HAL-003",
+      "authority_family_id": "v3-170",
+      "question": "TBK m.223'teki ayıp ihbar süresi geçince alıcı TBK m.125'e dayanarak yine de dönme hakkı kullanabilir mi?",
+      "category": "hal_prone",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.223",
+        "TBK m.227",
+        "TBK m.125"
+      ],
+      "expected_keywords": [
+        "ayıp ihbarı",
+        "satış",
+        "genel hüküm-özel hüküm"
+      ],
+      "expected_answer_contains": "özel hüküm",
+      "refusal_expected": false,
+      "notes": "Genel/özel hüküm çatışması",
+      "family_ordinal": 3,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::TBK-079",
+      "source_question_id": "TBK-079",
+      "authority_family_id": "v3-170",
+      "question": "TBK kapsamında taşınır satışında alıcının olağan inceleme süreci içinde fark etmesi gereken ayıpları bildirme yükümlülüğü nedir ve ihbar süresine uymamanın sonucu nedir?",
+      "category": "tbk_satis",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.223",
+        "TBK m.226"
+      ],
+      "expected_keywords": [
+        "ayıp bildirimi",
+        "muayene yükümlülüğü",
+        "derhal",
+        "ihbar",
+        "hak düşümü",
+        "gizli ayıp"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Taşınır satışında ayıp bildirimi — TBK m.223, 226",
+      "family_ordinal": 40,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::TBK-083",
+      "source_question_id": "TBK-083",
+      "authority_family_id": "v3-170",
+      "question": "TBK kapsamında alıcı, ayıplı maldan sözleşmeden dönme hakkını kullanırsa satıcının yükümlülükleri ve karşılıklı iade koşulları nelerdir?",
+      "category": "tbk_satis",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.227",
+        "TBK m.229"
+      ],
+      "expected_keywords": [
+        "sözleşmeden dönme",
+        "iade",
+        "bedel iadesi",
+        "faiz",
+        "giderler",
+        "zararlar"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Ayıplı satımda sözleşmeden dönme sonuçları — TBK m.227, 229",
+      "family_ordinal": 44,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::TBK-111",
+      "source_question_id": "TBK-111",
+      "authority_family_id": "v3-170",
+      "question": "Vekâlet sözleşmesinin tanımı ve genel kapsamı hangi maddede düzenlenmiştir?",
+      "category": "tbk_vekaletname",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.502"
+      ],
+      "expected_keywords": [
+        "vekâlet sözleşmesi",
+        "vekil",
+        "vekalet veren"
+      ],
+      "expected_answer_contains": "TBK m.502",
+      "refusal_expected": false,
+      "notes": "Vekalet sözleşmesi tanımı",
+      "family_ordinal": 56,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::TBK-114",
+      "source_question_id": "TBK-114",
+      "authority_family_id": "v3-170",
+      "question": "Vekilin hesap verme ve aldığı şeyleri iade etme borcu hangi maddede yer alır?",
+      "category": "tbk_vekaletname",
+      "difficulty": "easy",
+      "expected_sources": [
+        "TBK m.508"
+      ],
+      "expected_keywords": [
+        "hesap verme",
+        "iade",
+        "vekil"
+      ],
+      "expected_answer_contains": "hesap verme",
+      "refusal_expected": false,
+      "notes": "Hesap verme borcu",
+      "family_ordinal": 58,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::TBK-120",
+      "source_question_id": "TBK-120",
+      "authority_family_id": "v3-170",
+      "question": "TBK m.43-44 kapsamında hâkimin tazminat miktarını indirebileceği haller nelerdir? Zarar görenin kusurunun dışında başka indirim nedenleri var mıdır?",
+      "category": "tbk_genel",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TBK m.43",
+        "TBK m.44",
+        "TBK m.51"
+      ],
+      "expected_keywords": [
+        "tazminat indirimi",
+        "hakkaniyet indirimi",
+        "ortak kusur",
+        "olağanüstü hal",
+        "tazminatın belirlenmesi",
+        "hakkaniyete aykırı sonuç"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Tazminat indirimi nedenleri — TBK m.43-44 birlikte",
+      "family_ordinal": 62,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::TMK-CL-007",
+      "source_question_id": "TMK-CL-007",
+      "authority_family_id": "v3-170",
+      "question": "Tapu sicilinin tutulmasından doğan zararlarda devlet sorumluluğu ile haksız fiil sorumluluğu nasıl birlikte ele alınır?",
+      "category": "tmk_cross_law",
+      "difficulty": "hard",
+      "expected_sources": [
+        "TBK m.49",
+        "TMK m.1007"
+      ],
+      "expected_keywords": [
+        "tapu sicili",
+        "devlet sorumluluğu",
+        "zarar"
+      ],
+      "expected_answer_contains": "TMK m.1007",
+      "refusal_expected": false,
+      "notes": "TMK özel sorumluluk + TBK genel",
+      "family_ordinal": 78,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    },
+    {
+      "id": "v3-170::TMK-CL-020",
+      "source_question_id": "TMK-CL-020",
+      "authority_family_id": "v3-170",
+      "question": "Babam hayatını kaybetti ve küçük kardeşim için vasi atandı. Vasi, vasinin gözetimindeki çocuk adına banka hesabı açıp yatırım yapabilir mi? Vasinin bu işlemleri gerçekleştirirken TBK m.169 kapsamında alacağı devredip devredemeyeceği de değerlendirilmelidir.",
+      "category": "tmk_cross_law",
+      "difficulty": "medium",
+      "expected_sources": [
+        "TMK m.449",
+        "TMK m.450",
+        "TMK m.342",
+        "TBK m.169"
+      ],
+      "expected_keywords": [
+        "vasi",
+        "vesayet",
+        "küçük adına işlem",
+        "mahkeme onayı",
+        "yatırım",
+        "yasal temsil",
+        "alacağın devri",
+        "TBK m.169"
+      ],
+      "expected_answer_contains": null,
+      "refusal_expected": false,
+      "notes": "Colloquial; vesayet altındaki küçük için vasi sözleşmesi — TMK m.449-450 + TBK m.169 alacağın devri",
+      "family_ordinal": 85,
+      "authoritative_first_break_stage": "preprojection_hash",
+      "authoritative_primary_reason": "preprojection_hash_drift",
+      "authoritative_mismatch_keys": [
+        "preprojection_hash",
+        "raw_answer_hash"
+      ]
+    }
+  ]
+}
