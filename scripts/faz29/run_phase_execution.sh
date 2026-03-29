@@ -105,9 +105,16 @@ report_is_complete() {
   if [ ! -f "${report_path}" ]; then
     return 1
   fi
-  local actual_count
-  actual_count="$(report_question_count "${report_path}" 2>/dev/null || true)"
-  [ -n "${actual_count}" ] && [ "${actual_count}" = "${expected_count}" ]
+  python3 - "$report_path" "$expected_count" <<'PY'
+import json
+import sys
+from pathlib import Path
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+expected = int(sys.argv[2])
+actual = len(payload.get("per_question") or [])
+error_count = int((payload.get("report_meta") or {}).get("error_count", 0))
+raise SystemExit(0 if actual == expected and error_count == 0 else 1)
+PY
 }
 
 run_eval_if_needed() {
@@ -239,12 +246,14 @@ run_capture() {
   local capture_label="$1"
   local capture_dir="${REPO_ROOT}/runtime_logs/faz29_${capture_label}"
   local capture_truth_json="${capture_dir}/capture_truth.json"
-  mkdir -p "${capture_dir}"
 
   if [ -f "${capture_truth_json}" ]; then
     echo "[INFO] capture already materialized, skipping ${capture_label}"
     return 0
   fi
+
+  rm -rf "${capture_dir}"
+  mkdir -p "${capture_dir}"
 
   clear_namespace "${SESSION_NAMESPACE}"
   cleanup_lane "${RC_G_GATEWAY_PID}" "${RC_G_TUNNEL_PID}"
@@ -312,34 +321,28 @@ run_capture() {
     --title "FAZ29 ${capture_label} RC-G vs RC-O Upstream Equality Gate" || true
 
   local boundary_pack="${REPO_ROOT}/configs/evaluation/test_questions_faz29_boundary_frontier_166_${COMPACT_DATE_TAG}.json"
-  local boundary_expected_count
-  boundary_expected_count="$(json_count "${boundary_pack}")"
-  local boundary_candidate_output="${capture_dir}/eval_boundary_frontier_166.json"
-  run_eval_if_needed "http://127.0.0.1:${RC_O_GATEWAY_PORT}" "${API_KEY_VALUE}" "${boundary_pack}" "${boundary_candidate_output}" "faz29-boundary-frontier-166" "rc-o-faz29-${capture_label}-boundary-frontier-166-${COMPACT_DATE_TAG}" "${boundary_expected_count}"
-
   python3 "${REPO_ROOT}/scripts/faz29/build_surface_pair_report.py" \
     --family-id "faz29-boundary-frontier-166" \
     --reference-report "${REPO_ROOT}/evaluation/reports/eval_faz26_rc_g_faz1_50_20260328.json" \
     --reference-report "${REPO_ROOT}/evaluation/reports/eval_faz26_rc_g_v2_95_20260328.json" \
     --reference-report "${REPO_ROOT}/evaluation/reports/eval_faz26_rc_g_v3_170_20260328.json" \
-    --candidate-report "${boundary_candidate_output}" \
+    --candidate-report "${capture_dir}/eval_rc_o_faz1_50.json" \
+    --candidate-report "${capture_dir}/eval_rc_o_v2_95.json" \
+    --candidate-report "${capture_dir}/eval_rc_o_v3_170.json" \
     --question-pack "${boundary_pack}" \
     --output-json "${capture_dir}/boundary_pair.json" \
     --output-md "${capture_dir}/boundary_pair.md" \
     --title "FAZ29 ${capture_label} RC-G vs RC-O Boundary Frontier 166 Pair Report"
 
   local spillover_pack="${REPO_ROOT}/configs/evaluation/test_questions_faz29_spillover_guard_24_${COMPACT_DATE_TAG}.json"
-  local spillover_expected_count
-  spillover_expected_count="$(json_count "${spillover_pack}")"
-  local spillover_candidate_output="${capture_dir}/eval_spillover_guard_24.json"
-  run_eval_if_needed "http://127.0.0.1:${RC_O_GATEWAY_PORT}" "${API_KEY_VALUE}" "${spillover_pack}" "${spillover_candidate_output}" "faz29-spillover-guard-24" "rc-o-faz29-${capture_label}-spillover-guard-24-${COMPACT_DATE_TAG}" "${spillover_expected_count}"
-
   python3 "${REPO_ROOT}/scripts/faz29/build_surface_pair_report.py" \
     --family-id "faz29-spillover-guard-24" \
     --reference-report "${REPO_ROOT}/evaluation/reports/eval_faz26_rc_g_faz1_50_20260328.json" \
     --reference-report "${REPO_ROOT}/evaluation/reports/eval_faz26_rc_g_v2_95_20260328.json" \
     --reference-report "${REPO_ROOT}/evaluation/reports/eval_faz26_rc_g_v3_170_20260328.json" \
-    --candidate-report "${spillover_candidate_output}" \
+    --candidate-report "${capture_dir}/eval_rc_o_faz1_50.json" \
+    --candidate-report "${capture_dir}/eval_rc_o_v2_95.json" \
+    --candidate-report "${capture_dir}/eval_rc_o_v3_170.json" \
     --question-pack "${spillover_pack}" \
     --output-json "${capture_dir}/spillover_pair.json" \
     --output-md "${capture_dir}/spillover_pair.md" \
