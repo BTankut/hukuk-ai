@@ -1,0 +1,103 @@
+{
+  "archival_contract": {
+    "archival_reason": "current_forensic_truth_adopted_after_canonical_current_authority_and_historical_repair_truth_reclassification",
+    "candidate_channel": "historical_repair_archive",
+    "candidate_id": "RC-O",
+    "candidate_status": "discard_archived",
+    "current_evaluable": false,
+    "current_forensic_truth_adopted": true,
+    "current_forensic_truth_dominant_interaction_class": "boundary_pack_orchestration_runtime_mutation",
+    "current_forensic_truth_runtime_error_count": 0,
+    "current_forensic_truth_unexplained_count": 0,
+    "diagnostic_only": true,
+    "historical_archive_only": true,
+    "historical_inconclusive_recapture_truth_reclassified": true,
+    "historical_stable_repair_truth_reclassified": true,
+    "promotable": false,
+    "repair_truth_comparison_order": "current_forensic_truth -> historical_repair_archive",
+    "repairable": false,
+    "surface_breach_from_history_reintroduced": false
+  },
+  "archival_manifest": {
+    "allowed_usage": "diagnostic_reference_only",
+    "archive_channel": "historical_repair_archive_diagnostic_only",
+    "archive_reason": "current_forensic_truth_adopted_after_canonical_current_authority_and_historical_repair_truth_reclassification",
+    "archive_status": "closed",
+    "boundary_root_cause_ref": "FAZ27",
+    "candidate_id": "RC-O",
+    "candidate_status_before_archive": "frozen_failed_repair_candidate",
+    "current_authority_ref": "FAZ21 canonical current authority",
+    "current_forensic_truth_ref": "FAZ30",
+    "forbidden_usage": "serving_candidate,promotable_candidate,repair_candidate,current_truth_candidate,release_controls_reentry_candidate,cutover_candidate,pilot_candidate",
+    "historical_inconclusive_recapture_ref": "FAZ29",
+    "historical_stable_repair_truth_ref": "FAZ28",
+    "reconciliation_ref": "FAZ31"
+  },
+  "consumer_binding": {
+    "consumer_binding_pass": true,
+    "current_forensic_truth_adopted": true,
+    "historical_inconclusive_recapture_truth_reclassified": true,
+    "historical_repair_archive_channel": "diagnostic_only",
+    "historical_stable_repair_truth_reclassified": true,
+    "repair_truth_comparison_order": "current_forensic_truth -> historical_repair_archive",
+    "surface_breach_from_history_reintroduced": false
+  },
+  "planner_denylist": {
+    "planner_can_open_build_for_rc_o": false,
+    "planner_can_open_cutover_for_rc_o": false,
+    "planner_can_open_patch_for_rc_o": false,
+    "planner_can_open_pilot_for_rc_o": false,
+    "planner_can_open_recapture_for_rc_o": false,
+    "planner_can_open_release_controls_reentry_for_rc_o": false,
+    "planner_can_open_repair_for_rc_o": false,
+    "planner_can_open_replay_for_rc_o": false
+  },
+  "reconciliation": {
+    "archive_contract_breach": false,
+    "next_official_work": "post-rc-o steering re-entry under canonical current authority",
+    "official_decision": "PASS - RC-O Discard Archived Under Canonical Current Authority",
+    "planner_reopen_path_present": false,
+    "rc_o_reintroduced_to_current": false,
+    "surface_breach_from_history_reintroduced": false,
+    "unexplained_count": 0
+  },
+  "reference_pack": {
+    "boundary_root_cause_ref": "FAZ27",
+    "contradiction_rows": [],
+    "current_authority_ref": "FAZ21 canonical current authority",
+    "current_forensic_truth_ref": "FAZ30",
+    "historical_inconclusive_recapture_truth_ref": "FAZ29",
+    "historical_stable_repair_truth_ref": "FAZ28",
+    "reconciliation_ref": "FAZ31",
+    "reference_pack_contradiction_count": 0,
+    "reference_pack_integrity_pass": true,
+    "steering_topology_ref": "FAZ25"
+  },
+  "registry": {
+    "active_candidate_set_contains_rc_o": false,
+    "archive_registry_channel": "historical_repair_archive_diagnostic_only",
+    "archive_registry_contains_rc_o": true,
+    "current_truth_candidate_set_contains_rc_o": false,
+    "cutover_queue_contains_rc_o": false,
+    "pilot_queue_contains_rc_o": false,
+    "promotable_set_contains_rc_o": false,
+    "release_controls_reentry_queue_contains_rc_o": false,
+    "repairable_set_contains_rc_o": false
+  },
+  "report_hash": "54bf64830cabcd79e4a65a0563ca275a43923088b7f78c3db3f259c1d333ba41",
+  "tombstone": {
+    "archive_only": true,
+    "candidate_id": "RC-O",
+    "reactivation_allowed": false,
+    "reopen_allowed": false,
+    "replacement_required": false,
+    "tombstone_status": "active"
+  },
+  "wp_statuses": {
+    "WP-1": "PASS",
+    "WP-2": "PASS",
+    "WP-3": "PASS",
+    "WP-4": "PASS",
+    "WP-5": "PASS"
+  }
+}
