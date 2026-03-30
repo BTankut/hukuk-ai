@@ -1,0 +1,26 @@
+# FAZ31 RC-O Repair-Truth Reconciliation Contract
+
+- candidate_id = `RC-O`
+- base_candidate = `RC-G`
+- control_candidate = `RC-J`
+- forensic_reference_candidate = `RC-N`
+- candidate_status = `frozen_failed_repair_candidate`
+- promotable = `false`
+- repairable = `false`
+- current_evaluable = `false`
+- release_controls_reentry_base = `false`
+- current_authority_ref = `FAZ21 canonical current authority`
+- historical_repair_archive_channel = `diagnostic_only`
+- repair_truth_comparison_order = `current_forensic_truth -> historical_repair_archive`
+- report_hash = `8d9c191bdcce4be1454c0fb4d260a7d0d5cc4716e61c8499b983fa843af6e82b`
+- allowed_reconciliation_stages =
+  - `R0 = reference_pack_integrity`
+  - `R1 = canonical_current_authority_binding`
+  - `R2 = rc_o_repair_truth_contrast`
+  - `R3 = current_forensic_truth_adoption`
+  - `R4 = historical_repair_archive_reclassification`
+  - `R5 = downstream_repair_truth_consumer_binding`
+- allowed_root_cause_classes =
+  - `current_forensic_truth_adopted_and_historical_repair_truths_reclassified`
+  - `canonical_current_authority_repair_truth_contract_breach`
+  - `unexplained_rc_o_repair_truth_divergence`
