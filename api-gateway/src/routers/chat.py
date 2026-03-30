@@ -2199,6 +2199,56 @@ def _build_canonical_request_snapshot(
     }
 
 
+def _build_persisted_request_snapshot(
+    *,
+    request_body: ChatCompletionRequest,
+    conversation_history: list[dict[str, str]],
+    last_user_message: str,
+) -> dict[str, Any]:
+    snapshot = _build_canonical_request_snapshot(
+        request_body=request_body,
+        conversation_history=conversation_history,
+        last_user_message=last_user_message,
+    )
+    return json.loads(json.dumps(snapshot, ensure_ascii=False))
+
+
+def _build_persisted_raw_answer_snapshot(
+    *,
+    answer_text: str,
+    citations: list[str],
+    source_ids: list[str],
+    final_mode: str | None,
+    final_reason: str | None,
+) -> dict[str, Any]:
+    return {
+        "answer_text": answer_text,
+        "ordered_citation_list": list(citations),
+        "ordered_source_id_list": list(source_ids),
+        "final_mode": final_mode,
+        "final_reason": final_reason,
+    }
+
+
+def _build_persisted_response_envelope_snapshot(
+    *,
+    response_id: str,
+    blocked: bool,
+    final_mode: str | None,
+    final_reason: str | None,
+    citations: list[str],
+    source_ids: list[str],
+) -> dict[str, Any]:
+    return {
+        "response_id": response_id,
+        "blocked": blocked,
+        "final_mode": final_mode,
+        "final_reason": final_reason,
+        "ordered_citation_list": list(citations),
+        "ordered_source_id_list": list(source_ids),
+    }
+
+
 def _post_canonical_answer_path_request(
     *,
     base_url: str,
@@ -2340,6 +2390,26 @@ def _finalize_boundary_proxy_response(
         ).isoformat(),
         "decision_completed_at": datetime.now(timezone.utc).isoformat(),
     }
+    persisted_request_snapshot = _build_persisted_request_snapshot(
+        request_body=request_body,
+        conversation_history=conversation_history,
+        last_user_message=user_message,
+    )
+    persisted_raw_answer_snapshot = _build_persisted_raw_answer_snapshot(
+        answer_text=answer_text,
+        citations=citations,
+        source_ids=source_ids,
+        final_mode=final_mode,
+        final_reason=final_reason,
+    )
+    persisted_response_envelope_snapshot = _build_persisted_response_envelope_snapshot(
+        response_id=response_id,
+        blocked=blocked,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        citations=citations,
+        source_ids=source_ids,
+    )
 
     append_audit_event(
         event_type="chat_completion",
@@ -2365,6 +2435,9 @@ def _finalize_boundary_proxy_response(
         token_accounting={"usage": usage.model_dump(), "source": usage_source},
         decision_timestamps=decision_timestamps,
         api_version=api_version_label(),
+        persisted_request_snapshot=persisted_request_snapshot,
+        persisted_raw_answer_snapshot=persisted_raw_answer_snapshot,
+        persisted_response_envelope_snapshot=persisted_response_envelope_snapshot,
     )
     get_metrics_registry().record_chat_outcome(
         path=request.url.path,
@@ -3304,6 +3377,26 @@ def _finalize_chat_response(
         ).isoformat(),
         "decision_completed_at": datetime.now(timezone.utc).isoformat(),
     }
+    persisted_request_snapshot = _build_persisted_request_snapshot(
+        request_body=request_body,
+        conversation_history=conversation_history,
+        last_user_message=user_message,
+    )
+    persisted_raw_answer_snapshot = _build_persisted_raw_answer_snapshot(
+        answer_text=answer_text,
+        citations=citations,
+        source_ids=source_ids,
+        final_mode=final_mode,
+        final_reason=final_reason,
+    )
+    persisted_response_envelope_snapshot = _build_persisted_response_envelope_snapshot(
+        response_id=response_id,
+        blocked=blocked,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        citations=citations,
+        source_ids=source_ids,
+    )
 
     append_audit_event(
         event_type="chat_completion",
@@ -3332,6 +3425,9 @@ def _finalize_chat_response(
         },
         decision_timestamps=decision_timestamps,
         api_version=api_version_label(),
+        persisted_request_snapshot=persisted_request_snapshot,
+        persisted_raw_answer_snapshot=persisted_raw_answer_snapshot,
+        persisted_response_envelope_snapshot=persisted_response_envelope_snapshot,
     )
     get_metrics_registry().record_chat_outcome(
         path=request.url.path,

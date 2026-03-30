@@ -122,6 +122,7 @@ def run_release_smoke_suite(
             "use_verification": False,
             "max_tokens": 128,
             "session_id": session_id,
+            "chat_template_kwargs": {"enable_thinking": False},
         },
     )
     cited_latency_ms = (time.perf_counter() - cited_started_at) * 1000.0
@@ -138,6 +139,7 @@ def run_release_smoke_suite(
             "use_verification": False,
             "max_tokens": 96,
             "session_id": session_id,
+            "chat_template_kwargs": {"enable_thinking": False},
         },
     )
     continuity_latency_ms = (time.perf_counter() - continuity_started_at) * 1000.0
@@ -153,8 +155,9 @@ def run_release_smoke_suite(
             "messages": [{"role": "user", "content": refusal_query}],
             "stream": False,
             "use_verification": False,
-            "max_tokens": 96,
+            "max_tokens": 16,
             "session_id": refusal_session_id,
+            "chat_template_kwargs": {"enable_thinking": False},
         },
     )
     refusal_latency_ms = (time.perf_counter() - refusal_started_at) * 1000.0

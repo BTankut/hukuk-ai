@@ -1,0 +1,30 @@
+{
+  "label": "faz36_rc_q_release_state",
+  "created_at": "20260330T222547Z",
+  "bundle_dir": "/Users/btmacstudio/Projects/hukuk-ai/coordination/faz36_backups/faz36_rc_q_release_state_20260330T222547Z",
+  "env": {
+    "RELEASE_LANE_ID": null,
+    "API_VERSION_LABEL": null,
+    "SESSION_STORE_NAMESPACE": null
+  },
+  "files": [
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz36_rc_q_audit.jsonl",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz36_rc_q_audit.jsonl",
+      "sha256": "aad9d875c272c7ecac911af49b88641a83aa82a845f79076c3af8cf878f6de96",
+      "size_bytes": 880425
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz36_rc_q_gateway.log",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz36_rc_q_gateway.log",
+      "sha256": "0b1c3a3379926636ddeb4dac0fdd58c6269ec063729388e1c066d2d6ee6693a9",
+      "size_bytes": 195855
+    },
+    {
+      "source_path": "/Users/btmacstudio/Projects/hukuk-ai/runtime_logs/faz36_rc_q_supervision.json",
+      "backup_path": "files/Users__btmacstudio__Projects__hukuk-ai__runtime_logs__faz36_rc_q_supervision.json",
+      "sha256": "e4e091db1a1076dfb6fea23c041e734d74cea282502711b7be9b3d6dc1190ce7",
+      "size_bytes": 276
+    }
+  ]
+}

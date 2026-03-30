@@ -72,6 +72,16 @@ def test_append_audit_event_redacts_pii_and_writes_hash_chain(
         latency_ms=123.0,
         token_accounting={"usage": {"prompt_tokens": 12, "completion_tokens": 5, "total_tokens": 17}},
         decision_timestamps={"decision_completed_at": "2026-03-24T00:00:00Z"},
+        persisted_request_snapshot={
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Muvekkil 12345678901 test@example.com 5551234567",
+                }
+            ]
+        },
+        persisted_raw_answer_snapshot={"answer_text": "TBK m.49"},
+        persisted_response_envelope_snapshot={"response_id": "resp-1"},
     )
 
     assert event is not None
@@ -84,6 +94,12 @@ def test_append_audit_event_redacts_pii_and_writes_hash_chain(
     assert payload["citation_list"] == ["TBK m.49"]
     assert payload["latency"] == 123.0
     assert payload["decision_timestamps"]["decision_completed_at"] == "2026-03-24T00:00:00Z"
+    assert "12345678901" not in line
+    assert "test@example.com" not in line
+    assert "5551234567" not in line
+    assert "[TR_ID_REDACTED]" in line
+    assert "[EMAIL_REDACTED]" in line
+    assert "[PHONE_REDACTED]" in line
 
 
 def test_redact_persisted_payload_preserves_internal_ids_hashes_and_timestamps() -> None:

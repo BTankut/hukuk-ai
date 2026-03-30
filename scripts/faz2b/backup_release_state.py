@@ -54,6 +54,7 @@ def create_backup_bundle(
     manifest = {
         "label": label,
         "created_at": timestamp,
+        "bundle_dir": str(bundle_dir),
         "env": env_values,
         "files": copied_files,
     }

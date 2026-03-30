@@ -9,7 +9,7 @@ from pathlib import Path
 
 def restore_backup_bundle(*, manifest_path: Path, restore_dir: Path) -> Path:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    bundle_dir = manifest_path.parent
+    bundle_dir = Path(manifest.get("bundle_dir")) if manifest.get("bundle_dir") else manifest_path.parent
     restore_dir.mkdir(parents=True, exist_ok=True)
 
     restore_env_path = restore_dir / "restore.env.sh"

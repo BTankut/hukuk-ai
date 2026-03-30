@@ -90,3 +90,26 @@ def test_backup_restore_bundle_roundtrip(tmp_path: Path, monkeypatch: object) ->
     assert summary["files"][0]["exists"] is True
     assert "export API_AUTH_ENABLED=true" in restore_env
     assert "export SESSION_STORE_BACKEND=redis" in restore_env
+
+
+def test_restore_bundle_uses_manifest_bundle_dir_when_manifest_is_copied(tmp_path: Path) -> None:
+    include_path = tmp_path / "lane.env"
+    include_path.write_text("DGX_MODEL=example\n", encoding="utf-8")
+
+    manifest_path = create_backup_bundle(
+        output_dir=tmp_path / "backups",
+        label="release_lane",
+        env_keys=[],
+        include_paths=[include_path],
+    )
+    copied_manifest = tmp_path / "copied" / "manifest.json"
+    copied_manifest.parent.mkdir(parents=True, exist_ok=True)
+    copied_manifest.write_text(manifest_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+    summary_path = restore_backup_bundle(
+        manifest_path=copied_manifest,
+        restore_dir=tmp_path / "restore",
+    )
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["files"][0]["exists"] is True

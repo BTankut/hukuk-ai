@@ -261,6 +261,9 @@ def append_audit_event(
     token_accounting: dict[str, Any] | None = None,
     decision_timestamps: dict[str, str] | None = None,
     api_version: str | None = None,
+    persisted_request_snapshot: dict[str, Any] | None = None,
+    persisted_raw_answer_snapshot: dict[str, Any] | None = None,
+    persisted_response_envelope_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     if not audit_log_enabled():
         return None
@@ -302,6 +305,9 @@ def append_audit_event(
         "message_count": message_count,
         "user_message_chars": user_message_chars,
         "decision_timestamps": decision_timestamps or {},
+        "persisted_request_snapshot": persisted_request_snapshot or {},
+        "persisted_raw_answer_snapshot": persisted_raw_answer_snapshot or {},
+        "persisted_response_envelope_snapshot": persisted_response_envelope_snapshot or {},
     }
 
     prev_hash = _read_last_event_hash(path)

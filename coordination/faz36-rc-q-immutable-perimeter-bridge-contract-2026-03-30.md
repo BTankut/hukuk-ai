@@ -1,0 +1,23 @@
+# FAZ36 RC-Q Immutable Perimeter Bridge Contract
+
+- deep_copy_barrier_before_P11 = `true`
+- live_object_reference_reuse_allowed = `false`
+- perimeter_callback_into_model_request_allowed = `false`
+- perimeter_callback_into_retrieval_request_allowed = `false`
+- perimeter_callback_into_assembled_context_allowed = `false`
+- perimeter_callback_into_preprojection_allowed = `false`
+- perimeter_callback_into_raw_answer_allowed = `false`
+- perimeter_callback_into_response_envelope_allowed = `false`
+- shared_mutable_runtime_container_allowed = `false`
+- frozen_snapshot_id_only_cross_boundary = `true`
+- mandatory_auth_placement = `transport_gateway_only`
+- immutable_audit_logging_placement = `frozen_snapshot_async_outbox_only`
+- redis_session_persistence_placement = `sidecar_state_store_only`
+- persisted_pii_redaction_placement = `persistence_and_audit_views_only`
+- tokenizer_backed_accounting_placement = `post_response_frozen_snapshot_only`
+- backup_restore_placement = `offline_operational_boundary_only`
+- one_command_release_smoke_placement = `non_serving_harness_only`
+- pii_redaction_before_raw_answer_freeze_allowed = `false`
+- tokenizer_feedback_into_runtime_allowed = `false`
+- backup_restore_runtime_attachment_allowed = `false`
+- one_command_release_smoke_runtime_attachment_allowed = `false`
