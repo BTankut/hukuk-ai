@@ -1,0 +1,113 @@
+{
+  "rows": [
+    {
+      "control_set_id": "C0",
+      "source": "inherited_faz27_effective_control_surface",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C1",
+      "source": "inherited_faz27_b4",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C2",
+      "source": "inferred_faz27_tokenizer_non_causal",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C3",
+      "source": "inferred_faz27_api_non_causal",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C4",
+      "source": "inferred_faz29_smoke_non_causal",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C5",
+      "source": "inherited_faz27_b5",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C6",
+      "source": "inferred_faz27_pii_smoke_non_causal",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C7",
+      "source": "inferred_faz27_api_smoke_non_causal",
+      "record_count": 190,
+      "mismatch_count": 159,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "multi_control_interaction_runtime_mutation",
+      "capture_stability_match": true
+    },
+    {
+      "control_set_id": "C8",
+      "source": "current_faz30_rc_o_twin_capture",
+      "record_count": 190,
+      "mismatch_count": 156,
+      "runtime_error_count": 0,
+      "first_runtime_error_stage": "",
+      "dominant_primary_reason": "boundary_pack_orchestration_runtime_mutation",
+      "capture_stability_match": false,
+      "capture_a_summary": {
+        "mismatch_count": 156,
+        "preprojection_hash_mismatch_count": 156,
+        "raw_answer_hash_mismatch_count": 156,
+        "response_envelope_hash_mismatch_count": 87
+      },
+      "capture_b_summary": {
+        "mismatch_count": 152,
+        "preprojection_hash_mismatch_count": 152,
+        "raw_answer_hash_mismatch_count": 152,
+        "response_envelope_hash_mismatch_count": 91
+      }
+    }
+  ],
+  "minimal_failing_control_set": "none",
+  "dominant_interaction_class": "boundary_pack_orchestration_runtime_mutation",
+  "single_control_root_cause_found": false,
+  "interaction_root_cause_found": false,
+  "unexplained_count": 0,
+  "notes": "No release-control subset isolates the faz28-to-faz29 break; the observed instability is localized to boundary/evaluator materialization around the frozen RC-O pair builder surface.",
+  "source_basis": "faz27_inherited_control_surface_plus_faz30_current_twin_capture"
+}
