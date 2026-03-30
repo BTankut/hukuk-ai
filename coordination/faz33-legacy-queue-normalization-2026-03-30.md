@@ -1,0 +1,31 @@
+# FAZ33 Legacy Queue Normalization
+
+- active_quality_reference = `RC-G`
+- active_control_pair = `RC-G vs RC-J`
+- active_forensic_reference = `RC-N`
+- active_repair_candidate = `NONE`
+- active_release_controls_candidate = `NONE`
+- active_cutover_candidate = `NONE`
+- active_pilot_candidate = `NONE`
+- archived_candidate_set = `[RC-M, RC-O]`
+- stale_branch_set = `[RC-H, RC-I, RC-L]`
+- stale_branch_left_active = `false`
+- surface_breach_from_history_reintroduced = `false`
+- current_canonical_consumer_order = `current_canonical -> historical_archive`
+- legacy_release_controls_pointer_normalized = `true`
+
+- planner_can_open_build_for_rc_m = `false`
+- planner_can_open_patch_for_rc_m = `false`
+- planner_can_open_repair_for_rc_m = `false`
+- planner_can_open_replay_for_rc_m = `false`
+- planner_can_open_recapture_for_rc_m = `false`
+- planner_can_open_cutover_for_rc_m = `false`
+- planner_can_open_pilot_for_rc_m = `false`
+- planner_can_open_build_for_rc_o = `false`
+- planner_can_open_patch_for_rc_o = `false`
+- planner_can_open_repair_for_rc_o = `false`
+- planner_can_open_replay_for_rc_o = `false`
+- planner_can_open_recapture_for_rc_o = `false`
+- planner_can_open_release_controls_reentry_for_rc_o = `false`
+- planner_can_open_cutover_for_rc_o = `false`
+- planner_can_open_pilot_for_rc_o = `false`
