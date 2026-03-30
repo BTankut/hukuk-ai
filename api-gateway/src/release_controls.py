@@ -74,6 +74,27 @@ def trace_log_dir() -> Path:
     return _project_root() / "logs" / "traces"
 
 
+def _release_controls_redis_sidecar_enabled() -> bool:
+    return _to_bool(os.getenv("RELEASE_CONTROLS_REDIS_SIDECAR_ENABLED"), False)
+
+
+def _release_controls_redis_sidecar_url() -> str | None:
+    return (
+        os.getenv("RELEASE_CONTROLS_REDIS_SIDECAR_URL")
+        or os.getenv("REDIS_URL")
+        or os.getenv("SESSION_STORE_REDIS_URL")
+    )
+
+
+def _release_controls_redis_sidecar_namespace() -> str:
+    raw = (
+        os.getenv("RELEASE_CONTROLS_REDIS_SIDECAR_NAMESPACE")
+        or os.getenv("SESSION_STORE_NAMESPACE")
+        or "hukuk-ai"
+    )
+    return raw.strip() or "hukuk-ai"
+
+
 def _configured_api_keys() -> set[str]:
     raw = os.getenv("API_AUTH_KEYS") or os.getenv("API_AUTH_TOKEN") or ""
     return {item.strip() for item in raw.split(",") if item.strip()}
@@ -312,3 +333,54 @@ def export_trace_pack(
         json.dump(redacted_payload, handle, ensure_ascii=False, indent=2)
         handle.write("\n")
     return path
+
+
+def persist_sidecar_session_turn(
+    *,
+    session_id: str,
+    user_message: str,
+    assistant_message: str,
+    max_messages_per_session: int = 40,
+) -> dict[str, Any] | None:
+    if not _release_controls_redis_sidecar_enabled():
+        return None
+
+    redis_url = _release_controls_redis_sidecar_url()
+    if not redis_url:
+        return None
+
+    try:
+        import redis
+    except Exception:
+        get_metrics_registry().record_redis_session_error()
+        return None
+
+    namespace = _release_controls_redis_sidecar_namespace()
+    key = f"{namespace}:session:{session_id}"
+    index_key = f"{namespace}:index"
+    payloads = [
+        json.dumps(
+            redact_persisted_payload({"role": "user", "content": user_message}),
+            ensure_ascii=False,
+        ),
+        json.dumps(
+            redact_persisted_payload({"role": "assistant", "content": assistant_message}),
+            ensure_ascii=False,
+        ),
+    ]
+
+    try:
+        client = redis.Redis.from_url(redis_url, decode_responses=True)
+        client.rpush(key, *payloads)
+        client.ltrim(key, -max_messages_per_session, -1)
+        client.zadd(index_key, {session_id: time.time()})
+    except Exception:
+        get_metrics_registry().record_redis_session_error()
+        return None
+
+    return {
+        "redis_url": redis_url,
+        "namespace": namespace,
+        "session_id": session_id,
+        "persisted": True,
+    }

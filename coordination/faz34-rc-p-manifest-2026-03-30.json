@@ -1,0 +1,16 @@
+{
+  "candidate_id": "RC-P",
+  "base_candidate": "RC-G",
+  "control_candidate": "RC-J",
+  "forensic_reference_candidate": "RC-N",
+  "candidate_status": "release_controls_perimeter_candidate",
+  "diagnostic_only": false,
+  "promotable": false,
+  "repairable": false,
+  "current_evaluable": true,
+  "allowed_diff_surface": "non_model_visible_release_controls_perimeter_only",
+  "answer_path_delta_allowed": false,
+  "cutover_authorized": false,
+  "pilot_authorized": false,
+  "report_hash": "93f7ba5b12c1513d086ed2715bc5f5b61acdc68e8f6018577d7aa8d33e808e6e"
+}

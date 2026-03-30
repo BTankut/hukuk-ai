@@ -1,0 +1,35 @@
+# FAZ34 Release Controls Placement Matrix
+
+| rule | value |
+| --- | --- |
+| mandatory_auth_placement | transport_gateway_only |
+| mandatory_auth_model_visible_mutation_allowed | false |
+| mandatory_auth_prompt_path_access_allowed | false |
+| mandatory_auth_session_object_injection_allowed | false |
+| mandatory_auth_only_immutable_identity_token_allowed | true |
+| immutable_audit_logging_placement | frozen_snapshot_async_outbox_only |
+| immutable_audit_logging_in_prompt_path_allowed | false |
+| immutable_audit_logging_in_context_assembly_allowed | false |
+| immutable_audit_logging_raw_answer_mutation_allowed | false |
+| immutable_audit_logging_response_envelope_mutation_allowed | false |
+| redis_session_persistence_placement | sidecar_state_store_only |
+| redis_live_read_write_in_model_path_allowed | false |
+| redis_only_immutable_session_id_visible_to_model_path | true |
+| redis_context_mutation_allowed | false |
+| persisted_pii_redaction_placement | persistence_and_audit_views_only |
+| persisted_pii_redaction_before_raw_answer_freeze_allowed | false |
+| persisted_pii_redaction_prompt_mutation_allowed | false |
+| persisted_pii_redaction_context_mutation_allowed | false |
+| tokenizer_backed_accounting_placement | post_response_frozen_snapshot_only |
+| tokenizer_backed_accounting_feedback_into_runtime_allowed | false |
+| tokenizer_backed_accounting_prompt_path_access_allowed | false |
+| observability_alerting_placement | passive_tap_only |
+| observability_alerting_runtime_mutation_allowed | false |
+| api_versioning_placement | transport_boundary_only |
+| api_versioning_answer_path_mutation_allowed | false |
+| process_supervision_placement | host_or_process_boundary_only |
+| process_supervision_answer_path_mutation_allowed | false |
+| backup_restore_placement | offline_operational_boundary_only |
+| backup_restore_answer_path_mutation_allowed | false |
+| one_command_release_smoke_placement | non_serving_harness_only |
+| one_command_release_smoke_runtime_attachment_allowed | false |

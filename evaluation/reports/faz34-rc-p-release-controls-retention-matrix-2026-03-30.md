@@ -1,0 +1,9 @@
+# FAZ34 RC-P Release Controls Retention Matrix
+
+- must_close_release_controls_pass = `false`
+- retained_after_family_eval = `false`
+- retained_after_restart = `false`
+- retained_after_restore = `false`
+- answer_path_delta_reintroduced = `true`
+- runtime_error_count = `0`
+- unexplained_count = `0`

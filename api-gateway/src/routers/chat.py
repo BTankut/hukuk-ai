@@ -67,6 +67,7 @@ from release_controls import (
     ensure_request_id,
     ensure_trace_id,
     export_trace_pack,
+    persist_sidecar_session_turn,
     release_lane_id,
     require_api_auth,
 )
@@ -2190,6 +2191,7 @@ def _build_canonical_request_snapshot(
         "stream": False,
         "temperature": request_body.temperature,
         "max_tokens": request_body.max_tokens,
+        "session_id": request_body.session_id,
         "law_filter": request_body.law_filter,
         "use_verification": request_body.use_verification,
         "top_k": request_body.top_k,
@@ -2306,7 +2308,15 @@ def _finalize_boundary_proxy_response(
     if trace_payload:
         _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
 
-    store.add_turn(session_id, user_message, answer_text)
+    if _release_controls_perimeter_session_isolation_enabled():
+        persist_sidecar_session_turn(
+            session_id=session_id,
+            user_message=user_message,
+            assistant_message=answer_text,
+            max_messages_per_session=ConversationStore.MAX_MESSAGES_PER_SESSION,
+        )
+    else:
+        store.add_turn(session_id, user_message, answer_text)
     snapshot_messages = [
         ConversationMessage(role=item["role"], content=item["content"])
         for item in canonical_snapshot.get("messages", [])
@@ -2508,6 +2518,10 @@ def _env_flag(name: str, default: bool = False) -> bool:
 
 def _release_controls_boundary_proxy_enabled() -> bool:
     return _env_flag("RELEASE_CONTROLS_BOUNDARY_PROXY_ENABLED", False)
+
+
+def _release_controls_perimeter_session_isolation_enabled() -> bool:
+    return _env_flag("RELEASE_CONTROLS_PERIMETER_SESSION_ISOLATION", False)
 
 
 def _canonical_answer_path_base_url() -> str | None:
@@ -3644,7 +3658,10 @@ async def chat_completions(
 
     # Eğer client geçmiş mesaj göndermemişse → session store'u kullan
     conversation_history = request_history
-    if not conversation_history:
+    if not conversation_history and not (
+        _release_controls_boundary_proxy_enabled()
+        and _release_controls_perimeter_session_isolation_enabled()
+    ):
         conversation_history = store.get_history(session_id)
 
     if _release_controls_boundary_proxy_enabled():
