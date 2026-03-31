@@ -1,0 +1,26 @@
+# FAZ40 RC-Q Archival Closure Contract
+
+- candidate_id = `RC-Q`
+- candidate_status = `discard_archived`
+- candidate_channel = `historical_repair_archive`
+- promotable = `false`
+- repairable = `false`
+- current_evaluable = `false`
+- historical_archive_only = `true`
+- diagnostic_only = `true`
+- archival_reason = `current_instability_truth_adopted_after_canonical_current_authority_with_current_perimeter_truth_preserved_and_historical_repair_truth_reclassification`
+- current_perimeter_truth_reference_preserved = `true`
+- current_instability_truth_adopted = `true`
+- historical_failed_repair_truth_reclassified = `true`
+- historical_inconclusive_recapture_truth_reclassified = `true`
+- current_perimeter_truth_reference = `RC-P`
+- current_repair_truth_reference = `FAZ38 current_instability_truth`
+- historical_repair_archive_channel = `diagnostic_only`
+- repair_truth_comparison_order = `current_perimeter_truth_reference -> current_repair_truth -> historical_repair_archive`
+- surface_breach_from_history_reintroduced = `false`
+- current_instability_truth_runtime_error_count = `0`
+- current_instability_truth_unexplained_count = `0`
+- current_instability_truth_primary_reason = `frontier_membership_delta`
+- current_instability_truth_root_cause_class = `frontier_membership_instability`
+- current_instability_truth_dominant_stage = `I4`
+- current_instability_truth_union_instability_rowset_count = `6`
