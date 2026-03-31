@@ -1,0 +1,24 @@
+# FAZ38 RC-Q Targeted Acceptance Stability Check
+
+- capture_stability_match = `true`
+- capture_a_vs_capture_b_mismatch_count = `0`
+- capture_a_vs_capture_b_runtime_error_count = `0`
+- must_close_release_controls_count = `10`
+- mandatory_auth_pass = `true`
+- immutable_audit_logging_pass = `true`
+- persisted_pii_redaction_pass = `true`
+- redis_session_persistence_pass = `true`
+- tokenizer_backed_accounting_pass = `true`
+- observability_alerting_pass = `true`
+- api_versioning_pass = `true`
+- process_supervision_pass = `true`
+- backup_restore_pass = `true`
+- one_command_release_smoke_pass = `true`
+- refusal_smoke_status_code = `200`
+- restart_refusal_smoke_status_code = `200`
+- tokenizer_usage_total = `1.0`
+- estimated_usage_total = `0.0`
+- token_accounting_failure_total = `0.0`
+- backup_restore_missing_file_count = `0`
+- runtime_error_count = `0`
+- unexplained_count = `0`
