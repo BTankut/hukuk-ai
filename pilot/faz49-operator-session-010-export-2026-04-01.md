@@ -1,0 +1,26 @@
+# FAZ49 Session Export faz49-operator-session-010
+
+- session_id = `faz49-operator-session-010`
+- operator_or_observer_id = `internal_operator_002`
+- session_class = `in_scope_supported_citation_heavy`
+- prompt_text = `TBK'da kefalette sekil sarti ile es rizasini ilgili maddeleriyle anlatir misin?`
+- rc_r_response = `Kapsam icinde dayanak: TBK m.583, TBK m.584. Yazili sekil, kefaletin icerigi ve es rizasi gerekliligi bu maddelerin birlikte okunmasiyla belirlenir.`
+- rc_g_shadow_response = `Kapsam icinde dayanak: TBK m.583, TBK m.584. Yazili sekil, kefaletin icerigi ve es rizasi gerekliligi bu maddelerin birlikte okunmasiyla belirlenir.`
+- model_request_payload_hash_match = `true`
+- retrieval_request_hash_match = `true`
+- assembled_context_hash_match = `true`
+- preprojection_hash_match = `true`
+- raw_answer_hash_match = `true`
+- response_envelope_hash_match = `true`
+- citation_visible = `true`
+- refusal_visible_when_expected = `true`
+- immutable_audit_capture_pass = `true`
+- session_export_pass = `true`
+- session_replay_pass = `true`
+- incident_opened = `false`
+- supported_source_correct = `true`
+- citation_readable = `true`
+- answer_usable = `true`
+- refusal_correct = `n/a`
+- legal_overreach_present = `false`
+- human_escalation_needed = `false`

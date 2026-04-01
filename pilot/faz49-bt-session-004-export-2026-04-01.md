@@ -1,0 +1,26 @@
+# FAZ49 Session Export faz49-bt-session-004
+
+- session_id = `faz49-bt-session-004`
+- operator_or_observer_id = `BT`
+- session_class = `in_scope_supported_direct_citation`
+- prompt_text = `TCK'da hirsizlik sucu icin temel maddeyi dogrudan gosterir misin?`
+- rc_r_response = `Kapsam icinde dayanak: TCK m.141. Zilyedin rizasi olmadan tasiniri kendisine veya baskasina yarar saglamak maksadiyla almak bu madde kapsamindadir.`
+- rc_g_shadow_response = `Kapsam icinde dayanak: TCK m.141. Zilyedin rizasi olmadan tasiniri kendisine veya baskasina yarar saglamak maksadiyla almak bu madde kapsamindadir.`
+- model_request_payload_hash_match = `true`
+- retrieval_request_hash_match = `true`
+- assembled_context_hash_match = `true`
+- preprojection_hash_match = `true`
+- raw_answer_hash_match = `true`
+- response_envelope_hash_match = `true`
+- citation_visible = `true`
+- refusal_visible_when_expected = `true`
+- immutable_audit_capture_pass = `true`
+- session_export_pass = `true`
+- session_replay_pass = `true`
+- incident_opened = `false`
+- supported_source_correct = `true`
+- citation_readable = `true`
+- answer_usable = `true`
+- refusal_correct = `n/a`
+- legal_overreach_present = `false`
+- human_escalation_needed = `false`

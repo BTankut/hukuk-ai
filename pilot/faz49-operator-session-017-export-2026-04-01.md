@@ -1,0 +1,26 @@
+# FAZ49 Session Export faz49-operator-session-017
+
+- session_id = `faz49-operator-session-017`
+- operator_or_observer_id = `internal_operator_003`
+- session_class = `in_scope_supported_citation_heavy`
+- prompt_text = `TTK'da anonim sirket genel kurulunun devredilemez yetkileri ve cagrisi hangi maddelerde yer alir?`
+- rc_r_response = `Kapsam icinde dayanak: TTK m.408, TTK m.410. Genel kurulun devredilemez yetkileri ile toplantiya cagrinin asgari cercevesi bu maddelerde bulunur.`
+- rc_g_shadow_response = `Kapsam icinde dayanak: TTK m.408, TTK m.410. Genel kurulun devredilemez yetkileri ile toplantiya cagrinin asgari cercevesi bu maddelerde bulunur.`
+- model_request_payload_hash_match = `true`
+- retrieval_request_hash_match = `true`
+- assembled_context_hash_match = `true`
+- preprojection_hash_match = `true`
+- raw_answer_hash_match = `true`
+- response_envelope_hash_match = `true`
+- citation_visible = `true`
+- refusal_visible_when_expected = `true`
+- immutable_audit_capture_pass = `true`
+- session_export_pass = `true`
+- session_replay_pass = `true`
+- incident_opened = `false`
+- supported_source_correct = `true`
+- citation_readable = `true`
+- answer_usable = `true`
+- refusal_correct = `n/a`
+- legal_overreach_present = `false`
+- human_escalation_needed = `false`
