@@ -1,0 +1,22 @@
+# FAZ46 RC-R Session Export faz46-rc-r-session-002
+
+- session_id = `faz46-rc-r-session-002`
+- operator_id = `internal_operator_001`
+- session_class = `in_scope_supported_citation_heavy`
+- admission_pass = `true`
+- advisory_only_visible = `true`
+- human_review_visible = `true`
+- citation_visible = `true`
+- refusal_visible_when_expected = `true`
+- rc_r_runtime_error_count = `0`
+- rc_g_runtime_error_count = `0`
+- rc_r_vs_rc_g_model_request_payload_hash_match = `true`
+- rc_r_vs_rc_g_retrieval_request_hash_match = `true`
+- rc_r_vs_rc_g_assembled_context_hash_match = `true`
+- rc_r_vs_rc_g_preprojection_hash_match = `true`
+- rc_r_vs_rc_g_raw_answer_hash_match = `true`
+- rc_r_vs_rc_g_response_envelope_hash_match = `true`
+- audit_capture_pass = `true`
+- session_export_pass = `true`
+- session_replay_pass = `true`
+- incident_opened = `false`
