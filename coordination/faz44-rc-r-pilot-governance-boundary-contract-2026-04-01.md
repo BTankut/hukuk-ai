@@ -1,0 +1,23 @@
+# FAZ44 RC-R Pilot Governance Boundary Contract
+
+- internal_named_allowlist_only = `true`
+- anonymous_access_allowed = `false`
+- public_network_exposure_allowed = `false`
+- customer_user_allowed = `false`
+- external_user_allowed = `false`
+- customer_case_input_allowed = `false`
+- customer_data_ingestion_allowed = `false`
+- production_business_decision_usage_allowed = `false`
+- advisory_only_label_required = `true`
+- human_review_required = `true`
+- citation_visible_required = `true`
+- refusal_visible_required = `true`
+- immutable_audit_required = `true`
+- rollback_ready_required = `true`
+- incident_register_required = `true`
+- kill_switch_required = `true`
+- operator_runbook_required = `true`
+- post_session_export_required = `true`
+- session_replay_required = `true`
+- offline_only_operation_allowed = `true`
+- internet_dependency_allowed = `false`
