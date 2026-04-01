@@ -1,0 +1,27 @@
+# FAZ43 RC-R Release Controls Targeted Acceptance Post-Rollback
+
+- must_close_release_controls_count = `10`
+- mandatory_auth_pass = `true`
+- immutable_audit_logging_pass = `true`
+- persisted_pii_redaction_pass = `true`
+- redis_session_persistence_pass = `true`
+- tokenizer_backed_accounting_pass = `true`
+- observability_alerting_pass = `true`
+- api_versioning_pass = `true`
+- process_supervision_pass = `true`
+- backup_restore_pass = `true`
+- one_command_release_smoke_pass = `true`
+- auth_bypass_found = `false`
+- audit_write_loss_found = `false`
+- pii_leak_found = `false`
+- redis_continuity_break_found = `false`
+- token_accounting_fallback_found = `false`
+- observability_gap_found = `false`
+- api_versioning_gap_found = `false`
+- supervision_gap_found = `false`
+- backup_restore_gap_found = `false`
+- release_smoke_gap_found = `false`
+- refusal_smoke_status_code = `200`
+- restart_refusal_smoke_status_code = `200`
+- runtime_error_count = `0`
+- unexplained_count = `0`

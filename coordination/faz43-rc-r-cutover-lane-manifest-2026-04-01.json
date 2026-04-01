@@ -1,0 +1,13 @@
+{
+  "alias_from": "RC-G",
+  "alias_to": "RC-R",
+  "answer_path_delta_allowed": false,
+  "authority_control": "RC-J",
+  "baseline_reference": "RC-G",
+  "cutover_candidate": "RC-R",
+  "database_expansion_allowed": false,
+  "forensic_reference": "RC-N",
+  "known_good_lane": "RC-G",
+  "pilot_authorized": false,
+  "production_cutover_authorized": false
+}
