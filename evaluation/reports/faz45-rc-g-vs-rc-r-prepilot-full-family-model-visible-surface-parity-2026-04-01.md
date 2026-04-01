@@ -1,0 +1,14 @@
+# FAZ45 RC-G vs RC-R Prepilot Full-Family Model-Visible Surface Parity
+
+- faz1_50_mismatch_count = `0`
+- v2_95_mismatch_count = `0`
+- v3_170_mismatch_count = `0`
+- model_request_payload_hash_mismatch_count = `0`
+- retrieval_request_hash_mismatch_count = `0`
+- assembled_context_hash_mismatch_count = `0`
+- preprojection_hash_mismatch_count = `0`
+- raw_answer_hash_mismatch_count = `0`
+- response_envelope_hash_mismatch_count = `0`
+- family_metric_delta_zero = `true`
+- runtime_error_count = `0`
+- unexplained_count = `0`
