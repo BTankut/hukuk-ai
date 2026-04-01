@@ -1,0 +1,35 @@
+{
+  "active_control_pair": "RC-G vs RC-J",
+  "active_forensic_reference": "RC-N",
+  "active_quality_reference": "RC-G",
+  "allowed_diff_surface": "process_isolated_release_controls_perimeter_only",
+  "answer_path_delta_allowed": false,
+  "archived_candidate_set": [
+    "RC-M",
+    "RC-O",
+    "RC-Q"
+  ],
+  "base_candidate": "RC-G",
+  "candidate_id": "RC-R",
+  "candidate_status": "release_controls_process_isolated_perimeter_candidate",
+  "control_candidate": "RC-J",
+  "current_authority_ref": "FAZ21 canonical current authority",
+  "current_perimeter_truth_reference": "RC-P",
+  "cutover_authorized": false,
+  "database_expansion_authorized": false,
+  "forensic_reference_candidate": "RC-N",
+  "must_close_release_controls_count": 10,
+  "must_close_release_controls_exact_set": [
+    "mandatory auth",
+    "immutable audit logging",
+    "persisted PII redaction",
+    "Redis session persistence",
+    "tokenizer-backed accounting",
+    "observability / alerting",
+    "API versioning",
+    "process supervision",
+    "backup / restore",
+    "one-command release smoke"
+  ],
+  "pilot_authorized": false
+}

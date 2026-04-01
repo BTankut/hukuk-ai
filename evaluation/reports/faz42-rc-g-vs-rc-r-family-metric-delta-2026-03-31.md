@@ -1,0 +1,7 @@
+# FAZ42 RC-G vs RC-R Family Metric Delta
+
+- faz1_50_metric_delta_total = `0.0`
+- v2_95_metric_delta_total = `0.0`
+- v3_170_metric_delta_total = `0.0`
+- family_metric_delta_zero = `true`
+- unexplained_count = `0`

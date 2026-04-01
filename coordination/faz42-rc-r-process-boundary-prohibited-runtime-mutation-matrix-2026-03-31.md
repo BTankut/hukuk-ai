@@ -1,0 +1,24 @@
+# FAZ42 RC-R Process-Boundary Prohibited Runtime Mutation Matrix
+
+- mandatory_auth_model_visible_mutation_allowed = `false`
+- mandatory_auth_prompt_path_access_allowed = `false`
+- mandatory_auth_session_object_injection_allowed = `false`
+- mandatory_auth_only_immutable_identity_token_allowed = `true`
+- immutable_audit_logging_callback_into_serving_process_allowed = `false`
+- immutable_audit_logging_in_context_assembly_allowed = `false`
+- immutable_audit_logging_preprojection_mutation_allowed = `false`
+- immutable_audit_logging_raw_answer_mutation_allowed = `false`
+- immutable_audit_logging_response_envelope_mutation_allowed = `false`
+- redis_live_read_write_in_serving_process_allowed = `false`
+- redis_only_immutable_session_id_visible_to_serving_process = `true`
+- redis_context_mutation_allowed = `false`
+- persisted_pii_redaction_before_raw_answer_freeze_allowed = `false`
+- persisted_pii_redaction_prompt_mutation_allowed = `false`
+- persisted_pii_redaction_context_mutation_allowed = `false`
+- tokenizer_backed_accounting_feedback_into_serving_process_allowed = `false`
+- tokenizer_backed_accounting_prompt_path_access_allowed = `false`
+- observability_alerting_runtime_mutation_allowed = `false`
+- api_versioning_answer_path_mutation_allowed = `false`
+- process_supervision_answer_path_mutation_allowed = `false`
+- backup_restore_answer_path_mutation_allowed = `false`
+- one_command_release_smoke_runtime_attachment_allowed = `false`
