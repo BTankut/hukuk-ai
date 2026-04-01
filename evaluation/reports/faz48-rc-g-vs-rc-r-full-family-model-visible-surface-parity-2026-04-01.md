@@ -1,0 +1,24 @@
+# FAZ48 RC-G vs RC-R Full-Family Model-Visible Surface Parity
+
+- control_pair_authority_match = `true`
+- current_authority_contract_breach = `false`
+- surface_breach_from_history_reintroduced = `false`
+- faz1_50_mismatch_count = `0`
+- v2_95_mismatch_count = `0`
+- v3_170_mismatch_count = `0`
+- model_request_payload_hash_mismatch_count = `0`
+- retrieval_request_hash_mismatch_count = `0`
+- assembled_context_hash_mismatch_count = `0`
+- preprojection_hash_mismatch_count = `0`
+- raw_answer_hash_mismatch_count = `0`
+- response_envelope_hash_mismatch_count = `0`
+- family_metric_delta_zero = `true`
+- faz1_50_metric_delta_total = `0.0`
+- v2_95_metric_delta_total = `0.0`
+- v3_170_metric_delta_total = `0.0`
+- must_close_release_controls_pass = `true`
+- retained_after_family_eval = `true`
+- retained_after_restart = `true`
+- retained_after_restore = `true`
+- runtime_error_count = `0`
+- unexplained_count = `0`

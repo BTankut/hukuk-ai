@@ -1,0 +1,33 @@
+# FAZ48 RC-S Build Contract
+
+- next_candidate_id = `RC-S`
+- next_candidate_base = `RC-R`
+- next_candidate_quality_reference = `RC-G`
+- next_candidate_control = `RC-J`
+- next_candidate_forensic_reference = `RC-N`
+- next_candidate_perimeter_truth_reference = `RC-P`
+- next_candidate_status = `reserved_not_built`
+- next_phase_scope = `coverage_database_expansion_readiness_only_under_canonical_current_authority`
+- next_official_work_if_pass = `rc-s narrow controlled primary-source expansion gate under canonical current authority`
+- next_official_work_if_fail = `rc-s coverage readiness forensics under canonical current authority`
+- allowed_diff_surface = `coverage_contracts_metadata_schema_source_set_and_expansion_readiness_artifacts_only`
+- answer_path_delta_allowed = `false`
+- model_request_payload_delta_allowed = `false`
+- retrieval_request_contract_change_allowed = `false`
+- assembled_context_contract_change_allowed = `false`
+- preprojection_contract_change_allowed = `false`
+- raw_answer_contract_change_allowed = `false`
+- response_envelope_contract_change_allowed = `false`
+- runtime_error_delta_allowed = `false`
+- model_change_allowed = `false`
+- prompt_change_allowed = `false`
+- guardrail_change_allowed = `false`
+- release_controls_change_allowed = `false`
+- deployment_topology_change_allowed = `false`
+- customer_pilot_authorized_in_this_phase = `false`
+- production_cutover_authorized_in_this_phase = `false`
+- dgx_bundle_authorized_in_this_phase = `false`
+- database_expansion_authorized_in_this_phase = `false`
+- embedding_generation_authorized_in_this_phase = `false`
+- index_build_authorized_in_this_phase = `false`
+- ingestion_pipeline_run_authorized_in_this_phase = `false`

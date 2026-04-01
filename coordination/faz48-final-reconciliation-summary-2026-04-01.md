@@ -1,0 +1,22 @@
+# FAZ48 Final Reconciliation Summary
+
+- official_decision = `NO-GO - RC-S Coverage Readiness`
+- next_official_work = `rc-s coverage readiness forensics under canonical current authority`
+- reference_pack_contradiction_count = `0`
+- faz1_50_mismatch_count = `0`
+- v2_95_mismatch_count = `0`
+- v3_170_mismatch_count = `0`
+- model_request_payload_hash_mismatch_count = `0`
+- retrieval_request_hash_mismatch_count = `0`
+- assembled_context_hash_mismatch_count = `0`
+- preprojection_hash_mismatch_count = `0`
+- raw_answer_hash_mismatch_count = `0`
+- response_envelope_hash_mismatch_count = `0`
+- missing_primary_source_manifest_count = `6`
+- missing_primary_raw_storage_location_count = `6`
+- missing_primary_canonical_source_locator_count = `2`
+- missing_mandatory_metadata_mapping_count = `48`
+- yururluk_chronology_violation_count = `0`
+- source_id_uniqueness_contract_breach_count = `0`
+- runtime_error_count = `0`
+- unexplained_count = `0`
