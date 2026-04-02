@@ -1,0 +1,26 @@
+# RC-S Narrow Controlled Primary-Source Expansion Execution Raporu 2026-04-01
+
+- official_decision = `PASS - RC-S Narrow Controlled Primary-Source Expansion Executed`
+- expansion_source_class = `TMK core corpus`
+- input_document_count = `12`
+- accepted_document_count = `12`
+- excluded_source_contamination_found = `false`
+- source_id_uniqueness_breach_count = `0`
+- yururluk_violation_count = `0`
+- metadata_mapping_complete = `true`
+- source_id_contract_pass = `true`
+- yururluk_contract_pass = `true`
+- null_forbidden_contract_pass = `true`
+- parseability_contract_pass = `true`
+- embedding_generation_completed = `true`
+- index_build_completed = `true`
+- vector_db_write_completed = `true`
+- technical_write_error_count = `0`
+- model_changed = `false`
+- prompt_changed = `false`
+- retrieval_logic_changed = `false`
+- reranker_changed = `false`
+- guardrail_changed = `false`
+- release_controls_topology_changed = `false`
+- lawyer_review_batch_produced = `true`
+- next_official_work_if_pass = `rc-s tmk lawyer acceptance gate under canonical current authority`
