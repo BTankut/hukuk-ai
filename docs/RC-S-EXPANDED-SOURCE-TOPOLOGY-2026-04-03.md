@@ -19,21 +19,24 @@
 
 ## Expanded Source Status
 
-- accepted_expanded_source_set = `[TMK core corpus]`
-- accepted_expanded_source_count = `1`
-- current_accepted_expanded_source = `TMK core corpus`
-- current_accepted_expanded_source_status = `active_for_source_steering`
-- current_accepted_expanded_source_execution_complete = `true`
-- current_accepted_expanded_source_human_review_closed = `true`
+- accepted_expanded_source_set = `[TMK core corpus, TCK]`
+- accepted_expanded_source_count = `2`
+- current_accepted_expanded_sources = `TMK core corpus; TCK`
+- tmk_core_corpus_status = `accepted_expanded_source`
+- tck_status = `accepted_expanded_source`
+- tmk_execution_complete = `true`
+- tmk_human_review_closed = `true`
+- tck_execution_complete = `true`
+- tck_human_review_closed = `true`
 
 ## Not Yet Executed Source Classes
 
-- unexecuted_source_classes_in_canonical_order = `[TCK, HMK, CMK, TTK, İK]`
-- next_unexecuted_source_class = `TCK`
+- unexecuted_source_classes_in_canonical_order = `[HMK, CMK, TTK, İK]`
+- next_unexecuted_source_class = `HMK`
 
 ## Boundary Invariants
 
-- second_source_class_actual_execution_started = `false`
+- third_source_class_actual_execution_started = `false`
 - embedding_generation_started_for_next_source = `false`
 - index_build_started_for_next_source = `false`
 - vector_db_write_started_for_next_source = `false`
