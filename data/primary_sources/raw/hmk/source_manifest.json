@@ -1,0 +1,29 @@
+{
+  "source_class": "HMK",
+  "law_no": "6100",
+  "law_short_name": "HMK",
+  "law_name": "Hukuk Muhakemeleri Kanunu",
+  "detail_url": "https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=1&MevzuatNo=6100&MevzuatTertip=5",
+  "source_page_url": "https://mevzuat.gov.tr/mevzuat?MevzuatNo=6100&MevzuatTur=1&MevzuatTertip=5",
+  "fetched_at": "2026-04-03T15:33:29+00:00",
+  "article_count": 8,
+  "article_nos": [
+    "94",
+    "107",
+    "114",
+    "119",
+    "341",
+    "345",
+    "389",
+    "392"
+  ],
+  "raw_file_set": [
+    "kanun_source.xml",
+    "article_index.jsonl",
+    "source_manifest.json",
+    "checksums.sha256"
+  ],
+  "excluded_source_contamination_found": false,
+  "customer_or_private_data_found": false,
+  "internet_ad_hoc_content_found": false
+}
