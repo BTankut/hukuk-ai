@@ -1,0 +1,30 @@
+{
+  "source_class": "CMK",
+  "law_no": "5271",
+  "law_short_name": "CMK",
+  "law_name": "Ceza Muhakemesi Kanunu",
+  "detail_url": "https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=1&MevzuatNo=5271&MevzuatTertip=5",
+  "source_page_url": "https://mevzuat.gov.tr/mevzuat?MevzuatNo=5271&MevzuatTur=1&MevzuatTertip=5",
+  "fetched_at": "2026-04-03T21:38:53+00:00",
+  "article_count": 9,
+  "article_nos": [
+    "90",
+    "91",
+    "100",
+    "101",
+    "141",
+    "142",
+    "147",
+    "150",
+    "231"
+  ],
+  "raw_file_set": [
+    "kanun_source.xml",
+    "article_index.jsonl",
+    "source_manifest.json",
+    "checksums.sha256"
+  ],
+  "excluded_source_contamination_found": false,
+  "customer_or_private_data_found": false,
+  "internet_ad_hoc_content_found": false
+}
