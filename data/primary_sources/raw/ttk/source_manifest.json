@@ -1,0 +1,30 @@
+{
+  "source_class": "TTK",
+  "law_no": "6102",
+  "law_short_name": "TTK",
+  "law_name": "Turk Ticaret Kanunu",
+  "detail_url": "https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=1&MevzuatNo=6102&MevzuatTertip=5",
+  "source_page_url": "https://mevzuat.gov.tr/mevzuat?MevzuatNo=6102&MevzuatTur=1&MevzuatTertip=5",
+  "fetched_at": "2026-04-04T11:10:19+00:00",
+  "article_count": 9,
+  "article_nos": [
+    "19",
+    "20",
+    "21",
+    "23",
+    "52",
+    "390",
+    "391",
+    "408",
+    "410"
+  ],
+  "raw_file_set": [
+    "kanun_source.xml",
+    "article_index.jsonl",
+    "source_manifest.json",
+    "checksums.sha256"
+  ],
+  "excluded_source_contamination_found": false,
+  "customer_or_private_data_found": false,
+  "internet_ad_hoc_content_found": false
+}
