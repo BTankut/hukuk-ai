@@ -1,0 +1,30 @@
+{
+  "source_class": "İK",
+  "law_no": "2004",
+  "law_short_name": "İİK",
+  "law_name": "İcra ve İflas Kanunu",
+  "detail_url": "https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=1&MevzuatNo=2004&MevzuatTertip=3",
+  "source_page_url": "https://mevzuat.gov.tr/mevzuat?MevzuatNo=2004&MevzuatTur=1&MevzuatTertip=3",
+  "fetched_at": "2026-04-04T21:50:00+00:00",
+  "article_count": 9,
+  "article_nos": [
+    "58",
+    "60",
+    "61",
+    "62",
+    "67",
+    "68",
+    "72",
+    "82",
+    "89"
+  ],
+  "raw_file_set": [
+    "kanun_source.xml",
+    "article_index.jsonl",
+    "source_manifest.json",
+    "checksums.sha256"
+  ],
+  "excluded_source_contamination_found": false,
+  "customer_or_private_data_found": false,
+  "internet_ad_hoc_content_found": false
+}
