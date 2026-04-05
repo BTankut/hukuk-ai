@@ -313,17 +313,23 @@ class TestBuildMultiturnQuery:
 
 class TestScopeRefusalDetection:
 
-    def test_ttk_query_detected_as_out_of_scope(self):
+    def test_ttk_query_is_no_longer_forced_out_of_scope(self):
         reason = _detect_scope_refusal_reason(
             "Türk Ticaret Kanunu'na göre anonim şirket kuruluş asgari sermayesi nedir?"
         )
-        assert reason == "Türk Ticaret Kanunu (TTK)"
+        assert reason is None
 
-    def test_tck_query_detected_as_out_of_scope(self):
+    def test_tck_query_is_no_longer_forced_out_of_scope(self):
         reason = _detect_scope_refusal_reason(
             "TCK m.141 neyi düzenler?"
         )
-        assert reason == "Türk Ceza Kanunu (TCK)"
+        assert reason is None
+
+    def test_tmk_query_is_no_longer_forced_out_of_scope(self):
+        reason = _detect_scope_refusal_reason(
+            "TMK'ya göre iyiniyet karinesi nedir ve hangi maddede düzenlenmiştir?"
+        )
+        assert reason is None
 
     def test_cross_law_family_query_does_not_trigger_scope_refusal(self):
         reason = _detect_scope_refusal_reason(
@@ -745,6 +751,11 @@ class TestPreciseCrossLawDeterministicAnswers:
                 "Aile konutu şerhi bulunan taşınmazın satışında eşin rızası yoksa alıcının hukuki durumu hangi maddelerle değerlendirilir?",
                 ["TBK m.27", "TMK m.194", "TMK m.1023"],
                 ["aile konutu şerhi", "iyi niyeti"],
+            ),
+            (
+                "TMK'da aile konutu serhi ile esin rizasinin sonuclarini maddeleriyle anlatir misin?",
+                ["TMK m.194", "TMK m.1023"],
+                ["aile konutu", "tapu siciline güven"],
             ),
             (
                 "Evlilik birliği içinde bir eşin diğerinin rızası olmadan aile konutu üzerinde ipotek tesis etmesi mümkün müdür? Bu işlemin TBK m.27 çerçevesindeki geçersizlik sonuçları ve TMK'nın aile konutuna ilişkin güvencesi birlikte nasıl değerlendirilir?",

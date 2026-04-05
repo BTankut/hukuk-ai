@@ -63,6 +63,7 @@ REFUSAL_PATTERNS: list[str] = [
     r"yanıt\s*veremiyorum",
     r"bu\s+soruyu\s+cevaplayamıyorum",
     r"bu\s+soru\s+(tbk|turk\s+borclar\s+kanunu)\s+(kapsamında|icinde)\s+degil",
+    r"bu\s+soru\s+(ttk|turk\s+ticaret\s+kanunu)\s+(kapsamında|icinde)\s+degil",
     r"(ilgili\s+)?veri\s+(tabanımda|tabaninda|kaynagımda).*?(mevcut\s+değil|bulunmamaktadır|yok)",
     r"(ilgili\s+)?kaynak\s+(bulunamadı|mevcut\s+değil|yok)",
     r"(tbk\s+)?mevzuatımızda\s+(bu\s+konu\s+)?yer\s+almıyor",
@@ -70,8 +71,6 @@ REFUSAL_PATTERNS: list[str] = [
     r"guvenilir\s+bilgi\s+veremiyorum",
     r"bu\s+bilgiye\s+sahip\s+degil",
     r"iş\s+kanunu",          # Kıdem tazminatı sorusu için (_tr_lower ile İş→iş)
-    r"ticaret\s+kanunu",     # TTK sorusu için
-    r"ttk",
 ]
 
 # ---------------------------------------------------------------------------

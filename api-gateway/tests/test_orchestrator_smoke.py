@@ -227,3 +227,192 @@ def test_orchestrator_source_lock_recovers_incomplete_priority_subset():
     assert "[Kaynak: TBK m.19]" in response.answer
     assert "[Kaynak: TBK m.285]" in response.answer
     assert "[Kaynak: TMK m.561]" in response.answer
+
+
+def test_extract_priority_chunks_prefers_distinct_query_clauses_for_tck_pair():
+    chunks = [
+        RetrievedChunk(
+            text=(
+                "TCK m.43 ayni sucun birden fazla islenmesi halinde zincirleme suc "
+                "nedeniyle cezanin artirilmasini duzenler."
+            ),
+            citation="TCK m.43",
+        ),
+        RetrievedChunk(
+            text=(
+                "TCK m.168 etkin pismanlik halinde verilecek cezanin "
+                "ucte ikisine kadar indirilebilecegini duzenler."
+            ),
+            citation="TCK m.168",
+        ),
+        RetrievedChunk(
+            text=(
+                "TCK m.145 hirsizlikta malin degerinin azligi nedeniyle "
+                "cezada indirim yapilabilecegini duzenler."
+            ),
+            citation="TCK m.145",
+        ),
+        RetrievedChunk(
+            text=(
+                "TCK m.144 hirsizlik sucu paydas malik olunan mal uzerinde "
+                "veya hukuki iliskiye dayanan alacagin tahsili amaciyla "
+                "islendiginde daha az cezayi gerektiren halleri duzenler."
+            ),
+            citation="TCK m.144",
+        ),
+    ]
+
+    selected = RAGOrchestrator._extract_priority_chunks(
+        chunks,
+        query="TCK'da hirsizlikta daha az cezayi gerektiren haller ile deger azligini maddeleriyle gosterir misin?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["TCK m.144", "TCK m.145"]
+
+
+def test_extract_priority_chunks_prefers_article_pair_for_split_ttk_question():
+    chunks = [
+        RetrievedChunk(
+            text="TTK m.408 anonim sirket genel kurulunun devredilemez yetkilerini duzenler.",
+            citation="TTK m.408",
+        ),
+        RetrievedChunk(
+            text="TTK m.391 yonetim kurulunun batil kararlarini duzenler.",
+            citation="TTK m.391",
+        ),
+        RetrievedChunk(
+            text="TTK m.410 genel kurulu cagrmaya yetkili olanlari duzenler.",
+            citation="TTK m.410",
+        ),
+    ]
+
+    selected = RAGOrchestrator._extract_priority_chunks(
+        chunks,
+        query="TTK'da anonim sirket genel kurulunun devredilemez yetkileri ve cagrisi hangi maddelerde yer alir?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["TTK m.408", "TTK m.410"]
+
+
+def test_extract_priority_chunks_prefers_cmk_compensation_pair_over_generic_tazminat_hint():
+    chunks = [
+        RetrievedChunk(
+            text=(
+                "CMK m.141 koruma tedbirleri nedeniyle, kanunda sayilan yakalama, gozaltina alma "
+                "ve tutuklama hallerinde tazminat istemini duzenler."
+            ),
+            citation="CMK m.141",
+        ),
+        RetrievedChunk(
+            text=(
+                "CMK m.142 tazminat isteminde bulunma suresini ve basvuru usulunu duzenler."
+            ),
+            citation="CMK m.142",
+        ),
+        RetrievedChunk(
+            text=(
+                "CMK m.231 beraat eden saniga tazminat isteyebilecegi bir hal varsa bunun "
+                "bildirilecegini duzenler."
+            ),
+            citation="CMK m.231/f.3",
+        ),
+    ]
+
+    selected = RAGOrchestrator._extract_priority_chunks(
+        chunks,
+        query="CMK'da koruma tedbirleri nedeniyle tazminat ve basvuru usulunu maddeleriyle ozetler misin?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["CMK m.141", "CMK m.142"]
+
+
+def test_extract_priority_chunks_prefers_cmk_article_90_for_rights_notification_query():
+    chunks = [
+        RetrievedChunk(
+            text=(
+                "CMK m.141 koruma tedbirleri nedeniyle tazminat istemini duzenler."
+            ),
+            citation="CMK m.141",
+        ),
+        RetrievedChunk(
+            text=(
+                "CMK m.90 yakalanan kisiye kanuni haklarinin derhal bildirilecegini duzenler."
+            ),
+            citation="CMK m.90",
+        ),
+    ]
+
+    selected = RAGOrchestrator._extract_priority_chunks(
+        chunks,
+        query="CMK'da yakalanan kisinin haklarinin bildirilmesine dayanak madde nedir?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["CMK m.90"]
+
+
+def test_build_context_keeps_full_text_for_small_control_slice():
+    context = RAGOrchestrator._build_context(
+        [
+            RetrievedChunk(
+                text="HMK m.341 istinaf yoluna başvurulabilecek kararları düzenler.",
+                citation="HMK m.341",
+            ),
+            RetrievedChunk(
+                text="HMK m.345 istinaf süresini iki hafta olarak belirler.",
+                citation="HMK m.345",
+            ),
+        ]
+    )
+
+    assert "[Kaynak: HMK m.341]" in context
+    assert "istinaf yoluna başvurulabilecek kararları düzenler" in context
+    assert "istinaf süresini iki hafta olarak belirler" in context
+
+
+def test_build_context_uses_bounded_excerpt_for_large_chunks():
+    huge_chunk = "CMK m.100 tutuklama nedenlerini düzenler. " + ("ek cümle " * 600)
+    context = RAGOrchestrator._build_context(
+        [
+            RetrievedChunk(text=huge_chunk, citation="CMK m.100"),
+            RetrievedChunk(text=huge_chunk, citation="CMK m.101"),
+        ]
+    )
+
+    assert "[Kaynak: CMK m.100]" in context
+    assert "[Kaynak: CMK m.101]" in context
+    assert len(context) < len(huge_chunk)
+    assert ("ek cümle " * 200) not in context
+
+
+def test_orchestrator_source_lock_prefers_query_matching_chunk_for_single_source_questions():
+    guardrails = DummyGuardrails()
+    llm = DummyPassthroughLLMClient(
+        "TMK m.120 hükmüne göre, evlilik birliğinin en az iki yıl sürmüş olması koşuluyla anlaşmalı boşanma davası açılabilir.\n\n[Kaynak: TMK m.120]"
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="TMK'ya göre anlaşmalı boşanma davası açabilmek için evliliğin en az ne kadar sürmüş olması gerekir?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="TMK m.166 Evlilik en az bir yıl sürmüş ise, eşlerin birlikte başvurması veya bir eşin diğerinin davasını kabul etmesi hâlinde evlilik birliği temelinden sarsılmış sayılır.",
+                    citation="TMK m.166",
+                ),
+                RetrievedChunk(
+                    text="TMK m.120 Nişanın bozulması hâlinde hediyelerin geri verilmesini düzenler.",
+                    citation="TMK m.120",
+                ),
+            ],
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["TMK m.166"]
+    assert "source_lock_fallback" in response.guardrails_reasons
+    assert "[Kaynak: TMK m.166]" in response.answer
+    assert "[Kaynak: TMK m.120]" not in response.answer

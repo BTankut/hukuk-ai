@@ -243,14 +243,10 @@ def _infer_law_mentions_from_concepts(query: str) -> list[str]:
 def _detect_scope_refusal_reason(user_query: str) -> str | None:
     """Kapsam dışı sorularda deterministic refusal nedeni döndür.
 
-    Not: Faz 1 kapsamında TBK odaklı bir asistanız; aşağıdaki desenler
-    doğrudan kapsam dışı kabul edilir.
+    Not: Canonical current authority altında accepted source set artık
+    TMK/TCK/HMK/CMK/TTK/İK kapsamını da içeriyor. Bu nedenle deterministic
+    short-circuit yalnız gerçekten excluded alanlarda çalışmalıdır.
     """
-    has_tbk_signal = _contains_any_query_term(user_query, ("tbk", "borçlar kanunu"))
-
-    if _looks_like_tbk_tmk_cross_law_query(user_query):
-        return None
-
     labor_oos_terms = [
         "kıdem tazminatı",
         "ihbar tazminatı",
@@ -259,41 +255,6 @@ def _detect_scope_refusal_reason(user_query: str) -> str | None:
     ]
     if _contains_any_query_term(user_query, labor_oos_terms):
         return "İş Kanunu / çalışma hukuku"
-
-    tmk_signal = _contains_any_query_term(user_query, ("tmk", "medeni kanun"))
-    tmk_domain_terms = [
-        "anlaşmalı boşanma",
-        "boşanma",
-        "saklı pay",
-        "mirasbırakan",
-        "altsoy",
-        "taşınır rehni",
-        "teslimsiz rehin",
-        "iyiniyet karinesi",
-    ]
-    if (tmk_signal and not has_tbk_signal) or (
-        _contains_any_query_term(user_query, tmk_domain_terms) and not has_tbk_signal
-    ):
-        return "Türk Medeni Kanunu (TMK)"
-
-    ttk_signal = _contains_any_query_term(user_query, ("ttk", "ticaret kanunu"))
-    ttk_domain_terms = [
-        "anonim şirket",
-        "asgari sermaye",
-        "limited şirket",
-        "ticari işletme",
-        "çek",
-        "bono",
-        "poliçe",
-    ]
-    if (ttk_signal and not has_tbk_signal) or (
-        _contains_any_query_term(user_query, ttk_domain_terms) and not has_tbk_signal
-    ):
-        return "Türk Ticaret Kanunu (TTK)"
-
-    tck_signal = _contains_any_query_term(user_query, ("tck", "ceza kanunu"))
-    if tck_signal and not has_tbk_signal:
-        return "Türk Ceza Kanunu (TCK)"
 
     return None
 
@@ -1258,6 +1219,23 @@ def _build_precise_tmk_tbk_cross_law_answer(user_query: str) -> tuple[str, list[
             "güven ilkesi, aile konutu şerhi ile sınırlanır [Kaynak: TMK m.1023]."
         )
         return answer, ["TBK m.27", "TMK m.194", "TMK m.1023"]
+
+    asks_family_home_annotation_and_spousal_consent_effects = (
+        _contains_query_term(user_query, "aile konutu")
+        and _contains_query_term(user_query, "şerh")
+        and _contains_any_query_term(user_query, ("eşin rızası", "esin rizasi", "eş rızası", "es rızası"))
+        and _contains_any_query_term(user_query, ("sonuçları", "sonuclari", "sonuçlarını", "sonuclarini"))
+        and not _contains_any_query_term(user_query, ("işlenmemiş", "islenmemis", "şerhin yokluğu", "serhin yoklugu"))
+    )
+    if asks_family_home_annotation_and_spousal_consent_effects:
+        answer = (
+            "TMK m.194 uyarınca aile konutu üzerinde kira sözleşmesinin feshi, devir veya ayni hakkın "
+            "sınırlandırılması gibi tasarruflarda diğer eşin açık rızası aranır; aile konutu şerhi bu "
+            "korumanın üçüncü kişiler bakımından görünürlüğünü güçlendirir [Kaynak: TMK m.194]. Bu çerçevede "
+            "tapu siciline güven ilkesi ve üçüncü kişinin iyiniyeti TMK m.1023 çerçevesinde değerlendirilir; aile "
+            "konutu şerhi bulunan durumda iyiniyet iddiası buna göre sınırlanır [Kaynak: TMK m.1023]."
+        )
+        return answer, ["TMK m.194", "TMK m.1023"]
 
     asks_family_home_divorce_lease_assignment = (
         _contains_query_term(user_query, "aile konutu")
