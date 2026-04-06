@@ -2,4 +2,4 @@
 
 ## Official Decision
 
-- next_official_work = `rc-s internal productization rehearsal execution under canonical current authority`
+- next_official_work = `rc-s customer-safe pilot gate under canonical current authority`
