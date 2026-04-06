@@ -1,0 +1,22 @@
+{
+  "source_class": "hmk",
+  "official_source_name": "Hukuk Muhakemeleri Kanunu (6100)",
+  "official_source_locator": "https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=1&MevzuatNo=6100&MevzuatTertip=5",
+  "official_source_law_no": "6100",
+  "acquisition_date": "2026-04-06",
+  "raw_source_file_path": "data/primary_sources/full_acquisition/hmk/official_source.html.gz",
+  "checksum_sha256": "ea8a22adc639a4366f0b9eedad5859a63c5cdeb006e36f31d854b34eeabf46fe",
+  "source_provenance_verified": true,
+  "full_source_acquired": true,
+  "article_record_count": 459,
+  "first_article_no": 1,
+  "last_article_no": 452,
+  "duplicate_candidate_count": 9,
+  "missing_article_range_count": 0,
+  "ek_article_count": 1,
+  "gecici_article_count": 4,
+  "mulga_marker_count": 5,
+  "parse_error_count": 0,
+  "canonical_completeness_status": "FULL_AND_PROVEN",
+  "fetched_at": "2026-04-06T11:24:13+00:00"
+}

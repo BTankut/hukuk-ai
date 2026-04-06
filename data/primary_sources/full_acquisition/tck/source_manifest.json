@@ -1,0 +1,22 @@
+{
+  "source_class": "tck",
+  "official_source_name": "Turk Ceza Kanunu (5237)",
+  "official_source_locator": "https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=1&MevzuatNo=5237&MevzuatTertip=5",
+  "official_source_law_no": "5237",
+  "acquisition_date": "2026-04-06",
+  "raw_source_file_path": "data/primary_sources/full_acquisition/tck/official_source.html.gz",
+  "checksum_sha256": "27c73c06ff828694bb66ccf23983debad98328c1e8abe1dcf1e7c5b525b82a03",
+  "source_provenance_verified": true,
+  "full_source_acquired": true,
+  "article_record_count": 349,
+  "first_article_no": 1,
+  "last_article_no": 345,
+  "duplicate_candidate_count": 1,
+  "missing_article_range_count": 0,
+  "ek_article_count": 0,
+  "gecici_article_count": 1,
+  "mulga_marker_count": 16,
+  "parse_error_count": 0,
+  "canonical_completeness_status": "FULL_AND_PROVEN",
+  "fetched_at": "2026-04-06T11:24:13+00:00"
+}

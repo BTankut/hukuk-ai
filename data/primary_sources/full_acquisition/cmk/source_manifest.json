@@ -1,0 +1,22 @@
+{
+  "source_class": "cmk",
+  "official_source_name": "Ceza Muhakemesi Kanunu (5271)",
+  "official_source_locator": "https://mevzuat.gov.tr/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=1&MevzuatNo=5271&MevzuatTertip=5",
+  "official_source_law_no": "5271",
+  "acquisition_date": "2026-04-06",
+  "raw_source_file_path": "data/primary_sources/full_acquisition/cmk/official_source.html.gz",
+  "checksum_sha256": "77e3fa546997fe3869f9ae4b5f4eb845c38f96753d1a15c56240f231e70ebdca",
+  "source_provenance_verified": true,
+  "full_source_acquired": true,
+  "article_record_count": 348,
+  "first_article_no": 1,
+  "last_article_no": 335,
+  "duplicate_candidate_count": 16,
+  "missing_article_range_count": 0,
+  "ek_article_count": 1,
+  "gecici_article_count": 8,
+  "mulga_marker_count": 26,
+  "parse_error_count": 0,
+  "canonical_completeness_status": "FULL_AND_PROVEN",
+  "fetched_at": "2026-04-06T11:24:13+00:00"
+}
