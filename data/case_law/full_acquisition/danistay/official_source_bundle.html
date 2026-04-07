@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base href="../../">
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="description" content="">
+<meta name="keywords" content="">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:type" content="website">
+<meta property="og:title"
+	content="T.C. Danıştay Başkanlığı Emsal Karar Arama">
+<meta property="og:url" content="http://www.danistay.gov.tr/">
+<meta property="og:site_name" content="T.C. Danıştay Başkanlığı">
+<meta name="robots" content="noodp">
+<meta name="generator" content="Danıştay">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+<title>Danıştay Başkanlığı Karar Arama</title>
+<link rel="stylesheet"
+	href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
+<link
+	href="assets/plugins/custom/fullcalendar/fullcalendar.bundle.css?v=7.0.5"
+	rel="stylesheet" type="text/css" />
+<link href="assets/plugins/global/plugins.bundle.css?v=7.0.5"
+	rel="stylesheet" type="text/css" />
+<link href="assets/plugins/custom/prismjs/prismjs.bundle.css?v=7.0.5"
+	rel="stylesheet" type="text/css" />
+<link href="assets/css/style.bundle.css?v=7.0.5" rel="stylesheet"
+	type="text/css" />
+<link rel="shortcut icon" href="custom-assets/favicon.ico" />
+<!--begin::datatable-->
+<link
+	href="assets/plugins/custom/datatables/datatables.bundle.css?v=7.0.5"
+	rel="stylesheet" type="text/css">
+<!--end::datatable-->
+<!--begin::toastr-->
+<link href="assets/plugins/custom/toastr/toastr.css" rel="stylesheet" />
+<!--end::toastr-->
+
+<style>
+.dMor {
+	color: #7d2085;
+}
+
+.background-dMor {
+	background-color: #7d2085;
+}
+
+.btn-dark-Turkuaz {
+	color: rgb(3, 148, 148);
+	background-color: rgb(3, 148, 148);
+	border-color: rgb(3, 148, 148);
+}
+
+.btn-Turkuaz {
+	color: #FFFFFF;
+	background-color: #40aead;
+	border-color: #40aead;
+}
+
+.turkuazColor {
+	color: #40aead;
+}
+
+.background-TurkuazColor {
+	background-color: #40aead;
+}
+
+.card-body .row+.row {
+	margin-top: 1rem;
+}
+
+.dashboard-panel-1 {
+	width: 1% !important;
+	padding-left: 5px !important;
+	padding-right: 3px !important;
+	margin-top: 4px !important;
+}
+
+@media all and (max-width: 765px) , only screen and
+		(-webkit-min-device-pixel-ratio: 2) and (max-width: 1024px) , only
+		screen and (min--moz-device-pixel-ratio: 2) and (max-width: 1024px) ,
+		only screen and (-o-min-device-pixel-ratio: 2/1) and (max-width:
+		1024px) , only screen and (min-device-pixel-ratio: 2) and (max-width:
+		1024px) , only screen and (min-resolution: 192dpi) and (max-width:
+		1024px) , only screen and (min-resolution: 2dppx) and (max-width:
+	1024px) {
+	.dashboard-panel-1 {
+		width: 1% !important;
+		padding-left: 0 !important;
+		padding-right: 0 !important;
+		display: none;
+	}
+}
+
+label {
+	display: inline-block;
+	max-width: 100%;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.radio-inline {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	font-weight: normal;
+}
+
+.dataTables_wrapper .dataTable th.sorting_asc, .dataTables_wrapper .dataTable td.sorting_asc
+	{
+	color: #40aead !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .pagination .page-item.active>.page-link
+	{
+	-webkit-transition: color 0.15s ease, background-color 0.15s ease,
+		border-color 0.15s ease, -webkit-box-shadow 0.15s ease;
+	transition: color 0.15s ease, background-color 0.15s ease, border-color
+		0.15s ease, -webkit-box-shadow 0.15s ease;
+	transition: color 0.15s ease, background-color 0.15s ease, border-color
+		0.15s ease, box-shadow 0.15s ease;
+	transition: color 0.15s ease, background-color 0.15s ease, border-color
+		0.15s ease, box-shadow 0.15s ease, -webkit-box-shadow 0.15s ease;
+	background-color: #40aead;
+	color: #ffffff;
+}
+
+.clearable-input {
+  position: relative;
+  display: inline-block;
+}
+.clearable-input > input {
+  padding-right: 1.4em;
+}
+.clearable-input >[data-clear-input] {
+  display: none;
+  position: absolute;
+  top: 0.5em;
+  right: 1em;
+  font-weight: bold;
+  font-size: 1.4em;
+  padding: 0 0.2em;
+  line-height: 1em;
+  cursor: pointer;
+}
+.clearable-input > input::-ms-clear {
+  display: none;
+}
+</style>
+
+</head>
+<meta charset="UTF-8">
+<body id="kt_body"
+	class="header-fixed header-mobile-fixed subheader-enabled subheader-fixed aside-enabled aside-fixed aside-minimize-hoverable page-loading">
+
+
+	<div class="d-flex flex-column flex-root">
+		<div class="d-flex flex-row flex-column-fluid page" id="kt_login">
+			<div class="d-flex flex-column flex-md-row-fluid" id="kt_wrapper">
+				<div id="kt_header" class="header">
+	<!--begin::Container-->
+	<div class="container-fluid pt-17 d-flex flex-column flex-md-row align-items-center justify-content-between background-TurkuazColor">
+	
+		<!--begin::Logo-->
+		<img alt="Logo" class="rounded mx-auto d-block logo" src="custom-assets/karararamalogoD.png" />
+		<!--end::Logo-->
+	</div>
+	<!--end::Container-->
+</div>
+				<div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+
+	<!--begin::Entry-->
+	<div class="container">
+		<hr>
+		<!--begin: danistay karar arama resim  -->
+
+			<p style="font-family: 'Font Awesome 5 Free'; color: #484868"
+				class="mt-n10 rounded mx-auto d-block font-weight-bolder text-center display1">DANIŞTAY
+			<p style="font-family: 'Font Awesome 5 Free'; color: #484868"
+				class=" mt-n10 rounded mx-auto d-block font-weight-bolder text-center display4">KARAR ARAMA
+			</p>
+		<!--end: danistay karar arama resim   -->
+		<!--begin: danistay karar arama alanı  -->
+		<div class="col-md-12 offset-md-2 py-5">
+			<span class="pull-left turkuazColor hover" id="istatistik">DANIŞTAY
+				KARARI ( <span>382739</span> ADET DOKÜMAN)
+			</span>
+		</div>
+		<div class="spinner spinner-success spinner-center spinner-lg mr-15"
+			id="loader" style="z-index: 100"></div>
+			<div id="exceptionMsg" class="d-none"></div> 
+		<form class="offset-md-2 mr-md-30 pr-md-30" action="/detayliArama;jsessionid=37F0797B63071D3CB3B9AE6CF6A038B1"
+			method="post"
+			onsubmit="postSonuclar(this.form);"
+			id="search_form">
+			<select class="form-select form-select-sm form-control input-sm" id="searchType"
+				name="searchType">
+				<option value="">Arama Türü Seçiniz.</option>
+				<option value="andKelime" id="andKelime">Kelime Ara
+					(Kelime/lerin Tümünün Birlikte Bulunduğu Metinleri Ara)</option>
+				<option value="orKelime" id="orKelime">Kelime Ara
+					(Kelime/lerin Herhangi Birinin Bulunduğu Metinleri Ara)</option>
+			</select>
+		</form>
+		<div class="col-md-9 py-5 offset-md-2 mr-md-40 pr-md-40">
+	<div class="collapse" id="kelimeAraVe">
+		<div class="row andKeys"></div>
+		<div class="row pt-3">
+			<a href="#notSearchWords" class="pull-left turkuazColor arrow"
+				data-toggle="collapse" aria-expanded="false"
+				aria-controls="#notSearchWords" id="notSearchArrow"><em
+				class="fa fa-chevron-down arrow-img turkuazColor"></em> Bu
+				Kelime/lerin Bulunmadığı Metinleri Ara Kelime: </a>
+		</div>
+		<div class="row notKeys collapse" id="notSearchWords"></div>
+		<div class="row pt-1">
+			<div class="col-md-3 "></div>
+
+			<div class="col-md-1">
+				<button type="button" class="btn btn-Turkuaz"
+					onclick="postSonuclar(this.form);">Ara</button>
+			</div>
+			<div class="col-md-8 pl-md-10">
+				<button type="reset" id="temizle" class="btn btn-secondary">
+					Temizle</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="collapse" id="kelimeAraVeya">
+		<div class="row orKeys"></div>
+		<div class="row pt-3">
+			<a href="#notSearchWords" class="pull-left turkuazColor arrow"
+				data-toggle="collapse" aria-expanded="false"
+				aria-controls="#notSearchWords" id="notSearchArrow"><em
+				class="fa fa-chevron-down arrow-img turkuazColor"></em> Bu
+				Kelime/lerin Bulunmadığı Metinleri Ara Kelime: </a>
+		</div>
+		<div class="row notOrKeys collapse" id="notSearchWords"></div>
+		<div class="row pt-1">
+			<div class="col-md-3 "></div>
+
+			<div class="col-md-1">
+				<button type="button" class="btn btn-Turkuaz"
+					onclick="postSonuclar(this.form);">Ara</button>
+			</div>
+			<div class="col-md-8 pl-md-10">
+				<button type="reset" id="temizleOr" class="btn btn-secondary">
+					Temizle</button>
+			</div>
+		</div>
+	</div>
+</div>
+		<div class="col-md-12 py-5 offset-md-2 mr-md-40 pr-md-40">
+			<div class="row">
+				<div class="col-md-3 col-xs-3">
+					<a href="#collapseDetaylıArama" class="pull-left turkuazColor arrow"
+						data-toggle="collapse" aria-expanded="false"
+						aria-controls="#collapseDetaylıArama" id="detay"><em
+						class="fa fa-chevron-down arrow-img turkuazColor"></em>
+						Detaylı Arama </a>
+				</div>
+				<p id="isDisplayCaptcha" class="d-none">false</p>
+				
+				<div class="col-md-4 col-xs-4">
+				</div>
+			</div>
+		</div>
+		<!--end: danistay karar arama alanı  -->
+		<form class="offset-md-2 mr-md-30 pr-md-30" action="/detayliArama;jsessionid=37F0797B63071D3CB3B9AE6CF6A038B1" method="post" onsubmit="$(&#39;#collapseDetayAramaSonuc&#39;).show();">
+	<div class="collapse" id="collapseDetaylıArama">
+		<div class="card card-body"
+			style="background-color: rgb(235, 253, 253); display: block;">
+			<div class="row">
+				<div class="col-md-3">
+					<label for="daireler" class="control-label">Daire:</label>
+				</div>
+				<div class="col-md-9">
+					<select class="form-control input-sm"
+						id="daire" name="daire">
+						<option value="">Daire Seçiniz</option>
+						<option value="Büyük Gen.Kur." >İçtihatları Birleştirme Kurulu</option>
+						<option value="İdare Dava Daireleri Kurulu" >İdare Dava Daireleri Kurulu</option>
+						<option value="Vergi Dava Daireleri Kurulu" >Vergi Dava Daireleri Kurulu</option>
+						<option value="1. Daire" >1. Daire</option>
+						<option value="2. Daire" >2. Daire</option>
+						<option value="3. Daire" >3. Daire</option>
+						<option value="4. Daire" >4. Daire</option>
+						<option value="5. Daire" >5. Daire</option>
+						<option value="6. Daire" >6. Daire</option>
+						<option value="7. Daire" >7. Daire</option>
+						<option value="8. Daire" >8. Daire</option>
+						<option value="9. Daire" >9. Daire</option>
+						<option value="10. Daire" >10. Daire</option>
+						<option value="11. Daire" >11. Daire</option>
+						<option value="12. Daire" >12. Daire</option>
+						<option value="13. Daire" >13. Daire</option>
+						<option value="14. Daire" >14. Daire</option>
+						<option value="15. Daire" >15. Daire</option>
+						<option value="İçtihatları Birleştirme Kurulu" >İçtihatları Birleştirme Kurulu</option>
+						<option value="İdari İşler Kurulu" >İdari İşler Kurulu</option>
+						<option value="Başkanlar Kurulu" >Başkanlar Kurulu</option>
+						<option value="16. Daire" >16. Daire</option>
+						<option value="17. Daire" >17. Daire</option>
+						<option value="Askeri Yüksek İdare Mahkemesi" >Askeri Yüksek İdare Mahkemesi</option>
+						<option value="Askeri Yüksek İdare Mahkemesi Daireler Kurulu" >Askeri Yüksek İdare Mahkemesi Daireler Kurulu</option>
+						<option value="Askeri Yüksek İdare Mahkemesi Başsavcılığı" >Askeri Yüksek İdare Mahkemesi Başsavcılığı</option>
+						<option value="Askeri Yüksek İdare Mahkemesi 1. Daire" >Askeri Yüksek İdare Mahkemesi 1. Daire</option>
+						<option value="Askeri Yüksek İdare Mahkemesi 2. Daire" >Askeri Yüksek İdare Mahkemesi 2. Daire</option>
+						<option value="Askeri Yüksek İdare Mahkemesi 3. Daire" >Askeri Yüksek İdare Mahkemesi 3. Daire</option>
+					</select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="esas" class="control-label">Esas Numarası:</label>
+				</div>
+				<div class="col-md-2">
+					<input type="number" class="form-control input-sm number" id="esasNoYil" name="esasYil"
+						maxlength="4" placeholder="Esas yılı" value="">
+				</div>
+				<span class="col-sm-1 dashboard-panel-1"> / </span>
+				<div class="col-md-2">
+					<input type="number" class="form-control input-sm number"
+						id="esasNoSira1" name="esasIlkSiraNo"
+						maxlength="6" placeholder="İlk sıra no" value="">
+				</div>
+				<span class="col-sm-1 dashboard-panel-1"> - </span>
+				<div class="col-md-3">
+					<input type="number" class="form-control input-sm number"
+						id="esasNoSira2" name="esasSonSiraNo"
+						maxlength="6" placeholder="Son sıra no" value="">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="esas" class="control-label">Karar Numarası:</label>
+				</div>
+				<div class="col-md-2">
+					<input type="number" class="form-control input-sm number"
+						id="kararNoYil" name="kararYil" maxlength="4"
+						placeholder="Karar yılı" value="">
+				</div>
+				<span class="col-sm-1 dashboard-panel-1"> / </span>
+				<div class="col-md-2">
+					<input type="number" class="form-control input-sm number"
+						id="kararNoSira1" name="kararIlkSiraNo"
+						maxlength="6" placeholder="İlk sıra no" value="">
+				</div>
+				<span class="col-sm-1 dashboard-panel-1"> - </span>
+				<div class="col-md-3">
+					<input type="number" class="form-control input-sm number"
+						id="kararNoSira2" name="kararSonSiraNo"
+						maxlength="6" placeholder="Son sıra no" value="">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="esas" class="control-label">Tarih:</label>
+				</div>
+				<div class="col-md-4 tar">
+					<input type="text" class="form-control input-sm date-picker"
+						name="baslangicTarihi"
+						id="kararTarihiIlk" placeholder="Başlama tarihini giriniz." value="" />
+
+				</div>
+				<span class="col-sm-1 dashboard-panel-1"> - </span>
+				<div class="col-md-4 tar">
+					<input type="text" class="form-control input-sm"
+						name="bitisTarihi"
+						id="kararTarihiSon" placeholder="Bitiş tarihini giriniz." value="" />
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3"></div>
+				<div class="col-md-9">
+					<label class="control-label">İlgili Mevzuat Üzerinden Arama</label>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="mevzuatNo" class="control-label">Mevzuat
+						Numarası:</label>
+				</div>
+				<div class="col-md-9">
+					<input type="number" class="form-control input-sm"
+						name="mevzuatNumarasi" id="mevzuatNo" value="">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="mevzuatNo" class="control-label">Mevzuat Adı:</label>
+				</div>
+				<div class="col-md-9">
+					<input type="text" class="form-control input-sm"
+						name="mevzuatAdi" id="mevzuatAdi" value="">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="mevzuatNo" class="control-label">Madde</label>
+				</div>
+				<div class="col-md-9">
+					<input type="text" class="form-control input-sm"
+						name="madde" id="mevzuatMadde" value="">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="siralama" class="control-label">Sıralama:</label>
+				</div>
+				<div class="col-md-8 col-form-label">
+					<div class="radio-inline">
+						<label class="radio radio-success"> <input type="radio"
+							value="1" name="siralama" id="esasNoGore"
+							checked="checked"><span></span>Esas No'ya Göre
+						</label> <label class="radio radio-success"> <input type="radio"
+							value="2" name="siralama" id="kararNoGore"><span></span>Karar
+							No'ya Göre
+						</label> <label class="radio  radio-success"> <input type="radio"
+							value="3" name="siralama"
+							id="kararTarihiGore"><span></span>Karar Tarihine Göre
+						</label>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<label for="order" class="control-label"></label>
+				</div>
+				<div class="col-md-8 col-form-label">
+					<div class="radio-inline">
+						<label class="radio radio-success"> <input type="radio"
+							value="desc" name="siralamaDirection" id="descDirection" checked="checked"><span></span>Büyükten Küçüğe Göre
+						</label> 
+						<label class="radio radio-success"> <input type="radio"
+							value="asc" name="siralamaDirection" id="ascDirection"
+							><span></span>Küçükten Büyüğe Göre
+						</label> 
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3"></div>
+
+				<div class="col-md-1">
+					<button type="button" class="btn btn-Turkuaz" id="detaylıAramaG"
+						onclick="postSonuclarDetail(this.form);">Ara</button>
+				</div>
+				<div class="col-md-8 pl-md-10">
+					<button type="reset" id="temizle" class="btn btn-secondary">
+						Temizle</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</form>
+		<!--begin: collapse yardim  -->
+		<div class="offset-md-2 mr-md-30 pr-md-30 collapse"
+			id="collapseYardim">
+			<div class="card card-body"
+				style="background-color: rgb(235, 253, 253); display: block;">
+				<img class="img-fluid" src="custom-assets/ekayardim.jpg" alt="">
+			</div>
+		</div>
+		<!-- end: collapse yardim  -->
+		<!--begin: karar sonuclar  -->
+		<div class="portlet" id="detayAramaSonuc"></div>
+		<!-- end: karar sonuclar  -->
+	</div>
+	<!--end::Entry-->
+</div>
+				<div>
+	<div class="footer py-2 d-flex flex-lg-column background-dMor"></div>
+	<div style="padding-top: 0.1rem !important;"
+		class="footer py-10 d-flex flex-lg-column background-TurkuazColor"
+		id="kt_footer">
+		<!--begin::Container-->
+		<div
+			class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between">
+			<img alt="Logo"
+				class="rounded mx-md-auto d-block img-thumbnail img-fluid"
+				style="background-color: transparent; border: 0px; box-shadow: none;"
+				src="custom-assets/binaD.png" />
+		</div>
+		<!--end::Container-->
+	</div>
+	<!--end::Footer-->
+			</div>
+		</div>
+	</div>
+
+	<!--end::Wrapper-->
+	<!--begin::Global Config(global config for global JS scripts)-->
+
+	<!--end::Global Config-->
+	<!--begin::Global Theme Bundle(used by all pages)-->
+	<script src="assets/plugins/global/plugins.bundle.js?v=7.0.5"></script>
+	<script src="assets/plugins/custom/prismjs/prismjs.bundle.js?v=7.0.5"></script>
+	<script src="assets/js/scripts.bundle.js?v=7.0.5"></script>
+	<!--end::Global Theme Bundle-->
+	<!--begin::Page Vendors(used by this page)-->
+	<script
+		src="assets/plugins/custom/fullcalendar/fullcalendar.bundle.js?v=7.0.5"></script>
+	<!--end::Page Vendors-->
+	<!--begin::Page Scripts(used by this page)-->
+	<script src="assets/js/pages/widgets.js?v=7.0.5"></script>
+	<!--end::Page Scripts-->
+	<script src="assets/js/pages/features/custom/spinners.js"></script>
+	<script src='https://www.google.com/recaptcha/api.js'></script>
+	<!--begin::datatable-->
+	<script
+		src="assets/plugins/custom/datatables/datatables.bundle.js?v=7.0.5"></script>
+	<script
+		src="assets/js/pages/crud/datatables/basic/paginations.js?v=7.0.5"></script>
+	<!--end::datatable-->
+	<!--begin::toastr-->
+	<script src="assets/js/pages/features/miscellaneous/toastr.js?v=7.0.5"></script>
+	<!--end::toastr-->
+	<!-- begin:datapicker -->
+	<script
+		src="assets/js/pages/crud/forms/widgets/bootstrap-datepicker.tr.js"
+		charset="UTF-8"></script>
+	<!-- end:datapicker -->
+	<!-- begin:moment -->
+	<script
+		src="assets/plugins/global/moment.js"></script>
+	<!-- end:moment -->
+	
+	<script>
+		const ANDKEYS = '.andKeys .col-md-12';
+		const ORKEYS = '.orKeys .col-md-12';
+		const NOTANDKEYS = '.notKeys .col-md-12';
+		const NOTORKEYS = '.notOrKeys .col-md-12';
+
+		$('#detay').click(
+				function() {
+					//$('#detayAramaSonuc').children().remove();
+					$('#collapseDetayAramaSonuc').hide();
+
+					$('#detay').find('em').toggleClass('fa-chevron-down')
+							.toggleClass('fa-chevron-up');
+					temizle();
+				});
+
+		$('#kararTarihiGore').click(function() {
+			$('#descDirection').prop('checked', true);
+			$('#ascDirection').prop('disabled','true')
+		});
+
+		$('#esasNoGore').click(function() {
+			$('#descDirection').prop('checked', true);
+			$('#ascDirection').prop('disabled','')
+		});
+		
+		$('#kararNoGore').click(function() {
+			$('#descDirection').prop('checked', true);
+			$('#ascDirection').prop('disabled','')
+		});
+		
+		$('#temizle').click(function() {
+			temizle();
+		});
+
+		$('#temizleOr').click(function() {
+			temizle();
+		});
+
+		var temizle = function() {
+			$('#collapseDetayAramaSonuc').hide();
+			$('#collapseDetaylıArama .form-control').each(
+					function(index, element) {
+						if ($(this).defaultValue == undefined) {
+							$(this)[0].value = "";
+						} else {
+							$(this)[0].value = $(this).defaultValue;
+						}
+
+					});
+			$('#esasNoGore').prop("checked", true);
+			$('#descDirection').prop("checked", true);
+			$("#daire").val('').trigger('change');
+
+			$(ANDKEYS).each(function(index, elem) {
+				$(this).remove();
+			});
+
+			$(ORKEYS).each(function(index, elem) {
+				$(this).remove();
+			});
+
+			$(NOTANDKEYS).each(function(index, elem) {
+				$(this).remove();
+			});
+
+			$(NOTORKEYS).each(function(index, elem) {
+				$(this).remove();
+			});
+
+			addKeyInput('addAndKey', 'andKelime', "addAndKeyClick();",
+					'.andKeys');
+			addKeyInput('addNotKey', 'notKelime', "addAndNotKeyClick();",
+					'.notKeys');
+			addKeyInput('addOrKey', 'orKelime', "addOrKeyClick();", '.orKeys');
+			addKeyInput('addOrNotKey', 'notOrKelime', "addOrNotKeyClick();",
+					'.notOrKeys');
+
+		};
+
+		var getFormData = function(unindexed_array) {
+			var indexed_array = {};
+
+			$.map(unindexed_array, function(n, i) {
+				indexed_array[n['name']] = n['value'];
+			});
+
+			return indexed_array;
+		};
+
+		var postSonuclarDetail = function(form) {
+			if (validationDetail()) {
+				var formData = $(form).serializeArray();
+				if ($('#detay').find('em').hasClass('fa-chevron-up')) {
+					$('#detay').click();
+
+				}
+				$('#detayAramaSonuc').children().remove();
+				
+				
+				if(isDisplayCaptcha()){
+					formData.push({
+						"name" : "grecaptcha",
+						"value" : grecaptcha.getResponse()
+					});
+				}
+				var requestData = {data:getFormData(formData)};
+				$
+						.ajax({
+							type : "POST",
+							cache : false,
+							data : JSON.stringify(requestData),
+							contentType : 'application/json; charset=utf-8',
+							url : "/detayliArama",
+							processData : false,
+							success : function(data) {
+								$('#loader').hide();
+								if(isDisplayCaptcha()){
+									grecaptcha.reset();
+								}
+								var windowHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 456;
+								if (data.status != undefined
+										&& data.status.indexOf("EXCEPTION") > -1) {
+									if (data.detailMessage === "reCaptchaTimeout") {
+										toastr["info"]
+												("Hata tarafımıza ulaşmış olup, ilgili birim tarafından kontroller başlatılmıştır. Lütfen 'Ben robot değilim' seçeneğini işaretleyip tekrar arama yapınız!");
+									} else {
+										toastr["warning"]
+												("Lütfen arama bilgilerinizi kontrol ediniz!");
+									}
+
+								}  else if(data != null && data.data === null && data.metadata != null && data.metadata.FMTY === 'ERROR' ){
+									showWarning(data);
+								} else {
+									$("#detayAramaSonuc").append(data);
+									var table = $('#detayAramaSonuclar').DataTable({
+										scrollY: windowHeight,
+										scrollX: false,
+										select: {
+									        info: false
+									    },
+										responsive: true,
+										"processing": false,
+										"serverSide": true,
+										"filter": false,
+										"search": false,
+										"ordering": false,
+										ajax: function (data, callback, settings) {
+											var api = new $.fn.dataTable.Api(settings);
+											formData.push({
+												"name" : "pageSize",
+												"value" : api.page.len()
+											});
+											
+											formData.push({
+												"name" : "pageNumber",
+												"value" : api.page()+1
+											});
+											var requestData = {data:getFormData(formData)};
+										            $.ajax({
+																	type : "POST",
+																	cache : false,
+																	data : JSON.stringify(requestData),
+																	contentType: 'application/json; charset=utf-8',
+																	processData: false,
+																	url : "/aramadetaylist",
+																	success : function(response, textStatus, jQxhr ) {
+																		$("#toplamSonuc").text(0);
+																		if(response.metadata.FMTY == "ERROR"){
+																			toastr["warning"]
+																			("Gerçekleştirilen işlemde hata oluştu! Lütfen tekrar deneyiniz!");
+																			$("#toplamSonuc").text(null);
+																		}else if(response == null || response.data == null || response.data.recordsTotal == undefined || response.data.recordsTotal == null){
+																			$("#toplamSonuc").text(0);
+																		}else{
+																			$("#toplamSonuc").text(response.data.recordsTotal);
+																		}
+																		callback({
+											                              data: response.data.data,
+											                              recordsTotal:  response.data.recordsTotal,
+											                              recordsFiltered:  response.data.recordsFiltered
+												                         });
+																    }
+
+										            })
+										}
+										        ,"rowId": 'index',
+										        "columns": [
+										        	{ "data": "daireKurul" },
+										            { "data": "esasNo" },
+										            { "data": "kararNo" },
+										            { "data": "kararTarihi" },
+										            {
+										                "data": "detay", // can be null or undefined
+										                "defaultContent": ""
+										              }
+										        ],
+										        "columnDefs": [ {
+										        	  "targets": 4,
+										        	  "render": function ( data, type, row, meta ) {
+										        	    return '<a class="icerikdetay" style="cursor: pointer; color: #40aead;"><em class="fa fa-file-text-o" style="color: #40aead;"></em> Karar İçeriği</a>';
+										        	  }
+										        	} ],
+										        "language": {
+										            "infoEmpty":   "Kayıt Bulunamadı",
+										            "zeroRecords": "Kayıt Bulunamadı",
+										            "emptyTable":   "Kayıt Bulunamadı",
+										            "processing":   "Yükleniyor...",
+										        }
+										});
+									$('#detayAramaSonuclar').removeClass(
+											'nowrap');
+								    $('#detayAramaSonuclar tbody').on( 'click', 'tr', function () {
+								    	 $('#detayAramaSonuclar tbody .selected').each(function(i,el){$(this).toggleClass('selected');})
+								        $(this).toggleClass('selected');
+								    } );
+									$('#detayAramaSonuclar tbody').on('click', 'tr', function () {
+								        //var data = dt.rows(indexes).data();
+								        var data = table.row( this ).data();
+								        if(data != null){
+								        	openKararIceregiWindow(data.id,data.arananKelime,data.index);
+								        }
+									});
+								}
+								if(isDisplayCaptcha()){
+									$('#isDisplayCaptcha').text('false');
+									$('.captcha').remove();
+								}
+							},
+							error : function(data, status) {
+								if(isDisplayCaptcha()){
+									grecaptcha.reset();
+								}
+								toastr["info"]
+										("Hata tarafımıza ulaşmış olup, ilgili birim tarafından kontroller başlatılmıştır.");
+							}
+
+						});
+			}
+		};
+
+		var postSonuclar = function(form) {
+			if (validation()) {
+				var formData = $(form).serializeArray();
+				if ($('#detay').find('em').hasClass('fa-chevron-up')) {
+					$('#detay').click();
+
+				}
+				$('#detayAramaSonuc').children().remove();
+
+				
+				if(isDisplayCaptcha()){
+					formData.push({
+						"name" : "grecaptcha",
+						"value" : grecaptcha.getResponse()
+					});
+				}
+				var andKelimeler = [];
+				$(ANDKEYS).children('#andKelime').each(function(index, elem) {
+					if (elem.value != undefined && elem.value != "") {
+						andKelimeler.push("\"" + elem.value + "\"");
+					}
+				});
+				formData.push({
+					"name" : "andKelimeler",
+					"value" : andKelimeler
+				});
+				var orKelimeler = [];
+				$(ORKEYS).children('#orKelime').each(function(index, elem) {
+					if (elem.value != undefined && elem.value != "") {
+						orKelimeler.push("\"" + elem.value + "\"");
+					}
+				});
+				formData.push({
+					"name" : "orKelimeler",
+					"value" : orKelimeler
+				});
+				var notAndKelimeler = [];
+				$(NOTANDKEYS).children('#notKelime').each(
+						function(index, elem) {
+							if (elem.value != undefined && elem.value != "") {
+								notAndKelimeler.push("\"" + elem.value + "\"");
+							}
+						});
+				formData.push({
+					"name" : "notAndKelimeler",
+					"value" : notAndKelimeler
+				});
+				var notOrKelimeler = [];
+				$(NOTORKEYS).children('#notOrKelime').each(
+						function(index, elem) {
+							if (elem.value != undefined && elem.value != "") {
+								notOrKelimeler.push("\"" + elem.value + "\"");
+							}
+
+						});
+				formData.push({
+					"name" : "notOrKelimeler",
+					"value" : notOrKelimeler
+				});
+				var requestData = {data:getFormData(formData)};
+				$
+						.ajax({
+							type : "POST",
+							cache : false,
+							data : JSON.stringify(requestData),
+							contentType : 'application/json; charset=utf-8',
+							url : "/arama",
+							processData : false,
+							success : function(data) {
+								$('#loader').hide();
+								if(isDisplayCaptcha()){
+									grecaptcha.reset();
+								}
+								var windowHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 456;
+								if (data.status != undefined
+										&& data.status.indexOf("EXCEPTION") > -1) {
+									if (data.detailMessage === "reCaptchaTimeout") {
+										toastr["info"]
+												("Hata tarafımıza ulaşmış olup, ilgili birim tarafından kontroller başlatılmıştır. Lütfen 'Ben robot değilim' seçeneğini işaretleyip tekrar arama yapınız!");
+									} else {
+										toastr["warning"]
+												("Lütfen arama bilgilerinizi kontrol ediniz!");
+									}
+
+								}  else if(data != null && data.data === null && data.metadata != null && data.metadata.FMTY === 'ERROR' ){
+									showWarning(data);
+								} else {
+									$("#detayAramaSonuc").append(data);
+									var table = $('#detayAramaSonuclar').DataTable({
+										scrollY: windowHeight,
+										scrollX: false,
+										select: {
+									        info: false
+									    },
+										responsive: true,
+										"processing": false,
+										"serverSide": true,
+										"filter": false,
+										"search": false,
+										"ordering": false,
+										ajax: function (data, callback, settings) {
+											var api = new $.fn.dataTable.Api(settings);
+											formData.push({
+												"name" : "pageSize",
+												"value" : api.page.len()
+											});
+											
+											formData.push({
+												"name" : "pageNumber",
+												"value" : api.page()+1
+											});
+											var requestData = {data:getFormData(formData)};
+										            $.ajax({
+																	type : "POST",
+																	cache : false,
+																	data : JSON.stringify(requestData),
+																	contentType: 'application/json; charset=utf-8',
+																	processData: false,
+																	url : "/aramalist",
+																	success : function(response, textStatus, jQxhr ) {
+																		$("#toplamSonuc").text(0);
+																		if(response.metadata.FMTY == "ERROR"){
+																			toastr["warning"]
+																			("Gerçekleştirilen işlemde hata oluştu! Lütfen tekrar deneyiniz!");
+																			$("#toplamSonuc").text(null);
+																		}else if(response == null || response.data == null || response.data.recordsTotal == undefined || response.data.recordsTotal == null){
+																			$("#toplamSonuc").text(0);
+																		}else{
+																			$("#toplamSonuc").text(response.data.recordsTotal);
+																		}
+																		callback({
+											                              data: response.data.data,
+											                              recordsTotal:  response.data.recordsTotal,
+											                              recordsFiltered:  response.data.recordsFiltered
+												                         });
+																    }
+
+										            })
+										}
+										        ,"rowId": 'index',
+										        "columns": [
+										        	{ "data": "daireKurul" },
+										            { "data": "esasNo" },
+										            { "data": "kararNo" },
+										            { "data": "kararTarihi" },
+										            {
+										                "data": "detay", // can be null or undefined
+										                "defaultContent": ""
+										              }
+										        ],
+										        "columnDefs": [ {
+										        	  "targets": 4,
+										        	  "render": function ( data, type, row, meta ) {
+										        	    return '<a class="icerikdetay" style="cursor: pointer; color: #40aead;"><em class="fa fa-file-text-o" style="color: #40aead;"></em> Karar İçeriği</a>';
+										        	  }
+										        	} ],
+										        "language": {
+										            "infoEmpty":   "Kayıt Bulunamadı",
+										            "zeroRecords": "Kayıt Bulunamadı",
+										            "emptyTable":   "Kayıt Bulunamadı",
+										            "processing":   "Yükleniyor...",
+										        }
+										});
+									$('#detayAramaSonuclar').removeClass(
+											'nowrap');
+								    $('#detayAramaSonuclar tbody').on( 'click', 'tr', function () {
+								    	 $('#detayAramaSonuclar tbody .selected').each(function(i,el){$(this).toggleClass('selected');})
+								        $(this).toggleClass('selected');
+								    } );
+									$('#detayAramaSonuclar tbody').on('click', 'tr', function () {
+								        //var data = dt.rows(indexes).data();
+								        var data = table.row( this ).data();
+								        if(data != null){
+								        	openKararIceregiWindow(data.id,data.arananKelime,data.index);
+								        }   
+								} );
+									
+									if(isDisplayCaptcha()){
+										$('#isDisplayCaptcha').text('false');
+										$('.captcha').remove();
+									}
+								}
+
+							},
+							error : function(data, status) {
+								if(isDisplayCaptcha()){
+									grecaptcha.reset();
+								}
+								toastr["info"]
+										("Hata tarafımıza ulaşmış olup, ilgili birim tarafından kontroller başlatılmıştır.");
+							}
+
+						});
+			}
+		};
+
+		$(document).ready(function() {
+			$(window).keydown(function(event) {
+				if (event.keyCode == 13) {
+					if (event.target.id === "andKelime" || event.target.id === "orKelime") {
+						postSonuclar($("#search_form"));
+						event.preventDefault();
+						return false;
+					}
+				}
+			});
+		});
+
+		//maxlength
+		$(document).ready(function() {
+			$('#esasNoYil').maxlength({
+				alwaysShow : true,
+				threshold : $('#esasNoYil').attr("maxlength"),
+				validate : true
+			});
+			$('#esasNoSira1').maxlength({
+				alwaysShow : true,
+				threshold : $('#esasNoSira1').attr("maxlength"),
+				validate : true
+			});
+			$('#esasNoSira2').maxlength({
+				alwaysShow : true,
+				threshold : $('#esasNoSira2').attr("maxlength"),
+				validate : true
+			});
+			$('#kararNoYil').maxlength({
+				alwaysShow : true,
+				threshold : $('#kararNoYil').attr("maxlength"),
+				validate : true
+			});
+			$('#kararNoSira1').maxlength({
+				alwaysShow : true,
+				threshold : $('#kararNoSira1').attr("maxlength"),
+				validate : true
+			});
+			$('#kararNoSira2').maxlength({
+				alwaysShow : true,
+				threshold : $('#kararNoSira2').attr("maxlength"),
+				validate : true
+			});
+		});
+
+		var openKararIceregiWindow = function(documentId, arananKelime) {
+			window.open('getDokuman?id=' + documentId + '&arananKelime='
+					+ arananKelime, 'popup2',
+					'width=700,height=600,top=0,left=20,scrollbars=yes');				
+		}
+
+		var validation = function() {
+			var valid = false;
+			if (captchaValidation()) {
+				valid = aramaTurValidation() && (wordValidation() || daireValidation()
+						|| esasValidation() || kararValidation()
+						|| dateValidation() || mevzuatNumarasıValidation()
+						|| mevzuatAdiValidation() || mevzuatMaddeValidation());
+				if (!valid) {
+					toastr["warning"]
+							("Lütfen arama kriterlerini kontol ediniz!");
+				}
+			}
+			return valid;
+		}
+
+		var validationDetail = function() {
+			var valid = false;
+			if (captchaValidation()) {
+				valid =  daireValidation()
+						|| esasValidation() || kararValidation()
+						|| dateValidation() || mevzuatNumarasıValidation()
+						|| mevzuatAdiValidation() || mevzuatMaddeValidation();
+				if (!valid) {
+					toastr["warning"]
+							("Lütfen arama kriterlerini kontol ediniz!");
+				}
+			}
+			return valid;
+		}
+		
+		var wordValidation = function() {
+			var andKelimeler = "";
+			$(ANDKEYS).children('#andKelime').each(function(index, elem) {
+				if (elem.value != undefined && elem.value != "") {
+					andKelimeler = andKelimeler.concat(elem.value)
+				}
+			});
+
+			var orKelimeler = "";
+			$(ORKEYS).children('#orKelime').each(function(index, elem) {
+				if (elem.value != undefined && elem.value != "") {
+					orKelimeler =  orKelimeler.concat(elem.value)
+				}
+			});
+
+			var notAndKelimeler = "";
+			$(NOTANDKEYS).children('#notKelime').each(
+					function(index, elem) {
+						if (elem.value != undefined && elem.value != "") {
+							notAndKelimeler =  notAndKelimeler.concat(elem.value)
+						}
+					});
+
+			var notOrKelimeler = "";
+			$(NOTORKEYS).children('#notOrKelime').each(
+					function(index, elem) {
+						if (elem.value != undefined && elem.value != "") {
+							notOrKelimeler = notOrKelimeler.concat(elem.value)
+						}
+
+					});
+			if (andKelimeler.length == 0 && orKelimeler.length == 0 && notAndKelimeler.length == 0 && notOrKelimeler.length == 0) {
+				toastr["info"]("Lütfen en az 3 harf giriniz!");
+				return false;
+			}
+			
+			if (andKelimeler.length < 3 && orKelimeler.length < 3 && notAndKelimeler.length < 3 && notOrKelimeler.length < 3 ) {
+				toastr["info"]("Lütfen en az 3 harf giriniz!");
+				return false;
+			}
+	
+			return true;
+		};
+
+		var esasValidation = function() {
+			var esasNoYil = $("#esasNoYil").val();
+			var esasNoSira1 = $("#esasNoSira1").val();
+			var esasNoSira2 = $("#esasNoSira2").val();
+			if ((esasNoYil === "" || esasNoYil == undefined)
+					&& (esasNoSira1 === "" || esasNoSira1 == undefined)
+					&& (esasNoSira2 === "" || esasNoSira2 == undefined)) {
+				return false;
+			}
+			if (esasNoYil === "" || esasNoYil == undefined) {
+				toastr["warning"]("Lütfen Esas Yıl giriniz!");
+				return false;
+			}
+			if (esasNoSira1 === "" || esasNoSira1 == undefined) {
+				toastr["warning"]("Lütfen Esas Numarası İlk Sıra No giriniz!");
+				return false;
+			}
+
+			if (esasNoSira2 === "" || esasNoSira2 == undefined) {
+				toastr["warning"]("Lütfen Esas Numarası Son Sıra No giriniz!");
+				return false;
+			}
+			return true;
+		};
+
+		var kararValidation = function() {
+			var kararNoYil = $("#kararNoYil").val();
+			var kararNoSira1 = $("#kararNoSira1").val();
+			var kararNoSira2 = $("#kararNoSira2").val();
+			if ((kararNoYil === "" || kararNoYil == undefined)
+					&& (kararNoSira1 === "" || kararNoSira1 == undefined)
+					&& (kararNoSira2 === "" || kararNoSira2 == undefined)) {
+				return false;
+			}
+			if (kararNoYil === "" || kararNoYil == undefined) {
+				toastr["warning"]("Lütfen Karar Yılı giriniz!");
+				return false;
+			}
+			if (kararNoSira1 === "" || kararNoSira1 == undefined) {
+				toastr["warning"]("Lütfen Karar Numarası İlk Sıra No giriniz!");
+				return false;
+			}
+
+			if (kararNoSira2 === "" || kararNoSira2 == undefined) {
+				toastr["warning"]("Lütfen Karar Numarası Son Sıra No giriniz!");
+				return false;
+			}
+			return true;
+		};
+
+		$('#search_form option:selected').val()
+		var daireValidation = function() {
+			var daire = $("#daire option:selected").text();
+			if (daire == undefined || daire === "" || daire === "Daire Seçiniz") {
+				return false;
+			}
+			return true;
+		}
+
+		var dateValidation = function() {
+			if ($("#kararTarihiIlk").val() != ""
+					&& $("#kararTarihiSon").val() != "") {
+				var fromSplitted = $("#kararTarihiIlk").val().split(".");
+				var toSplitted = $("#kararTarihiSon").val().split(".");
+				var from = new Date(fromSplitted[2], fromSplitted[1],
+						fromSplitted[0]).getTime();
+				var to = new Date(toSplitted[2], toSplitted[1], toSplitted[0])
+						.getTime();
+				if (from > to) {
+					toastr["error"]
+							("Karar Başlangıç Tarihi Karar Bitiş Tarihinden Büyük Olamaz!");
+					return false;
+				}
+				return true;
+			}
+			return false;
+		}
+
+		var mevzuatNumarasıValidation = function() {
+			var mevzuatNo = $("#mevzuatNo").val();
+			if (mevzuatNo == undefined || mevzuatNo === "") {
+				return false;
+			}
+			return true;
+		}
+
+		var mevzuatAdiValidation = function() {
+			var mevzuatAdi = $("#mevzuatAdi").val();
+			if (mevzuatAdi == undefined || mevzuatAdi === "") {
+				return false;
+			}
+			return true;
+		};
+
+		var mevzuatMaddeValidation = function() {
+			var mevzuatMadde = $("#mevzuatMadde").val();
+			if (mevzuatMadde == undefined || mevzuatMadde === "") {
+				return false;
+			}
+			return true;
+		};
+
+		var aramaTurValidation = function() {
+			var aramaTur = $('#search_form option:selected').val()
+			if (aramaTur == undefined || aramaTur === ""
+					|| aramaTur === "Arama Türü Seçiniz.") {
+				toastr["info"]("Lütfen Arama Türü Seçiniz!");
+				return false;
+			}
+			return true;
+		}
+
+
+		function digitsOnly() {
+			$('input[type="number"]').keyup(function(e) {
+				if (/\D/g.test(this.value)) {
+					// Filter non-digits from input value.
+					this.value = this.value.replace(/\D/g, '');
+				}
+			});
+			//prevent e,+,-,\,
+			$('input[type="number"]').keydown(
+					function(e) {
+						var preventedKeyNumbers = [ 69, 107, 189, 109, 110, 16,
+								190, 188 ];
+						if (preventedKeyNumbers.indexOf(e.which) > -1) {
+							e.preventDefault();
+						} else if (e.shiftKey && e.which === 52) { //shift and +
+							e.preventDefault();
+						}
+					});
+
+			$('input[type="number"]').bind('copy paste', function(e) {
+				e.preventDefault();
+			});
+		};
+
+		$(document).ready(function() {
+			
+			var exceptionMessage = $('#exceptionMsg').text();
+			if (exceptionMessage != undefined && exceptionMessage != '') {
+				toastr["info"](exceptionMessage);
+/* 				setTimeout(function() {
+					window.open('index', _self);
+				}, 10000); */
+				
+			}
+			
+			digitsOnly();
+			$('#loader').hide();
+			jQuery.ajaxSetup({
+				beforeSend : function() {
+					$('#loader').show();
+				},
+				complete : function() {
+					$('#loader').hide();
+				},
+				success : function() {
+					$('#loader').hide();
+				}
+			});
+
+		});
+
+		toastr.options = {
+			"closeButton" : true,
+			"debug" : false,
+			"newestOnTop" : false,
+			"progressBar" : true,
+			"positionClass" : "toast-top-right",
+			"preventDuplicates" : false,
+			"onclick" : null,
+			"showDuration" : "300",
+			"hideDuration" : "1000",
+			"timeOut" : "5000",
+			"extendedTimeOut" : "1000",
+			"showEasing" : "swing",
+			"hideEasing" : "linear",
+			"showMethod" : "fadeIn",
+			"hideMethod" : "fadeOut"
+		};
+		$(document).ready(function() {
+			$('#kararTarihiIlk').datepicker({
+				language : "tr",
+				autoclose : true,
+				todayBtn : true,
+				todayHighlight : true,
+				todayBtn : "linked"
+			});
+
+			$('#kararTarihiSon').datepicker({
+				language : "tr",
+				autoclose : true,
+				todayBtn : true,
+				todayHighlight : true,
+				todayBtn : "linked"
+			});
+		});
+
+		$(document).ready(function() {
+			$('#daire').select2({
+				selectOnClose : true,
+				width : "-webkit-fill-available",
+				allowClear : true
+			});
+		});
+		var isDisplayCaptcha = function(){
+			var isDisplayCaptcha = $('#isDisplayCaptcha').text();
+			if(isDisplayCaptcha === "true"){
+				return true;
+			}
+			return false;
+		}
+		var captchaValidation = function() {
+			if(!isDisplayCaptcha()){
+				return true;
+			}
+			if (grecaptcha == undefined
+					|| grecaptcha.getResponse() == undefined
+					|| grecaptcha.getResponse() === '') {
+				toastr["warning"]
+						("Lütfen 'Ben robot değilim' Onay Kutusunu İşaretleyiniz!");
+				return false;
+			} else {
+				return true;
+			}
+			return true;
+		};
+
+		$(document).ready(
+				function() {
+
+					$('#searchType').select2({
+						selectOnClose : true,
+						width : "-webkit-fill-available",
+						allowClear : false,
+						minimumResultsForSearch: -1
+					});
+
+					$('#searchType').on(
+							'select2:select',
+							function(e) {
+								if (e.params.data.id == undefined
+										|| e.params.data.id === "") {
+									$('#kelimeAraVeya').hide();
+									$('#kelimeAraVe').hide();
+								}
+
+								if (e.params.data.id === "andKelime") {
+									$('#kelimeAraVe').show();
+									$('#kelimeAraVeya').hide();
+								}
+								if (e.params.data.id === "orKelime") {
+									$('#kelimeAraVeya').show();
+									$('#kelimeAraVe').hide();
+								}
+								temizle();
+							});
+
+					addKeyInput('addAndKey', 'andKelime', "addAndKeyClick();",
+							'.andKeys');
+					addKeyInput('addNotKey', 'notKelime',
+							"addAndNotKeyClick();", '.notKeys');
+					addKeyInput('addOrKey', 'orKelime', "addOrKeyClick();",
+							'.orKeys');
+					addKeyInput('addOrNotKey', 'notOrKelime',
+							"addOrNotKeyClick();", '.notOrKeys');
+					
+					$('input[type="search"]').keydown(
+							function(e) {
+								var preventedKeyNumbers = [ 69, 107, 189, 109, 110, 16,
+										190, 188 ];
+								if (preventedKeyNumbers.indexOf(e.which) > -1) {
+									e.preventDefault();
+								} else if (e.shiftKey && e.which === 52) { //shift and +
+									e.preventDefault();
+								}
+							});
+				
+				});
+
+		var addAndKeyClick = function() {
+			addKeyInput('addAndKey', 'andKelime', "addAndKeyClick();",
+					'.andKeys');
+			var length = $(ANDKEYS).length;
+			if (length == 6) {
+				$("#addAndKey").hide();
+			}
+		};
+
+		var addAndNotKeyClick = function() {
+			addKeyInput('addNotKey', 'notKelime', "addAndNotKeyClick();",
+					'.notKeys');
+			var length = $(NOTANDKEYS).length;
+			if (length == 6) {
+				$("#addNotKey").hide();
+			}
+		};
+
+		var addOrKeyClick = function() {
+			addKeyInput('addOrKey', 'orKelime', "addOrKeyClick();", '.orKeys');
+			var length = $(ORKEYS).length;
+			if (length == 6) {
+				$("#addOrKey").hide();
+			}
+		};
+
+		var addOrNotKeyClick = function() {
+			addKeyInput('addOrNotKey', 'notOrKelime', "addOrNotKeyClick();",
+					'.notOrKeys');
+			var length = $(NOTORKEYS).length;
+			if (length == 6) {
+				$("#addOrNotKey").hide();
+			}
+		};
+
+		var addKeyInput = function(btnId, inputId, funcName, parentClass) {
+			$('#' + btnId).remove();
+			var div = document.createElement('DIV');
+			div.setAttribute("class", "col-md-12 clearable-input");
+			div.innerHTML = "<input type=\"search\" class=\"form-control input-sm\" name=\""+inputId+"\" id=\""+inputId+"\" placeholder=\"Kelime giriniz.\" onSearch=\"onSearch(event,this,"+btnId+");\"\>";
+			var button = document.createElement('DIV');
+			button.setAttribute("class",
+					"btn btn-icon-only btn-Turkuaz ml-4 mt-1");
+			button.setAttribute("id", btnId);
+			button.setAttribute("onclick", funcName)
+			button.innerHTML = "Kelime Ekle";
+			$(parentClass)[0].appendChild(div);
+			$(parentClass)[0].appendChild(button);
+		};
+
+		var onSearch = function(event, el, btnId ) {
+			if($('input[id='+$(el).attr("id")+']').length > 1){
+				$(el).parent().remove();
+			}
+			if($('input[id='+$(el).attr("id")+']').length < 6){
+				$(btnId).show();
+			}
+
+		};
+
+
+		
+		$('#notSearchArrow').click(
+				function() {
+					$('#notSearchArrow').find('em').toggleClass(
+							'fa-chevron-down').toggleClass('fa-chevron-up');
+
+				});
+		
+        var showWarning = function(response){
+			if(response != null && response.data === null && response.metadata != null && response.metadata.FMTY === 'ERROR' ){
+				if(response.metadata.FMTE.indexOf("DisplayCaptcha") > -1){
+					toastr["warning"]
+					("Lütfen Ben Robot Değilim Seçeneğini İşaretleyiniz!");
+					setTimeout(function() {location.reload();}, 5000); 
+					
+				}else{
+					toastr["warning"]
+					(response.metadata.FMTE.substring(response.metadata.FMTE.lastIndexOf(":")+1, response.metadata.FMTE.length));
+				}
+			}
+        }
+
+		// begin:: Global Config(global config for global JS scripts) 
+		var KTAppSettings = {
+			"breakpoints" : {
+				"sm" : 576,
+				"md" : 768,
+				"lg" : 992,
+				"xl" : 1200,
+				"xxl" : 1200
+			},
+			"colors" : {
+				"theme" : {
+					"base" : {
+						"white" : "#ffffff",
+						"primary" : "#1BC5BD",
+						"secondary" : "#E5EAEE",
+						"success" : "#1BC5BD",
+						"info" : "#6993FF",
+						"warning" : "#FFA800",
+						"danger" : "#F64E60",
+						"light" : "#F3F6F9",
+						"dark" : "#212121"
+					},
+					"light" : {
+						"white" : "#ffffff",
+						"primary" : "#1BC5BD",
+						"secondary" : "#ECF0F3",
+						"success" : "#C9F7F5",
+						"info" : "#E1E9FF",
+						"warning" : "#FFF4DE",
+						"danger" : "#FFE2E5",
+						"light" : "#F3F6F9",
+						"dark" : "#D6D6E0"
+					},
+					"inverse" : {
+						"white" : "#ffffff",
+						"primary" : "#ffffff",
+						"secondary" : "#212121",
+						"success" : "#ffffff",
+						"info" : "#ffffff",
+						"warning" : "#ffffff",
+						"danger" : "#ffffff",
+						"light" : "#464E5F",
+						"dark" : "#ffffff"
+					}
+				},
+				"gray" : {
+					"gray-100" : "#F3F6F9",
+					"gray-200" : "#ECF0F3",
+					"gray-300" : "#E5EAEE",
+					"gray-400" : "#D6D6E0",
+					"gray-500" : "#B5B5C3",
+					"gray-600" : "#80808F",
+					"gray-700" : "#464E5F",
+					"gray-800" : "#1B283F",
+					"gray-900" : "#212121"
+				}
+			},
+			"font-family" : "Poppins"
+		};
+	</script>
+	<!--end::Global Config-->
+	<!--end::Page Scripts-->
+</body>
+</html>
