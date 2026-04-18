@@ -84,12 +84,21 @@ _GENERATION_START_ORDINAL = count(1)
 
 router = APIRouter(tags=["chat"])
 _LAW_TOKEN_PATTERN = r"TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK"
+_NUMERIC_LAW_TOKEN_PATTERN = r"\d{2,8}"
 _ARTICLE_REF_RE = re.compile(
     rf"\b(?P<law>{_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
     re.IGNORECASE,
 )
+_NUMERIC_ARTICLE_REF_RE = re.compile(
+    rf"\b(?P<law>{_NUMERIC_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    re.IGNORECASE,
+)
 _ARTICLE_SEQUENCE_RE = re.compile(
     rf"\b(?P<law>{_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<articles>\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?(?:\s*(?:,|ve|veya)\s*(?:m|md|madde)?\.?\s*\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?)*)",
+    re.IGNORECASE,
+)
+_NUMERIC_ARTICLE_SEQUENCE_RE = re.compile(
+    rf"\b(?P<law>{_NUMERIC_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<articles>\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?(?:\s*(?:,|ve|veya)\s*(?:m|md|madde)?\.?\s*\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?)*)",
     re.IGNORECASE,
 )
 _LAW_MENTION_RE = re.compile(
@@ -1369,6 +1378,14 @@ def _extract_explicit_article_refs(query: str) -> list[tuple[str, str]]:
             refs.append(ref)
             seen.add(ref)
 
+    for match in _NUMERIC_ARTICLE_REF_RE.finditer(query):
+        law = match.group("law").strip()
+        madde = match.group("madde").strip().lower()
+        ref = (law, madde)
+        if ref not in seen:
+            refs.append(ref)
+            seen.add(ref)
+
     return refs
 
 
@@ -1423,6 +1440,15 @@ def _extract_article_sequences(query: str) -> list[tuple[str, str]]:
                 refs.append(ref)
                 seen.add(ref)
 
+    for match in _NUMERIC_ARTICLE_SEQUENCE_RE.finditer(query):
+        law = match.group("law").strip()
+
+        for madde in _expand_article_sequence(match.group("articles")):
+            ref = (law, madde)
+            if ref not in seen:
+                refs.append(ref)
+                seen.add(ref)
+
     return refs
 
 
@@ -1437,6 +1463,11 @@ def _extract_law_mentions(query: str) -> list[str]:
         if code and code not in seen:
             mentions.append(code)
             seen.add(code)
+
+    for law, _madde in _extract_article_sequences(query):
+        if law not in seen:
+            mentions.append(law)
+            seen.add(law)
 
     for code in _infer_law_mentions_from_concepts(query):
         if code not in seen:
@@ -1523,11 +1554,16 @@ def _retrieve_explicit_article_chunks(
     exact_chunks: list[RetrievedChunk] = []
 
     for law, madde in article_refs:
+        metadata_filter = (
+            MetadataFilter(law_no=law, madde_no=madde)
+            if law.isdigit()
+            else MetadataFilter(law_short_name=law, madde_no=madde)
+        )
         try:
             results, _stats = retriever.retrieve(
                 query=query,
                 top_k=2,
-                metadata_filter=MetadataFilter(law_short_name=law, madde_no=madde),
+                metadata_filter=metadata_filter,
             )
         except Exception as exc:
             logger.warning(
@@ -1563,11 +1599,16 @@ def _retrieve_law_bucket_chunks(
 
     bucket_chunks: list[RetrievedChunk] = []
     for law in laws:
+        metadata_filter = (
+            MetadataFilter(law_no=law)
+            if law.isdigit()
+            else MetadataFilter(law_short_name=law)
+        )
         try:
             results, _stats = retriever.retrieve(
                 query=query,
                 top_k=top_k,
-                metadata_filter=MetadataFilter(law_short_name=law),
+                metadata_filter=metadata_filter,
             )
         except Exception as exc:
             logger.warning("Law-bucket retrieval bypass (law=%s): %s", law, exc)

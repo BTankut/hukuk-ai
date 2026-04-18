@@ -37,11 +37,15 @@ _TR_ASCII_FOLD_MAP = str.maketrans(
     }
 )
 _SOURCE_ID_RE = re.compile(
-    r"\b(?P<law>TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK)\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    r"\b(?P<law>TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK|\d{2,8})\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    re.IGNORECASE,
+)
+_SOURCE_ID_COLON_RE = re.compile(
+    r"^(?P<law>TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK|\d{2,8}):(?:[^:]+):m(?P<madde>\d+[a-z]?)",
     re.IGNORECASE,
 )
 _SOURCE_ID_FALLBACK_RE = re.compile(
-    r"^(?P<law>tbk|tmk|tck|hmk|ttk|iik|ii?k)[-_ ]m?(?P<madde>\d+[a-z]?)",
+    r"^(?P<law>tbk|tmk|tck|hmk|ttk|iik|ii?k|\d{2,8})[-_ ]m?(?P<madde>\d+[a-z]?)",
     re.IGNORECASE,
 )
 _INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
@@ -103,6 +107,12 @@ def canonicalize_source_id(value: str | None) -> str | None:
     if match:
         law = canonicalize_law_code(match.group("law"))
         madde = match.group("madde").lower()
+        return f"{law} m.{madde}"
+
+    colon_match = _SOURCE_ID_COLON_RE.search(raw)
+    if colon_match:
+        law = canonicalize_law_code(colon_match.group("law"))
+        madde = colon_match.group("madde").lower()
         return f"{law} m.{madde}"
 
     lowered = raw.lower()

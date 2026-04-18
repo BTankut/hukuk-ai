@@ -377,11 +377,22 @@ class TestLawSignalParsing:
         )
         assert refs[:3] == [("TBK", "181"), ("TBK", "182"), ("TBK", "183")]
 
+    def test_extract_explicit_article_refs_supports_numeric_law_ids(self):
+        refs = _extract_explicit_article_refs(
+            "3224 m.1 ile 8913838 m.1 birlikte nasıl okunur?"
+        )
+        assert ("3224", "1") in refs
+        assert ("8913838", "1") in refs
+
     def test_extract_law_mentions_supports_names_and_codes(self):
         laws = _extract_law_mentions(
             "Türk Borçlar Kanunu ile TMK birlikte nasıl uygulanır?"
         )
         assert laws == ["TBK", "TMK"]
+
+    def test_extract_law_mentions_supports_numeric_law_ids_from_article_refs(self):
+        laws = _extract_law_mentions("3224 m.1 metni ile 126 m.1 birlikte değerlendirilsin.")
+        assert laws == ["3224", "126"]
 
     def test_extract_law_mentions_infers_tbk_tmk_for_cross_law_concepts(self):
         laws = _extract_law_mentions(

@@ -28,6 +28,11 @@ def test_canonicalize_source_id_accepts_legacy_chunk_style():
     assert canonicalize_source_id("tbk-49-f1") == "TBK m.49"
 
 
+def test_canonicalize_source_id_accepts_numeric_colon_and_citation_forms():
+    assert canonicalize_source_id("3224:3224:m1:f0:from1985-06-25:to9999-12-31") == "3224 m.1"
+    assert canonicalize_source_id("3224 m.1/f.0") == "3224 m.1"
+
+
 def test_harden_answer_keeps_supported_answer_in_answer_mode():
     evidence = _evidence("TBK m.49")
 
