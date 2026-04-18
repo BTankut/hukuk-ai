@@ -21,10 +21,25 @@ if str(API_GATEWAY_SRC) not in sys.path:
 DOCS_DIR = ROOT / "docs"
 RUNTIME_DIR = ROOT / "runtime_logs" / "mevzuat_controlled_cutover_execution_rerun_20260418"
 SUMMARY_JSON = RUNTIME_DIR / "phase_summary.json"
+VECTOR_BLOCKER_SUMMARY_JSON = ROOT / "runtime_logs" / "mevzuat_cutover_vector_rerun_20260418" / "phase_summary.json"
 
 SOURCE_ARTICLE_ROWS = Path("/Users/btmacstudio/Projects/mevzuat/mevzuat_db/article_rows.jsonl")
 ACTIVE_RUNTIME_COLLECTION = "mevzuat_e5_shadow"
-CANDIDATE_RUNTIME_COLLECTION = "mevzuat_faz1_shadow_20260416"
+
+
+def load_candidate_runtime_collection() -> str:
+    fallback = "mevzuat_faz1_shadow_20260418_compat1024"
+    if not VECTOR_BLOCKER_SUMMARY_JSON.exists():
+        return fallback
+    try:
+        summary = json.loads(VECTOR_BLOCKER_SUMMARY_JSON.read_text(encoding="utf-8"))
+    except Exception:
+        return fallback
+    candidate = str(summary.get("new_candidate_collection_name") or "").strip()
+    return candidate or fallback
+
+
+CANDIDATE_RUNTIME_COLLECTION = load_candidate_runtime_collection()
 ROLLBACK_TARGET = ACTIVE_RUNTIME_COLLECTION
 BACKOUT_TARGET = ACTIVE_RUNTIME_COLLECTION
 
@@ -160,6 +175,28 @@ def wait_for_health(timeout: int = 120) -> bool:
     while time.time() < deadline:
         try:
             response = requests.get(GATEWAY_HEALTH_URL, timeout=5)
+            if response.status_code == 200:
+                return True
+        except Exception:
+            pass
+        time.sleep(2)
+    return False
+
+
+def wait_for_chat_ready(timeout: int = 120) -> bool:
+    import requests
+
+    deadline = time.time() + timeout
+    payload = {
+        "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+        "messages": [{"role": "user", "content": "HMK m.107 dayanağını kısaca söyle."}],
+        "temperature": 0,
+        "max_tokens": 80,
+        "stream": False,
+    }
+    while time.time() < deadline:
+        try:
+            response = requests.post(GATEWAY_CHAT_URL, json=payload, timeout=30)
             if response.status_code == 200:
                 return True
         except Exception:
@@ -465,6 +502,8 @@ def main() -> None:
         launch_runtime(CANDIDATE_RUNTIME_COLLECTION)
         if not wait_for_health():
             raise RuntimeError("post-switch gateway health timeout")
+        if not wait_for_chat_ready():
+            raise RuntimeError("post-switch gateway chat readiness timeout")
         execution["post_switch_health_http_200"] = True
 
         for case in smoke_cases:
