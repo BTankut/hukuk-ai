@@ -12,6 +12,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from authoritative_candidate_utils import load_authoritative_candidate_collection_name
+
 ROOT = Path(__file__).resolve().parents[2]
 API_GATEWAY_SRC = ROOT / "api-gateway" / "src"
 if str(API_GATEWAY_SRC) not in sys.path:
@@ -23,7 +29,7 @@ SUMMARY_JSON = RUNTIME_DIR / "phase_summary.json"
 
 SOURCE_ARTICLE_ROWS = Path("/Users/btmacstudio/Projects/mevzuat/mevzuat_db/article_rows.jsonl")
 ACTIVE_RUNTIME_COLLECTION = "mevzuat_e5_shadow"
-CANDIDATE_COLLECTION = "mevzuat_faz1_shadow_20260418_compat1024"
+CANDIDATE_COLLECTION = load_authoritative_candidate_collection_name()
 GATEWAY_PORT = 8012
 LOCAL_TUNNEL_PORT = 30013
 PROBE_LOG_NAME = "retrieval_parity_probe_gateway.log"

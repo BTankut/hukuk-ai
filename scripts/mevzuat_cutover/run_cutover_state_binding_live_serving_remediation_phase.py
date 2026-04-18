@@ -24,6 +24,10 @@ from runtime_binding_utils import (
     stop_pid_and_listener,
     wait_for_pidfile_listener_match,
 )
+from authoritative_candidate_utils import (
+    load_authoritative_candidate_collection_name,
+    load_stale_candidate_collection_name,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,7 +44,6 @@ VECTOR_SUMMARY_JSON = ROOT / "runtime_logs" / "mevzuat_cutover_vector_rerun_2026
 SOURCE_ARTICLE_ROWS = Path("/Users/btmacstudio/Projects/mevzuat/mevzuat_db/article_rows.jsonl")
 
 ACTIVE_RUNTIME_COLLECTION = "mevzuat_e5_shadow"
-FAILED_DECLARED_CANDIDATE = "mevzuat_faz1_shadow_20260416"
 DEFAULT_REMEDIATED_CANDIDATE = "mevzuat_faz1_shadow_20260418_compat1024"
 BASELINE_GATEWAY_PORT = 8000
 BASELINE_TUNNEL_PORT = 30011
@@ -95,14 +98,33 @@ def iter_article_rows(path: Path):
 
 
 def load_remediated_candidate() -> str:
-    if not VECTOR_SUMMARY_JSON.exists():
-        return DEFAULT_REMEDIATED_CANDIDATE
+    if VECTOR_SUMMARY_JSON.exists():
+        try:
+            summary = load_json(VECTOR_SUMMARY_JSON)
+        except Exception:
+            summary = {}
+        candidate = str(summary.get("new_candidate_collection_name") or "").strip()
+        if candidate:
+            return candidate
     try:
-        summary = load_json(VECTOR_SUMMARY_JSON)
+        return load_authoritative_candidate_collection_name()
     except Exception:
         return DEFAULT_REMEDIATED_CANDIDATE
-    candidate = str(summary.get("new_candidate_collection_name") or "").strip()
-    return candidate or DEFAULT_REMEDIATED_CANDIDATE
+
+
+def load_failed_declared_candidate() -> str:
+    if FAILED_RERUN_SUMMARY_JSON.exists():
+        try:
+            summary = load_json(FAILED_RERUN_SUMMARY_JSON)
+        except Exception:
+            summary = {}
+        candidate = str(summary.get("candidate_runtime_collection") or "").strip()
+        if candidate:
+            return candidate
+    try:
+        return load_stale_candidate_collection_name()
+    except Exception:
+        return ""
 
 
 def build_smoke_cases(article_rows_path: Path, failed_summary: dict[str, Any]) -> list[SmokeCase]:
@@ -474,6 +496,7 @@ def render_next_doc(decision: str) -> str:
 def main() -> None:
     ensure_dir(RUNTIME_DIR)
     failed_summary = load_json(FAILED_RERUN_SUMMARY_JSON)
+    failed_declared_candidate = load_failed_declared_candidate()
     remediated_candidate = load_remediated_candidate()
     smoke_cases = build_smoke_cases(SOURCE_ARTICLE_ROWS, failed_summary)
 
@@ -574,7 +597,7 @@ def main() -> None:
     stale_binding_found = not binding_consistency_pass
 
     binding_summary = {
-        "failed_declared_active_runtime_after": FAILED_DECLARED_CANDIDATE,
+        "failed_declared_active_runtime_after": failed_declared_candidate,
         "failed_gateway_pidfile_pid": failed_gateway_pidfile_pid,
         "failed_gateway_listener_pid": failed_gateway_listener_pid,
         "failed_gateway_listener_collection": failed_gateway_listener_collection or "UNKNOWN",

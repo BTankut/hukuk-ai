@@ -11,6 +11,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from authoritative_candidate_utils import (
+    load_authoritative_candidate_collection_name,
+    load_stale_candidate_collection_name,
+)
+
 
 ROOT = Path(__file__).resolve().parents[2]
 API_GATEWAY_SRC = ROOT / "api-gateway" / "src"
@@ -27,7 +36,6 @@ PARITY_SUMMARY_JSON = ROOT / "runtime_logs" / "mevzuat_retrieval_runtime_parity_
 VECTOR_SUMMARY_JSON = ROOT / "runtime_logs" / "mevzuat_cutover_vector_rerun_20260418" / "phase_summary.json"
 
 ACTIVE_RUNTIME_COLLECTION = "mevzuat_e5_shadow"
-FAILED_POST_SWITCH_COLLECTION = "mevzuat_faz1_shadow_20260416"
 DEFAULT_REMEDIATED_COLLECTION = "mevzuat_faz1_shadow_20260418_compat1024"
 
 PROBE_GATEWAY_PORT = 8014
@@ -83,14 +91,33 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def load_remediated_collection_name() -> str:
-    if not VECTOR_SUMMARY_JSON.exists():
-        return DEFAULT_REMEDIATED_COLLECTION
+    if VECTOR_SUMMARY_JSON.exists():
+        try:
+            summary = load_json(VECTOR_SUMMARY_JSON)
+        except Exception:
+            summary = {}
+        candidate = str(summary.get("new_candidate_collection_name") or "").strip()
+        if candidate:
+            return candidate
     try:
-        summary = load_json(VECTOR_SUMMARY_JSON)
+        return load_authoritative_candidate_collection_name()
     except Exception:
         return DEFAULT_REMEDIATED_COLLECTION
-    candidate = str(summary.get("new_candidate_collection_name") or "").strip()
-    return candidate or DEFAULT_REMEDIATED_COLLECTION
+
+
+def load_failed_post_switch_collection() -> str:
+    if FAILED_RERUN_SUMMARY_JSON.exists():
+        try:
+            summary = load_json(FAILED_RERUN_SUMMARY_JSON)
+        except Exception:
+            summary = {}
+        candidate = str(summary.get("candidate_runtime_collection") or "").strip()
+        if candidate:
+            return candidate
+    try:
+        return load_stale_candidate_collection_name()
+    except Exception:
+        return ""
 
 
 def iter_article_rows(path: Path):
@@ -405,7 +432,7 @@ def render_divergence_doc(rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def render_binding_doc(remediated_collection: str) -> str:
+def render_binding_doc(failed_collection: str, remediated_collection: str) -> str:
     return "\n".join(
         [
             "# Mevzuat Post-Switch Runtime Binding Contract Denetimi 2026-04-18",
@@ -419,19 +446,19 @@ def render_binding_doc(remediated_collection: str) -> str:
             "- `binding_parity_pass = true`",
             "",
             "## Audit Note",
-            f"- failed rerun stale binding'i `{FAILED_POST_SWITCH_COLLECTION}` idi; remediation ile serving candidate rolu `{remediated_collection}` koleksiyonuna tasindi",
+            f"- failed rerun stale binding'i `{failed_collection}` idi; remediation ile serving candidate rolu `{remediated_collection}` koleksiyonuna tasindi",
         ]
     )
 
 
-def render_path_diff_doc() -> str:
+def render_path_diff_doc(failed_collection: str, remediated_collection: str) -> str:
     return "\n".join(
         [
             "# Mevzuat Live Serving Path vs Parity Path Diff Raporu 2026-04-18",
             "",
             "## Official Fields",
-            "- `query_path_pre_switch = runtime_parity_probe_gateway_8012 + direct_runtime_parity_harness on mevzuat_faz1_shadow_20260418_compat1024`",
-            "- `query_path_post_switch = baseline_gateway_dgxnode2:8000 on mevzuat_faz1_shadow_20260416`",
+            f"- `query_path_pre_switch = runtime_parity_probe_gateway_8012 + direct_runtime_parity_harness on {remediated_collection}`",
+            f"- `query_path_post_switch = baseline_gateway_dgxnode2:8000 on {failed_collection}`",
             "- `embedding_call_diff = none`",
             "- `retrieval_call_diff = stale_legacy_candidate_collection_binding`",
             "- `rerank_or_order_diff = none`",
@@ -540,6 +567,7 @@ def main() -> None:
     smoke_cases = select_smoke_cases(SOURCE_ARTICLE_ROWS)
     failed_rerun_summary = load_json(FAILED_RERUN_SUMMARY_JSON)
     parity_summary = load_json(PARITY_SUMMARY_JSON)
+    failed_collection = load_failed_post_switch_collection()
     remediated_collection = load_remediated_collection_name()
 
     rerun_results: list[dict[str, Any]] = []
@@ -660,8 +688,8 @@ def main() -> None:
         decision = "NO-GO - Mevzuat Post-Switch Divergence Remediation"
 
     write_text(DIVERGENCE_DOC, render_divergence_doc(divergence_rows))
-    write_text(BINDING_DOC, render_binding_doc(remediated_collection))
-    write_text(PATH_DIFF_DOC, render_path_diff_doc())
+    write_text(BINDING_DOC, render_binding_doc(failed_collection, remediated_collection))
+    write_text(PATH_DIFF_DOC, render_path_diff_doc(failed_collection, remediated_collection))
     write_text(UPSTREAM_DOC, render_upstream_doc(upstream_pre_model, upstream_post_model, post_switch_connectivity_pass))
     write_text(REMEDIATION_DOC, render_remediation_doc(remediation))
     write_text(RERUN_SMOKE_DOC, render_rerun_smoke_doc(rerun_smoke))
@@ -679,7 +707,7 @@ def main() -> None:
     SUMMARY_JSON.write_text(
         json.dumps(
             {
-                "failed_rerun_candidate_collection": FAILED_POST_SWITCH_COLLECTION,
+                "failed_rerun_candidate_collection": failed_collection,
                 "remediated_candidate_collection": remediated_collection,
                 "binding_parity_pass": binding_parity_pass,
                 "path_divergence_found": path_divergence_found,

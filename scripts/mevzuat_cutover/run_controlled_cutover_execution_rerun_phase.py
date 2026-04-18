@@ -15,6 +15,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from authoritative_candidate_utils import load_authoritative_candidate_collection_name
+
 from runtime_binding_utils import stop_pid_and_listener, wait_for_pidfile_listener_match
 
 
@@ -33,15 +35,15 @@ ACTIVE_RUNTIME_COLLECTION = "mevzuat_e5_shadow"
 
 
 def load_candidate_runtime_collection() -> str:
-    fallback = "mevzuat_faz1_shadow_20260418_compat1024"
-    if not VECTOR_BLOCKER_SUMMARY_JSON.exists():
-        return fallback
-    try:
-        summary = json.loads(VECTOR_BLOCKER_SUMMARY_JSON.read_text(encoding="utf-8"))
-    except Exception:
-        return fallback
-    candidate = str(summary.get("new_candidate_collection_name") or "").strip()
-    return candidate or fallback
+    if VECTOR_BLOCKER_SUMMARY_JSON.exists():
+        try:
+            summary = json.loads(VECTOR_BLOCKER_SUMMARY_JSON.read_text(encoding="utf-8"))
+        except Exception:
+            summary = {}
+        candidate = str(summary.get("new_candidate_collection_name") or "").strip()
+        if candidate:
+            return candidate
+    return load_authoritative_candidate_collection_name()
 
 
 CANDIDATE_RUNTIME_COLLECTION = load_candidate_runtime_collection()
