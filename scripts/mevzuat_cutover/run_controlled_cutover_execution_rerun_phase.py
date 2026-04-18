@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-import signal
 import subprocess
 import sys
 import time
@@ -11,6 +10,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from runtime_binding_utils import stop_pid_and_listener, wait_for_pidfile_listener_match
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,6 +50,8 @@ BACKOUT_TARGET = ACTIVE_RUNTIME_COLLECTION
 
 GATEWAY_HEALTH_URL = "http://127.0.0.1:8000/v1/health"
 GATEWAY_CHAT_URL = "http://127.0.0.1:8000/v1/chat/completions"
+GATEWAY_PORT = 8000
+TUNNEL_PORT = 30011
 LAUNCHER = ROOT / "scripts" / "finetune" / "launch_local_baseline_gateway_dgxnode2.sh"
 BASELINE_PID = ROOT / "runtime_logs" / "baseline_gateway_dgxnode2.pid"
 TUNNEL_PID = ROOT / "runtime_logs" / "baseline_dgxnode2_vllm_tunnel.pid"
@@ -132,40 +139,16 @@ def select_smoke_cases(article_rows_path: Path) -> list[SmokeCase]:
     ]
 
 
-def stop_pid_file(pid_path: Path) -> None:
-    if not pid_path.exists():
-        return
-    raw = pid_path.read_text(encoding="utf-8").strip()
-    if not raw:
-        return
-    try:
-        pid = int(raw)
-    except ValueError:
-        return
-    try:
-        os.kill(pid, signal.SIGTERM)
-    except ProcessLookupError:
-        return
-    deadline = time.time() + 10
-    while time.time() < deadline:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            break
-        time.sleep(0.2)
-    else:
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-
-
 def launch_runtime(collection_name: str) -> None:
-    stop_pid_file(BASELINE_PID)
-    stop_pid_file(TUNNEL_PID)
+    stop_pid_and_listener(BASELINE_PID, GATEWAY_PORT)
+    stop_pid_and_listener(TUNNEL_PID, TUNNEL_PORT)
     env = os.environ.copy()
     env["MILVUS_COLLECTION"] = collection_name
     subprocess.run(["bash", str(LAUNCHER)], cwd=str(ROOT), env=env, check=True)
+    if not wait_for_pidfile_listener_match(TUNNEL_PID, TUNNEL_PORT, timeout=20):
+        raise RuntimeError("post-switch tunnel pid/listener mismatch")
+    if not wait_for_pidfile_listener_match(BASELINE_PID, GATEWAY_PORT, timeout=20):
+        raise RuntimeError("post-switch gateway pid/listener mismatch")
 
 
 def wait_for_health(timeout: int = 120) -> bool:
