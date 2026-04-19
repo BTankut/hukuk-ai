@@ -29,6 +29,7 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 from observability import get_metrics_registry
+from llm.client import LLMResult, TokenUsage
 from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
@@ -812,6 +813,7 @@ async def test_sse_stream_format():
         blocked=False,
         guardrails_reasons=[],
         verification=None,
+        include_metadata_chunk=True,
         delay_between_chunks=0,
     ):
         chunks.append(chunk)
@@ -883,6 +885,7 @@ async def test_sse_stream_metadata_carries_optional_trace():
         guardrails_reasons=[],
         verification={"verdict": "pass"},
         trace={"query_signals": {"user_query": "TBK m.49 nedir?"}},
+        include_metadata_chunk=True,
         delay_between_chunks=0,
     ):
         chunks.append(chunk)
@@ -892,12 +895,59 @@ async def test_sse_stream_metadata_carries_optional_trace():
     assert meta_data["trace"]["query_signals"]["user_query"] == "TBK m.49 nedir?"
 
 
+@pytest.mark.asyncio
+async def test_sse_stream_omits_metadata_by_default():
+    chunks = []
+    async for chunk in _stream_sse_response(
+        answer="Test yanıtı",
+        session_id="s1",
+        model="test",
+        citations=["TBK m.49"],
+        blocked=False,
+        guardrails_reasons=[],
+        verification=None,
+        delay_between_chunks=0,
+    ):
+        chunks.append(chunk)
+
+    assert chunks[-1] == "data: [DONE]\n\n"
+    assert not any("chat.completion.metadata" in chunk for chunk in chunks)
+
+
 # ---------------------------------------------------------------------------
 # POST /v1/chat/completions — Non-streaming Testleri
 # ---------------------------------------------------------------------------
 
 
 class TestChatCompletionsNonStreaming:
+
+    def test_native_dialog_shortcut_returns_non_empty_answer(self, client, mock_orchestrator):
+        mock_llm_client = MagicMock()
+        mock_llm_client.chat = AsyncMock(
+            return_value=LLMResult(
+                text="Merhaba. Sorunu doğrudan yazabilirsin.",
+                usage=TokenUsage(prompt_tokens=5, completion_tokens=6, total_tokens=11),
+                trace={"native_dialog": True},
+            )
+        )
+        mock_orchestrator.llm_client = mock_llm_client
+
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "model": "hukuk-ai-poc",
+                "messages": [{"role": "user", "content": "merhaba"}],
+                "stream": False,
+            },
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["choices"][0]["message"]["content"] == "Merhaba. Sorunu doğrudan yazabilirsin."
+        assert data["final_mode"] == "answer"
+        assert data["citations"] == []
+        mock_orchestrator.answer.assert_not_called()
+        mock_llm_client.chat.assert_awaited_once()
 
     def test_basic_request(self, client, mock_orchestrator):
         mock_orchestrator.answer = AsyncMock(
@@ -1150,6 +1200,7 @@ class TestChatCompletionsStreaming:
             json={
                 "messages": [{"role": "user", "content": "evlilik kanunu"}],
                 "stream": True,
+                "include_trace": True,
             },
         )
         lines = [l for l in resp.text.split("\n") if l.startswith("data:") and "[DONE]" not in l]
@@ -1164,6 +1215,18 @@ class TestChatCompletionsStreaming:
 
         assert len(meta_chunks) == 1
         assert "TMK m.1" in meta_chunks[0]["citations"]
+
+    def test_streaming_omits_metadata_chunk_by_default(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response("test"))
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [{"role": "user", "content": "test"}],
+                "stream": True,
+            },
+        )
+        assert resp.status_code == 200
+        assert "chat.completion.metadata" not in resp.text
 
     def test_streaming_session_header(self, client, mock_orchestrator):
         mock_orchestrator.answer = AsyncMock(return_value=_make_orch_response())

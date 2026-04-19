@@ -127,6 +127,19 @@ _LAW_NAME_NORMALIZATION = {
     "icra ve iflas kanunu": "İİK",
 }
 _INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
+_NATIVE_DIALOG_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("greeting", ("merhaba", "selam", "selamlar", "günaydın", "iyi akşamlar", "iyi geceler", "hey", "hello", "hi")),
+    ("smalltalk", ("nasılsın", "nasilsin", "ne haber", "iyi misin", "iyi misiniz")),
+    ("capability", ("ne yapabiliyorsun", "neler yapabiliyorsun", "yardımcı olabilir misin", "yardimci olabilir misin", "kimsin")),
+    ("gratitude", ("teşekkürler", "tesekkurler", "teşekkür ederim", "tesekkur ederim", "sağ ol", "sag ol")),
+)
+_NATIVE_DIALOG_SYSTEM_PROMPT = (
+    "Sen hukuk-ai-poc arayüzünde çalışan Türkçe yardımcı asistansın. "
+    "Bu mod yalnız düşük riskli doğal diyalog içindir: selamlaşma, kısa sosyal cevaplar, "
+    "ürünün genel kullanımını anlatma ve teşekkür yanıtlama. "
+    "Kısa, doğal ve net yanıt ver. Bu modda sahte kaynak/citation üretme. "
+    "Kullanıcı hukuki soru sorarsa mevzuat sorusunu doğrudan yazabileceğini kısa biçimde belirt."
+)
 
 
 def _tr_lower(text: str) -> str:
@@ -160,6 +173,10 @@ _LAW_NAME_NORMALIZATION_NORMALIZED = {
 }
 
 
+def _normalize_whitespace(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def _contains_query_term(query: str, term: str) -> bool:
     normalized_query = _normalize_tr_text(query)
     normalized_term = _normalize_tr_text(term)
@@ -179,6 +196,47 @@ def _contains_query_term(query: str, term: str) -> bool:
 
 def _contains_any_query_term(query: str, terms: tuple[str, ...] | list[str]) -> bool:
     return any(_contains_query_term(query, term) for term in terms)
+
+
+def _detect_native_dialog_intent(user_query: str) -> str | None:
+    normalized_query = _normalize_tr_text(_normalize_whitespace(user_query)).strip("!?.,;:")
+    if not normalized_query:
+        return None
+    if _extract_law_mentions(user_query) or _extract_explicit_article_refs(user_query):
+        return None
+
+    for intent, terms in _NATIVE_DIALOG_PATTERNS:
+        if normalized_query in {_normalize_tr_text(term) for term in terms}:
+            return intent
+        if any(normalized_query.startswith(_normalize_tr_text(term) + " ") for term in terms):
+            return intent
+    return None
+
+
+def _build_native_dialog_fallback_answer(intent: str) -> str:
+    if intent == "gratitude":
+        return "Rica ederim. İstersen mevzuat sorunu doğrudan kanun ve madde numarasıyla sor."
+    if intent == "capability":
+        return (
+            "Merhaba. Mevzuat sorularında yardımcı olabilirim; özellikle kanun ve madde bazlı "
+            "sorularda daha isabetli çalışırım. İstersen sorunu doğrudan yaz."
+        )
+    return "Merhaba. Mevzuat sorularında yardımcı olabilirim; istersen sorunu doğrudan yaz."
+
+
+def _build_native_dialog_answer_contract(*, answer_text: str) -> dict[str, Any]:
+    return {
+        "answer_text": answer_text,
+        "primary_source_id": None,
+        "secondary_source_ids": [],
+        "law_scope": [],
+        "source_validity": "unknown",
+        "unsupported_reason": None,
+        "verifier_status": "pass",
+        "final_mode": "answer",
+        "claim_units": [],
+        "native_dialog": True,
+    }
 
 
 def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
@@ -2045,6 +2103,7 @@ async def _stream_sse_response(
     final_mode: str | None = None,
     final_reason: str | None = None,
     answer_contract: dict[str, Any] | None = None,
+    include_metadata_chunk: bool = False,
     words_per_chunk: int = 5,
     delay_between_chunks: float = 0.02,
 ) -> AsyncGenerator[str, None]:
@@ -2054,7 +2113,7 @@ async def _stream_sse_response(
         1. Role chunk (delta: {role: "assistant"})
         2. Content chunks (delta: {content: <kelime grubu>})
         3. Finish chunk (delta: {}, finish_reason: "stop")
-        4. Metadata chunk (hukuk-ai özel: citations, verification)
+        4. Opsiyonel metadata chunk (hukuk-ai özel: citations, verification)
         5. [DONE]
     """
     chunk_id = response_id or f"chatcmpl-{uuid.uuid4().hex[:12]}"
@@ -2093,27 +2152,28 @@ async def _stream_sse_response(
     yield _make_delta_chunk({}, finish_reason="stop")
     await asyncio.sleep(0)
 
-    # 4. Hukuk-AI özel metadata chunk
-    meta_payload: dict[str, Any] = {
-        "id": chunk_id,
-        "object": "chat.completion.metadata",
-        "session_id": session_id,
-        "citations": citations,
-        "blocked": blocked,
-        "guardrails_reasons": guardrails_reasons,
-        "verification": verification,
-    }
-    if trace is not None:
-        meta_payload["trace"] = trace
-    if usage is not None:
-        meta_payload["usage"] = usage.model_dump()
-    if final_mode is not None:
-        meta_payload["final_mode"] = final_mode
-    if final_reason is not None:
-        meta_payload["final_reason"] = final_reason
-    if answer_contract is not None:
-        meta_payload["answer_contract"] = answer_contract
-    yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
+    # 4. Hukuk-AI özel metadata chunk (opsiyonel; varsayılan olarak OpenAI uyumluluğu korunur)
+    if include_metadata_chunk:
+        meta_payload: dict[str, Any] = {
+            "id": chunk_id,
+            "object": "chat.completion.metadata",
+            "session_id": session_id,
+            "citations": citations,
+            "blocked": blocked,
+            "guardrails_reasons": guardrails_reasons,
+            "verification": verification,
+        }
+        if trace is not None:
+            meta_payload["trace"] = trace
+        if usage is not None:
+            meta_payload["usage"] = usage.model_dump()
+        if final_mode is not None:
+            meta_payload["final_mode"] = final_mode
+        if final_reason is not None:
+            meta_payload["final_reason"] = final_reason
+        if answer_contract is not None:
+            meta_payload["answer_contract"] = answer_contract
+        yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
 
     # 5. Done sentinel
     yield "data: [DONE]\n\n"
@@ -2138,6 +2198,46 @@ def _get_orchestrator(request: Request) -> RAGOrchestrator:
 def _get_retriever(request: Request) -> Any | None:
     """FastAPI app.state'ten retriever al (opsiyonel)."""
     return getattr(request.app.state, "retriever", None)
+
+
+async def _run_native_dialog_passthrough(
+    *,
+    request: Request,
+    request_body: ChatCompletionRequest,
+    intent: str,
+) -> tuple[str, dict[str, int] | None, dict[str, Any] | None]:
+    orchestrator = _get_orchestrator(request)
+    llm_client = getattr(orchestrator, "llm_client", None)
+    if llm_client is None or not hasattr(llm_client, "chat"):
+        return _build_native_dialog_fallback_answer(intent), None, None
+
+    from llm.client import ChatMessage
+
+    native_messages = [ChatMessage(role="system", content=_NATIVE_DIALOG_SYSTEM_PROMPT)]
+    native_messages.extend(
+        ChatMessage(role=msg.role, content=msg.content)
+        for msg in request_body.messages
+        if msg.role in {"user", "assistant", "system"}
+    )
+
+    try:
+        result = await llm_client.chat(
+            messages=native_messages,
+            temperature=request_body.temperature if request_body.temperature is not None else 0.2,
+            max_tokens=request_body.max_tokens,
+        )
+    except Exception:
+        logger.warning("Native dialog passthrough failed; deterministic fallback used", exc_info=True)
+        return _build_native_dialog_fallback_answer(intent), None, None
+
+    usage_payload = None
+    if result.usage is not None:
+        usage_payload = {
+            "prompt_tokens": result.usage.prompt_tokens,
+            "completion_tokens": result.usage.completion_tokens,
+            "total_tokens": result.usage.total_tokens,
+        }
+    return result.text.strip() or _build_native_dialog_fallback_answer(intent), usage_payload, result.trace
 
 
 def _estimate_chat_usage(
@@ -2486,6 +2586,7 @@ def _finalize_boundary_proxy_response(
                 final_mode=final_mode,
                 final_reason=final_reason,
                 answer_contract=public_answer_contract,
+                include_metadata_chunk=request_body.include_trace,
             ),
             media_type="text/event-stream",
             headers={
@@ -3478,6 +3579,7 @@ def _finalize_chat_response(
                 final_mode=final_mode,
                 final_reason=final_reason,
                 answer_contract=public_answer_contract,
+                include_metadata_chunk=request_body.include_trace,
             ),
             media_type="text/event-stream",
             headers={
@@ -3569,6 +3671,98 @@ async def chat_completions(
     # ── Session & Multi-turn ─────────────────────────────────────────────────
     session_id = request_body.session_id or f"sess-{uuid.uuid4().hex[:16]}"
     response_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+    request_history: list[dict[str, str]] = [
+        {"role": msg.role, "content": msg.content}
+        for msg in request_body.messages[:-1]
+        if msg.role in {"user", "assistant", "system"}
+    ]
+    conversation_history = request_history
+    if not conversation_history and not (
+        _release_controls_boundary_proxy_enabled()
+        and _release_controls_perimeter_session_isolation_enabled()
+    ):
+        conversation_history = store.get_history(session_id)
+
+    native_dialog_intent = _detect_native_dialog_intent(last_user_msg)
+    if native_dialog_intent is not None:
+        answer_text, native_usage, native_llm_trace = await _run_native_dialog_passthrough(
+            request=request,
+            request_body=request_body,
+            intent=native_dialog_intent,
+        )
+        answer_contract = _build_native_dialog_answer_contract(answer_text=answer_text)
+        law_scope_signal = build_law_scope_signal(
+            question_raw=last_user_msg,
+            mentioned_laws=[],
+            explicit_article_refs=[],
+            law_filter=request_body.law_filter,
+            model_source_ids=[],
+        )
+        trace_payload = _build_trace_payload(
+            request_id=response_id,
+            decision_lane="native_dialog_shortcut",
+            user_query=last_user_msg,
+            enriched_query=last_user_msg,
+            retrieval_query=last_user_msg,
+            question_normalized=normalize_query_text(last_user_msg),
+            question_type="general_dialogue",
+            target_date=datetime.now(timezone.utc).date().isoformat(),
+            law_scope_signal=law_scope_signal,
+            law_filter=request_body.law_filter,
+            mentioned_laws=[],
+            cross_law_mode=False,
+            explicit_article_refs=[],
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+            pre_rerank_chunks=[],
+            post_rerank_chunks=[],
+            assembled_context="",
+            blocked=False,
+            guardrails_reasons=[],
+            verification=None,
+            answer_contract=answer_contract,
+            model_cited_source_ids=[],
+            final_mode="answer",
+            final_reason=None,
+        )
+        pre_answer_payload = _pre_answer_stage_payload(
+            decision_lane="native_dialog_shortcut",
+            user_message=last_user_msg,
+            enriched_query=last_user_msg,
+            retrieval_query=last_user_msg,
+            conversation_history=conversation_history,
+            mentioned_laws=[],
+            explicit_article_refs=[],
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+        )
+        return _finalize_chat_response(
+            request=request,
+            request_body=request_body,
+            store=store,
+            session_id=session_id,
+            response_id=response_id,
+            user_message=last_user_msg,
+            conversation_history=conversation_history,
+            pre_answer_payload=pre_answer_payload,
+            answer_text=answer_text,
+            citations=[],
+            blocked=False,
+            guardrails_reasons=[],
+            verification=None,
+            trace_payload=trace_payload,
+            answer_contract=answer_contract,
+            final_mode="answer",
+            final_reason=None,
+            upstream_usage=native_usage,
+            llm_trace=native_llm_trace,
+        )
 
     # Dar kapsamlı, yüksek isabetli deterministic çapraz-kanun / TBK yanıtları
     precise_lane = "precise_cross_law_shortcut"
@@ -3764,20 +3958,6 @@ async def chat_completions(
             upstream_usage=None,
             llm_trace=None,
         )
-
-    # Konuşma geçmişi: request'teki messages'ın son user mesajından öncekiler
-    request_history: list[dict[str, str]] = []
-    for msg in request_body.messages[:-1]:
-        if msg.role in {"user", "assistant", "system"}:
-            request_history.append({"role": msg.role, "content": msg.content})
-
-    # Eğer client geçmiş mesaj göndermemişse → session store'u kullan
-    conversation_history = request_history
-    if not conversation_history and not (
-        _release_controls_boundary_proxy_enabled()
-        and _release_controls_perimeter_session_isolation_enabled()
-    ):
-        conversation_history = store.get_history(session_id)
 
     if _release_controls_boundary_proxy_enabled():
         canonical_snapshot, proxy_response = await _proxy_canonical_answer_path(
