@@ -698,12 +698,17 @@ def apply_law_scope_validation(
         contract.law_scope = dedupe_strings([*expected, *resolved])
         return contract.unsupported_reason
 
-    if len(resolved) == 1:
+    if resolved:
         contract.law_scope = resolved
         return contract.unsupported_reason
 
+    if expected:
+        contract.law_scope = expected
+        return contract.unsupported_reason
+
     contract.final_mode = "refusal"
-    contract.unsupported_reason = "insufficient_supported_evidence"
+    if contract.unsupported_reason is None:
+        contract.unsupported_reason = "insufficient_supported_evidence"
     return contract.unsupported_reason
 
 

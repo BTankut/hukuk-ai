@@ -297,6 +297,35 @@ def test_harden_answer_drops_out_of_scope_secondary_citations_for_single_law_hig
     assert result.answer_contract["secondary_source_ids"] == []
 
 
+def test_harden_answer_keeps_ambiguous_multi_norm_document_selection_answer():
+    evidence = _evidence("20135150 m.7", "20135150 m.23", "TMK m.997")
+
+    result = harden_answer(
+        answer_text=(
+            "Tapu kütüğü, yevmiye defteri ve yardımcı siciller bakımından merkez metin "
+            "Tapu Sicili Tüzüğü'dür [Kaynak: 20135150 m.7]. Bu tüzük yardımcı sicilleri "
+            "ve resmi belgeleri de düzenler [Kaynak: 20135150 m.23]. Üst norm düzeyinde "
+            "TMK m.997 tapu sicilinin tutulmasını kanuni temele bağlar [Kaynak: TMK m.997]."
+        ),
+        citations=["20135150 m.7", "20135150 m.23", "TMK m.997"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="Tapu kütüğü, yevmiye defteri, resmi belgeler ve yardımcı sicillerin nasıl tutulduğunu ararken hangi tüzük merkezde olmalıdır?",
+        mentioned_laws=[],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["20135150 m.7", "20135150 m.23", "TMK m.997"],
+        today=date(2026, 4, 20),
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.answer_text.startswith("Tapu kütüğü")
+    assert result.citations == ["20135150 m.7", "20135150 m.23", "TMK m.997"]
+    assert result.answer_contract["law_scope"] == ["20135150", "TMK"]
+
+
 def test_harden_answer_returns_partial_when_supported_and_unsupported_claim_units_mix():
     evidence = _evidence("TBK m.49", "TBK m.50")
 
