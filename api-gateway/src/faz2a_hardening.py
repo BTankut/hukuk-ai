@@ -37,15 +37,15 @@ _TR_ASCII_FOLD_MAP = str.maketrans(
     }
 )
 _SOURCE_ID_RE = re.compile(
-    r"\b(?P<law>TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK|\d{2,8})\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    r"\b(?P<law>(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9}))\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
     re.IGNORECASE,
 )
 _SOURCE_ID_COLON_RE = re.compile(
-    r"^(?P<law>TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK|\d{2,8}):(?:[^:]+):m(?P<madde>\d+[a-z]?)",
+    r"^(?P<law>(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9})):(?:[^:]+):m(?P<madde>\d+[a-z]?)",
     re.IGNORECASE,
 )
 _SOURCE_ID_FALLBACK_RE = re.compile(
-    r"^(?P<law>tbk|tmk|tck|hmk|ttk|iik|ii?k|\d{2,8})[-_ ]m?(?P<madde>\d+[a-z]?)",
+    r"^(?P<law>(?:[a-zçğıöşü]{2,10}|\d{1,9}))[-_ ]m?(?P<madde>\d+[a-z]?)",
     re.IGNORECASE,
 )
 _INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
@@ -65,7 +65,35 @@ _DEFINITION_PATTERNS = ("nedir", "tanımı nedir", "tanimi nedir", "ne demektir"
 _CONDITION_PATTERNS = ("şartları nelerdir", "sartlari nelerdir", "unsurları nelerdir", "unsurlari nelerdir", "hangi hallerde")
 _PROCEDURE_ACTION_HINTS = ("başvuru", "basvuru", "itiraz", "dava", "fesih", "ihbar", "ödeme", "odeme", "talep", "süre", "sure")
 _COMPLEXITY_MARKERS = ("karşılaştır", "karsilastir", "farkı", "farki", "istisna", "hariç", "haric", "veya", "ya da")
+_SOURCE_ID_TOKEN_STOPWORDS = {
+    "ama",
+    "bu",
+    "bir",
+    "da",
+    "de",
+    "gibi",
+    "icin",
+    "için",
+    "ile",
+    "kaynak",
+    "madde",
+    "md",
+    "mu",
+    "mı",
+    "mü",
+    "ve",
+    "veya",
+    "yanit",
+    "yanıt",
+}
 _LAW_NO_BY_SHORT = {
+    "AY": "2709",
+    "CMK": "5271",
+    "IK": "4857",
+    "İK": "4857",
+    "İYUK": "2577",
+    "IYUK": "2577",
+    "KVKK": "6698",
     "TBK": "6098",
     "TMK": "4721",
     "TCK": "5237",
@@ -92,7 +120,20 @@ def canonicalize_law_code(value: str) -> str:
     upper = value.strip().upper()
     if upper in {"IİK", "IIK"}:
         return "İİK"
+    if upper == "İK":
+        return "IK"
+    if upper == "İYUK":
+        return "IYUK"
     return upper
+
+
+def _is_plausible_source_law_token(value: str) -> bool:
+    token = normalize_whitespace(str(value))
+    if not token:
+        return False
+    if token.isdigit():
+        return True
+    return normalize_query_text(token) not in _SOURCE_ID_TOKEN_STOPWORDS
 
 
 def canonicalize_source_id(value: str | None) -> str | None:
@@ -103,21 +144,21 @@ def canonicalize_source_id(value: str | None) -> str | None:
     if not raw:
         return None
 
-    match = _SOURCE_ID_RE.search(raw)
-    if match:
-        law = canonicalize_law_code(match.group("law"))
-        madde = match.group("madde").lower()
-        return f"{law} m.{madde}"
-
     colon_match = _SOURCE_ID_COLON_RE.search(raw)
-    if colon_match:
+    if colon_match and _is_plausible_source_law_token(colon_match.group("law")):
         law = canonicalize_law_code(colon_match.group("law"))
         madde = colon_match.group("madde").lower()
         return f"{law} m.{madde}"
 
+    match = _SOURCE_ID_RE.search(raw)
+    if match and _is_plausible_source_law_token(match.group("law")):
+        law = canonicalize_law_code(match.group("law"))
+        madde = match.group("madde").lower()
+        return f"{law} m.{madde}"
+
     lowered = raw.lower()
     fallback = _SOURCE_ID_FALLBACK_RE.search(lowered)
-    if fallback:
+    if fallback and _is_plausible_source_law_token(fallback.group("law")):
         law = canonicalize_law_code(fallback.group("law"))
         madde = fallback.group("madde").lower()
         return f"{law} m.{madde}"

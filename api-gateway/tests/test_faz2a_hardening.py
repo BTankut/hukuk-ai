@@ -33,6 +33,13 @@ def test_canonicalize_source_id_accepts_numeric_colon_and_citation_forms():
     assert canonicalize_source_id("3224 m.1/f.0") == "3224 m.1"
 
 
+def test_canonicalize_source_id_accepts_alpha_short_codes_in_full_and_visible_forms():
+    assert canonicalize_source_id("IK:4857:m18:f0:from1900-01-01:to9999-12-31") == "IK m.18"
+    assert canonicalize_source_id("IK m.18/f.0") == "IK m.18"
+    assert canonicalize_source_id("KVKK:6698:m9:f0:from2016-04-07:to9999-12-31") == "KVKK m.9"
+    assert canonicalize_source_id("KVKK m.9/f.0") == "KVKK m.9"
+
+
 def test_harden_answer_keeps_supported_answer_in_answer_mode():
     evidence = _evidence("TBK m.49")
 
@@ -104,6 +111,42 @@ def test_harden_answer_blocks_citation_out_of_whitelist():
     assert result.answer_contract["unsupported_reason"] == "citation_out_of_whitelist"
     assert result.answer_text == ""
     assert result.internal_blocked is True
+
+
+def test_harden_answer_accepts_short_code_citation_when_whitelist_has_full_source_id():
+    evidence = [
+        {
+            "source_id": "IK:4857:m18:f0:from1900-01-01:to9999-12-31",
+            "citation": "IK:4857:m18:f0:from1900-01-01:to9999-12-31",
+            "source": "IK",
+            "law_no": "4857",
+            "law_short_name": "IK",
+            "madde_no": "18",
+            "fikra_no": "0",
+            "yururluk_baslangic": None,
+            "yururluk_bitis": "9999-12-31",
+            "mulga": None,
+            "excerpt": "İş güvencesi örnek metni",
+        }
+    ]
+
+    result = harden_answer(
+        answer_text="İşe iade davası gündeme gelebilir. [Kaynak: IK m.18/f.0]",
+        citations=["IK m.18/f.0"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="İş Kanunu kapsamında işe iade şartları nelerdir?",
+        mentioned_laws=["IK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["IK:4857:m18:f0:from1900-01-01:to9999-12-31"],
+        today=date(2026, 4, 20),
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.citations == ["IK m.18"]
 
 
 def test_harden_answer_requires_inline_citation_for_narrow_claim():
