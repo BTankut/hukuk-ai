@@ -56,6 +56,14 @@ _TR_ASCII_TRANS = str.maketrans(
 )
 
 _QUERY_CLAUSE_SPLIT_RE = re.compile(r"\b(?:ve|ile)\b")
+_SOURCE_FAMILY_QUERY_HINTS: dict[str, tuple[str, ...]] = {
+    "tuzuk": ("tüzük", "tuzuk"),
+    "yonetmelik": ("yönetmelik", "yonetmelik"),
+    "teblig": ("tebliğ", "teblig"),
+    "kararname": ("kararname",),
+    "genelge": ("genelge",),
+    "kanun": ("kanun",),
+}
 
 
 @dataclass(slots=True)
@@ -243,15 +251,19 @@ class RAGOrchestrator:
         compact_chunks = [
             (
                 chunk.citation,
+                (chunk.metadata or {}).get("source_title")
+                or (chunk.metadata or {}).get("belge_adi")
+                or (chunk.metadata or {}).get("kanun_adi")
+                or (chunk.metadata or {}).get("law_name"),
                 re.sub(r"\s+", " ", chunk.text).strip(),
             )
             for chunk in chunks
         ]
-        total_chars = sum(len(text) for _, text in compact_chunks)
+        total_chars = sum(len(text) for _, _, text in compact_chunks)
         use_excerpt_mode = total_chars > _MAX_CONTEXT_CHARS
 
         formatted = []
-        for chunk, (_, compact_text) in zip(chunks, compact_chunks, strict=False):
+        for chunk, (_, source_title, compact_text) in zip(chunks, compact_chunks, strict=False):
             citation = chunk.citation
             body = (
                 RAGOrchestrator._build_chunk_excerpt(
@@ -261,10 +273,11 @@ class RAGOrchestrator:
                 if use_excerpt_mode
                 else compact_text
             )
-            # Format: kaynak etiketi önce, ardından metin.
-            # LLM'in "[Kaynak: X]" formatını doğrudan kopyalaması için
-            # numeric prefix KULLANILMIYOR — sadece kaynak etiketi.
-            formatted.append(f"[Kaynak: {citation}]\n{body}")
+            lines = [f"[Kaynak: {citation}]"]
+            if isinstance(source_title, str) and source_title.strip():
+                lines.append(f"[Belge: {source_title.strip()}]")
+            lines.append(body)
+            formatted.append("\n".join(lines))
         return "\n\n---\n\n".join(formatted)
 
     @staticmethod
@@ -303,6 +316,11 @@ class RAGOrchestrator:
 
         query_terms = cls._extract_priority_terms(query)
         query_clauses = cls._extract_query_clauses(query)
+        requested_source_families = cls._extract_requested_source_families(query)
+        source_cluster_sizes: dict[str, int] = {}
+        for _, chunk in candidates:
+            source_key = cls._resolve_chunk_source_key(chunk)
+            source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
         override_chunks = cls._extract_priority_override_chunks(
             candidates=[chunk for _, chunk in candidates],
             query=query,
@@ -316,6 +334,9 @@ class RAGOrchestrator:
         score_map = {
             chunk.citation: cls._score_chunk_priority(
                 query_terms=query_terms,
+                query_clauses=query_clauses,
+                requested_source_families=requested_source_families,
+                source_cluster_sizes=source_cluster_sizes,
                 chunk=chunk,
                 query=query,
             )
@@ -334,6 +355,21 @@ class RAGOrchestrator:
         if best_score >= first_score + 2 and best_overall is not ordered[0]:
             ordered.remove(best_overall)
             ordered.insert(0, best_overall)
+
+        if max_chunks >= 2 and len(ordered) >= 2:
+            first_source_key = cls._resolve_chunk_source_key(ordered[0])
+            same_source_remaining = [
+                chunk for chunk in ordered[1:]
+                if cls._resolve_chunk_source_key(chunk) == first_source_key
+            ]
+            if same_source_remaining:
+                best_same_source = max(
+                    same_source_remaining,
+                    key=lambda chunk: (score_map.get(chunk.citation, 0), -ordered.index(chunk)),
+                )
+                if best_same_source is not ordered[1]:
+                    ordered.remove(best_same_source)
+                    ordered.insert(1, best_same_source)
 
         if max_chunks >= 2 and len(ordered) >= 3:
             current_second = ordered[1]
@@ -354,6 +390,7 @@ class RAGOrchestrator:
             max_chunks == 2
             and len(ordered) >= 2
             and score_map.get(ordered[0].citation, 0) >= score_map.get(ordered[1].citation, 0) + 2
+            and cls._resolve_chunk_source_key(ordered[0]) != cls._resolve_chunk_source_key(ordered[1])
         ):
             effective_max_chunks = 1
         return ordered[:effective_max_chunks]
@@ -417,22 +454,63 @@ class RAGOrchestrator:
                 clauses.append(terms)
         return clauses
 
+    @staticmethod
+    def _extract_requested_source_families(text: str) -> set[str]:
+        normalized = text.lower().translate(_TR_ASCII_TRANS)
+        families: set[str] = set()
+        for family, hints in _SOURCE_FAMILY_QUERY_HINTS.items():
+            if any(hint in normalized for hint in hints):
+                families.add(family)
+        return families
+
+    @staticmethod
+    def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
+        metadata = chunk.metadata or {}
+        family = metadata.get("belge_turu") or metadata.get("source_type")
+        if isinstance(family, str) and family.strip():
+            return family.strip().lower()
+        return None
+
+    @staticmethod
+    def _resolve_chunk_source_key(chunk: RetrievedChunk) -> str:
+        metadata = chunk.metadata or {}
+        return str(
+            metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+            or metadata.get("law_short_name")
+            or metadata.get("kanun_kisa_adi")
+            or metadata.get("source_id")
+            or chunk.source
+            or chunk.citation
+        ).strip().lower()
+
     @classmethod
     def _score_chunk_priority(
         cls,
         *,
         query_terms: set[str],
+        query_clauses: list[set[str]],
+        requested_source_families: set[str],
+        source_cluster_sizes: dict[str, int],
         chunk: RetrievedChunk,
         query: str,
     ) -> int:
         chunk_excerpt = cls._build_chunk_excerpt(chunk.text, max_len=480)
-        chunk_terms = cls._extract_priority_terms(
-            f"{chunk.citation} {chunk_excerpt}"
+        metadata = chunk.metadata or {}
+        source_title = (
+            metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+            or ""
         )
+        heading = metadata.get("heading") or metadata.get("article_heading") or ""
+        chunk_terms = cls._extract_priority_terms(f"{chunk.citation} {source_title} {heading} {chunk_excerpt}")
         overlap_score = len(query_terms & chunk_terms)
         score = overlap_score
         query_lower = query.lower().translate(_TR_ASCII_TRANS)
-        query_clauses = cls._extract_query_clauses(query)
         if len(query_clauses) >= 2:
             first_clause = query_clauses[0]
             first_clause_overlap = len(first_clause & chunk_terms)
@@ -466,6 +544,19 @@ class RAGOrchestrator:
         article_match = re.search(r"m\.\s*(\d+)", chunk.citation.lower())
         if article_match and article_match.group(1) in query_lower:
             score += 4
+        if source_title:
+            score += len(query_terms & cls._extract_priority_terms(str(source_title))) * 10
+        if heading:
+            score += len(query_terms & cls._extract_priority_terms(str(heading))) * 5
+        source_family = cls._resolve_chunk_source_family(chunk)
+        if requested_source_families:
+            if source_family in requested_source_families:
+                score += 24
+            elif source_family:
+                score -= 12
+        cluster_size = source_cluster_sizes.get(cls._resolve_chunk_source_key(chunk), 1)
+        if cluster_size > 1:
+            score += (cluster_size - 1) * 6
         return score
 
     @classmethod

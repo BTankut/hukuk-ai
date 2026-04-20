@@ -373,6 +373,21 @@ def test_build_context_keeps_full_text_for_small_control_slice():
     assert "istinaf süresini iki hafta olarak belirler" in context
 
 
+def test_build_context_includes_source_title_when_present():
+    context = RAGOrchestrator._build_context(
+        [
+            RetrievedChunk(
+                text="20135150 m.7 Tapu siciline tescil usulünü düzenler.",
+                citation="20135150 m.7",
+                metadata={"source_title": "TAPU SİCİLİ TÜZÜĞÜ"},
+            )
+        ]
+    )
+
+    assert "[Kaynak: 20135150 m.7]" in context
+    assert "[Belge: TAPU SİCİLİ TÜZÜĞÜ]" in context
+
+
 def test_build_context_uses_bounded_excerpt_for_large_chunks():
     huge_chunk = "CMK m.100 tutuklama nedenlerini düzenler. " + ("ek cümle " * 600)
     context = RAGOrchestrator._build_context(
@@ -416,3 +431,50 @@ def test_orchestrator_source_lock_prefers_query_matching_chunk_for_single_source
     assert "source_lock_fallback" in response.guardrails_reasons
     assert "[Kaynak: TMK m.166]" in response.answer
     assert "[Kaynak: TMK m.120]" not in response.answer
+
+
+def test_extract_priority_chunks_prefers_requested_tuzuk_family_with_matching_title():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="20135150 m.7 Tapu sicili ana ve yardımcı sicillerden oluşur.",
+                citation="20135150 m.7",
+                metadata={"belge_turu": "tuzuk", "source_title": "TAPU SİCİLİ TÜZÜĞÜ"},
+            ),
+            RetrievedChunk(
+                text="TMK m.997 Tapu sicili tutulur.",
+                citation="TMK m.997",
+                metadata={"belge_turu": "kanun", "source_title": "TÜRK MEDENİ KANUNU"},
+            ),
+        ],
+        query="Tapu kütüğü ve yevmiye defteri için hangi tüzük merkezde olmalıdır?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected][:1] == ["20135150 m.7"]
+
+
+def test_extract_priority_chunks_prefers_same_source_cluster_for_employment_query():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="Çalışma usul ve esasları ile personele ilişkin genel hüküm.",
+                citation="20008 m.41",
+                metadata={"belge_turu": "kky", "source_title": "ÇANAKKALE ... PERSONELİ HAKKINDA YÖNETMELİK"},
+            ),
+            RetrievedChunk(
+                text="İşe iade davası, fesih bildiriminin tebliğinden itibaren bir ay içinde açılır.",
+                citation="IK m.20",
+                metadata={"belge_turu": "kanun", "source_title": "İŞ KANUNU"},
+            ),
+            RetrievedChunk(
+                text="Otuz veya daha fazla işçi çalıştıran işyerinde altı ay kıdemi olan işçinin feshi geçerli sebebe dayanmalıdır.",
+                citation="IK m.18",
+                metadata={"belge_turu": "kanun", "source_title": "İŞ KANUNU"},
+            ),
+        ],
+        query="42 çalışanlı bir işyerinde 8 aylık kıdemi olan işçi işe iade yoluna gidebilir mi?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["IK m.18", "IK m.20"]

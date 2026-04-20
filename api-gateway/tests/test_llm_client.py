@@ -32,7 +32,7 @@ def test_generate_rag_draft_uses_wave2_prompt_rules_with_context() -> None:
     assert max_tokens is None
     assert len(messages) == 2
     assert messages[0].role == "system"
-    assert "Kanun prefixlerini asla karıştırma" in messages[0].content
+    assert "Belge ailesini ve prefixlerini asla karıştırma" in messages[0].content
     assert "Cross-law sorularda" in messages[0].content
     assert "Önce kısa sonucu ver" in messages[0].content
     assert "Soruda açık madde numarası geçiyorsa" in messages[1].content
@@ -137,6 +137,38 @@ def test_build_request_payload_and_generation_contract_are_deterministic() -> No
         "streaming": False,
         "enable_thinking": False,
     }
+
+
+def test_build_request_payload_and_generation_contract_enable_thinking_when_configured() -> None:
+    settings = Settings(
+        dgx_model="Qwen/test",
+        dgx_top_p=0.9,
+        dgx_top_k=40,
+        dgx_seed=3407,
+        dgx_request_timeout_seconds=123.0,
+        dgx_retry_count=0,
+        dgx_enable_thinking=True,
+    )
+    client = LLMClient(settings)
+    messages = [ChatMessage(role="user", content="TBK m.49 nedir?")]
+
+    request_payload = client._build_request_payload(messages=messages, temperature=0.1, max_tokens=256)
+    generation_contract = client._build_generation_contract(temperature=0.1, max_tokens=256)
+
+    assert request_payload["extra_body"]["chat_template_kwargs"]["enable_thinking"] is True
+    assert generation_contract["enable_thinking"] is True
+
+
+def test_build_rag_messages_generalizes_beyond_core_law_families() -> None:
+    messages = LLMClient._build_rag_messages(
+        query="Tapu sicili için hangi tüzük merkezde olmalıdır?",
+        context="[Kaynak: 20135150 m.7]\n[Belge: TAPU SİCİLİ TÜZÜĞÜ]\n...",
+    )
+
+    system_prompt = messages[0].content
+    assert "mevzuat ailesine" in system_prompt
+    assert "tüzük" in system_prompt
+    assert "[Belge: ...]" in system_prompt
 
 
 def test_extract_raw_answer_object_keeps_unprojected_content() -> None:

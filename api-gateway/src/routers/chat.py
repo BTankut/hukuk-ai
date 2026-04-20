@@ -50,6 +50,7 @@ from faz2a_hardening import (
     HardeningResult,
     build_initial_answer_contract,
     build_law_scope_signal,
+    canonicalize_law_code,
     canonicalize_source_id,
     dedupe_strings,
     harden_answer,
@@ -60,6 +61,7 @@ from observability import get_metrics_registry, looks_like_refusal
 from pydantic import BaseModel, Field
 
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
+from rag.source_catalog import enrich_metadata_with_source_title
 from rag.token_manager import estimate_tokens
 from release_controls import (
     api_version_label,
@@ -140,6 +142,126 @@ _NATIVE_DIALOG_SYSTEM_PROMPT = (
     "Kısa, doğal ve net yanıt ver. Bu modda sahte kaynak/citation üretme. "
     "Kullanıcı hukuki soru sorarsa mevzuat sorusunu doğrudan yazabileceğini kısa biçimde belirt."
 )
+_SOURCE_FAMILY_HINT_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+    (("kanun hükmünde kararname", "kanun hukmunde kararname", "khk"), ("khk",)),
+    (
+        ("cumhurbaşkanlığı kararnamesi", "cumhurbaskanligi kararnamesi", "cbk", "kararname"),
+        ("cb_kararname",),
+    ),
+    (
+        ("cumhurbaşkanlığı yönetmeliği", "cumhurbaskanligi yonetmeligi"),
+        ("cb_yonetmelik", "yonetmelik"),
+    ),
+    (
+        ("cumhurbaşkanlığı kararı", "cumhurbaskanligi karari", "cumhurbaşkanı kararı", "cumhurbaskani karari"),
+        ("cb_karar",),
+    ),
+    (
+        ("cumhurbaşkanlığı genelgesi", "cumhurbaskanligi genelgesi", "tasarruf genelgesi", "mobbing genelgesi"),
+        ("cb_genelge",),
+    ),
+    (("tebliğ", "teblig"), ("teblig",)),
+    (("tüzük", "tuzuk"), ("tuzuk",)),
+    (
+        (
+            "üniversite yönetmeliği",
+            "universite yonetmeligi",
+            "öğrenci yönetmeliği",
+            "ogrenci yonetmeligi",
+            "yatay geçiş",
+            "yatay gecis",
+            "çift anadal",
+            "cift anadal",
+            "tez savunma",
+            "yüksek lisans",
+            "yuksek lisans",
+            "hazırlık sınıfı",
+            "hazirlik sinifi",
+        ),
+        ("uy", "yonetmelik"),
+    ),
+    (
+        (
+            "kurum yönetmeliği",
+            "kurum yonetmeligi",
+            "bddk",
+            "sgk",
+            "epdk",
+            "btk",
+            "rtük",
+            "rtuk",
+        ),
+        ("kky", "yonetmelik"),
+    ),
+    (("yönetmelik", "yonetmelik"), ("yonetmelik",)),
+)
+_SOURCE_FAMILY_ALIAS_EXPANSIONS: dict[str, tuple[str, ...]] = {
+    "yonetmelik": ("yonetmelik", "cb_yonetmelik", "kky", "uy"),
+    "kanun": ("kanun", "mulga_kanun"),
+}
+_SOURCE_FAMILY_DISPLAY_LABELS: dict[str, str] = {
+    "tuzuk": "tüzük",
+    "kanun": "kanun",
+    "mulga_kanun": "mülga kanun",
+    "yonetmelik": "yönetmelik",
+    "cb_yonetmelik": "Cumhurbaşkanlığı yönetmeliği",
+    "cb_kararname": "Cumhurbaşkanlığı kararnamesi",
+    "cb_karar": "Cumhurbaşkanı kararı",
+    "cb_genelge": "Cumhurbaşkanlığı genelgesi",
+    "khk": "KHK",
+    "teblig": "tebliğ",
+    "kky": "kurum yönetmeliği",
+    "uy": "üniversite yönetmeliği",
+}
+_RETRIEVAL_PLANNER_ALLOWED_FAMILIES = {
+    "kanun",
+    "mulga_kanun",
+    "tuzuk",
+    "yonetmelik",
+    "cb_yonetmelik",
+    "cb_kararname",
+    "cb_karar",
+    "cb_genelge",
+    "khk",
+    "teblig",
+    "kky",
+    "uy",
+}
+_RETRIEVAL_PRIORITY_TOKEN_RE = re.compile(r"[a-z0-9]+")
+_RETRIEVAL_PRIORITY_STOPWORDS = {
+    "ve",
+    "ile",
+    "icin",
+    "için",
+    "gore",
+    "göre",
+    "hangi",
+    "nedir",
+    "nasil",
+    "nasıl",
+    "kisa",
+    "kısa",
+    "sonuc",
+    "sonuç",
+    "gerekce",
+    "gerekçe",
+    "dayanak",
+    "belge",
+    "zinciri",
+    "gerekiyorsa",
+    "durumuna",
+    "cevapla",
+    "yaniti",
+    "yanıtı",
+    "seklinde",
+    "şeklinde",
+    "temel",
+    "olarak",
+    "olan",
+    "dair",
+    "hakkinda",
+    "hakkında",
+}
 
 
 def _tr_lower(text: str) -> str:
@@ -170,6 +292,30 @@ def _normalize_tr_text(text: str) -> str:
 _LAW_NAME_NORMALIZATION_NORMALIZED = {
     _normalize_tr_text(key): value
     for key, value in _LAW_NAME_NORMALIZATION.items()
+}
+_RETRIEVAL_PLANNER_FAMILY_NORMALIZATION = {
+    _normalize_tr_text("kanun"): "kanun",
+    _normalize_tr_text("mülga kanun"): "mulga_kanun",
+    _normalize_tr_text("mulga kanun"): "mulga_kanun",
+    _normalize_tr_text("tüzük"): "tuzuk",
+    _normalize_tr_text("tuzuk"): "tuzuk",
+    _normalize_tr_text("yönetmelik"): "yonetmelik",
+    _normalize_tr_text("yonetmelik"): "yonetmelik",
+    _normalize_tr_text("Cumhurbaşkanlığı yönetmeliği"): "cb_yonetmelik",
+    _normalize_tr_text("Cumhurbaskanligi yonetmeligi"): "cb_yonetmelik",
+    _normalize_tr_text("Cumhurbaşkanlığı kararnamesi"): "cb_kararname",
+    _normalize_tr_text("Cumhurbaskanligi kararnamesi"): "cb_kararname",
+    _normalize_tr_text("Cumhurbaşkanlığı kararı"): "cb_karar",
+    _normalize_tr_text("Cumhurbaskanligi karari"): "cb_karar",
+    _normalize_tr_text("Cumhurbaşkanlığı genelgesi"): "cb_genelge",
+    _normalize_tr_text("Cumhurbaskanligi genelgesi"): "cb_genelge",
+    _normalize_tr_text("khk"): "khk",
+    _normalize_tr_text("tebliğ"): "teblig",
+    _normalize_tr_text("teblig"): "teblig",
+    _normalize_tr_text("kurum yönetmeliği"): "kky",
+    _normalize_tr_text("kurum yonetmeligi"): "kky",
+    _normalize_tr_text("üniversite yönetmeliği"): "uy",
+    _normalize_tr_text("universite yonetmeligi"): "uy",
 }
 
 
@@ -224,6 +370,247 @@ def _build_native_dialog_fallback_answer(intent: str) -> str:
     return "Merhaba. Mevzuat sorularında yardımcı olabilirim; istersen sorunu doğrudan yaz."
 
 
+def _retrieval_planner_enabled() -> bool:
+    return os.getenv("RETRIEVAL_PLANNER_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+
+
+def _strip_json_fence(text: str) -> str:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?\s*", "", stripped, flags=re.IGNORECASE)
+        stripped = re.sub(r"\s*```$", "", stripped)
+    return stripped.strip()
+
+
+def _extract_json_object(text: str) -> dict[str, Any] | None:
+    stripped = _strip_json_fence(text)
+    if not stripped:
+        return None
+    try:
+        payload = json.loads(stripped)
+        return payload if isinstance(payload, dict) else None
+    except json.JSONDecodeError:
+        pass
+
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        payload = json.loads(stripped[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _normalize_retrieval_planner_law_hint(value: Any) -> str | None:
+    raw = _normalize_whitespace(str(value or ""))
+    if not raw:
+        return None
+    normalized = _normalize_tr_text(raw)
+    if normalized in _LAW_NAME_NORMALIZATION_NORMALIZED:
+        return _LAW_NAME_NORMALIZATION_NORMALIZED[normalized]
+    candidate = canonicalize_law_code(raw)
+    if candidate in _LAW_CODE_NORMALIZATION or candidate in {"IK", "AY", "CMK", "KVKK", "IYUK"}:
+        return candidate
+    return None
+
+
+def _normalize_retrieval_planner_family_hint(value: Any) -> str | None:
+    raw = _normalize_whitespace(str(value or ""))
+    if not raw:
+        return None
+    normalized = _RETRIEVAL_PLANNER_FAMILY_NORMALIZATION.get(_normalize_tr_text(raw))
+    if normalized in _RETRIEVAL_PLANNER_ALLOWED_FAMILIES:
+        return normalized
+    lowered = raw.strip().lower()
+    if lowered in _RETRIEVAL_PLANNER_ALLOWED_FAMILIES:
+        return lowered
+    return None
+
+
+def _normalize_retrieval_planner_term_hint(value: Any) -> str | None:
+    raw = _normalize_whitespace(str(value or ""))
+    if not raw:
+        return None
+    normalized = normalize_query_text(raw)
+    if len(normalized) < 3:
+        return None
+    return raw
+
+
+def _sanitize_retrieval_plan_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(payload, dict):
+        return None
+
+    raw_laws = payload.get("law_hints")
+    raw_families = payload.get("source_family_hints")
+    raw_terms = payload.get("term_hints") or payload.get("search_terms")
+
+    law_hints = dedupe_strings(
+        [
+            normalized
+            for normalized in (
+                _normalize_retrieval_planner_law_hint(item)
+                for item in (raw_laws if isinstance(raw_laws, list) else [])
+            )
+            if normalized
+        ]
+    )
+    source_family_hints = _expand_source_family_aliases(
+        dedupe_strings(
+            [
+                normalized
+                for normalized in (
+                    _normalize_retrieval_planner_family_hint(item)
+                    for item in (raw_families if isinstance(raw_families, list) else [])
+                )
+                if normalized
+            ]
+        )
+    )
+    term_hints = dedupe_strings(
+        [
+            normalized
+            for normalized in (
+                _normalize_retrieval_planner_term_hint(item)
+                for item in (raw_terms if isinstance(raw_terms, list) else [])
+            )
+            if normalized
+        ]
+    )[:6]
+
+    if not law_hints and not source_family_hints and not term_hints:
+        return None
+
+    return {
+        "law_hints": law_hints,
+        "source_family_hints": source_family_hints,
+        "term_hints": term_hints,
+    }
+
+
+def _build_retrieval_plan_expansion(plan: dict[str, Any]) -> str:
+    parts: list[str] = []
+    for family in plan.get("source_family_hints") or []:
+        if isinstance(family, str) and family.strip():
+            parts.append(_SOURCE_FAMILY_DISPLAY_LABELS.get(family, family))
+    for term in plan.get("term_hints") or []:
+        if isinstance(term, str) and term.strip():
+            parts.append(term.strip())
+    return _normalize_whitespace(" ".join(dedupe_strings(parts)))
+
+
+def _build_retrieval_plan_focus_query(plan: dict[str, Any] | None) -> str:
+    if not plan:
+        return ""
+    parts: list[str] = []
+    for term in plan.get("term_hints") or []:
+        if isinstance(term, str) and term.strip():
+            parts.append(term.strip())
+    for family in plan.get("source_family_hints") or []:
+        if isinstance(family, str) and family.strip():
+            parts.append(_SOURCE_FAMILY_DISPLAY_LABELS.get(family, family))
+    return _normalize_whitespace(" ".join(dedupe_strings(parts)))
+
+
+def _apply_retrieval_plan_hints(
+    *,
+    retrieval_query: str,
+    mentioned_laws: list[str],
+    requested_source_families: list[str],
+    applied_expansions: list[str],
+    retrieval_top_k: int,
+    retrieval_plan: dict[str, Any] | None,
+) -> tuple[str, list[str], list[str], int]:
+    if not retrieval_plan:
+        return retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k
+
+    requested_source_families = dedupe_strings(
+        [*requested_source_families, *(retrieval_plan.get("source_family_hints") or [])]
+    )
+
+    planner_expansion = _build_retrieval_plan_expansion(retrieval_plan)
+    if planner_expansion:
+        retrieval_query = _append_unique_expansion(
+            retrieval_query,
+            applied_expansions,
+            planner_expansion,
+        )
+        retrieval_top_k = max(retrieval_top_k, 20)
+
+    return retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k
+
+
+async def _run_retrieval_planner(
+    *,
+    request: Request,
+    user_query: str,
+    mentioned_laws: list[str],
+    requested_source_families: list[str],
+    explicit_article_refs: list[tuple[str, str]],
+    law_filter: str | None,
+) -> dict[str, Any] | None:
+    if not _retrieval_planner_enabled():
+        return None
+    if explicit_article_refs or law_filter:
+        return None
+    if len(_normalize_whitespace(user_query)) < 40:
+        return None
+
+    orchestrator = _get_orchestrator(request)
+    llm_client = getattr(orchestrator, "llm_client", None)
+    if llm_client is None or not hasattr(llm_client, "chat"):
+        return None
+
+    from llm.client import ChatMessage
+
+    planner_messages = [
+        ChatMessage(
+            role="system",
+            content=(
+                "Sen retrieval planner olarak çalışıyorsun. "
+                "Görev: kullanıcı sorusundan yalnız retrieval ipuçlarını çıkar. "
+                "Sadece geçerli JSON nesnesi döndür; açıklama yazma.\n"
+                "Şema:\n"
+                "{"
+                '"law_hints":["TBK","TMK","IK","KVKK"],'
+                '"source_family_hints":["kanun","tuzuk","yonetmelik","teblig","cb_kararname","cb_yonetmelik","cb_karar","cb_genelge","khk","kky","uy","mulga_kanun"],'
+                '"term_hints":["kısa arama terimi 1","kısa arama terimi 2"]'
+                "}\n"
+                "Kurallar:\n"
+                "- Sadece yüksek güvenli ipuçlarını yaz.\n"
+                "- Emin değilsen ilgili diziyi boş bırak.\n"
+                "- law_hints yalnız kısa mevzuat kodları olsun; emin değilsen boş bırak.\n"
+                "- term_hints kısa ve retrieval dostu isim öbekleri olsun.\n"
+                "- Maksimum 4 law_hints, 3 source_family_hints, 6 term_hints."
+            ),
+        ),
+        ChatMessage(
+            role="user",
+            content=(
+                f"Soru:\n{user_query}\n\n"
+                f"Gözlenen law işaretleri: {mentioned_laws or []}\n"
+                f"Gözlenen belge aileleri: {requested_source_families or []}"
+            ),
+        ),
+    ]
+
+    try:
+        result = await llm_client.chat(messages=planner_messages, temperature=0.0, max_tokens=180)
+    except Exception as exc:
+        logger.debug("Retrieval planner bypass (LLM error): %s", exc)
+        return None
+
+    raw_text = result.text if isinstance(getattr(result, "text", None), str) else ""
+    payload = _extract_json_object(raw_text)
+    sanitized = _sanitize_retrieval_plan_payload(payload)
+    if sanitized is None:
+        return None
+    sanitized["raw_text"] = raw_text
+    return sanitized
+
+
 def _build_native_dialog_answer_contract(*, answer_text: str) -> dict[str, Any]:
     return {
         "answer_text": answer_text,
@@ -237,6 +624,155 @@ def _build_native_dialog_answer_contract(*, answer_text: str) -> dict[str, Any]:
         "claim_units": [],
         "native_dialog": True,
     }
+
+
+def _expand_source_family_aliases(families: list[str]) -> list[str]:
+    expanded: list[str] = []
+    for family in families:
+        expansions = _SOURCE_FAMILY_ALIAS_EXPANSIONS.get(family, (family,))
+        expanded.extend(expansions)
+    return dedupe_strings(expanded)
+
+
+def _infer_requested_source_families(query: str) -> list[str]:
+    families: list[str] = []
+    for terms, resolved_families in _SOURCE_FAMILY_HINT_RULES:
+        if _contains_any_query_term(query, terms):
+            families.extend(resolved_families)
+    return _expand_source_family_aliases(families)
+
+
+def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
+    metadata = chunk.metadata or {}
+    family = metadata.get("belge_turu") or metadata.get("source_type")
+    if not isinstance(family, str) or not family.strip():
+        return None
+    return family.strip().lower()
+
+
+def _build_retrieved_chunk(result: Any) -> RetrievedChunk:
+    metadata = enrich_metadata_with_source_title(getattr(result, "metadata", None) or {})
+    return RetrievedChunk(
+        text=result.text,
+        citation=result.citation,
+        source=result.law_short_name,
+        score=result.score,
+        metadata=metadata,
+    )
+
+
+def _extract_retrieval_priority_terms(text: str) -> set[str]:
+    normalized = normalize_query_text(text or "")
+    return {
+        token
+        for token in _RETRIEVAL_PRIORITY_TOKEN_RE.findall(normalized)
+        if len(token) >= 3 and token not in _RETRIEVAL_PRIORITY_STOPWORDS
+    }
+
+
+def _count_term_overlap(text: str | None, terms: set[str]) -> int:
+    if not text or not terms:
+        return 0
+    tokens = _extract_retrieval_priority_terms(text)
+    return len(tokens & terms)
+
+
+def _resolve_chunk_source_key(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    return (
+        str(
+            metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+            or metadata.get("law_short_name")
+            or metadata.get("kanun_kisa_adi")
+            or metadata.get("source_id")
+            or chunk.source
+            or chunk.citation
+        )
+        .strip()
+        .lower()
+    )
+
+
+def _prioritize_chunks_for_source_families(
+    *,
+    query: str,
+    chunks: list[RetrievedChunk],
+    source_families: list[str],
+) -> list[RetrievedChunk]:
+    if not chunks:
+        return chunks
+
+    family_order = {family: index for index, family in enumerate(source_families)}
+    query_terms = _extract_retrieval_priority_terms(query)
+    source_cluster_sizes: dict[str, int] = {}
+    for chunk in chunks:
+        source_key = _resolve_chunk_source_key(chunk)
+        source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
+
+    if source_families and not any(_resolve_chunk_source_family(chunk) in family_order for chunk in chunks):
+        return chunks
+
+    def _rank_tuple(item: tuple[int, RetrievedChunk]) -> tuple[Any, ...]:
+        original_index, chunk = item
+        metadata = chunk.metadata or {}
+        family = _resolve_chunk_source_family(chunk) or ""
+        source_title = (
+            metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+        )
+        heading = metadata.get("heading") or metadata.get("article_heading")
+        cluster_size = source_cluster_sizes.get(_resolve_chunk_source_key(chunk), 1)
+        family_match = 0 if not source_families else (0 if family in family_order else 1)
+        family_rank = family_order.get(family, len(family_order))
+        title_overlap = _count_term_overlap(str(source_title or ""), query_terms)
+        heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
+        text_overlap = _count_term_overlap(chunk.text, query_terms)
+        dense_score = chunk.score or 0.0
+        return (
+            family_match,
+            family_rank,
+            -title_overlap,
+            -heading_overlap,
+            -cluster_size,
+            -text_overlap,
+            -dense_score,
+            original_index,
+        )
+
+    ranked = sorted(
+        enumerate(chunks),
+        key=_rank_tuple,
+    )
+    return [chunk for _index, chunk in ranked]
+
+
+def _apply_source_family_answer_hint(
+    *,
+    query: str,
+    source_families: list[str],
+) -> str:
+    if not source_families:
+        return query
+
+    labels = [
+        _SOURCE_FAMILY_DISPLAY_LABELS.get(family, family)
+        for family in source_families
+    ]
+    label_text = ", ".join(dedupe_strings(labels))
+    hint = (
+        "\n\n[KAYNAK AİLESİ ÖNCELİĞİ]\n"
+        f"Kullanıcı özellikle şu belge ailesini soruyor: {label_text}. "
+        "Yanıtı kurarken önce bu ailedeki düzenlemeyi merkez al. "
+        "Üst normu veya paralel normu ancak gerçekten gerekliyse tamamlayıcı dayanak olarak ekle. "
+        "Kullanıcı 'hangi tüzük/yönetmelik/genelge/kararname' diye soruyorsa, "
+        "önce ilgili belge ailesindeki metni isim ve içerik düzeyinde belirlemeye çalış."
+    )
+    return f"{query}{hint}"
 
 
 def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
@@ -1632,16 +2168,7 @@ def _retrieve_explicit_article_chunks(
             )
             continue
 
-        exact_chunks.extend(
-            RetrievedChunk(
-                text=result.text,
-                citation=result.citation,
-                source=result.law_short_name,
-                score=result.score,
-                metadata=result.metadata,
-            )
-            for result in results
-        )
+        exact_chunks.extend(_build_retrieved_chunk(result) for result in results)
 
     return exact_chunks
 
@@ -1672,16 +2199,34 @@ def _retrieve_law_bucket_chunks(
             logger.warning("Law-bucket retrieval bypass (law=%s): %s", law, exc)
             continue
 
-        bucket_chunks.extend(
-            RetrievedChunk(
-                text=result.text,
-                citation=result.citation,
-                source=result.law_short_name,
-                score=result.score,
-                metadata=result.metadata,
+        bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
+
+    return bucket_chunks
+
+
+def _retrieve_source_family_chunks(
+    *,
+    retriever: Any,
+    query: str,
+    source_families: list[str],
+    top_k: int,
+) -> list[RetrievedChunk]:
+    from rag.retriever import MetadataFilter
+
+    bucket_chunks: list[RetrievedChunk] = []
+    for family in source_families:
+        metadata_filter = MetadataFilter(belge_turu=family)
+        try:
+            results, _stats = retriever.retrieve(
+                query=query,
+                top_k=top_k,
+                metadata_filter=metadata_filter,
             )
-            for result in results
-        )
+        except Exception as exc:
+            logger.warning("Source-family retrieval bypass (family=%s): %s", family, exc)
+            continue
+
+        bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
 
     return bucket_chunks
 
@@ -1711,6 +2256,10 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "chunk_id": metadata.get("chunk_id"),
         "law_no": metadata.get("law_no") or metadata.get("kanun_no"),
         "law_short_name": metadata.get("law_short_name") or metadata.get("kanun_kisa_adi"),
+        "source_title": metadata.get("source_title") or metadata.get("belge_adi") or metadata.get("kanun_adi"),
+        "belge_adi": metadata.get("belge_adi") or metadata.get("kanun_adi"),
+        "belge_turu": metadata.get("belge_turu") or metadata.get("source_type"),
+        "heading": metadata.get("heading") or metadata.get("article_heading"),
         "madde_no": metadata.get("madde_no"),
         "fikra_no": metadata.get("fikra_no"),
         "yururluk_baslangic": metadata.get("yururluk_baslangic"),
@@ -1784,6 +2333,7 @@ def _build_trace_payload(
     law_filter: str | None,
     mentioned_laws: list[str],
     cross_law_mode: bool,
+    requested_source_families: list[str],
     explicit_article_refs: list[tuple[str, str]],
     forced_article_refs: list[tuple[str, str]],
     applied_expansions: list[str],
@@ -1800,6 +2350,7 @@ def _build_trace_payload(
     model_cited_source_ids: list[str],
     final_mode: str,
     final_reason: str | None,
+    retrieval_plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
     if not assembled_evidence and model_cited_source_ids:
@@ -1826,6 +2377,8 @@ def _build_trace_payload(
             "retrieval_query": retrieval_query,
             "law_filter": law_filter,
             "mentioned_laws": mentioned_laws,
+            "requested_source_families": requested_source_families,
+            "retrieval_plan": retrieval_plan,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -1857,6 +2410,7 @@ def _build_trace_payload(
             "law_filter": law_filter,
             "mentioned_laws": mentioned_laws,
             "cross_law_mode": cross_law_mode,
+            "retrieval_plan": retrieval_plan,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -2811,6 +3365,7 @@ def _retrieval_input_stage_payload(
         "top_k": pre_answer_payload.get("top_k_effective"),
         "metadata_filter": {"law_short_name": law_filter} if law_filter else None,
         "mentioned_laws": pre_answer_payload.get("mentioned_laws") or [],
+        "retrieval_plan": pre_answer_payload.get("retrieval_plan"),
         "explicit_article_refs": pre_answer_payload.get("explicit_article_refs") or [],
         "forced_article_refs": pre_answer_payload.get("forced_article_refs") or [],
         "applied_expansions": pre_answer_payload.get("applied_expansions") or [],
@@ -2884,12 +3439,14 @@ def _pre_answer_stage_payload(
     retrieval_query: str,
     conversation_history: list[dict[str, str]],
     mentioned_laws: list[str],
+    requested_source_families: list[str],
     explicit_article_refs: list[tuple[str, str]],
     forced_article_refs: list[tuple[str, str]],
     applied_expansions: list[str],
     top_k_requested: int,
     top_k_effective: int,
     reranker_enabled: bool,
+    retrieval_plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "decision_lane": decision_lane,
@@ -2898,9 +3455,11 @@ def _pre_answer_stage_payload(
         "retrieval_query": retrieval_query,
         "conversation_history": conversation_history,
         "mentioned_laws": mentioned_laws,
+        "requested_source_families": requested_source_families,
         "explicit_article_refs": explicit_article_refs,
         "forced_article_refs": forced_article_refs,
         "applied_expansions": applied_expansions,
+        "retrieval_plan": retrieval_plan,
         "top_k_requested": top_k_requested,
         "top_k_effective": top_k_effective,
         "reranker_enabled": reranker_enabled,
@@ -3711,6 +4270,7 @@ async def chat_completions(
             law_filter=request_body.law_filter,
             mentioned_laws=[],
             cross_law_mode=False,
+            requested_source_families=[],
             explicit_article_refs=[],
             forced_article_refs=[],
             applied_expansions=[],
@@ -3735,6 +4295,7 @@ async def chat_completions(
             retrieval_query=last_user_msg,
             conversation_history=conversation_history,
             mentioned_laws=[],
+            requested_source_families=[],
             explicit_article_refs=[],
             forced_article_refs=[],
             applied_expansions=[],
@@ -3813,6 +4374,7 @@ async def chat_completions(
             law_filter=request_body.law_filter,
             mentioned_laws=mentioned_laws,
             cross_law_mode=False,
+            requested_source_families=[],
             explicit_article_refs=explicit_article_refs,
             forced_article_refs=[],
             applied_expansions=[],
@@ -3837,6 +4399,7 @@ async def chat_completions(
             retrieval_query=last_user_msg,
             conversation_history=request_history,
             mentioned_laws=mentioned_laws,
+            requested_source_families=[],
             explicit_article_refs=explicit_article_refs,
             forced_article_refs=[],
             applied_expansions=[],
@@ -3906,6 +4469,7 @@ async def chat_completions(
             law_filter=request_body.law_filter,
             mentioned_laws=mentioned_laws,
             cross_law_mode=False,
+            requested_source_families=[],
             explicit_article_refs=explicit_article_refs,
             forced_article_refs=[],
             applied_expansions=[],
@@ -3930,6 +4494,7 @@ async def chat_completions(
             retrieval_query=last_user_msg,
             conversation_history=request_history,
             mentioned_laws=mentioned_laws,
+            requested_source_families=[],
             explicit_article_refs=explicit_article_refs,
             forced_article_refs=[],
             applied_expansions=[],
@@ -3985,10 +4550,27 @@ async def chat_completions(
     retrieval_query = last_user_msg
     retrieval_top_k = request_body.top_k
     mentioned_laws = _extract_law_mentions(last_user_msg)
-    cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
     explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
+    requested_source_families = _infer_requested_source_families(last_user_msg)
     forced_article_refs: list[tuple[str, str]] = []
     applied_expansions: list[str] = []
+    retrieval_plan = await _run_retrieval_planner(
+        request=request,
+        user_query=last_user_msg,
+        mentioned_laws=mentioned_laws,
+        requested_source_families=requested_source_families,
+        explicit_article_refs=explicit_article_refs,
+        law_filter=request_body.law_filter,
+    )
+    retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k = _apply_retrieval_plan_hints(
+        retrieval_query=retrieval_query,
+        mentioned_laws=mentioned_laws,
+        requested_source_families=requested_source_families,
+        applied_expansions=applied_expansions,
+        retrieval_top_k=retrieval_top_k,
+        retrieval_plan=retrieval_plan,
+    )
+    cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
 
     concept_anchor_rules: list[
         tuple[tuple[tuple[str, ...], ...], str, list[tuple[str, str]], bool]
@@ -4224,6 +4806,10 @@ async def chat_completions(
     forced_article_refs = _dedupe_article_refs(forced_article_refs)
     all_exact_article_refs = _dedupe_article_refs(explicit_article_refs + forced_article_refs)
     source_lock_target_citations = len(all_exact_article_refs) or None
+    answer_query = _apply_source_family_answer_hint(
+        query=enriched_query,
+        source_families=requested_source_families,
+    )
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     retrieved_chunks: list[RetrievedChunk] = []
@@ -4256,16 +4842,7 @@ async def chat_completions(
                     top_k=top_k_effective,
                     metadata_filter=metadata_filter,
                 )
-                retrieved_chunks = [
-                    RetrievedChunk(
-                        text=r.text,
-                        citation=r.citation,
-                        source=r.law_short_name,
-                        score=r.score,
-                        metadata=r.metadata,
-                    )
-                    for r in results
-                ]
+                retrieved_chunks = [_build_retrieved_chunk(r) for r in results]
                 logger.info(
                     "Retrieval: session=%s hits=%d latency=%.0fms reranker=%s",
                     session_id,
@@ -4273,6 +4850,25 @@ async def chat_completions(
                     stats.latency_ms,
                     "enabled" if _reranker_enabled else "disabled",
                 )
+
+                planner_focus_query = _build_retrieval_plan_focus_query(retrieval_plan)
+                if planner_focus_query and normalize_query_text(planner_focus_query) != normalize_query_text(retrieval_query):
+                    planner_top_k = max(6, min(10, top_k_effective))
+                    planner_results, planner_stats = retriever.retrieve(
+                        query=planner_focus_query,
+                        top_k=planner_top_k,
+                        metadata_filter=metadata_filter,
+                    )
+                    planner_chunks = [_build_retrieved_chunk(r) for r in planner_results]
+                    if planner_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(planner_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval planner-focus: session=%s hits=%d latency=%.0fms query=%s",
+                            session_id,
+                            planner_stats.hit_count,
+                            planner_stats.latency_ms,
+                            planner_focus_query,
+                        )
 
                 if cross_law_mode and not request_body.law_filter and len(mentioned_laws) >= 2:
                     per_law_top_k = max(4, min(8, top_k_effective))
@@ -4292,6 +4888,24 @@ async def chat_completions(
                             len(retrieved_chunks),
                         )
 
+                if requested_source_families:
+                    per_family_top_k = max(4, min(8, top_k_effective))
+                    family_bucket_chunks = _retrieve_source_family_chunks(
+                        retriever=retriever,
+                        query=retrieval_query,
+                        source_families=requested_source_families,
+                        top_k=per_family_top_k,
+                    )
+                    if family_bucket_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(family_bucket_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval source-families: session=%s families=%s per_family_top_k=%d total=%d",
+                            session_id,
+                            requested_source_families,
+                            per_family_top_k,
+                            len(retrieved_chunks),
+                        )
+
                 if all_exact_article_refs:
                     exact_chunks = _retrieve_explicit_article_chunks(
                         retriever=retriever,
@@ -4307,6 +4921,11 @@ async def chat_completions(
                             len(exact_chunks),
                             len(retrieved_chunks),
                         )
+                retrieved_chunks = _prioritize_chunks_for_source_families(
+                    query=last_user_msg,
+                    chunks=retrieved_chunks,
+                    source_families=requested_source_families,
+                )
                 pre_rerank_chunks = list(retrieved_chunks)
         except Exception as exc:
             logger.warning(
@@ -4342,7 +4961,7 @@ async def chat_completions(
                         citation=r.citation,
                         source=r.source,
                         score=r.score,
-                        metadata=r.metadata,
+                        metadata=enrich_metadata_with_source_title(r.metadata),
                     )
                     for r in _ranked
                 ]
@@ -4393,7 +5012,7 @@ async def chat_completions(
 
     try:
         orch_response = await orchestrator.answer(
-            query=enriched_query,
+            query=answer_query,
             retrieved_chunks=retrieved_chunks,
             source_lock_target_citations=source_lock_target_citations,
             max_tokens=request_body.max_tokens,
@@ -4438,7 +5057,7 @@ async def chat_completions(
         request_id=response_id,
         decision_lane="rag",
         user_query=last_user_msg,
-        enriched_query=enriched_query,
+        enriched_query=answer_query,
         retrieval_query=retrieval_query,
         question_normalized=normalize_query_text(last_user_msg),
         question_type=hardening.question_type,
@@ -4447,6 +5066,7 @@ async def chat_completions(
         law_filter=request_body.law_filter,
         mentioned_laws=mentioned_laws,
         cross_law_mode=cross_law_mode,
+        requested_source_families=requested_source_families,
         explicit_article_refs=explicit_article_refs,
         forced_article_refs=forced_article_refs,
         applied_expansions=applied_expansions,
@@ -4463,20 +5083,23 @@ async def chat_completions(
         model_cited_source_ids=hardening.model_cited_source_ids,
         final_mode=hardening.final_mode,
         final_reason=hardening.final_reason,
+        retrieval_plan=retrieval_plan,
     )
     pre_answer_payload = _pre_answer_stage_payload(
         decision_lane="rag",
         user_message=last_user_msg,
-        enriched_query=enriched_query,
+        enriched_query=answer_query,
         retrieval_query=retrieval_query,
         conversation_history=conversation_history,
         mentioned_laws=mentioned_laws,
+        requested_source_families=requested_source_families,
         explicit_article_refs=explicit_article_refs,
         forced_article_refs=forced_article_refs,
         applied_expansions=applied_expansions,
         top_k_requested=request_body.top_k,
         top_k_effective=top_k_effective,
         reranker_enabled=_reranker_enabled,
+        retrieval_plan=retrieval_plan,
     )
     return _finalize_chat_response(
         request=request,

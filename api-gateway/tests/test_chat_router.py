@@ -34,10 +34,15 @@ from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
     ConversationMessage,
+    _apply_retrieval_plan_hints,
     _build_precise_tmk_tbk_cross_law_answer,
     _contains_query_term,
+    _extract_json_object,
     _extract_explicit_article_refs,
     _extract_law_mentions,
+    _infer_requested_source_families,
+    _prioritize_chunks_for_source_families,
+    _sanitize_retrieval_plan_payload,
     _should_use_cross_law_retrieval,
     _build_precise_tbk_answer,
     _detect_scope_refusal_reason,
@@ -416,6 +421,82 @@ class TestLawSignalParsing:
         )
         assert laws == ["TBK", "TMK"]
 
+    def test_infer_requested_source_families_detects_tuzuk(self):
+        families = _infer_requested_source_families(
+            "Tapu kütüğü, yevmiye defteri ve resmi belgeler için hangi tüzük merkezde olmalıdır?"
+        )
+        assert "tuzuk" in families
+
+    def test_infer_requested_source_families_detects_university_and_regulation_family(self):
+        families = _infer_requested_source_families(
+            "Bir yüksek lisans öğrencisinin tez savunma jürisi için hangi üniversite yönetmeliği aranmalıdır?"
+        )
+        assert "uy" in families
+        assert "yonetmelik" in families
+
+    def test_prioritize_chunks_for_source_families_prefers_matching_family(self):
+        from rag.orchestrator import RetrievedChunk
+
+        chunks = [
+            RetrievedChunk(
+                text="Kanun chunk",
+                citation="TMK m.997",
+                source="TMK",
+                score=0.95,
+                metadata={"belge_turu": "kanun"},
+            ),
+            RetrievedChunk(
+                text="Tüzük chunk",
+                citation="20135150 m.2",
+                source="20135150",
+                score=0.75,
+                metadata={"belge_turu": "tuzuk"},
+            ),
+        ]
+
+        prioritized = _prioritize_chunks_for_source_families(
+            query="Tapu kütüğü ve yardımcı siciller için hangi tüzük merkezde olmalıdır?",
+            chunks=chunks,
+            source_families=["tuzuk"],
+        )
+
+        assert prioritized[0].citation == "20135150 m.2"
+
+    def test_prioritize_chunks_uses_source_cluster_and_text_overlap_without_family_hint(self):
+        from rag.orchestrator import RetrievedChunk
+
+        chunks = [
+            RetrievedChunk(
+                text="Çanakkale alan başkanlığında personel çalışma usulü düzenlenir.",
+                citation="20008 m.41",
+                source="20008",
+                score=0.95,
+                metadata={"source_title": "ÇANAKKALE ... PERSONELİ HAKKINDA YÖNETMELİK", "belge_turu": "kky"},
+            ),
+            RetrievedChunk(
+                text="İşe iade davası, fesih bildiriminin tebliğinden itibaren bir ay içinde açılır.",
+                citation="IK m.20",
+                source="IK",
+                score=0.90,
+                metadata={"source_title": "İŞ KANUNU", "belge_turu": "kanun"},
+            ),
+            RetrievedChunk(
+                text="Otuz veya daha fazla işçi çalıştırılan işyerinde altı ay kıdemi olan işçinin feshi geçerli sebebe dayanmalıdır.",
+                citation="IK m.18",
+                source="IK",
+                score=0.89,
+                metadata={"source_title": "İŞ KANUNU", "belge_turu": "kanun"},
+            ),
+        ]
+
+        prioritized = _prioritize_chunks_for_source_families(
+            query="42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan işçi işe iade yoluna gidebilir mi?",
+            chunks=chunks,
+            source_families=[],
+        )
+
+        assert prioritized[0].citation == "IK m.20"
+
     def test_cross_law_retrieval_enabled_for_joint_scope_queries(self):
         laws = ["TBK", "TMK"]
         assert _should_use_cross_law_retrieval(
@@ -445,6 +526,51 @@ class TestLawSignalParsing:
             "Kefalet sözleşmesinde eşin rızası hangi durumlarda aranmaz?",
             laws,
         ) is False
+
+    def test_extract_json_object_parses_fenced_json(self):
+        payload = _extract_json_object(
+            '```json\n{"law_hints":["IK"],"source_family_hints":["kanun"],"term_hints":["işe iade"]}\n```'
+        )
+        assert payload == {
+            "law_hints": ["IK"],
+            "source_family_hints": ["kanun"],
+            "term_hints": ["işe iade"],
+        }
+
+    def test_sanitize_retrieval_plan_payload_normalizes_laws_families_and_terms(self):
+        payload = _sanitize_retrieval_plan_payload(
+            {
+                "law_hints": ["İK", "Türk Medeni Kanunu", "uydurma"],
+                "source_family_hints": ["Tüzük", "Üniversite Yönetmeliği"],
+                "term_hints": [" işe iade ", "geçerli sebep", "x"],
+            }
+        )
+
+        assert payload == {
+            "law_hints": ["IK", "TMK"],
+            "source_family_hints": ["tuzuk", "uy"],
+            "term_hints": ["işe iade", "geçerli sebep"],
+        }
+
+    def test_apply_retrieval_plan_hints_merges_query_laws_and_families(self):
+        retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k = _apply_retrieval_plan_hints(
+            retrieval_query="İşe iade davası açabilir mi?",
+            mentioned_laws=[],
+            requested_source_families=[],
+            applied_expansions=[],
+            retrieval_top_k=8,
+            retrieval_plan={
+                "law_hints": ["IK"],
+                "source_family_hints": ["kanun"],
+                "term_hints": ["işe iade", "geçerli sebep"],
+            },
+        )
+
+        assert mentioned_laws == []
+        assert "kanun" in requested_source_families
+        assert "işe iade" in retrieval_query
+        assert "geçerli sebep" in retrieval_query
+        assert retrieval_top_k == 20
 
 
 class TestPreciseDeterministicAnswers:
@@ -1452,6 +1578,47 @@ class TestLawFilterAndRetrieval:
         call_kwargs = mock_retriever.retrieve.call_args.kwargs
         assert call_kwargs.get("metadata_filter") is not None
         assert call_kwargs["metadata_filter"].law_short_name == "TBK"
+
+    def test_source_family_bucket_retrieval_triggered_for_tuzuk_queries(self, mock_orchestrator):
+        mock_retriever = MagicMock()
+
+        from rag.retriever import RetrievalStats
+        mock_stats = RetrievalStats(
+            collection="test",
+            query_preview="tüzük",
+            top_k=20,
+            filter_expr=None,
+            hit_count=0,
+            latency_ms=10.0,
+        )
+        mock_retriever.retrieve = MagicMock(return_value=([], mock_stats))
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response("RAG cevabı", citations=[])
+        )
+
+        app = _make_app(mock_orch=mock_orchestrator, mock_retriever=mock_retriever)
+        new_store = ConversationStore()
+        app.dependency_overrides[get_conversation_store] = lambda: new_store
+
+        with TestClient(app) as c:
+            resp = c.post(
+                "/v1/chat/completions",
+                json={
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "Tapu kütüğü ve yardımcı siciller için hangi tüzük merkezde olmalıdır?",
+                        }
+                    ],
+                },
+            )
+
+        assert resp.status_code == 200
+        assert mock_retriever.retrieve.call_count >= 2
+        assert any(
+            getattr(call.kwargs.get("metadata_filter"), "belge_turu", None) == "tuzuk"
+            for call in mock_retriever.retrieve.call_args_list
+        )
 
     def test_explicit_article_refs_are_force_included(self, mock_orchestrator):
         mock_retriever = MagicMock()

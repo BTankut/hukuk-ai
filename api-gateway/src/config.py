@@ -55,6 +55,7 @@ class Settings:
     dgx_seed: int | None = None
     dgx_request_timeout_seconds: float = 180.0
     dgx_retry_count: int = 0
+    dgx_enable_thinking: bool = False
 
     # Guardrails
     guardrails_enabled: bool = True
@@ -89,6 +90,7 @@ class Settings:
             "dgx_seed": _to_int(os.getenv("DGX_SEED"), -1),
             "dgx_request_timeout_seconds": _to_float(os.getenv("DGX_REQUEST_TIMEOUT_SECONDS"), 180.0),
             "dgx_retry_count": _to_int(os.getenv("DGX_RETRY_COUNT"), 0),
+            "dgx_enable_thinking": _to_bool(os.getenv("DGX_ENABLE_THINKING"), False),
             "guardrails_enabled": _to_bool(os.getenv("GUARDRAILS_ENABLED"), True),
             "guardrails_strict_mode": _to_bool(os.getenv("GUARDRAILS_STRICT_MODE"), False),
             "guardrails_config_dir": Path(os.getenv("GUARDRAILS_CONFIG_DIR", "guardrails")),

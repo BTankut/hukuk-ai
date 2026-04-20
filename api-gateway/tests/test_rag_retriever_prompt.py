@@ -101,6 +101,12 @@ class TestMetadataFilter:
         assert "mulga" in expr
         assert "false" in expr
 
+    def test_belge_turu_filter_expr(self):
+        from rag.retriever import MetadataFilter
+        f = MetadataFilter(belge_turu="tuzuk", mulga=None)
+        expr = f.to_milvus_expr()
+        assert 'metadata["belge_turu"] == "tuzuk"' in expr
+
     def test_madde_range_filter(self):
         from rag.retriever import MetadataFilter
         f = MetadataFilter(madde_no_min=40, madde_no_max=60, mulga=None)
@@ -213,6 +219,31 @@ class TestMockRetriever:
         f = MetadataFilter(law_no="9999", mulga=None)
         results, _ = retriever.retrieve(query_vector=QUERY_VECTOR, metadata_filter=f)
         assert results == []
+
+    def test_filter_by_belge_turu(self):
+        from rag.retriever import MockRetriever, MetadataFilter
+
+        chunks = [
+            {
+                "id": "kanun_1",
+                "text": "kanun metni",
+                "embedding": QUERY_VECTOR,
+                "metadata": {"belge_turu": "kanun", "law_short_name": "TBK", "madde_no": "1"},
+            },
+            {
+                "id": "tuzuk_1",
+                "text": "tüzük metni",
+                "embedding": QUERY_VECTOR,
+                "metadata": {"belge_turu": "tuzuk", "law_short_name": "20135150", "madde_no": "1"},
+            },
+        ]
+
+        retriever = MockRetriever(fixture_chunks=chunks)
+        f = MetadataFilter(belge_turu="tuzuk", mulga=None)
+        results, _ = retriever.retrieve(query_vector=QUERY_VECTOR, metadata_filter=f)
+
+        assert len(results) == 1
+        assert results[0].metadata["belge_turu"] == "tuzuk"
 
 
 # ---------------------------------------------------------------------------

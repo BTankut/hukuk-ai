@@ -110,7 +110,7 @@ class LLMClient:
             "retry_count": self.settings.dgx_retry_count,
             "timeout_seconds": self.settings.dgx_request_timeout_seconds,
             "streaming": False,
-            "enable_thinking": False,
+            "enable_thinking": self.settings.dgx_enable_thinking,
         }
 
     def _build_request_payload(
@@ -125,7 +125,7 @@ class LLMClient:
             "messages": [{"role": m.role, "content": m.content} for m in messages],
             "temperature": temperature,
             "max_tokens": max_tokens,
-            "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
+            "extra_body": {"chat_template_kwargs": {"enable_thinking": self.settings.dgx_enable_thinking}},
         }
         if self.settings.dgx_top_p is not None:
             payload["top_p"] = self.settings.dgx_top_p
@@ -279,12 +279,16 @@ class LLMClient:
             "Sen bir Türk hukuku asistanısın. YALNIZCA verilen KAYNAKLAR bölümünü kullan. "
             "Kaynakta bulunmayan bilgi, sonuç veya madde üretme.\n\n"
             "Yanıtı üretmeden önce zihinsel olarak şu sırayı izle, fakat bu adımları kullanıcıya yazma:\n"
-            "1. Sorunun gerçekten hangi kanun ailesine dayandığını belirle (TBK, TMK, TCK, HMK, TTK, İİK).\n"
-            "2. Soru belirli bir maddeye atıf yapıyorsa ve o madde kaynaklarda varsa önce onu değerlendir.\n"
-            "3. Her iddiayı yalnız gerçekten dayandığın kaynak maddelerle eşleştir.\n\n"
+            "1. Sorunun gerçekten hangi mevzuat ailesine ve hangi belge türüne dayandığını belirle "
+            "(kanun, tüzük, yönetmelik, tebliğ, Cumhurbaşkanlığı kararnamesi/kararı/genelgesi, "
+            "kurum veya üniversite düzenlemesi, mülga norm vb.).\n"
+            "2. Kaynaklarda '[Belge: ...]' satırı varsa, kullanıcı özellikle bir belge ailesini soruyorsa "
+            "önce o isimli düzenlemeyi merkez al; yalnız gerekli ise üst norm veya paralel normla tamamla.\n"
+            "3. Soru belirli bir maddeye atıf yapıyorsa ve o madde kaynaklarda varsa önce onu değerlendir.\n"
+            "4. Her iddiayı yalnız gerçekten dayandığın kaynak maddelerle eşleştir.\n\n"
             "Zorunlu kurallar:\n"
             "- Her hukuki iddiada en yakın ilgili '[Kaynak: X]' etiketini kullan.\n"
-            "- Kanun prefixlerini asla karıştırma; TBK/TMK/TCK/HMK/TTK/İİK aynen korunmalı.\n"
+            "- Belge ailesini ve prefixlerini asla karıştırma; kanun/tüzük/yönetmelik/tebliğ/kararname ayrımını koru.\n"
             "- Komşu veya benzer maddeyi yalnız yakın olduğu için cite etme; sadece gerçekten dayandığın maddeyi yaz.\n"
             "- Cross-law sorularda cevap gerçekten iki kanuna dayanıyorsa her iki kanundan da açık kaynak göster; dayanmıyorsa gereksiz ikinci kanun ekleme.\n"
             "- Önce kısa sonucu ver, sonra en fazla üç kısa dayanak maddesiyle devam et.\n"

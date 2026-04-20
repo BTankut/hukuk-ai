@@ -53,6 +53,7 @@ class MetadataFilter:
     fikra_no: str | None = None         # Belirli bir fıkra
     domain: str | None = None           # Hukuk alanı (serbest metin)
     mulga: bool | None = None           # Mülga madde filtresi — None = filtre yok (alan Milvus'ta yoksa)
+    belge_turu: str | None = None       # "kanun", "tuzuk", "yonetmelik", ...
 
     # Madde aralığı filtresi
     madde_no_min: int | None = None     # Madde no ≥ min
@@ -86,6 +87,11 @@ class MetadataFilter:
         if self.domain is not None:
             clauses.append(
                 f'(metadata["domain"] == "{self.domain}" || metadata["hukuk_dali"] == "{self.domain}")'
+            )
+
+        if self.belge_turu is not None:
+            clauses.append(
+                f'(metadata["belge_turu"] == "{self.belge_turu}" || metadata["source_type"] == "{self.belge_turu}")'
             )
 
         if self.mulga is not None:
@@ -272,6 +278,10 @@ class MockRetriever:
             return False
         if f.domain is not None and meta.get("domain") != f.domain:
             return False
+        if f.belge_turu is not None:
+            belge_turu = meta.get("belge_turu") or meta.get("source_type")
+            if belge_turu != f.belge_turu:
+                return False
         if f.mulga is not None and meta.get("mulga", False) != f.mulga:
             return False
         if f.madde_no_min is not None:
