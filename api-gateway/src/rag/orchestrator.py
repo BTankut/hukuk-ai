@@ -19,6 +19,7 @@ _GENERIC_ASSISTANT_HINTS = (
 
 _MAX_CONTEXT_CHARS = 1600
 _MAX_CONTEXT_CHUNK_EXCERPT_CHARS = 320
+_PROCEDURE_CONTEXT_CHUNK_EXCERPT_CHARS = 960
 _PRIORITY_TOKEN_RE = re.compile(r"[a-z0-9]+")
 _PRIORITY_STOPWORDS = {
     "ve",
@@ -65,6 +66,24 @@ _SOURCE_FAMILY_QUERY_HINTS: dict[str, tuple[str, ...]] = {
     "genelge": ("genelge",),
     "kanun": ("kanun",),
 }
+_PROCEDURE_QUERY_HINTS = (
+    "ön usul",
+    "on usul",
+    "ön şart",
+    "on sart",
+    "dava şart",
+    "dava sart",
+    "usul",
+    "süre",
+    "sure",
+    "başvuru",
+    "basvuru",
+    "itiraz",
+    "arabulucu",
+    "arabuluculuk",
+    "hak düşürücü",
+    "hak dusurucu",
+)
 
 
 @dataclass(slots=True)
@@ -159,7 +178,7 @@ class RAGOrchestrator:
         Returns:
             OrchestratorResponse
         """
-        context = self._build_context(retrieved_chunks)
+        context = self._build_context(retrieved_chunks, query=query)
         if max_tokens is None:
             draft_result = await self.llm_client.generate_rag_draft(
                 query=query,
@@ -246,8 +265,15 @@ class RAGOrchestrator:
             llm_trace=draft_trace,
         )
 
-    @staticmethod
-    def _build_context(chunks: list[RetrievedChunk]) -> str:
+    @classmethod
+    def _is_procedure_or_timeline_query(cls, query: str | None) -> bool:
+        if not query:
+            return False
+        normalized = query.lower().translate(_TR_ASCII_TRANS)
+        return any(hint in normalized for hint in _PROCEDURE_QUERY_HINTS)
+
+    @classmethod
+    def _build_context(cls, chunks: list[RetrievedChunk], *, query: str | None = None) -> str:
         if not chunks:
             return ""
 
@@ -264,14 +290,20 @@ class RAGOrchestrator:
         ]
         total_chars = sum(len(text) for _, _, text in compact_chunks)
         use_excerpt_mode = total_chars > _MAX_CONTEXT_CHARS
+        excerpt_len = (
+            _PROCEDURE_CONTEXT_CHUNK_EXCERPT_CHARS
+            if cls._is_procedure_or_timeline_query(query)
+            else _MAX_CONTEXT_CHUNK_EXCERPT_CHARS
+        )
 
         formatted = []
         for chunk, (_, source_title, compact_text) in zip(chunks, compact_chunks, strict=False):
             citation = chunk.citation
             body = (
-                RAGOrchestrator._build_chunk_excerpt(
+                cls._build_query_focused_excerpt(
                     compact_text,
-                    max_len=_MAX_CONTEXT_CHUNK_EXCERPT_CHARS,
+                    query=query,
+                    max_len=excerpt_len,
                 )
                 if use_excerpt_mode
                 else compact_text
@@ -684,6 +716,50 @@ class RAGOrchestrator:
         if excerpt:
             return excerpt[:max_len].rstrip()
         return compact[:max_len].rstrip()
+
+    @classmethod
+    def _build_query_focused_excerpt(
+        cls,
+        text: str,
+        *,
+        query: str | None,
+        max_len: int,
+    ) -> str:
+        compact = re.sub(r"\s+", " ", text).strip()
+        if len(compact) <= max_len or not query:
+            return cls._build_chunk_excerpt(compact, max_len=max_len)
+
+        normalized_text = compact.lower().translate(_TR_ASCII_TRANS)
+        normalized_query = query.lower().translate(_TR_ASCII_TRANS)
+
+        needles: list[str] = []
+        if cls._is_procedure_or_timeline_query(query):
+            needles.extend(_PROCEDURE_QUERY_HINTS)
+        needles.extend(term for term in cls._extract_priority_terms(normalized_query) if len(term) >= 4)
+
+        first_pos: int | None = None
+        for needle in needles:
+            normalized_needle = needle.lower().translate(_TR_ASCII_TRANS)
+            pos = normalized_text.find(normalized_needle)
+            if pos == -1:
+                continue
+            if first_pos is None or pos < first_pos:
+                first_pos = pos
+
+        if first_pos is None:
+            return cls._build_chunk_excerpt(compact, max_len=max_len)
+
+        start = max(0, first_pos - 120)
+        end = min(len(compact), start + max_len)
+        if end - start < max_len and start > 0:
+            start = max(0, end - max_len)
+
+        excerpt = compact[start:end].strip()
+        if start > 0:
+            excerpt = f"... {excerpt}"
+        if end < len(compact):
+            excerpt = f"{excerpt} ..."
+        return excerpt
 
     @classmethod
     def _build_source_locked_fallback(

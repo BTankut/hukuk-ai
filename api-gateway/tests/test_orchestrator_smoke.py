@@ -282,6 +282,30 @@ def test_orchestrator_accepts_title_style_citations_for_numeric_tuzuk_chunks():
     assert response.answer.startswith("Tapu sicili bakımından merkez tüzük")
 
 
+def test_build_context_keeps_full_procedure_timeline_excerpt_for_long_statutes():
+    long_prefix = "A" * 900
+    procedural_tail = (
+        " İş sözleşmesi feshedilen işçi, fesih bildiriminin tebliği tarihinden itibaren "
+        "bir ay içinde işe iade talebiyle arabulucuya başvurmak zorundadır. "
+        "Arabuluculuk sonunda anlaşmaya varılamazsa son tutanaktan itibaren iki hafta içinde "
+        "iş mahkemesinde dava açılabilir."
+    )
+    chunk = RetrievedChunk(
+        text=long_prefix + procedural_tail,
+        citation="IK m.20/f.0",
+        source="IK",
+        metadata={"source_title": "İŞ KANUNU"},
+    )
+
+    context = RAGOrchestrator._build_context(
+        [chunk, RetrievedChunk(text="B" * 900, citation="IK m.18/f.0", source="IK")],
+        query="İşe iade talebi için zorunlu ön usul ve temel süreleri belirt.",
+    )
+
+    assert "arabulucuya başvurmak zorundadır" in context
+    assert "iki hafta içinde iş mahkemesinde dava açılabilir" in context
+
+
 def test_orchestrator_source_lock_can_expand_to_three_priority_chunks():
     guardrails = DummyGuardrails()
     llm = DummyPassthroughLLMClient(

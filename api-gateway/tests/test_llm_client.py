@@ -28,7 +28,7 @@ def test_generate_rag_draft_uses_wave2_prompt_rules_with_context() -> None:
     )
 
     messages, temperature, max_tokens = client.calls[-1]
-    assert temperature == 0.1
+    assert temperature == 0.0
     assert max_tokens is None
     assert len(messages) == 2
     assert messages[0].role == "system"
@@ -169,6 +169,18 @@ def test_build_rag_messages_generalizes_beyond_core_law_families() -> None:
     assert "mevzuat ailesine" in system_prompt
     assert "tüzük" in system_prompt
     assert "[Belge: ...]" in system_prompt
+
+
+def test_build_rag_messages_adds_procedure_guardrails_for_timeline_questions() -> None:
+    messages = LLMClient._build_rag_messages(
+        query="İşe iade talebi için zorunlu ön usul ve temel süreler nelerdir?",
+        context="[Kaynak: IK m.20]\n[Belge: İŞ KANUNU]\n...",
+    )
+
+    system_prompt = messages[0].content
+    assert "Ön şart/ön usul ile dava aşamasını birbirine karıştırma." in system_prompt
+    assert "Kaynakta arabulucuya başvuru zorunlu deniyorsa" in system_prompt
+    assert "Süreleri yalnız kaynakta açıkça geçtiği şekliyle ver" in system_prompt
 
 
 def test_extract_raw_answer_object_keeps_unprojected_content() -> None:

@@ -39,6 +39,27 @@ class LLMClient:
         " log=",
         " state=",
     )
+    _TR_LOWER_MAP = str.maketrans("İIĞÖÜŞÇ", "iiğöüşç")
+    _PROCEDURE_SIGNAL_TERMS = (
+        "ön usul",
+        "on usul",
+        "ön şart",
+        "on sart",
+        "dava şart",
+        "dava sart",
+        "usul",
+        "süre",
+        "sure",
+        "hangi sürede",
+        "hangi surede",
+        "başvuru",
+        "basvuru",
+        "itiraz",
+        "arabulucu",
+        "arabuluculuk",
+        "hak düşürücü",
+        "hak dusurucu",
+    )
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -274,7 +295,16 @@ class LLMClient:
         ]
 
     @staticmethod
-    def _build_rag_messages(query: str, context: str) -> list[ChatMessage]:
+    def _normalize_query(query: str) -> str:
+        return query.translate(LLMClient._TR_LOWER_MAP).lower()
+
+    @classmethod
+    def _is_procedure_or_timeline_query(cls, query: str) -> bool:
+        normalized = cls._normalize_query(query)
+        return any(term in normalized for term in cls._PROCEDURE_SIGNAL_TERMS)
+
+    @classmethod
+    def _build_rag_messages(cls, query: str, context: str) -> list[ChatMessage]:
         system_prompt = (
             "Sen bir Türk hukuku asistanısın. YALNIZCA verilen KAYNAKLAR bölümünü kullan. "
             "Kaynakta bulunmayan bilgi, sonuç veya madde üretme.\n\n"
@@ -294,6 +324,13 @@ class LLMClient:
             "- Önce kısa sonucu ver, sonra en fazla üç kısa dayanak maddesiyle devam et.\n"
             "- Kaynak yetersizse açıkça bunu söyle ve tahmin yürütme."
         )
+        if cls._is_procedure_or_timeline_query(query):
+            system_prompt += (
+                "\n- Usul, süre, ön şart veya dava yolu sorularında adımları kaynakta geçtiği sırayla aktar.\n"
+                "- Ön şart/ön usul ile dava aşamasını birbirine karıştırma.\n"
+                "- Kaynakta arabulucuya başvuru zorunlu deniyorsa bunu mahkemeye doğrudan başvuru diye yeniden yazma.\n"
+                "- Süreleri yalnız kaynakta açıkça geçtiği şekliyle ver; kendi hukuk bilgisinden süre ekleme."
+            )
         user_prompt = (
             "Aşağıdaki kaynak metinlerini kullanarak soruyu yanıtla. "
             "Önce tek cümlelik sonucu ver. Ardından yalnız gerçekten dayandığın maddeleri "
@@ -318,7 +355,7 @@ class LLMClient:
             messages = self._build_no_context_messages(query)
         else:
             messages = self._build_rag_messages(query, context)
-        result = await self.chat(messages=messages, temperature=0.1, max_tokens=max_tokens)
+        result = await self.chat(messages=messages, temperature=0.0, max_tokens=max_tokens)
         if isinstance(result, str):
             return result
         trace = dict(result.trace or {})
