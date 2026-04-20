@@ -25,6 +25,19 @@ class DummyGuardrails:
         return GuardrailsResult(answer=draft_answer, blocked=False, reasons=[])
 
 
+class DummyMutatingGuardrails:
+    def __init__(self, rewritten_answer: str) -> None:
+        self.rewritten_answer = rewritten_answer
+        self.called = 0
+
+    async def run(self, *, user_query: str, draft_answer: str, retrieved_chunks: list[dict]):
+        self.called += 1
+        assert user_query
+        assert draft_answer
+        assert retrieved_chunks
+        return GuardrailsResult(answer=self.rewritten_answer, blocked=False, reasons=["mutated"])
+
+
 def test_orchestrator_routes_post_processing_to_guardrails_layer():
     guardrails = DummyGuardrails()
     orchestrator = RAGOrchestrator(llm_client=DummyLLMClient(), guardrails=guardrails)
@@ -154,6 +167,119 @@ def test_orchestrator_source_locks_when_answer_mixes_one_priority_with_wrong_sou
     assert "source_lock_fallback" in response.guardrails_reasons
     assert "[Kaynak: TBK m.584]" in response.answer
     assert "[Kaynak: TMK m.185]" in response.answer
+
+
+def test_orchestrator_keeps_answer_when_extra_citations_are_still_retrieved():
+    guardrails = DummyGuardrails()
+    llm = DummyPassthroughLLMClient(
+        "İşe iade koruması için en az otuz işçi, altı ay kıdem ve belirsiz süreli sözleşme aranır. "
+        "[Kaynak: IK m.18] İşe iade davası açıldığında başvuru ve dava süresi bakımından yargı yolu "
+        "İş Kanunu düzeni içinde değerlendirilir [Kaynak: IK m.20] İşverenin işe başlatmama sonucu "
+        "da ayrıca düzenlenmiştir [Kaynak: IK m.21]"
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan işçi performans gerekçesiyle çıkarılırsa işe iade yoluna gidebilir mi?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="IK m.18 feshin geçerli sebebe dayandırılması için otuz işçi ve altı ay kıdem şartını düzenler.",
+                    citation="IK m.18",
+                ),
+                RetrievedChunk(
+                    text="IK m.22 çalışma koşullarında değişiklik ve fesih usulünü düzenler.",
+                    citation="IK m.22",
+                ),
+                RetrievedChunk(
+                    text="IK m.20 fesih bildirimine itiraz ve usulü düzenler.",
+                    citation="IK m.20",
+                ),
+                RetrievedChunk(
+                    text="IK m.21 geçersiz sebeple yapılan feshin sonuçlarını düzenler.",
+                    citation="IK m.21",
+                ),
+            ],
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["IK m.18", "IK m.20", "IK m.21"]
+    assert "source_lock_fallback" not in response.guardrails_reasons
+    assert response.answer.startswith("İşe iade koruması için")
+
+
+def test_orchestrator_restores_good_draft_when_guardrails_drops_source_alignment():
+    guardrails = DummyMutatingGuardrails(
+        "Bu soru bakımından değerlendirilmesi gereken hükümler mevcuttur."
+    )
+    llm = DummyPassthroughLLMClient(
+        "Evet, işçi işe iade davası açabilir. [Kaynak: IK m.20] "
+        "Otuz veya daha fazla işçi çalıştırılan işyerinde en az altı aylık kıdem ve "
+        "belirsiz süreli sözleşme varsa koruma uygulanır [Kaynak: IK m.18] "
+        "Feshin geçersizliği halinde işe başlatmama sonucu ayrıca düzenlenmiştir [Kaynak: IK m.21]"
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan işçi performans gerekçesiyle çıkarılırsa işe iade yoluna gidebilir mi?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="IK m.18 feshin geçerli sebebe dayandırılması için otuz işçi ve altı ay kıdem şartını düzenler.",
+                    citation="IK m.18",
+                ),
+                RetrievedChunk(
+                    text="IK m.20 fesih bildirimine itiraz ve usulü düzenler.",
+                    citation="IK m.20",
+                ),
+                RetrievedChunk(
+                    text="IK m.21 geçersiz feshin sonuçlarını düzenler.",
+                    citation="IK m.21",
+                ),
+            ],
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["IK m.20", "IK m.18", "IK m.21"]
+    assert "source_lock_fallback" not in response.guardrails_reasons
+    assert response.answer.startswith("Evet, işçi işe iade davası açabilir.")
+
+
+def test_orchestrator_accepts_title_style_citations_for_numeric_tuzuk_chunks():
+    guardrails = DummyGuardrails()
+    llm = DummyPassthroughLLMClient(
+        "Tapu sicili bakımından merkez tüzük Tapu Sicili Tüzüğü'dür. "
+        "[Kaynak: Tapu Sicili Tüzüğü m.7] Yevmiye defteri ve resmi belgeler için "
+        "aynı tüzüğün kayıt rejimi uygulanır [Kaynak: Tapu Sicili Tüzüğü m.23]"
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="Tapu kütüğü, yevmiye defteri ve resmi belgeler için hangi tüzük esas alınır?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="20135150 m.7 Tapu sicilinin unsurları MADDE 7 – Tapu sicili ana ve yardımcı sicillerden oluşur.",
+                    citation="20135150 m.7/f.0",
+                    source="20135150",
+                    metadata={"source_title": "TAPU SİCİLİ TÜZÜĞÜ", "belge_adi": "TAPU SİCİLİ TÜZÜĞÜ"},
+                ),
+                RetrievedChunk(
+                    text="20135150 m.23 Yevmiye defterine kayıt MADDE 23 – Yevmiye defterine istemler kaydedilir.",
+                    citation="20135150 m.23/f.0",
+                    source="20135150",
+                    metadata={"source_title": "TAPU SİCİLİ TÜZÜĞÜ", "belge_adi": "TAPU SİCİLİ TÜZÜĞÜ"},
+                ),
+            ],
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["Tapu Sicili Tüzüğü m.7", "Tapu Sicili Tüzüğü m.23"]
+    assert "source_lock_fallback" not in response.guardrails_reasons
+    assert response.answer.startswith("Tapu sicili bakımından merkez tüzük")
 
 
 def test_orchestrator_source_lock_can_expand_to_three_priority_chunks():

@@ -54,6 +54,7 @@ _TR_ASCII_TRANS = str.maketrans(
         "ü": "u",
     }
 )
+_ARTICLE_TOKEN_RE = re.compile(r"m\.\s*(\d+[a-z]?)", re.IGNORECASE)
 
 _QUERY_CLAUSE_SPLIT_RE = re.compile(r"\b(?:ve|ile)\b")
 _SOURCE_FAMILY_QUERY_HINTS: dict[str, tuple[str, ...]] = {
@@ -201,12 +202,14 @@ class RAGOrchestrator:
                 query=query,
                 answer=final_answer,
                 retrieved_chunks=retrieved_chunks,
+                draft_answer=draft,
                 source_lock_target_citations=source_lock_target_citations,
             )
             if source_locked_answer != final_answer:
                 final_answer = source_locked_answer
                 citations = extract_citations(final_answer)
-                reasons = reasons + ["source_lock_fallback"]
+                if final_answer != draft:
+                    reasons = reasons + ["source_lock_fallback"]
 
         # Verification Engine (Backlog #6)
         if self._verification_engine and not blocked:
@@ -287,6 +290,55 @@ class RAGOrchestrator:
         normalized = re.sub(r"\bm\.\s*", "m.", normalized, flags=re.IGNORECASE)
         normalized = re.sub(r"/f\.\d+$", "", normalized, flags=re.IGNORECASE)
         return normalized
+
+    @staticmethod
+    def _normalize_citation_text(text: str | None) -> str:
+        normalized = re.sub(r"\s+", " ", (text or "").strip())
+        tr_map = str.maketrans("İIĞÖÜŞÇ", "iiğöüşç")
+        return normalized.translate(tr_map).lower().translate(_TR_ASCII_TRANS)
+
+    @classmethod
+    def _extract_article_token(cls, citation: str | None) -> str | None:
+        if not citation:
+            return None
+        match = _ARTICLE_TOKEN_RE.search(citation)
+        if not match:
+            return None
+        return match.group(1).lower()
+
+    @classmethod
+    def _chunk_citation_aliases(cls, chunk: RetrievedChunk) -> set[str]:
+        aliases: set[str] = set()
+        normalized_citation = cls._normalize_citation(chunk.citation)
+        if normalized_citation:
+            aliases.add(cls._normalize_citation_text(normalized_citation))
+
+        article_token = cls._extract_article_token(chunk.citation)
+        if not article_token:
+            return aliases
+
+        raw_source = cls._normalize_citation_text(chunk.source)
+        if raw_source:
+            aliases.add(f"{raw_source} m.{article_token}")
+
+        metadata = chunk.metadata or {}
+        source_title = cls._normalize_citation_text(
+            metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+        )
+        if source_title:
+            aliases.add(f"{source_title} m.{article_token}")
+
+        return aliases
+
+    @classmethod
+    def _citation_matches_chunk(cls, citation: str, chunk: RetrievedChunk) -> bool:
+        normalized_citation = cls._normalize_citation_text(cls._normalize_citation(citation))
+        if not normalized_citation:
+            return False
+        return normalized_citation in cls._chunk_citation_aliases(chunk)
 
     @staticmethod
     def _looks_like_generic_assistant_reply(answer: str) -> bool:
@@ -565,33 +617,24 @@ class RAGOrchestrator:
         citations: list[str],
         priority_chunks: list[RetrievedChunk],
     ) -> bool:
-        priority = {
-            cls._normalize_citation(chunk.citation)
-            for chunk in priority_chunks
-            if chunk.citation
-        }
-        cited = {cls._normalize_citation(citation) for citation in citations if citation}
-        return bool(priority & cited)
+        for citation in citations:
+            if any(cls._citation_matches_chunk(citation, chunk) for chunk in priority_chunks):
+                return True
+        return False
 
     @classmethod
-    def _has_partial_priority_mismatch(
+    def _has_nonretrieved_citations(
         cls,
         citations: list[str],
-        priority_chunks: list[RetrievedChunk],
+        retrieved_chunks: list[RetrievedChunk],
     ) -> bool:
-        priority = {
-            cls._normalize_citation(chunk.citation)
-            for chunk in priority_chunks
-            if chunk.citation
-        }
-        cited = {cls._normalize_citation(citation) for citation in citations if citation}
-        if len(priority) < 2 or not cited:
+        cited = [citation for citation in citations if citation]
+        if not cited:
             return False
-
-        overlap = priority & cited
-        missing_priority = priority - cited
-        extra_citations = cited - priority
-        return bool(overlap) and bool(missing_priority) and bool(extra_citations)
+        return any(
+            not any(cls._citation_matches_chunk(citation, chunk) for chunk in retrieved_chunks)
+            for citation in cited
+        )
 
     @staticmethod
     def _has_incomplete_priority_coverage(
@@ -668,12 +711,41 @@ class RAGOrchestrator:
         return "\n".join(lines)
 
     @classmethod
+    def _needs_source_lock_fallback(
+        cls,
+        *,
+        answer: str,
+        retrieved_chunks: list[RetrievedChunk],
+        priority_chunks: list[RetrievedChunk],
+        source_lock_target_citations: int | None,
+    ) -> bool:
+        citations = extract_citations(answer)
+        return (
+            cls._looks_like_generic_assistant_reply(answer)
+            or not citations
+            or not cls._has_priority_citation_overlap(citations, priority_chunks)
+            or cls._has_nonretrieved_citations(citations, retrieved_chunks)
+            or (
+                source_lock_target_citations is not None
+                and cls._has_incomplete_priority_coverage(
+                    citations,
+                    priority_chunks,
+                    required_count=max(
+                        2,
+                        min(source_lock_target_citations, 4),
+                    ),
+                )
+            )
+        )
+
+    @classmethod
     def _maybe_source_lock_answer(
         cls,
         *,
         query: str,
         answer: str,
         retrieved_chunks: list[RetrievedChunk],
+        draft_answer: str | None = None,
         source_lock_target_citations: int | None = None,
     ) -> str:
         if not retrieved_chunks:
@@ -691,23 +763,24 @@ class RAGOrchestrator:
         if not priority_chunks:
             return answer
 
-        citations = extract_citations(answer)
-        needs_fallback = (
-            cls._looks_like_generic_assistant_reply(answer)
-            or not citations
-            or not cls._has_priority_citation_overlap(citations, priority_chunks)
-            or cls._has_partial_priority_mismatch(citations, priority_chunks)
-            or (
-                source_lock_target_citations is not None
-                and cls._has_incomplete_priority_coverage(
-                    citations,
-                    priority_chunks,
-                    required_count=max_priority_chunks,
-                )
-            )
+        needs_fallback = cls._needs_source_lock_fallback(
+            answer=answer,
+            retrieved_chunks=retrieved_chunks,
+            priority_chunks=priority_chunks,
+            source_lock_target_citations=source_lock_target_citations,
         )
         if not needs_fallback:
             return answer
+
+        if draft_answer and draft_answer != answer:
+            draft_needs_fallback = cls._needs_source_lock_fallback(
+                answer=draft_answer,
+                retrieved_chunks=retrieved_chunks,
+                priority_chunks=priority_chunks,
+                source_lock_target_citations=source_lock_target_citations,
+            )
+            if not draft_needs_fallback:
+                return draft_answer
 
         fallback = cls._build_source_locked_fallback(
             retrieved_chunks,

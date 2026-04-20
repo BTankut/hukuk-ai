@@ -47,3 +47,35 @@ def test_guardrails_pipeline_masks_output_pii_without_losing_citation():
     assert "[TR_ID_NUMBER_MASKED]" in result.answer
     assert "12345678901" not in result.answer
     assert "[Kaynak: TBK m.49]" in result.answer
+
+
+def test_guardrails_pipeline_uses_regex_only_masking_for_output(monkeypatch):
+    pipeline = GuardrailsPipeline(
+        settings=Settings(
+            guardrails_enabled=False,
+            guardrails_strict_mode=False,
+            presidio_enabled=False,
+            presidio_entities="TR_ID_NUMBER,PERSON,LOCATION",
+        )
+    )
+
+    observed_allow_ner: list[bool] = []
+    original_mask = PresidioMasker.mask
+
+    def recording_mask(self, text: str, *, allow_ner: bool = True) -> str:
+        observed_allow_ner.append(allow_ner)
+        return original_mask(self, text, allow_ner=allow_ner)
+
+    monkeypatch.setattr(PresidioMasker, "mask", recording_mask)
+
+    result = asyncio.run(
+        pipeline.run(
+            user_query="Tapu sicili hangi tüzükte düzenlenir?",
+            draft_answer="Tapu sicili Tapu Sicili Tüzüğü'nde düzenlenir. [Kaynak: 20135150 m.7]",
+            retrieved_chunks=[{"text": "...", "citation": "20135150 m.7"}],
+        )
+    )
+
+    assert result.blocked is False
+    assert result.answer == "Tapu sicili Tapu Sicili Tüzüğü'nde düzenlenir. [Kaynak: 20135150 m.7]"
+    assert observed_allow_ner == [True, False]

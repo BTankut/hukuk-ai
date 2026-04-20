@@ -39,7 +39,7 @@ class PresidioMasker:
             self._analyzer = None
             self._anonymizer = None
 
-    def mask(self, text: str) -> str:
+    def mask(self, text: str, *, allow_ner: bool = True) -> str:
         if not text:
             return text
 
@@ -61,7 +61,7 @@ class PresidioMasker:
             masked = TR_ID_PATTERN.sub("[TR_ID_NUMBER_MASKED]", masked)
 
         # ── Adım 3: Presidio NER (opsiyonel) ─────────────────────────────────
-        if self.settings.presidio_enabled and self._analyzer and self._anonymizer:
+        if allow_ner and self.settings.presidio_enabled and self._analyzer and self._anonymizer:
             entities = [e for e in self._entities if e != "TR_ID_NUMBER"]
             if entities:
                 # Presidio'nun standart tanıyıcıları yalnızca "en" dilini destekler.

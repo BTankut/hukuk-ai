@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -35,6 +36,7 @@ from routers.chat import (
     ChatCompletionRequest,
     ConversationMessage,
     _apply_retrieval_plan_hints,
+    _build_source_cluster_candidates,
     _build_precise_tmk_tbk_cross_law_answer,
     _contains_query_term,
     _extract_json_object,
@@ -42,6 +44,8 @@ from routers.chat import (
     _extract_law_mentions,
     _infer_requested_source_families,
     _prioritize_chunks_for_source_families,
+    _resolve_public_answer_text,
+    _sanitize_source_cluster_selector_payload,
     _sanitize_retrieval_plan_payload,
     _should_use_cross_law_retrieval,
     _build_precise_tbk_answer,
@@ -51,7 +55,7 @@ from routers.chat import (
     get_conversation_store,
     router as chat_router,
 )
-from rag.orchestrator import OrchestratorResponse
+from rag.orchestrator import OrchestratorResponse, RetrievedChunk
 from session_store import RedisSessionBackend
 
 
@@ -571,6 +575,109 @@ class TestLawSignalParsing:
         assert "işe iade" in retrieval_query
         assert "geçerli sebep" in retrieval_query
         assert retrieval_top_k == 20
+
+    def test_build_source_cluster_candidates_groups_chunks_by_source_key(self):
+        chunks = [
+            RetrievedChunk(
+                text="İş güvencesi",
+                citation="IK m.21/f.0",
+                source="IK",
+                score=0.91,
+                metadata={"source_title": "İŞ KANUNU", "law_short_name": "IK", "belge_turu": "kanun"},
+            ),
+            RetrievedChunk(
+                text="Toplu işçi çıkarma",
+                citation="1475 m.24/f.0",
+                source="1475",
+                score=0.89,
+                metadata={"source_title": "İŞ KANUNU", "law_short_name": "1475", "belge_turu": "mulga_kanun"},
+            ),
+            RetrievedChunk(
+                text="Tapu sicili",
+                citation="20135150 m.7/f.0",
+                source="20135150",
+                score=0.93,
+                metadata={"source_title": "TAPU SİCİLİ TÜZÜĞÜ", "law_short_name": "20135150", "belge_turu": "tuzuk"},
+            ),
+        ]
+
+        candidates = _build_source_cluster_candidates(chunks, limit=8)
+
+        assert [item["cluster_id"] for item in candidates] == ["C1", "C2"]
+        assert candidates[0]["display_title"] == "İŞ KANUNU"
+        assert candidates[0]["laws"] == ["IK", "1475"]
+        assert candidates[0]["chunk_count"] == 2
+        assert candidates[1]["display_title"] == "TAPU SİCİLİ TÜZÜĞÜ"
+
+    def test_sanitize_source_cluster_selector_payload_keeps_only_known_clusters_and_laws(self):
+        candidates = [
+            {
+                "cluster_id": "C1",
+                "source_key": "iş kanunu",
+                "display_title": "İŞ KANUNU",
+                "source_family": "kanun",
+                "laws": ["IK", "1475"],
+            },
+            {
+                "cluster_id": "C2",
+                "source_key": "tapu sicili tüzüğü",
+                "display_title": "TAPU SİCİLİ TÜZÜĞÜ",
+                "source_family": "tuzuk",
+                "laws": ["20135150"],
+            },
+        ]
+
+        payload = _sanitize_source_cluster_selector_payload(
+            {
+                "selected_cluster_ids": ["C2", "C9", "C1"],
+                "selected_law_hints": ["20135150", "IK", "TBK"],
+            },
+            candidates=candidates,
+        )
+
+        assert payload == {
+            "selected_cluster_ids": ["C2", "C1"],
+            "selected_law_hints": ["20135150", "IK"],
+        }
+
+    def test_resolve_public_answer_text_prefers_hardened_contract_projection(self):
+        resolved = _resolve_public_answer_text(
+            answer_text="Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:\n- ...",
+            answer_contract={
+                "answer_text": "Tapu sicili bakımından merkez tüzük Tapu Sicili Tüzüğü'dür. [Kaynak: 20135150 m.7/f.0]",
+                "final_mode": "answer",
+            },
+            final_mode="answer",
+        )
+
+        assert resolved == "Tapu sicili bakımından merkez tüzük Tapu Sicili Tüzüğü'dür. [Kaynak: 20135150 m.7/f.0]"
+
+    def test_prioritize_chunks_prefers_selected_source_cluster(self):
+        chunks = [
+            RetrievedChunk(
+                text="İade hükümleri",
+                citation="7088 m.2/f.0",
+                source="7088",
+                score=0.99,
+                metadata={"source_title": "7088 SAYILI KARAR", "belge_turu": "kanun"},
+            ),
+            RetrievedChunk(
+                text="Geçersiz sebeple yapılan feshin sonuçları",
+                citation="IK m.21/f.0",
+                source="IK",
+                score=0.90,
+                metadata={"source_title": "İŞ KANUNU", "law_short_name": "IK", "belge_turu": "kanun"},
+            ),
+        ]
+
+        prioritized = _prioritize_chunks_for_source_families(
+            query="Performans gerekçesiyle işten çıkarılan işçi işe iade davası açabilir mi?",
+            chunks=chunks,
+            source_families=["kanun"],
+            selected_source_keys={"İŞ KANUNU".strip().lower()},
+        )
+
+        assert prioritized[0].citation == "IK m.21/f.0"
 
 
 class TestPreciseDeterministicAnswers:
@@ -1766,18 +1873,26 @@ class TestLawFilterAndRetrieval:
         new_store = ConversationStore()
         app.dependency_overrides[get_conversation_store] = lambda: new_store
 
-        with TestClient(app) as c:
-            resp = c.post(
-                "/v1/chat/completions",
-                json={
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": "Aile konutu olarak kullanılan kiralananda TBK ve TMK nasıl birlikte uygulanır?",
-                        }
-                    ],
-                },
-            )
+        with patch.dict(
+            os.environ,
+            {
+                "SOURCE_CLUSTER_SELECTOR_ENABLED": "false",
+                "LEGACY_QUERY_EXPANSIONS_ENABLED": "true",
+            },
+            clear=False,
+        ):
+            with TestClient(app) as c:
+                resp = c.post(
+                    "/v1/chat/completions",
+                    json={
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": "Aile konutu olarak kullanılan kiralananda TBK ve TMK nasıl birlikte uygulanır?",
+                            }
+                        ],
+                    },
+                )
 
         assert resp.status_code == 200
         assert mock_retriever.retrieve.call_count == 7
@@ -2125,23 +2240,24 @@ class TestLawFilterAndRetrieval:
         new_store = ConversationStore()
         app.dependency_overrides[get_conversation_store] = lambda: new_store
 
-        with TestClient(app) as c:
-            resp = c.post(
-                "/v1/chat/completions",
-                json={
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": (
-                                "Babam taşınmazını bana sattı; ancak gerçekte bağışlamak "
-                                "istediğini düşünüyorum. Muris muvazaası nedeniyle dava "
-                                "açabilir miyim?"
-                            ),
-                        }
-                    ],
-                    "include_trace": True,
-                },
-            )
+        with patch.dict(os.environ, {"LEGACY_QUERY_EXPANSIONS_ENABLED": "true"}, clear=False):
+            with TestClient(app) as c:
+                resp = c.post(
+                    "/v1/chat/completions",
+                    json={
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": (
+                                    "Babam taşınmazını bana sattı; ancak gerçekte bağışlamak "
+                                    "istediğini düşünüyorum. Muris muvazaası nedeniyle dava "
+                                    "açabilir miyim?"
+                                ),
+                            }
+                        ],
+                        "include_trace": True,
+                    },
+                )
 
         assert resp.status_code == 200
         assert mock_retriever.retrieve.call_count == 4
@@ -2242,25 +2358,26 @@ class TestLawFilterAndRetrieval:
         new_store = ConversationStore()
         app.dependency_overrides[get_conversation_store] = lambda: new_store
 
-        with TestClient(app) as c:
-            resp = c.post(
-                "/v1/chat/completions",
-                json={
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": (
-                                "Eşlerden birinin ölümü halinde hayatta kalan eşin edinilmiş "
-                                "mallara katılma rejimi çerçevesinde borçlara karşı kişisel "
-                                "sorumluluğu nasıl belirlenir? Ölen eşin alacaklısı, TBK m.77 "
-                                "kapsamında sebepsiz zenginleşme iddiasıyla hayatta kalan eşin "
-                                "elde ettiği katılma alacağına başvurabilir mi?"
-                            ),
-                        }
-                    ],
-                    "include_trace": True,
-                },
-            )
+        with patch.dict(os.environ, {"LEGACY_QUERY_EXPANSIONS_ENABLED": "true"}, clear=False):
+            with TestClient(app) as c:
+                resp = c.post(
+                    "/v1/chat/completions",
+                    json={
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": (
+                                    "Eşlerden birinin ölümü halinde hayatta kalan eşin edinilmiş "
+                                    "mallara katılma rejimi çerçevesinde borçlara karşı kişisel "
+                                    "sorumluluğu nasıl belirlenir? Ölen eşin alacaklısı, TBK m.77 "
+                                    "kapsamında sebepsiz zenginleşme iddiasıyla hayatta kalan eşin "
+                                    "elde ettiği katılma alacağına başvurabilir mi?"
+                                ),
+                            }
+                        ],
+                        "include_trace": True,
+                    },
+                )
 
         assert resp.status_code == 200
         orch_call = mock_orchestrator.answer.call_args

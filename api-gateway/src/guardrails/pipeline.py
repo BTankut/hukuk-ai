@@ -169,7 +169,7 @@ class GuardrailsPipeline:
             return self.masker.mask(text)
 
         async def presidio_mask_output(text: str) -> str:
-            return self.masker.mask(text)
+            return self.masker.mask(text, allow_ner=False)
 
         async def verify_output_citations(answer: str, retrieved_chunks: list[dict[str, Any]]) -> bool:
             ok, _invalid = validate_citations(answer, retrieved_chunks)
@@ -379,7 +379,7 @@ class GuardrailsPipeline:
             guarded = draft_answer
             reasons.append("guardrails_fail_open_refusal_fallback")
 
-        masked_output = self.masker.mask(guarded)
+        masked_output = self.masker.mask(guarded, allow_ner=False)
 
         blocked = False
         if self.settings.guardrails_strict_mode:

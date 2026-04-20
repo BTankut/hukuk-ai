@@ -374,6 +374,14 @@ def _retrieval_planner_enabled() -> bool:
     return os.getenv("RETRIEVAL_PLANNER_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
 
 
+def _legacy_query_expansions_enabled() -> bool:
+    return os.getenv("LEGACY_QUERY_EXPANSIONS_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
+
+
+def _source_cluster_selector_enabled() -> bool:
+    return os.getenv("SOURCE_CLUSTER_SELECTOR_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+
+
 def _strip_json_fence(text: str) -> str:
     stripped = text.strip()
     if stripped.startswith("```"):
@@ -542,6 +550,199 @@ def _apply_retrieval_plan_hints(
     return retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k
 
 
+def _extract_chunk_law_hint(chunk: RetrievedChunk) -> str | None:
+    metadata = chunk.metadata or {}
+    for value in (
+        metadata.get("law_short_name"),
+        metadata.get("kanun_kisa_adi"),
+        chunk.source,
+        metadata.get("law_no"),
+        metadata.get("kanun_no"),
+    ):
+        candidate = canonicalize_law_code(str(value or ""))
+        if candidate:
+            return candidate
+        raw = _normalize_whitespace(str(value or ""))
+        if raw and raw.isdigit():
+            return raw
+    return None
+
+
+def _build_source_cluster_candidates(chunks: list[RetrievedChunk], *, limit: int = 8) -> list[dict[str, Any]]:
+    clusters: OrderedDict[str, dict[str, Any]] = OrderedDict()
+    for chunk in chunks:
+        source_key = _resolve_chunk_source_key(chunk)
+        if not source_key:
+            continue
+        metadata = chunk.metadata or {}
+        cluster = clusters.setdefault(
+            source_key,
+            {
+                "source_key": source_key,
+                "display_title": (
+                    metadata.get("source_title")
+                    or metadata.get("belge_adi")
+                    or metadata.get("kanun_adi")
+                    or metadata.get("law_name")
+                    or chunk.source
+                    or chunk.citation
+                ),
+                "source_family": _resolve_chunk_source_family(chunk),
+                "laws": [],
+                "citations": [],
+                "excerpts": [],
+                "max_score": chunk.score or 0.0,
+                "chunk_count": 0,
+            },
+        )
+        cluster["max_score"] = max(cluster["max_score"], chunk.score or 0.0)
+        cluster["chunk_count"] += 1
+        law_hint = _extract_chunk_law_hint(chunk)
+        if law_hint and law_hint not in cluster["laws"]:
+            cluster["laws"].append(law_hint)
+        if chunk.citation and chunk.citation not in cluster["citations"] and len(cluster["citations"]) < 3:
+            cluster["citations"].append(chunk.citation)
+        excerpt = _normalize_whitespace(chunk.text or "")
+        if excerpt and excerpt not in cluster["excerpts"] and len(cluster["excerpts"]) < 2:
+            cluster["excerpts"].append(excerpt[:220])
+
+    ranked = sorted(
+        clusters.values(),
+        key=lambda item: (-int(item["chunk_count"]), -(item["max_score"] or 0.0), str(item["display_title"])),
+    )[:limit]
+
+    candidates: list[dict[str, Any]] = []
+    for index, cluster in enumerate(ranked, start=1):
+        candidates.append(
+            {
+                "cluster_id": f"C{index}",
+                "source_key": cluster["source_key"],
+                "display_title": cluster["display_title"],
+                "source_family": cluster["source_family"],
+                "laws": cluster["laws"],
+                "citations": cluster["citations"],
+                "excerpts": cluster["excerpts"],
+                "chunk_count": cluster["chunk_count"],
+                "max_score": round(float(cluster["max_score"] or 0.0), 6),
+            }
+        )
+    return candidates
+
+
+def _sanitize_source_cluster_selector_payload(
+    payload: dict[str, Any] | None,
+    *,
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if not isinstance(payload, dict) or not candidates:
+        return None
+
+    valid_cluster_ids = {candidate["cluster_id"] for candidate in candidates}
+    valid_laws = {
+        law
+        for candidate in candidates
+        for law in candidate.get("laws") or []
+        if isinstance(law, str) and law
+    }
+
+    selected_cluster_ids = dedupe_strings(
+        [
+            cluster_id
+            for cluster_id in (payload.get("selected_cluster_ids") or [])
+            if isinstance(cluster_id, str) and cluster_id in valid_cluster_ids
+        ]
+    )[:3]
+    selected_laws = dedupe_strings(
+        [
+            law
+            for law in (
+                canonicalize_law_code(item) or _normalize_whitespace(str(item or ""))
+                for item in (payload.get("selected_law_hints") or [])
+            )
+            if isinstance(law, str) and law in valid_laws
+        ]
+    )[:4]
+
+    if not selected_cluster_ids and not selected_laws:
+        return None
+
+    return {
+        "selected_cluster_ids": selected_cluster_ids,
+        "selected_law_hints": selected_laws,
+    }
+
+
+async def _run_source_cluster_selector(
+    *,
+    request: Request,
+    user_query: str,
+    requested_source_families: list[str],
+    chunks: list[RetrievedChunk],
+) -> dict[str, Any] | None:
+    if not _source_cluster_selector_enabled():
+        return None
+    if len(_normalize_whitespace(user_query)) < 40:
+        return None
+
+    candidates = _build_source_cluster_candidates(chunks)
+    if len(candidates) < 2:
+        return None
+
+    orchestrator = _get_orchestrator(request)
+    llm_client = getattr(orchestrator, "llm_client", None)
+    if llm_client is None or not hasattr(llm_client, "chat"):
+        return None
+
+    from llm.client import ChatMessage
+
+    family_text = ", ".join(requested_source_families) if requested_source_families else "yok"
+    selector_messages = [
+        ChatMessage(
+            role="system",
+            content=(
+                "Sen hukuk retrieval kaynak seçicisisin. "
+                "Kullanıcı sorusu ve aday kaynak kümeleri verilecek. "
+                "Görevin, cevabı kurmak için en muhtemel 1-3 kaynak kümesini seçmek. "
+                "Yalnızca verilen adaylardan seçim yap. "
+                "Belge adı ve kapsamı soruyu gerçekten yönetmeli; genel başlık benzerliğine aldanma. "
+                "Özellikle 'İade hükümleri' gibi jenerik başlıklar yüzünden alakasız metin seçme. "
+                "JSON dışında hiçbir şey döndürme. "
+                'Şema: {"selected_cluster_ids":["C1"],"selected_law_hints":["IK"]}'
+            ),
+        ),
+        ChatMessage(
+            role="user",
+            content=(
+                f"SORU:\n{user_query}\n\n"
+                f"İSTENEN BELGE AİLESİ:\n{family_text}\n\n"
+                "ADAY KAYNAK KÜMELERİ:\n"
+                f"{json.dumps(candidates, ensure_ascii=False, indent=2)}"
+            ),
+        ),
+    ]
+
+    try:
+        result = await llm_client.chat(
+            messages=selector_messages,
+            temperature=0.0,
+            max_tokens=180,
+        )
+    except Exception:
+        logger.warning("Source cluster selector failed; continuing without selector", exc_info=True)
+        return None
+
+    payload = _sanitize_source_cluster_selector_payload(
+        _extract_json_object(result.text),
+        candidates=candidates,
+    )
+    if not payload:
+        return None
+
+    payload["candidates"] = candidates
+    payload["raw_text"] = result.text
+    return payload
+
+
 async def _run_retrieval_planner(
     *,
     request: Request,
@@ -701,6 +902,7 @@ def _prioritize_chunks_for_source_families(
     query: str,
     chunks: list[RetrievedChunk],
     source_families: list[str],
+    selected_source_keys: set[str] | None = None,
 ) -> list[RetrievedChunk]:
     if not chunks:
         return chunks
@@ -727,15 +929,25 @@ def _prioritize_chunks_for_source_families(
         )
         heading = metadata.get("heading") or metadata.get("article_heading")
         cluster_size = source_cluster_sizes.get(_resolve_chunk_source_key(chunk), 1)
+        selected_source_rank = (
+            0
+            if not selected_source_keys or _resolve_chunk_source_key(chunk) in selected_source_keys
+            else 1
+        )
         family_match = 0 if not source_families else (0 if family in family_order else 1)
         family_rank = family_order.get(family, len(family_order))
         title_overlap = _count_term_overlap(str(source_title or ""), query_terms)
         heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
         text_overlap = _count_term_overlap(chunk.text, query_terms)
+        generic_heading_only_penalty = 0
+        if heading_overlap > 0 and title_overlap == 0 and text_overlap <= heading_overlap:
+            generic_heading_only_penalty = 1
         dense_score = chunk.score or 0.0
         return (
+            selected_source_rank,
             family_match,
             family_rank,
+            generic_heading_only_penalty,
             -title_overlap,
             -heading_overlap,
             -cluster_size,
@@ -749,6 +961,30 @@ def _prioritize_chunks_for_source_families(
         key=_rank_tuple,
     )
     return [chunk for _index, chunk in ranked]
+
+
+def _focus_chunks_on_selected_sources(
+    *,
+    chunks: list[RetrievedChunk],
+    selected_source_keys: set[str],
+) -> list[RetrievedChunk]:
+    if not chunks or not selected_source_keys:
+        return chunks
+
+    selected_chunks = [
+        chunk for chunk in chunks
+        if _resolve_chunk_source_key(chunk) in selected_source_keys
+    ]
+    if len(selected_chunks) < 2:
+        return chunks
+
+    other_chunks = [
+        chunk for chunk in chunks
+        if _resolve_chunk_source_key(chunk) not in selected_source_keys
+    ]
+    max_selected = max(4, min(8, len(selected_chunks)))
+    max_other = 2 if len(selected_chunks) >= 4 else 3
+    return selected_chunks[:max_selected] + other_chunks[:max_other]
 
 
 def _apply_source_family_answer_hint(
@@ -2351,6 +2587,7 @@ def _build_trace_payload(
     final_mode: str,
     final_reason: str | None,
     retrieval_plan: dict[str, Any] | None = None,
+    source_cluster_selector: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
     if not assembled_evidence and model_cited_source_ids:
@@ -2379,6 +2616,7 @@ def _build_trace_payload(
             "mentioned_laws": mentioned_laws,
             "requested_source_families": requested_source_families,
             "retrieval_plan": retrieval_plan,
+            "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -2411,6 +2649,7 @@ def _build_trace_payload(
             "mentioned_laws": mentioned_laws,
             "cross_law_mode": cross_law_mode,
             "retrieval_plan": retrieval_plan,
+            "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -3222,6 +3461,25 @@ def _sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> 
     return sanitized
 
 
+def _resolve_public_answer_text(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+) -> str:
+    if final_mode not in {"answer", "partial"}:
+        return answer_text
+    if not isinstance(answer_contract, dict):
+        return answer_text
+    contract_answer_text = answer_contract.get("answer_text")
+    if not isinstance(contract_answer_text, str):
+        return answer_text
+    normalized_contract = contract_answer_text.strip()
+    if not normalized_contract:
+        return answer_text
+    return normalized_contract
+
+
 def _extract_answer_source_ids(
     *,
     answer_contract: dict[str, Any] | None,
@@ -3447,6 +3705,7 @@ def _pre_answer_stage_payload(
     top_k_effective: int,
     reranker_enabled: bool,
     retrieval_plan: dict[str, Any] | None = None,
+    source_cluster_selector: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "decision_lane": decision_lane,
@@ -3460,6 +3719,7 @@ def _pre_answer_stage_payload(
         "forced_article_refs": forced_article_refs,
         "applied_expansions": applied_expansions,
         "retrieval_plan": retrieval_plan,
+        "source_cluster_selector": source_cluster_selector,
         "top_k_requested": top_k_requested,
         "top_k_effective": top_k_effective,
         "reranker_enabled": reranker_enabled,
@@ -4019,6 +4279,11 @@ def _finalize_chat_response(
     upstream_usage: dict[str, int] | None,
     llm_trace: dict[str, Any] | None,
 ) -> Any:
+    answer_text = _resolve_public_answer_text(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+    )
     public_answer_contract = _sanitize_public_answer_contract(answer_contract)
     trace_payload = _attach_parity_trace(
         trace_payload=trace_payload,
@@ -4782,26 +5047,27 @@ async def chat_completions(
 
     expansion_match_query = last_user_msg
 
-    for term_groups, expansion, exact_refs, boost_top_k in concept_anchor_rules:
-        if all(_contains_any_query_term(expansion_match_query, terms) for terms in term_groups):
-            retrieval_query = _append_unique_expansion(
-                retrieval_query,
-                applied_expansions,
-                expansion,
-            )
-            forced_article_refs.extend(exact_refs)
-            if boost_top_k:
-                retrieval_top_k = max(retrieval_top_k, 20)
+    if _legacy_query_expansions_enabled():
+        for term_groups, expansion, exact_refs, boost_top_k in concept_anchor_rules:
+            if all(_contains_any_query_term(expansion_match_query, terms) for terms in term_groups):
+                retrieval_query = _append_unique_expansion(
+                    retrieval_query,
+                    applied_expansions,
+                    expansion,
+                )
+                forced_article_refs.extend(exact_refs)
+                if boost_top_k:
+                    retrieval_top_k = max(retrieval_top_k, 20)
 
-    for triggers, expansion, boost_top_k in expansion_rules:
-        if _contains_any_query_term(expansion_match_query, triggers):
-            retrieval_query = _append_unique_expansion(
-                retrieval_query,
-                applied_expansions,
-                expansion,
-            )
-            if boost_top_k:
-                retrieval_top_k = max(retrieval_top_k, 20)
+        for triggers, expansion, boost_top_k in expansion_rules:
+            if _contains_any_query_term(expansion_match_query, triggers):
+                retrieval_query = _append_unique_expansion(
+                    retrieval_query,
+                    applied_expansions,
+                    expansion,
+                )
+                if boost_top_k:
+                    retrieval_top_k = max(retrieval_top_k, 20)
 
     forced_article_refs = _dedupe_article_refs(forced_article_refs)
     all_exact_article_refs = _dedupe_article_refs(explicit_article_refs + forced_article_refs)
@@ -4815,6 +5081,7 @@ async def chat_completions(
     retrieved_chunks: list[RetrievedChunk] = []
     pre_rerank_chunks: list[RetrievedChunk] = []
     post_rerank_chunks: list[RetrievedChunk] = []
+    source_cluster_selector: dict[str, Any] | None = None
     top_k_effective = retrieval_top_k
     retriever = _get_retriever(request)
 
@@ -4926,6 +5193,55 @@ async def chat_completions(
                     chunks=retrieved_chunks,
                     source_families=requested_source_families,
                 )
+
+                source_cluster_selector = await _run_source_cluster_selector(
+                    request=request,
+                    user_query=last_user_msg,
+                    requested_source_families=requested_source_families,
+                    chunks=retrieved_chunks,
+                )
+                if source_cluster_selector:
+                    selected_cluster_ids = set(source_cluster_selector.get("selected_cluster_ids") or [])
+                    candidate_by_id = {
+                        candidate["cluster_id"]: candidate
+                        for candidate in source_cluster_selector.get("candidates") or []
+                    }
+                    selected_source_keys = {
+                        candidate_by_id[cluster_id]["source_key"]
+                        for cluster_id in selected_cluster_ids
+                        if cluster_id in candidate_by_id
+                    }
+                    selected_laws = dedupe_strings(
+                        source_cluster_selector.get("selected_law_hints") or []
+                    )
+
+                    if selected_laws and not request_body.law_filter:
+                        selected_law_chunks = _retrieve_law_bucket_chunks(
+                            retriever=retriever,
+                            query=retrieval_query,
+                            laws=selected_laws,
+                            top_k=max(4, min(8, top_k_effective)),
+                        )
+                        if selected_law_chunks:
+                            retrieved_chunks = _dedupe_retrieved_chunks(selected_law_chunks + retrieved_chunks)
+
+                    retrieved_chunks = _prioritize_chunks_for_source_families(
+                        query=last_user_msg,
+                        chunks=retrieved_chunks,
+                        source_families=requested_source_families,
+                        selected_source_keys=selected_source_keys,
+                    )
+                    retrieved_chunks = _focus_chunks_on_selected_sources(
+                        chunks=retrieved_chunks,
+                        selected_source_keys=selected_source_keys,
+                    )
+                    logger.info(
+                        "Retrieval source-selector: session=%s clusters=%s laws=%s total=%d",
+                        session_id,
+                        sorted(selected_cluster_ids),
+                        selected_laws,
+                        len(retrieved_chunks),
+                    )
                 pre_rerank_chunks = list(retrieved_chunks)
         except Exception as exc:
             logger.warning(
@@ -5084,6 +5400,7 @@ async def chat_completions(
         final_mode=hardening.final_mode,
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
+        source_cluster_selector=source_cluster_selector,
     )
     pre_answer_payload = _pre_answer_stage_payload(
         decision_lane="rag",
@@ -5100,6 +5417,7 @@ async def chat_completions(
         top_k_effective=top_k_effective,
         reranker_enabled=_reranker_enabled,
         retrieval_plan=retrieval_plan,
+        source_cluster_selector=source_cluster_selector,
     )
     return _finalize_chat_response(
         request=request,
