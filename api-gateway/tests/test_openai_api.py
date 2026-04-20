@@ -60,6 +60,23 @@ def test_models_endpoint(main_client):
     assert data["data"][0]["id"] == "hukuk-ai-poc"
 
 
+def test_single_model_endpoint(main_client):
+    client, _ = main_client
+    response = client.get("/v1/models/hukuk-ai-poc")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == "hukuk-ai-poc"
+    assert data["object"] == "model"
+    assert data["owned_by"] == "hukuk-ai"
+
+
+def test_single_model_endpoint_returns_404_for_unknown_model(main_client):
+    client, _ = main_client
+    response = client.get("/v1/models/does-not-exist")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Model not found"
+
+
 def test_models_endpoint_requires_auth_when_enabled(main_client, monkeypatch):
     client, _ = main_client
     monkeypatch.setenv("API_AUTH_ENABLED", "true")
@@ -70,6 +87,12 @@ def test_models_endpoint_requires_auth_when_enabled(main_client, monkeypatch):
 
     allowed = client.get("/v1/models", headers={"X-API-Key": "secret-key"})
     assert allowed.status_code == 200
+
+    denied_single = client.get("/v1/models/hukuk-ai-poc")
+    assert denied_single.status_code == 401
+
+    allowed_single = client.get("/v1/models/hukuk-ai-poc", headers={"X-API-Key": "secret-key"})
+    assert allowed_single.status_code == 200
 
 
 def test_metrics_endpoint_reports_request_counters(main_client):
@@ -166,7 +189,6 @@ def test_chat_completions_streaming(main_client):
     ]
     assert len(finish_chunks) >= 1
 
-    # Metadata chunk mevcut olmalı
+    # OpenAI uyumluluğu için standard dışı metadata chunk gönderilmemeli
     meta_chunks = [c for c in chunks if c.get("object") == "chat.completion.metadata"]
-    assert len(meta_chunks) == 1
-    assert "citations" in meta_chunks[0]
+    assert meta_chunks == []
