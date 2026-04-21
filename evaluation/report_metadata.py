@@ -8,6 +8,13 @@ from typing import Any
 
 
 SCHEMA_VERSION = 2
+BENCHMARK_HUKUK_AI_100_METADATA = {
+    "benchmark_name": "hukuk_ai_100_stress",
+    "benchmark_version": "2026-04-21",
+    "question_count": 100,
+    "scope": "12 legislation/document families",
+    "private_answer_key": True,
+}
 KNOWN_EVAL_FAMILIES = {
     "test_questions.json": "faz1-50",
     "test_questions_v2_95.json": "v2-95",
@@ -83,7 +90,7 @@ def build_identity_metadata(
     model: str | None = None,
     config_fingerprint: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    metadata = {
         "schema_version": SCHEMA_VERSION,
         "runner": runner,
         "report_role": report_role,
@@ -104,3 +111,6 @@ def build_identity_metadata(
         "git_commit": resolve_git_commit(git_commit),
         "config_fingerprint": config_fingerprint or {},
     }
+    if infer_eval_family(questions_path, explicit=eval_family) == "hukuk_ai_100_public_questions":
+        metadata["benchmark"] = BENCHMARK_HUKUK_AI_100_METADATA
+    return metadata
