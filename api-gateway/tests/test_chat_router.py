@@ -36,6 +36,8 @@ from routers.chat import (
     ChatCompletionRequest,
     ConversationMessage,
     _apply_retrieval_plan_hints,
+    _build_numbered_law_reference_expansion,
+    _build_retrieval_plan_expansion,
     _build_source_cluster_candidates,
     _build_precise_tmk_tbk_cross_law_answer,
     _contains_query_term,
@@ -544,17 +546,40 @@ class TestLawSignalParsing:
     def test_sanitize_retrieval_plan_payload_normalizes_laws_families_and_terms(self):
         payload = _sanitize_retrieval_plan_payload(
             {
-                "law_hints": ["İK", "Türk Medeni Kanunu", "uydurma"],
+                "law_hints": ["İK", "Türk Medeni Kanunu", "3194", "233 sayılı KHK", "uydurma"],
                 "source_family_hints": ["Tüzük", "Üniversite Yönetmeliği"],
                 "term_hints": [" işe iade ", "geçerli sebep", "x"],
             }
         )
 
         assert payload == {
-            "law_hints": ["IK", "TMK"],
+            "law_hints": ["IK", "TMK", "3194", "233"],
             "source_family_hints": ["tuzuk", "uy"],
             "term_hints": ["işe iade", "geçerli sebep"],
         }
+
+    def test_build_retrieval_plan_expansion_includes_numeric_law_hints_as_search_terms(self):
+        expansion = _build_retrieval_plan_expansion(
+            {
+                "law_hints": ["3194", "IK"],
+                "source_family_hints": ["kanun"],
+                "term_hints": ["yapı tatil tutanağı"],
+            }
+        )
+
+        assert "3194 sayılı kanun" in expansion
+        assert "IK" in expansion
+        assert "yapı tatil tutanağı" in expansion
+
+    def test_build_numbered_law_reference_expansion_adds_khk_reference_variants(self):
+        expansion = _build_numbered_law_reference_expansion(
+            "666 sayılı KHK'nın hâlâ referans değeri var mıdır?"
+        )
+
+        assert "666 sayılı KHK" in expansion
+        assert "KHK-666" in expansion
+        assert "KHK/666" in expansion
+        assert "KHK-666/1 md" in expansion
 
     def test_apply_retrieval_plan_hints_merges_query_laws_and_families(self):
         retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k = _apply_retrieval_plan_hints(

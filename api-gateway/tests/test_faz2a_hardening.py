@@ -358,7 +358,7 @@ def test_harden_answer_keeps_ambiguous_multi_norm_document_selection_answer():
 
 def test_harden_answer_allows_numbered_law_scope_when_source_text_mentions_it():
     evidence = _evidence("641 m.0")
-    evidence[0]["excerpt"] = "641 sayılı KHK ek cetvelinde 11/10/2011 tarihli ve KHK-666/1 md. değişikliği gösterilir."
+    evidence[0]["excerpt"] = "641 sayılı KHK ek cetvelinde 11/10/2011 tarihli ve KHK/666/1 md. değişikliği gösterilir."
 
     result = harden_answer(
         answer_text="666 sayılı KHK mali hak eşitleme tartışmalarında atıf değeri taşır. [Kaynak: 641 m.0]",

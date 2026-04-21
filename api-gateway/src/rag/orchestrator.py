@@ -44,6 +44,32 @@ _PRIORITY_STOPWORDS = {
     "misin",
     "ozetl",
 }
+_SOURCE_SELECTION_GENERIC_TERMS = _PRIORITY_STOPWORDS | {
+    "cevapla",
+    "yanit",
+    "kisa",
+    "sonuc",
+    "gerekce",
+    "dayanak",
+    "belge",
+    "zinciri",
+    "gerekiyorsa",
+    "guncellik",
+    "notu",
+    "tarihindeki",
+    "durumuna",
+    "guncel",
+    "yururluk",
+    "tespit",
+    "ediliyor",
+    "idare",
+    "idarenin",
+    "islem",
+    "izlemesi",
+    "gerekir",
+    "sure",
+    "verme",
+}
 _TR_ASCII_TRANS = str.maketrans(
     {
         "ç": "c",
@@ -59,6 +85,16 @@ _ARTICLE_TOKEN_RE = re.compile(r"m\.\s*(\d+[a-z]?)", re.IGNORECASE)
 _NUMBERED_LAW_MENTION_RE = re.compile(
     r"\b(?P<law>\d{1,9})\s+say[ıi]l[ıi]\s+"
     r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
+    re.IGNORECASE,
+)
+_NUMBERED_LAW_REFERENCE_RE = re.compile(
+    r"\b(?P<law>\d{2,8})\s+say[ıi]l[ıi]\s+"
+    r"(?:(?:[a-zçğıöşüâîû]+\s+){0,6})?"
+    r"(?:kanun|kanunu|kanunun|khk|kararname|kararnamesi|yönetmelik|yonetmelik|tüzük|tuzuk)",
+    re.IGNORECASE,
+)
+_DASHED_LAW_REFERENCE_RE = re.compile(
+    r"\b(?:khk|kanun|kararname)[-/\s]?(?P<law>\d{2,8})\b",
     re.IGNORECASE,
 )
 
@@ -467,6 +503,18 @@ class RAGOrchestrator:
         for _, chunk in candidates:
             source_key = cls._resolve_chunk_source_key(chunk)
             source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
+        retrieved_laws = {
+            law
+            for _, chunk in candidates
+            for law in cls._chunk_law_candidates(chunk)
+            if law.isdigit()
+        }
+        referenced_law_counts: dict[str, int] = {}
+        for _, chunk in candidates:
+            for law in cls._chunk_referenced_numbered_laws(chunk):
+                if law not in retrieved_laws:
+                    continue
+                referenced_law_counts[law] = referenced_law_counts.get(law, 0) + 1
         override_chunks = cls._extract_priority_override_chunks(
             candidates=[chunk for _, chunk in candidates],
             query=query,
@@ -483,12 +531,13 @@ class RAGOrchestrator:
                 query_clauses=query_clauses,
                 requested_source_families=requested_source_families,
                 source_cluster_sizes=source_cluster_sizes,
+                referenced_law_counts=referenced_law_counts,
                 chunk=chunk,
                 query=query,
             )
             for _, chunk in candidates
         }
-        if not any(score_map.values()):
+        if not any(score > 0 for score in score_map.values()):
             return [chunk for _, chunk in candidates[:max_chunks]]
 
         ordered = [chunk for _, chunk in candidates]
@@ -685,6 +734,37 @@ class RAGOrchestrator:
                 candidates.add(match.group(1))
         return candidates
 
+    @classmethod
+    def _chunk_referenced_numbered_laws(cls, chunk: RetrievedChunk) -> set[str]:
+        metadata = chunk.metadata or {}
+        surface = " ".join(
+            str(value or "")
+            for value in (
+                chunk.text,
+                metadata.get("source_title"),
+                metadata.get("belge_adi"),
+                metadata.get("heading"),
+                metadata.get("article_heading"),
+            )
+        )
+        return {
+            match.group("law")
+            for match in _NUMBERED_LAW_REFERENCE_RE.finditer(surface)
+        } | {
+            match.group("law")
+            for match in _DASHED_LAW_REFERENCE_RE.finditer(surface)
+        }
+
+    @classmethod
+    def _extract_salient_query_terms(cls, query: str) -> set[str]:
+        return {
+            term
+            for term in cls._extract_priority_terms(query)
+            if len(term) >= 4
+            and term not in _SOURCE_SELECTION_GENERIC_TERMS
+            and not re.fullmatch(r"\d{1,4}", term)
+        }
+
     @staticmethod
     def _asks_current_validity_over_historical_contrast(query: str) -> bool:
         normalized = query.lower().translate(_TR_ASCII_TRANS)
@@ -796,6 +876,7 @@ class RAGOrchestrator:
         query_clauses: list[set[str]],
         requested_source_families: set[str],
         source_cluster_sizes: dict[str, int],
+        referenced_law_counts: dict[str, int],
         chunk: RetrievedChunk,
         query: str,
     ) -> int:
@@ -814,11 +895,31 @@ class RAGOrchestrator:
         score = overlap_score
         query_lower = query.lower().translate(_TR_ASCII_TRANS)
         numbered_laws = cls._extract_numbered_law_mentions(query)
+        chunk_laws = cls._chunk_law_candidates(chunk)
+        chunk_referenced_laws = cls._chunk_referenced_numbered_laws(chunk)
         if numbered_laws:
-            if numbered_laws & cls._chunk_law_candidates(chunk):
+            if numbered_laws & (chunk_laws | chunk_referenced_laws):
                 score += 60
             else:
                 score -= 16
+        if referenced_law_counts:
+            referenced_hits = {
+                law
+                for law in chunk_laws
+                if law in referenced_law_counts
+            }
+            if referenced_hits:
+                score += min(45, sum(referenced_law_counts[law] for law in referenced_hits) * 18)
+            elif chunk_referenced_laws & set(referenced_law_counts):
+                score -= 18
+        salient_terms = cls._extract_salient_query_terms(query)
+        if len(salient_terms) >= 3:
+            salient_overlap = len(salient_terms & chunk_terms)
+            score += min(40, salient_overlap * 10)
+            if salient_overlap == 0:
+                score -= 36
+            elif salient_overlap == 1:
+                score -= 12
         if cls._asks_current_validity_query(query):
             score += cls._chunk_active_priority(chunk)
         if len(query_clauses) >= 2:

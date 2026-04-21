@@ -425,6 +425,11 @@ def _normalize_retrieval_planner_law_hint(value: Any) -> str | None:
     raw = _normalize_whitespace(str(value or ""))
     if not raw:
         return None
+    if raw.isdigit() and 2 <= len(raw) <= 8:
+        return raw
+    numbered_mentions = extract_numbered_law_mentions(raw)
+    if numbered_mentions:
+        return numbered_mentions[0]
     normalized = _normalize_tr_text(raw)
     if normalized in _LAW_NAME_NORMALIZATION_NORMALIZED:
         return _LAW_NAME_NORMALIZATION_NORMALIZED[normalized]
@@ -510,6 +515,9 @@ def _sanitize_retrieval_plan_payload(payload: dict[str, Any] | None) -> dict[str
 
 def _build_retrieval_plan_expansion(plan: dict[str, Any]) -> str:
     parts: list[str] = []
+    for law in plan.get("law_hints") or []:
+        if isinstance(law, str) and law.strip():
+            parts.append(f"{law.strip()} sayılı kanun" if law.strip().isdigit() else law.strip())
     for family in plan.get("source_family_hints") or []:
         if isinstance(family, str) and family.strip():
             parts.append(_SOURCE_FAMILY_DISPLAY_LABELS.get(family, family))
@@ -529,6 +537,28 @@ def _build_retrieval_plan_focus_query(plan: dict[str, Any] | None) -> str:
     for family in plan.get("source_family_hints") or []:
         if isinstance(family, str) and family.strip():
             parts.append(_SOURCE_FAMILY_DISPLAY_LABELS.get(family, family))
+    return _normalize_whitespace(" ".join(dedupe_strings(parts)))
+
+
+def _build_numbered_law_reference_expansion(query: str) -> str:
+    numbered_laws = extract_numbered_law_mentions(query)
+    if not numbered_laws:
+        return ""
+    normalized = normalize_query_text(query)
+    asks_khk = "khk" in normalized or "kanun hukmunde kararname" in normalized
+    parts: list[str] = []
+    for law in numbered_laws:
+        parts.append(f"{law} sayılı kanun")
+        if asks_khk:
+            parts.extend(
+                [
+                    f"{law} sayılı KHK",
+                    f"KHK-{law}",
+                    f"KHK/{law}",
+                    f"KHK {law}",
+                    f"KHK-{law}/1 md",
+                ]
+            )
     return _normalize_whitespace(" ".join(dedupe_strings(parts)))
 
 
@@ -813,7 +843,7 @@ async def _run_retrieval_planner(
                 "Kurallar:\n"
                 "- Sadece yüksek güvenli ipuçlarını yaz.\n"
                 "- Emin değilsen ilgili diziyi boş bırak.\n"
-                "- law_hints yalnız kısa mevzuat kodları olsun; emin değilsen boş bırak.\n"
+                "- law_hints kısa mevzuat kodları veya yüksek güvenli sayısal kanun/KHK numaraları olsun; emin değilsen boş bırak.\n"
                 "- term_hints kısa ve retrieval dostu isim öbekleri olsun.\n"
                 "- Maksimum 4 law_hints, 3 source_family_hints, 6 term_hints."
             ),
@@ -5051,6 +5081,14 @@ async def chat_completions(
         )
         retrieval_top_k = max(retrieval_top_k, 20)
     numbered_law_mentions = extract_numbered_law_mentions(last_user_msg)
+    numbered_law_reference_expansion = _build_numbered_law_reference_expansion(last_user_msg)
+    if numbered_law_reference_expansion:
+        retrieval_query = _append_unique_expansion(
+            retrieval_query,
+            applied_expansions,
+            numbered_law_reference_expansion,
+        )
+        retrieval_top_k = max(retrieval_top_k, 20)
     cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
 
     concept_anchor_rules: list[
@@ -5383,6 +5421,41 @@ async def chat_completions(
                             "Retrieval numbered-law-buckets: session=%s laws=%s total=%d",
                             session_id,
                             numbered_law_mentions,
+                            len(retrieved_chunks),
+                        )
+
+                if numbered_law_reference_expansion:
+                    reference_top_k = max(6, min(10, top_k_effective))
+                    reference_results, reference_stats = retriever.retrieve(
+                        query=numbered_law_reference_expansion,
+                        top_k=reference_top_k,
+                        metadata_filter=metadata_filter,
+                    )
+                    reference_chunks = [_build_retrieved_chunk(result) for result in reference_results]
+                    if reference_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(reference_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval numbered-law-reference: session=%s hits=%d latency=%.0fms query=%s",
+                            session_id,
+                            reference_stats.hit_count,
+                            reference_stats.latency_ms,
+                            numbered_law_reference_expansion,
+                        )
+
+                planner_law_hints = set(retrieval_plan.get("law_hints") or []) if retrieval_plan else set()
+                if planner_law_hints and not request_body.law_filter:
+                    planner_law_chunks = _retrieve_law_bucket_chunks(
+                        retriever=retriever,
+                        query=retrieval_query,
+                        laws=planner_law_hints,
+                        top_k=max(4, min(8, top_k_effective)),
+                    )
+                    if planner_law_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(planner_law_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval planner-law-buckets: session=%s laws=%s total=%d",
+                            session_id,
+                            sorted(planner_law_hints),
                             len(retrieved_chunks),
                         )
 

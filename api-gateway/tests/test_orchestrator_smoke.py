@@ -725,6 +725,48 @@ def test_orchestrator_source_lock_removes_repealed_citation_for_current_query():
     assert "[Kaynak: 1000 m.9" not in response.answer
 
 
+def test_extract_priority_chunks_prefers_domain_specific_source_over_generic_sanction_source():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="5000 m.20 İdari yaptırımlar, denetimlerde tespit edilen eksikliklerin verilen süre içinde giderilmemesi halinde uygulanır.",
+                citation="5000 m.20",
+                metadata={"belge_turu": "yonetmelik", "law_no": "5000", "source_title": "GENEL DENETİM YÖNETMELİĞİ"},
+            ),
+            RetrievedChunk(
+                text="6000 m.7 Tescilsiz cihaz faaliyeti durdurulur, cihaz mühürlenir ve aykırılık giderilmezse idari para cezası uygulanır.",
+                citation="6000 m.7",
+                metadata={"belge_turu": "kanun", "law_no": "6000", "source_title": "CİHAZ GÜVENLİĞİ KANUNU"},
+            ),
+        ],
+        query="Tescilsiz cihaz için mühürleme, durdurma ve para cezası bakımından işlem zinciri nedir?",
+        max_chunks=1,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["6000 m.7"]
+
+
+def test_extract_priority_chunks_prefers_primary_law_referenced_by_secondary_sources():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="7000 m.20 Aykırılık halinde 8000 sayılı Kanunun 5 inci maddesi uyarınca işlem yapılır.",
+                citation="7000 m.20",
+                metadata={"belge_turu": "yonetmelik", "law_no": "7000", "source_title": "ALT DÜZENLEME"},
+            ),
+            RetrievedChunk(
+                text="8000 m.5 Aykırılığın tespiti, mühürleme, süre verme ve yaptırım zincirini düzenler.",
+                citation="8000 m.5",
+                metadata={"belge_turu": "kanun", "law_no": "8000", "source_title": "ANA KANUN"},
+            ),
+        ],
+        query="Aykırılık tespitinde süre verme ve yaptırım işlem zinciri hangi ana dayanakla kurulur?",
+        max_chunks=1,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["8000 m.5"]
+
+
 def test_extract_priority_chunks_prefers_numbered_khk_over_incidental_mentions():
     selected = RAGOrchestrator._extract_priority_chunks(
         [
@@ -749,6 +791,32 @@ def test_extract_priority_chunks_prefers_numbered_khk_over_incidental_mentions()
     )
 
     assert [chunk.citation for chunk in selected][:1] == ["233 m.1"]
+
+
+def test_extract_priority_chunks_prefers_source_textually_referencing_requested_numbered_khk():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="641 m.0 Ek cetvelde 11/10/2011-KHK-666/1 md. değişikliği ve geçiş atfı gösterilir.",
+                citation="641 m.0",
+                metadata={"belge_turu": "khk", "law_no": "641", "source_title": "641 SAYILI KHK"},
+            ),
+            RetrievedChunk(
+                text="663 m.28 Personel mali haklarına ilişkin genel ve mülga düzenleme.",
+                citation="663 m.28",
+                metadata={"belge_turu": "khk", "law_no": "663", "source_title": "663 SAYILI KHK"},
+            ),
+            RetrievedChunk(
+                text="659 m.0 Değişiklik tablosunda KHK/666 ile yapılan değişiklik gösterilir.",
+                citation="659 m.0",
+                metadata={"belge_turu": "khk", "law_no": "659", "source_title": "659 SAYILI KHK"},
+            ),
+        ],
+        query="666 sayılı KHK'nın hâlâ referans değeri var mıdır?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["641 m.0", "659 m.0"]
 
 
 def test_extract_priority_chunks_penalizes_organization_statute_for_tuzuk_hierarchy_question():

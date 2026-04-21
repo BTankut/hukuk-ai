@@ -779,7 +779,7 @@ def _sources_textually_reference_numbered_law(
     if not source_id_set:
         return False
     mention_re = re.compile(
-        rf"(?:{re.escape(expected_law)}\s+say[ıi]l[ıi]|khk[-\s]?{re.escape(expected_law)}|{re.escape(expected_law)}\s+sayili)",
+        rf"(?:{re.escape(expected_law)}\s+say[ıi]l[ıi]|khk[-/\s]?{re.escape(expected_law)}|{re.escape(expected_law)}\s+sayili)",
         re.IGNORECASE,
     )
     for evidence in assembled_evidence:
