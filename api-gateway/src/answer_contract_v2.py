@@ -50,6 +50,7 @@ def _lower_asciiish(value: Any) -> str:
     text = _clean(value).casefold()
     table = str.maketrans(
         {
+            "\u0307": "",
             "ç": "c",
             "ğ": "g",
             "ı": "i",
@@ -124,7 +125,7 @@ def _collect_trace_evidence(trace_payload: dict[str, Any] | None) -> list[dict[s
     for item in found:
         marker = "|".join(
             _clean(item.get(key))
-            for key in ("source_id", "citation", "chunk_id", "source_title", "madde_no")
+            for key in ("source_id", "citation", "source_identifier", "chunk_id", "source_title", "madde_no", "article_or_section")
         )
         if marker in seen:
             continue
@@ -184,6 +185,12 @@ def _canonical_trace_family(value: Any) -> str:
 def _evidence_family(evidence: dict[str, Any] | None) -> str:
     if not isinstance(evidence, dict):
         return UNKNOWN
+    direct_family = _canonical_trace_family(
+        evidence.get("source_family")
+        or evidence.get("source_family_canonical")
+    )
+    if direct_family != UNKNOWN:
+        return direct_family
     title_family = _detect_family(
         " ".join(
             _clean(evidence.get(key))
@@ -224,6 +231,10 @@ def _claim_matches_item(
             "source_id",
             "citation",
             "canonical_id",
+            "canonical_identifier_display",
+            "source_identifier",
+            "law_no",
+            "kanun_no",
             "display_citation",
             "source",
             "law_short_name",
@@ -241,6 +252,143 @@ def _claim_matches_item(
     claim_numbers = set(re.findall(r"\d+[a-z]?", " ".join(needles)))
     item_numbers = set(re.findall(r"\d+[a-z]?", " ".join(haystacks)))
     return bool(claim_numbers and claim_numbers <= item_numbers)
+
+
+def _article_token(value: Any) -> str:
+    normalized = _lower_asciiish(value)
+    if not normalized:
+        return ""
+    match = _ARTICLE_RE.search(normalized) or _SOURCE_ID_ARTICLE_RE.search(normalized)
+    if match:
+        return match.group("article").lower()
+    match = re.search(r"\b(\d+[a-z]?)\b", normalized)
+    return match.group(1).lower() if match else ""
+
+
+def _evidence_article_token(evidence: dict[str, Any] | None) -> str:
+    if not isinstance(evidence, dict):
+        return ""
+    for key in ("article_or_section", "madde_no", "article_no", "source_id", "citation"):
+        token = _article_token(evidence.get(key))
+        if token:
+            return token
+    return ""
+
+
+def _evidence_effective_state(evidence: dict[str, Any] | None) -> str:
+    if not isinstance(evidence, dict):
+        return "unknown"
+    direct = _valid_effective_state(evidence.get("effective_state"))
+    if direct:
+        return direct
+    return _detect_effective_state("", evidence, None)
+
+
+def _identifier_matches_same_evidence(
+    *,
+    source_identifier: str,
+    citations: list[str],
+    evidence: dict[str, Any] | None,
+) -> bool:
+    if not isinstance(evidence, dict):
+        return False
+    return _claim_matches_item(evidence, source_identifier=source_identifier, citations=citations)
+
+
+def _title_tokens(value: Any) -> set[str]:
+    stopwords = {
+        "ve",
+        "ile",
+        "dair",
+        "hakkinda",
+        "iliskin",
+        "sayili",
+        "kanun",
+        "kanunu",
+        "yonetmelik",
+        "yonetmeligi",
+        "tuzuk",
+        "tuzugu",
+        "karar",
+        "karari",
+        "kararname",
+        "kararnamesi",
+        "genelge",
+        "teblig",
+    }
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]{3,}", _lower_asciiish(value))
+        if token not in stopwords
+    }
+
+
+def _title_matches_same_evidence(claimed_title: str, evidence_title: str) -> bool:
+    claimed = _lower_asciiish(claimed_title)
+    evidence = _lower_asciiish(evidence_title)
+    if not claimed or not evidence or claimed == "unknown" or evidence == "unknown":
+        return True
+    if claimed in evidence or evidence in claimed:
+        return True
+    claimed_tokens = _title_tokens(claimed)
+    evidence_tokens = _title_tokens(evidence)
+    if not claimed_tokens or not evidence_tokens:
+        return True
+    overlap = len(claimed_tokens & evidence_tokens)
+    return overlap >= max(2, min(len(claimed_tokens), len(evidence_tokens)) // 2)
+
+
+def _same_evidence_verification_findings(
+    *,
+    raw_claimed_family: str,
+    raw_claimed_title: str,
+    source_identifier: str,
+    source_title: str,
+    article_or_section: str,
+    effective_state: str,
+    citations: list[str],
+    selected_evidence: dict[str, Any] | None,
+) -> list[str]:
+    if not isinstance(selected_evidence, dict):
+        return []
+
+    findings: list[str] = []
+    evidence_family = _evidence_family(selected_evidence)
+    if raw_claimed_family != UNKNOWN and evidence_family != UNKNOWN and raw_claimed_family != evidence_family:
+        findings.append("same_evidence_family_mismatch")
+
+    if source_identifier and source_identifier.lower() != "unknown" and not _identifier_matches_same_evidence(
+        source_identifier=source_identifier,
+        citations=citations,
+        evidence=selected_evidence,
+    ):
+        findings.append("same_evidence_identifier_mismatch")
+
+    evidence_title = _first_string(
+        selected_evidence.get("source_title"),
+        selected_evidence.get("full_title"),
+        selected_evidence.get("belge_adi"),
+        selected_evidence.get("kanun_adi"),
+        selected_evidence.get("title"),
+    )
+    title_claim = raw_claimed_title or source_title
+    if raw_claimed_title and not _title_matches_same_evidence(title_claim, evidence_title):
+        findings.append("same_evidence_title_mismatch")
+
+    claim_article = _article_token(article_or_section)
+    evidence_article = _evidence_article_token(selected_evidence)
+    if claim_article and evidence_article and claim_article != evidence_article:
+        findings.append("same_evidence_article_mismatch")
+
+    evidence_state = _evidence_effective_state(selected_evidence)
+    if (
+        effective_state in {"active", "repealed"}
+        and evidence_state in {"active", "repealed"}
+        and effective_state != evidence_state
+    ):
+        findings.append("same_evidence_effective_state_mismatch")
+
+    return findings
 
 
 def _claim_matches_evidence(
@@ -281,6 +429,8 @@ def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
         "CBG": "CB_GENELGE",
         "TEBLIG": "TEBLIGLER",
         "YON": "YONETMELIK",
+        "UY": "UY",
+        "KKY": "KKY",
     }
     if aliases.get(normalized_raw):
         return aliases[normalized_raw]
@@ -303,6 +453,17 @@ def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
         return normalized_raw
 
     normalized = _lower_asciiish(text)
+    text_aliases = {
+        "uy": "UY",
+        "kky": "KKY",
+        "cb_karar": "CB_KARAR",
+        "cb_kararname": "CB_KARARNAME",
+        "cb_yonetmelik": "CB_YONETMELIK",
+        "cb_genelge": "CB_GENELGE",
+        "mulga_kanun": "MULGA",
+    }
+    if normalized in text_aliases:
+        return text_aliases[normalized]
     if "mulga" in normalized or "yururlukten kaldir" in normalized:
         return "MULGA"
     checks: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -329,6 +490,8 @@ def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
 
 def _detect_identifier(text: str, citations: list[str], evidence: dict[str, Any] | None) -> str:
     from_contract = _first_string(
+        evidence.get("source_identifier") if isinstance(evidence, dict) else "",
+        evidence.get("canonical_identifier_display") if isinstance(evidence, dict) else "",
         evidence.get("source_id") if isinstance(evidence, dict) else "",
         evidence.get("citation") if isinstance(evidence, dict) else "",
     )
@@ -345,9 +508,13 @@ def _detect_identifier(text: str, citations: list[str], evidence: dict[str, Any]
 
 
 def _detect_article(text: str, evidence: dict[str, Any] | None, source_identifier: str) -> str:
-    evidence_article = _first_string(evidence.get("madde_no") if isinstance(evidence, dict) else "")
+    evidence_article = _first_string(
+        evidence.get("article_or_section") if isinstance(evidence, dict) else "",
+        evidence.get("madde_no") if isinstance(evidence, dict) else "",
+    )
     if evidence_article:
-        return f"madde:{evidence_article.lower()}"
+        token = _article_token(evidence_article) or evidence_article.lower()
+        return f"madde:{token}"
     for candidate in (source_identifier, text):
         match = _SOURCE_ID_ARTICLE_RE.search(candidate)
         if match:
@@ -366,13 +533,16 @@ def _detect_effective_state(text: str, evidence: dict[str, Any] | None, legacy_v
         return "amended"
 
     if isinstance(evidence, dict):
+        direct = _valid_effective_state(evidence.get("effective_state"))
+        if direct:
+            return direct
         mulga = evidence.get("mulga")
         if mulga is True or _lower_asciiish(mulga) in {"1", "true", "evet", "yes"}:
             return "repealed"
-        end_date = _clean(evidence.get("yururluk_bitis"))
+        end_date = _clean(evidence.get("effective_end") or evidence.get("yururluk_bitis"))
         if end_date and end_date not in _ACTIVE_END_DATE_SENTINELS:
             return "repealed"
-        if evidence.get("yururluk_baslangic") and not end_date:
+        if (evidence.get("effective_start") or evidence.get("yururluk_baslangic")) and not end_date:
             return "active"
         if end_date in _ACTIVE_END_DATE_SENTINELS:
             return "active"
@@ -557,9 +727,13 @@ def build_or_repair_answer_contract(
         ]
     )
 
-    source_family = _first_string(contract.get("source_family_claimed"))
-    if source_family:
-        source_family = _detect_family(source_family)
+    raw_claimed_family = _first_string(contract.get("source_family_claimed"))
+    if raw_claimed_family:
+        raw_claimed_family = _detect_family(raw_claimed_family)
+    if not raw_claimed_family or raw_claimed_family == UNKNOWN:
+        raw_claimed_family = _detect_family(combined_text, selected_evidence)
+
+    source_family = raw_claimed_family
     if not source_family or source_family == UNKNOWN:
         source_family = _detect_family(combined_text, selected_evidence)
     selected_evidence_family = _evidence_family(selected_evidence)
@@ -571,9 +745,11 @@ def build_or_repair_answer_contract(
         legacy_primary,
         _detect_identifier(combined_text, citations, selected_evidence),
     )
+    raw_claimed_title = _first_string(contract.get("source_title_claimed"))
     source_title = _first_string(
-        contract.get("source_title_claimed"),
+        raw_claimed_title,
         selected_evidence.get("source_title") if isinstance(selected_evidence, dict) else "",
+        selected_evidence.get("full_title") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("belge_adi") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("kanun_adi") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("title") if isinstance(selected_evidence, dict) else "",
@@ -625,6 +801,22 @@ def build_or_repair_answer_contract(
     )
     if not native_dialog and source_identifier and evidence_items and not claim_evidence_match:
         verification_findings.append("claimed_source_not_in_selected_evidence")
+
+    if not native_dialog:
+        verification_findings.extend(
+            finding
+            for finding in _same_evidence_verification_findings(
+                raw_claimed_family=raw_claimed_family,
+                raw_claimed_title=raw_claimed_title,
+                source_identifier=source_identifier,
+                source_title=source_title,
+                article_or_section=article_or_section,
+                effective_state=effective_state,
+                citations=citations,
+                selected_evidence=selected_evidence,
+            )
+            if finding not in verification_findings
+        )
 
     family_resolution = _trace_family_resolution(trace_payload)
     predicted_family = _canonical_trace_family(family_resolution.get("predicted_family"))

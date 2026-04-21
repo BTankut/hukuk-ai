@@ -1147,12 +1147,15 @@ class RAGOrchestrator:
             return None
 
         intro = cls._build_reference_value_intro(query) or (
-            "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:"
+            "Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:"
         )
         lines = [intro]
         for chunk in priority_chunks:
-            excerpt = cls._build_chunk_excerpt(chunk.text)
-            lines.append(f"- [Kaynak: {chunk.citation}] {excerpt}")
+            excerpt = cls._build_query_focused_excerpt(chunk.text, query=query, max_len=360)
+            lines.append(f"- [Kaynak: {chunk.citation}] Doğrulanmış span: {excerpt}")
+        lines.append(
+            "Bu yanıt yalnız yukarıdaki kanıtlarla sınırlıdır; kanıt dışı normatif sonuç kurulmamıştır."
+        )
         return "\n".join(lines)
 
     @classmethod

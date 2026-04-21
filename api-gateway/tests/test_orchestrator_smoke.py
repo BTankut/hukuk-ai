@@ -130,9 +130,10 @@ def test_orchestrator_source_locks_when_answer_cites_only_non_priority_source():
     assert response.blocked is False
     assert response.citations == ["TBK m.299", "TMK m.683"]
     assert "source_lock_fallback" in response.guardrails_reasons
-    assert response.answer.startswith("Bu soru bakımından doğrudan değerlendirilmesi gereken")
+    assert response.answer.startswith("Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap")
     assert "[Kaynak: TBK m.299]" in response.answer
     assert "[Kaynak: TMK m.683]" in response.answer
+    assert "kanıt dışı normatif sonuç kurulmamıştır" in response.answer
 
 
 def test_orchestrator_source_locks_when_answer_mixes_one_priority_with_wrong_sources():

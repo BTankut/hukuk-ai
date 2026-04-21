@@ -110,3 +110,83 @@ def test_repair_marks_cross_family_evidence_conflict_as_partial():
     assert contract["confidence_0_100"] < 70
     assert contract["needs_manual_review"] is True
     assert "cross_family_evidence_conflict" in contract["verification_findings"]
+
+
+def test_repair_flags_same_evidence_identifier_and_article_mismatch():
+    result = build_or_repair_answer_contract(
+        qid="PHASE4-SAME-EVIDENCE",
+        answer_text="Bu sonuç 9999 sayılı metnin 12. maddesine dayanır. [Kaynak: 9999 m.12]",
+        citations=["9999 m.12"],
+        answer_contract={
+            "answer_text": "Bu sonuç 9999 sayılı metnin 12. maddesine dayanır. [Kaynak: 9999 m.12]",
+            "primary_source_id": "9999 m.12",
+            "source_family_claimed": "KANUN",
+            "source_identifier_claimed": "9999 m.12",
+            "article_or_section_claimed": "madde:12",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "40969:m27:f0",
+                    "citation": "40969 m.27/f.0",
+                    "source_family": "uy",
+                    "source_identifier": "40969 m.27",
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "article_or_section": "27",
+                    "effective_state": "active",
+                    "quoted_or_extracted_span": "Tez danışmanı atanmasına ilişkin kural.",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "partially_grounded"
+    assert contract["confidence_0_100"] < 70
+    assert contract["needs_manual_review"] is True
+    assert "same_evidence_family_mismatch" in contract["verification_findings"]
+    assert "same_evidence_identifier_mismatch" in contract["verification_findings"]
+    assert "same_evidence_article_mismatch" in contract["verification_findings"]
+
+
+def test_repair_accepts_phase4_canonical_same_evidence_fields():
+    result = build_or_repair_answer_contract(
+        qid="PHASE4-GROUNDED",
+        answer_text="Tez danışmanı atanması yönetmelik m.27'de düzenlenir. [Kaynak: 40969 m.27]",
+        citations=["40969 m.27"],
+        answer_contract={
+            "answer_text": "Tez danışmanı atanması yönetmelik m.27'de düzenlenir. [Kaynak: 40969 m.27]",
+            "primary_source_id": "40969 m.27",
+            "source_family_claimed": "UY",
+            "source_title_claimed": "Kırklareli Üniversitesi Lisansüstü Eğitim ve Öğretim Yönetmeliği",
+            "source_identifier_claimed": "40969 m.27",
+            "article_or_section_claimed": "madde:27",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "40969:m27:f0",
+                    "citation": "40969 m.27/f.0",
+                    "source_family": "uy",
+                    "source_identifier": "40969 m.27",
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "article_or_section": "27",
+                    "effective_state": "active",
+                    "quoted_or_extracted_span": "Tez danışmanı atanmasına ilişkin kural.",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "fully_grounded"
+    assert contract["needs_manual_review"] is False
+    assert contract["verification_findings"] == []
