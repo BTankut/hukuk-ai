@@ -31,3 +31,9 @@ htmlcov/
 
 # Local databases or large runtime artifacts
 *.db
+
+# Benchmark private inputs and local run artifacts
+evaluation/private/
+*_answer_key_private.csv
+*_master.csv
+reports/benchmark/runs/
