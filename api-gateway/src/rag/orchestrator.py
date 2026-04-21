@@ -56,6 +56,11 @@ _TR_ASCII_TRANS = str.maketrans(
     }
 )
 _ARTICLE_TOKEN_RE = re.compile(r"m\.\s*(\d+[a-z]?)", re.IGNORECASE)
+_NUMBERED_LAW_MENTION_RE = re.compile(
+    r"\b(?P<law>\d{1,9})\s+say[ıi]l[ıi]\s+"
+    r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
+    re.IGNORECASE,
+)
 
 _QUERY_CLAUSE_SPLIT_RE = re.compile(r"\b(?:ve|ile)\b")
 _SOURCE_FAMILY_QUERY_HINTS: dict[str, tuple[str, ...]] = {
@@ -83,6 +88,63 @@ _PROCEDURE_QUERY_HINTS = (
     "arabuluculuk",
     "hak düşürücü",
     "hak dusurucu",
+)
+_CURRENT_VALIDITY_QUERY_HINTS = (
+    "guncel",
+    "yururluk",
+    "yururlukte",
+    "yururluk durumuna gore",
+    "guncellik notu",
+    "hangi metin",
+    "kullanilmali",
+)
+_OLD_CURRENT_CONTRAST_HINTS = (
+    "eski",
+    "mulga",
+    "yururlukten kaldir",
+    "yoksa",
+)
+_ACTIVE_END_DATE_SENTINELS = {
+    "9999-12-31",
+    "9999-12-31T00:00:00",
+    "9999-12-31 00:00:00",
+}
+_TRUTHY_METADATA_FLAGS = {"1", "true", "yes", "y", "evet"}
+_FALSEY_METADATA_FLAGS = {"0", "false", "no", "n", "hayir", "hayır"}
+_HISTORICAL_SOURCE_FOCUS_HINTS = (
+    "mulga mevzuat",
+    "mulga kanun",
+    "mulga duzenleme",
+    "tarihsel metin",
+    "eski metin",
+    "o tarihte",
+    "yururlukten kalkmis",
+)
+_REFERENCE_VALUE_QUERY_HINTS = (
+    "referans degeri",
+    "atif degeri",
+    "hala referans",
+    "halen referans",
+    "normatif referans",
+)
+_TUZUK_HIERARCHY_HINTS = (
+    "gecerli bir tuzuk",
+    "tuzuk hukmu",
+    "kurum ici",
+    "alt duzenleme",
+    "celis",
+    "normlar hiyerarsisi",
+    "hangisi uygulanir",
+)
+_ORGANIZATION_STATUTE_HINTS = (
+    "sendika tuzug",
+    "dernek tuzug",
+    "vakif senedi",
+    "kurulus tuzug",
+    "ana tuzuk",
+    "tuzuk degisikligi",
+    "tuzugun degistirilmesi",
+    "tuzukte belirtilen",
 )
 
 
@@ -553,6 +615,28 @@ class RAGOrchestrator:
         family = metadata.get("belge_turu") or metadata.get("source_type")
         if isinstance(family, str) and family.strip():
             return family.strip().lower()
+        source_title = (
+            metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+            or ""
+        )
+        normalized_title = str(source_title).lower().translate(_TR_ASCII_TRANS)
+        if "tuzugu" in normalized_title or normalized_title.endswith("tuzuk"):
+            return "tuzuk"
+        if "kanun hukmunde kararname" in normalized_title or re.search(r"\bkhk\b", normalized_title):
+            return "khk"
+        if "cumhurbaskanligi yonetmeligi" in normalized_title:
+            return "cb_yonetmelik"
+        if "yonetmelik" in normalized_title:
+            return "yonetmelik"
+        if "teblig" in normalized_title:
+            return "teblig"
+        if "genelge" in normalized_title:
+            return "cb_genelge"
+        if "kararname" in normalized_title:
+            return "cb_kararname"
         return None
 
     @staticmethod
@@ -569,6 +653,140 @@ class RAGOrchestrator:
             or chunk.source
             or chunk.citation
         ).strip().lower()
+
+    @staticmethod
+    def _extract_numbered_law_mentions(query: str) -> set[str]:
+        return {
+            match.group("law")
+            for match in _NUMBERED_LAW_MENTION_RE.finditer(query or "")
+        }
+
+    @staticmethod
+    def _chunk_law_candidates(chunk: RetrievedChunk) -> set[str]:
+        metadata = chunk.metadata or {}
+        candidates: set[str] = set()
+        for value in (
+            metadata.get("law_no"),
+            metadata.get("kanun_no"),
+            metadata.get("law_short_name"),
+            metadata.get("kanun_kisa_adi"),
+            metadata.get("source_id"),
+            chunk.source,
+            chunk.citation,
+        ):
+            raw = re.sub(r"\s+", " ", str(value or "")).strip()
+            if not raw:
+                continue
+            candidates.add(raw.upper())
+            if raw.isdigit():
+                candidates.add(raw)
+            match = re.search(r"\b(\d{1,9})\s*(?:m|md|madde)\.?\s*\d+", raw, re.IGNORECASE)
+            if match:
+                candidates.add(match.group(1))
+        return candidates
+
+    @staticmethod
+    def _asks_current_validity_over_historical_contrast(query: str) -> bool:
+        normalized = query.lower().translate(_TR_ASCII_TRANS)
+        year_count = len({match.group(0) for match in re.finditer(r"\b(19|20)\d{2}\b", query or "")})
+        has_current_signal = any(hint in normalized for hint in _CURRENT_VALIDITY_QUERY_HINTS)
+        has_contrast_signal = any(hint in normalized for hint in _OLD_CURRENT_CONTRAST_HINTS)
+        return has_current_signal and (has_contrast_signal or year_count >= 2)
+
+    @classmethod
+    def _asks_current_validity_query(cls, query: str) -> bool:
+        if cls._asks_current_validity_over_historical_contrast(query):
+            return True
+        normalized = query.lower().translate(_TR_ASCII_TRANS)
+        if any(hint in normalized for hint in _HISTORICAL_SOURCE_FOCUS_HINTS):
+            return False
+        return any(hint in normalized for hint in _CURRENT_VALIDITY_QUERY_HINTS)
+
+    @staticmethod
+    def _chunk_active_priority(chunk: RetrievedChunk) -> int:
+        if RAGOrchestrator._is_temporally_inactive_chunk(chunk):
+            return -45
+        metadata = chunk.metadata or {}
+        mulga = metadata.get("mulga")
+        start = str(metadata.get("yururluk_baslangic") or "")
+        end = str(metadata.get("yururluk_bitis") or "").strip()
+        if start or RAGOrchestrator._metadata_flag_is_false(mulga) or end in _ACTIVE_END_DATE_SENTINELS:
+            return 24
+        return 0
+
+    @staticmethod
+    def _metadata_flag_is_true(value: Any) -> bool:
+        if value is True:
+            return True
+        if isinstance(value, str):
+            return value.strip().lower().translate(_TR_ASCII_TRANS) in _TRUTHY_METADATA_FLAGS
+        return False
+
+    @staticmethod
+    def _metadata_flag_is_false(value: Any) -> bool:
+        if value is False:
+            return True
+        if isinstance(value, str):
+            return value.strip().lower().translate(_TR_ASCII_TRANS) in _FALSEY_METADATA_FLAGS
+        return False
+
+    @classmethod
+    def _is_temporally_inactive_chunk(cls, chunk: RetrievedChunk) -> bool:
+        metadata = chunk.metadata or {}
+        if cls._metadata_flag_is_true(metadata.get("mulga")):
+            return True
+        source_family = cls._resolve_chunk_source_family(chunk)
+        if source_family and source_family.startswith("mulga"):
+            return True
+        end = str(metadata.get("yururluk_bitis") or "").strip()
+        return bool(end and end not in _ACTIVE_END_DATE_SENTINELS)
+
+    @staticmethod
+    def _looks_like_tuzuk_hierarchy_query(query: str) -> bool:
+        normalized = query.lower().translate(_TR_ASCII_TRANS)
+        return "tuzuk" in normalized and any(hint in normalized for hint in _TUZUK_HIERARCHY_HINTS)
+
+    @staticmethod
+    def _looks_like_organization_statute_chunk(chunk: RetrievedChunk) -> bool:
+        metadata = chunk.metadata or {}
+        surface = " ".join(
+            str(value or "")
+            for value in (
+                chunk.text,
+                metadata.get("source_title"),
+                metadata.get("belge_adi"),
+                metadata.get("kanun_adi"),
+                metadata.get("heading"),
+                metadata.get("article_heading"),
+            )
+        ).lower().translate(_TR_ASCII_TRANS)
+        return any(hint in surface for hint in _ORGANIZATION_STATUTE_HINTS)
+
+    @classmethod
+    def _build_reference_value_intro(cls, query: str | None) -> str | None:
+        if not query:
+            return None
+        normalized = query.lower().translate(_TR_ASCII_TRANS)
+        if not any(hint in normalized for hint in _REFERENCE_VALUE_QUERY_HINTS):
+            return None
+        labels: list[str] = []
+        seen: set[str] = set()
+        for match in _NUMBERED_LAW_MENTION_RE.finditer(query or ""):
+            law = match.group("law")
+            if law in seen:
+                continue
+            kind = match.group("kind")
+            display_kind = "KHK" if "khk" in kind.lower() or "kararname" in kind.lower() else kind
+            labels.append(f"{law} sayılı {display_kind}")
+            seen.add(law)
+        if not labels:
+            return None
+        label_text = ", ".join(labels)
+        return (
+            f"{label_text}, soru konusu bağlamda hâlâ tarihsel ve normatif atıf değeri taşır. "
+            "Güncel sonuç, yürürlükteki ana metne işlenmiş hüküm, ilga/iptal notu ve ilgili geçiş "
+            "düzenlemeleri birlikte okunarak kurulmalıdır. Dayanak gösteren başlıca kaynaklar:"
+        )
 
     @classmethod
     def _score_chunk_priority(
@@ -595,6 +813,14 @@ class RAGOrchestrator:
         overlap_score = len(query_terms & chunk_terms)
         score = overlap_score
         query_lower = query.lower().translate(_TR_ASCII_TRANS)
+        numbered_laws = cls._extract_numbered_law_mentions(query)
+        if numbered_laws:
+            if numbered_laws & cls._chunk_law_candidates(chunk):
+                score += 60
+            else:
+                score -= 16
+        if cls._asks_current_validity_query(query):
+            score += cls._chunk_active_priority(chunk)
         if len(query_clauses) >= 2:
             first_clause = query_clauses[0]
             first_clause_overlap = len(first_clause & chunk_terms)
@@ -635,9 +861,14 @@ class RAGOrchestrator:
         source_family = cls._resolve_chunk_source_family(chunk)
         if requested_source_families:
             if source_family in requested_source_families:
-                score += 24
+                score += 42
             elif source_family:
-                score -= 12
+                score -= 18
+        if cls._looks_like_tuzuk_hierarchy_query(query):
+            if source_family == "tuzuk":
+                score += 36
+            elif cls._looks_like_organization_statute_chunk(chunk):
+                score -= 55
         cluster_size = source_cluster_sizes.get(cls._resolve_chunk_source_key(chunk), 1)
         if cluster_size > 1:
             score += (cluster_size - 1) * 6
@@ -667,6 +898,24 @@ class RAGOrchestrator:
             not any(cls._citation_matches_chunk(citation, chunk) for chunk in retrieved_chunks)
             for citation in cited
         )
+
+    @classmethod
+    def _has_temporally_invalid_citations_for_current_query(
+        cls,
+        *,
+        query: str,
+        citations: list[str],
+        retrieved_chunks: list[RetrievedChunk],
+    ) -> bool:
+        if not cls._asks_current_validity_query(query):
+            return False
+        for citation in citations:
+            for chunk in retrieved_chunks:
+                if not cls._citation_matches_chunk(citation, chunk):
+                    continue
+                if cls._is_temporally_inactive_chunk(chunk):
+                    return True
+        return False
 
     @staticmethod
     def _has_incomplete_priority_coverage(
@@ -777,7 +1026,7 @@ class RAGOrchestrator:
         if not priority_chunks:
             return None
 
-        intro = (
+        intro = cls._build_reference_value_intro(query) or (
             "Bu soru bakımından doğrudan değerlendirilmesi gereken başlıca hükümler şunlardır:"
         )
         lines = [intro]
@@ -790,6 +1039,7 @@ class RAGOrchestrator:
     def _needs_source_lock_fallback(
         cls,
         *,
+        query: str,
         answer: str,
         retrieved_chunks: list[RetrievedChunk],
         priority_chunks: list[RetrievedChunk],
@@ -801,6 +1051,11 @@ class RAGOrchestrator:
             or not citations
             or not cls._has_priority_citation_overlap(citations, priority_chunks)
             or cls._has_nonretrieved_citations(citations, retrieved_chunks)
+            or cls._has_temporally_invalid_citations_for_current_query(
+                query=query,
+                citations=citations,
+                retrieved_chunks=retrieved_chunks,
+            )
             or (
                 source_lock_target_citations is not None
                 and cls._has_incomplete_priority_coverage(
@@ -840,6 +1095,7 @@ class RAGOrchestrator:
             return answer
 
         needs_fallback = cls._needs_source_lock_fallback(
+            query=query,
             answer=answer,
             retrieved_chunks=retrieved_chunks,
             priority_chunks=priority_chunks,
@@ -850,6 +1106,7 @@ class RAGOrchestrator:
 
         if draft_answer and draft_answer != answer:
             draft_needs_fallback = cls._needs_source_lock_fallback(
+                query=query,
                 answer=draft_answer,
                 retrieved_chunks=retrieved_chunks,
                 priority_chunks=priority_chunks,

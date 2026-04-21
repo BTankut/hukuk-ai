@@ -604,6 +604,174 @@ def test_extract_priority_chunks_prefers_requested_tuzuk_family_with_matching_ti
     assert [chunk.citation for chunk in selected][:1] == ["20135150 m.7"]
 
 
+def test_extract_priority_chunks_prefers_current_source_for_old_current_validity_question():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="3473 m.2 Devlet Arşiv Hizmetleri hakkında eski düzenleme.",
+                citation="3473 m.2",
+                metadata={
+                    "belge_turu": "kanun",
+                    "source_title": "3473 SAYILI KANUN",
+                    "yururluk_bitis": "2019-01-01",
+                    "mulga": True,
+                },
+            ),
+            RetrievedChunk(
+                text="201811962 m.1 Devlet Arşiv Hizmetleri Hakkında Yönetmelik güncel arşiv hizmetlerini düzenler.",
+                citation="201811962 m.1",
+                metadata={
+                    "belge_turu": "cb_yonetmelik",
+                    "source_title": "DEVLET ARŞİV HİZMETLERİ HAKKINDA YÖNETMELİK",
+                    "yururluk_baslangic": "2019-01-01",
+                    "yururluk_bitis": "9999-12-31",
+                    "mulga": False,
+                },
+            ),
+        ],
+        query="Arşiv mevzuatı sorusunda 1988 tarihli eski metin mi, yoksa 2019 tarihli güncel metin mi kullanılmalı?",
+        max_chunks=1,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["201811962 m.1"]
+
+
+def test_extract_priority_chunks_prefers_active_source_for_current_validity_question():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="1000 m.9 eski uygulama işlemlerine ilişkin yürürlükten kalkmış düzenleme.",
+                citation="1000 m.9",
+                metadata={
+                    "belge_turu": "mulga_kanun",
+                    "law_no": "1000",
+                    "source_title": "MÜLGA ÖRNEK KANUN",
+                    "mulga": "true",
+                },
+            ),
+            RetrievedChunk(
+                text="2000 m.1 güncel başvuru, inceleme ve karar sürecini düzenler.",
+                citation="2000 m.1",
+                metadata={
+                    "belge_turu": "kanun",
+                    "law_no": "2000",
+                    "source_title": "GÜNCEL ÖRNEK KANUN",
+                    "yururluk_bitis": "9999-12-31",
+                    "mulga": "false",
+                },
+            ),
+        ],
+        query="Bu soruyu 2026-04-19 tarihindeki yürürlük durumuna göre cevapla. Güncel işlem zinciri nedir?",
+        max_chunks=1,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["2000 m.1"]
+
+
+def test_build_source_locked_fallback_answers_numbered_reference_value_query():
+    fallback = RAGOrchestrator._build_source_locked_fallback(
+        [
+            RetrievedChunk(
+                text="641 m.0 11/10/2011-KHK-666/1 md. değişikliğini gösteren cetvel.",
+                citation="641 m.0",
+                metadata={"belge_turu": "khk", "law_no": "641"},
+            )
+        ],
+        query="666 sayılı KHK'nın hâlâ referans değeri var mıdır?",
+        max_chunks=1,
+    )
+
+    assert fallback is not None
+    assert "666 sayılı KHK" in fallback
+    assert "atıf değeri" in fallback
+    assert "[Kaynak: 641 m.0]" in fallback
+
+
+def test_orchestrator_source_lock_removes_repealed_citation_for_current_query():
+    guardrails = DummyGuardrails()
+    llm = DummyPassthroughLLMClient(
+        "Güncel işlem önce başvuru ile başlar [Kaynak: 2000 m.1]. "
+        "Ayrıca eski uygulama süreci uygulanır [Kaynak: 1000 m.9/f.0]."
+    )
+    orchestrator = RAGOrchestrator(llm_client=llm, guardrails=guardrails)
+
+    response = asyncio.run(
+        orchestrator.answer(
+            query="Bu soruyu 2026-04-19 tarihindeki yürürlük durumuna göre cevapla. Güncel işlem zinciri nedir?",
+            retrieved_chunks=[
+                RetrievedChunk(
+                    text="2000 m.1 Güncel başvuru, inceleme ve karar sürecini düzenler.",
+                    citation="2000 m.1",
+                    metadata={"law_no": "2000", "mulga": "false", "yururluk_bitis": "9999-12-31"},
+                ),
+                RetrievedChunk(
+                    text="2000 m.2 Güncel yaptırım sonucunu düzenler.",
+                    citation="2000 m.2",
+                    metadata={"law_no": "2000", "mulga": "false", "yururluk_bitis": "9999-12-31"},
+                ),
+                RetrievedChunk(
+                    text="1000 m.9 Eski uygulama işlemleri.",
+                    citation="1000 m.9",
+                    metadata={"law_no": "1000", "belge_turu": "mulga_kanun", "mulga": "true"},
+                ),
+            ],
+            source_lock_target_citations=2,
+        )
+    )
+
+    assert response.blocked is False
+    assert response.citations == ["2000 m.1", "2000 m.2"]
+    assert "source_lock_fallback" in response.guardrails_reasons
+    assert "[Kaynak: 1000 m.9" not in response.answer
+
+
+def test_extract_priority_chunks_prefers_numbered_khk_over_incidental_mentions():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="2254 m.7 yönetim kuruluna ilişkin genel düzenleme 233 sayılı KHK saklıdır der.",
+                citation="2254 m.7",
+                metadata={"belge_turu": "kanun", "law_no": "2254", "source_title": "2254 SAYILI KANUN"},
+            ),
+            RetrievedChunk(
+                text="233 m.1 Kamu iktisadi teşebbüsleri hakkında özel rejim ve kapsam düzenlenir.",
+                citation="233 m.1",
+                metadata={"belge_turu": "khk", "law_no": "233", "source_title": "233 SAYILI KHK"},
+            ),
+            RetrievedChunk(
+                text="TTK m.1 Türk Ticaret Kanunu genel ticari hükümleri düzenler.",
+                citation="TTK m.1",
+                metadata={"belge_turu": "kanun", "law_short_name": "TTK", "source_title": "TÜRK TİCARET KANUNU"},
+            ),
+        ],
+        query="Bir KİT'e ilişkin özel rejim sorusunda 233 sayılı KHK ile TTK arasında çatışma görünüyorsa lex specialis analizi nasıl kurulmalı?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected][:1] == ["233 m.1"]
+
+
+def test_extract_priority_chunks_penalizes_organization_statute_for_tuzuk_hierarchy_question():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="2821 m.54 Sendika tüzüğünün değiştirilmesi ve kuruluş tüzüğü usulünü düzenler.",
+                citation="2821 m.54",
+                metadata={"belge_turu": "kanun", "source_title": "SENDİKALAR KANUNU"},
+            ),
+            RetrievedChunk(
+                text="9999 m.1 Tüzük hükümleri alt düzenlemelere göre üst norm niteliğindedir.",
+                citation="9999 m.1",
+                metadata={"belge_turu": "tuzuk", "source_title": "ÖRNEK TÜZÜK"},
+            ),
+        ],
+        query="Geçerli bir tüzük hükmü ile kurum içi alt düzenleme çelişirse hangisi uygulanır?",
+        max_chunks=1,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["9999 m.1"]
+
+
 def test_extract_priority_chunks_prefers_same_source_cluster_for_employment_query():
     selected = RAGOrchestrator._extract_priority_chunks(
         [

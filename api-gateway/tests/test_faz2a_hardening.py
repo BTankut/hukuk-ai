@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from datetime import date
 
-from faz2a_hardening import canonicalize_source_id, harden_answer, harden_answer_diagnostic
+from faz2a_hardening import (
+    build_law_scope_signal,
+    canonicalize_source_id,
+    harden_answer,
+    harden_answer_diagnostic,
+    resolve_target_date,
+)
 
 
 def _evidence(*source_ids: str) -> list[dict[str, object]]:
@@ -38,6 +44,30 @@ def test_canonicalize_source_id_accepts_alpha_short_codes_in_full_and_visible_fo
     assert canonicalize_source_id("IK m.18/f.0") == "IK m.18"
     assert canonicalize_source_id("KVKK:6698:m9:f0:from2016-04-07:to9999-12-31") == "KVKK m.9"
     assert canonicalize_source_id("KVKK m.9/f.0") == "KVKK m.9"
+
+
+def test_resolve_target_date_uses_today_for_old_current_validity_contrast():
+    target_date, explicit = resolve_target_date(
+        "1988 tarihli eski metin mi, yoksa 2019 tarihli güncel metin mi kullanılmalı?",
+        today=date(2026, 4, 21),
+    )
+
+    assert target_date == date(2026, 4, 21)
+    assert explicit is False
+
+
+def test_build_law_scope_signal_extracts_numbered_khk_mentions():
+    signal = build_law_scope_signal(
+        mentioned_laws=["TTK"],
+        explicit_article_refs=[],
+        law_filter=None,
+        model_source_ids=["233 m.1", "TTK m.1"],
+        question_raw="233 sayılı KHK ile TTK arasında çatışma varsa lex specialis nasıl kurulur?",
+    )
+
+    assert signal["scope_class"] == "multi_law"
+    assert signal["explicit_law_scope"] == ["TTK", "233"]
+    assert signal["expected_law_scope"] == ["TTK", "233"]
 
 
 def test_harden_answer_keeps_supported_answer_in_answer_mode():
@@ -324,6 +354,29 @@ def test_harden_answer_keeps_ambiguous_multi_norm_document_selection_answer():
     assert result.answer_text.startswith("Tapu kütüğü")
     assert result.citations == ["20135150 m.7", "20135150 m.23", "TMK m.997"]
     assert result.answer_contract["law_scope"] == ["20135150", "TMK"]
+
+
+def test_harden_answer_allows_numbered_law_scope_when_source_text_mentions_it():
+    evidence = _evidence("641 m.0")
+    evidence[0]["excerpt"] = "641 sayılı KHK ek cetvelinde 11/10/2011 tarihli ve KHK-666/1 md. değişikliği gösterilir."
+
+    result = harden_answer(
+        answer_text="666 sayılı KHK mali hak eşitleme tartışmalarında atıf değeri taşır. [Kaynak: 641 m.0]",
+        citations=["641 m.0"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="666 sayılı KHK'nın hâlâ referans değeri var mıdır?",
+        mentioned_laws=["666"],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["641 m.0"],
+        today=date(2026, 4, 20),
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.answer_contract["law_scope"] == ["666", "641"]
 
 
 def test_harden_answer_returns_partial_when_supported_and_unsupported_claim_units_mix():

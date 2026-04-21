@@ -53,6 +53,7 @@ from faz2a_hardening import (
     canonicalize_law_code,
     canonicalize_source_id,
     dedupe_strings,
+    extract_numbered_law_mentions,
     harden_answer,
     normalize_query_text,
     validate_trace_payload,
@@ -103,6 +104,13 @@ _NUMERIC_ARTICLE_SEQUENCE_RE = re.compile(
     rf"\b(?P<law>{_NUMERIC_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<articles>\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?(?:\s*(?:,|ve|veya)\s*(?:m|md|madde)?\.?\s*\d+[a-z]?(?:\s*[-–]\s*\d+[a-z]?)?)*)",
     re.IGNORECASE,
 )
+_ACTIVE_END_DATE_SENTINELS = {
+    "9999-12-31",
+    "9999-12-31T00:00:00",
+    "9999-12-31 00:00:00",
+}
+_TRUTHY_METADATA_FLAGS = {"1", "true", "yes", "y", "evet"}
+_FALSEY_METADATA_FLAGS = {"0", "false", "no", "n", "hayir", "hayır"}
 _LAW_MENTION_RE = re.compile(
     rf"\b(?P<law>{_LAW_TOKEN_PATTERN}|Türk Borçlar Kanunu|Borçlar Kanunu|Türk Medeni Kanunu|Medeni Kanun|Türk Ceza Kanunu|Ceza Kanunu|Türk Ticaret Kanunu|Ticaret Kanunu|İcra ve İflas Kanunu)\b",
     re.IGNORECASE,
@@ -198,6 +206,8 @@ _SOURCE_FAMILY_HINT_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] =
 _SOURCE_FAMILY_ALIAS_EXPANSIONS: dict[str, tuple[str, ...]] = {
     "yonetmelik": ("yonetmelik", "cb_yonetmelik", "kky", "uy"),
     "kanun": ("kanun", "mulga_kanun"),
+    "khk": ("khk",),
+    "tuzuk": ("tuzuk",),
 }
 _SOURCE_FAMILY_DISPLAY_LABELS: dict[str, str] = {
     "tuzuk": "tüzük",
@@ -537,7 +547,6 @@ def _apply_retrieval_plan_hints(
     requested_source_families = dedupe_strings(
         [*requested_source_families, *(retrieval_plan.get("source_family_hints") or [])]
     )
-
     planner_expansion = _build_retrieval_plan_expansion(retrieval_plan)
     if planner_expansion:
         retrieval_query = _append_unique_expansion(
@@ -738,6 +747,28 @@ async def _run_source_cluster_selector(
     if not payload:
         return None
 
+    requested_family_set = set(requested_source_families)
+    if requested_family_set and any(candidate.get("source_family") in requested_family_set for candidate in candidates):
+        candidate_by_id = {candidate["cluster_id"]: candidate for candidate in candidates}
+        selected_cluster_ids = [
+            cluster_id
+            for cluster_id in payload.get("selected_cluster_ids") or []
+            if candidate_by_id.get(cluster_id, {}).get("source_family") in requested_family_set
+        ]
+        if not selected_cluster_ids:
+            selected_cluster_ids = [
+                candidate["cluster_id"]
+                for candidate in candidates
+                if candidate.get("source_family") in requested_family_set
+            ][:2]
+        selected_laws = [
+            law
+            for cluster_id in selected_cluster_ids
+            for law in candidate_by_id.get(cluster_id, {}).get("laws") or []
+        ]
+        payload["selected_cluster_ids"] = dedupe_strings(selected_cluster_ids)[:3]
+        payload["selected_law_hints"] = dedupe_strings(selected_laws)[:4]
+
     payload["candidates"] = candidates
     payload["raw_text"] = result.text
     return payload
@@ -843,12 +874,147 @@ def _infer_requested_source_families(query: str) -> list[str]:
     return _expand_source_family_aliases(families)
 
 
+def _infer_family_from_source_title(title: Any) -> str | None:
+    normalized = _normalize_tr_text(str(title or ""))
+    if not normalized:
+        return None
+    if "tuzugu" in normalized or normalized.endswith("tuzuk"):
+        return "tuzuk"
+    if "kanun hukmunde kararname" in normalized or re.search(r"\bkhk\b", normalized):
+        return "khk"
+    if "cumhurbaskanligi yonetmeligi" in normalized:
+        return "cb_yonetmelik"
+    if "yonetmelik" in normalized:
+        return "yonetmelik"
+    if "teblig" in normalized:
+        return "teblig"
+    if "genelge" in normalized:
+        return "cb_genelge"
+    if "kararname" in normalized:
+        return "cb_kararname"
+    return None
+
+
 def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
     metadata = chunk.metadata or {}
     family = metadata.get("belge_turu") or metadata.get("source_type")
-    if not isinstance(family, str) or not family.strip():
-        return None
-    return family.strip().lower()
+    if isinstance(family, str) and family.strip():
+        return family.strip().lower()
+    return _infer_family_from_source_title(
+        metadata.get("source_title")
+        or metadata.get("belge_adi")
+        or metadata.get("kanun_adi")
+        or metadata.get("law_name")
+    )
+
+
+def _chunk_law_candidates(chunk: RetrievedChunk) -> set[str]:
+    metadata = chunk.metadata or {}
+    candidates: set[str] = set()
+    for value in (
+        metadata.get("law_no"),
+        metadata.get("kanun_no"),
+        metadata.get("law_short_name"),
+        metadata.get("kanun_kisa_adi"),
+        metadata.get("source_id"),
+        chunk.source,
+        chunk.citation,
+    ):
+        raw = _normalize_whitespace(str(value or ""))
+        if not raw:
+            continue
+        if raw.isdigit():
+            candidates.add(raw)
+        canonical = canonicalize_law_code(raw)
+        if canonical:
+            candidates.add(canonical)
+        match = re.search(r"\b(\d{1,9})\s*(?:m|md|madde)\.?\s*\d+", raw, re.IGNORECASE)
+        if match:
+            candidates.add(match.group(1))
+    return candidates
+
+
+def _asks_current_validity_over_historical_contrast(query: str) -> bool:
+    normalized = normalize_query_text(query)
+    year_count = len({match.group(0) for match in re.finditer(r"\b(19|20)\d{2}\b", query or "")})
+    has_current_signal = any(
+        hint in normalized
+        for hint in ("guncel", "yururluk", "yururlukte", "hangi metin", "kullanilmali")
+    )
+    has_contrast_signal = any(
+        hint in normalized
+        for hint in ("eski", "mulga", "yururlukten kaldir", "yoksa")
+    )
+    return has_current_signal and (has_contrast_signal or year_count >= 2)
+
+
+def _asks_current_validity_query(query: str) -> bool:
+    if _asks_current_validity_over_historical_contrast(query):
+        return True
+    normalized = normalize_query_text(query)
+    if any(
+        hint in normalized
+        for hint in (
+            "mulga mevzuat",
+            "mulga kanun",
+            "mulga duzenleme",
+            "tarihsel metin",
+            "eski metin",
+            "o tarihte",
+            "yururlukten kalkmis",
+        )
+    ):
+        return False
+    return any(
+        hint in normalized
+        for hint in (
+            "guncel",
+            "yururluk",
+            "yururlukte",
+            "yururluk durumuna gore",
+            "guncellik notu",
+            "hangi metin",
+            "kullanilmali",
+        )
+    )
+
+
+def _metadata_flag_is_true(value: Any) -> bool:
+    if value is True:
+        return True
+    if isinstance(value, str):
+        return normalize_query_text(value) in _TRUTHY_METADATA_FLAGS
+    return False
+
+
+def _metadata_flag_is_false(value: Any) -> bool:
+    if value is False:
+        return True
+    if isinstance(value, str):
+        return normalize_query_text(value) in _FALSEY_METADATA_FLAGS
+    return False
+
+
+def _is_temporally_inactive_chunk(chunk: RetrievedChunk) -> bool:
+    metadata = chunk.metadata or {}
+    if _metadata_flag_is_true(metadata.get("mulga")):
+        return True
+    source_family = _resolve_chunk_source_family(chunk)
+    if source_family and source_family.startswith("mulga"):
+        return True
+    end = str(metadata.get("yururluk_bitis") or "").strip()
+    return bool(end and end not in _ACTIVE_END_DATE_SENTINELS)
+
+
+def _chunk_active_rank(chunk: RetrievedChunk) -> int:
+    if _is_temporally_inactive_chunk(chunk):
+        return 2
+    metadata = chunk.metadata or {}
+    mulga = metadata.get("mulga")
+    end = str(metadata.get("yururluk_bitis") or "").strip()
+    start = str(metadata.get("yururluk_baslangic") or "")
+    return 0 if start or _metadata_flag_is_false(mulga) or end in _ACTIVE_END_DATE_SENTINELS else 1
+
 
 
 def _build_retrieved_chunk(result: Any) -> RetrievedChunk:
@@ -909,6 +1075,8 @@ def _prioritize_chunks_for_source_families(
 
     family_order = {family: index for index, family in enumerate(source_families)}
     query_terms = _extract_retrieval_priority_terms(query)
+    numbered_laws = set(extract_numbered_law_mentions(query))
+    current_validity_query = _asks_current_validity_query(query)
     source_cluster_sizes: dict[str, int] = {}
     for chunk in chunks:
         source_key = _resolve_chunk_source_key(chunk)
@@ -943,7 +1111,13 @@ def _prioritize_chunks_for_source_families(
         if heading_overlap > 0 and title_overlap == 0 and text_overlap <= heading_overlap:
             generic_heading_only_penalty = 1
         dense_score = chunk.score or 0.0
+        law_match_rank = 0
+        if numbered_laws:
+            law_match_rank = 0 if numbered_laws & _chunk_law_candidates(chunk) else 1
+        active_rank = _chunk_active_rank(chunk) if current_validity_query else 0
         return (
+            law_match_rank,
+            active_rank,
             selected_source_rank,
             family_match,
             family_rank,
@@ -2299,6 +2473,11 @@ def _extract_law_mentions(query: str) -> list[str]:
             mentions.append(law)
             seen.add(law)
 
+    for law in extract_numbered_law_mentions(query):
+        if law not in seen:
+            mentions.append(law)
+            seen.add(law)
+
     for code in _infer_law_mentions_from_concepts(query):
         if code not in seen:
             mentions.append(code)
@@ -2333,6 +2512,14 @@ def _should_use_cross_law_retrieval(query: str, mentioned_laws: list[str]) -> bo
         "sonuç ne olur",
         "başvurabilir mi",
         "nasıl belirlenir",
+        "çatışma",
+        "çeliş",
+        "celis",
+        "lex specialis",
+        "özel rejim",
+        "ozel rejim",
+        "genel şirketler hukuku",
+        "genel sirketler hukuku",
     )
     return _contains_any_query_term(query, cross_law_markers)
 
@@ -2438,6 +2625,27 @@ def _retrieve_law_bucket_chunks(
         bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
 
     return bucket_chunks
+
+
+def _retrieve_active_chunks(
+    *,
+    retriever: Any,
+    query: str,
+    top_k: int,
+) -> list[RetrievedChunk]:
+    from rag.retriever import MetadataFilter
+
+    try:
+        results, _stats = retriever.retrieve(
+            query=query,
+            top_k=top_k,
+            metadata_filter=MetadataFilter(mulga=False),
+        )
+    except Exception as exc:
+        logger.warning("Active-source retrieval bypass: %s", exc)
+        return []
+
+    return [_build_retrieved_chunk(result) for result in results]
 
 
 def _retrieve_source_family_chunks(
@@ -4835,6 +5043,14 @@ async def chat_completions(
         retrieval_top_k=retrieval_top_k,
         retrieval_plan=retrieval_plan,
     )
+    if _asks_current_validity_over_historical_contrast(last_user_msg):
+        retrieval_query = _append_unique_expansion(
+            retrieval_query,
+            applied_expansions,
+            "güncel yürürlükte metin yürürlükten kaldırılan eski metin",
+        )
+        retrieval_top_k = max(retrieval_top_k, 20)
+    numbered_law_mentions = extract_numbered_law_mentions(last_user_msg)
     cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
 
     concept_anchor_rules: list[
@@ -5046,7 +5262,6 @@ async def chat_completions(
     ]
 
     expansion_match_query = last_user_msg
-
     if _legacy_query_expansions_enabled():
         for term_groups, expansion, exact_refs, boost_top_k in concept_anchor_rules:
             if all(_contains_any_query_term(expansion_match_query, terms) for terms in term_groups):
@@ -5155,6 +5370,22 @@ async def chat_completions(
                             len(retrieved_chunks),
                         )
 
+                if numbered_law_mentions and not request_body.law_filter:
+                    numbered_law_chunks = _retrieve_law_bucket_chunks(
+                        retriever=retriever,
+                        query=retrieval_query,
+                        laws=numbered_law_mentions,
+                        top_k=max(4, min(8, top_k_effective)),
+                    )
+                    if numbered_law_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(numbered_law_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval numbered-law-buckets: session=%s laws=%s total=%d",
+                            session_id,
+                            numbered_law_mentions,
+                            len(retrieved_chunks),
+                        )
+
                 if requested_source_families:
                     per_family_top_k = max(4, min(8, top_k_effective))
                     family_bucket_chunks = _retrieve_source_family_chunks(
@@ -5170,6 +5401,21 @@ async def chat_completions(
                             session_id,
                             requested_source_families,
                             per_family_top_k,
+                            len(retrieved_chunks),
+                        )
+
+                if _asks_current_validity_query(last_user_msg):
+                    active_chunks = _retrieve_active_chunks(
+                        retriever=retriever,
+                        query=retrieval_query,
+                        top_k=max(6, min(10, top_k_effective)),
+                    )
+                    if active_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(active_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval active-sources: session=%s added=%d total=%d",
+                            session_id,
+                            len(active_chunks),
                             len(retrieved_chunks),
                         )
 

@@ -54,6 +54,11 @@ _FULL_DATE_PATTERNS = (
     re.compile(r"\b(?P<day>\d{1,2})[./](?P<month>\d{1,2})[./](?P<year>20\d{2})\b"),
 )
 _YEAR_ONLY_RE = re.compile(r"\b(19|20)\d{2}\b")
+_NUMBERED_LAW_MENTION_RE = re.compile(
+    r"\b(?P<law>\d{1,9})\s+say[ıi]l[ıi]\s+"
+    r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
+    re.IGNORECASE,
+)
 _NARROW_QUESTION_TYPE_SET = {"single_article", "definition", "elements", "procedure"}
 _SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[a-zçğıöşüâîû][.!?])\s+", re.IGNORECASE)
 _QUESTION_TYPE_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -65,6 +70,20 @@ _DEFINITION_PATTERNS = ("nedir", "tanımı nedir", "tanimi nedir", "ne demektir"
 _CONDITION_PATTERNS = ("şartları nelerdir", "sartlari nelerdir", "unsurları nelerdir", "unsurlari nelerdir", "hangi hallerde")
 _PROCEDURE_ACTION_HINTS = ("başvuru", "basvuru", "itiraz", "dava", "fesih", "ihbar", "ödeme", "odeme", "talep", "süre", "sure")
 _COMPLEXITY_MARKERS = ("karşılaştır", "karsilastir", "farkı", "farki", "istisna", "hariç", "haric", "veya", "ya da")
+_CURRENT_VALIDITY_QUERY_HINTS = (
+    "guncel",
+    "yururluk",
+    "yururlukte",
+    "yururluk durumu",
+    "hangi metin",
+    "kullanilmali",
+)
+_OLD_CURRENT_CONTRAST_HINTS = (
+    "eski",
+    "mulga",
+    "yururlukten kaldir",
+    "yoksa",
+)
 _SOURCE_ID_TOKEN_STOPWORDS = {
     "ama",
     "bu",
@@ -292,8 +311,31 @@ def _dedupe_article_refs(values: list[tuple[str, str]]) -> list[tuple[str, str]]
     return deduped
 
 
+def extract_numbered_law_mentions(question_raw: str) -> list[str]:
+    mentions: list[str] = []
+    seen: set[str] = set()
+    for match in _NUMBERED_LAW_MENTION_RE.finditer(question_raw or ""):
+        law = match.group("law")
+        if law in seen:
+            continue
+        mentions.append(law)
+        seen.add(law)
+    return mentions
+
+
+def _asks_current_validity_over_historical_contrast(question_raw: str) -> bool:
+    normalized = normalize_query_text(question_raw)
+    has_multiple_years = len({match.group(0) for match in _YEAR_ONLY_RE.finditer(question_raw or "")}) >= 2
+    has_current_signal = any(hint in normalized for hint in _CURRENT_VALIDITY_QUERY_HINTS)
+    has_contrast_signal = any(hint in normalized for hint in _OLD_CURRENT_CONTRAST_HINTS)
+    return has_current_signal and (has_contrast_signal or has_multiple_years)
+
+
 def resolve_target_date(question_raw: str, *, today: date | None = None) -> tuple[date, bool]:
     reference = today or date.today()
+
+    if _asks_current_validity_over_historical_contrast(question_raw):
+        return reference, False
 
     for pattern in _FULL_DATE_PATTERNS:
         match = pattern.search(question_raw)
@@ -343,6 +385,7 @@ def build_law_scope_signal(
         [
             *(canonicalize_law_code(law) for law, _ in explicit_article_refs),
             *(canonicalize_law_code(law) for law in mentioned_laws),
+            *extract_numbered_law_mentions(question_raw),
         ]
     )
     expected_law_scope = list(explicit_law_scope)
@@ -656,6 +699,7 @@ def apply_law_scope_validation(
     *,
     contract: StructuredAnswerContract,
     law_scope_signal: dict[str, Any],
+    assembled_evidence: list[dict[str, Any]] | None = None,
 ) -> UnsupportedReason | None:
     expected = law_scope_signal.get("expected_law_scope", [])
     source_ids = [
@@ -683,6 +727,13 @@ def apply_law_scope_validation(
             if extract_law_code_from_source_id(source_id) == expected_law
         ]
         if not kept_sources:
+            if expected_law.isdigit() and _sources_textually_reference_numbered_law(
+                source_ids=source_ids,
+                expected_law=expected_law,
+                assembled_evidence=assembled_evidence or [],
+            ):
+                contract.law_scope = dedupe_strings([expected_law, *resolved])
+                return contract.unsupported_reason
             contract.primary_source_id = None
             contract.secondary_source_ids = []
             contract.law_scope = []
@@ -710,6 +761,38 @@ def apply_law_scope_validation(
     if contract.unsupported_reason is None:
         contract.unsupported_reason = "insufficient_supported_evidence"
     return contract.unsupported_reason
+
+
+def _sources_textually_reference_numbered_law(
+    *,
+    source_ids: list[str],
+    expected_law: str,
+    assembled_evidence: list[dict[str, Any]],
+) -> bool:
+    if not source_ids or not assembled_evidence:
+        return False
+    source_id_set = {
+        canonicalize_source_id(source_id)
+        for source_id in source_ids
+        if canonicalize_source_id(source_id)
+    }
+    if not source_id_set:
+        return False
+    mention_re = re.compile(
+        rf"(?:{re.escape(expected_law)}\s+say[ıi]l[ıi]|khk[-\s]?{re.escape(expected_law)}|{re.escape(expected_law)}\s+sayili)",
+        re.IGNORECASE,
+    )
+    for evidence in assembled_evidence:
+        source_id = canonicalize_source_id(evidence.get("source_id") or evidence.get("citation"))
+        if source_id not in source_id_set:
+            continue
+        surface = " ".join(
+            str(evidence.get(field) or "")
+            for field in ("excerpt", "source_title", "belge_adi", "citation")
+        )
+        if mention_re.search(surface):
+            return True
+    return False
 
 
 def _parse_optional_date(value: Any) -> date | None:
@@ -2041,6 +2124,7 @@ def _harden_answer_with_profile(
         final_reason = apply_law_scope_validation(
             contract=contract,
             law_scope_signal=law_scope_signal,
+            assembled_evidence=assembled_evidence,
         )
     if final_reason is None:
         claim_binding_outcome = apply_selective_claim_binding_v3(
