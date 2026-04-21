@@ -87,6 +87,11 @@ _NUMBERED_LAW_MENTION_RE = re.compile(
     r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
     re.IGNORECASE,
 )
+_NUMBERED_LAW_LIST_MENTION_RE = re.compile(
+    r"\b(?P<laws>\d{1,9}(?:\s*,\s*\d{1,9})*(?:\s+(?:ve|ile)\s+\d{1,9})?)\s+say[ıi]l[ıi]\s+"
+    r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
+    re.IGNORECASE,
+)
 _NUMBERED_LAW_REFERENCE_RE = re.compile(
     r"\b(?P<law>\d{2,8})\s+say[ıi]l[ıi]\s+"
     r"(?:(?:[a-zçğıöşüâîû]+\s+){0,6})?"
@@ -705,10 +710,16 @@ class RAGOrchestrator:
 
     @staticmethod
     def _extract_numbered_law_mentions(query: str) -> set[str]:
-        return {
+        mentions = {
+            law
+            for match in _NUMBERED_LAW_LIST_MENTION_RE.finditer(query or "")
+            for law in re.findall(r"\d{1,9}", match.group("laws"))
+        }
+        mentions.update(
             match.group("law")
             for match in _NUMBERED_LAW_MENTION_RE.finditer(query or "")
-        }
+        )
+        return mentions
 
     @staticmethod
     def _chunk_law_candidates(chunk: RetrievedChunk) -> set[str]:
@@ -851,6 +862,14 @@ class RAGOrchestrator:
             return None
         labels: list[str] = []
         seen: set[str] = set()
+        for match in _NUMBERED_LAW_LIST_MENTION_RE.finditer(query or ""):
+            kind = match.group("kind")
+            display_kind = "KHK" if "khk" in kind.lower() or "kararname" in kind.lower() else kind
+            for law in re.findall(r"\d{1,9}", match.group("laws")):
+                if law in seen:
+                    continue
+                labels.append(f"{law} sayılı {display_kind}")
+                seen.add(law)
         for match in _NUMBERED_LAW_MENTION_RE.finditer(query or ""):
             law = match.group("law")
             if law in seen:

@@ -60,3 +60,53 @@ def test_repair_degrades_unsupported_confident_shape_to_not_grounded_band():
     assert contract["confidence_0_100"] <= 39
     assert contract["needs_manual_review"] is True
     assert result.validation["unsupported_confident_answer"] is False
+
+
+def test_repair_marks_cross_family_evidence_conflict_as_partial():
+    result = build_or_repair_answer_contract(
+        qid="CBKAR-TEST",
+        answer_text="Bu belge kanun olarak uygulanır. [Kaynak: 3350 m.5]",
+        citations=["3350 m.5"],
+        answer_contract={
+            "answer_text": "Bu belge kanun olarak uygulanır. [Kaynak: 3350 m.5]",
+            "primary_source_id": "3350 m.5",
+            "source_family_claimed": "KANUN",
+            "source_identifier_claimed": "3350 m.5",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "target_date": "2026-04-21",
+            "query_signals": {
+                "source_family_resolution": {
+                    "predicted_family": "cb_karar",
+                    "family_confidence": 0.86,
+                }
+            },
+            "retrieval": {
+                "retrieval_verification_features": {
+                    "cross_family_conflict_flag": True,
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "3350:3350:m5:f0:from1900-01-01:to9999-12-31",
+                    "citation": "3350 m.5/f.0",
+                    "source_title": "İTHALAT REJİMİ KARARI (KARAR SAYISI: 3350)",
+                    "belge_turu": "cb_karar",
+                    "madde_no": "5",
+                    "mulga": False,
+                    "yururluk_bitis": "9999-12-31",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "CB_KARAR"
+    assert contract["grounding_status"] == "partially_grounded"
+    assert contract["confidence_0_100"] < 70
+    assert contract["needs_manual_review"] is True
+    assert "cross_family_evidence_conflict" in contract["verification_findings"]

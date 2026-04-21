@@ -35,10 +35,13 @@ from routers.chat import (
     ConversationStore,
     ChatCompletionRequest,
     ConversationMessage,
+    _apply_source_cluster_deterministic_overrides,
     _apply_retrieval_plan_hints,
+    _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
     _build_retrieval_plan_expansion,
     _build_source_cluster_candidates,
+    _clamp_families_to_strong_resolution,
     _build_precise_tmk_tbk_cross_law_answer,
     _contains_query_term,
     _extract_json_object,
@@ -46,6 +49,7 @@ from routers.chat import (
     _extract_law_mentions,
     _infer_requested_source_families,
     _prioritize_chunks_for_source_families,
+    _resolve_chunk_source_family,
     _resolve_source_family_prior,
     _resolve_public_answer_text,
     _sanitize_source_cluster_selector_payload,
@@ -450,6 +454,17 @@ class TestLawSignalParsing:
         assert resolution.family_confidence >= 0.75
         assert "cb_karar" in resolution.routing_families
 
+    def test_source_family_prior_keeps_investment_program_decision_as_cb_karar_candidate(self):
+        resolution = _resolve_source_family_prior(
+            "Yatırım programı kararı mı, yoksa yıl içi işlemleri düzenleyen genelge de mi aranmalı?"
+        )
+        families = [candidate.family for candidate in resolution.family_candidates]
+
+        assert "cb_karar" in families
+        assert "cb_genelge" in families
+        assert resolution.family_confidence < 0.75
+        assert resolution.routing_families == []
+
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(
             "Bir yüksek lisans öğrencisinin tez savunması için üniversite yönetmeliği ne der?"
@@ -469,6 +484,50 @@ class TestLawSignalParsing:
         assert resolution.predicted_family == "kanun"
         assert resolution.family_confidence >= 0.75
         assert resolution.routing_families == []
+
+    def test_source_family_prior_prefers_specific_document_type_over_number_reference(self):
+        resolution = _resolve_source_family_prior(
+            "551, 554, 555 ve 556 sayılı KHK'lara dayanmak güvenli midir?",
+            mentioned_laws=["551", "554", "555", "556"],
+        )
+
+        assert resolution.predicted_family == "khk"
+        assert resolution.family_confidence >= 0.75
+        assert resolution.routing_families == ["khk"]
+
+    def test_numbered_law_reference_expansion_handles_comma_and_ve_lists(self):
+        expansion = _build_numbered_law_reference_expansion(
+            "551, 554, 555 ve 556 sayılı KHK'lara dayanmak güvenli midir?"
+        )
+
+        assert "551 sayılı KHK" in expansion
+        assert "554 sayılı KHK" in expansion
+        assert "555 sayılı KHK" in expansion
+        assert "556 sayılı KHK" in expansion
+
+    def test_annual_investment_program_expansion_uses_reference_year_without_hardcoded_decision_no(self):
+        expansion = _build_annual_investment_program_expansion(
+            "Bu soruyu 2026-04-19 tarihindeki yürürlük durumuna göre cevapla. "
+            "Kamu yatırım projesinin tutarı değişecekse yatırım programı kararı mı aranmalı?"
+        )
+
+        assert "2026 yılı kamu yatırım programı" in expansion
+        assert "karar sayısı" in expansion
+        assert "10868" not in expansion
+
+    def test_chunk_source_family_prefers_khk_title_over_generic_metadata(self):
+        chunk = RetrievedChunk(
+            text="Markalar hakkında KHK",
+            citation="556 m.82/f.0",
+            source="556",
+            score=0.9,
+            metadata={
+                "source_title": "MARKALARIN KORUNMASI HAKKINDA KANUN HÜKMÜNDE KARARNAME",
+                "belge_turu": "kanun",
+            },
+        )
+
+        assert _resolve_chunk_source_family(chunk) == "khk"
 
     def test_prioritize_chunks_for_source_families_prefers_matching_family(self):
         from rag.orchestrator import RetrievedChunk
@@ -694,6 +753,120 @@ class TestLawSignalParsing:
             "selected_cluster_ids": ["C2", "C1"],
             "selected_law_hints": ["20135150", "IK"],
         }
+
+    def test_source_cluster_overrides_prefer_identifier_match_inside_requested_family(self):
+        candidates = [
+            {
+                "cluster_id": "C1",
+                "source_key": "markalarin korunmasi hakkinda kanun hükmünde kararname",
+                "display_title": "MARKALARIN KORUNMASI HAKKINDA KANUN HÜKMÜNDE KARARNAME",
+                "source_family": "khk",
+                "laws": ["556"],
+                "citations": ["556 m.82/f.0"],
+            },
+            {
+                "cluster_id": "C2",
+                "source_key": "sanayi bakanligi khk",
+                "display_title": "SANAYİ VE TEKNOLOJİ BAKANLIĞI HAKKINDA KHK",
+                "source_family": "khk",
+                "laws": ["635"],
+                "citations": ["635 m.1/f.0"],
+            },
+            {
+                "cluster_id": "C3",
+                "source_key": "yükseköğretim kanunu",
+                "display_title": "YÜKSEKÖĞRETİM KANUNU",
+                "source_family": "kanun",
+                "laws": ["2547"],
+                "citations": ["2547 m.44/f.0"],
+            },
+        ]
+
+        payload = _apply_source_cluster_deterministic_overrides(
+            payload={"selected_cluster_ids": ["C2"], "selected_law_hints": ["635"]},
+            candidates=candidates,
+            user_query="551, 554, 555 ve 556 sayılı KHK'lara dayanmak güvenli midir?",
+            requested_source_families=["khk"],
+        )
+
+        assert payload["selected_cluster_ids"] == ["C1"]
+        assert payload["selected_law_hints"] == ["556"]
+
+    def test_source_cluster_overrides_do_not_let_law_number_escape_requested_family(self):
+        candidates = [
+            {
+                "cluster_id": "C1",
+                "source_key": "yükseköğretim kanunu",
+                "display_title": "YÜKSEKÖĞRETİM KANUNU",
+                "source_family": "kanun",
+                "laws": ["2547"],
+                "citations": ["2547 m.44/f.0"],
+            },
+            {
+                "cluster_id": "C2",
+                "source_key": "kırklareli üniversitesi lisansüstü eğitim yönetmeliği",
+                "display_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                "source_family": "uy",
+                "laws": ["40969"],
+                "citations": ["40969 m.27/f.0"],
+            },
+        ]
+
+        payload = _apply_source_cluster_deterministic_overrides(
+            payload={"selected_cluster_ids": ["C1"], "selected_law_hints": ["2547"]},
+            candidates=candidates,
+            user_query="Yalnız 2547 yeterli midir, yoksa hangi üniversite yönetmeliği merkezde olmalıdır?",
+            requested_source_families=["uy", "yonetmelik"],
+        )
+
+        assert payload["selected_cluster_ids"] == ["C2"]
+        assert payload["selected_law_hints"] == ["40969"]
+
+    def test_source_cluster_overrides_prefer_reference_year_for_annual_investment_programs(self):
+        candidates = [
+            {
+                "cluster_id": "C1",
+                "source_key": "2019 yatirim programi karari",
+                "display_title": "2019 YILI YATIRIM PROGRAMININ KABULÜNE DAİR KARAR",
+                "source_family": "cb_karar",
+                "laws": ["767"],
+                "citations": ["767 m.2/f.0"],
+                "excerpts": ["2019 Yılı Yatırım Programı"],
+            },
+            {
+                "cluster_id": "C2",
+                "source_key": "2026 yatirim programi karari",
+                "display_title": "2026 YILI YATIRIM PROGRAMININ KABULÜNE DAİR KARAR",
+                "source_family": "cb_karar",
+                "laws": ["10868"],
+                "citations": ["10868 m.0/f.0"],
+                "excerpts": ["Karar Sayısı: 10868 15 Ocak 2026"],
+            },
+        ]
+
+        payload = _apply_source_cluster_deterministic_overrides(
+            payload={"selected_cluster_ids": ["C1"], "selected_law_hints": ["767"]},
+            candidates=candidates,
+            user_query="2026 yılında kamu yatırım projesi için yatırım programı kararı mı aranmalı?",
+            requested_source_families=["cb_karar"],
+        )
+
+        assert payload["selected_cluster_ids"] == ["C2"]
+        assert payload["selected_law_hints"] == ["10868"]
+
+    def test_clamp_families_removes_planner_family_that_conflicts_with_strong_resolution(self):
+        resolution = _resolve_source_family_prior(
+            "Yalnız 2547 yeterli midir, yoksa hangi üniversite yönetmeliği merkezde olmalıdır?"
+        )
+        families = _clamp_families_to_strong_resolution(
+            ["uy", "yonetmelik", "kanun", "mulga_kanun"],
+            resolution,
+        )
+
+        assert "uy" in families
+        assert "yonetmelik" in families
+        assert "kanun" not in families
+        assert "mulga_kanun" not in families
 
     def test_resolve_public_answer_text_prefers_hardened_contract_projection(self):
         resolved = _resolve_public_answer_text(

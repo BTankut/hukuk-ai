@@ -166,7 +166,14 @@ _SOURCE_FAMILY_HINT_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] =
         ("cb_yonetmelik", "yonetmelik"),
     ),
     (
-        ("cumhurbaşkanlığı kararı", "cumhurbaskanligi karari", "cumhurbaşkanı kararı", "cumhurbaskani karari"),
+        (
+            "cumhurbaşkanlığı kararı",
+            "cumhurbaskanligi karari",
+            "cumhurbaşkanı kararı",
+            "cumhurbaskani karari",
+            "yatırım programı kararı",
+            "yatirim programi karari",
+        ),
         ("cb_karar",),
     ),
     (
@@ -580,6 +587,29 @@ def _build_numbered_law_reference_expansion(query: str) -> str:
     return _normalize_whitespace(" ".join(dedupe_strings(parts)))
 
 
+def _extract_year_tokens(text: str) -> list[str]:
+    return dedupe_strings(re.findall(r"\b(?:19|20)\d{2}\b", text or ""))
+
+
+def _build_annual_investment_program_expansion(query: str) -> str:
+    normalized = normalize_query_text(query or "")
+    if "yatirim program" not in normalized:
+        return ""
+    if "karar" not in normalized:
+        return ""
+    if not any(hint in normalized for hint in ("kamu yatirim", "yatirim projes", "program hazirlik")):
+        return ""
+    years = _extract_year_tokens(query)
+    if not years:
+        return ""
+    year = years[-1]
+    return _normalize_whitespace(
+        f"{year} yılı kamu yatırım programı karar sayısı "
+        f"{year} yılı yatırım programının kabulü ve uygulanmasına dair karar "
+        "yıl içi proje parametre değişikliği"
+    )
+
+
 def _apply_retrieval_plan_hints(
     *,
     retrieval_query: str,
@@ -729,6 +759,124 @@ def _sanitize_source_cluster_selector_payload(
     }
 
 
+def _candidate_identifier_values(candidate: dict[str, Any]) -> set[str]:
+    values: set[str] = set()
+    for value in (
+        candidate.get("source_key"),
+        candidate.get("display_title"),
+        *(candidate.get("laws") or []),
+        *(candidate.get("citations") or []),
+        *(candidate.get("excerpts") or []),
+    ):
+        normalized = _normalize_tr_text(str(value or ""))
+        if not normalized:
+            continue
+        values.add(normalized)
+        for number in re.findall(r"\d{2,9}(?:[-/]\d{1,4})?", normalized):
+            values.add(number)
+            values.add(number.split("-", 1)[0].split("/", 1)[0])
+    return values
+
+
+def _candidate_matches_identifier_tokens(candidate: dict[str, Any], identifier_tokens: set[str]) -> bool:
+    if not identifier_tokens:
+        return False
+    values = _candidate_identifier_values(candidate)
+    for token in identifier_tokens:
+        normalized_token = _normalize_tr_text(token)
+        if normalized_token in values:
+            return True
+        if len(normalized_token) >= 3 and any(normalized_token in value for value in values):
+            return True
+    return False
+
+
+def _candidate_matches_year_tokens(candidate: dict[str, Any], year_tokens: set[str]) -> bool:
+    if not year_tokens:
+        return False
+    values = _candidate_identifier_values(candidate)
+    return any(year in values or any(year in value for value in values) for year in year_tokens)
+
+
+def _apply_source_cluster_deterministic_overrides(
+    *,
+    payload: dict[str, Any],
+    candidates: list[dict[str, Any]],
+    user_query: str,
+    requested_source_families: list[str],
+) -> dict[str, Any]:
+    candidate_by_id = {candidate["cluster_id"]: candidate for candidate in candidates}
+    requested_family_set = set(requested_source_families)
+    selected_cluster_ids = [
+        cluster_id
+        for cluster_id in payload.get("selected_cluster_ids") or []
+        if cluster_id in candidate_by_id
+    ]
+
+    scoped_candidates = candidates
+    family_order = {family: index for index, family in enumerate(requested_source_families)}
+    if requested_family_set and any(candidate.get("source_family") in requested_family_set for candidate in candidates):
+        scoped_candidates = sorted(
+            [
+                candidate
+                for candidate in candidates
+                if candidate.get("source_family") in requested_family_set
+            ],
+            key=lambda candidate: (
+                family_order.get(str(candidate.get("source_family") or ""), len(family_order)),
+                candidates.index(candidate),
+            ),
+        )
+        selected_cluster_ids = [
+            cluster_id
+            for cluster_id in selected_cluster_ids
+            if candidate_by_id.get(cluster_id, {}).get("source_family") in requested_family_set
+        ]
+        if not selected_cluster_ids:
+            selected_cluster_ids = [candidate["cluster_id"] for candidate in scoped_candidates[:2]]
+
+    identifier_tokens = _extract_source_identifier_tokens(user_query)
+    if identifier_tokens:
+        identifier_matches = [
+            candidate
+            for candidate in scoped_candidates
+            if _candidate_matches_identifier_tokens(candidate, identifier_tokens)
+        ]
+        if identifier_matches:
+            selected_cluster_ids = [candidate["cluster_id"] for candidate in identifier_matches[:3]]
+    elif _build_annual_investment_program_expansion(user_query):
+        year_tokens = set(_extract_year_tokens(user_query))
+        year_matches = [
+            candidate
+            for candidate in scoped_candidates
+            if _candidate_matches_year_tokens(candidate, year_tokens)
+        ]
+        if year_matches:
+            selected_cluster_ids = [candidate["cluster_id"] for candidate in year_matches[:3]]
+
+    selected_laws = [
+        law
+        for cluster_id in selected_cluster_ids
+        for law in candidate_by_id.get(cluster_id, {}).get("laws") or []
+    ]
+    payload["selected_cluster_ids"] = dedupe_strings(selected_cluster_ids)[:3]
+    payload["selected_law_hints"] = dedupe_strings(selected_laws)[:4]
+    return payload
+
+
+def _clamp_families_to_strong_resolution(
+    families: list[str],
+    source_family_resolution: SourceFamilyResolution,
+) -> list[str]:
+    if source_family_resolution.family_confidence < 0.75 or not source_family_resolution.routing_families:
+        return families
+    allowed = set(_expand_source_family_aliases(source_family_resolution.routing_families))
+    clamped = [family for family in families if family in allowed]
+    if not clamped:
+        clamped = list(allowed)
+    return dedupe_strings(clamped)
+
+
 async def _run_source_cluster_selector(
     *,
     request: Request,
@@ -795,27 +943,12 @@ async def _run_source_cluster_selector(
     if not payload:
         return None
 
-    requested_family_set = set(requested_source_families)
-    if requested_family_set and any(candidate.get("source_family") in requested_family_set for candidate in candidates):
-        candidate_by_id = {candidate["cluster_id"]: candidate for candidate in candidates}
-        selected_cluster_ids = [
-            cluster_id
-            for cluster_id in payload.get("selected_cluster_ids") or []
-            if candidate_by_id.get(cluster_id, {}).get("source_family") in requested_family_set
-        ]
-        if not selected_cluster_ids:
-            selected_cluster_ids = [
-                candidate["cluster_id"]
-                for candidate in candidates
-                if candidate.get("source_family") in requested_family_set
-            ][:2]
-        selected_laws = [
-            law
-            for cluster_id in selected_cluster_ids
-            for law in candidate_by_id.get(cluster_id, {}).get("laws") or []
-        ]
-        payload["selected_cluster_ids"] = dedupe_strings(selected_cluster_ids)[:3]
-        payload["selected_law_hints"] = dedupe_strings(selected_laws)[:4]
+    payload = _apply_source_cluster_deterministic_overrides(
+        payload=payload,
+        candidates=candidates,
+        user_query=user_query,
+        requested_source_families=requested_source_families,
+    )
 
     payload["candidates"] = candidates
     payload["raw_text"] = result.text
@@ -986,15 +1119,26 @@ def _infer_family_from_source_title(title: Any) -> str | None:
 
 def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
     metadata = chunk.metadata or {}
-    family = metadata.get("belge_turu") or metadata.get("source_type")
-    if isinstance(family, str) and family.strip():
-        return family.strip().lower()
-    return _infer_family_from_source_title(
+    title_family = _infer_family_from_source_title(
         metadata.get("source_title")
         or metadata.get("belge_adi")
         or metadata.get("kanun_adi")
         or metadata.get("law_name")
     )
+    if title_family in {
+        "khk",
+        "tuzuk",
+        "teblig",
+        "cb_genelge",
+        "cb_yonetmelik",
+        "cb_kararname",
+        "cb_karar",
+    }:
+        return title_family
+    family = metadata.get("belge_turu") or metadata.get("source_type")
+    if isinstance(family, str) and family.strip():
+        return family.strip().lower()
+    return title_family
 
 
 def _chunk_law_candidates(chunk: RetrievedChunk) -> set[str]:
@@ -1021,6 +1165,62 @@ def _chunk_law_candidates(chunk: RetrievedChunk) -> set[str]:
         if match:
             candidates.add(match.group(1))
     return candidates
+
+
+def _extract_source_identifier_tokens(text: str) -> set[str]:
+    without_dates = re.sub(r"\b(?:19|20)\d{2}-\d{1,2}-\d{1,2}\b", " ", text or "")
+    tokens: set[str] = set()
+    for match in re.finditer(
+        r"\b(?:karar|kararname|tebliğ|teblig|genelge)?\s*(?:sayısı|sayisi|no|numarası|numarasi)?\s*:?\s*(\d{2,9}(?:[-/]\d{1,4})?)\b",
+        _normalize_tr_text(without_dates),
+    ):
+        token = match.group(1)
+        if re.fullmatch(r"(?:19|20)\d{2}", token):
+            continue
+        tokens.add(token)
+        tokens.add(token.split("-", 1)[0].split("/", 1)[0])
+    return {token for token in tokens if len(token) >= 2}
+
+
+def _chunk_identifier_candidates(chunk: RetrievedChunk) -> set[str]:
+    metadata = chunk.metadata or {}
+    candidates: set[str] = set()
+    for value in (
+        metadata.get("belge_no"),
+        metadata.get("kanun_no"),
+        metadata.get("law_no"),
+        metadata.get("belge_kisa_adi"),
+        metadata.get("kanun_kisa_adi"),
+        metadata.get("law_short_name"),
+        metadata.get("source_id"),
+        metadata.get("display_citation"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+        metadata.get("kanun_adi"),
+        chunk.source,
+        chunk.citation,
+    ):
+        normalized = _normalize_tr_text(str(value or ""))
+        if not normalized:
+            continue
+        candidates.add(normalized)
+        for number in re.findall(r"\d{2,9}(?:[-/]\d{1,4})?", normalized):
+            candidates.add(number)
+            candidates.add(number.split("-", 1)[0].split("/", 1)[0])
+    return candidates
+
+
+def _chunk_matches_identifier_tokens(chunk: RetrievedChunk, identifier_tokens: set[str]) -> bool:
+    if not identifier_tokens:
+        return False
+    candidates = _chunk_identifier_candidates(chunk)
+    for token in identifier_tokens:
+        normalized_token = _normalize_tr_text(token)
+        if normalized_token in candidates:
+            return True
+        if any(normalized_token in candidate for candidate in candidates if len(normalized_token) >= 3):
+            return True
+    return False
 
 
 def _asks_current_validity_over_historical_contrast(query: str) -> bool:
@@ -1165,6 +1365,7 @@ def _prioritize_chunks_for_source_families(
     family_order = {family: index for index, family in enumerate(source_families)}
     query_terms = _extract_retrieval_priority_terms(query)
     numbered_laws = set(extract_numbered_law_mentions(query))
+    identifier_tokens = _extract_source_identifier_tokens(query)
     current_validity_query = _asks_current_validity_query(query)
     source_cluster_sizes: dict[str, int] = {}
     for chunk in chunks:
@@ -1203,13 +1404,31 @@ def _prioritize_chunks_for_source_families(
         law_match_rank = 0
         if numbered_laws:
             law_match_rank = 0 if numbered_laws & _chunk_law_candidates(chunk) else 1
+        identifier_match_rank = 0
+        if identifier_tokens:
+            identifier_match_rank = 0 if _chunk_matches_identifier_tokens(chunk, identifier_tokens) else 1
         active_rank = _chunk_active_rank(chunk) if current_validity_query else 0
+        if source_families:
+            return (
+                active_rank,
+                selected_source_rank,
+                family_match,
+                family_rank,
+                identifier_match_rank,
+                law_match_rank,
+                generic_heading_only_penalty,
+                -title_overlap,
+                -heading_overlap,
+                -cluster_size,
+                -text_overlap,
+                -dense_score,
+                original_index,
+            )
         return (
+            identifier_match_rank,
             law_match_rank,
             active_rank,
             selected_source_rank,
-            family_match,
-            family_rank,
             generic_heading_only_penalty,
             -title_overlap,
             -heading_overlap,
@@ -2852,6 +3071,67 @@ def _build_allowed_source_whitelist(chunks: list[RetrievedChunk]) -> list[str]:
     return whitelist
 
 
+def _build_retrieval_verification_features(
+    *,
+    query: str,
+    requested_source_families: list[str],
+    source_family_resolution: dict[str, Any] | None,
+    chunks: list[RetrievedChunk],
+) -> dict[str, Any]:
+    predicted_family = None
+    family_confidence = 0.0
+    if isinstance(source_family_resolution, dict):
+        predicted_family = source_family_resolution.get("predicted_family")
+        try:
+            family_confidence = float(source_family_resolution.get("family_confidence") or 0.0)
+        except (TypeError, ValueError):
+            family_confidence = 0.0
+
+    identifier_tokens = sorted(_extract_source_identifier_tokens(query))
+    chunk_families = [_resolve_chunk_source_family(chunk) or "unknown" for chunk in chunks]
+    unique_families = dedupe_strings(chunk_families)
+    identifier_match_flag = (
+        any(_chunk_matches_identifier_tokens(chunk, set(identifier_tokens)) for chunk in chunks)
+        if identifier_tokens
+        else None
+    )
+    requested_family_set = set(requested_source_families)
+    family_match_count = sum(1 for family in chunk_families if family in requested_family_set)
+    predicted_family_match_count = (
+        sum(1 for family in chunk_families if family == predicted_family)
+        if predicted_family
+        else 0
+    )
+    current_validity_query = _asks_current_validity_query(query)
+    temporal_alignment_flag = (
+        all(not _is_temporally_inactive_chunk(chunk) for chunk in chunks[:5])
+        if current_validity_query and chunks
+        else None
+    )
+    cross_family_conflict_flag = len(set(family for family in chunk_families[:8] if family != "unknown")) > 1
+    if predicted_family and family_confidence >= 0.75 and predicted_family_match_count:
+        cross_family_conflict_flag = any(
+            family not in {predicted_family, "unknown"} for family in chunk_families[:5]
+        )
+
+    return {
+        "reranker_family_bonus": family_match_count,
+        "identifier_match_flag": identifier_match_flag,
+        "identifier_tokens": identifier_tokens,
+        "temporal_alignment_flag": temporal_alignment_flag,
+        "selected_evidence_count": len(chunks),
+        "cross_family_conflict_flag": cross_family_conflict_flag,
+        "selected_evidence_families": unique_families,
+        "predicted_family_match_count": predicted_family_match_count,
+    }
+
+
+def _strong_source_family_gate(source_family_resolution: SourceFamilyResolution) -> set[str]:
+    if source_family_resolution.family_confidence < 0.75:
+        return set()
+    return set(source_family_resolution.routing_families)
+
+
 def _build_trace_payload(
     *,
     request_id: str,
@@ -2886,6 +3166,7 @@ def _build_trace_payload(
     retrieval_plan: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
+    retrieval_verification_features: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
     if not assembled_evidence and model_cited_source_ids:
@@ -2917,6 +3198,7 @@ def _build_trace_payload(
             "family_confidence": (source_family_resolution or {}).get("family_confidence"),
             "family_candidates": (source_family_resolution or {}).get("family_candidates", []),
             "source_family_resolution": source_family_resolution,
+            "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
             "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
@@ -2954,6 +3236,7 @@ def _build_trace_payload(
             "family_confidence": (source_family_resolution or {}).get("family_confidence"),
             "family_candidates": (source_family_resolution or {}).get("family_candidates", []),
             "source_family_resolution": source_family_resolution,
+            "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
             "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
@@ -2971,6 +3254,12 @@ def _build_trace_payload(
             "top_k_effective": top_k_effective,
             "reranker_enabled": reranker_enabled,
             "source_family_resolution": source_family_resolution,
+            "reranker_family_bonus": (retrieval_verification_features or {}).get("reranker_family_bonus"),
+            "identifier_match_flag": (retrieval_verification_features or {}).get("identifier_match_flag"),
+            "temporal_alignment_flag": (retrieval_verification_features or {}).get("temporal_alignment_flag"),
+            "selected_evidence_count": (retrieval_verification_features or {}).get("selected_evidence_count"),
+            "cross_family_conflict_flag": (retrieval_verification_features or {}).get("cross_family_conflict_flag"),
+            "retrieval_verification_features": retrieval_verification_features,
             "pre_rerank_chunks": [
                 _serialize_trace_chunk(chunk) for chunk in pre_rerank_chunks
             ],
@@ -5244,6 +5533,10 @@ async def chat_completions(
         applied_expansions=applied_expansions,
         source_family_resolution=source_family_resolution,
     )
+    requested_source_families = _clamp_families_to_strong_resolution(
+        requested_source_families,
+        source_family_resolution,
+    )
     if _asks_current_validity_over_historical_contrast(last_user_msg):
         retrieval_query = _append_unique_expansion(
             retrieval_query,
@@ -5258,6 +5551,14 @@ async def chat_completions(
             retrieval_query,
             applied_expansions,
             numbered_law_reference_expansion,
+        )
+        retrieval_top_k = max(retrieval_top_k, 20)
+    annual_investment_program_expansion = _build_annual_investment_program_expansion(last_user_msg)
+    if annual_investment_program_expansion:
+        retrieval_query = _append_unique_expansion(
+            retrieval_query,
+            applied_expansions,
+            annual_investment_program_expansion,
         )
         retrieval_top_k = max(retrieval_top_k, 20)
     cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
@@ -5696,13 +5997,34 @@ async def chat_completions(
                         candidate["cluster_id"]: candidate
                         for candidate in source_cluster_selector.get("candidates") or []
                     }
+                    strong_family_gate = _strong_source_family_gate(source_family_resolution)
+                    if strong_family_gate:
+                        gated_cluster_ids = {
+                            cluster_id
+                            for cluster_id in selected_cluster_ids
+                            if (
+                                candidate_by_id.get(cluster_id, {}).get("source_family")
+                                in strong_family_gate
+                            )
+                        }
+                        if gated_cluster_ids:
+                            selected_cluster_ids = gated_cluster_ids
+                        else:
+                            selected_cluster_ids = set()
+                            logger.info(
+                                "Retrieval source-selector gated out: session=%s families=%s",
+                                session_id,
+                                sorted(strong_family_gate),
+                            )
                     selected_source_keys = {
                         candidate_by_id[cluster_id]["source_key"]
                         for cluster_id in selected_cluster_ids
                         if cluster_id in candidate_by_id
                     }
-                    selected_laws = dedupe_strings(
-                        source_cluster_selector.get("selected_law_hints") or []
+                    selected_laws = (
+                        dedupe_strings(source_cluster_selector.get("selected_law_hints") or [])
+                        if selected_cluster_ids
+                        else []
                     )
 
                     if selected_laws and not request_body.law_filter:
@@ -5806,6 +6128,13 @@ async def chat_completions(
         except Exception as exc:
             logger.warning("Reranker bypass (hata): %s", exc, exc_info=True)
     post_rerank_chunks = list(retrieved_chunks)
+    source_family_resolution_trace = source_family_resolution.to_trace_dict()
+    retrieval_verification_features = _build_retrieval_verification_features(
+        query=last_user_msg,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution_trace,
+        chunks=post_rerank_chunks,
+    )
 
     # ── Orchestrator ─────────────────────────────────────────────────────────
     orchestrator = _get_orchestrator(request)
@@ -5891,7 +6220,8 @@ async def chat_completions(
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
         source_cluster_selector=source_cluster_selector,
-        source_family_resolution=source_family_resolution.to_trace_dict(),
+        source_family_resolution=source_family_resolution_trace,
+        retrieval_verification_features=retrieval_verification_features,
     )
     pre_answer_payload = _pre_answer_stage_payload(
         decision_lane="rag",
@@ -5909,7 +6239,7 @@ async def chat_completions(
         reranker_enabled=_reranker_enabled,
         retrieval_plan=retrieval_plan,
         source_cluster_selector=source_cluster_selector,
-        source_family_resolution=source_family_resolution.to_trace_dict(),
+        source_family_resolution=source_family_resolution_trace,
     )
     return _finalize_chat_response(
         request=request,

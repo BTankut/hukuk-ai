@@ -59,6 +59,11 @@ _NUMBERED_LAW_MENTION_RE = re.compile(
     r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
     re.IGNORECASE,
 )
+_NUMBERED_LAW_LIST_MENTION_RE = re.compile(
+    r"\b(?P<laws>\d{1,9}(?:\s*,\s*\d{1,9})*(?:\s+(?:ve|ile)\s+\d{1,9})?)\s+say[ıi]l[ıi]\s+"
+    r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
+    re.IGNORECASE,
+)
 _NARROW_QUESTION_TYPE_SET = {"single_article", "definition", "elements", "procedure"}
 _SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[a-zçğıöşüâîû][.!?])\s+", re.IGNORECASE)
 _QUESTION_TYPE_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -314,6 +319,12 @@ def _dedupe_article_refs(values: list[tuple[str, str]]) -> list[tuple[str, str]]
 def extract_numbered_law_mentions(question_raw: str) -> list[str]:
     mentions: list[str] = []
     seen: set[str] = set()
+    for match in _NUMBERED_LAW_LIST_MENTION_RE.finditer(question_raw or ""):
+        for law in re.findall(r"\d{1,9}", match.group("laws")):
+            if law in seen:
+                continue
+            mentions.append(law)
+            seen.add(law)
     for match in _NUMBERED_LAW_MENTION_RE.finditer(question_raw or ""):
         law = match.group("law")
         if law in seen:

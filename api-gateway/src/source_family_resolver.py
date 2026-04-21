@@ -144,13 +144,43 @@ def _add_term_rule(
 def _route_families_for_candidates(candidates: list[SourceFamilyCandidate], top_confidence: float) -> list[str]:
     if not candidates:
         return []
+    if top_confidence < 0.70:
+        return []
     selected: list[str] = []
-    threshold = 2.0 if top_confidence < 0.72 else max(2.0, candidates[0].score - 2.5)
+    threshold = max(2.0, candidates[0].score - 2.5)
     for candidate in candidates:
         if candidate.score < threshold:
             continue
         selected.extend(ROUTING_ALIASES.get(candidate.family, (candidate.family,)))
     return dedupe(selected)
+
+
+def _demote_generic_law_signal_when_specific_type_is_present(
+    scores: dict[str, dict[str, object]],
+) -> None:
+    kanun = scores.get("kanun")
+    if not kanun:
+        return
+    kanun_signals = kanun.get("signals")
+    if not isinstance(kanun_signals, list):
+        return
+    if kanun_signals != ["explicit_law_or_article_reference"]:
+        return
+
+    specific_type_scores = [
+        float(payload["score"])
+        for family, payload in scores.items()
+        if family != "kanun"
+        and isinstance(payload.get("signals"), list)
+        and any(str(signal).endswith("_document_type") for signal in payload["signals"])
+    ]
+    if not specific_type_scores:
+        return
+
+    # Numbered references are generic until the query names the document type.
+    # Example: "551 sayılı KHK" must route as KHK, not as a kanun just because
+    # it contains a number.
+    kanun["score"] = min(float(kanun["score"]), max(specific_type_scores) - 3.0)
 
 
 def _confidence(top_score: float, second_score: float) -> float:
@@ -218,6 +248,8 @@ def resolve_source_family_prior(
             "karar no",
             "karar numarası",
             "karar numarasi",
+            "yatırım programı kararı",
+            "yatirim programi karari",
         ),
         score=6.0,
         signal="cb_karar_document_type",
@@ -291,7 +323,7 @@ def resolve_source_family_prior(
     )
     if contains_any(normalized_query, university_terms):
         _add(scores, "uy", 3.0, "university_namespace_signal")
-        if contains_any(normalized_query, ("yönetmelik", "yonetmelik")):
+        if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
             _add(scores, "uy", 3.0, "university_regulation_signal")
 
     agency_terms = (
@@ -313,11 +345,13 @@ def resolve_source_family_prior(
     )
     if contains_any(normalized_query, agency_terms):
         _add(scores, "kky", 2.5, "agency_or_board_namespace_signal")
-        if contains_any(normalized_query, ("yönetmelik", "yonetmelik")):
+        if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
             _add(scores, "kky", 2.5, "agency_regulation_signal")
 
-    if contains_any(normalized_query, ("yönetmelik", "yonetmelik")):
+    if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
         _add(scores, "yonetmelik", 3.0, "generic_regulation_signal")
+
+    _demote_generic_law_signal_when_specific_type_is_present(scores)
 
     if not scores:
         return SourceFamilyResolution(

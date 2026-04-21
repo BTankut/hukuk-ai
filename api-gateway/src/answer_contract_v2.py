@@ -155,6 +155,119 @@ def _select_evidence(
     return evidence[0] if evidence else None
 
 
+def _canonical_trace_family(value: Any) -> str:
+    normalized = _lower_asciiish(value).upper().replace(" ", "_")
+    aliases = {
+        "CBK": "CB_KARARNAME",
+        "CBKAR": "CB_KARAR",
+        "CBY": "CB_YONETMELIK",
+        "CBG": "CB_GENELGE",
+        "TEBLIG": "TEBLIGLER",
+        "TEBLIGLER": "TEBLIGLER",
+        "YON": "YONETMELIK",
+        "MULGA_KANUN": "MULGA",
+        "KANUN": "KANUN",
+        "KHKK": "KHK",
+        "KHK": "KHK",
+        "TUZUK": "TUZUK",
+        "YONETMELIK": "YONETMELIK",
+        "CB_YONETMELIK": "CB_YONETMELIK",
+        "CB_KARARNAME": "CB_KARARNAME",
+        "CB_KARAR": "CB_KARAR",
+        "CB_GENELGE": "CB_GENELGE",
+        "KKY": "KKY",
+        "UY": "UY",
+    }
+    return aliases.get(normalized, UNKNOWN)
+
+
+def _evidence_family(evidence: dict[str, Any] | None) -> str:
+    if not isinstance(evidence, dict):
+        return UNKNOWN
+    title_family = _detect_family(
+        " ".join(
+            _clean(evidence.get(key))
+            for key in ("source_title", "belge_adi", "kanun_adi", "title", "citation", "source_id")
+        )
+    )
+    family = _canonical_trace_family(evidence.get("belge_turu") or evidence.get("source_type"))
+    if title_family in {
+        "CB_GENELGE",
+        "CB_YONETMELIK",
+        "CB_KARARNAME",
+        "CB_KARAR",
+        "KHK",
+        "TUZUK",
+        "TEBLIGLER",
+    }:
+        return title_family
+    if family != UNKNOWN:
+        return family
+    return title_family
+
+
+def _claim_matches_item(
+    item: dict[str, Any],
+    *,
+    source_identifier: str,
+    citations: list[str],
+) -> bool:
+    needles = {_lower_asciiish(source_identifier)}
+    needles.update(_lower_asciiish(citation) for citation in citations if _clean(citation))
+    needles = {needle for needle in needles if needle}
+    if not needles:
+        return False
+
+    haystacks = {
+        _lower_asciiish(item.get(key))
+        for key in (
+            "source_id",
+            "citation",
+            "canonical_id",
+            "display_citation",
+            "source",
+            "law_short_name",
+            "kanun_kisa_adi",
+        )
+        if _clean(item.get(key))
+    }
+    for needle in needles:
+        for haystack in haystacks:
+            if needle == haystack:
+                return True
+            if len(needle) >= 5 and (needle in haystack or haystack in needle):
+                return True
+
+    claim_numbers = set(re.findall(r"\d+[a-z]?", " ".join(needles)))
+    item_numbers = set(re.findall(r"\d+[a-z]?", " ".join(haystacks)))
+    return bool(claim_numbers and claim_numbers <= item_numbers)
+
+
+def _claim_matches_evidence(
+    evidence: list[dict[str, Any]],
+    *,
+    source_identifier: str,
+    citations: list[str],
+) -> bool:
+    return any(
+        _claim_matches_item(item, source_identifier=source_identifier, citations=citations)
+        for item in evidence
+    )
+
+
+def _trace_family_resolution(trace_payload: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(trace_payload, dict):
+        return {}
+    for parent_key in ("query_signals", "parsed_query", "retrieval"):
+        parent = trace_payload.get(parent_key)
+        if not isinstance(parent, dict):
+            continue
+        resolution = parent.get("source_family_resolution")
+        if isinstance(resolution, dict):
+            return resolution
+    return {}
+
+
 def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
     raw_family = _first_string(
         evidence.get("belge_turu") if isinstance(evidence, dict) else "",
@@ -171,6 +284,8 @@ def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
     }
     if aliases.get(normalized_raw):
         return aliases[normalized_raw]
+    if normalized_raw == "MULGA_KANUN":
+        return "MULGA"
     if normalized_raw in {
         "KANUN",
         "CB_KARARNAME",
@@ -447,6 +562,9 @@ def build_or_repair_answer_contract(
         source_family = _detect_family(source_family)
     if not source_family or source_family == UNKNOWN:
         source_family = _detect_family(combined_text, selected_evidence)
+    selected_evidence_family = _evidence_family(selected_evidence)
+    if selected_evidence_family != UNKNOWN:
+        source_family = selected_evidence_family
 
     source_identifier = _first_string(
         contract.get("source_identifier_claimed"),
@@ -499,12 +617,55 @@ def build_or_repair_answer_contract(
         grounding_status = "partially_grounded"
         answer_mode = "qualified_answer"
 
+    verification_findings: list[str] = []
+    claim_evidence_match = _claim_matches_evidence(
+        evidence_items,
+        source_identifier=source_identifier,
+        citations=citations,
+    )
+    if not native_dialog and source_identifier and evidence_items and not claim_evidence_match:
+        verification_findings.append("claimed_source_not_in_selected_evidence")
+
+    family_resolution = _trace_family_resolution(trace_payload)
+    predicted_family = _canonical_trace_family(family_resolution.get("predicted_family"))
+    try:
+        predicted_confidence = float(family_resolution.get("family_confidence") or 0.0)
+    except (TypeError, ValueError):
+        predicted_confidence = 0.0
+    evidence_families = {
+        family
+        for family in (_evidence_family(item) for item in evidence_items[:10])
+        if family != UNKNOWN
+    }
+    if (
+        not native_dialog
+        and predicted_family != UNKNOWN
+        and predicted_confidence >= 0.75
+        and source_family != UNKNOWN
+        and source_family != predicted_family
+        and predicted_family in evidence_families
+    ):
+        verification_findings.append("predicted_family_evidence_conflict")
+
+    retrieval_features = {}
+    if isinstance(trace_payload, dict):
+        retrieval = trace_payload.get("retrieval")
+        if isinstance(retrieval, dict):
+            retrieval_features = retrieval.get("retrieval_verification_features") or {}
+    if isinstance(retrieval_features, dict) and retrieval_features.get("cross_family_conflict_flag") is True:
+        verification_findings.append("cross_family_evidence_conflict")
+
+    if verification_findings and grounding_status == "fully_grounded":
+        grounding_status = "partially_grounded"
+        answer_mode = "qualified_answer"
+
     needs_manual_review = bool(contract.get("needs_manual_review"))
     if not native_dialog:
         needs_manual_review = needs_manual_review or grounding_status != "fully_grounded"
         needs_manual_review = needs_manual_review or not claimed_source_parse_success
         needs_manual_review = needs_manual_review or (not article_or_section and final_mode in {"answer", "partial"})
         needs_manual_review = needs_manual_review or final_mode in {"refusal", "blocked"}
+        needs_manual_review = needs_manual_review or bool(verification_findings)
 
     confidence = _confidence_for_contract(
         grounding_status=grounding_status,
@@ -550,6 +711,7 @@ def build_or_repair_answer_contract(
             "effective_state_claimed": effective_state,
             "temporal_qualification": temporal_qualification_claim,
             "needs_manual_review": bool(needs_manual_review),
+            "verification_findings": verification_findings,
         }
     )
 
