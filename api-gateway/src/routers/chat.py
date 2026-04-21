@@ -63,7 +63,7 @@ from observability import get_metrics_registry, looks_like_refusal
 from pydantic import BaseModel, Field
 
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
-from rag.source_catalog import enrich_metadata_with_source_title
+from rag.source_catalog import enrich_metadata_with_source_title, resolve_effective_state
 from rag.token_manager import estimate_tokens
 from release_controls import (
     api_version_label,
@@ -1221,6 +1221,240 @@ def _chunk_matches_identifier_tokens(chunk: RetrievedChunk, identifier_tokens: s
         if any(normalized_token in candidate for candidate in candidates if len(normalized_token) >= 3):
             return True
     return False
+
+
+def _resolve_chunk_source_title(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    return _normalize_whitespace(
+        str(
+            metadata.get("full_title")
+            or metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+            or metadata.get("title")
+            or chunk.source
+            or chunk.citation
+            or ""
+        )
+    )
+
+
+def _resolve_chunk_source_identifier(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    identifier = _normalize_whitespace(
+        str(
+            metadata.get("canonical_identifier_display")
+            or metadata.get("display_citation")
+            or metadata.get("source_id")
+            or metadata.get("belge_no")
+            or metadata.get("kanun_no")
+            or metadata.get("law_no")
+            or metadata.get("law_short_name")
+            or metadata.get("kanun_kisa_adi")
+            or chunk.source
+            or ""
+        )
+    )
+    return identifier or _resolve_trace_source_id(chunk)
+
+
+def _normalize_article_token(value: Any) -> str:
+    raw = _normalize_whitespace(str(value or "")).lower()
+    if not raw:
+        return ""
+    normalized = _normalize_tr_text(raw)
+    gecici = "gecici" in normalized
+    match = re.search(r"\b(?:gecici\s+)?(?:madde|m|md)\.?\s*(\d+[a-z]?)\b", normalized)
+    if not match:
+        match = re.search(r"\bm\.(\d+[a-z]?)\b", normalized)
+    if not match:
+        match = re.search(r"\b(\d+[a-z]?)\b", normalized)
+    if not match:
+        return normalized
+    article = match.group(1).lower()
+    return f"gecici-{article}" if gecici else article
+
+
+def _chunk_article_token(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    for value in (
+        metadata.get("article_or_section"),
+        metadata.get("madde_no"),
+        metadata.get("article_no"),
+        metadata.get("article"),
+        metadata.get("source_id"),
+        chunk.citation,
+    ):
+        token = _normalize_article_token(value)
+        if token:
+            return token
+    return ""
+
+
+def _extract_query_article_tokens(
+    query: str,
+    explicit_article_refs: list[tuple[str, str]] | None = None,
+) -> set[str]:
+    tokens = {
+        token
+        for _law, article in (explicit_article_refs or [])
+        for token in (_normalize_article_token(article),)
+        if token
+    }
+    normalized = _normalize_tr_text(query or "")
+    for match in re.finditer(r"\b(?:gecici\s+madde|madde|m|md)\.?\s*(\d+[a-z]?)\b", normalized):
+        token = _normalize_article_token(match.group(0))
+        if token:
+            tokens.add(token)
+    for match in re.finditer(r"\b(\d+[a-z]?)\s*(?:inci|nci|uncu|\.?)?\s*madde[a-z]*\b", normalized):
+        token = _normalize_article_token(match.group(1))
+        if token:
+            tokens.add(token)
+    return tokens
+
+
+def _chunk_article_matches(chunk: RetrievedChunk, article_tokens: set[str]) -> bool:
+    chunk_token = _chunk_article_token(chunk)
+    return bool(chunk_token and chunk_token in article_tokens)
+
+
+def _build_chunk_evidence_span(chunk: RetrievedChunk, *, query: str | None = None, max_len: int = 700) -> str:
+    if query:
+        return RAGOrchestrator._build_query_focused_excerpt(chunk.text, query=query, max_len=max_len)
+    return RAGOrchestrator._build_chunk_excerpt(chunk.text, max_len=max_len)
+
+
+def _select_article_span_evidence(
+    *,
+    query: str,
+    chunks: list[RetrievedChunk],
+    requested_source_families: list[str],
+    explicit_article_refs: list[tuple[str, str]] | None = None,
+    selected_source_keys: set[str] | None = None,
+) -> tuple[list[RetrievedChunk], dict[str, Any]]:
+    if not chunks:
+        return chunks, {"applied": False, "reason": "no_chunks"}
+
+    query_terms = _extract_retrieval_priority_terms(query)
+    identifier_tokens = _extract_source_identifier_tokens(query)
+    article_tokens = _extract_query_article_tokens(query, explicit_article_refs)
+    requested_family_set = set(requested_source_families)
+    numbered_laws = set(extract_numbered_law_mentions(query))
+    explicit_ref_set = {
+        (law, _normalize_article_token(article))
+        for law, article in (explicit_article_refs or [])
+        if law and _normalize_article_token(article)
+    }
+    source_cluster_sizes: dict[str, int] = {}
+    for chunk in chunks:
+        source_key = _resolve_chunk_source_key(chunk)
+        source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
+
+    has_selector_signal = bool(
+        article_tokens
+        or identifier_tokens
+        or requested_family_set
+        or selected_source_keys
+        or query_terms
+    )
+    if not has_selector_signal:
+        return chunks, {"applied": False, "reason": "no_selector_signal"}
+
+    current_validity_query = _asks_current_validity_query(query)
+    scored: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
+    for original_index, chunk in enumerate(chunks):
+        metadata = chunk.metadata or {}
+        family = _resolve_chunk_source_family(chunk) or ""
+        source_key = _resolve_chunk_source_key(chunk)
+        title = _resolve_chunk_source_title(chunk)
+        heading = metadata.get("heading") or metadata.get("article_heading")
+        article_token = _chunk_article_token(chunk)
+        chunk_laws = _chunk_law_candidates(chunk)
+
+        explicit_ref_match = False
+        for law, article in explicit_ref_set:
+            law_match = law in chunk_laws or law == _extract_chunk_law_hint(chunk)
+            if law_match and article_token == article:
+                explicit_ref_match = True
+                break
+
+        article_match = bool(article_tokens and article_token in article_tokens)
+        identifier_match = _chunk_matches_identifier_tokens(chunk, identifier_tokens)
+        family_match = bool(requested_family_set and family in requested_family_set)
+        selected_source_match = bool(selected_source_keys and source_key in selected_source_keys)
+        law_match = bool(numbered_laws and numbered_laws & chunk_laws)
+        title_overlap = _count_term_overlap(title, query_terms)
+        heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
+        text_overlap = _count_term_overlap(chunk.text, query_terms)
+        cluster_size = source_cluster_sizes.get(source_key, 1)
+
+        score = float(chunk.score or 0.0)
+        if explicit_ref_match:
+            score += 140
+        if article_match:
+            score += 70
+        if selected_source_match:
+            score += 55
+        if identifier_match:
+            score += 45
+        if family_match:
+            score += 40
+        if law_match:
+            score += 30
+        score += min(title_overlap, 8) * 7
+        score += min(heading_overlap, 8) * 6
+        score += min(text_overlap, 10) * 2
+        score += min(cluster_size, 6) * 1.5
+        if requested_family_set and not family_match:
+            score -= 25
+        if numbered_laws and not law_match:
+            score -= 18
+        if current_validity_query:
+            score -= _chunk_active_rank(chunk) * 20
+
+        scored.append(
+            (
+                score,
+                original_index,
+                chunk,
+                {
+                    "source_id": _resolve_trace_source_id(chunk),
+                    "citation": chunk.citation,
+                    "score": round(score, 4),
+                    "source_family": family or None,
+                    "source_identifier": _resolve_chunk_source_identifier(chunk),
+                    "article_or_section": article_token or None,
+                    "explicit_ref_match": explicit_ref_match,
+                    "article_match": article_match,
+                    "identifier_match": identifier_match,
+                    "family_match": family_match,
+                    "selected_source_match": selected_source_match,
+                    "title_overlap": title_overlap,
+                    "heading_overlap": heading_overlap,
+                    "text_overlap": text_overlap,
+                },
+            )
+        )
+
+    ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
+    reordered = [chunk for _score, _index, chunk, _trace in ranked]
+    top_traces = [trace for _score, _index, _chunk, trace in ranked[:10]]
+    first_changed = bool(reordered and chunks and reordered[0].citation != chunks[0].citation)
+    applied = bool(first_changed or article_tokens or identifier_tokens or selected_source_keys or requested_family_set)
+    return reordered, {
+        "applied": applied,
+        "reason": "article_span_selector",
+        "query_article_tokens": sorted(article_tokens),
+        "identifier_tokens": sorted(identifier_tokens),
+        "requested_source_families": requested_source_families,
+        "selected_source_keys": sorted(selected_source_keys or []),
+        "selected_source_ids": [trace["source_id"] for trace in top_traces if trace.get("source_id")],
+        "selected_articles": dedupe_strings(
+            [str(trace["article_or_section"]) for trace in top_traces if trace.get("article_or_section")]
+        ),
+        "top_scores": top_traces,
+    }
 
 
 def _asks_current_validity_over_historical_contrast(query: str) -> bool:
@@ -3000,6 +3234,11 @@ def _resolve_trace_source_id(chunk: RetrievedChunk) -> str:
 
 def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
     metadata = chunk.metadata or {}
+    source_title = _resolve_chunk_source_title(chunk)
+    source_family = _resolve_chunk_source_family(chunk)
+    source_identifier = _resolve_chunk_source_identifier(chunk)
+    article_or_section = _chunk_article_token(chunk)
+    effective_state = metadata.get("effective_state") or resolve_effective_state(metadata)
     return {
         "source_id": _resolve_trace_source_id(chunk),
         "citation": chunk.citation,
@@ -3008,9 +3247,21 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "chunk_id": metadata.get("chunk_id"),
         "law_no": metadata.get("law_no") or metadata.get("kanun_no"),
         "law_short_name": metadata.get("law_short_name") or metadata.get("kanun_kisa_adi"),
-        "source_title": metadata.get("source_title") or metadata.get("belge_adi") or metadata.get("kanun_adi"),
+        "source_title": source_title,
         "belge_adi": metadata.get("belge_adi") or metadata.get("kanun_adi"),
         "belge_turu": metadata.get("belge_turu") or metadata.get("source_type"),
+        "source_family": source_family,
+        "source_identifier": source_identifier,
+        "article_or_section": article_or_section or None,
+        "full_title": metadata.get("full_title") or source_title,
+        "issuer": metadata.get("issuer"),
+        "official_gazette_no": metadata.get("official_gazette_no"),
+        "official_gazette_date": metadata.get("official_gazette_date"),
+        "effective_start": metadata.get("effective_start") or metadata.get("yururluk_baslangic"),
+        "effective_end": metadata.get("effective_end") or metadata.get("yururluk_bitis"),
+        "canonical_identifier_display": metadata.get("canonical_identifier_display"),
+        "source_family_canonical": metadata.get("source_family_canonical") or source_family,
+        "effective_state": effective_state,
         "heading": metadata.get("heading") or metadata.get("article_heading"),
         "madde_no": metadata.get("madde_no"),
         "fikra_no": metadata.get("fikra_no"),
@@ -3020,10 +3271,15 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
     }
 
 
-def _build_assembled_evidence(chunks: list[RetrievedChunk]) -> list[dict[str, Any]]:
+def _build_assembled_evidence(
+    chunks: list[RetrievedChunk],
+    *,
+    query: str | None = None,
+) -> list[dict[str, Any]]:
     evidence: list[dict[str, Any]] = []
     for chunk in chunks:
         item = _serialize_trace_chunk(chunk)
+        item["quoted_or_extracted_span"] = _build_chunk_evidence_span(chunk, query=query)
         item["excerpt"] = chunk.text
         evidence.append(item)
     return evidence
@@ -3049,6 +3305,11 @@ def _build_fallback_assembled_evidence(
                 "law_no": None,
                 "law_short_name": law_short_name or None,
                 "madde_no": madde_no or None,
+                "source_family": "kanun" if law_short_name else None,
+                "source_identifier": canonical,
+                "article_or_section": madde_no or None,
+                "effective_state": "unknown",
+                "quoted_or_extracted_span": fallback_excerpt,
                 "fikra_no": None,
                 "yururluk_baslangic": None,
                 "yururluk_bitis": None,
@@ -3165,10 +3426,11 @@ def _build_trace_payload(
     final_reason: str | None,
     retrieval_plan: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
+    article_span_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
     retrieval_verification_features: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
+    assembled_evidence = _build_assembled_evidence(post_rerank_chunks, query=user_query)
     if not assembled_evidence and model_cited_source_ids:
         assembled_evidence = _build_fallback_assembled_evidence(
             model_cited_source_ids,
@@ -3201,6 +3463,7 @@ def _build_trace_payload(
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
             "source_cluster_selector": source_cluster_selector,
+            "article_span_selector": article_span_selector,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -3239,6 +3502,7 @@ def _build_trace_payload(
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
             "source_cluster_selector": source_cluster_selector,
+            "article_span_selector": article_span_selector,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -3260,6 +3524,7 @@ def _build_trace_payload(
             "selected_evidence_count": (retrieval_verification_features or {}).get("selected_evidence_count"),
             "cross_family_conflict_flag": (retrieval_verification_features or {}).get("cross_family_conflict_flag"),
             "retrieval_verification_features": retrieval_verification_features,
+            "article_span_selector": article_span_selector,
             "pre_rerank_chunks": [
                 _serialize_trace_chunk(chunk) for chunk in pre_rerank_chunks
             ],
@@ -3272,6 +3537,7 @@ def _build_trace_payload(
             "assembled_context": assembled_context,
             "assembled_evidence": assembled_evidence,
             "allowed_source_whitelist": allowed_source_whitelist,
+            "article_span_selector": article_span_selector,
         },
         "generation_outcome": {
             "decision_lane": decision_lane,
@@ -4343,6 +4609,7 @@ def _pre_answer_stage_payload(
     reranker_enabled: bool,
     retrieval_plan: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
+    article_span_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
@@ -4358,6 +4625,7 @@ def _pre_answer_stage_payload(
         "applied_expansions": applied_expansions,
         "retrieval_plan": retrieval_plan,
         "source_cluster_selector": source_cluster_selector,
+        "article_span_selector": article_span_selector,
         "source_family_resolution": source_family_resolution,
         "top_k_requested": top_k_requested,
         "top_k_effective": top_k_effective,
@@ -5807,6 +6075,8 @@ async def chat_completions(
     pre_rerank_chunks: list[RetrievedChunk] = []
     post_rerank_chunks: list[RetrievedChunk] = []
     source_cluster_selector: dict[str, Any] | None = None
+    article_span_selector: dict[str, Any] | None = None
+    selected_source_keys: set[str] = set()
     top_k_effective = retrieval_top_k
     retriever = _get_retriever(request)
 
@@ -6127,6 +6397,15 @@ async def chat_completions(
                     )
         except Exception as exc:
             logger.warning("Reranker bypass (hata): %s", exc, exc_info=True)
+
+    if retrieved_chunks:
+        retrieved_chunks, article_span_selector = _select_article_span_evidence(
+            query=last_user_msg,
+            chunks=retrieved_chunks,
+            requested_source_families=requested_source_families,
+            explicit_article_refs=all_exact_article_refs,
+            selected_source_keys=selected_source_keys,
+        )
     post_rerank_chunks = list(retrieved_chunks)
     source_family_resolution_trace = source_family_resolution.to_trace_dict()
     retrieval_verification_features = _build_retrieval_verification_features(
@@ -6164,7 +6443,7 @@ async def chat_completions(
     blocked = orch_response.blocked
     guardrails_reasons = orch_response.guardrails_reasons
     verification = orch_response.verification
-    assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
+    assembled_evidence = _build_assembled_evidence(post_rerank_chunks, query=last_user_msg)
     allowed_source_whitelist = _build_allowed_source_whitelist(post_rerank_chunks)
     if not assembled_evidence and citations:
         assembled_evidence = _build_fallback_assembled_evidence(
@@ -6220,6 +6499,7 @@ async def chat_completions(
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
         source_cluster_selector=source_cluster_selector,
+        article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,
         retrieval_verification_features=retrieval_verification_features,
     )
@@ -6239,6 +6519,7 @@ async def chat_completions(
         reranker_enabled=_reranker_enabled,
         retrieval_plan=retrieval_plan,
         source_cluster_selector=source_cluster_selector,
+        article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,
     )
     return _finalize_chat_response(

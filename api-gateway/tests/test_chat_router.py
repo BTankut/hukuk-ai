@@ -37,10 +37,12 @@ from routers.chat import (
     ConversationMessage,
     _apply_source_cluster_deterministic_overrides,
     _apply_retrieval_plan_hints,
+    _build_assembled_evidence,
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
     _build_retrieval_plan_expansion,
     _build_source_cluster_candidates,
+    _select_article_span_evidence,
     _clamp_families_to_strong_resolution,
     _build_precise_tmk_tbk_cross_law_answer,
     _contains_query_term,
@@ -906,6 +908,107 @@ class TestLawSignalParsing:
         )
 
         assert prioritized[0].citation == "IK m.21/f.0"
+
+    def test_article_span_selector_prioritizes_explicit_article_in_same_document(self):
+        chunks = [
+            RetrievedChunk(
+                text="Başvuru usulü madde 8 kapsamında açıklanır.",
+                citation="40969 m.8/f.0",
+                source="40969",
+                score=0.98,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "law_no": "40969",
+                    "madde_no": "8",
+                },
+            ),
+            RetrievedChunk(
+                text="Tez danışmanı atanması madde 12 kapsamında düzenlenir.",
+                citation="40969 m.12/f.0",
+                source="40969",
+                score=0.77,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "law_no": "40969",
+                    "madde_no": "12",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="40969 sayılı yönetmeliğin 12. maddesinde tez danışmanı nasıl düzenlenir?",
+            chunks=chunks,
+            requested_source_families=["uy", "yonetmelik"],
+            explicit_article_refs=[],
+        )
+
+        assert selected[0].citation == "40969 m.12/f.0"
+        assert selector["applied"] is True
+        assert selector["query_article_tokens"] == ["12"]
+        assert "12" in selector["selected_articles"]
+
+    def test_article_span_selector_keeps_requested_family_ahead_of_cross_family_article_hit(self):
+        chunks = [
+            RetrievedChunk(
+                text="Kanun madde 12 metni.",
+                citation="2547 m.12/f.0",
+                source="2547",
+                score=0.99,
+                metadata={"source_title": "YÜKSEKÖĞRETİM KANUNU", "belge_turu": "kanun", "madde_no": "12"},
+            ),
+            RetrievedChunk(
+                text="Üniversite yönetmeliğinde tez danışmanı usulü düzenlenir.",
+                citation="40969 m.27/f.0",
+                source="40969",
+                score=0.70,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "madde_no": "27",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="Yalnız kanun değil, üniversite yönetmeliğine göre tez danışmanı usulü nedir?",
+            chunks=chunks,
+            requested_source_families=["uy", "yonetmelik"],
+            explicit_article_refs=[],
+        )
+
+        assert selected[0].citation == "40969 m.27/f.0"
+        assert selector["top_scores"][0]["source_family"] == "uy"
+
+    def test_assembled_evidence_exposes_phase4_canonical_span_fields(self):
+        chunk = RetrievedChunk(
+            text=(
+                "Tez danışmanı, öğrencinin programı ve çalışmanın niteliği dikkate alınarak atanır. "
+                "Danışman değişikliği ilgili enstitü kurulunca sonuçlandırılır."
+            ),
+            citation="40969 m.12/f.0",
+            source="40969",
+            score=0.84,
+            metadata={
+                "full_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                "belge_turu": "uy",
+                "law_no": "40969",
+                "madde_no": "12",
+                "effective_state": "active",
+                "canonical_identifier_display": "40969 m.12",
+            },
+        )
+
+        evidence = _build_assembled_evidence([chunk], query="Tez danışmanı nasıl atanır?")
+
+        assert evidence[0]["source_family"] == "uy"
+        assert evidence[0]["source_title"].startswith("KIRKLARELİ ÜNİVERSİTESİ")
+        assert evidence[0]["source_identifier"] == "40969 m.12"
+        assert evidence[0]["article_or_section"] == "12"
+        assert evidence[0]["effective_state"] == "active"
+        assert "Tez danışmanı" in evidence[0]["quoted_or_extracted_span"]
 
 
 class TestPreciseDeterministicAnswers:
