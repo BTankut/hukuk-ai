@@ -2,7 +2,7 @@
 
 ## 1. Commit SHA
 
-Pending at report generation time. This report is included in the Phase 0.5 commit; use `git log -1` after commit for the immutable SHA.
+Phase 0.5 implementation commit: `35e9fe3`.
 
 ## 2. Degisen Dosyalar
 
