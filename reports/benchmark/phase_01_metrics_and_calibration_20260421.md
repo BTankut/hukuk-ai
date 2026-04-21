@@ -4,7 +4,7 @@
 
 - Commit 1: `47280cb` benchmark: phase 1 add canonical source schema groundwork
 - Commit 2: `fa51b85` benchmark: phase 1 extend scorer taxonomy
-- Commit 3: pending at report generation time; this report is included in the calibration/reporting commit.
+- Commit 3: `ab85520` benchmark: phase 1 add calibration reporting
 
 ## 2. Degisen Dosyalar
 
