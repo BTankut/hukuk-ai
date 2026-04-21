@@ -1,0 +1,604 @@
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from typing import Any
+
+
+ANSWER_MODES = {
+    "direct_answer",
+    "qualified_answer",
+    "insufficient_grounding",
+    "conflict_detected",
+    "repealed_or_uncertain",
+}
+GROUNDING_STATUSES = {"fully_grounded", "partially_grounded", "not_grounded"}
+EFFECTIVE_STATES = {"active", "amended", "repealed", "unknown"}
+
+UNKNOWN = "UNKNOWN"
+_ACTIVE_END_DATE_SENTINELS = {"9999-12-31", "9999-12-31T00:00:00", "9999-12-31 00:00:00"}
+_ARTICLE_RE = re.compile(
+    r"\b(?:gecici\s+madde|madde|m|md)\.?\s*(?P<article>\d+[a-z]?)\b",
+    re.IGNORECASE,
+)
+_SOURCE_ID_ARTICLE_RE = re.compile(r"\bm\.(?P<article>\d+[a-z]?)\b", re.IGNORECASE)
+_NUMBERED_SOURCE_RE = re.compile(
+    r"\b(?P<number>\d{1,9})\s+say[ıi]l[ıi]\s+"
+    r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik|tebliğ|teblig|genelge|kararname|karar)\b",
+    re.IGNORECASE,
+)
+_UNCERTAINTY_RE = re.compile(
+    r"\b(belirsiz|belirsizlik|yetersiz|manuel|manual|doğrulanamad|dogrulanamad|net değil|net degil|unknown|not_grounded|partially_grounded|insufficient)\b",
+    re.IGNORECASE,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class AnswerContractRepairResult:
+    contract: dict[str, Any]
+    confidence_0_100: int
+    validation: dict[str, Any]
+
+
+def _clean(value: Any) -> str:
+    if value is None:
+        return ""
+    return re.sub(r"\s+", " ", str(value)).strip()
+
+
+def _lower_asciiish(value: Any) -> str:
+    text = _clean(value).casefold()
+    table = str.maketrans(
+        {
+            "ç": "c",
+            "ğ": "g",
+            "ı": "i",
+            "ö": "o",
+            "ş": "s",
+            "ü": "u",
+            "â": "a",
+            "î": "i",
+            "û": "u",
+        }
+    )
+    return text.translate(table)
+
+
+def _first_string(*values: Any) -> str:
+    for value in values:
+        text = _clean(value)
+        if text:
+            return text
+    return ""
+
+
+def _first_list_string(value: Any) -> str:
+    if isinstance(value, list):
+        for item in value:
+            text = _clean(item)
+            if text:
+                return text
+    return ""
+
+
+def _valid_answer_mode(value: Any) -> str:
+    text = _clean(value)
+    return text if text in ANSWER_MODES else ""
+
+
+def _valid_grounding_status(value: Any) -> str:
+    text = _clean(value)
+    return text if text in GROUNDING_STATUSES else ""
+
+
+def _valid_effective_state(value: Any) -> str:
+    text = _clean(value)
+    return text if text in EFFECTIVE_STATES else ""
+
+
+def _collect_trace_evidence(trace_payload: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(trace_payload, dict):
+        return []
+
+    found: list[dict[str, Any]] = []
+    for key in ("assembled_evidence", "rerank_list"):
+        value = trace_payload.get(key)
+        if isinstance(value, list):
+            found.extend(item for item in value if isinstance(item, dict))
+
+    context_assembly = trace_payload.get("context_assembly")
+    if isinstance(context_assembly, dict):
+        value = context_assembly.get("assembled_evidence")
+        if isinstance(value, list):
+            found.extend(item for item in value if isinstance(item, dict))
+
+    retrieval = trace_payload.get("retrieval")
+    if isinstance(retrieval, dict):
+        for key in ("post_rerank_chunks", "pre_rerank_chunks"):
+            value = retrieval.get(key)
+            if isinstance(value, list):
+                found.extend(item for item in value if isinstance(item, dict))
+
+    deduped: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in found:
+        marker = "|".join(
+            _clean(item.get(key))
+            for key in ("source_id", "citation", "chunk_id", "source_title", "madde_no")
+        )
+        if marker in seen:
+            continue
+        seen.add(marker)
+        deduped.append(item)
+    return deduped
+
+
+def _select_evidence(
+    evidence: list[dict[str, Any]],
+    *,
+    source_identifier: str,
+    citations: list[str],
+) -> dict[str, Any] | None:
+    needles = {_lower_asciiish(source_identifier)}
+    needles.update(_lower_asciiish(citation) for citation in citations if _clean(citation))
+    needles.discard("")
+
+    for item in evidence:
+        haystack = {
+            _lower_asciiish(item.get("source_id")),
+            _lower_asciiish(item.get("citation")),
+            _lower_asciiish(item.get("canonical_id")),
+            _lower_asciiish(item.get("source")),
+        }
+        if needles & haystack:
+            return item
+    return evidence[0] if evidence else None
+
+
+def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
+    raw_family = _first_string(
+        evidence.get("belge_turu") if isinstance(evidence, dict) else "",
+        evidence.get("source_type") if isinstance(evidence, dict) else "",
+    )
+    normalized_raw = _lower_asciiish(raw_family).upper().replace(" ", "_")
+    aliases = {
+        "CBK": "CB_KARARNAME",
+        "CBKAR": "CB_KARAR",
+        "CBY": "CB_YONETMELIK",
+        "CBG": "CB_GENELGE",
+        "TEBLIG": "TEBLIGLER",
+        "YON": "YONETMELIK",
+    }
+    if aliases.get(normalized_raw):
+        return aliases[normalized_raw]
+    if normalized_raw in {
+        "KANUN",
+        "CB_KARARNAME",
+        "YONETMELIK",
+        "CB_YONETMELIK",
+        "CB_KARAR",
+        "CB_GENELGE",
+        "KHK",
+        "TUZUK",
+        "KKY",
+        "UY",
+        "TEBLIGLER",
+        "MULGA",
+    }:
+        return normalized_raw
+
+    normalized = _lower_asciiish(text)
+    if "mulga" in normalized or "yururlukten kaldir" in normalized:
+        return "MULGA"
+    checks: tuple[tuple[str, tuple[str, ...]], ...] = (
+        ("CB_GENELGE", ("cumhurbaskanligi genelgesi", "cumhurbaskani genelgesi", "cb genelge")),
+        ("CB_YONETMELIK", ("cumhurbaskanligi yonetmeligi", "cumhurbaskani yonetmeligi", "cb yonetmelik")),
+        ("CB_KARARNAME", ("cumhurbaskanligi kararnamesi", "cumhurbaskani kararnamesi", "cbk")),
+        ("CB_KARAR", ("cumhurbaskani karari", "cumhurbaskanligi karari", "cb karari")),
+        ("KHK", ("kanun hukmunde kararname", "khk")),
+        ("TUZUK", ("tuzuk",)),
+        ("TEBLIGLER", ("teblig",)),
+        ("UY", ("uygulama yonetmeligi", "uygulama esaslari")),
+        ("KKY", ("kurum yonetmeligi", "kurulus yonetmeligi", "kamu kurum")),
+        ("YONETMELIK", ("yonetmelik",)),
+        ("KANUN", ("kanun", "tbk", "tmk", "tck", "hmk", "ttk", "iik", "iyuk", "kvkk")),
+    )
+    for family, terms in checks:
+        if any(term in normalized for term in terms):
+            return family
+
+    if re.search(r"\b[A-ZÇĞİÖŞÜ]{2,10}\s*m\.\d+", text):
+        return "KANUN"
+    return UNKNOWN
+
+
+def _detect_identifier(text: str, citations: list[str], evidence: dict[str, Any] | None) -> str:
+    from_contract = _first_string(
+        evidence.get("source_id") if isinstance(evidence, dict) else "",
+        evidence.get("citation") if isinstance(evidence, dict) else "",
+    )
+    if from_contract:
+        return from_contract
+    first_citation = _first_list_string(citations)
+    if first_citation:
+        return first_citation
+    match = _NUMBERED_SOURCE_RE.search(text)
+    if match:
+        return f"{match.group('number')} sayili {match.group('kind')}"
+    source_article = re.search(r"\b(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9})\s*m\.\d+[a-z]?\b", text, re.IGNORECASE)
+    return source_article.group(0) if source_article else ""
+
+
+def _detect_article(text: str, evidence: dict[str, Any] | None, source_identifier: str) -> str:
+    evidence_article = _first_string(evidence.get("madde_no") if isinstance(evidence, dict) else "")
+    if evidence_article:
+        return f"madde:{evidence_article.lower()}"
+    for candidate in (source_identifier, text):
+        match = _SOURCE_ID_ARTICLE_RE.search(candidate)
+        if match:
+            return f"madde:{match.group('article').lower()}"
+        match = _ARTICLE_RE.search(candidate)
+        if match:
+            return f"madde:{match.group('article').lower()}"
+    return ""
+
+
+def _detect_effective_state(text: str, evidence: dict[str, Any] | None, legacy_validity: Any) -> str:
+    legacy = _lower_asciiish(legacy_validity)
+    if legacy in {"active", "repealed", "unknown"}:
+        return legacy
+    if legacy == "historical":
+        return "amended"
+
+    if isinstance(evidence, dict):
+        mulga = evidence.get("mulga")
+        if mulga is True or _lower_asciiish(mulga) in {"1", "true", "evet", "yes"}:
+            return "repealed"
+        end_date = _clean(evidence.get("yururluk_bitis"))
+        if end_date and end_date not in _ACTIVE_END_DATE_SENTINELS:
+            return "repealed"
+        if evidence.get("yururluk_baslangic") and not end_date:
+            return "active"
+        if end_date in _ACTIVE_END_DATE_SENTINELS:
+            return "active"
+
+    normalized = _lower_asciiish(text)
+    if re.search(r"\b(mulga|yururlukten kaldir|yururlukten kalk)\b", normalized):
+        return "repealed"
+    if re.search(r"\b(degisik|degistiril|tadil|son hali|guncel)\b", normalized):
+        return "amended"
+    if re.search(r"\b(yururlukte|halen|gecerli|aktif)\b", normalized):
+        return "active"
+    return "unknown"
+
+
+def _detect_temporal_qualification(text: str, trace_payload: dict[str, Any] | None) -> str:
+    if isinstance(trace_payload, dict):
+        target_date = _clean(trace_payload.get("target_date"))
+        if target_date:
+            return target_date
+    match = re.search(r"\b(?:19|20)\d{2}(?:-\d{1,2}-\d{1,2})?\b", text)
+    if match:
+        return match.group(0)
+    if re.search(r"\b(bugun|guncel|mevcut|halen|yururlukte)\b", _lower_asciiish(text)):
+        return "current"
+    return "unknown"
+
+
+def _resolve_grounding_status(
+    *,
+    final_mode: str | None,
+    blocked: bool,
+    source_identifier: str,
+    source_family: str,
+    citations: list[str],
+    evidence: dict[str, Any] | None,
+    unsupported_reason: Any,
+) -> str:
+    if blocked or final_mode in {"blocked", "refusal"}:
+        return "not_grounded"
+    has_source = bool(source_identifier or citations or evidence)
+    if not has_source:
+        return "not_grounded"
+    if final_mode == "answer" and source_family != UNKNOWN and source_identifier and unsupported_reason in {None, ""}:
+        return "fully_grounded"
+    return "partially_grounded"
+
+
+def _resolve_answer_mode(
+    *,
+    text: str,
+    final_mode: str | None,
+    grounding_status: str,
+    effective_state: str,
+) -> str:
+    normalized = _lower_asciiish(text)
+    if "celiski" in normalized or "conflict" in normalized:
+        return "conflict_detected"
+    if effective_state == "repealed" or (
+        effective_state == "unknown" and ("mulga" in normalized or "yururluk" in normalized)
+    ):
+        return "repealed_or_uncertain"
+    if grounding_status == "not_grounded" or final_mode in {"refusal", "blocked"}:
+        return "insufficient_grounding"
+    if grounding_status == "partially_grounded" or final_mode == "partial":
+        return "qualified_answer"
+    return "direct_answer"
+
+
+def _confidence_for_contract(
+    *,
+    grounding_status: str,
+    source_family: str,
+    source_identifier: str,
+    article_or_section: str,
+    effective_state: str,
+    answer_mode: str,
+    native_dialog: bool,
+) -> int:
+    if grounding_status == "fully_grounded":
+        confidence = 82
+        low, high = 70, 95
+    elif grounding_status == "partially_grounded":
+        confidence = 58
+        low, high = 40, 69
+    else:
+        confidence = 28
+        low, high = 0, 39
+
+    if source_family == UNKNOWN:
+        confidence -= 18
+    if not source_identifier:
+        confidence -= 12
+    if not article_or_section and not native_dialog:
+        confidence -= 7
+    if effective_state == "unknown" and not native_dialog:
+        confidence -= 5
+    if answer_mode in {"conflict_detected", "repealed_or_uncertain"}:
+        confidence -= 8
+
+    return max(low, min(high, confidence))
+
+
+def _confidence_policy_ok(grounding_status: str, confidence: int) -> bool:
+    if grounding_status == "fully_grounded":
+        return 70 <= confidence <= 95
+    if grounding_status == "partially_grounded":
+        return 40 <= confidence <= 69
+    if grounding_status == "not_grounded":
+        return 0 <= confidence <= 39
+    return False
+
+
+def _format_final_reason(
+    *,
+    source_family: str,
+    source_identifier: str,
+    article_or_section: str,
+    effective_state: str,
+    grounding_status: str,
+    answer_mode: str,
+    needs_manual_review: bool,
+) -> str:
+    return (
+        f"dayanak={source_family}:{source_identifier or 'unknown'}; "
+        f"madde={article_or_section or 'unknown'}; "
+        f"yururluk={effective_state}; "
+        f"grounding={grounding_status}; "
+        f"sonuc={answer_mode}; "
+        f"belirsizlik={'var' if needs_manual_review else 'yok'}"
+    )
+
+
+def controlled_fallback_answer(contract: dict[str, Any]) -> str:
+    source_family = _clean(contract.get("source_family_claimed")) or UNKNOWN
+    source_identifier = _clean(contract.get("source_identifier_claimed")) or "unknown"
+    article_or_section = _clean(contract.get("article_or_section_claimed")) or "unknown"
+    effective_state = _clean(contract.get("effective_state_claimed")) or "unknown"
+    temporal_qualification = _clean(contract.get("temporal_qualification")) or "unknown"
+    return (
+        "Bu soruya mevcut kaynaklarla tam destekli bir kesin cevap veremiyorum. "
+        f"Kaynak iddiasi: {source_family} / {source_identifier}; "
+        f"madde-bolum: {article_or_section}; "
+        f"yururluk: {effective_state}; tarih: {temporal_qualification}. "
+        "Bu kayit manuel inceleme gerektirir."
+    )
+
+
+def build_or_repair_answer_contract(
+    *,
+    qid: str | None,
+    answer_text: str,
+    citations: list[str],
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+    final_reason: str | None,
+    trace_payload: dict[str, Any] | None = None,
+    blocked: bool = False,
+    guardrails_reasons: list[str] | None = None,
+    verification: dict[str, Any] | None = None,
+) -> AnswerContractRepairResult:
+    original = dict(answer_contract) if isinstance(answer_contract, dict) else {}
+    contract = dict(original)
+    evidence_items = _collect_trace_evidence(trace_payload)
+
+    legacy_primary = _first_string(
+        contract.get("source_identifier_claimed"),
+        contract.get("primary_source_id"),
+        _first_list_string(contract.get("secondary_source_ids")),
+        _first_list_string(citations),
+    )
+    selected_evidence = _select_evidence(evidence_items, source_identifier=legacy_primary, citations=citations)
+    combined_text = " ".join(
+        [
+            answer_text,
+            " ".join(citations),
+            _clean(contract.get("primary_source_id")),
+            _clean(contract.get("law_scope")),
+            _clean(contract.get("source_validity")),
+            _clean(final_reason),
+            _clean(guardrails_reasons),
+            _clean(verification),
+        ]
+    )
+
+    source_family = _first_string(contract.get("source_family_claimed"))
+    if source_family:
+        source_family = _detect_family(source_family)
+    if not source_family or source_family == UNKNOWN:
+        source_family = _detect_family(combined_text, selected_evidence)
+
+    source_identifier = _first_string(
+        contract.get("source_identifier_claimed"),
+        legacy_primary,
+        _detect_identifier(combined_text, citations, selected_evidence),
+    )
+    source_title = _first_string(
+        contract.get("source_title_claimed"),
+        selected_evidence.get("source_title") if isinstance(selected_evidence, dict) else "",
+        selected_evidence.get("belge_adi") if isinstance(selected_evidence, dict) else "",
+        selected_evidence.get("kanun_adi") if isinstance(selected_evidence, dict) else "",
+        selected_evidence.get("title") if isinstance(selected_evidence, dict) else "",
+        selected_evidence.get("source") if isinstance(selected_evidence, dict) else "",
+        source_identifier,
+        UNKNOWN,
+    )
+    article_or_section = _first_string(
+        contract.get("article_or_section_claimed"),
+        _detect_article(combined_text, selected_evidence, source_identifier),
+    )
+    effective_state = _valid_effective_state(contract.get("effective_state_claimed")) or _detect_effective_state(
+        combined_text,
+        selected_evidence,
+        contract.get("source_validity"),
+    )
+    temporal_qualification = _first_string(
+        contract.get("temporal_qualification"),
+        _detect_temporal_qualification(combined_text, trace_payload),
+    )
+    native_dialog = bool(contract.get("native_dialog"))
+
+    grounding_status = _valid_grounding_status(contract.get("grounding_status")) or _resolve_grounding_status(
+        final_mode=final_mode or contract.get("final_mode"),
+        blocked=blocked,
+        source_identifier=source_identifier,
+        source_family=source_family,
+        citations=citations,
+        evidence=selected_evidence,
+        unsupported_reason=contract.get("unsupported_reason"),
+    )
+    answer_mode = _valid_answer_mode(contract.get("answer_mode")) or _resolve_answer_mode(
+        text=combined_text,
+        final_mode=final_mode or contract.get("final_mode"),
+        grounding_status=grounding_status,
+        effective_state=effective_state,
+    )
+
+    claimed_source_parse_success = source_family != UNKNOWN and bool(source_identifier or source_title != UNKNOWN)
+    if not claimed_source_parse_success and grounding_status == "fully_grounded":
+        grounding_status = "partially_grounded"
+        answer_mode = "qualified_answer"
+
+    needs_manual_review = bool(contract.get("needs_manual_review"))
+    if not native_dialog:
+        needs_manual_review = needs_manual_review or grounding_status != "fully_grounded"
+        needs_manual_review = needs_manual_review or not claimed_source_parse_success
+        needs_manual_review = needs_manual_review or (not article_or_section and final_mode in {"answer", "partial"})
+        needs_manual_review = needs_manual_review or final_mode in {"refusal", "blocked"}
+
+    confidence = _confidence_for_contract(
+        grounding_status=grounding_status,
+        source_family=source_family,
+        source_identifier=source_identifier,
+        article_or_section=article_or_section,
+        effective_state=effective_state,
+        answer_mode=answer_mode,
+        native_dialog=native_dialog,
+    )
+    confidence_policy_ok = _confidence_policy_ok(grounding_status, confidence)
+    controlled_final_reason = _format_final_reason(
+        source_family=source_family,
+        source_identifier=source_identifier,
+        article_or_section=article_or_section,
+        effective_state=effective_state,
+        grounding_status=grounding_status,
+        answer_mode=answer_mode,
+        needs_manual_review=needs_manual_review,
+    )
+    uncertainty_disclosed = not needs_manual_review or bool(
+        _UNCERTAINTY_RE.search(f"{controlled_final_reason} {answer_text}")
+    )
+    unsupported_confident_answer = confidence >= 70 and (
+        grounding_status != "fully_grounded" or needs_manual_review or not claimed_source_parse_success
+    )
+    source_identifier_claim = source_identifier or "unknown"
+    article_or_section_claim = article_or_section or "unknown"
+    temporal_qualification_claim = temporal_qualification or "unknown"
+
+    contract.update(
+        {
+            "qid": _clean(qid) or UNKNOWN,
+            "final_answer": answer_text,
+            "final_reason": controlled_final_reason,
+            "confidence_0_100": confidence,
+            "answer_mode": answer_mode,
+            "grounding_status": grounding_status,
+            "source_family_claimed": source_family,
+            "source_title_claimed": source_title,
+            "source_identifier_claimed": source_identifier_claim,
+            "article_or_section_claimed": article_or_section_claim,
+            "effective_state_claimed": effective_state,
+            "temporal_qualification": temporal_qualification_claim,
+            "needs_manual_review": bool(needs_manual_review),
+        }
+    )
+
+    required_fields = (
+        "qid",
+        "final_answer",
+        "final_reason",
+        "confidence_0_100",
+        "answer_mode",
+        "grounding_status",
+        "source_family_claimed",
+        "source_title_claimed",
+        "source_identifier_claimed",
+        "article_or_section_claimed",
+        "effective_state_claimed",
+        "temporal_qualification",
+        "needs_manual_review",
+    )
+    missing_fields = [
+        field
+        for field in required_fields
+        if field not in contract or contract[field] in {None, ""}
+    ]
+    enum_valid = (
+        contract["answer_mode"] in ANSWER_MODES
+        and contract["grounding_status"] in GROUNDING_STATUSES
+        and contract["effective_state_claimed"] in EFFECTIVE_STATES
+        and isinstance(contract["needs_manual_review"], bool)
+    )
+    original_required_complete = all(
+        key in original and original.get(key) not in {None, ""}
+        for key in required_fields
+        if key != "needs_manual_review"
+    ) and isinstance(original.get("needs_manual_review"), bool)
+    contract_valid = not missing_fields and enum_valid and confidence_policy_ok
+    validation = {
+        "contract_valid": bool(contract_valid),
+        "contract_repaired": not original_required_complete,
+        "missing_fields": missing_fields,
+        "claimed_source_parse_success": bool(claimed_source_parse_success),
+        "confidence_policy_ok": bool(confidence_policy_ok),
+        "uncertainty_disclosed": bool(uncertainty_disclosed),
+        "manual_review_flag": bool(needs_manual_review),
+        "unsupported_confident_answer": bool(unsupported_confident_answer),
+        "groundedness_confidence_consistency": bool(confidence_policy_ok and not unsupported_confident_answer),
+    }
+    contract["contract_validation"] = validation
+    return AnswerContractRepairResult(
+        contract=contract,
+        confidence_0_100=confidence,
+        validation=validation,
+    )

@@ -46,6 +46,11 @@ SCORED_FIELDS = [
     "temporal_validity_score",
     "grounding_score",
     "answer_contract_score",
+    "confidence_policy_consistency_score",
+    "groundedness_confidence_consistency_score",
+    "claimed_source_parse_success_score",
+    "uncertainty_honesty_score",
+    "unsupported_confident_answer",
     "hallucinated_source_penalty",
     "auto_fail_triggered",
     "score_0_10_proxy",
@@ -57,6 +62,12 @@ SCORED_FIELDS = [
     "must_include_total",
     "auto_fail_hit_count",
     "answer_contract_missing",
+    "contract_valid",
+    "contract_repaired",
+    "confidence_policy_ok",
+    "claimed_source_parse_success",
+    "uncertainty_disclosed",
+    "manual_review_flag",
     "missing_trace",
     "empty_or_refused",
     "api_error",
@@ -121,6 +132,27 @@ def parse_confidence(value: str) -> float | None:
     return float(match.group(0))
 
 
+def bool_field(value: str) -> bool | None:
+    normalized = normalize(value or "")
+    if normalized in {"true", "1", "yes", "evet"}:
+        return True
+    if normalized in {"false", "0", "no", "hayir", "hayır"}:
+        return False
+    return None
+
+
+def confidence_policy_consistent(grounding_status: str, confidence: float | None) -> bool:
+    if confidence is None:
+        return False
+    if grounding_status == "fully_grounded":
+        return 70 <= confidence <= 95
+    if grounding_status == "partially_grounded":
+        return 40 <= confidence <= 69
+    if grounding_status == "not_grounded":
+        return 0 <= confidence <= 39
+    return False
+
+
 def temporal_expected(answer: dict[str, str], gold_effective_state: str) -> bool:
     task_type = normalize(answer.get("task_type", ""))
     primary = canonical_family(answer.get("primary_type"))
@@ -153,6 +185,12 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
             answer.get("source_titles", ""),
             answer.get("source_ids", ""),
             answer.get("doc_types", ""),
+            answer.get("source_family_claimed", ""),
+            answer.get("source_title_claimed", ""),
+            answer.get("source_identifier_claimed", ""),
+            answer.get("article_or_section_claimed", ""),
+            answer.get("effective_state_claimed", ""),
+            answer.get("temporal_qualification", ""),
         ]
     )
 
@@ -193,29 +231,95 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         temporal_validity_score = 0.0 if answer_source.effective_state_canonical == "repealed" and expected_family != "MULGA" else 1.0
 
     must_ratio = safe_ratio(must_include_hits, len(must_include), default=0.0)
-    has_source_surface = bool(answer.get("citations") or answer.get("source_titles") or answer.get("source_ids"))
+    has_source_surface = bool(
+        answer.get("citations")
+        or answer.get("source_titles")
+        or answer.get("source_ids")
+        or answer.get("source_identifier_claimed")
+    )
     grounding_score = numeric_score(0.75 * must_ratio + (0.25 if has_source_surface else 0.0))
 
-    missing_contract = not answer.get("confidence_0_100") or not answer.get("final_reason")
+    required_contract_fields = (
+        "confidence_0_100",
+        "final_reason",
+        "answer_mode",
+        "grounding_status",
+        "source_family_claimed",
+        "source_title_claimed",
+        "source_identifier_claimed",
+        "article_or_section_claimed",
+        "effective_state_claimed",
+        "temporal_qualification",
+        "needs_manual_review",
+    )
+    missing_contract = any(not answer.get(field, "").strip() for field in required_contract_fields)
     missing_trace = not answer.get("retrieval_trace_id")
     empty_or_refused = answer.get("answer", "").startswith("REFUSED_OR_EMPTY:")
     api_error = bool(answer.get("error"))
-    answer_contract_score = numeric_score(
-        (0.5 if answer.get("confidence_0_100") else 0.0)
-        + (0.5 if answer.get("final_reason") else 0.0)
-    )
     auto_fail_triggered = auto_fail_hits > 0
     hallucinated_source_penalty = 1.0 if has_source_surface and gold_documents and not gold_document_hits else 0.0
     confidence_value = parse_confidence(answer.get("confidence_0_100", ""))
+    grounding_status = answer.get("grounding_status", "").strip()
+    confidence_policy_ok_field = bool_field(answer.get("confidence_policy_ok", ""))
+    confidence_policy_ok = (
+        confidence_policy_ok_field
+        if confidence_policy_ok_field is not None
+        else confidence_policy_consistent(grounding_status, confidence_value)
+    )
+    groundedness_confidence_consistency = confidence_policy_consistent(grounding_status, confidence_value)
+    claimed_source_parse_success_field = bool_field(answer.get("claimed_source_parse_success", ""))
+    claimed_source_parse_success = (
+        claimed_source_parse_success_field
+        if claimed_source_parse_success_field is not None
+        else answer_source.source_family_canonical != "UNKNOWN"
+    )
+    uncertainty_disclosed_field = bool_field(answer.get("uncertainty_disclosed", ""))
+    manual_review_field = bool_field(answer.get("manual_review_flag", ""))
+    needs_manual_review_field = bool_field(answer.get("needs_manual_review", ""))
+    manual_review_flag = (
+        manual_review_field
+        if manual_review_field is not None
+        else bool(needs_manual_review_field)
+    )
+    uncertainty_disclosed = (
+        uncertainty_disclosed_field
+        if uncertainty_disclosed_field is not None
+        else (not manual_review_flag or bool(answer.get("final_reason")))
+    )
+    contract_valid_field = bool_field(answer.get("contract_valid", ""))
+    contract_valid = bool(contract_valid_field) if contract_valid_field is not None else not missing_contract
+    contract_repaired = bool_field(answer.get("contract_repaired", "")) is True
+    confidence_policy_consistency_score = numeric_score(confidence_policy_ok)
+    groundedness_confidence_consistency_score = numeric_score(groundedness_confidence_consistency)
+    claimed_source_parse_success_score = numeric_score(claimed_source_parse_success)
+    uncertainty_honesty_score = numeric_score(uncertainty_disclosed)
+    completeness_score = 1.0 - safe_ratio(
+        sum(1 for field in required_contract_fields if not answer.get(field, "").strip()),
+        len(required_contract_fields),
+        default=1.0,
+    )
+    answer_contract_score = 0.0 if missing_contract else numeric_score(
+        0.40 * completeness_score
+        + 0.20 * confidence_policy_consistency_score
+        + 0.15 * groundedness_confidence_consistency_score
+        + 0.15 * claimed_source_parse_success_score
+        + 0.10 * uncertainty_honesty_score
+    )
     repealed_source_used_as_active = (
         expected_family == "MULGA"
         and answer_source.effective_state_canonical == "active"
     )
     missing_temporal_qualification = temporal_needed and answer_source.effective_state_canonical == "unknown"
-    unsupported_confident_claim = (
+    unsupported_confident_answer = bool_field(answer.get("unsupported_confident_answer", "")) is True
+    unsupported_confident_claim = unsupported_confident_answer or (
         confidence_value is not None
-        and confidence_value >= 80
-        and (document_match_score < 0.5 or grounding_score < 0.5)
+        and confidence_value >= 70
+        and (
+            grounding_status != "fully_grounded"
+            or document_match_score < 0.5
+            or grounding_score < 0.5
+            or not claimed_source_parse_success
+        )
     )
 
     failure_classes: list[str] = []
@@ -247,6 +351,14 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         failure_classes.append("hallucinated_identifier")
     if unsupported_confident_claim:
         failure_classes.append("unsupported_confident_claim")
+    if not contract_valid:
+        failure_classes.append("answer_contract_invalid")
+    if not confidence_policy_ok:
+        failure_classes.append("confidence_policy_violation")
+    if not claimed_source_parse_success:
+        failure_classes.append("claimed_source_parse_failed")
+    if not uncertainty_disclosed:
+        failure_classes.append("uncertainty_not_disclosed")
     if 0 < grounding_score < 1:
         failure_classes.append("partial_grounding_only")
 
@@ -284,6 +396,11 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "temporal_validity_score": f"{temporal_validity_score:.2f}",
         "grounding_score": f"{grounding_score:.2f}",
         "answer_contract_score": f"{answer_contract_score:.2f}",
+        "confidence_policy_consistency_score": f"{confidence_policy_consistency_score:.2f}",
+        "groundedness_confidence_consistency_score": f"{groundedness_confidence_consistency_score:.2f}",
+        "claimed_source_parse_success_score": f"{claimed_source_parse_success_score:.2f}",
+        "uncertainty_honesty_score": f"{uncertainty_honesty_score:.2f}",
+        "unsupported_confident_answer": bool_text(unsupported_confident_claim),
         "hallucinated_source_penalty": f"{hallucinated_source_penalty:.2f}",
         "auto_fail_triggered": bool_text(auto_fail_triggered),
         "score_0_10_proxy": f"{score:.2f}",
@@ -295,6 +412,12 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "must_include_total": str(len(must_include)),
         "auto_fail_hit_count": str(auto_fail_hits),
         "answer_contract_missing": bool_text(missing_contract),
+        "contract_valid": bool_text(contract_valid),
+        "contract_repaired": bool_text(contract_repaired),
+        "confidence_policy_ok": bool_text(confidence_policy_ok),
+        "claimed_source_parse_success": bool_text(claimed_source_parse_success),
+        "uncertainty_disclosed": bool_text(uncertainty_disclosed),
+        "manual_review_flag": bool_text(manual_review_flag),
         "missing_trace": bool_text(missing_trace),
         "empty_or_refused": bool_text(empty_or_refused),
         "api_error": bool_text(api_error),
@@ -329,7 +452,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
             failure_counter[failure] += 1
 
     summary = {
-        "scoring_mode": "deterministic_proxy_phase_1_not_human_judge",
+        "scoring_mode": "deterministic_proxy_phase_2_answer_contract_not_human_judge",
         "total": len(rows),
         "raw_score_proxy": round(sum(float(row["score_0_10_proxy"]) for row in rows), 2),
         "max_score": sum(float(row["max_points"]) for row in rows),
@@ -342,7 +465,18 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "avg_temporal_validity_score": round(average(rows, "temporal_validity_score"), 3),
         "avg_grounding_score": round(average(rows, "grounding_score"), 3),
         "avg_answer_contract_score": round(average(rows, "answer_contract_score"), 3),
+        "avg_confidence_policy_consistency_score": round(average(rows, "confidence_policy_consistency_score"), 3),
+        "avg_groundedness_confidence_consistency_score": round(
+            average(rows, "groundedness_confidence_consistency_score"), 3
+        ),
+        "avg_claimed_source_parse_success_score": round(average(rows, "claimed_source_parse_success_score"), 3),
+        "avg_uncertainty_honesty_score": round(average(rows, "uncertainty_honesty_score"), 3),
         "hallucinated_source_count": sum(1 for row in rows if float(row["hallucinated_source_penalty"]) > 0),
+        "unsupported_confident_answer_count": sum(
+            1 for row in rows if row["unsupported_confident_answer"] == "True"
+        ),
+        "answer_contract_invalid_count": sum(1 for row in rows if row["contract_valid"] == "False"),
+        "contract_repaired_count": sum(1 for row in rows if row["contract_repaired"] == "True"),
         "repealed_as_active_count": failure_counter.get("repealed_source_used_as_active", 0),
         "temporal_validity_miss_count": failure_counter.get("missing_temporal_qualification", 0),
         "contract_completeness_rate": round(
@@ -379,7 +513,14 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- avg_temporal_validity_score: {summary['avg_temporal_validity_score']}",
         f"- avg_grounding_score: {summary['avg_grounding_score']}",
         f"- avg_answer_contract_score: {summary['avg_answer_contract_score']}",
+        f"- avg_confidence_policy_consistency_score: {summary['avg_confidence_policy_consistency_score']}",
+        f"- avg_groundedness_confidence_consistency_score: {summary['avg_groundedness_confidence_consistency_score']}",
+        f"- avg_claimed_source_parse_success_score: {summary['avg_claimed_source_parse_success_score']}",
+        f"- avg_uncertainty_honesty_score: {summary['avg_uncertainty_honesty_score']}",
         f"- hallucinated_source_count: {summary['hallucinated_source_count']}",
+        f"- unsupported_confident_answer_count: {summary['unsupported_confident_answer_count']}",
+        f"- answer_contract_invalid_count: {summary['answer_contract_invalid_count']}",
+        f"- contract_repaired_count: {summary['contract_repaired_count']}",
         f"- repealed_as_active_count: {summary['repealed_as_active_count']}",
         f"- temporal_validity_miss_count: {summary['temporal_validity_miss_count']}",
         f"- contract_completeness_rate: {summary['contract_completeness_rate']}",

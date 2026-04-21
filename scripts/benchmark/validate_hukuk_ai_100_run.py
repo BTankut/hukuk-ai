@@ -23,6 +23,22 @@ REQUIRED_ANSWER_COLUMNS = [
     "final_reason",
     "retrieval_trace_id",
 ]
+PHASE2_CONTRACT_COLUMNS = [
+    "answer_mode",
+    "grounding_status",
+    "source_family_claimed",
+    "source_title_claimed",
+    "source_identifier_claimed",
+    "article_or_section_claimed",
+    "effective_state_claimed",
+    "temporal_qualification",
+    "needs_manual_review",
+    "contract_valid",
+    "claimed_source_parse_success",
+    "confidence_policy_ok",
+    "uncertainty_disclosed",
+    "manual_review_flag",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,6 +79,7 @@ def write_md(path: Path, summary: dict[str, object]) -> None:
         f"- answer_rows: {summary['answer_rows']}",
         f"- trace_rows: {summary['trace_rows']}",
         f"- missing_answer_columns: {summary['missing_answer_columns']}",
+        f"- missing_phase2_contract_columns: {summary['missing_phase2_contract_columns']}",
         f"- missing_qids: {summary['missing_qids']}",
         f"- extra_qids: {summary['extra_qids']}",
         f"- duplicate_answer_qids: {summary['duplicate_answer_qids']}",
@@ -71,6 +88,8 @@ def write_md(path: Path, summary: dict[str, object]) -> None:
         f"- refused_or_empty_rows: {summary['refused_or_empty_rows']}",
         f"- missing_confidence_0_100: {summary['missing_confidence_0_100']}",
         f"- missing_final_reason: {summary['missing_final_reason']}",
+        f"- missing_phase2_contract_fields: {summary['missing_phase2_contract_fields']}",
+        f"- invalid_contract_rows: {summary['invalid_contract_rows']}",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -89,10 +108,19 @@ def main() -> int:
     missing_qids = sorted(set(expected_qids) - set(answer_qids))
     extra_qids = sorted(set(answer_qids) - set(expected_qids))
     missing_answer_columns = [column for column in REQUIRED_ANSWER_COLUMNS if column not in answer_columns]
+    missing_phase2_contract_columns = [
+        column for column in PHASE2_CONTRACT_COLUMNS if column not in answer_columns
+    ]
     missing_trace_qids = sorted(set(answer_qids) - set(trace_qids))
     extra_trace_qids = sorted(set(trace_qids) - set(answer_qids))
     missing_confidence = sum(1 for row in answers if not row.get("confidence_0_100", "").strip())
     missing_final_reason = sum(1 for row in answers if not row.get("final_reason", "").strip())
+    missing_phase2_contract_fields = sum(
+        1
+        for row in answers
+        if any(not row.get(column, "").strip() for column in PHASE2_CONTRACT_COLUMNS)
+    )
+    invalid_contract_rows = sum(1 for row in answers if row.get("contract_valid", "").strip() == "False")
 
     summary = {
         "run_dir": str(args.run_dir),
@@ -101,6 +129,7 @@ def main() -> int:
         "trace_rows": len(trace_qids),
         "expected_question_rows": len(questions),
         "missing_answer_columns": missing_answer_columns,
+        "missing_phase2_contract_columns": missing_phase2_contract_columns,
         "missing_qids": missing_qids,
         "extra_qids": extra_qids,
         "duplicate_answer_qids": duplicate_answer_qids,
@@ -111,6 +140,8 @@ def main() -> int:
         "refused_or_empty_rows": sum(1 for row in answers if row.get("answer", "").startswith("REFUSED_OR_EMPTY:")),
         "missing_confidence_0_100": missing_confidence,
         "missing_final_reason": missing_final_reason,
+        "missing_phase2_contract_fields": missing_phase2_contract_fields,
+        "invalid_contract_rows": invalid_contract_rows,
         "strict_contract": args.strict_contract,
     }
     hard_fail = (
@@ -126,7 +157,13 @@ def main() -> int:
         or summary["error_rows"] != 0
         or summary["refused_or_empty_rows"] != 0
     )
-    contract_fail = args.strict_contract and (missing_confidence > 0 or missing_final_reason > 0)
+    contract_fail = args.strict_contract and (
+        missing_confidence > 0
+        or missing_final_reason > 0
+        or bool(missing_phase2_contract_columns)
+        or missing_phase2_contract_fields > 0
+        or invalid_contract_rows > 0
+    )
     summary["status"] = "fail" if hard_fail or contract_fail else "pass"
 
     if args.json_out:

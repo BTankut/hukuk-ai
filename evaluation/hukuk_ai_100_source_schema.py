@@ -221,6 +221,35 @@ def canonicalize_source_text(
 
 
 def canonicalize_answer_row(row: dict[str, str]) -> CanonicalSourceSignal:
+    claimed_family = canonical_family(row.get("source_family_claimed"))
+    if claimed_family != "UNKNOWN":
+        claimed_text = " ".join(
+            [
+                row.get("source_title_claimed", ""),
+                row.get("source_identifier_claimed", ""),
+                row.get("article_or_section_claimed", ""),
+                row.get("effective_state_claimed", ""),
+                row.get("temporal_qualification", ""),
+            ]
+        )
+        claimed_identifier = row.get("source_identifier_claimed", "").strip()
+        if normalize_text(claimed_identifier) == "unknown":
+            claimed_identifier = ""
+        claimed_effective_state = row.get("effective_state_claimed", "").strip().lower()
+        if claimed_effective_state not in {"active", "amended", "repealed", "unknown"}:
+            claimed_effective_state = detect_effective_state(claimed_text)
+        return CanonicalSourceSignal(
+            source_family_canonical=claimed_family,
+            source_title_canonical=normalize_text(row.get("source_title_claimed", ""))[:180],
+            source_identifier_canonical=detect_identifier(claimed_text) or claimed_identifier,
+            article_or_section_canonical=detect_article_or_section(claimed_text),
+            effective_state_canonical=claimed_effective_state or "unknown",
+            temporal_anchor=detect_temporal_anchor(
+                row.get("temporal_qualification", "") or claimed_text,
+                reference_date=row.get("reference_date"),
+            ),
+        )
+
     text = " ".join(
         [
             row.get("answer", ""),
@@ -228,11 +257,17 @@ def canonicalize_answer_row(row: dict[str, str]) -> CanonicalSourceSignal:
             row.get("source_titles", ""),
             row.get("source_ids", ""),
             row.get("doc_types", ""),
+            row.get("source_family_claimed", ""),
+            row.get("source_title_claimed", ""),
+            row.get("source_identifier_claimed", ""),
+            row.get("article_or_section_claimed", ""),
+            row.get("effective_state_claimed", ""),
+            row.get("temporal_qualification", ""),
         ]
     )
     return canonicalize_source_text(
         text,
-        fallback_family=row.get("primary_type"),
+        fallback_family=row.get("source_family_claimed") or row.get("primary_type"),
         reference_date=row.get("reference_date"),
     )
 

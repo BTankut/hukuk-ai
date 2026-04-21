@@ -35,6 +35,22 @@ ANSWER_FIELDS = [
     "doc_types",
     "confidence_0_100",
     "final_reason",
+    "answer_mode",
+    "grounding_status",
+    "source_family_claimed",
+    "source_title_claimed",
+    "source_identifier_claimed",
+    "article_or_section_claimed",
+    "effective_state_claimed",
+    "temporal_qualification",
+    "needs_manual_review",
+    "contract_valid",
+    "contract_repaired",
+    "claimed_source_parse_success",
+    "confidence_policy_ok",
+    "uncertainty_disclosed",
+    "manual_review_flag",
+    "unsupported_confident_answer",
     "retrieval_trace_id",
     "final_mode",
     "blocked",
@@ -250,7 +266,7 @@ def extract_confidence(response: dict[str, Any]) -> str:
 
 
 def extract_final_reason(response: dict[str, Any]) -> str:
-    for container in (response, response.get("answer_contract")):
+    for container in (response.get("answer_contract"), response):
         if not isinstance(container, dict):
             continue
         value = container.get("final_reason")
@@ -261,6 +277,42 @@ def extract_final_reason(response: dict[str, Any]) -> str:
     if "_error" in response:
         return "api_error"
     return ""
+
+
+def answer_contract(response: dict[str, Any]) -> dict[str, Any]:
+    value = response.get("answer_contract")
+    return value if isinstance(value, dict) else {}
+
+
+def contract_validation(response: dict[str, Any]) -> dict[str, Any]:
+    contract = answer_contract(response)
+    value = contract.get("contract_validation")
+    if isinstance(value, dict):
+        return value
+    trace = response.get("trace")
+    if isinstance(trace, dict):
+        value = trace.get("answer_contract_validation")
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def contract_value(response: dict[str, Any], key: str) -> str:
+    value = answer_contract(response).get(key)
+    if isinstance(value, bool):
+        return "True" if value else "False"
+    if value is None:
+        return ""
+    return str(value)
+
+
+def validation_value(response: dict[str, Any], key: str) -> str:
+    value = contract_validation(response).get(key)
+    if isinstance(value, bool):
+        return "True" if value else "False"
+    if value is None:
+        return ""
+    return str(value)
 
 
 def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms: int) -> dict[str, str]:
@@ -288,6 +340,22 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "doc_types": doc_types,
         "confidence_0_100": extract_confidence(response),
         "final_reason": extract_final_reason(response),
+        "answer_mode": contract_value(response, "answer_mode"),
+        "grounding_status": contract_value(response, "grounding_status"),
+        "source_family_claimed": contract_value(response, "source_family_claimed"),
+        "source_title_claimed": contract_value(response, "source_title_claimed"),
+        "source_identifier_claimed": contract_value(response, "source_identifier_claimed"),
+        "article_or_section_claimed": contract_value(response, "article_or_section_claimed"),
+        "effective_state_claimed": contract_value(response, "effective_state_claimed"),
+        "temporal_qualification": contract_value(response, "temporal_qualification"),
+        "needs_manual_review": contract_value(response, "needs_manual_review"),
+        "contract_valid": validation_value(response, "contract_valid"),
+        "contract_repaired": validation_value(response, "contract_repaired"),
+        "claimed_source_parse_success": validation_value(response, "claimed_source_parse_success"),
+        "confidence_policy_ok": validation_value(response, "confidence_policy_ok"),
+        "uncertainty_disclosed": validation_value(response, "uncertainty_disclosed"),
+        "manual_review_flag": validation_value(response, "manual_review_flag"),
+        "unsupported_confident_answer": validation_value(response, "unsupported_confident_answer"),
         "retrieval_trace_id": extract_trace_id(response),
         "final_mode": str(response.get("final_mode", "")),
         "blocked": str(response.get("blocked", "")),
@@ -315,6 +383,9 @@ def write_summary(run_dir: Path, summary: dict[str, Any]) -> None:
         f"- missing_trace: {summary['missing_trace']}",
         f"- missing_confidence_0_100: {summary['missing_confidence_0_100']}",
         f"- missing_final_reason: {summary['missing_final_reason']}",
+        f"- missing_contract_fields: {summary['missing_contract_fields']}",
+        f"- contract_valid: {summary['contract_valid']}",
+        f"- unsupported_confident_answer: {summary['unsupported_confident_answer']}",
     ]
     (run_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -406,6 +477,20 @@ def main() -> int:
         "missing_trace": sum(1 for r in rows if not r["retrieval_trace_id"]),
         "missing_confidence_0_100": sum(1 for r in rows if not r["confidence_0_100"]),
         "missing_final_reason": sum(1 for r in rows if not r["final_reason"]),
+        "missing_contract_fields": sum(
+            1
+            for r in rows
+            if not r["answer_mode"]
+            or not r["grounding_status"]
+            or not r["source_family_claimed"]
+            or not r["source_identifier_claimed"]
+            or not r["article_or_section_claimed"]
+            or not r["effective_state_claimed"]
+            or not r["temporal_qualification"]
+            or not r["needs_manual_review"]
+        ),
+        "contract_valid": sum(1 for r in rows if r["contract_valid"] == "True"),
+        "unsupported_confident_answer": sum(1 for r in rows if r["unsupported_confident_answer"] == "True"),
         "candidate_answers": str(answers_path),
         "trace": str(trace_path),
     }

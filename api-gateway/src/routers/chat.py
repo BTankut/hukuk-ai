@@ -46,6 +46,7 @@ from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from answer_contract_v2 import build_or_repair_answer_contract, controlled_fallback_answer
 from faz2a_hardening import (
     HardeningResult,
     build_initial_answer_contract,
@@ -2993,6 +2994,7 @@ class ChatCompletionResponse(BaseModel):
     verification: dict[str, Any] | None = None
     final_mode: str | None = None
     final_reason: str | None = None
+    confidence_0_100: int | None = None
     answer_contract: dict[str, Any] | None = None
     trace: dict[str, Any] | None = None
 
@@ -3133,6 +3135,7 @@ async def _stream_sse_response(
     trace: dict[str, Any] | None = None,
     final_mode: str | None = None,
     final_reason: str | None = None,
+    confidence_0_100: int | None = None,
     answer_contract: dict[str, Any] | None = None,
     include_metadata_chunk: bool = False,
     words_per_chunk: int = 5,
@@ -3202,6 +3205,8 @@ async def _stream_sse_response(
             meta_payload["final_mode"] = final_mode
         if final_reason is not None:
             meta_payload["final_reason"] = final_reason
+        if confidence_0_100 is not None:
+            meta_payload["confidence_0_100"] = confidence_0_100
         if answer_contract is not None:
             meta_payload["answer_contract"] = answer_contract
         yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
@@ -3505,6 +3510,37 @@ def _finalize_boundary_proxy_response(
     trace_payload = proxy_response.get("trace")
     if not isinstance(trace_payload, dict):
         trace_payload = {}
+    contract_repair = build_or_repair_answer_contract(
+        qid=response_id,
+        answer_text=answer_text,
+        citations=citations,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        trace_payload=trace_payload,
+        blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+    )
+    if not answer_text.strip():
+        answer_text = controlled_fallback_answer(contract_repair.contract)
+        contract_repair = build_or_repair_answer_contract(
+            qid=response_id,
+            answer_text=answer_text,
+            citations=citations,
+            answer_contract=contract_repair.contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+            trace_payload=trace_payload,
+            blocked=blocked,
+            guardrails_reasons=guardrails_reasons,
+            verification=verification,
+        )
+    answer_contract = contract_repair.contract
+    trace_payload = dict(trace_payload)
+    trace_payload["answer_contract"] = answer_contract
+    trace_payload["answer_contract_validation"] = contract_repair.validation
+    trace_payload["confidence_0_100"] = contract_repair.confidence_0_100
     if trace_payload:
         _export_trace_payload_or_raise(request_id=response_id, trace_payload=trace_payload)
 
@@ -3524,6 +3560,10 @@ def _finalize_boundary_proxy_response(
         and isinstance(item.get("role"), str)
         and isinstance(item.get("content"), str)
     ]
+    snapshot_history = [
+        {"role": msg.role, "content": msg.content}
+        for msg in snapshot_messages[:-1]
+    ]
     usage, usage_source = _resolve_chat_usage(
         messages=snapshot_messages,
         answer_text=answer_text,
@@ -3542,7 +3582,7 @@ def _finalize_boundary_proxy_response(
     }
     persisted_request_snapshot = _build_persisted_request_snapshot(
         request_body=request_body,
-        conversation_history=conversation_history,
+        conversation_history=snapshot_history,
         last_user_message=user_message,
     )
     persisted_raw_answer_snapshot = _build_persisted_raw_answer_snapshot(
@@ -3616,6 +3656,7 @@ def _finalize_boundary_proxy_response(
                 trace=client_trace,
                 final_mode=final_mode,
                 final_reason=final_reason,
+                confidence_0_100=contract_repair.confidence_0_100,
                 answer_contract=public_answer_contract,
                 include_metadata_chunk=request_body.include_trace,
             ),
@@ -3646,6 +3687,7 @@ def _finalize_boundary_proxy_response(
         verification=verification,
         final_mode=final_mode,
         final_reason=final_reason,
+        confidence_0_100=contract_repair.confidence_0_100,
         answer_contract=public_answer_contract,
         trace=client_trace,
     )
@@ -4522,6 +4564,43 @@ def _finalize_chat_response(
         answer_contract=answer_contract,
         final_mode=final_mode,
     )
+    contract_repair = build_or_repair_answer_contract(
+        qid=response_id,
+        answer_text=answer_text,
+        citations=citations,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        trace_payload=trace_payload,
+        blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+    )
+    if not answer_text.strip():
+        answer_text = controlled_fallback_answer(contract_repair.contract)
+        contract_repair = build_or_repair_answer_contract(
+            qid=response_id,
+            answer_text=answer_text,
+            citations=citations,
+            answer_contract=contract_repair.contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+            trace_payload=trace_payload,
+            blocked=blocked,
+            guardrails_reasons=guardrails_reasons,
+            verification=verification,
+        )
+    answer_contract = contract_repair.contract
+    trace_payload = dict(trace_payload)
+    trace_payload["answer_contract"] = answer_contract
+    trace_payload["answer_contract_validation"] = contract_repair.validation
+    trace_payload["confidence_0_100"] = contract_repair.confidence_0_100
+    generation_outcome = trace_payload.get("generation_outcome")
+    if isinstance(generation_outcome, dict):
+        generation_outcome = dict(generation_outcome)
+        generation_outcome["answer_contract_validation"] = contract_repair.validation
+        generation_outcome["confidence_0_100"] = contract_repair.confidence_0_100
+        trace_payload["generation_outcome"] = generation_outcome
     public_answer_contract = _sanitize_public_answer_contract(answer_contract)
     trace_payload = _attach_parity_trace(
         trace_payload=trace_payload,
@@ -4640,6 +4719,7 @@ def _finalize_chat_response(
                 trace=client_trace,
                 final_mode=final_mode,
                 final_reason=final_reason,
+                confidence_0_100=contract_repair.confidence_0_100,
                 answer_contract=public_answer_contract,
                 include_metadata_chunk=request_body.include_trace,
             ),
@@ -4670,6 +4750,7 @@ def _finalize_chat_response(
         verification=verification,
         final_mode=final_mode,
         final_reason=final_reason,
+        confidence_0_100=contract_repair.confidence_0_100,
         answer_contract=public_answer_contract,
         trace=client_trace,
     )
