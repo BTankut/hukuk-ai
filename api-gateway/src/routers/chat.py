@@ -82,6 +82,10 @@ from token_accounting import (
     resolve_token_usage,
     token_accounting_fallback_allowed,
 )
+from source_family_resolver import (
+    SourceFamilyResolution,
+    resolve_source_family_prior,
+)
 
 logger = logging.getLogger(__name__)
 _GENERATION_START_ORDINAL = count(1)
@@ -226,6 +230,19 @@ _SOURCE_FAMILY_DISPLAY_LABELS: dict[str, str] = {
 }
 _RETRIEVAL_PLANNER_ALLOWED_FAMILIES = {
     "kanun",
+    "mulga_kanun",
+    "tuzuk",
+    "yonetmelik",
+    "cb_yonetmelik",
+    "cb_kararname",
+    "cb_karar",
+    "cb_genelge",
+    "khk",
+    "teblig",
+    "kky",
+    "uy",
+}
+_WEAK_SOURCE_FAMILY_ROUTE_TOPK_FAMILIES = {
     "mulga_kanun",
     "tuzuk",
     "yonetmelik",
@@ -903,6 +920,47 @@ def _infer_requested_source_families(query: str) -> list[str]:
         if _contains_any_query_term(query, terms):
             families.extend(resolved_families)
     return _expand_source_family_aliases(families)
+
+
+def _resolve_source_family_prior(
+    query: str,
+    *,
+    mentioned_laws: list[str] | None = None,
+    explicit_article_refs: list[tuple[str, str]] | None = None,
+    law_filter: str | None = None,
+) -> SourceFamilyResolution:
+    return resolve_source_family_prior(
+        query,
+        mentioned_laws=mentioned_laws or [],
+        explicit_article_refs=explicit_article_refs or [],
+        law_filter=law_filter,
+    )
+
+
+def _apply_source_family_resolution_hints(
+    *,
+    retrieval_query: str,
+    requested_source_families: list[str],
+    retrieval_top_k: int,
+    applied_expansions: list[str],
+    source_family_resolution: SourceFamilyResolution,
+) -> tuple[str, list[str], int]:
+    routing_families = source_family_resolution.routing_families
+    if routing_families:
+        requested_source_families = dedupe_strings(
+            [*requested_source_families, *_expand_source_family_aliases(routing_families)]
+        )
+        if any(family in _WEAK_SOURCE_FAMILY_ROUTE_TOPK_FAMILIES for family in routing_families):
+            retrieval_top_k = max(retrieval_top_k, 24)
+
+    for expansion in source_family_resolution.query_expansions:
+        retrieval_query = _append_unique_expansion(
+            retrieval_query,
+            applied_expansions,
+            expansion,
+        )
+
+    return retrieval_query, requested_source_families, retrieval_top_k
 
 
 def _infer_family_from_source_title(title: Any) -> str | None:
@@ -2827,6 +2885,7 @@ def _build_trace_payload(
     final_reason: str | None,
     retrieval_plan: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
+    source_family_resolution: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
     if not assembled_evidence and model_cited_source_ids:
@@ -2854,6 +2913,10 @@ def _build_trace_payload(
             "law_filter": law_filter,
             "mentioned_laws": mentioned_laws,
             "requested_source_families": requested_source_families,
+            "predicted_family": (source_family_resolution or {}).get("predicted_family"),
+            "family_confidence": (source_family_resolution or {}).get("family_confidence"),
+            "family_candidates": (source_family_resolution or {}).get("family_candidates", []),
+            "source_family_resolution": source_family_resolution,
             "retrieval_plan": retrieval_plan,
             "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
@@ -2887,6 +2950,10 @@ def _build_trace_payload(
             "law_filter": law_filter,
             "mentioned_laws": mentioned_laws,
             "cross_law_mode": cross_law_mode,
+            "predicted_family": (source_family_resolution or {}).get("predicted_family"),
+            "family_confidence": (source_family_resolution or {}).get("family_confidence"),
+            "family_candidates": (source_family_resolution or {}).get("family_candidates", []),
+            "source_family_resolution": source_family_resolution,
             "retrieval_plan": retrieval_plan,
             "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
@@ -2903,6 +2970,7 @@ def _build_trace_payload(
             "top_k_requested": top_k_requested,
             "top_k_effective": top_k_effective,
             "reranker_enabled": reranker_enabled,
+            "source_family_resolution": source_family_resolution,
             "pre_rerank_chunks": [
                 _serialize_trace_chunk(chunk) for chunk in pre_rerank_chunks
             ],
@@ -3986,6 +4054,7 @@ def _pre_answer_stage_payload(
     reranker_enabled: bool,
     retrieval_plan: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
+    source_family_resolution: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "decision_lane": decision_lane,
@@ -4000,6 +4069,7 @@ def _pre_answer_stage_payload(
         "applied_expansions": applied_expansions,
         "retrieval_plan": retrieval_plan,
         "source_cluster_selector": source_cluster_selector,
+        "source_family_resolution": source_family_resolution,
         "top_k_requested": top_k_requested,
         "top_k_effective": top_k_effective,
         "reranker_enabled": reranker_enabled,
@@ -5138,6 +5208,19 @@ async def chat_completions(
     requested_source_families = _infer_requested_source_families(last_user_msg)
     forced_article_refs: list[tuple[str, str]] = []
     applied_expansions: list[str] = []
+    source_family_resolution = _resolve_source_family_prior(
+        last_user_msg,
+        mentioned_laws=mentioned_laws,
+        explicit_article_refs=explicit_article_refs,
+        law_filter=request_body.law_filter,
+    )
+    retrieval_query, requested_source_families, retrieval_top_k = _apply_source_family_resolution_hints(
+        retrieval_query=retrieval_query,
+        requested_source_families=requested_source_families,
+        retrieval_top_k=retrieval_top_k,
+        applied_expansions=applied_expansions,
+        source_family_resolution=source_family_resolution,
+    )
     retrieval_plan = await _run_retrieval_planner(
         request=request,
         user_query=last_user_msg,
@@ -5153,6 +5236,13 @@ async def chat_completions(
         applied_expansions=applied_expansions,
         retrieval_top_k=retrieval_top_k,
         retrieval_plan=retrieval_plan,
+    )
+    retrieval_query, requested_source_families, retrieval_top_k = _apply_source_family_resolution_hints(
+        retrieval_query=retrieval_query,
+        requested_source_families=requested_source_families,
+        retrieval_top_k=retrieval_top_k,
+        applied_expansions=applied_expansions,
+        source_family_resolution=source_family_resolution,
     )
     if _asks_current_validity_over_historical_contrast(last_user_msg):
         retrieval_query = _append_unique_expansion(
@@ -5801,6 +5891,7 @@ async def chat_completions(
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
         source_cluster_selector=source_cluster_selector,
+        source_family_resolution=source_family_resolution.to_trace_dict(),
     )
     pre_answer_payload = _pre_answer_stage_payload(
         decision_lane="rag",
@@ -5818,6 +5909,7 @@ async def chat_completions(
         reranker_enabled=_reranker_enabled,
         retrieval_plan=retrieval_plan,
         source_cluster_selector=source_cluster_selector,
+        source_family_resolution=source_family_resolution.to_trace_dict(),
     )
     return _finalize_chat_response(
         request=request,

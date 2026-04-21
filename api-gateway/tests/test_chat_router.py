@@ -46,6 +46,7 @@ from routers.chat import (
     _extract_law_mentions,
     _infer_requested_source_families,
     _prioritize_chunks_for_source_families,
+    _resolve_source_family_prior,
     _resolve_public_answer_text,
     _sanitize_source_cluster_selector_payload,
     _sanitize_retrieval_plan_payload,
@@ -439,6 +440,35 @@ class TestLawSignalParsing:
         )
         assert "uy" in families
         assert "yonetmelik" in families
+
+    def test_source_family_prior_detects_cb_karar_from_karar_sayisi(self):
+        resolution = _resolve_source_family_prior(
+            "Karar Sayısı: 3350 olan İthalat Rejimi Kararı hangi belge ailesindedir?"
+        )
+
+        assert resolution.predicted_family == "cb_karar"
+        assert resolution.family_confidence >= 0.75
+        assert "cb_karar" in resolution.routing_families
+
+    def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
+        resolution = _resolve_source_family_prior(
+            "Bir yüksek lisans öğrencisinin tez savunması için üniversite yönetmeliği ne der?"
+        )
+
+        assert resolution.predicted_family == "uy"
+        assert "uy" in resolution.routing_families
+        assert "yonetmelik" in resolution.routing_families
+
+    def test_source_family_prior_uses_law_reference_as_kanun_signal(self):
+        resolution = _resolve_source_family_prior(
+            "TBK m.49 haksız fiil bakımından ne düzenler?",
+            mentioned_laws=["TBK"],
+            explicit_article_refs=[("TBK", "49")],
+        )
+
+        assert resolution.predicted_family == "kanun"
+        assert resolution.family_confidence >= 0.75
+        assert resolution.routing_families == []
 
     def test_prioritize_chunks_for_source_families_prefers_matching_family(self):
         from rag.orchestrator import RetrievedChunk
@@ -2074,6 +2104,9 @@ class TestLawFilterAndRetrieval:
         assert trace["query_signals"]["user_query"] == "TBK m.49 nedir?"
         assert trace["query_signals"]["mentioned_laws"] == ["TBK"]
         assert trace["query_signals"]["cross_law_mode"] is False
+        assert trace["query_signals"]["predicted_family"] == "kanun"
+        assert trace["query_signals"]["family_confidence"] >= 0.75
+        assert trace["query_signals"]["family_candidates"][0]["family"] == "kanun"
         assert trace["query_signals"]["explicit_article_refs"] == [{"law": "TBK", "madde": "49"}]
         assert trace["query_signals"]["forced_article_refs"] == []
         assert trace["retrieval"]["top_k_requested"] == 20
