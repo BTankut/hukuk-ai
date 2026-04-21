@@ -37,3 +37,4 @@ evaluation/private/
 *_answer_key_private.csv
 *_master.csv
 reports/benchmark/runs/
+reports/benchmark/green_lane/

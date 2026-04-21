@@ -1,0 +1,43 @@
+name: Benchmark Hardening
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - bt/hukuk-ai-100-benchmark-hardening
+
+jobs:
+  benchmark-green-lane:
+    name: benchmark-green-lane
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Create benchmark virtualenv
+        run: |
+          python -m venv .venv-benchmark
+          .venv-benchmark/bin/python -m pip install --upgrade pip
+      - name: Run benchmark green lane
+        env:
+          BENCHMARK_PYTHON: ${{ github.workspace }}/.venv-benchmark/bin/python
+        run: bash scripts/benchmark/run_green_lane.sh --ci
+
+  legacy-suite-observe-only:
+    name: legacy-suite-observe-only
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Create API gateway virtualenv
+        run: |
+          python -m venv api-gateway/.venv
+          api-gateway/.venv/bin/python -m pip install --upgrade pip
+          api-gateway/.venv/bin/python -m pip install -e "api-gateway[dev]"
+      - name: Run legacy suite in observe-only mode
+        run: api-gateway/.venv/bin/python -m pytest api-gateway/tests evaluation -q
