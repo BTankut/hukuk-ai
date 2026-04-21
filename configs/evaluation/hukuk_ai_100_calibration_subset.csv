@@ -1,0 +1,21 @@
+qid,expected_band,critical_error_flags,label_source,notes
+KKY-11,high,,phase1_proxy_seed_pending_human_judge_confirmation,strong proxy answer; confirm with human judge before promotion
+KHK-01,high,,phase1_proxy_seed_pending_human_judge_confirmation,strong proxy answer; confirm with human judge before promotion
+CBK-05,high,,phase1_proxy_seed_pending_human_judge_confirmation,strong proxy answer; confirm with human judge before promotion
+TEB-06,high,,phase1_proxy_seed_pending_human_judge_confirmation,strong proxy answer; confirm with human judge before promotion
+TUZUK-01,high,,phase1_proxy_seed_pending_human_judge_confirmation,strong proxy answer; confirm with human judge before promotion
+KANUN-15,medium,partial_grounding_only,phase1_proxy_seed_pending_human_judge_confirmation,medium-band candidate for judge/proxy calibration
+YON-05,medium,partial_grounding_only,phase1_proxy_seed_pending_human_judge_confirmation,medium-band candidate for judge/proxy calibration
+TUZUK-04,medium,missing_temporal_qualification,phase1_proxy_seed_pending_human_judge_confirmation,medium-band temporal validity calibration item
+KANUN-01,medium,partial_grounding_only,phase1_proxy_seed_pending_human_judge_confirmation,medium-band scenario applicability calibration item
+CBY-04,medium,partial_grounding_only,phase1_proxy_seed_pending_human_judge_confirmation,medium-band weak-family calibration item
+CBKAR-03,low,wrong_family|wrong_document|hallucinated_identifier,phase1_proxy_seed_pending_human_judge_confirmation,low-band CB_KARAR calibration item
+CBY-01,low,wrong_family|wrong_document,phase1_proxy_seed_pending_human_judge_confirmation,low-band CB_YONETMELIK calibration item
+MULGA-03,low,wrong_family|wrong_document|missing_temporal_qualification,phase1_proxy_seed_pending_human_judge_confirmation,low-band temporal/repealed calibration item
+CBG-01,low,wrong_family|wrong_document|hallucinated_identifier,phase1_proxy_seed_pending_human_judge_confirmation,low-band CB_GENELGE calibration item
+KANUN-04,low,wrong_family|wrong_document,phase1_proxy_seed_pending_human_judge_confirmation,low-band KANUN calibration item
+YON-02,low,wrong_family|wrong_document,phase1_proxy_seed_pending_human_judge_confirmation,low-band YONETMELIK calibration item
+UY-10,low,wrong_family|wrong_document,phase1_proxy_seed_pending_human_judge_confirmation,low-band UY calibration item
+CBG-04,low,wrong_family|missing_temporal_qualification,phase1_proxy_seed_pending_human_judge_confirmation,low-band temporal weak-family calibration item
+CBK-04,low,wrong_family|wrong_document,phase1_proxy_seed_pending_human_judge_confirmation,low-band CB_KARARNAME calibration item
+KANUN-21,low,wrong_family|wrong_document,phase1_proxy_seed_pending_human_judge_confirmation,low-band scenario applicability calibration item
