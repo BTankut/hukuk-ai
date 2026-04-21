@@ -798,6 +798,44 @@ def _candidate_matches_year_tokens(candidate: dict[str, Any], year_tokens: set[s
     return any(year in values or any(year in value for value in values) for year in year_tokens)
 
 
+def _candidate_has_selector_support(
+    candidate: dict[str, Any],
+    *,
+    user_query: str,
+    requested_source_families: list[str],
+    identifier_tokens: set[str],
+) -> bool:
+    if _candidate_matches_identifier_tokens(candidate, identifier_tokens):
+        return True
+
+    query_terms = _extract_retrieval_priority_terms(user_query)
+    title = str(candidate.get("display_title") or "")
+    normalized_title = _normalize_tr_text(title)
+    title_overlap = max(
+        _count_term_overlap(title, query_terms),
+        sum(1 for term in query_terms if len(term) >= 4 and term in normalized_title),
+    )
+    excerpt_overlap = max(
+        [
+            max(
+                _count_term_overlap(str(excerpt or ""), query_terms),
+                sum(
+                    1
+                    for term in query_terms
+                    if len(term) >= 4 and term in _normalize_tr_text(str(excerpt or ""))
+                ),
+            )
+            for excerpt in (candidate.get("excerpts") or [])
+        ]
+        or [0]
+    )
+    family = str(candidate.get("source_family") or "")
+    requested_family_set = set(requested_source_families)
+    if requested_family_set and family in requested_family_set:
+        return title_overlap >= 1 or excerpt_overlap >= 5
+    return title_overlap >= 2 or (title_overlap >= 1 and excerpt_overlap >= 4)
+
+
 def _apply_source_cluster_deterministic_overrides(
     *,
     payload: dict[str, Any],
@@ -853,6 +891,21 @@ def _apply_source_cluster_deterministic_overrides(
         ]
         if year_matches:
             selected_cluster_ids = [candidate["cluster_id"] for candidate in year_matches[:3]]
+
+    supported_cluster_ids = [
+        cluster_id
+        for cluster_id in selected_cluster_ids
+        if _candidate_has_selector_support(
+            candidate_by_id.get(cluster_id, {}),
+            user_query=user_query,
+            requested_source_families=requested_source_families,
+            identifier_tokens=identifier_tokens,
+        )
+    ]
+    if supported_cluster_ids:
+        selected_cluster_ids = supported_cluster_ids
+    else:
+        selected_cluster_ids = []
 
     selected_laws = [
         law
@@ -949,6 +1002,8 @@ async def _run_source_cluster_selector(
         user_query=user_query,
         requested_source_families=requested_source_families,
     )
+    if not payload.get("selected_cluster_ids"):
+        return None
 
     payload["candidates"] = candidates
     payload["raw_text"] = result.text
@@ -6324,6 +6379,8 @@ async def chat_completions(
                         selected_laws,
                         len(retrieved_chunks),
                     )
+                elif len(retrieved_chunks) > top_k_effective:
+                    retrieved_chunks = retrieved_chunks[:top_k_effective]
                 pre_rerank_chunks = list(retrieved_chunks)
         except Exception as exc:
             logger.warning(

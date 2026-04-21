@@ -467,6 +467,31 @@ class TestLawSignalParsing:
         assert resolution.family_confidence < 0.75
         assert resolution.routing_families == []
 
+    def test_source_family_prior_detects_investment_incentive_decision_terms(self):
+        resolution = _resolve_source_family_prior(
+            "Yatırım teşvik belgesi başvurusu 2026'da yapılıyor; eski 2012/3305 rejimi mi, "
+            "yoksa 30.05.2025 tarihli yeni sistem mi esas alınmalı?"
+        )
+
+        assert resolution.predicted_family == "cb_karar"
+        assert "cb_karar" in resolution.routing_families
+
+    def test_source_family_prior_detects_cbk_abbreviation(self):
+        resolution = _resolve_source_family_prior(
+            "3 sayılı CBK'nın güncel adı ve 19.02.2026 tarihli değişikliği atlanabilir mi?"
+        )
+
+        assert resolution.predicted_family == "cb_kararname"
+        assert "cb_kararname" in resolution.routing_families
+
+    def test_source_family_prior_detects_archive_cb_regulation_terms(self):
+        resolution = _resolve_source_family_prior(
+            "Arşiv mevzuatı sorusunda 1988 tarihli eski metin mi, yoksa 2019 tarihli güncel metin mi kullanılmalı?"
+        )
+
+        assert resolution.predicted_family == "cb_yonetmelik"
+        assert "cb_yonetmelik" in resolution.routing_families
+
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(
             "Bir yüksek lisans öğrencisinin tez savunması için üniversite yönetmeliği ne der?"
@@ -855,6 +880,38 @@ class TestLawSignalParsing:
 
         assert payload["selected_cluster_ids"] == ["C2"]
         assert payload["selected_law_hints"] == ["10868"]
+
+    def test_source_cluster_overrides_reject_weak_llm_cluster_without_title_or_identifier_support(self):
+        candidates = [
+            {
+                "cluster_id": "C1",
+                "source_key": "bedelsiz arsa devri yonetmeligi",
+                "display_title": "HAZİNE ARAZİLERİNİN BEDELSİZ DEVRİNE İLİŞKİN YÖNETMELİK",
+                "source_family": "yonetmelik",
+                "laws": ["20047114"],
+                "citations": ["20047114 m.0/f.0"],
+                "excerpts": ["Arazi veya arsaların gerçek kişilere devrine ilişkin usuller."],
+            },
+            {
+                "cluster_id": "C2",
+                "source_key": "yatirimlarda devlet yardimlari karari",
+                "display_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                "source_family": "cb_karar",
+                "laws": ["9903"],
+                "citations": ["9903 m.1/f.0"],
+                "excerpts": ["Yatırım teşvik belgesi başvuruları ve geçiş hükümleri."],
+            },
+        ]
+
+        payload = _apply_source_cluster_deterministic_overrides(
+            payload={"selected_cluster_ids": ["C1"], "selected_law_hints": ["20047114"]},
+            candidates=candidates,
+            user_query="Yatırım teşvik belgesi başvurusu 2026'da yapılıyor; yeni sistem mi esas alınmalı?",
+            requested_source_families=["cb_karar"],
+        )
+
+        assert payload["selected_cluster_ids"] == ["C2"]
+        assert payload["selected_law_hints"] == ["9903"]
 
     def test_clamp_families_removes_planner_family_that_conflicts_with_strong_resolution(self):
         resolution = _resolve_source_family_prior(
