@@ -26,6 +26,10 @@ from evaluation.hukuk_ai_100_source_schema import (
     canonicalize_gold_row,
     normalize_text as normalize_source_text,
 )
+from evaluation.hukuk_ai_100_article_alignment import (
+    articles_equal,
+    classify_article_alignment,
+)
 
 
 DEFAULT_ANSWER_KEY = REPO_ROOT / "evaluation/private/hukuk_ai_100_answer_key_private.csv"
@@ -78,6 +82,9 @@ SCORED_FIELDS = [
     "support_span_count",
     "selector_reason",
     "article_match_type",
+    "query_article_alignment",
+    "article_alignment",
+    "selected_article_equals_claimed_article",
     "selector_evidence_sufficiency",
     "metadata_identity_strength",
     "temporal_state_resolved",
@@ -240,6 +247,16 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         article_match_score = 0.0
     else:
         article_match_score = 1.0 if gold_document_hits else 0.0
+    article_alignment = answer.get("article_alignment", "").strip() or classify_article_alignment(
+        selected_article=answer.get("selected_article", ""),
+        claimed_article=answer_source.article_or_section_canonical,
+        article_match_type=answer.get("article_match_type", ""),
+        selected_paragraph_or_clause=answer.get("selected_paragraph_or_clause", ""),
+    )
+    selected_article_equals_claimed_article = articles_equal(
+        answer.get("selected_article", ""),
+        answer_source.article_or_section_canonical,
+    )
 
     temporal_needed = temporal_expected(answer, gold_source.effective_state_canonical)
     if temporal_needed:
@@ -450,6 +467,9 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "support_span_count": answer.get("support_span_count", ""),
         "selector_reason": answer.get("selector_reason", ""),
         "article_match_type": answer.get("article_match_type", ""),
+        "query_article_alignment": answer.get("query_article_alignment", ""),
+        "article_alignment": article_alignment,
+        "selected_article_equals_claimed_article": bool_text(selected_article_equals_claimed_article),
         "selector_evidence_sufficiency": answer.get("selector_evidence_sufficiency", ""),
         "metadata_identity_strength": answer.get("metadata_identity_strength", ""),
         "temporal_state_resolved": answer.get("temporal_state_resolved", ""),
@@ -509,6 +529,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
     selector_reason_counts = Counter(row.get("selector_reason", "") or "unknown" for row in rows)
     article_match_type_counts = Counter(row.get("article_match_type", "") or "unknown" for row in rows)
+    article_alignment_counts = Counter(row.get("article_alignment", "") or "unknown" for row in rows)
+    query_article_alignment_counts = Counter(row.get("query_article_alignment", "") or "unknown" for row in rows)
 
     summary = {
         "scoring_mode": "deterministic_proxy_phase_2_answer_contract_not_human_judge",
@@ -555,6 +577,18 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
         "selector_reason_counts": dict(sorted(selector_reason_counts.items())),
         "article_match_type_counts": dict(sorted(article_match_type_counts.items())),
+        "article_alignment_counts": dict(sorted(article_alignment_counts.items())),
+        "query_article_alignment_counts": dict(sorted(query_article_alignment_counts.items())),
+        "selected_article_equals_claimed_article_count": sum(
+            1 for row in rows if bool_field(str(row.get("selected_article_equals_claimed_article", ""))) is True
+        ),
+        "selected_article_equals_claimed_article_rate": round(
+            sum(1 for row in rows if bool_field(str(row.get("selected_article_equals_claimed_article", ""))) is True)
+            / len(rows),
+            4,
+        )
+        if rows
+        else 0.0,
         "temporal_state_resolved_count": sum(
             1 for row in rows if bool_field(str(row.get("temporal_state_resolved", ""))) is True
         ),
@@ -613,6 +647,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- manual_review_count: {summary['manual_review_count']}",
         f"- selector_exact_article_hit_rate: {summary['selector_exact_article_hit_rate']}",
         f"- selector_same_document_hit_rate: {summary['selector_same_document_hit_rate']}",
+        f"- selected_article_equals_claimed_article_count: {summary['selected_article_equals_claimed_article_count']}",
+        f"- selected_article_equals_claimed_article_rate: {summary['selected_article_equals_claimed_article_rate']}",
         f"- avg_selector_support_span_count: {summary['avg_selector_support_span_count']}",
         f"- temporal_state_resolved_count: {summary['temporal_state_resolved_count']}",
         f"- article_lock_failed_count: {summary['article_lock_failed_count']}",
@@ -632,6 +668,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Article Match Type"])
     for status, count in summary["article_match_type_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Article Alignment"])
+    for status, count in summary["article_alignment_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Query Article Alignment"])
+    for status, count in summary["query_article_alignment_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(
         [

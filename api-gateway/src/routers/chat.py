@@ -1675,6 +1675,33 @@ def _article_window_distance(chunk_token: str, article_tokens: set[str]) -> int 
     return min(distances) if distances else None
 
 
+def _query_article_alignment(
+    *,
+    selected_article: str | None,
+    query_article_tokens: set[str],
+    article_match_type: str,
+    selected_paragraph_or_clause: str | None = None,
+) -> str:
+    selected_token = _normalize_article_token(selected_article or "")
+    if not query_article_tokens:
+        if selected_token == "0":
+            return "title_only"
+        if selected_paragraph_or_clause and not selected_token:
+            return "clause_only"
+        return "unknown"
+    if selected_token and selected_token in query_article_tokens:
+        return "exact"
+    if selected_token == "0":
+        return "title_only"
+    if selected_token and any(_article_window_distance(selected_token, {token}) == 1 for token in query_article_tokens):
+        return "neighbor"
+    if article_match_type in {"title_only", "source_local_support"}:
+        return "title_only"
+    if selected_paragraph_or_clause and not selected_token:
+        return "clause_only"
+    return "none"
+
+
 def _chunk_effective_state_resolved(chunk: RetrievedChunk) -> bool:
     metadata = chunk.metadata or {}
     state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
@@ -2002,6 +2029,9 @@ def _select_article_span_evidence(
             break
     top_trace = top_traces[0] if top_traces else None
     selector_exact_article_hit = bool(top_trace and (top_trace.get("explicit_ref_match") or top_trace.get("article_match")))
+    selected_article = top_trace.get("article_or_section") if top_trace else None
+    selected_paragraph_or_clause = top_trace.get("paragraph_or_clause") if top_trace else None
+    article_match_type = top_trace.get("article_match_type") if top_trace else "none"
     support_span_count = len(window_items) if window_items else min(len(reordered), 1 if reordered else 0)
     metadata_identity_strength = _selector_metadata_identity_strength(
         top_trace=top_trace,
@@ -2040,12 +2070,18 @@ def _select_article_span_evidence(
         "requested_source_families": requested_source_families,
         "selected_source_keys": sorted(selected_source_key_set),
         "selected_document_id": primary_source_key or None,
-        "selected_article": top_trace.get("article_or_section") if top_trace else None,
-        "selected_paragraph_or_clause": top_trace.get("paragraph_or_clause") if top_trace else None,
+        "selected_article": selected_article,
+        "selected_paragraph_or_clause": selected_paragraph_or_clause,
         "support_span_count": support_span_count,
         "selector_reason": document_lock_reason,
         "document_lock_reason": document_lock_reason,
-        "article_match_type": top_trace.get("article_match_type") if top_trace else "none",
+        "article_match_type": article_match_type,
+        "query_article_alignment": _query_article_alignment(
+            selected_article=selected_article,
+            query_article_tokens=article_tokens,
+            article_match_type=str(article_match_type or ""),
+            selected_paragraph_or_clause=selected_paragraph_or_clause,
+        ),
         "selector_document_rank": selector_document_rank,
         "selector_article_rank": selector_article_rank,
         "selector_exact_article_hit": selector_exact_article_hit,

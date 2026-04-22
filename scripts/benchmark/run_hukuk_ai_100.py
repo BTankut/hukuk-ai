@@ -17,6 +17,14 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from evaluation.hukuk_ai_100_article_alignment import (
+    articles_equal,
+    classify_article_alignment,
+)
+
 DEFAULT_QUESTIONS = REPO_ROOT / "configs/evaluation/hukuk_ai_100_public_questions.csv"
 DEFAULT_RUNS_DIR = REPO_ROOT / "reports/benchmark/runs"
 
@@ -61,6 +69,9 @@ ANSWER_FIELDS = [
     "support_span_count",
     "selector_reason",
     "article_match_type",
+    "query_article_alignment",
+    "article_alignment",
+    "selected_article_equals_claimed_article",
     "selector_evidence_sufficiency",
     "metadata_identity_strength",
     "temporal_state_resolved",
@@ -359,6 +370,17 @@ def selector_value(response: dict[str, Any], key: str) -> str:
     return str(value)
 
 
+def extracted_article_alignment(response: dict[str, Any]) -> str:
+    selected_article = selector_value(response, "selected_article")
+    claimed_article = contract_value(response, "article_or_section_claimed")
+    return classify_article_alignment(
+        selected_article=selected_article,
+        claimed_article=claimed_article,
+        article_match_type=selector_value(response, "article_match_type"),
+        selected_paragraph_or_clause=selector_value(response, "selected_paragraph_or_clause"),
+    )
+
+
 def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms: int) -> dict[str, str]:
     qid = row.get("q_id") or row.get("qid") or ""
     content = first_choice_content(response)
@@ -410,6 +432,16 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "support_span_count": selector_value(response, "support_span_count"),
         "selector_reason": selector_value(response, "selector_reason"),
         "article_match_type": selector_value(response, "article_match_type"),
+        "query_article_alignment": selector_value(response, "query_article_alignment"),
+        "article_alignment": extracted_article_alignment(response),
+        "selected_article_equals_claimed_article": (
+            "True"
+            if articles_equal(
+                selector_value(response, "selected_article"),
+                contract_value(response, "article_or_section_claimed"),
+            )
+            else "False"
+        ),
         "selector_evidence_sufficiency": selector_value(response, "selector_evidence_sufficiency"),
         "metadata_identity_strength": selector_value(response, "metadata_identity_strength"),
         "temporal_state_resolved": selector_value(response, "temporal_state_resolved"),

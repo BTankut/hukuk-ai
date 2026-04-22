@@ -1332,6 +1332,7 @@ class TestLawSignalParsing:
         assert selector["selected_document_id"]
         assert selector["selected_article"] == "12"
         assert selector["article_match_type"] == "exact"
+        assert selector["query_article_alignment"] == "exact"
         assert selector["selector_reason"] == "selected_source_lock"
         assert selector["selector_evidence_sufficiency"] == "exact_enough"
         assert selector["metadata_identity_strength"] == "strong"
@@ -1375,6 +1376,7 @@ class TestLawSignalParsing:
 
         assert selected[0].citation == "40969 m.12/f.0"
         assert selector["article_match_type"] == "exact"
+        assert selector["query_article_alignment"] == "exact"
         assert selector["selected_article"] == "12"
 
     def test_article_span_selector_uses_document_lock_before_cross_document_article_hit(self):
@@ -1410,6 +1412,7 @@ class TestLawSignalParsing:
         assert "kirklareli" in selector["selected_document_id"]
         assert selector["selector_reason"] == "family_title_lock"
         assert selector["article_match_type"] == "source_local_support"
+        assert selector["query_article_alignment"] == "unknown"
 
     def test_article_span_selector_surfaces_insufficient_support_metrics(self):
         chunks = [

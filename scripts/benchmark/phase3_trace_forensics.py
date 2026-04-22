@@ -187,6 +187,8 @@ def write_cluster_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "score_0_10_proxy",
         "pass_fail_proxy",
         "mechanism",
+        "article_alignment",
+        "query_article_alignment",
         "failure_classes",
         "pre_top_family",
         "post_top_family",
@@ -210,6 +212,8 @@ def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> Non
     flag_counts: Counter[str] = Counter()
     weak_rows = [row for row in failing if row["expected_family"] in WEAK_FAMILIES]
     weak_mechanisms = Counter(row["mechanism"] for row in weak_rows)
+    article_alignment_counts = Counter(row.get("article_alignment") or "unknown" for row in rows)
+    query_article_alignment_counts = Counter(row.get("query_article_alignment") or "unknown" for row in rows)
     for row in failing:
         flag_counts.update(split_flags(row["failure_classes"]))
 
@@ -228,6 +232,12 @@ def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> Non
     lines.extend(["", "## Failure Classes"])
     for flag, count in flag_counts.most_common():
         lines.append(f"- {flag}: {count}")
+    lines.extend(["", "## Article Alignment"])
+    for alignment, count in article_alignment_counts.most_common():
+        lines.append(f"- {alignment}: {count}")
+    lines.extend(["", "## Query Article Alignment"])
+    for alignment, count in query_article_alignment_counts.most_common():
+        lines.append(f"- {alignment}: {count}")
     lines.extend(["", "## Failing Rows by Expected Family"])
     for family, count in family_counts_summary.most_common():
         lines.append(f"- {family}: {count}")
@@ -282,6 +292,8 @@ def main() -> int:
                 "score_0_10_proxy": scored.get("score_0_10_proxy", ""),
                 "pass_fail_proxy": scored.get("pass_fail_proxy", ""),
                 "mechanism": derive_mechanism(scored, pre_counts, post_counts),
+                "article_alignment": scored.get("article_alignment", ""),
+                "query_article_alignment": scored.get("query_article_alignment", ""),
                 "failure_classes": scored.get("failure_classes", ""),
                 "pre_top_family": pre_top_family,
                 "post_top_family": post_top_family,

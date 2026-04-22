@@ -1,0 +1,287 @@
+{
+  "answer_contract_invalid_count": 0,
+  "answer_suppressed_due_to_evidence_gap_count": 16,
+  "article_alignment_counts": {
+    "exact": 27,
+    "neighbor": 9,
+    "none": 48,
+    "title_only": 16
+  },
+  "article_lock_failed_count": 0,
+  "article_match_type_counts": {
+    "source_local_support": 100
+  },
+  "average_score_0_10_proxy": 6.92,
+  "avg_answer_contract_score": 1.0,
+  "avg_article_match_score": 0.82,
+  "avg_claimed_source_parse_success_score": 1.0,
+  "avg_confidence_policy_consistency_score": 1.0,
+  "avg_document_match_score": 0.732,
+  "avg_family_match_score": 0.67,
+  "avg_groundedness_confidence_consistency_score": 1.0,
+  "avg_grounding_score": 0.415,
+  "avg_selector_support_span_count": 2.66,
+  "avg_temporal_validity_score": 0.88,
+  "avg_uncertainty_honesty_score": 1.0,
+  "by_primary_type": {
+    "CB_GENELGE": {
+      "avg_score_0_10_proxy": 3.06,
+      "count": 4,
+      "fail": 4,
+      "pass": 0
+    },
+    "CB_KARAR": {
+      "avg_score_0_10_proxy": 6.84,
+      "count": 8,
+      "fail": 4,
+      "pass": 4
+    },
+    "CB_KARARNAME": {
+      "avg_score_0_10_proxy": 9.14,
+      "count": 6,
+      "fail": 0,
+      "pass": 6
+    },
+    "CB_YONETMELIK": {
+      "avg_score_0_10_proxy": 6.2,
+      "count": 6,
+      "fail": 3,
+      "pass": 3
+    },
+    "KANUN": {
+      "avg_score_0_10_proxy": 7.16,
+      "count": 21,
+      "fail": 8,
+      "pass": 13
+    },
+    "KHK": {
+      "avg_score_0_10_proxy": 8.55,
+      "count": 6,
+      "fail": 1,
+      "pass": 5
+    },
+    "KKY": {
+      "avg_score_0_10_proxy": 7.68,
+      "count": 11,
+      "fail": 4,
+      "pass": 7
+    },
+    "MULGA": {
+      "avg_score_0_10_proxy": 2.9,
+      "count": 5,
+      "fail": 5,
+      "pass": 0
+    },
+    "TEBLIGLER": {
+      "avg_score_0_10_proxy": 7.81,
+      "count": 8,
+      "fail": 1,
+      "pass": 7
+    },
+    "TUZUK": {
+      "avg_score_0_10_proxy": 7.11,
+      "count": 5,
+      "fail": 2,
+      "pass": 3
+    },
+    "UY": {
+      "avg_score_0_10_proxy": 8.07,
+      "count": 10,
+      "fail": 2,
+      "pass": 8
+    },
+    "YONETMELIK": {
+      "avg_score_0_10_proxy": 5.35,
+      "count": 10,
+      "fail": 9,
+      "pass": 1
+    }
+  },
+  "by_source_family_canonical": {
+    "CB_GENELGE": {
+      "avg_score_0_10_proxy": 3.91,
+      "count": 5,
+      "fail": 4,
+      "pass": 1
+    },
+    "CB_KARAR": {
+      "avg_score_0_10_proxy": 7.79,
+      "count": 3,
+      "fail": 1,
+      "pass": 2
+    },
+    "CB_KARARNAME": {
+      "avg_score_0_10_proxy": 8.51,
+      "count": 8,
+      "fail": 1,
+      "pass": 7
+    },
+    "CB_YONETMELIK": {
+      "avg_score_0_10_proxy": 5.15,
+      "count": 3,
+      "fail": 2,
+      "pass": 1
+    },
+    "KANUN": {
+      "avg_score_0_10_proxy": 6.62,
+      "count": 23,
+      "fail": 10,
+      "pass": 13
+    },
+    "KHK": {
+      "avg_score_0_10_proxy": 7.65,
+      "count": 6,
+      "fail": 1,
+      "pass": 5
+    },
+    "KKY": {
+      "avg_score_0_10_proxy": 7.06,
+      "count": 18,
+      "fail": 10,
+      "pass": 8
+    },
+    "MULGA": {
+      "avg_score_0_10_proxy": 5.0,
+      "count": 1,
+      "fail": 1,
+      "pass": 0
+    },
+    "TEBLIGLER": {
+      "avg_score_0_10_proxy": 7.16,
+      "count": 13,
+      "fail": 5,
+      "pass": 8
+    },
+    "TUZUK": {
+      "avg_score_0_10_proxy": 6.1,
+      "count": 5,
+      "fail": 2,
+      "pass": 3
+    },
+    "UY": {
+      "avg_score_0_10_proxy": 7.84,
+      "count": 11,
+      "fail": 3,
+      "pass": 8
+    },
+    "YONETMELIK": {
+      "avg_score_0_10_proxy": 6.4,
+      "count": 4,
+      "fail": 3,
+      "pass": 1
+    }
+  },
+  "by_task_type": {
+    "compliance_checklist": {
+      "avg_score_0_10_proxy": 5.12,
+      "count": 8,
+      "fail": 6,
+      "pass": 2
+    },
+    "current_update": {
+      "avg_score_0_10_proxy": 6.34,
+      "count": 5,
+      "fail": 3,
+      "pass": 2
+    },
+    "document_selection": {
+      "avg_score_0_10_proxy": 8.25,
+      "count": 36,
+      "fail": 6,
+      "pass": 30
+    },
+    "exception_analysis": {
+      "avg_score_0_10_proxy": 5.95,
+      "count": 2,
+      "fail": 1,
+      "pass": 1
+    },
+    "hierarchy_conflict": {
+      "avg_score_0_10_proxy": 7.44,
+      "count": 8,
+      "fail": 4,
+      "pass": 4
+    },
+    "precise_retrieval": {
+      "avg_score_0_10_proxy": 6.05,
+      "count": 10,
+      "fail": 5,
+      "pass": 5
+    },
+    "scenario_applicability": {
+      "avg_score_0_10_proxy": 7.11,
+      "count": 12,
+      "fail": 5,
+      "pass": 7
+    },
+    "temporal_validity": {
+      "avg_score_0_10_proxy": 5.53,
+      "count": 19,
+      "fail": 13,
+      "pass": 6
+    }
+  },
+  "contract_completeness_rate": 1.0,
+  "contract_repaired_count": 100,
+  "fail_proxy": 43,
+  "failure_class_counts": {
+    "auto_fail_triggered": 2,
+    "hallucinated_identifier": 44,
+    "missing_gold_document_signal": 15,
+    "missing_required_content_signal": 97,
+    "partial_grounding_only": 97,
+    "repealed_source_used_as_active": 5,
+    "unsupported_confident_claim": 16,
+    "wrong_article": 3,
+    "wrong_document": 15,
+    "wrong_family": 33
+  },
+  "hallucinated_source_count": 15,
+  "manual_review_count": 70,
+  "max_score": 1000.0,
+  "metadata_identity_strength_counts": {
+    "medium": 21,
+    "none": 3,
+    "strong": 75,
+    "weak": 1
+  },
+  "pass_proxy": 57,
+  "query_article_alignment_counts": {
+    "unknown": 100
+  },
+  "raw_score_proxy": 692.02,
+  "repealed_as_active_count": 5,
+  "scoring_mode": "deterministic_proxy_phase_2_answer_contract_not_human_judge",
+  "selected_article_equals_claimed_article_count": 34,
+  "selected_article_equals_claimed_article_rate": 0.34,
+  "selector_evidence_sufficiency_counts": {
+    "insufficient_support": 1,
+    "partially_supported": 99
+  },
+  "selector_exact_article_hit_rate": 0.0,
+  "selector_reason_counts": {
+    "family_title_lock": 21,
+    "identifier_lock": 4,
+    "selected_source_lock": 70,
+    "top_ranked": 5
+  },
+  "selector_same_document_hit_rate": 0.99,
+  "support_insufficient_for_specific_claim_count": 16,
+  "temporal_clause_missing_count": 0,
+  "temporal_state_resolved_count": 100,
+  "temporal_validity_miss_count": 0,
+  "total": 100,
+  "unsupported_confident_answer_count": 16,
+  "worst_10_qids": [
+    "KANUN-18",
+    "MULGA-03",
+    "MULGA-04",
+    "CBY-05",
+    "UY-07",
+    "YON-02",
+    "CBG-04",
+    "TEB-04",
+    "CBG-01",
+    "CBG-02"
+  ]
+}
