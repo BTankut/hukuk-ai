@@ -12,7 +12,6 @@ import csv
 import json
 import re
 import sys
-import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -25,6 +24,7 @@ from evaluation.hukuk_ai_100_source_schema import (
     canonical_family,
     canonicalize_answer_row,
     canonicalize_gold_row,
+    normalize_text as normalize_source_text,
 )
 
 
@@ -82,6 +82,10 @@ SCORED_FIELDS = [
     "metadata_identity_strength",
     "temporal_state_resolved",
     "manual_review_trigger_reason",
+    "article_lock_failed",
+    "support_insufficient_for_specific_claim",
+    "temporal_clause_missing",
+    "answer_suppressed_due_to_evidence_gap",
     "missing_trace",
     "empty_or_refused",
     "api_error",
@@ -98,10 +102,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def normalize(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text.casefold())
-    text = "".join(ch for ch in text if not unicodedata.combining(ch))
-    text = re.sub(r"[^0-9a-zA-ZğĞıİöÖüÜşŞçÇ]+", " ", text)
-    return re.sub(r"\s+", " ", text).strip()
+    return normalize_source_text(text)
 
 
 def split_rubric(value: str) -> list[str]:
@@ -453,6 +454,10 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "metadata_identity_strength": answer.get("metadata_identity_strength", ""),
         "temporal_state_resolved": answer.get("temporal_state_resolved", ""),
         "manual_review_trigger_reason": answer.get("manual_review_trigger_reason", ""),
+        "article_lock_failed": answer.get("article_lock_failed", ""),
+        "support_insufficient_for_specific_claim": answer.get("support_insufficient_for_specific_claim", ""),
+        "temporal_clause_missing": answer.get("temporal_clause_missing", ""),
+        "answer_suppressed_due_to_evidence_gap": answer.get("answer_suppressed_due_to_evidence_gap", ""),
         "missing_trace": bool_text(missing_trace),
         "empty_or_refused": bool_text(empty_or_refused),
         "api_error": bool_text(api_error),
@@ -553,6 +558,18 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "temporal_state_resolved_count": sum(
             1 for row in rows if bool_field(str(row.get("temporal_state_resolved", ""))) is True
         ),
+        "article_lock_failed_count": sum(
+            1 for row in rows if bool_field(str(row.get("article_lock_failed", ""))) is True
+        ),
+        "support_insufficient_for_specific_claim_count": sum(
+            1 for row in rows if bool_field(str(row.get("support_insufficient_for_specific_claim", ""))) is True
+        ),
+        "temporal_clause_missing_count": sum(
+            1 for row in rows if bool_field(str(row.get("temporal_clause_missing", ""))) is True
+        ),
+        "answer_suppressed_due_to_evidence_gap_count": sum(
+            1 for row in rows if bool_field(str(row.get("answer_suppressed_due_to_evidence_gap", ""))) is True
+        ),
         "failure_class_counts": dict(sorted(failure_counter.items())),
         "by_primary_type": breakdown(rows, "primary_type"),
         "by_source_family_canonical": breakdown(rows, "source_family_canonical"),
@@ -598,6 +615,10 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- selector_same_document_hit_rate: {summary['selector_same_document_hit_rate']}",
         f"- avg_selector_support_span_count: {summary['avg_selector_support_span_count']}",
         f"- temporal_state_resolved_count: {summary['temporal_state_resolved_count']}",
+        f"- article_lock_failed_count: {summary['article_lock_failed_count']}",
+        f"- support_insufficient_for_specific_claim_count: {summary['support_insufficient_for_specific_claim_count']}",
+        f"- temporal_clause_missing_count: {summary['temporal_clause_missing_count']}",
+        f"- answer_suppressed_due_to_evidence_gap_count: {summary['answer_suppressed_due_to_evidence_gap_count']}",
         "",
         "## Selector Evidence Sufficiency",
     ]
