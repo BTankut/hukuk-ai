@@ -1329,9 +1329,12 @@ class TestLawSignalParsing:
         assert selector["selector_article_rank"] == 1
         assert selector["selector_support_span_count"] >= 2
         assert selector["support_span_count"] >= 2
+        assert selector["support_span_diversity"] >= 2
+        assert selector["support_contains_article_number"] is True
         assert selector["selected_document_id"]
         assert selector["selected_article"] == "12"
         assert selector["article_match_type"] == "exact"
+        assert selector["selector_article_lock_type"] == "explicit_exact"
         assert selector["query_article_alignment"] == "exact"
         assert selector["selector_reason"] == "selected_source_lock"
         assert selector["selector_evidence_sufficiency"] == "exact_enough"
@@ -1376,6 +1379,7 @@ class TestLawSignalParsing:
 
         assert selected[0].citation == "40969 m.12/f.0"
         assert selector["article_match_type"] == "exact"
+        assert selector["selector_article_lock_type"] == "explicit_exact"
         assert selector["query_article_alignment"] == "exact"
         assert selector["selected_article"] == "12"
 
@@ -1412,7 +1416,83 @@ class TestLawSignalParsing:
         assert "kirklareli" in selector["selected_document_id"]
         assert selector["selector_reason"] == "family_title_lock"
         assert selector["article_match_type"] == "source_local_support"
+        assert selector["selector_article_lock_type"] == "semantic_exact"
+        assert selector["selector_exact_article_hit"] is True
         assert selector["query_article_alignment"] == "unknown"
+
+    def test_article_span_selector_marks_semantic_exact_when_question_has_no_article_number(self):
+        chunks = [
+            RetrievedChunk(
+                text="Tez danışmanı, öğrencinin programı ve çalışmanın niteliği dikkate alınarak atanır.",
+                citation="40969 m.12/f.0",
+                source="40969",
+                score=0.88,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "law_no": "40969",
+                    "madde_no": "12",
+                    "effective_state": "active",
+                },
+            ),
+            RetrievedChunk(
+                text="Tez danışmanlığına ilişkin ek kurul usulleri aynı yönetmelikte düzenlenir.",
+                citation="40969 m.13/f.0",
+                source="40969",
+                score=0.74,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "law_no": "40969",
+                    "madde_no": "13",
+                    "effective_state": "active",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="Kırklareli Üniversitesi lisansüstü yönetmeliğine göre tez danışmanı nasıl atanır?",
+            chunks=chunks,
+            requested_source_families=["uy", "yonetmelik"],
+            explicit_article_refs=[],
+            selected_source_keys={"kırklareli üniversitesi lisansüstü eğitim ve öğretim yönetmeliği"},
+        )
+
+        assert selected[0].citation == "40969 m.12/f.0"
+        assert selector["selected_article"] == "12"
+        assert selector["query_article_alignment"] == "unknown"
+        assert selector["selector_article_lock_type"] == "semantic_exact"
+        assert selector["selector_exact_article_hit"] is True
+        assert selector["support_contains_article_number"] is True
+        assert selector["support_span_diversity"] >= 1
+        assert selector["selector_evidence_sufficiency"] == "exact_enough"
+
+    def test_article_span_selector_surfaces_temporal_and_exception_support_metrics(self):
+        chunks = [
+            RetrievedChunk(
+                text="Bu yönetmelik yürürlüğe girer; istisna hükümleri ve başvuru süresi ayrıca saklıdır.",
+                citation="12345 m.5/f.0",
+                source="12345",
+                score=0.80,
+                metadata={
+                    "source_title": "ÖRNEK YÖNETMELİK",
+                    "belge_turu": "yonetmelik",
+                    "law_no": "12345",
+                    "madde_no": "5",
+                    "effective_state": "active",
+                },
+            )
+        ]
+
+        _selected, selector = _select_article_span_evidence(
+            query="Örnek yönetmelikte yürürlük ve istisna hükümleri nasıl düzenlenir?",
+            chunks=chunks,
+            requested_source_families=["yonetmelik"],
+            explicit_article_refs=[],
+        )
+
+        assert selector["support_contains_temporal_clause"] is True
+        assert selector["support_contains_exception_signal"] is True
 
     def test_article_span_selector_surfaces_insufficient_support_metrics(self):
         chunks = [
@@ -1435,6 +1515,8 @@ class TestLawSignalParsing:
         assert selected[0].citation == "2547 m.12/f.0"
         assert selector["selector_evidence_sufficiency"] == "insufficient_support"
         assert selector["metadata_identity_strength"] == "weak"
+        assert selector["selector_article_lock_type"] == "none"
+        assert selector["selector_exact_article_hit"] is False
         assert selector["manual_review_trigger_reason"] == "insufficient_selector_support"
 
     def test_assembled_evidence_exposes_phase4_canonical_span_fields(self):

@@ -1772,6 +1772,91 @@ def _selector_manual_review_reason(
     return ""
 
 
+def _support_contains_temporal_clause(traces: list[dict[str, Any]]) -> bool:
+    needles = ("yururluk", "mulga", "degisik", "tarih", "gecerli", "halen", "aktif")
+    for trace in traces:
+        if trace.get("contains_temporal_clause"):
+            return True
+        text = _normalize_tr_text(
+            " ".join(str(trace.get(key) or "") for key in ("citation", "source_key", "source_id"))
+        )
+        if any(needle in text for needle in needles):
+            return True
+    return False
+
+
+def _support_contains_exception_signal(query: str, traces: list[dict[str, Any]]) -> bool:
+    normalized_query = _normalize_tr_text(query or "")
+    query_has_exception = any(
+        signal in normalized_query
+        for signal in ("istisna", "haric", "uygulanmaz", "ceza", "sure", "usul", "itiraz", "muaf")
+    )
+    if query_has_exception:
+        return True
+    for trace in traces:
+        if trace.get("clause_match") or trace.get("contains_exception_signal"):
+            return True
+    return False
+
+
+def _contains_temporal_clause_signal(text: str) -> bool:
+    normalized = _normalize_tr_text(text or "")
+    return any(
+        signal in normalized
+        for signal in (
+            "yururluk",
+            "yururluge",
+            "mulga",
+            "yururlukten kaldiril",
+            "degisik",
+            "tarihinde",
+            "gecerli",
+            "gecici madde",
+            "ek madde",
+        )
+    )
+
+
+def _contains_exception_signal(text: str) -> bool:
+    normalized = _normalize_tr_text(text or "")
+    return any(
+        signal in normalized
+        for signal in ("istisna", "haric", "sakli", "uygulanmaz", "muaf", "ceza", "sure", "itiraz", "usul")
+    )
+
+
+def _selector_article_lock_type(
+    *,
+    top_trace: dict[str, Any] | None,
+    article_tokens: set[str],
+    metadata_identity_strength: str,
+    support_span_count: int,
+) -> str:
+    if not top_trace:
+        return "none"
+    article = str(top_trace.get("article_or_section") or "")
+    if top_trace.get("explicit_ref_match") or top_trace.get("article_match"):
+        return "explicit_exact"
+    if article_tokens and top_trace.get("adjacent_article_match"):
+        return "neighbor"
+    if article == "0" or top_trace.get("article_match_type") == "title_only":
+        return "title_only"
+    semantic_support = (
+        int(top_trace.get("heading_overlap") or 0) >= 1
+        or int(top_trace.get("text_overlap") or 0) >= 2
+        or bool(top_trace.get("selected_source_match"))
+        or bool(top_trace.get("identifier_match"))
+    )
+    source_identity_ok = (
+        metadata_identity_strength in {"strong", "medium"}
+        or bool(top_trace.get("family_match"))
+        or bool(top_trace.get("law_match"))
+    )
+    if not article_tokens and article and article != "0" and semantic_support and source_identity_ok and support_span_count >= 1:
+        return "semantic_exact"
+    return "none"
+
+
 def _build_chunk_evidence_span(chunk: RetrievedChunk, *, query: str | None = None, max_len: int = 700) -> str:
     if query:
         return RAGOrchestrator._build_query_focused_excerpt(chunk.text, query=query, max_len=max_len)
@@ -1931,6 +2016,8 @@ def _select_article_span_evidence(
                     "title_overlap": title_overlap,
                     "heading_overlap": heading_overlap,
                     "text_overlap": text_overlap,
+                    "contains_temporal_clause": _contains_temporal_clause_signal(chunk.text),
+                    "contains_exception_signal": _contains_exception_signal(chunk.text),
                     "temporal_state_resolved": _chunk_effective_state_resolved(chunk),
                 },
             )
@@ -2028,7 +2115,6 @@ def _select_article_span_evidence(
             selector_article_rank = rank
             break
     top_trace = top_traces[0] if top_traces else None
-    selector_exact_article_hit = bool(top_trace and (top_trace.get("explicit_ref_match") or top_trace.get("article_match")))
     selected_article = top_trace.get("article_or_section") if top_trace else None
     selected_paragraph_or_clause = top_trace.get("paragraph_or_clause") if top_trace else None
     article_match_type = top_trace.get("article_match_type") if top_trace else "none"
@@ -2039,6 +2125,13 @@ def _select_article_span_evidence(
         requested_family_set=requested_family_set,
         selected_source_keys=selected_source_keys,
     )
+    selector_article_lock_type = _selector_article_lock_type(
+        top_trace=top_trace,
+        article_tokens=article_tokens,
+        metadata_identity_strength=metadata_identity_strength,
+        support_span_count=support_span_count,
+    )
+    selector_exact_article_hit = selector_article_lock_type in {"explicit_exact", "semantic_exact"}
     temporal_state_resolved = bool(top_trace and top_trace.get("temporal_state_resolved"))
     if selector_exact_article_hit and metadata_identity_strength in {"strong", "medium"}:
         evidence_sufficiency = "exact_enough"
@@ -2073,9 +2166,22 @@ def _select_article_span_evidence(
         "selected_article": selected_article,
         "selected_paragraph_or_clause": selected_paragraph_or_clause,
         "support_span_count": support_span_count,
+        "support_span_diversity": len(
+            {
+                str(trace.get("article_or_section") or "")
+                for trace in top_traces
+                if trace.get("article_or_section") not in {None, ""}
+            }
+        ),
+        "support_contains_article_number": bool(
+            any(str(trace.get("article_or_section") or "") not in {"", "0"} for trace in top_traces)
+        ),
+        "support_contains_temporal_clause": _support_contains_temporal_clause(top_traces),
+        "support_contains_exception_signal": _support_contains_exception_signal(query, top_traces),
         "selector_reason": document_lock_reason,
         "document_lock_reason": document_lock_reason,
         "article_match_type": article_match_type,
+        "selector_article_lock_type": selector_article_lock_type,
         "query_article_alignment": _query_article_alignment(
             selected_article=selected_article,
             query_article_tokens=article_tokens,

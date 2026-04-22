@@ -80,8 +80,13 @@ SCORED_FIELDS = [
     "selected_article",
     "selected_paragraph_or_clause",
     "support_span_count",
+    "support_span_diversity",
+    "support_contains_article_number",
+    "support_contains_temporal_clause",
+    "support_contains_exception_signal",
     "selector_reason",
     "article_match_type",
+    "selector_article_lock_type",
     "query_article_alignment",
     "article_alignment",
     "selected_article_equals_claimed_article",
@@ -465,8 +470,13 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "selected_article": answer.get("selected_article", ""),
         "selected_paragraph_or_clause": answer.get("selected_paragraph_or_clause", ""),
         "support_span_count": answer.get("support_span_count", ""),
+        "support_span_diversity": answer.get("support_span_diversity", ""),
+        "support_contains_article_number": answer.get("support_contains_article_number", ""),
+        "support_contains_temporal_clause": answer.get("support_contains_temporal_clause", ""),
+        "support_contains_exception_signal": answer.get("support_contains_exception_signal", ""),
         "selector_reason": answer.get("selector_reason", ""),
         "article_match_type": answer.get("article_match_type", ""),
+        "selector_article_lock_type": answer.get("selector_article_lock_type", ""),
         "query_article_alignment": answer.get("query_article_alignment", ""),
         "article_alignment": article_alignment,
         "selected_article_equals_claimed_article": bool_text(selected_article_equals_claimed_article),
@@ -528,6 +538,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     metadata_strength_counts = Counter(row.get("metadata_identity_strength", "") or "unknown" for row in rows)
     evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
     selector_reason_counts = Counter(row.get("selector_reason", "") or "unknown" for row in rows)
+    selector_article_lock_type_counts = Counter(row.get("selector_article_lock_type", "") or "unknown" for row in rows)
     article_match_type_counts = Counter(row.get("article_match_type", "") or "unknown" for row in rows)
     article_alignment_counts = Counter(row.get("article_alignment", "") or "unknown" for row in rows)
     query_article_alignment_counts = Counter(row.get("query_article_alignment", "") or "unknown" for row in rows)
@@ -576,6 +587,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "metadata_identity_strength_counts": dict(sorted(metadata_strength_counts.items())),
         "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
         "selector_reason_counts": dict(sorted(selector_reason_counts.items())),
+        "selector_article_lock_type_counts": dict(sorted(selector_article_lock_type_counts.items())),
         "article_match_type_counts": dict(sorted(article_match_type_counts.items())),
         "article_alignment_counts": dict(sorted(article_alignment_counts.items())),
         "query_article_alignment_counts": dict(sorted(query_article_alignment_counts.items())),
@@ -665,6 +677,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Selector Reason"])
     for status, count in summary["selector_reason_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Selector Article Lock Type"])
+    for status, count in summary["selector_article_lock_type_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Article Match Type"])
     for status, count in summary["article_match_type_counts"].items():
