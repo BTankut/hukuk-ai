@@ -3,6 +3,141 @@ from __future__ import annotations
 from answer_contract_v2 import build_or_repair_answer_contract
 
 
+def test_repair_selects_partial_identifier_evidence_before_first_fallback():
+    result = build_or_repair_answer_contract(
+        qid="KANUN-01",
+        answer_text="İşe iade şartı İş Kanunu m.18'e dayanır. [Kaynak: IK m.18]",
+        citations=["IK m.18"],
+        answer_contract={
+            "answer_text": "İşe iade şartı İş Kanunu m.18'e dayanır. [Kaynak: IK m.18]",
+            "primary_source_id": "IK m.18",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "target_date": "2026-04-21",
+            "assembled_evidence": [
+                {
+                    "source_id": "24083:24083:m20:f0",
+                    "citation": "24083 m.20/f.0",
+                    "source_title": "Türkiye İnsan Hakları ve Eşitlik Kurumunda Sözleşmeli Personel Usul ve Esasları",
+                    "source_family": "teblig",
+                    "source_identifier": "24083 m.20",
+                    "article_or_section": "20",
+                    "effective_state": "active",
+                },
+                {
+                    "source_id": "IK:4857:m18:f0:from1900-01-01:to9999-12-31",
+                    "citation": "IK m.18/f.0",
+                    "source_title": "İŞ KANUNU",
+                    "source_family": "kanun",
+                    "source_identifier": "IK m.18",
+                    "article_or_section": "18",
+                    "effective_state": "active",
+                },
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "KANUN"
+    assert contract["source_identifier_claimed"] == "IK m.18"
+    assert contract["source_title_claimed"] == "İŞ KANUNU"
+    assert contract["article_or_section_claimed"] == "madde:18"
+    assert "same_evidence_identifier_mismatch" not in contract["verification_findings"]
+
+
+def test_repair_does_not_match_short_law_abbreviation_as_source_identifier():
+    result = build_or_repair_answer_contract(
+        qid="TBK-PARTIAL",
+        answer_text="Bildirim süresi TBK m.432'de düzenlenir. [Kaynak: TBK m.432]",
+        citations=["TBK m.432"],
+        answer_contract={
+            "answer_text": "Bildirim süresi TBK m.432'de düzenlenir. [Kaynak: TBK m.432]",
+            "primary_source_id": "TBK m.432",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "TBK:6098:m438:f0",
+                    "citation": "TBK m.438/f.0",
+                    "source_title": "TÜRK BORÇLAR KANUNU",
+                    "source_family": "kanun",
+                    "source_identifier": "TBK m.438",
+                    "law_short_name": "TBK",
+                    "article_or_section": "438",
+                    "effective_state": "active",
+                },
+                {
+                    "source_id": "TBK:6098:m432:f0",
+                    "citation": "TBK m.432/f.0",
+                    "source_title": "TÜRK BORÇLAR KANUNU",
+                    "source_family": "kanun",
+                    "source_identifier": "TBK m.432",
+                    "law_short_name": "TBK",
+                    "article_or_section": "432",
+                    "effective_state": "active",
+                },
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_identifier_claimed"] == "TBK m.432"
+    assert contract["article_or_section_claimed"] == "madde:432"
+    assert "same_evidence_article_mismatch" not in contract["verification_findings"]
+
+
+def test_repair_does_not_treat_article_number_as_source_identity():
+    result = build_or_repair_answer_contract(
+        qid="ARTICLE-ONLY-MISMATCH",
+        answer_text="İtiraz usulü IK m.20'de düzenlenir. [Kaynak: IK m.20]",
+        citations=["IK m.20", "TBK m.432"],
+        answer_contract={
+            "answer_text": "İtiraz usulü IK m.20'de düzenlenir. [Kaynak: IK m.20]",
+            "primary_source_id": "IK m.20",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "24083:24083:m20:f0",
+                    "citation": "24083 m.20/f.0",
+                    "source_title": "Türkiye İnsan Hakları ve Eşitlik Kurumunda Sözleşmeli Personel Usul ve Esasları",
+                    "source_family": "teblig",
+                    "source_identifier": "24083 m.20",
+                    "article_or_section": "20",
+                    "effective_state": "active",
+                },
+                {
+                    "source_id": "TBK:6098:m432:f0",
+                    "citation": "TBK m.432/f.0",
+                    "source_title": "TÜRK BORÇLAR KANUNU",
+                    "source_family": "kanun",
+                    "source_identifier": "TBK m.432",
+                    "article_or_section": "432",
+                    "effective_state": "active",
+                },
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_identifier_claimed"] == "IK m.20"
+    assert contract["article_or_section_claimed"] == "madde:20"
+    assert "claimed_source_not_in_selected_evidence" in contract["verification_findings"]
+    assert "same_evidence_identifier_mismatch" in contract["verification_findings"]
+
+
 def test_repair_adds_phase2_contract_fields_for_grounded_answer():
     result = build_or_repair_answer_contract(
         qid="KANUN-01",

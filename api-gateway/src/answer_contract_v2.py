@@ -153,6 +153,24 @@ def _select_evidence(
         }
         if needles & haystack:
             return item
+    for item in evidence:
+        haystack = {
+            _lower_asciiish(item.get(key))
+            for key in (
+                "source_id",
+                "citation",
+                "canonical_id",
+                "canonical_identifier_display",
+                "source_identifier",
+                "display_citation",
+            )
+            if _clean(item.get(key))
+        }
+        if any(len(needle) >= 5 and needle in value for needle in needles for value in haystack):
+            return item
+    for item in evidence:
+        if _claim_matches_item(item, source_identifier=source_identifier, citations=citations):
+            return item
     return evidence[0] if evidence else None
 
 
@@ -246,12 +264,15 @@ def _claim_matches_item(
         for haystack in haystacks:
             if needle == haystack:
                 return True
-            if len(needle) >= 5 and (needle in haystack or haystack in needle):
+            if len(needle) >= 5 and needle in haystack:
+                return True
+            if len(needle) >= 5 and len(haystack) >= 5 and haystack in needle:
                 return True
 
     claim_numbers = set(re.findall(r"\d+[a-z]?", " ".join(needles)))
     item_numbers = set(re.findall(r"\d+[a-z]?", " ".join(haystacks)))
-    return bool(claim_numbers and claim_numbers <= item_numbers)
+    has_source_number = any(len(number.rstrip("abcdefghijklmnopqrstuvwxyz")) >= 4 for number in claim_numbers)
+    return bool(claim_numbers and has_source_number and claim_numbers <= item_numbers)
 
 
 def _article_token(value: Any) -> str:
@@ -292,6 +313,8 @@ def _identifier_matches_same_evidence(
 ) -> bool:
     if not isinstance(evidence, dict):
         return False
+    if source_identifier and source_identifier.lower() != "unknown":
+        return _claim_matches_item(evidence, source_identifier=source_identifier, citations=[])
     return _claim_matches_item(evidence, source_identifier=source_identifier, citations=citations)
 
 
@@ -508,13 +531,6 @@ def _detect_identifier(text: str, citations: list[str], evidence: dict[str, Any]
 
 
 def _detect_article(text: str, evidence: dict[str, Any] | None, source_identifier: str) -> str:
-    evidence_article = _first_string(
-        evidence.get("article_or_section") if isinstance(evidence, dict) else "",
-        evidence.get("madde_no") if isinstance(evidence, dict) else "",
-    )
-    if evidence_article:
-        token = _article_token(evidence_article) or evidence_article.lower()
-        return f"madde:{token}"
     for candidate in (source_identifier, text):
         match = _SOURCE_ID_ARTICLE_RE.search(candidate)
         if match:
@@ -522,6 +538,13 @@ def _detect_article(text: str, evidence: dict[str, Any] | None, source_identifie
         match = _ARTICLE_RE.search(candidate)
         if match:
             return f"madde:{match.group('article').lower()}"
+    evidence_article = _first_string(
+        evidence.get("article_or_section") if isinstance(evidence, dict) else "",
+        evidence.get("madde_no") if isinstance(evidence, dict) else "",
+    )
+    if evidence_article:
+        token = _article_token(evidence_article) or evidence_article.lower()
+        return f"madde:{token}"
     return ""
 
 
@@ -794,11 +817,18 @@ def build_or_repair_answer_contract(
         answer_mode = "qualified_answer"
 
     verification_findings: list[str] = []
-    claim_evidence_match = _claim_matches_evidence(
-        evidence_items,
-        source_identifier=source_identifier,
-        citations=citations,
-    )
+    if source_identifier and source_identifier.lower() != "unknown":
+        claim_evidence_match = _claim_matches_evidence(
+            evidence_items,
+            source_identifier=source_identifier,
+            citations=[],
+        )
+    else:
+        claim_evidence_match = _claim_matches_evidence(
+            evidence_items,
+            source_identifier=source_identifier,
+            citations=citations,
+        )
     if not native_dialog and source_identifier and evidence_items and not claim_evidence_match:
         verification_findings.append("claimed_source_not_in_selected_evidence")
 
