@@ -461,6 +461,22 @@ class TestLawSignalParsing:
         assert resolution.family_confidence >= 0.75
         assert "cb_karar" in resolution.routing_families
 
+    def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
+        resolution = _resolve_source_family_prior(
+            "Elektronik tebligat yönetmeliği kapsamında muhatabın bildirim yükümlülüğü nedir?"
+        )
+
+        assert resolution.predicted_family == "yonetmelik"
+        assert "teblig" not in resolution.routing_families
+
+    def test_source_family_prior_detects_legal_teblig_but_not_tebligat(self):
+        resolution = _resolve_source_family_prior(
+            "Vergi Usul Kanunu Genel Tebliği (Sıra No: 431) hangi usulü getiriyor?"
+        )
+
+        assert resolution.predicted_family == "teblig"
+        assert "teblig" in resolution.routing_families
+
     def test_source_family_prior_keeps_investment_program_decision_as_cb_karar_candidate(self):
         resolution = _resolve_source_family_prior(
             "Yatırım programı kararı mı, yoksa yıl içi işlemleri düzenleyen genelge de mi aranmalı?"

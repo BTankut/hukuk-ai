@@ -109,6 +109,21 @@ def contains_any(normalized_query: str, terms: Iterable[str]) -> bool:
     return any(contains_term(normalized_query, term) for term in terms)
 
 
+def contains_legal_teblig_term(normalized_query: str, term: str) -> bool:
+    normalized_term = normalize_tr(term)
+    if normalized_term == "teblig":
+        return re.search(r"(?<![a-z0-9])teblig(?!at)[a-z0-9]*(?![a-z0-9])", normalized_query) is not None
+    if normalized_term == "teblig no":
+        return (
+            re.search(
+                r"(?<![a-z0-9])teblig(?!at)[a-z0-9]*\s+no[a-z0-9]*(?![a-z0-9])",
+                normalized_query,
+            )
+            is not None
+        )
+    return contains_term(normalized_query, term)
+
+
 def dedupe(values: Iterable[str]) -> list[str]:
     seen: set[str] = set()
     out: list[str] = []
@@ -137,7 +152,11 @@ def _add_term_rule(
     score: float,
     signal: str,
 ) -> None:
-    if contains_any(normalized_query, terms):
+    if family == "teblig":
+        matched = any(contains_legal_teblig_term(normalized_query, term) for term in terms)
+    else:
+        matched = contains_any(normalized_query, terms)
+    if matched:
         _add(scores, family, score, signal)
 
 

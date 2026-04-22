@@ -138,6 +138,56 @@ def test_repair_does_not_treat_article_number_as_source_identity():
     assert "same_evidence_identifier_mismatch" in contract["verification_findings"]
 
 
+def test_repair_uses_strong_family_routed_evidence_over_off_family_model_citation():
+    result = build_or_repair_answer_contract(
+        qid="CBG-FAMILY-OVERRIDE",
+        answer_text="Yanıt yanlışlıkla tebliğe atıf yaptı. [Kaynak: 22980 m.7]",
+        citations=["22980 m.7"],
+        answer_contract={
+            "answer_text": "Yanıt yanlışlıkla tebliğe atıf yaptı. [Kaynak: 22980 m.7]",
+            "primary_source_id": "22980 m.7",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "cb_genelge",
+                    "family_confidence": 0.86,
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "22980:22980:m7:f0",
+                    "citation": "22980 m.7/f.0",
+                    "source_title": "MİLLİ EMLAK GENEL TEBLİĞİ (SIRA NO: 375)",
+                    "source_family": "teblig",
+                    "source_identifier": "22980 m.7",
+                    "article_or_section": "7",
+                    "effective_state": "active",
+                },
+                {
+                    "source_id": "14:14:m0:f0",
+                    "citation": "14 m.0/f.0",
+                    "source_title": "Rehberlik, Teftiş ve Denetim Faaliyetlerinin Düzenli ve Etkin Bir Şekilde Yerine Getirilmesi ile İlgili",
+                    "source_family": "cb_genelge",
+                    "source_identifier": "14 m.0",
+                    "article_or_section": "0",
+                    "effective_state": "active",
+                },
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "CB_GENELGE"
+    assert contract["source_identifier_claimed"] == "14 m.0"
+    assert contract["source_title_claimed"].startswith("Rehberlik")
+    assert "predicted_family_overrode_model_source" in contract["verification_findings"]
+
+
 def test_repair_adds_phase2_contract_fields_for_grounded_answer():
     result = build_or_repair_answer_contract(
         qid="KANUN-01",

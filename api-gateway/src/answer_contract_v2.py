@@ -750,6 +750,26 @@ def build_or_repair_answer_contract(
         ]
     )
 
+    family_resolution = _trace_family_resolution(trace_payload)
+    predicted_family = _canonical_trace_family(family_resolution.get("predicted_family"))
+    try:
+        predicted_confidence = float(family_resolution.get("family_confidence") or 0.0)
+    except (TypeError, ValueError):
+        predicted_confidence = 0.0
+    strong_family_selected_evidence: dict[str, Any] | None = None
+    if predicted_family != UNKNOWN and predicted_confidence >= 0.75:
+        for item in evidence_items:
+            if _evidence_family(item) == predicted_family:
+                strong_family_selected_evidence = item
+                break
+    selected_evidence_forced_by_family = False
+    if (
+        strong_family_selected_evidence is not None
+        and _evidence_family(selected_evidence) != predicted_family
+    ):
+        selected_evidence = strong_family_selected_evidence
+        selected_evidence_forced_by_family = True
+
     raw_claimed_family = _first_string(contract.get("source_family_claimed"))
     if raw_claimed_family:
         raw_claimed_family = _detect_family(raw_claimed_family)
@@ -763,11 +783,15 @@ def build_or_repair_answer_contract(
     if selected_evidence_family != UNKNOWN:
         source_family = selected_evidence_family
 
-    source_identifier = _first_string(
-        contract.get("source_identifier_claimed"),
-        legacy_primary,
-        _detect_identifier(combined_text, citations, selected_evidence),
-    )
+    selected_identifier = _detect_identifier(combined_text, [], selected_evidence)
+    if selected_evidence_forced_by_family:
+        source_identifier = _first_string(selected_identifier, contract.get("source_identifier_claimed"), legacy_primary)
+    else:
+        source_identifier = _first_string(
+            contract.get("source_identifier_claimed"),
+            legacy_primary,
+            _detect_identifier(combined_text, citations, selected_evidence),
+        )
     raw_claimed_title = _first_string(contract.get("source_title_claimed"))
     source_title = _first_string(
         raw_claimed_title,
@@ -848,17 +872,13 @@ def build_or_repair_answer_contract(
             if finding not in verification_findings
         )
 
-    family_resolution = _trace_family_resolution(trace_payload)
-    predicted_family = _canonical_trace_family(family_resolution.get("predicted_family"))
-    try:
-        predicted_confidence = float(family_resolution.get("family_confidence") or 0.0)
-    except (TypeError, ValueError):
-        predicted_confidence = 0.0
     evidence_families = {
         family
         for family in (_evidence_family(item) for item in evidence_items[:10])
         if family != UNKNOWN
     }
+    if selected_evidence_forced_by_family:
+        verification_findings.append("predicted_family_overrode_model_source")
     if (
         not native_dialog
         and predicted_family != UNKNOWN
