@@ -37,6 +37,7 @@ from routers.chat import (
     ConversationMessage,
     _apply_source_cluster_deterministic_overrides,
     _apply_retrieval_plan_hints,
+    _apply_pre_generation_family_pool,
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
@@ -540,6 +541,15 @@ class TestLawSignalParsing:
         assert resolution.predicted_family == "cb_karar"
         assert "cb_karar" in resolution.routing_families
 
+    def test_source_family_prior_detects_cb_genelge_specific_terms(self):
+        resolution = _resolve_source_family_prior(
+            "Tasarruf Genelgesi kapsamında kamu idaresinin harcama kısıtları nasıl uygulanır?"
+        )
+
+        assert resolution.predicted_family == "cb_genelge"
+        assert resolution.family_confidence >= 0.75
+        assert resolution.preferred_families == ["cb_genelge"]
+
     def test_source_family_prior_detects_cbk_abbreviation(self):
         resolution = _resolve_source_family_prior(
             "3 sayılı CBK'nın güncel adı ve 19.02.2026 tarihli değişikliği atlanabilir mi?"
@@ -555,6 +565,63 @@ class TestLawSignalParsing:
 
         assert resolution.predicted_family == "cb_yonetmelik"
         assert "cb_yonetmelik" in resolution.routing_families
+
+    def test_pre_generation_family_pool_locks_strong_preferred_family(self):
+        resolution = _resolve_source_family_prior(
+            "Karar Sayısı: 3350 olan İthalat Rejimi Kararı hangi belge ailesindedir?"
+        )
+        chunks = [
+            RetrievedChunk(
+                text="Yönetmelik parçası",
+                citation="Yönetmelik m.1",
+                source="Yönetmelik",
+                score=2.0,
+                metadata={"belge_turu": "yonetmelik", "belge_adi": "GENEL YÖNETMELİK"},
+            ),
+            RetrievedChunk(
+                text="İthalat Rejimi Kararı parçası",
+                citation="3350 m.1",
+                source="3350",
+                score=1.0,
+                metadata={"belge_turu": "cb_karar", "belge_adi": "İTHALAT REJİMİ KARARI"},
+            ),
+        ]
+
+        filtered, policy = _apply_pre_generation_family_pool(
+            chunks=chunks,
+            source_family_resolution=resolution,
+            top_k_effective=10,
+        )
+
+        assert [chunk.metadata["belge_turu"] for chunk in filtered] == ["cb_karar"]
+        assert policy["preferred_family_pool_size"] == 1
+        assert policy["cross_family_fallback_used"] is False
+        assert policy["family_override_reason"] == "strong_preferred_family_pool"
+
+    def test_pre_generation_family_pool_uses_controlled_alias_fallback(self):
+        resolution = _resolve_source_family_prior(
+            "Devlet Arşivleri yönetmeliği kapsamında saklama yükümlülüğü nedir?"
+        )
+        chunks = [
+            RetrievedChunk(
+                text="Genel yönetmelik parçası",
+                citation="Yönetmelik m.1",
+                source="Yönetmelik",
+                score=1.0,
+                metadata={"belge_turu": "yonetmelik", "belge_adi": "ARŞİV HİZMETLERİ YÖNETMELİĞİ"},
+            )
+        ]
+
+        filtered, policy = _apply_pre_generation_family_pool(
+            chunks=chunks,
+            source_family_resolution=resolution,
+            top_k_effective=10,
+        )
+
+        assert filtered == chunks
+        assert policy["preferred_family_pool_size"] == 0
+        assert policy["cross_family_fallback_used"] is True
+        assert policy["family_override_reason"] == "preferred_family_pool_empty_controlled_alias_fallback"
 
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(

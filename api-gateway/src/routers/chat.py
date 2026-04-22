@@ -4376,6 +4376,7 @@ def _build_retrieval_verification_features(
     requested_source_families: list[str],
     source_family_resolution: dict[str, Any] | None,
     chunks: list[RetrievedChunk],
+    family_routing_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     predicted_family = None
     family_confidence = 0.0
@@ -4405,6 +4406,22 @@ def _build_retrieval_verification_features(
             selected_family_confidence = family_confidence
         if source_family_resolution.get("family_override_reason"):
             family_override_reason = str(source_family_resolution.get("family_override_reason"))
+    if isinstance(family_routing_policy, dict):
+        expected_family_prior = family_routing_policy.get("expected_family_prior") or expected_family_prior
+        raw_preferred = family_routing_policy.get("preferred_families")
+        if isinstance(raw_preferred, list):
+            preferred_families = [str(family) for family in raw_preferred if str(family or "").strip()]
+        raw_fallback = family_routing_policy.get("fallback_families")
+        if isinstance(raw_fallback, list):
+            fallback_families = [str(family) for family in raw_fallback if str(family or "").strip()]
+        try:
+            selected_family_confidence = float(
+                family_routing_policy.get("selected_family_confidence") or selected_family_confidence
+            )
+        except (TypeError, ValueError):
+            pass
+        if family_routing_policy.get("family_override_reason"):
+            family_override_reason = str(family_routing_policy.get("family_override_reason"))
 
     identifier_tokens = sorted(_extract_source_identifier_tokens(query))
     chunk_families = [_resolve_chunk_source_family(chunk) or "unknown" for chunk in chunks]
@@ -4433,8 +4450,20 @@ def _build_retrieval_verification_features(
         and preferred_family_pool_size == 0
         and any(family not in preferred_family_set and family != "unknown" for family in chunk_families)
     )
+    if isinstance(family_routing_policy, dict):
+        try:
+            preferred_family_pool_size = int(
+                family_routing_policy.get("preferred_family_pool_size", preferred_family_pool_size)
+            )
+        except (TypeError, ValueError):
+            pass
+        cross_family_fallback_used = bool(family_routing_policy.get("cross_family_fallback_used"))
     if cross_family_fallback_used:
-        family_override_reason = "preferred_family_pool_empty_cross_family_fallback_observed"
+        family_override_reason = (
+            str(family_routing_policy.get("family_override_reason"))
+            if isinstance(family_routing_policy, dict) and family_routing_policy.get("family_override_reason")
+            else "preferred_family_pool_empty_cross_family_fallback_observed"
+        )
     current_validity_query = _asks_current_validity_query(query)
     temporal_alignment_flag = (
         all(not _is_temporally_inactive_chunk(chunk) for chunk in chunks[:5])
@@ -4470,6 +4499,55 @@ def _strong_source_family_gate(source_family_resolution: SourceFamilyResolution)
     if source_family_resolution.family_confidence < 0.75:
         return set()
     return set(source_family_resolution.routing_families)
+
+
+def _apply_pre_generation_family_pool(
+    *,
+    chunks: list[RetrievedChunk],
+    source_family_resolution: SourceFamilyResolution,
+    top_k_effective: int,
+) -> tuple[list[RetrievedChunk], dict[str, Any]]:
+    expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
+    preferred_families = (
+        list(source_family_resolution.preferred_families)
+        if source_family_resolution.family_confidence >= 0.75
+        else []
+    )
+    fallback_families = list(source_family_resolution.fallback_families)
+    policy: dict[str, Any] = {
+        "expected_family_prior": expected_family_prior,
+        "preferred_families": preferred_families,
+        "fallback_families": fallback_families,
+        "preferred_family_pool_size": 0,
+        "cross_family_fallback_used": False,
+        "selected_family_confidence": round(source_family_resolution.selected_family_confidence, 3),
+        "family_override_reason": source_family_resolution.family_override_reason,
+    }
+    if not chunks or not preferred_families:
+        return chunks, policy
+
+    preferred_family_set = set(preferred_families)
+    preferred_chunks = [
+        chunk for chunk in chunks
+        if (_resolve_chunk_source_family(chunk) or "unknown") in preferred_family_set
+    ]
+    policy["preferred_family_pool_size"] = len(preferred_chunks)
+    if preferred_chunks:
+        policy["family_override_reason"] = "strong_preferred_family_pool"
+        return preferred_chunks[:top_k_effective], policy
+
+    fallback_family_set = set(fallback_families)
+    fallback_chunks = [
+        chunk for chunk in chunks
+        if fallback_family_set and (_resolve_chunk_source_family(chunk) or "unknown") in fallback_family_set
+    ]
+    policy["cross_family_fallback_used"] = True
+    if fallback_chunks:
+        policy["family_override_reason"] = "preferred_family_pool_empty_controlled_alias_fallback"
+        return fallback_chunks[:top_k_effective], policy
+
+    policy["family_override_reason"] = "preferred_family_pool_empty_global_fallback"
+    return chunks[:top_k_effective], policy
 
 
 def _build_trace_payload(
@@ -7215,6 +7293,7 @@ async def chat_completions(
     source_identity_reranker: dict[str, Any] | None = None
     article_span_selector: dict[str, Any] | None = None
     selected_source_keys: set[str] = set()
+    family_routing_policy: dict[str, Any] | None = None
     if metadata_first_selector:
         for candidate in metadata_first_selector.get("candidates") or []:
             selected_source_keys.update(candidate.get("focus_keys") or [])
@@ -7488,6 +7567,25 @@ async def chat_completions(
                     )
                 elif len(retrieved_chunks) > top_k_effective:
                     retrieved_chunks = retrieved_chunks[:top_k_effective]
+                before_family_pool_count = len(retrieved_chunks)
+                retrieved_chunks, family_routing_policy = _apply_pre_generation_family_pool(
+                    chunks=retrieved_chunks,
+                    source_family_resolution=source_family_resolution,
+                    top_k_effective=top_k_effective,
+                )
+                if before_family_pool_count != len(retrieved_chunks) or (
+                    family_routing_policy.get("cross_family_fallback_used") if family_routing_policy else False
+                ):
+                    logger.info(
+                        "Retrieval family-pool: session=%s expected=%s preferred=%s fallback=%s before=%d after=%d reason=%s",
+                        session_id,
+                        family_routing_policy.get("expected_family_prior") if family_routing_policy else None,
+                        family_routing_policy.get("preferred_families") if family_routing_policy else [],
+                        family_routing_policy.get("cross_family_fallback_used") if family_routing_policy else False,
+                        before_family_pool_count,
+                        len(retrieved_chunks),
+                        family_routing_policy.get("family_override_reason") if family_routing_policy else None,
+                    )
                 pre_rerank_chunks = list(retrieved_chunks)
         except Exception as exc:
             logger.warning(
@@ -7583,6 +7681,7 @@ async def chat_completions(
         requested_source_families=requested_source_families,
         source_family_resolution=source_family_resolution_trace,
         chunks=post_rerank_chunks,
+        family_routing_policy=family_routing_policy,
     )
 
     # ── Orchestrator ─────────────────────────────────────────────────────────
