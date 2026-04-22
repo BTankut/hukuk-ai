@@ -41,7 +41,9 @@ from routers.chat import (
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
     _build_retrieval_plan_expansion,
+    _build_metadata_first_query_expansion,
     _build_source_cluster_candidates,
+    _select_metadata_first_source_candidates,
     _select_article_span_evidence,
     _clamp_families_to_strong_resolution,
     _build_precise_tmk_tbk_cross_law_answer,
@@ -65,6 +67,8 @@ from routers.chat import (
     router as chat_router,
 )
 from rag.orchestrator import OrchestratorResponse, RetrievedChunk
+from rag.source_catalog import load_canonical_source_catalog
+from rag.retriever import MetadataFilter, MockRetriever
 from session_store import RedisSessionBackend
 
 
@@ -912,6 +916,107 @@ class TestLawSignalParsing:
 
         assert payload["selected_cluster_ids"] == ["C2"]
         assert payload["selected_law_hints"] == ["9903"]
+
+    def test_metadata_first_source_candidates_rank_title_identifier_and_family(self, tmp_path, monkeypatch):
+        article_rows = tmp_path / "article_rows.jsonl"
+        article_rows.write_text(
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "source_id": "9903:9903:m1:f0:from2025-05-30:to9999-12-31",
+                            "belge_turu": "cb_karar",
+                            "belge_no": "9903",
+                            "belge_kisa_adi": "9903",
+                            "belge_adi": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                            "resmi_gazete_tarih": "2025-05-30",
+                            "yururluk_baslangic": "2025-05-30",
+                            "yururluk_bitis": "9999-12-31",
+                        },
+                        ensure_ascii=False,
+                    ),
+                    json.dumps(
+                        {
+                            "source_id": "20047114:20047114:m0:f0:from2004-04-21:to9999-12-31",
+                            "belge_turu": "yonetmelik",
+                            "belge_no": "20047114",
+                            "belge_kisa_adi": "20047114",
+                            "belge_adi": "HAZİNE ARAZİLERİNİN BEDELSİZ DEVRİNE İLİŞKİN YÖNETMELİK",
+                        },
+                        ensure_ascii=False,
+                    ),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("MEVZUAT_ARTICLE_ROWS_PATH", str(article_rows))
+        load_canonical_source_catalog.cache_clear()
+
+        selector = _select_metadata_first_source_candidates(
+            query="Yatırım teşvik belgesi için 2026'da 9903 sayılı karar mı uygulanır?",
+            requested_source_families=["cb_karar"],
+            source_family_resolution=_resolve_source_family_prior("Yatırım teşvik belgesi için karar sorusu"),
+        )
+
+        assert selector is not None
+        assert selector["selected_source_keys"] == ["9903"]
+        assert selector["selected_families"] == ["cb_karar"]
+        assert selector["candidates"][0]["canonical_identifier"] == "9903"
+        assert "identifier_exact" in selector["candidates"][0]["match_reasons"]
+        assert "YATIRIMLARDA DEVLET YARDIMLARI" in _build_metadata_first_query_expansion(selector)
+        load_canonical_source_catalog.cache_clear()
+
+    def test_metadata_first_identifier_tokens_ignore_article_only_numbers(self, tmp_path, monkeypatch):
+        article_rows = tmp_path / "article_rows.jsonl"
+        article_rows.write_text(
+            json.dumps(
+                {
+                    "source_id": "107:107:m1:f0:from2020-01-01:to9999-12-31",
+                    "belge_turu": "cb_kararname",
+                    "belge_no": "107",
+                    "belge_kisa_adi": "107",
+                    "belge_adi": "107 SAYILI CUMHURBAŞKANLIĞI KARARNAMESİ",
+                },
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("MEVZUAT_ARTICLE_ROWS_PATH", str(article_rows))
+        load_canonical_source_catalog.cache_clear()
+
+        selector = _select_metadata_first_source_candidates(
+            query="HMK m.107 nedir?",
+            requested_source_families=[],
+            source_family_resolution=_resolve_source_family_prior("HMK m.107 nedir?"),
+        )
+
+        assert selector is None
+        load_canonical_source_catalog.cache_clear()
+
+    def test_metadata_filter_law_no_matches_general_belge_no(self):
+        metadata_filter = MetadataFilter(law_no="3350")
+        expr = metadata_filter.to_milvus_expr()
+        assert 'metadata["belge_no"] == "3350"' in (expr or "")
+        retriever = MockRetriever(
+            fixture_chunks=[
+                {
+                    "id": "c1",
+                    "text": "İthalat rejimi kararı",
+                    "embedding": [1.0, 0.0],
+                    "metadata": {"belge_no": "3350", "madde_no": "1"},
+                }
+            ]
+        )
+
+        results, stats = retriever.retrieve(
+            query_vector=[1.0, 0.0],
+            metadata_filter=metadata_filter,
+        )
+
+        assert stats.hit_count == 1
+        assert results[0].metadata["belge_no"] == "3350"
 
     def test_clamp_families_removes_planner_family_that_conflicts_with_strong_resolution(self):
         resolution = _resolve_source_family_prior(

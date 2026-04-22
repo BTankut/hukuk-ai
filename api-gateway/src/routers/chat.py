@@ -63,7 +63,12 @@ from observability import get_metrics_registry, looks_like_refusal
 from pydantic import BaseModel, Field
 
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
-from rag.source_catalog import enrich_metadata_with_source_title, resolve_effective_state
+from rag.source_catalog import (
+    enrich_metadata_with_source_title,
+    load_canonical_source_catalog,
+    normalize_canonical_text,
+    resolve_effective_state,
+)
 from rag.token_manager import estimate_tokens
 from release_controls import (
     api_version_label,
@@ -563,6 +568,232 @@ def _build_retrieval_plan_focus_query(plan: dict[str, Any] | None) -> str:
         if isinstance(family, str) and family.strip():
             parts.append(_SOURCE_FAMILY_DISPLAY_LABELS.get(family, family))
     return _normalize_whitespace(" ".join(dedupe_strings(parts)))
+
+
+def _metadata_first_candidate_generation_enabled() -> bool:
+    return os.getenv("METADATA_FIRST_CANDIDATE_GENERATION_ENABLED", "true").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _extract_source_identity_identifier_tokens(query: str) -> set[str]:
+    normalized = _normalize_tr_text(query or "")
+    tokens: set[str] = set()
+    patterns = (
+        r"\b(\d{2,9})\s+sayili\s+(?:kanun|khk|karar|cbk|cumhurbaskanligi kararnamesi|teblig|genelge)\b",
+        r"\b(?:kanun|khk|karar|kararname|cbk|teblig|genelge)\s+(?:sayisi|no|numarasi)\s*:?\s*(\d{1,9}(?:[-/]\d{1,4})?)\b",
+        r"\b(?:sayisi|no|numarasi)\s*:?\s*(\d{2,9}(?:[-/]\d{1,4})?)\b",
+    )
+    for pattern in patterns:
+        for match in re.finditer(pattern, normalized):
+            token = match.group(1)
+            if re.fullmatch(r"(?:18|19|20)\d{2}", token):
+                continue
+            tokens.add(token)
+            tokens.add(token.split("-", 1)[0].split("/", 1)[0])
+    for law in extract_numbered_law_mentions(query):
+        if not re.fullmatch(r"(?:18|19|20)\d{2}", law):
+            tokens.add(law)
+    return {token for token in tokens if token and len(token) >= 1}
+
+
+def _record_identifier_values(record: dict[str, Any]) -> set[str]:
+    values: set[str] = set()
+    for value in (
+        record.get("source_key"),
+        record.get("canonical_identifier"),
+        record.get("canonical_identifier_display"),
+        *(record.get("cross_refs") or []),
+    ):
+        normalized = normalize_canonical_text(value)
+        if not normalized:
+            continue
+        values.add(normalized)
+        for number in re.findall(r"\d{1,9}(?:[-/]\d{1,4})?", normalized):
+            values.add(number)
+            values.add(number.split("-", 1)[0].split("/", 1)[0])
+    return values
+
+
+def _source_identity_record_score(
+    record: dict[str, Any],
+    *,
+    query: str,
+    requested_source_families: list[str],
+    source_family_resolution: SourceFamilyResolution | None,
+) -> tuple[float, list[str]]:
+    normalized_query = normalize_canonical_text(query)
+    query_terms = {
+        token
+        for token in normalized_query.split()
+        if len(token) >= 3 and token not in _RETRIEVAL_PRIORITY_STOPWORDS
+    }
+    title = str(record.get("canonical_title") or "")
+    title_normalized = str(record.get("canonical_title_normalized") or normalize_canonical_text(title))
+    title_tokens = set(title_normalized.split())
+    alias_tokens: set[str] = set()
+    for alias in record.get("alias_titles") or []:
+        alias_tokens.update(normalize_canonical_text(alias).split())
+    issuer_tokens = set(str(record.get("issuer_normalized") or "").split())
+    identifier_tokens = _extract_source_identity_identifier_tokens(query)
+    identifier_values = _record_identifier_values(record)
+    year_tokens = set(_extract_year_tokens(query))
+    year_values = set(record.get("year_signals") or [])
+    family = str(record.get("source_family_canonical") or "")
+    requested_family_set = set(_expand_source_family_aliases(requested_source_families))
+    score = 0.0
+    reasons: list[str] = []
+
+    if requested_family_set:
+        if family in requested_family_set:
+            score += 14.0
+            reasons.append("family_match")
+        else:
+            score -= 12.0
+            reasons.append("family_mismatch_penalty")
+
+    if source_family_resolution and source_family_resolution.predicted_family:
+        predicted = set(_expand_source_family_aliases([source_family_resolution.predicted_family]))
+        if family in predicted:
+            score += 8.0
+            reasons.append("prior_family_match")
+
+    exact_identifier_hits = sorted(identifier_tokens & identifier_values)
+    if exact_identifier_hits:
+        score += 32.0 + min(len(exact_identifier_hits), 3) * 3.0
+        reasons.append("identifier_exact")
+
+    title_overlap = len(query_terms & title_tokens)
+    alias_overlap = len(query_terms & alias_tokens)
+    issuer_overlap = len(query_terms & issuer_tokens)
+    if title_overlap:
+        score += title_overlap * 4.0
+        reasons.append(f"title_overlap:{title_overlap}")
+    if title_overlap >= 2:
+        score += 6.0
+        reasons.append("title_specificity")
+    if alias_overlap:
+        score += alias_overlap * 2.0
+        reasons.append(f"alias_overlap:{alias_overlap}")
+    if issuer_overlap:
+        score += issuer_overlap * 3.0
+        reasons.append(f"issuer_overlap:{issuer_overlap}")
+
+    if year_tokens:
+        if year_tokens & year_values:
+            score += 8.0
+            reasons.append("year_match")
+        elif any(year in title_normalized for year in year_tokens):
+            score += 5.0
+            reasons.append("year_title_match")
+
+    if family == "cb_karar" and any(term in normalized_query for term in ("karar", "yatirim", "tesvik", "ithalat")):
+        score += 5.0
+        reasons.append("cb_karar_playbook")
+    if family == "cb_genelge" and any(term in normalized_query for term in ("genelge", "tasarruf", "eylem plani")):
+        score += 5.0
+        reasons.append("cb_genelge_playbook")
+    if family == "cb_yonetmelik" and any(term in normalized_query for term in ("cumhurbaskanligi yonetmeligi", "devlet arsiv")):
+        score += 5.0
+        reasons.append("cb_yonetmelik_playbook")
+    if family == "teblig" and any(term in normalized_query for term in ("teblig", "seri", "sira no")):
+        score += 5.0
+        reasons.append("teblig_playbook")
+    if family == "uy" and ("universite" in normalized_query or "universitesi" in normalized_query):
+        score += 5.0
+        reasons.append("uy_playbook")
+
+    if exact_identifier_hits or title_overlap >= 2:
+        score += 4.0
+        reasons.append("identity_anchor")
+    return score, reasons
+
+
+def _select_metadata_first_source_candidates(
+    *,
+    query: str,
+    requested_source_families: list[str],
+    source_family_resolution: SourceFamilyResolution | None,
+    limit: int = 6,
+) -> dict[str, Any] | None:
+    if not _metadata_first_candidate_generation_enabled():
+        return None
+    catalog = load_canonical_source_catalog()
+    if not catalog:
+        return None
+
+    scored: list[dict[str, Any]] = []
+    for record in catalog.values():
+        score, reasons = _source_identity_record_score(
+            record,
+            query=query,
+            requested_source_families=requested_source_families,
+            source_family_resolution=source_family_resolution,
+        )
+        if score < 22.0:
+            continue
+        if "identifier_exact" not in reasons and not any(reason.startswith("title_overlap:") for reason in reasons):
+            continue
+        scored.append(
+            {
+                "source_key": record.get("source_key"),
+                "canonical_title": record.get("canonical_title"),
+                "canonical_identifier": record.get("canonical_identifier"),
+                "canonical_identifier_type": record.get("canonical_identifier_type"),
+                "source_family": record.get("source_family_canonical"),
+                "issuer": record.get("issuer"),
+                "year_signals": record.get("year_signals") or [],
+                "effective_state": record.get("effective_state"),
+                "score": round(score, 3),
+                "match_reasons": reasons,
+                "focus_keys": [
+                    key
+                    for key in (
+                        str(record.get("source_key") or "").strip().lower(),
+                        str(record.get("canonical_title") or "").strip().lower(),
+                    )
+                    if key
+                ],
+            }
+        )
+
+    if not scored:
+        return None
+    ranked = sorted(
+        scored,
+        key=lambda item: (
+            -float(item["score"]),
+            str(item.get("source_family") or ""),
+            str(item.get("canonical_title") or ""),
+        ),
+    )[:limit]
+    return {
+        "applied": True,
+        "reason": "metadata_first_source_identity",
+        "candidate_count": len(scored),
+        "selected_source_keys": dedupe_strings([str(item.get("source_key") or "") for item in ranked if item.get("source_key")]),
+        "selected_families": dedupe_strings([str(item.get("source_family") or "") for item in ranked if item.get("source_family")]),
+        "query_identifier_tokens": sorted(_extract_source_identity_identifier_tokens(query)),
+        "query_year_tokens": _extract_year_tokens(query),
+        "candidates": ranked,
+    }
+
+
+def _build_metadata_first_query_expansion(selector: dict[str, Any] | None) -> str:
+    if not selector:
+        return ""
+    parts: list[str] = []
+    for candidate in selector.get("candidates") or []:
+        if candidate.get("canonical_title"):
+            parts.append(str(candidate["canonical_title"]))
+        if candidate.get("canonical_identifier"):
+            parts.append(str(candidate["canonical_identifier"]))
+        if candidate.get("source_family"):
+            parts.append(_SOURCE_FAMILY_DISPLAY_LABELS.get(str(candidate["source_family"]), str(candidate["source_family"])))
+    return _normalize_whitespace(" ".join(dedupe_strings(parts[:12])))
 
 
 def _build_numbered_law_reference_expansion(query: str) -> str:
@@ -3480,6 +3711,7 @@ def _build_trace_payload(
     final_mode: str,
     final_reason: str | None,
     retrieval_plan: dict[str, Any] | None = None,
+    metadata_first_selector: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
     article_span_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
@@ -3517,6 +3749,7 @@ def _build_trace_payload(
             "source_family_resolution": source_family_resolution,
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
+            "metadata_first_selector": metadata_first_selector,
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,
             "explicit_article_refs": [
@@ -3556,6 +3789,7 @@ def _build_trace_payload(
             "source_family_resolution": source_family_resolution,
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
+            "metadata_first_selector": metadata_first_selector,
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,
             "explicit_article_refs": [
@@ -3573,6 +3807,7 @@ def _build_trace_payload(
             "top_k_effective": top_k_effective,
             "reranker_enabled": reranker_enabled,
             "source_family_resolution": source_family_resolution,
+            "metadata_first_selector": metadata_first_selector,
             "reranker_family_bonus": (retrieval_verification_features or {}).get("reranker_family_bonus"),
             "identifier_match_flag": (retrieval_verification_features or {}).get("identifier_match_flag"),
             "temporal_alignment_flag": (retrieval_verification_features or {}).get("temporal_alignment_flag"),
@@ -4663,6 +4898,7 @@ def _pre_answer_stage_payload(
     top_k_effective: int,
     reranker_enabled: bool,
     retrieval_plan: dict[str, Any] | None = None,
+    metadata_first_selector: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
     article_span_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
@@ -4679,6 +4915,7 @@ def _pre_answer_stage_payload(
         "forced_article_refs": forced_article_refs,
         "applied_expansions": applied_expansions,
         "retrieval_plan": retrieval_plan,
+        "metadata_first_selector": metadata_first_selector,
         "source_cluster_selector": source_cluster_selector,
         "article_span_selector": article_span_selector,
         "source_family_resolution": source_family_resolution,
@@ -5884,6 +6121,23 @@ async def chat_completions(
             annual_investment_program_expansion,
         )
         retrieval_top_k = max(retrieval_top_k, 20)
+    metadata_first_selector = _select_metadata_first_source_candidates(
+        query=last_user_msg,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+    )
+    if metadata_first_selector:
+        requested_source_families = dedupe_strings(
+            [*requested_source_families, *(metadata_first_selector.get("selected_families") or [])]
+        )
+        metadata_first_expansion = _build_metadata_first_query_expansion(metadata_first_selector)
+        if metadata_first_expansion:
+            retrieval_query = _append_unique_expansion(
+                retrieval_query,
+                applied_expansions,
+                metadata_first_expansion,
+            )
+            retrieval_top_k = max(retrieval_top_k, 20)
     cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
 
     concept_anchor_rules: list[
@@ -6132,6 +6386,9 @@ async def chat_completions(
     source_cluster_selector: dict[str, Any] | None = None
     article_span_selector: dict[str, Any] | None = None
     selected_source_keys: set[str] = set()
+    if metadata_first_selector:
+        for candidate in metadata_first_selector.get("candidates") or []:
+            selected_source_keys.update(candidate.get("focus_keys") or [])
     top_k_effective = retrieval_top_k
     retriever = _get_retriever(request)
 
@@ -6253,6 +6510,27 @@ async def chat_completions(
                             "Retrieval planner-law-buckets: session=%s laws=%s total=%d",
                             session_id,
                             sorted(planner_law_hints),
+                            len(retrieved_chunks),
+                        )
+
+                if metadata_first_selector and not request_body.law_filter:
+                    metadata_first_source_keys = [
+                        key
+                        for key in metadata_first_selector.get("selected_source_keys") or []
+                        if isinstance(key, str) and key.strip()
+                    ]
+                    metadata_first_chunks = _retrieve_law_bucket_chunks(
+                        retriever=retriever,
+                        query=retrieval_query,
+                        laws=metadata_first_source_keys,
+                        top_k=max(4, min(8, top_k_effective)),
+                    )
+                    if metadata_first_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(metadata_first_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval metadata-first-sources: session=%s sources=%s total=%d",
+                            session_id,
+                            metadata_first_source_keys,
                             len(retrieved_chunks),
                         )
 
@@ -6555,6 +6833,7 @@ async def chat_completions(
         final_mode=hardening.final_mode,
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
+        metadata_first_selector=metadata_first_selector,
         source_cluster_selector=source_cluster_selector,
         article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,
@@ -6575,6 +6854,7 @@ async def chat_completions(
         top_k_effective=top_k_effective,
         reranker_enabled=_reranker_enabled,
         retrieval_plan=retrieval_plan,
+        metadata_first_selector=metadata_first_selector,
         source_cluster_selector=source_cluster_selector,
         article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,

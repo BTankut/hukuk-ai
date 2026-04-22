@@ -67,9 +67,12 @@ class MetadataFilter:
         clauses: list[str] = []
 
         if self.law_no is not None:
-            # Hem İngilizce (law_no) hem Türkçe (kanun_no) alan adı desteği
+            # Hem kanun hem genel mevzuat numarası alanlarını destekle
             clauses.append(
-                f'(metadata["law_no"] == "{self.law_no}" || metadata["kanun_no"] == "{self.law_no}")'
+                f'(metadata["law_no"] == "{self.law_no}" || '
+                f'metadata["kanun_no"] == "{self.law_no}" || '
+                f'metadata["belge_no"] == "{self.law_no}" || '
+                f'metadata["belge_kisa_adi"] == "{self.law_no}")'
             )
 
         if self.law_short_name is not None:
@@ -268,8 +271,15 @@ class MockRetriever:
     def _matches_filter(chunk: dict[str, Any], f: MetadataFilter) -> bool:
         meta = chunk.get("metadata", {})
 
-        if f.law_no is not None and meta.get("law_no") != f.law_no:
-            return False
+        if f.law_no is not None:
+            law_values = {
+                str(meta.get("law_no") or ""),
+                str(meta.get("kanun_no") or ""),
+                str(meta.get("belge_no") or ""),
+                str(meta.get("belge_kisa_adi") or ""),
+            }
+            if f.law_no not in law_values:
+                return False
         if f.law_short_name is not None and meta.get("law_short_name") != f.law_short_name:
             return False
         if f.madde_no is not None and meta.get("madde_no") != f.madde_no:
