@@ -2443,6 +2443,61 @@ def _chunk_year_values(chunk: RetrievedChunk) -> set[str]:
     return values
 
 
+def _field_overlap_match_type(*, overlap: int, query_term_count: int, field_term_count: int) -> str:
+    if overlap <= 0:
+        return "none"
+    denominator = max(1, min(query_term_count, field_term_count))
+    ratio = overlap / denominator
+    if overlap >= 4 and ratio >= 0.45:
+        return "strong_overlap"
+    if overlap >= 2 and ratio >= 0.25:
+        return "medium_overlap"
+    return "weak_overlap"
+
+
+def _title_match_type(*, title: str, query: str, query_terms: set[str], title_overlap: int) -> str:
+    normalized_title = normalize_query_text(title or "")
+    normalized_query = normalize_query_text(query or "")
+    if normalized_title and len(normalized_title) >= 18 and normalized_title in normalized_query:
+        return "exact_phrase"
+    title_terms = _extract_retrieval_priority_terms(title)
+    return _field_overlap_match_type(
+        overlap=title_overlap,
+        query_term_count=len(query_terms),
+        field_term_count=len(title_terms),
+    )
+
+
+def _issuer_match_type(*, issuer_overlap: int, query_terms: set[str], issuer: str) -> str:
+    issuer_terms = _extract_retrieval_priority_terms(issuer)
+    return _field_overlap_match_type(
+        overlap=issuer_overlap,
+        query_term_count=len(query_terms),
+        field_term_count=len(issuer_terms),
+    )
+
+
+def _identifier_match_type(
+    *,
+    strict_identifier_tokens: set[str],
+    identifier_match: bool,
+    source_identity_values: set[str],
+) -> str:
+    if not strict_identifier_tokens:
+        return "not_requested"
+    if identifier_match:
+        return "exact_identifier"
+    if source_identity_values & strict_identifier_tokens:
+        return "normalized_identifier_overlap"
+    return "none"
+
+
+def _year_match_type(*, year_tokens: set[str], year_match: bool) -> str:
+    if not year_tokens:
+        return "not_requested"
+    return "exact_year" if year_match else "none"
+
+
 def _rerank_chunks_by_source_identity(
     *,
     query: str,
@@ -2469,11 +2524,29 @@ def _rerank_chunks_by_source_identity(
         source_identity_values = _chunk_source_identity_values(chunk)
         chunk_years = _chunk_year_values(chunk)
         title_overlap = _count_term_overlap(title, query_terms)
-        issuer_overlap = _count_term_overlap(str(metadata.get("issuer") or ""), query_terms)
+        issuer = str(metadata.get("issuer") or metadata.get("kurum") or metadata.get("authority") or "")
+        issuer_overlap = _count_term_overlap(issuer, query_terms)
         identifier_match = _chunk_matches_identifier_tokens(chunk, strict_identifier_tokens)
+        title_match_type = _title_match_type(
+            title=title,
+            query=query,
+            query_terms=query_terms,
+            title_overlap=title_overlap,
+        )
+        issuer_match_type = _issuer_match_type(
+            issuer_overlap=issuer_overlap,
+            query_terms=query_terms,
+            issuer=issuer,
+        )
+        identifier_match_type = _identifier_match_type(
+            strict_identifier_tokens=strict_identifier_tokens,
+            identifier_match=identifier_match,
+            source_identity_values=source_identity_values,
+        )
         metadata_first_match = any(_chunk_matches_metadata_first_candidate(chunk, candidate) for candidate in metadata_candidates)
         family_match = bool(requested_family_set and family in requested_family_set)
         year_match = bool(year_tokens and year_tokens & chunk_years)
+        year_match_type = _year_match_type(year_tokens=year_tokens, year_match=year_match)
         active_rank = _chunk_active_rank(chunk)
         article_token = _chunk_article_token(chunk)
         source_key = _resolve_chunk_source_key(chunk)
@@ -2483,27 +2556,54 @@ def _rerank_chunks_by_source_identity(
         if metadata_first_match:
             score += 90
             reasons.append("metadata_first_match")
-        if identifier_match:
-            score += 50
-            reasons.append("identifier_match")
+        if identifier_match_type == "exact_identifier":
+            score += 90
+            reasons.append("identifier_exact")
+        elif identifier_match_type == "normalized_identifier_overlap":
+            score += 35
+            reasons.append("identifier_normalized_overlap")
         if family_match:
             score += 35
             reasons.append("family_match")
         elif requested_family_set:
             score -= 35
             reasons.append("family_mismatch_penalty")
+        if title_match_type == "exact_phrase":
+            score += 85
+            reasons.append("title_exact_phrase")
+        elif title_match_type == "strong_overlap":
+            score += 60
+            reasons.append("title_strong_overlap")
+        elif title_match_type == "medium_overlap":
+            score += 30
+            reasons.append("title_medium_overlap")
+        elif title_match_type == "weak_overlap":
+            score += 8
+            reasons.append("title_weak_overlap")
         if title_overlap:
             score += min(title_overlap, 10) * 8
             reasons.append(f"title_overlap:{title_overlap}")
+        if issuer_match_type == "strong_overlap":
+            score += 16
+            reasons.append("issuer_strong_overlap")
+        elif issuer_match_type == "medium_overlap":
+            score += 8
+            reasons.append("issuer_medium_overlap")
+        elif issuer_match_type == "weak_overlap":
+            score += 3
+            reasons.append("issuer_weak_overlap")
         if issuer_overlap:
-            score += min(issuer_overlap, 6) * 4
+            score += min(issuer_overlap, 6) * 3
             reasons.append(f"issuer_overlap:{issuer_overlap}")
-        if year_match:
-            score += 10
+        if year_match_type == "exact_year":
+            score += 14
             reasons.append("year_match")
         elif year_tokens:
             score -= 8
             reasons.append("year_mismatch_penalty")
+        if family_match and title_match_type == "none" and identifier_match_type == "none" and year_match_type == "none":
+            score -= 12
+            reasons.append("generic_family_without_identity_penalty")
         if current_validity_query:
             score -= active_rank * 35
             reasons.append(f"current_active_rank:{active_rank}")
@@ -2530,13 +2630,19 @@ def _rerank_chunks_by_source_identity(
                     "source_identifier": _resolve_chunk_source_identifier(chunk),
                     "article_or_section": article_token or None,
                     "score": round(score, 4),
+                    "document_identity_score": round(score, 4),
                     "metadata_first_match": metadata_first_match,
                     "identifier_match": identifier_match,
+                    "identifier_match_type": identifier_match_type,
                     "family_match": family_match,
+                    "title_match_type": title_match_type,
                     "title_overlap": title_overlap,
+                    "issuer_match_type": issuer_match_type,
                     "issuer_overlap": issuer_overlap,
                     "year_match": year_match,
+                    "year_match_type": year_match_type,
                     "active_rank": active_rank,
+                    "document_rerank_reason": " | ".join(reasons),
                     "reasons": reasons,
                 },
             )
@@ -2545,6 +2651,7 @@ def _rerank_chunks_by_source_identity(
     ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
     reordered = [chunk for _score, _index, chunk, _trace in ranked]
     first_changed = bool(reordered and chunks and reordered[0].citation != chunks[0].citation)
+    top_trace = ranked[0][3] if ranked else {}
     return reordered, {
         "applied": True,
         "reason": "source_identity_reranker",
@@ -2552,6 +2659,12 @@ def _rerank_chunks_by_source_identity(
         "requested_source_families": requested_source_families,
         "query_identifier_tokens": sorted(strict_identifier_tokens),
         "query_year_tokens": sorted(year_tokens),
+        "document_identity_score": top_trace.get("document_identity_score"),
+        "title_match_type": top_trace.get("title_match_type"),
+        "identifier_match_type": top_trace.get("identifier_match_type"),
+        "issuer_match_type": top_trace.get("issuer_match_type"),
+        "year_match_type": top_trace.get("year_match_type"),
+        "document_rerank_reason": top_trace.get("document_rerank_reason"),
         "metadata_first_candidate_keys": [
             str(candidate.get("source_key") or "")
             for candidate in metadata_candidates
@@ -4626,6 +4739,12 @@ def _build_trace_payload(
             "retrieval_plan": retrieval_plan,
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
+            "document_identity_score": (source_identity_reranker or {}).get("document_identity_score"),
+            "title_match_type": (source_identity_reranker or {}).get("title_match_type"),
+            "identifier_match_type": (source_identity_reranker or {}).get("identifier_match_type"),
+            "issuer_match_type": (source_identity_reranker or {}).get("issuer_match_type"),
+            "year_match_type": (source_identity_reranker or {}).get("year_match_type"),
+            "document_rerank_reason": (source_identity_reranker or {}).get("document_rerank_reason"),
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,
             "explicit_article_refs": [

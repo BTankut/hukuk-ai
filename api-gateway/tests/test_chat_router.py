@@ -1221,6 +1221,45 @@ class TestLawSignalParsing:
         assert reranked[0].citation == "9903 m.1"
         assert trace["applied"] is True
         assert trace["top_scores"][0]["metadata_first_match"] is True
+        assert trace["identifier_match_type"] == "exact_identifier"
+        assert trace["document_identity_score"] == trace["top_scores"][0]["document_identity_score"]
+
+    def test_source_identity_reranker_prefers_strong_title_match_over_generic_family(self):
+        generic_chunk = RetrievedChunk(
+            text="Genel yönetmelik hükmü.",
+            citation="1000 m.1",
+            source="1000",
+            score=0.99,
+            metadata={
+                "belge_turu": "yonetmelik",
+                "belge_no": "1000",
+                "source_title": "GENEL YÖNETMELİK",
+                "madde_no": "1",
+            },
+        )
+        titled_chunk = RetrievedChunk(
+            text="Hazine arazilerinin bedelsiz devrine ilişkin usul.",
+            citation="20047114 m.1",
+            source="20047114",
+            score=0.25,
+            metadata={
+                "belge_turu": "yonetmelik",
+                "belge_no": "20047114",
+                "source_title": "HAZİNE ARAZİLERİNİN BEDELSİZ DEVRİNE İLİŞKİN YÖNETMELİK",
+                "madde_no": "1",
+            },
+        )
+
+        reranked, trace = _rerank_chunks_by_source_identity(
+            query="Hazine arazilerinin bedelsiz devrine ilişkin yönetmelikte devir usulü nedir?",
+            chunks=[generic_chunk, titled_chunk],
+            requested_source_families=["yonetmelik"],
+            metadata_first_selector=None,
+        )
+
+        assert reranked[0].citation == "20047114 m.1"
+        assert trace["title_match_type"] in {"exact_phrase", "strong_overlap"}
+        assert "title_" in trace["document_rerank_reason"]
 
     def test_source_identity_reranker_demotes_repealed_chunk_for_current_query(self):
         repealed_chunk = RetrievedChunk(

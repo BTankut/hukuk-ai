@@ -96,6 +96,12 @@ SCORED_FIELDS = [
     "selected_article_equals_claimed_article",
     "selector_evidence_sufficiency",
     "metadata_identity_strength",
+    "document_identity_score",
+    "title_match_type",
+    "identifier_match_type",
+    "issuer_match_type",
+    "year_match_type",
+    "document_rerank_reason",
     "temporal_state_resolved",
     "manual_review_trigger_reason",
     "article_lock_failed",
@@ -495,6 +501,12 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "selected_article_equals_claimed_article": bool_text(selected_article_equals_claimed_article),
         "selector_evidence_sufficiency": answer.get("selector_evidence_sufficiency", ""),
         "metadata_identity_strength": answer.get("metadata_identity_strength", ""),
+        "document_identity_score": answer.get("document_identity_score", ""),
+        "title_match_type": answer.get("title_match_type", ""),
+        "identifier_match_type": answer.get("identifier_match_type", ""),
+        "issuer_match_type": answer.get("issuer_match_type", ""),
+        "year_match_type": answer.get("year_match_type", ""),
+        "document_rerank_reason": answer.get("document_rerank_reason", ""),
         "temporal_state_resolved": answer.get("temporal_state_resolved", ""),
         "manual_review_trigger_reason": answer.get("manual_review_trigger_reason", ""),
         "article_lock_failed": answer.get("article_lock_failed", ""),
@@ -554,6 +566,19 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         for row in rows
     ]
     metadata_strength_counts = Counter(row.get("metadata_identity_strength", "") or "unknown" for row in rows)
+    title_match_type_counts = Counter(row.get("title_match_type", "") or "unknown" for row in rows)
+    identifier_match_type_counts = Counter(row.get("identifier_match_type", "") or "unknown" for row in rows)
+    issuer_match_type_counts = Counter(row.get("issuer_match_type", "") or "unknown" for row in rows)
+    year_match_type_counts = Counter(row.get("year_match_type", "") or "unknown" for row in rows)
+    document_identity_scores: list[float] = []
+    for row in rows:
+        raw_score = str(row.get("document_identity_score", "")).strip()
+        if not raw_score:
+            continue
+        try:
+            document_identity_scores.append(float(raw_score))
+        except ValueError:
+            continue
     evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
     selector_reason_counts = Counter(row.get("selector_reason", "") or "unknown" for row in rows)
     selector_article_lock_type_counts = Counter(row.get("selector_article_lock_type", "") or "unknown" for row in rows)
@@ -623,6 +648,16 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         else 0.0,
         "avg_selector_support_span_count": round(sum(selector_support_counts) / len(rows), 3) if rows else 0.0,
         "metadata_identity_strength_counts": dict(sorted(metadata_strength_counts.items())),
+        "title_match_type_counts": dict(sorted(title_match_type_counts.items())),
+        "identifier_match_type_counts": dict(sorted(identifier_match_type_counts.items())),
+        "issuer_match_type_counts": dict(sorted(issuer_match_type_counts.items())),
+        "year_match_type_counts": dict(sorted(year_match_type_counts.items())),
+        "avg_document_identity_score": round(
+            sum(document_identity_scores) / len(document_identity_scores),
+            3,
+        )
+        if document_identity_scores
+        else 0.0,
         "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
         "selector_reason_counts": dict(sorted(selector_reason_counts.items())),
         "selector_article_lock_type_counts": dict(sorted(selector_article_lock_type_counts.items())),
@@ -717,6 +752,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- cross_family_fallback_used_count: {summary['cross_family_fallback_used_count']}",
         f"- avg_selected_family_confidence: {summary['avg_selected_family_confidence']}",
         f"- avg_selector_support_span_count: {summary['avg_selector_support_span_count']}",
+        f"- avg_document_identity_score: {summary['avg_document_identity_score']}",
         f"- temporal_state_resolved_count: {summary['temporal_state_resolved_count']}",
         f"- article_lock_failed_count: {summary['article_lock_failed_count']}",
         f"- support_insufficient_for_specific_claim_count: {summary['support_insufficient_for_specific_claim_count']}",
@@ -729,6 +765,18 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Metadata Identity Strength"])
     for status, count in summary["metadata_identity_strength_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Title Match Type"])
+    for status, count in summary["title_match_type_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Identifier Match Type"])
+    for status, count in summary["identifier_match_type_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Issuer Match Type"])
+    for status, count in summary["issuer_match_type_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Year Match Type"])
+    for status, count in summary["year_match_type_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Selector Reason"])
     for status, count in summary["selector_reason_counts"].items():

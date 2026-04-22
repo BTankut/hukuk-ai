@@ -83,6 +83,12 @@ ANSWER_FIELDS = [
     "selected_article_equals_claimed_article",
     "selector_evidence_sufficiency",
     "metadata_identity_strength",
+    "document_identity_score",
+    "title_match_type",
+    "identifier_match_type",
+    "issuer_match_type",
+    "year_match_type",
+    "document_rerank_reason",
     "temporal_state_resolved",
     "manual_review_trigger_reason",
     "article_lock_failed",
@@ -407,6 +413,33 @@ def retrieval_feature_value(response: dict[str, Any], key: str) -> str:
     return ""
 
 
+def source_identity_value(response: dict[str, Any], key: str) -> str:
+    trace = trace_payload(response)
+    for container_name in ("retrieval", "parsed_query", "query_signals"):
+        container = trace.get(container_name)
+        if not isinstance(container, dict):
+            continue
+        if key in container:
+            value = container.get(key)
+        else:
+            reranker = container.get("source_identity_reranker")
+            if not isinstance(reranker, dict):
+                continue
+            value = reranker.get(key)
+            if value is None:
+                top_scores = reranker.get("top_scores")
+                if isinstance(top_scores, list) and top_scores and isinstance(top_scores[0], dict):
+                    value = top_scores[0].get(key)
+        if isinstance(value, bool):
+            return "True" if value else "False"
+        if value is None:
+            continue
+        if isinstance(value, list):
+            return stringify_list(value)
+        return str(value)
+    return ""
+
+
 def extracted_article_alignment(response: dict[str, Any]) -> str:
     selected_article = selector_value(response, "selected_article")
     claimed_article = contract_value(response, "article_or_section_claimed")
@@ -490,6 +523,12 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         ),
         "selector_evidence_sufficiency": selector_value(response, "selector_evidence_sufficiency"),
         "metadata_identity_strength": selector_value(response, "metadata_identity_strength"),
+        "document_identity_score": source_identity_value(response, "document_identity_score"),
+        "title_match_type": source_identity_value(response, "title_match_type"),
+        "identifier_match_type": source_identity_value(response, "identifier_match_type"),
+        "issuer_match_type": source_identity_value(response, "issuer_match_type"),
+        "year_match_type": source_identity_value(response, "year_match_type"),
+        "document_rerank_reason": source_identity_value(response, "document_rerank_reason"),
         "temporal_state_resolved": selector_value(response, "temporal_state_resolved"),
         "manual_review_trigger_reason": selector_value(response, "manual_review_trigger_reason"),
         "article_lock_failed": contract_value(response, "article_lock_failed"),
