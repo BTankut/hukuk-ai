@@ -132,9 +132,10 @@ def test_repair_does_not_treat_article_number_as_source_identity():
     )
 
     contract = result.contract
-    assert contract["source_identifier_claimed"] == "IK m.20"
+    assert contract["source_identifier_claimed"] == "unknown"
     assert contract["article_or_section_claimed"] == "madde:20"
-    assert "claimed_source_not_in_selected_evidence" in contract["verification_findings"]
+    assert contract["identifier_integrity_status"] == "unverified_claim_suppressed"
+    assert "claimed_identifier_suppressed" in contract["verification_findings"]
     assert "same_evidence_identifier_mismatch" in contract["verification_findings"]
 
 
@@ -375,6 +376,93 @@ def test_repair_accepts_phase4_canonical_same_evidence_fields():
     assert contract["grounding_status"] == "fully_grounded"
     assert contract["needs_manual_review"] is False
     assert contract["verification_findings"] == []
+
+
+def test_repair_treats_generic_yonetmelik_and_uy_as_compatible_specificity():
+    result = build_or_repair_answer_contract(
+        qid="PHASE8C-FAMILY-COMPAT",
+        answer_text="Tez danışmanı yönetmelik m.27'de düzenlenir. [Kaynak: 40969 m.27]",
+        citations=["40969 m.27"],
+        answer_contract={
+            "answer_text": "Tez danışmanı yönetmelik m.27'de düzenlenir. [Kaynak: 40969 m.27]",
+            "source_family_claimed": "YONETMELIK",
+            "source_identifier_claimed": "40969 m.27",
+            "article_or_section_claimed": "madde:27",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "40969:m27:f0",
+                    "citation": "40969 m.27/f.0",
+                    "source_family": "uy",
+                    "source_identifier": "40969 m.27",
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "article_or_section": "27",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "UY"
+    assert contract["family_compatibility_status"] == "generic_specific_compatible"
+    assert "family_compatibility_failed" not in contract["verification_findings"]
+    assert contract["grounding_status"] == "fully_grounded"
+
+
+def test_repair_replaces_mismatched_identifier_when_selector_evidence_is_authoritative():
+    result = build_or_repair_answer_contract(
+        qid="PHASE8C-ID-INTEGRITY",
+        answer_text="Tez danışmanı 9999 sayılı metne göre düzenlenir. [Kaynak: 9999 m.12]",
+        citations=["9999 m.12"],
+        answer_contract={
+            "answer_text": "Tez danışmanı 9999 sayılı metne göre düzenlenir. [Kaynak: 9999 m.12]",
+            "source_family_claimed": "UY",
+            "source_identifier_claimed": "9999 m.12",
+            "article_or_section_claimed": "madde:12",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "article_span_selector": {
+                    "selected_document_id": "40969",
+                    "selected_article": "27",
+                    "selector_evidence_sufficiency": "exact_enough",
+                    "metadata_identity_strength": "strong",
+                    "selector_exact_article_hit": True,
+                    "support_span_count": 2,
+                    "article_match_type": "exact",
+                    "temporal_state_resolved": True,
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "40969:m27:f0",
+                    "citation": "40969 m.27/f.0",
+                    "source_family": "uy",
+                    "source_identifier": "40969 m.27",
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "article_or_section": "27",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_identifier_claimed"] == "40969 m.27"
+    assert contract["identifier_integrity_status"] == "replaced_by_selected_evidence"
+    assert contract["grounding_status"] == "partially_grounded"
+    assert contract["confidence_0_100"] < 70
+    assert "claimed_identifier_replaced_by_selected_evidence" in contract["verification_findings"]
 
 
 def test_repair_uses_phase6_selector_insufficient_support_as_confidence_ceiling():

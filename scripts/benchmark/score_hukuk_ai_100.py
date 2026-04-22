@@ -54,6 +54,8 @@ SCORED_FIELDS = [
     "groundedness_confidence_consistency_score",
     "claimed_source_parse_success_score",
     "uncertainty_honesty_score",
+    "family_compatibility_status",
+    "identifier_integrity_status",
     "unsupported_confident_answer",
     "hallucinated_source_penalty",
     "auto_fail_triggered",
@@ -446,6 +448,8 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "groundedness_confidence_consistency_score": f"{groundedness_confidence_consistency_score:.2f}",
         "claimed_source_parse_success_score": f"{claimed_source_parse_success_score:.2f}",
         "uncertainty_honesty_score": f"{uncertainty_honesty_score:.2f}",
+        "family_compatibility_status": answer.get("family_compatibility_status", ""),
+        "identifier_integrity_status": answer.get("identifier_integrity_status", ""),
         "unsupported_confident_answer": bool_text(unsupported_confident_claim),
         "hallucinated_source_penalty": f"{hallucinated_source_penalty:.2f}",
         "auto_fail_triggered": bool_text(auto_fail_triggered),
@@ -543,6 +547,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
     selector_reason_counts = Counter(row.get("selector_reason", "") or "unknown" for row in rows)
     selector_article_lock_type_counts = Counter(row.get("selector_article_lock_type", "") or "unknown" for row in rows)
+    family_compatibility_counts = Counter(row.get("family_compatibility_status", "") or "unknown" for row in rows)
+    identifier_integrity_counts = Counter(row.get("identifier_integrity_status", "") or "unknown" for row in rows)
     preferred_family_rows = [row for row in rows if row.get("preferred_source_families")]
     preferred_family_hit_rows = [
         row for row in preferred_family_rows if bool_field(str(row.get("selector_preferred_family_hit", ""))) is True
@@ -596,6 +602,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
         "selector_reason_counts": dict(sorted(selector_reason_counts.items())),
         "selector_article_lock_type_counts": dict(sorted(selector_article_lock_type_counts.items())),
+        "family_compatibility_status_counts": dict(sorted(family_compatibility_counts.items())),
+        "identifier_integrity_status_counts": dict(sorted(identifier_integrity_counts.items())),
         "selector_preferred_family_hit_rate": round(len(preferred_family_hit_rows) / len(preferred_family_rows), 4)
         if preferred_family_rows
         else 0.0,
@@ -692,6 +700,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Selector Article Lock Type"])
     for status, count in summary["selector_article_lock_type_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Family Compatibility"])
+    for status, count in summary["family_compatibility_status_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Identifier Integrity"])
+    for status, count in summary["identifier_integrity_status_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Article Match Type"])
     for status, count in summary["article_match_type_counts"].items():

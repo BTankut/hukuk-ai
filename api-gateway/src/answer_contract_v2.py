@@ -231,6 +231,76 @@ def _evidence_family(evidence: dict[str, Any] | None) -> str:
     return title_family
 
 
+def _family_compatibility_status(claimed_family: str, evidence_family: str) -> str:
+    if claimed_family == UNKNOWN or evidence_family == UNKNOWN:
+        return "unknown"
+    if claimed_family == evidence_family:
+        return "exact"
+    generic_yonetmelik = {"YONETMELIK", "CB_YONETMELIK", "KKY", "UY"}
+    if claimed_family in generic_yonetmelik and evidence_family in generic_yonetmelik:
+        return "generic_specific_compatible"
+    return "incompatible"
+
+
+def _evidence_identity_text(item: dict[str, Any]) -> str:
+    return " ".join(
+        _clean(item.get(key))
+        for key in (
+            "source_id",
+            "citation",
+            "canonical_id",
+            "canonical_identifier_display",
+            "source_identifier",
+            "display_citation",
+            "source",
+            "source_title",
+            "full_title",
+            "belge_adi",
+            "kanun_adi",
+            "title",
+        )
+    )
+
+
+def _identity_matches_item(value: str, item: dict[str, Any]) -> bool:
+    needle = _lower_asciiish(value)
+    haystack = _lower_asciiish(_evidence_identity_text(item))
+    if not needle or not haystack:
+        return False
+    return needle == haystack or (len(needle) >= 5 and (needle in haystack or haystack in needle))
+
+
+def _trace_article_selector(trace_payload: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(trace_payload, dict):
+        return {}
+    for parent_key in ("retrieval", "context_assembly", "parsed_query", "query_signals"):
+        parent = trace_payload.get(parent_key)
+        if not isinstance(parent, dict):
+            continue
+        selector = parent.get("article_span_selector")
+        if isinstance(selector, dict):
+            return selector
+    return {}
+
+
+def _selector_selected_evidence(
+    evidence: list[dict[str, Any]],
+    trace_payload: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    selector = _trace_article_selector(trace_payload)
+    selected_document_id = _clean(selector.get("selected_document_id"))
+    selected_article = _article_token(selector.get("selected_article"))
+    if not selected_document_id:
+        return None
+
+    document_matches = [item for item in evidence if _identity_matches_item(selected_document_id, item)]
+    if selected_article:
+        for item in document_matches:
+            if _evidence_article_token(item) == selected_article:
+                return item
+    return document_matches[0] if document_matches else None
+
+
 def _claim_matches_item(
     item: dict[str, Any],
     *,
@@ -377,7 +447,7 @@ def _same_evidence_verification_findings(
 
     findings: list[str] = []
     evidence_family = _evidence_family(selected_evidence)
-    if raw_claimed_family != UNKNOWN and evidence_family != UNKNOWN and raw_claimed_family != evidence_family:
+    if _family_compatibility_status(raw_claimed_family, evidence_family) == "incompatible":
         findings.append("same_evidence_family_mismatch")
 
     if source_identifier and source_identifier.lower() != "unknown" and not _identifier_matches_same_evidence(
@@ -751,7 +821,13 @@ def build_or_repair_answer_contract(
         _first_list_string(contract.get("secondary_source_ids")),
         _first_list_string(citations),
     )
-    selected_evidence = _select_evidence(evidence_items, source_identifier=legacy_primary, citations=citations)
+    selector_selected_evidence = _selector_selected_evidence(evidence_items, trace_payload)
+    selected_evidence = selector_selected_evidence or _select_evidence(
+        evidence_items,
+        source_identifier=legacy_primary,
+        citations=citations,
+    )
+    selected_evidence_forced_by_selector = selector_selected_evidence is not None
     combined_text = " ".join(
         [
             answer_text,
@@ -795,6 +871,7 @@ def build_or_repair_answer_contract(
     if not source_family or source_family == UNKNOWN:
         source_family = _detect_family(combined_text, selected_evidence)
     selected_evidence_family = _evidence_family(selected_evidence)
+    family_compatibility_status = _family_compatibility_status(raw_claimed_family, selected_evidence_family)
     if selected_evidence_family != UNKNOWN:
         source_family = selected_evidence_family
 
@@ -807,15 +884,58 @@ def build_or_repair_answer_contract(
             legacy_primary,
             _detect_identifier(combined_text, citations, selected_evidence),
         )
+    raw_identifier_claim_present = bool(_first_string(contract.get("source_identifier_claimed"), legacy_primary))
+    pre_verification_findings: list[str] = []
+    if family_compatibility_status == "incompatible":
+        pre_verification_findings.append("family_compatibility_failed")
+
+    identifier_integrity_status = "missing"
+    if source_identifier and source_identifier.lower() != "unknown":
+        if _identifier_matches_same_evidence(
+            source_identifier=source_identifier,
+            citations=[],
+            evidence=selected_evidence,
+        ):
+            identifier_integrity_status = "exact"
+        elif selected_identifier and (
+            selected_evidence_forced_by_selector
+            or selected_evidence_forced_by_family
+            or not raw_identifier_claim_present
+        ):
+            pre_verification_findings.append("identifier_integrity_failed")
+            pre_verification_findings.append("same_evidence_identifier_mismatch")
+            pre_verification_findings.append("claimed_identifier_replaced_by_selected_evidence")
+            source_identifier = selected_identifier
+            identifier_integrity_status = "replaced_by_selected_evidence"
+        else:
+            pre_verification_findings.append("identifier_integrity_failed")
+            pre_verification_findings.append("same_evidence_identifier_mismatch")
+            pre_verification_findings.append("claimed_identifier_suppressed")
+            source_identifier = ""
+            identifier_integrity_status = "unverified_claim_suppressed"
+    elif selected_identifier:
+        source_identifier = selected_identifier
+        identifier_integrity_status = "selected_evidence"
+
     raw_claimed_title = _first_string(contract.get("source_title_claimed"))
-    source_title = _first_string(
-        raw_claimed_title,
+    selected_evidence_title = _first_string(
         selected_evidence.get("source_title") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("full_title") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("belge_adi") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("kanun_adi") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("title") if isinstance(selected_evidence, dict) else "",
         selected_evidence.get("source") if isinstance(selected_evidence, dict) else "",
+    )
+    prefer_selected_title = (
+        identifier_integrity_status in {"replaced_by_selected_evidence", "selected_evidence"}
+        or family_compatibility_status == "incompatible"
+        or selected_evidence_forced_by_selector
+        or selected_evidence_forced_by_family
+    )
+    source_title = _first_string(
+        selected_evidence_title if prefer_selected_title else "",
+        raw_claimed_title,
+        selected_evidence_title,
         source_identifier,
         UNKNOWN,
     )
@@ -855,7 +975,7 @@ def build_or_repair_answer_contract(
         grounding_status = "partially_grounded"
         answer_mode = "qualified_answer"
 
-    verification_findings: list[str] = []
+    verification_findings: list[str] = list(pre_verification_findings)
     if source_identifier and source_identifier.lower() != "unknown":
         claim_evidence_match = _claim_matches_evidence(
             evidence_items,
@@ -1029,6 +1149,8 @@ def build_or_repair_answer_contract(
             "temporal_qualification": temporal_qualification_claim,
             "needs_manual_review": bool(needs_manual_review),
             "verification_findings": verification_findings,
+            "family_compatibility_status": family_compatibility_status,
+            "identifier_integrity_status": identifier_integrity_status,
             "article_lock_failed": bool(article_lock_failed),
             "support_insufficient_for_specific_claim": bool(support_insufficient_for_specific_claim),
             "temporal_clause_missing": bool(temporal_clause_missing),
