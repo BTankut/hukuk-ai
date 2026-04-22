@@ -4898,7 +4898,18 @@ def _satisfied_completeness_slots(
             exact_identity_visible
             and _answer_contains_any(
                 normalized_answer,
-                ("uygulanir", "dayanir", "duzenler", "kapsar", "merkez", "esas alinir"),
+                (
+                    "uygulanir",
+                    "dayanir",
+                    "dayanak",
+                    "duzenler",
+                    "kapsar",
+                    "merkez",
+                    "esas alinir",
+                    "ilgili",
+                    "bakimindan",
+                    "bu nedenle",
+                ),
             )
         ):
             satisfied.append(slot)
@@ -4922,18 +4933,54 @@ def _satisfied_completeness_slots(
             satisfied.append(slot)
         elif slot == "procedure_or_consequence" and _answer_contains_any(
             normalized_answer,
-            ("usul", "sure", "basvuru", "itiraz", "adim", "sonuc", "yaptirim", "zorunlu"),
+            (
+                "usul",
+                "sure",
+                "basvuru",
+                "itiraz",
+                "adim",
+                "sonuc",
+                "yaptirim",
+                "zorunlu",
+                "yukumluluk",
+                "bildirim",
+                "islem",
+            ),
         ):
             satisfied.append(slot)
         elif slot == "scenario_applicability" and _answer_contains_any(
             normalized_answer,
-            ("sart", "kosul", "halinde", "hallerde", "kapsam", "uygulanir", "aranir"),
+            (
+                "sart",
+                "kosul",
+                "halinde",
+                "hallerde",
+                "durumda",
+                "kapsam",
+                "uygulanir",
+                "gecerlidir",
+                "aranir",
+                "bakimindan",
+                "iliskin",
+            ),
         ):
             satisfied.append(slot)
         elif slot == "hierarchy_or_conflict_rule" and (
             _answer_contains_any(
                 normalized_answer,
-                ("oncelik", "ust norm", "alt norm", "ozel duzenleme", "genel duzenleme", "yeterli"),
+                (
+                    "oncelik",
+                    "oncelikle",
+                    "ust norm",
+                    "alt norm",
+                    "ozel duzenleme",
+                    "genel duzenleme",
+                    "ikincil duzenleme",
+                    "normlar hiyerarsisi",
+                    "kanuna aykiri",
+                    "dayanak",
+                    "yeterli",
+                ),
             )
             or ("kanun" in normalized_query and "yonetmelik" in normalized_query and "kanun" in normalized_answer)
         ):
@@ -4971,6 +5018,9 @@ def _build_completeness_synthesis_features(
             support_span_count = int(article_span_selector.get("support_span_count") or 0)
         except (TypeError, ValueError):
             support_span_count = 0
+    effective_support_count = support_span_count
+    if effective_support_count == 0 and citation_count and chunks:
+        effective_support_count = min(citation_count, len(chunks))
 
     has_answer = bool((answer_text or "").strip()) and not str(answer_text).startswith("REFUSED_OR_EMPTY:")
     satisfied_slots = (
@@ -4982,7 +5032,7 @@ def _build_completeness_synthesis_features(
             chunks=chunks,
             answer_fact_units=answer_fact_units,
             citation_count=citation_count,
-            support_span_count=support_span_count,
+            support_span_count=effective_support_count,
         )
         if has_answer
         else []
@@ -4991,8 +5041,8 @@ def _build_completeness_synthesis_features(
     slot_factor = len(satisfied_slots) / len(required_slots) if required_slots else 1.0
     answer_factor = min(1.0, answer_fact_units / minimum_required_facts) if has_answer else 0.0
     evidence_factor = (
-        min(1.0, support_span_count / max(1, minimum_required_facts))
-        if support_span_count
+        min(1.0, effective_support_count / max(1, minimum_required_facts))
+        if effective_support_count
         else (0.5 if chunks else 0.0)
     )
     coverage_score = round((0.55 * slot_factor) + (0.25 * answer_factor) + (0.20 * evidence_factor), 3)
@@ -5000,14 +5050,14 @@ def _build_completeness_synthesis_features(
         has_answer
         and answer_fact_units >= minimum_required_facts
         and citation_count >= 1
-        and (support_span_count >= 1 or bool(chunks))
+        and effective_support_count >= 1
         and not missing_slots
     )
     structurally_full = bool(
         has_answer
         and answer_fact_units >= minimum_required_facts
         and citation_count >= 1
-        and (support_span_count >= 1 or bool(chunks))
+        and effective_support_count >= 1
     )
     if not has_answer:
         degrade_reason = "no_answer"
@@ -5024,7 +5074,7 @@ def _build_completeness_synthesis_features(
     elif not chunks:
         degrade_reason = "no_retrieved_evidence"
         rubric_class = "insufficient_both"
-    elif support_span_count == 0:
+    elif effective_support_count == 0:
         degrade_reason = "no_selector_support_spans"
         rubric_class = "legally_aligned_but_partial"
     elif not minimum_answer_facts_present:

@@ -566,6 +566,24 @@ class TestLawSignalParsing:
         assert "temporal_validity" in features["missing_fact_slots"]
         assert features["completeness_degrade_reason"].startswith("missing_required_fact_slots:")
 
+    def test_completeness_synthesis_accepts_citation_backed_chunks_without_selector_spans(self):
+        features = _build_completeness_synthesis_features(
+            query="Bu düzenleme ne sonuç doğurur?",
+            answer_text=(
+                "Düzenleme ilgili işlem bakımından uygulanacak sonucu belirler [Kaynak: X m.1]. "
+                "Dayanak metin, bu sonucun kapsamını ayrıca sınırlar [Kaynak: X m.2]."
+            ),
+            article_span_selector={"support_span_count": 0},
+            chunks=[
+                RetrievedChunk(text="Sonuç", citation="X m.1", source="X", score=1.0, metadata={}),
+                RetrievedChunk(text="Kapsam", citation="X m.2", source="X", score=1.0, metadata={}),
+            ],
+        )
+
+        assert features["minimum_answer_facts_present"] is True
+        assert features["missing_fact_slots"] == []
+        assert features["completeness_degrade_reason"] == "complete_enough"
+
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(
             "Elektronik tebligat yönetmeliği kapsamında muhatabın bildirim yükümlülüğü nedir?"
