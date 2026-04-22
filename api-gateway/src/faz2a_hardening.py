@@ -462,6 +462,7 @@ class TracePack(BaseModel):
     assembled_evidence: list[dict[str, Any]]
     allowed_source_whitelist: list[str]
     answer_contract: dict[str, Any]
+    completeness_synthesis: dict[str, Any] | None = None
     model_cited_source_ids: list[str]
     verifier_verdict: str | None = None
     final_mode: FinalMode
