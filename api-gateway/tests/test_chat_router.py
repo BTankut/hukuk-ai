@@ -74,6 +74,7 @@ from rag.orchestrator import OrchestratorResponse, RetrievedChunk
 from rag.source_catalog import load_canonical_source_catalog
 from rag.retriever import MetadataFilter, MockRetriever
 from session_store import RedisSessionBackend
+from source_family_resolver import SourceFamilyResolution
 
 
 # ---------------------------------------------------------------------------
@@ -688,6 +689,43 @@ class TestLawSignalParsing:
         assert policy["family_override_reason"] == "hard_family_gate_no_preferred_candidates"
         assert policy["family_gate_status"] == "hard_gate_no_preferred_candidates"
 
+    def test_pre_generation_family_pool_honors_policy_preferred_family_at_070(self):
+        resolution = SourceFamilyResolution(
+            predicted_family="yonetmelik",
+            family_confidence=0.70,
+            routing_families=["yonetmelik"],
+            expected_family_prior="yonetmelik",
+            preferred_families=["yonetmelik"],
+            selected_family_confidence=0.70,
+            family_override_reason="strong_family_prior",
+        )
+        chunks = [
+            RetrievedChunk(
+                text="Kanun parçası",
+                citation="6502 m.1",
+                source="6502",
+                score=2.0,
+                metadata={"source_family_canonical": "kanun", "source_title": "TÜKETİCİNİN KORUNMASI HAKKINDA KANUN"},
+            ),
+            RetrievedChunk(
+                text="Yönetmelik parçası",
+                citation="20237 m.1",
+                source="20237",
+                score=1.0,
+                metadata={"source_family_canonical": "yonetmelik", "source_title": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ"},
+            ),
+        ]
+
+        filtered, policy = _apply_pre_generation_family_pool(
+            chunks=chunks,
+            source_family_resolution=resolution,
+            top_k_effective=10,
+        )
+
+        assert [chunk.citation for chunk in filtered] == ["20237 m.1"]
+        assert policy["family_gate_status"] == "locked_preferred_family"
+        assert policy["no_gate_reason"] == ""
+
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(
             "Bir yüksek lisans öğrencisinin tez savunması için üniversite yönetmeliği ne der?"
@@ -751,6 +789,36 @@ class TestLawSignalParsing:
         )
 
         assert _resolve_chunk_source_family(chunk) == "khk"
+
+    def test_chunk_source_family_prefers_canonical_family_for_university_regulation(self):
+        chunk = RetrievedChunk(
+            text="Üniversite yönetmeliği parçası.",
+            citation="31299 m.1/f.0",
+            source="31299",
+            score=0.9,
+            metadata={
+                "source_family_canonical": "uy",
+                "source_title": "IŞIK ÜNİVERSİTESİ YATAY GEÇİŞ, ÇİFT ANADAL, YAN DAL VE KREDİ TRANSFERİ YÖNETMELİĞİ",
+                "belge_turu": "yonetmelik",
+            },
+        )
+
+        assert _resolve_chunk_source_family(chunk) == "uy"
+
+    def test_chunk_source_family_does_not_treat_tebligat_yonetmeligi_as_teblig(self):
+        chunk = RetrievedChunk(
+            text="Elektronik tebligat yönetmeliği parçası.",
+            citation="29033 m.1/f.0",
+            source="29033",
+            score=0.9,
+            metadata={
+                "source_family_canonical": "teblig",
+                "source_title": "ELEKTRONİK TEBLİGAT YÖNETMELİĞİ",
+                "belge_turu": "teblig",
+            },
+        )
+
+        assert _resolve_chunk_source_family(chunk) == "yonetmelik"
 
     def test_prioritize_chunks_for_source_families_prefers_matching_family(self):
         from rag.orchestrator import RetrievedChunk
@@ -1288,6 +1356,10 @@ class TestLawSignalParsing:
         assert trace["top_scores"][0]["metadata_first_match"] is True
         assert trace["identifier_match_type"] == "exact_identifier"
         assert trace["document_identity_score"] == trace["top_scores"][0]["document_identity_score"]
+        assert trace["identity_lock_strength"] == "strong"
+        assert trace["selected_document_rank_after_identity_rerank"] == 1
+        assert trace["selected_document_original_rank"] == 2
+        assert trace["top_scores"][0]["title_bias_applied"] > 0
 
     def test_source_identity_reranker_prefers_strong_title_match_over_generic_family(self):
         generic_chunk = RetrievedChunk(

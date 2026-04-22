@@ -106,6 +106,11 @@ SCORED_FIELDS = [
     "identifier_match_type",
     "issuer_match_type",
     "year_match_type",
+    "title_bias_applied",
+    "issuer_bias_applied",
+    "identity_lock_strength",
+    "selected_document_rank_after_identity_rerank",
+    "selected_document_original_rank",
     "document_rerank_reason",
     "temporal_state_resolved",
     "manual_review_trigger_reason",
@@ -132,6 +137,8 @@ SCORED_FIELDS = [
     "reranked_family_set",
     "selected_family_source",
     "family_gate_status",
+    "family_gate_reason",
+    "no_gate_reason",
     "missing_trace",
     "empty_or_refused",
     "api_error",
@@ -538,6 +545,14 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "identifier_match_type": answer.get("identifier_match_type", ""),
         "issuer_match_type": answer.get("issuer_match_type", ""),
         "year_match_type": answer.get("year_match_type", ""),
+        "title_bias_applied": answer.get("title_bias_applied", ""),
+        "issuer_bias_applied": answer.get("issuer_bias_applied", ""),
+        "identity_lock_strength": answer.get("identity_lock_strength", ""),
+        "selected_document_rank_after_identity_rerank": answer.get(
+            "selected_document_rank_after_identity_rerank",
+            "",
+        ),
+        "selected_document_original_rank": answer.get("selected_document_original_rank", ""),
         "document_rerank_reason": answer.get("document_rerank_reason", ""),
         "temporal_state_resolved": answer.get("temporal_state_resolved", ""),
         "manual_review_trigger_reason": answer.get("manual_review_trigger_reason", ""),
@@ -564,6 +579,8 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "reranked_family_set": answer.get("reranked_family_set", ""),
         "selected_family_source": answer.get("selected_family_source", ""),
         "family_gate_status": answer.get("family_gate_status", ""),
+        "family_gate_reason": answer.get("family_gate_reason", ""),
+        "no_gate_reason": answer.get("no_gate_reason", ""),
         "missing_trace": bool_text(missing_trace),
         "empty_or_refused": bool_text(empty_or_refused),
         "api_error": bool_text(api_error),
@@ -617,15 +634,29 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     identifier_match_type_counts = Counter(row.get("identifier_match_type", "") or "unknown" for row in rows)
     issuer_match_type_counts = Counter(row.get("issuer_match_type", "") or "unknown" for row in rows)
     year_match_type_counts = Counter(row.get("year_match_type", "") or "unknown" for row in rows)
+    identity_lock_strength_counts = Counter(row.get("identity_lock_strength", "") or "unknown" for row in rows)
     document_identity_scores: list[float] = []
+    title_bias_values: list[float] = []
+    issuer_bias_values: list[float] = []
     for row in rows:
         raw_score = str(row.get("document_identity_score", "")).strip()
-        if not raw_score:
-            continue
-        try:
-            document_identity_scores.append(float(raw_score))
-        except ValueError:
-            continue
+        if raw_score:
+            try:
+                document_identity_scores.append(float(raw_score))
+            except ValueError:
+                pass
+        raw_title_bias = str(row.get("title_bias_applied", "")).strip()
+        if raw_title_bias:
+            try:
+                title_bias_values.append(float(raw_title_bias))
+            except ValueError:
+                pass
+        raw_issuer_bias = str(row.get("issuer_bias_applied", "")).strip()
+        if raw_issuer_bias:
+            try:
+                issuer_bias_values.append(float(raw_issuer_bias))
+            except ValueError:
+                pass
     evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
     selector_reason_counts = Counter(row.get("selector_reason", "") or "unknown" for row in rows)
     selector_article_lock_type_counts = Counter(row.get("selector_article_lock_type", "") or "unknown" for row in rows)
@@ -641,6 +672,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     expected_family_prior_counts = Counter(row.get("expected_family_prior", "") or "unknown" for row in rows)
     family_override_reason_counts = Counter(row.get("family_override_reason", "") or "unknown" for row in rows)
     family_gate_status_counts = Counter(row.get("family_gate_status", "") or "unknown" for row in rows)
+    family_gate_reason_counts = Counter(row.get("family_gate_reason", "") or "unknown" for row in rows)
+    no_gate_reason_counts = Counter(row.get("no_gate_reason", "") or "none" for row in rows)
     completeness_degrade_reason_counts = Counter(
         row.get("completeness_degrade_reason", "") or "unknown" for row in rows
     )
@@ -721,11 +754,18 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "identifier_match_type_counts": dict(sorted(identifier_match_type_counts.items())),
         "issuer_match_type_counts": dict(sorted(issuer_match_type_counts.items())),
         "year_match_type_counts": dict(sorted(year_match_type_counts.items())),
+        "identity_lock_strength_counts": dict(sorted(identity_lock_strength_counts.items())),
         "avg_document_identity_score": round(
             sum(document_identity_scores) / len(document_identity_scores),
             3,
         )
         if document_identity_scores
+        else 0.0,
+        "avg_title_bias_applied": round(sum(title_bias_values) / len(title_bias_values), 3)
+        if title_bias_values
+        else 0.0,
+        "avg_issuer_bias_applied": round(sum(issuer_bias_values) / len(issuer_bias_values), 3)
+        if issuer_bias_values
         else 0.0,
         "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
         "selector_reason_counts": dict(sorted(selector_reason_counts.items())),
@@ -741,6 +781,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "expected_family_prior_counts": dict(sorted(expected_family_prior_counts.items())),
         "family_override_reason_counts": dict(sorted(family_override_reason_counts.items())),
         "family_gate_status_counts": dict(sorted(family_gate_status_counts.items())),
+        "family_gate_reason_counts": dict(sorted(family_gate_reason_counts.items())),
+        "no_gate_reason_counts": dict(sorted(no_gate_reason_counts.items())),
         "completeness_degrade_reason_counts": dict(sorted(completeness_degrade_reason_counts.items())),
         "task_type_answer_template_counts": dict(sorted(task_type_answer_template_counts.items())),
         "rubric_aligned_completeness_class_counts": dict(sorted(rubric_aligned_completeness_counts.items())),
@@ -867,6 +909,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     lines.extend(["", "## Year Match Type"])
     for status, count in summary["year_match_type_counts"].items():
         lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Identity Lock Strength"])
+    for status, count in summary["identity_lock_strength_counts"].items():
+        lines.append(f"- {status}: {count}")
     lines.extend(["", "## Selector Reason"])
     for status, count in summary["selector_reason_counts"].items():
         lines.append(f"- {status}: {count}")
@@ -896,6 +941,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Family Gate Status"])
     for status, count in summary["family_gate_status_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Family Gate Reason"])
+    for status, count in summary["family_gate_reason_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## No Gate Reason"])
+    for status, count in summary["no_gate_reason_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Completeness Degrade Reason"])
     for status, count in summary["completeness_degrade_reason_counts"].items():

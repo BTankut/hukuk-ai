@@ -1170,9 +1170,16 @@ def _clamp_families_to_strong_resolution(
     families: list[str],
     source_family_resolution: SourceFamilyResolution,
 ) -> list[str]:
-    if source_family_resolution.family_confidence < 0.75 or not source_family_resolution.routing_families:
+    strong_families = (
+        list(source_family_resolution.routing_families or source_family_resolution.preferred_families)
+        if source_family_resolution.preferred_families
+        else []
+    )
+    if not strong_families and source_family_resolution.family_confidence >= 0.75:
+        strong_families = list(source_family_resolution.routing_families)
+    if not strong_families:
         return families
-    allowed = set(_expand_source_family_aliases(source_family_resolution.routing_families))
+    allowed = set(_expand_source_family_aliases(strong_families))
     clamped = [family for family in families if family in allowed]
     if not clamped:
         clamped = list(allowed)
@@ -1404,21 +1411,53 @@ def _infer_family_from_source_title(title: Any) -> str | None:
     normalized = _normalize_tr_text(str(title or ""))
     if not normalized:
         return None
-    if "tuzugu" in normalized or normalized.endswith("tuzuk"):
+    if "tuzugu" in normalized or "tuzuk" in normalized:
         return "tuzuk"
     if "kanun hukmunde kararname" in normalized or re.search(r"\bkhk\b", normalized):
         return "khk"
+    if "karar sayisi" in normalized or "cumhurbaskani karari" in normalized:
+        return "cb_karar"
     if "cumhurbaskanligi yonetmeligi" in normalized:
         return "cb_yonetmelik"
-    if "yonetmelik" in normalized:
+    if "yonetmelik" in normalized or "yonetmeligi" in normalized:
         return "yonetmelik"
-    if "teblig" in normalized:
+    if re.search(r"(?<![a-z0-9])teblig(?!at)[a-z0-9]*(?![a-z0-9])", normalized):
         return "teblig"
     if "genelge" in normalized:
         return "cb_genelge"
     if "kararname" in normalized:
         return "cb_kararname"
     return None
+
+
+def _canonical_source_family_value(value: Any) -> str | None:
+    raw = str(value or "").strip().lower().replace(" ", "_")
+    if not raw:
+        return None
+    aliases = {
+        "cb_genelge": "cb_genelge",
+        "cumhurbaskanligi_genelgesi": "cb_genelge",
+        "cb_karar": "cb_karar",
+        "cumhurbaskani_karari": "cb_karar",
+        "cb_kararname": "cb_kararname",
+        "cumhurbaskanligi_kararnamesi": "cb_kararname",
+        "cb_yonetmelik": "cb_yonetmelik",
+        "cumhurbaskanligi_yonetmeligi": "cb_yonetmelik",
+        "kanun": "kanun",
+        "mulga": "mulga_kanun",
+        "mulga_kanun": "mulga_kanun",
+        "khk": "khk",
+        "kanun_hukmunde_kararname": "khk",
+        "kky": "kky",
+        "kurum_kurulus_yonetmeligi": "kky",
+        "teblig": "teblig",
+        "tebligler": "teblig",
+        "tuzuk": "tuzuk",
+        "uy": "uy",
+        "universite_yonetmeligi": "uy",
+        "yonetmelik": "yonetmelik",
+    }
+    return aliases.get(raw, raw if raw in _RETRIEVAL_PLANNER_ALLOWED_FAMILIES else None)
 
 
 def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
@@ -1429,6 +1468,23 @@ def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
         or metadata.get("kanun_adi")
         or metadata.get("law_name")
     )
+    canonical_family = _canonical_source_family_value(
+        metadata.get("source_family_canonical")
+        or metadata.get("source_family")
+        or metadata.get("canonical_source_family")
+    )
+    if canonical_family and title_family:
+        if canonical_family in {"teblig", "kanun", "mulga_kanun"} and title_family in {
+            "yonetmelik",
+            "teblig",
+            "tuzuk",
+            "khk",
+            "cb_genelge",
+            "cb_karar",
+            "cb_kararname",
+            "cb_yonetmelik",
+        }:
+            return title_family
     if title_family in {
         "khk",
         "tuzuk",
@@ -1439,7 +1495,12 @@ def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
         "cb_karar",
     }:
         return title_family
+    if canonical_family:
+        return canonical_family
     family = metadata.get("belge_turu") or metadata.get("source_type")
+    canonical_family = _canonical_source_family_value(family)
+    if canonical_family:
+        return canonical_family
     if isinstance(family, str) and family.strip():
         return family.strip().lower()
     return title_family
@@ -2570,6 +2631,9 @@ def _rerank_chunks_by_source_identity(
 
         score = float(chunk.score or 0.0)
         reasons: list[str] = []
+        title_bias_applied = 0.0
+        issuer_bias_applied = 0.0
+        year_bias_applied = 0.0
         if metadata_first_match:
             score += 100
             reasons.append("metadata_first_match")
@@ -2586,43 +2650,48 @@ def _rerank_chunks_by_source_identity(
             score -= 35
             reasons.append("family_mismatch_penalty")
         if title_match_type == "exact_phrase":
-            score += 120
+            title_bias_applied += 125
             reasons.append("title_exact_phrase")
         elif title_match_type == "strong_overlap":
-            score += 85
+            title_bias_applied += 90
             reasons.append("title_strong_overlap")
         elif title_match_type == "medium_overlap":
-            score += 25
+            title_bias_applied += 30
             reasons.append("title_medium_overlap")
         elif title_match_type == "weak_overlap":
-            score += 2
+            title_bias_applied += 0
             reasons.append("title_weak_overlap")
         if title_overlap:
-            score += min(title_overlap, 10) * (10 if title_match_type in {"exact_phrase", "strong_overlap"} else 4)
+            title_bias_applied += min(title_overlap, 10) * (
+                10 if title_match_type in {"exact_phrase", "strong_overlap"} else 4
+            )
             reasons.append(f"title_overlap:{title_overlap}")
+        score += title_bias_applied
         if issuer_match_type == "strong_overlap":
-            score += 16
+            issuer_bias_applied += 20
             reasons.append("issuer_strong_overlap")
         elif issuer_match_type == "medium_overlap":
-            score += 8
+            issuer_bias_applied += 10
             reasons.append("issuer_medium_overlap")
         elif issuer_match_type == "weak_overlap":
-            score += 3
+            issuer_bias_applied += 2
             reasons.append("issuer_weak_overlap")
         if issuer_overlap:
-            score += min(issuer_overlap, 6) * 3
+            issuer_bias_applied += min(issuer_overlap, 6) * 3
             reasons.append(f"issuer_overlap:{issuer_overlap}")
+        score += issuer_bias_applied
         if year_match_type == "exact_year":
-            score += 14
+            year_bias_applied += 18 if current_validity_query else 14
             reasons.append("year_match")
         elif year_tokens:
-            score -= 8
+            year_bias_applied -= 10
             reasons.append("year_mismatch_penalty")
+        score += year_bias_applied
         if official_gazette_date_match:
             score += 16
             reasons.append("official_gazette_date_match")
         if family_match and title_match_type == "none" and identifier_match_type == "none" and year_match_type == "none":
-            score -= 28 if family in {"cb_karar", "cb_genelge", "uy", "yonetmelik", "teblig"} else 12
+            score -= 45 if family in {"cb_karar", "cb_genelge", "uy", "yonetmelik", "teblig", "kky"} else 18
             reasons.append("generic_family_without_identity_penalty")
         if current_validity_query:
             score -= active_rank * 35
@@ -2636,6 +2705,20 @@ def _rerank_chunks_by_source_identity(
         if source_identity_values & strict_identifier_tokens:
             score += 10
             reasons.append("source_value_identifier_overlap")
+        if metadata_first_match or identifier_match_type == "exact_identifier" or title_match_type in {
+            "exact_phrase",
+            "strong_overlap",
+        }:
+            identity_lock_strength = "strong"
+        elif identifier_match_type == "normalized_identifier_overlap" or title_match_type == "medium_overlap":
+            identity_lock_strength = "medium"
+        elif family_match or title_match_type == "weak_overlap" or issuer_match_type in {
+            "strong_overlap",
+            "medium_overlap",
+        }:
+            identity_lock_strength = "weak"
+        else:
+            identity_lock_strength = "none"
 
         scored.append(
             (
@@ -2657,12 +2740,17 @@ def _rerank_chunks_by_source_identity(
                     "family_match": family_match,
                     "title_match_type": title_match_type,
                     "title_overlap": title_overlap,
+                    "title_bias_applied": round(title_bias_applied, 4),
                     "issuer_match_type": issuer_match_type,
                     "issuer_overlap": issuer_overlap,
+                    "issuer_bias_applied": round(issuer_bias_applied, 4),
                     "year_match": year_match,
                     "year_match_type": year_match_type,
+                    "year_bias_applied": round(year_bias_applied, 4),
                     "official_gazette_date_match": official_gazette_date_match,
                     "active_rank": active_rank,
+                    "identity_lock_strength": identity_lock_strength,
+                    "selected_document_original_rank": original_index + 1,
                     "document_rerank_reason": " | ".join(reasons),
                     "reasons": reasons,
                 },
@@ -2672,7 +2760,12 @@ def _rerank_chunks_by_source_identity(
     ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
     reordered = [chunk for _score, _index, chunk, _trace in ranked]
     first_changed = bool(reordered and chunks and reordered[0].citation != chunks[0].citation)
-    top_trace = ranked[0][3] if ranked else {}
+    ranked_traces: list[dict[str, Any]] = []
+    for reranked_index, (_score, _index, _chunk, trace) in enumerate(ranked[:10], start=1):
+        trace_with_rank = dict(trace)
+        trace_with_rank["selected_document_rank_after_identity_rerank"] = reranked_index
+        ranked_traces.append(trace_with_rank)
+    top_trace = ranked_traces[0] if ranked_traces else {}
     return reordered, {
         "applied": True,
         "reason": "source_identity_reranker",
@@ -2685,13 +2778,20 @@ def _rerank_chunks_by_source_identity(
         "identifier_match_type": top_trace.get("identifier_match_type"),
         "issuer_match_type": top_trace.get("issuer_match_type"),
         "year_match_type": top_trace.get("year_match_type"),
+        "title_bias_applied": top_trace.get("title_bias_applied"),
+        "issuer_bias_applied": top_trace.get("issuer_bias_applied"),
+        "identity_lock_strength": top_trace.get("identity_lock_strength"),
+        "selected_document_rank_after_identity_rerank": top_trace.get(
+            "selected_document_rank_after_identity_rerank"
+        ),
+        "selected_document_original_rank": top_trace.get("selected_document_original_rank"),
         "document_rerank_reason": top_trace.get("document_rerank_reason"),
         "metadata_first_candidate_keys": [
             str(candidate.get("source_key") or "")
             for candidate in metadata_candidates
             if candidate.get("source_key")
         ],
-        "top_scores": [trace for _score, _index, _chunk, trace in ranked[:10]],
+        "top_scores": ranked_traces,
     }
 
 
@@ -4523,6 +4623,8 @@ def _build_retrieval_verification_features(
     reranked_family_set: list[str] = []
     selected_family_source: str | None = None
     family_gate_status = "not_applied"
+    family_gate_reason = "not_applied"
+    no_gate_reason = ""
     if isinstance(source_family_resolution, dict):
         predicted_family = source_family_resolution.get("predicted_family")
         try:
@@ -4544,6 +4646,7 @@ def _build_retrieval_verification_features(
             selected_family_confidence = family_confidence
         if source_family_resolution.get("family_override_reason"):
             family_override_reason = str(source_family_resolution.get("family_override_reason"))
+            family_gate_reason = family_override_reason
     if isinstance(family_routing_policy, dict):
         expected_family_prior = family_routing_policy.get("expected_family_prior") or expected_family_prior
         raw_preferred = family_routing_policy.get("preferred_families")
@@ -4571,6 +4674,10 @@ def _build_retrieval_verification_features(
             selected_family_source = str(family_routing_policy.get("selected_family_source"))
         if family_routing_policy.get("family_gate_status"):
             family_gate_status = str(family_routing_policy.get("family_gate_status"))
+        if family_routing_policy.get("family_gate_reason"):
+            family_gate_reason = str(family_routing_policy.get("family_gate_reason"))
+        if family_routing_policy.get("no_gate_reason"):
+            no_gate_reason = str(family_routing_policy.get("no_gate_reason"))
 
     identifier_tokens = sorted(_extract_source_identifier_tokens(query))
     chunk_families = [_resolve_chunk_source_family(chunk) or "unknown" for chunk in chunks]
@@ -4620,7 +4727,11 @@ def _build_retrieval_verification_features(
         else None
     )
     cross_family_conflict_flag = len(set(family for family in chunk_families[:8] if family != "unknown")) > 1
-    if predicted_family and family_confidence >= 0.75 and predicted_family_match_count:
+    if preferred_family_set and preferred_family_pool_size:
+        cross_family_conflict_flag = any(
+            family not in preferred_family_set and family != "unknown" for family in chunk_families[:5]
+        )
+    elif predicted_family and family_confidence >= 0.75 and predicted_family_match_count:
         cross_family_conflict_flag = any(
             family not in {predicted_family, "unknown"} for family in chunk_families[:5]
         )
@@ -4645,6 +4756,8 @@ def _build_retrieval_verification_features(
         "reranked_family_set": dedupe_strings(reranked_family_set),
         "selected_family_source": selected_family_source,
         "family_gate_status": family_gate_status,
+        "family_gate_reason": family_gate_reason,
+        "no_gate_reason": no_gate_reason,
     }
 
 
@@ -4934,9 +5047,11 @@ def _build_completeness_synthesis_features(
 
 
 def _strong_source_family_gate(source_family_resolution: SourceFamilyResolution) -> set[str]:
+    if source_family_resolution.preferred_families:
+        return set(_expand_source_family_aliases(source_family_resolution.preferred_families))
     if source_family_resolution.family_confidence < 0.75:
         return set()
-    return set(source_family_resolution.routing_families)
+    return set(_expand_source_family_aliases(source_family_resolution.routing_families))
 
 
 def _apply_pre_generation_family_pool(
@@ -4949,12 +5064,14 @@ def _apply_pre_generation_family_pool(
     pre_filter_family_set = dedupe_strings(
         (_resolve_chunk_source_family(chunk) or "unknown") for chunk in chunks
     )
-    preferred_families = (
-        list(source_family_resolution.preferred_families)
-        if source_family_resolution.family_confidence >= 0.75
-        else []
-    )
+    preferred_families = dedupe_strings(_expand_source_family_aliases(source_family_resolution.preferred_families))
     fallback_families = list(source_family_resolution.fallback_families)
+    family_gate_reason = source_family_resolution.family_override_reason
+    no_gate_reason = ""
+    if not chunks:
+        no_gate_reason = "no_candidates"
+    elif not preferred_families:
+        no_gate_reason = "no_preferred_family_prior"
     policy: dict[str, Any] = {
         "expected_family_prior": expected_family_prior,
         "preferred_families": preferred_families,
@@ -4967,6 +5084,8 @@ def _apply_pre_generation_family_pool(
         "reranked_family_set": pre_filter_family_set,
         "selected_family_source": pre_filter_family_set[0] if pre_filter_family_set else None,
         "family_gate_status": "no_gate",
+        "family_gate_reason": family_gate_reason,
+        "no_gate_reason": no_gate_reason,
     }
     if not chunks or not preferred_families:
         return chunks, policy
@@ -4979,6 +5098,8 @@ def _apply_pre_generation_family_pool(
     policy["preferred_family_pool_size"] = len(preferred_chunks)
     if preferred_chunks:
         policy["family_override_reason"] = "strong_preferred_family_pool"
+        policy["family_gate_reason"] = "preferred_family_pool_available"
+        policy["no_gate_reason"] = ""
         reranked_family_set = dedupe_strings(
             (_resolve_chunk_source_family(chunk) or "unknown") for chunk in preferred_chunks
         )
@@ -4990,6 +5111,8 @@ def _apply_pre_generation_family_pool(
     fallback_family_set = set(fallback_families)
     if expected_family_prior in _HARD_PRE_GENERATION_FAMILY_GATES:
         policy["family_override_reason"] = "hard_family_gate_no_preferred_candidates"
+        policy["family_gate_reason"] = "hard_family_gate_no_preferred_candidates"
+        policy["no_gate_reason"] = ""
         policy["family_gate_status"] = "hard_gate_no_preferred_candidates"
         policy["reranked_family_set"] = []
         policy["selected_family_source"] = None
@@ -5002,6 +5125,8 @@ def _apply_pre_generation_family_pool(
     policy["cross_family_fallback_used"] = True
     if fallback_chunks:
         policy["family_override_reason"] = "preferred_family_pool_empty_controlled_alias_fallback"
+        policy["family_gate_reason"] = "controlled_alias_fallback"
+        policy["no_gate_reason"] = ""
         reranked_family_set = dedupe_strings(
             (_resolve_chunk_source_family(chunk) or "unknown") for chunk in fallback_chunks
         )
@@ -5011,6 +5136,8 @@ def _apply_pre_generation_family_pool(
         return fallback_chunks[:top_k_effective], policy
 
     policy["family_override_reason"] = "preferred_family_pool_empty_global_fallback"
+    policy["family_gate_reason"] = "global_fallback"
+    policy["no_gate_reason"] = ""
     filtered = chunks[:top_k_effective]
     reranked_family_set = dedupe_strings(
         (_resolve_chunk_source_family(chunk) or "unknown") for chunk in filtered
