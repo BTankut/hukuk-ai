@@ -108,6 +108,10 @@ SCORED_FIELDS = [
     "support_insufficient_for_specific_claim",
     "temporal_clause_missing",
     "answer_suppressed_due_to_evidence_gap",
+    "required_fact_coverage_score",
+    "minimum_answer_facts_present",
+    "completeness_degrade_reason",
+    "task_type_answer_template_used",
     "expected_family_prior",
     "preferred_family_pool_size",
     "cross_family_fallback_used",
@@ -513,6 +517,10 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "support_insufficient_for_specific_claim": answer.get("support_insufficient_for_specific_claim", ""),
         "temporal_clause_missing": answer.get("temporal_clause_missing", ""),
         "answer_suppressed_due_to_evidence_gap": answer.get("answer_suppressed_due_to_evidence_gap", ""),
+        "required_fact_coverage_score": answer.get("required_fact_coverage_score", ""),
+        "minimum_answer_facts_present": answer.get("minimum_answer_facts_present", ""),
+        "completeness_degrade_reason": answer.get("completeness_degrade_reason", ""),
+        "task_type_answer_template_used": answer.get("task_type_answer_template_used", ""),
         "expected_family_prior": answer.get("expected_family_prior", ""),
         "preferred_family_pool_size": answer.get("preferred_family_pool_size", ""),
         "cross_family_fallback_used": answer.get("cross_family_fallback_used", ""),
@@ -593,6 +601,24 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     query_article_alignment_counts = Counter(row.get("query_article_alignment", "") or "unknown" for row in rows)
     expected_family_prior_counts = Counter(row.get("expected_family_prior", "") or "unknown" for row in rows)
     family_override_reason_counts = Counter(row.get("family_override_reason", "") or "unknown" for row in rows)
+    completeness_degrade_reason_counts = Counter(
+        row.get("completeness_degrade_reason", "") or "unknown" for row in rows
+    )
+    task_type_answer_template_counts = Counter(
+        row.get("task_type_answer_template_used", "") or "unknown" for row in rows
+    )
+    minimum_answer_facts_present_count = sum(
+        1 for row in rows if bool_field(str(row.get("minimum_answer_facts_present", ""))) is True
+    )
+    required_fact_coverage_scores: list[float] = []
+    for row in rows:
+        raw_score = str(row.get("required_fact_coverage_score", "")).strip()
+        if not raw_score:
+            continue
+        try:
+            required_fact_coverage_scores.append(float(raw_score))
+        except ValueError:
+            continue
     cross_family_fallback_used_count = sum(
         1 for row in rows if bool_field(str(row.get("cross_family_fallback_used", ""))) is True
     )
@@ -671,6 +697,15 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "query_article_alignment_counts": dict(sorted(query_article_alignment_counts.items())),
         "expected_family_prior_counts": dict(sorted(expected_family_prior_counts.items())),
         "family_override_reason_counts": dict(sorted(family_override_reason_counts.items())),
+        "completeness_degrade_reason_counts": dict(sorted(completeness_degrade_reason_counts.items())),
+        "task_type_answer_template_counts": dict(sorted(task_type_answer_template_counts.items())),
+        "minimum_answer_facts_present_count": minimum_answer_facts_present_count,
+        "avg_required_fact_coverage_score": round(
+            sum(required_fact_coverage_scores) / len(required_fact_coverage_scores),
+            3,
+        )
+        if required_fact_coverage_scores
+        else 0.0,
         "cross_family_fallback_used_count": cross_family_fallback_used_count,
         "avg_selected_family_confidence": round(
             sum(selected_family_confidences) / len(selected_family_confidences),
@@ -753,6 +788,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- avg_selected_family_confidence: {summary['avg_selected_family_confidence']}",
         f"- avg_selector_support_span_count: {summary['avg_selector_support_span_count']}",
         f"- avg_document_identity_score: {summary['avg_document_identity_score']}",
+        f"- minimum_answer_facts_present_count: {summary['minimum_answer_facts_present_count']}",
+        f"- avg_required_fact_coverage_score: {summary['avg_required_fact_coverage_score']}",
         f"- temporal_state_resolved_count: {summary['temporal_state_resolved_count']}",
         f"- article_lock_failed_count: {summary['article_lock_failed_count']}",
         f"- support_insufficient_for_specific_claim_count: {summary['support_insufficient_for_specific_claim_count']}",
@@ -804,6 +841,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Family Override Reason"])
     for status, count in summary["family_override_reason_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Completeness Degrade Reason"])
+    for status, count in summary["completeness_degrade_reason_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Task Type Answer Template"])
+    for status, count in summary["task_type_answer_template_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(
         [

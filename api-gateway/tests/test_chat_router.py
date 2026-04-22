@@ -41,6 +41,7 @@ from routers.chat import (
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
+    _build_completeness_synthesis_features,
     _build_retrieval_verification_features,
     _build_retrieval_plan_expansion,
     _build_metadata_first_query_expansion,
@@ -504,6 +505,46 @@ class TestLawSignalParsing:
         assert features["preferred_family_pool_size"] == 1
         assert features["cross_family_fallback_used"] is False
         assert features["family_override_reason"] == "strong_family_prior"
+
+    def test_completeness_synthesis_flags_short_complex_answer(self):
+        features = _build_completeness_synthesis_features(
+            query="Başvuru usulü ve süresi nedir?",
+            answer_text="Başvuru yapılır [Kaynak: X m.1].",
+            article_span_selector={"support_span_count": 1},
+            chunks=[
+                RetrievedChunk(
+                    text="Başvuru usulü ve süre koşulları.",
+                    citation="X m.1",
+                    source="X",
+                    score=1.0,
+                    metadata={},
+                )
+            ],
+        )
+
+        assert features["task_type_answer_template_used"] == "procedure"
+        assert features["minimum_answer_facts_present"] is False
+        assert features["completeness_degrade_reason"] == "answer_too_short_for_template"
+
+    def test_completeness_synthesis_accepts_multi_fact_grounded_answer(self):
+        features = _build_completeness_synthesis_features(
+            query="Hangi hallerde başvuru yapılır, istisnası var mı?",
+            answer_text=(
+                "Başvuru, kaynakta sayılan şartlar gerçekleşirse yapılır [Kaynak: X m.1]. "
+                "İkinci olarak süre şartına uyulmalıdır [Kaynak: X m.2]. "
+                "İstisna kaynağın saklı tuttuğu hallerle sınırlıdır [Kaynak: X m.3]."
+            ),
+            article_span_selector={"support_span_count": 3},
+            chunks=[
+                RetrievedChunk(text="Şart", citation="X m.1", source="X", score=1.0, metadata={}),
+                RetrievedChunk(text="Süre", citation="X m.2", source="X", score=1.0, metadata={}),
+                RetrievedChunk(text="İstisna", citation="X m.3", source="X", score=1.0, metadata={}),
+            ],
+        )
+
+        assert features["task_type_answer_template_used"] == "procedure"
+        assert features["minimum_answer_facts_present"] is True
+        assert features["required_fact_coverage_score"] == 1.0
 
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(

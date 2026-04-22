@@ -4608,6 +4608,83 @@ def _build_retrieval_verification_features(
     }
 
 
+def _answer_template_for_query(query: str) -> str:
+    normalized = normalize_query_text(query or "")
+    if any(term in normalized for term in ("usul", "basvuru", "itiraz", "sure", "dava sart", "on sart")):
+        return "procedure"
+    if any(term in normalized for term in ("istisna", "muaf", "haric", "sakli", "uygulanmaz")):
+        return "exception"
+    if any(term in normalized for term in ("kosul", "sart", "hangi hallerde", "aranir", "gerekir")):
+        return "condition"
+    if any(term in normalized for term in ("fark", "karsilastir", "yoksa", "eski", "guncel", "hangisi")):
+        return "comparison_or_temporal"
+    return "direct"
+
+
+def _count_answer_fact_units(answer_text: str) -> int:
+    stripped = re.sub(r"\[Kaynak:[^\]]+\]", " ", answer_text or "")
+    pieces = re.split(r"(?:\n+|(?<=[.!?])\s+|(?:^|\s)(?:[-*]|\d+[.)])\s+)", stripped)
+    long_pieces = [
+        piece.strip()
+        for piece in pieces
+        if len(piece.strip()) >= 28 and any(char.isalpha() for char in piece)
+    ]
+    citation_count = len(_INLINE_CITATION_RE.findall(answer_text or ""))
+    return max(len(long_pieces), citation_count)
+
+
+def _build_completeness_synthesis_features(
+    *,
+    query: str,
+    answer_text: str,
+    article_span_selector: dict[str, Any] | None,
+    chunks: list[RetrievedChunk],
+) -> dict[str, Any]:
+    template = _answer_template_for_query(query)
+    minimum_required_facts = 2 if template == "direct" else 3
+    answer_fact_units = _count_answer_fact_units(answer_text)
+    citation_count = len(_INLINE_CITATION_RE.findall(answer_text or ""))
+    support_span_count = 0
+    if isinstance(article_span_selector, dict):
+        try:
+            support_span_count = int(article_span_selector.get("support_span_count") or 0)
+        except (TypeError, ValueError):
+            support_span_count = 0
+
+    has_answer = bool((answer_text or "").strip()) and not str(answer_text).startswith("REFUSED_OR_EMPTY:")
+    answer_factor = min(1.0, answer_fact_units / minimum_required_facts) if has_answer else 0.0
+    citation_factor = min(1.0, citation_count / max(1, min(minimum_required_facts, 2))) if has_answer else 0.0
+    evidence_factor = min(1.0, support_span_count / minimum_required_facts) if support_span_count else (0.5 if chunks else 0.0)
+    coverage_score = round((0.50 * answer_factor) + (0.25 * citation_factor) + (0.25 * evidence_factor), 3)
+    minimum_answer_facts_present = bool(
+        has_answer
+        and answer_fact_units >= minimum_required_facts
+        and citation_count >= 1
+        and (support_span_count >= 1 or bool(chunks))
+    )
+    if not has_answer:
+        degrade_reason = "no_answer"
+    elif answer_fact_units < minimum_required_facts:
+        degrade_reason = "answer_too_short_for_template"
+    elif citation_count == 0:
+        degrade_reason = "missing_source_citations"
+    elif not chunks:
+        degrade_reason = "no_retrieved_evidence"
+    elif support_span_count == 0:
+        degrade_reason = "no_selector_support_spans"
+    elif not minimum_answer_facts_present:
+        degrade_reason = "partial_evidence_only"
+    else:
+        degrade_reason = "complete_enough"
+
+    return {
+        "required_fact_coverage_score": coverage_score,
+        "minimum_answer_facts_present": minimum_answer_facts_present,
+        "completeness_degrade_reason": degrade_reason,
+        "task_type_answer_template_used": template,
+    }
+
+
 def _strong_source_family_gate(source_family_resolution: SourceFamilyResolution) -> set[str]:
     if source_family_resolution.family_confidence < 0.75:
         return set()
@@ -4767,6 +4844,12 @@ def _build_trace_payload(
         "assembled_evidence": assembled_evidence,
         "allowed_source_whitelist": allowed_source_whitelist,
         "answer_contract": answer_contract,
+        "completeness_synthesis": {
+            "required_fact_coverage_score": answer_contract.get("required_fact_coverage_score"),
+            "minimum_answer_facts_present": answer_contract.get("minimum_answer_facts_present"),
+            "completeness_degrade_reason": answer_contract.get("completeness_degrade_reason"),
+            "task_type_answer_template_used": answer_contract.get("task_type_answer_template_used"),
+        },
         "model_cited_source_ids": model_cited_source_ids,
         "verifier_verdict": verification.get("verdict") if isinstance(verification, dict) else None,
         "final_mode": final_mode,
@@ -4841,6 +4924,12 @@ def _build_trace_payload(
             "verification": verification,
             "final_mode": final_mode,
             "final_reason": final_reason,
+            "completeness_synthesis": {
+                "required_fact_coverage_score": answer_contract.get("required_fact_coverage_score"),
+                "minimum_answer_facts_present": answer_contract.get("minimum_answer_facts_present"),
+                "completeness_degrade_reason": answer_contract.get("completeness_degrade_reason"),
+                "task_type_answer_template_used": answer_contract.get("task_type_answer_template_used"),
+            },
         },
     }
     return validate_trace_payload(payload)
@@ -7855,6 +7944,13 @@ async def chat_completions(
         assembled_evidence=assembled_evidence,
         allowed_source_whitelist=allowed_source_whitelist,
     )
+    completeness_synthesis = _build_completeness_synthesis_features(
+        query=last_user_msg,
+        answer_text=hardening.answer_text,
+        article_span_selector=article_span_selector,
+        chunks=post_rerank_chunks,
+    )
+    hardening.answer_contract.update(completeness_synthesis)
     trace_payload = _build_trace_payload(
         request_id=response_id,
         decision_lane="rag",

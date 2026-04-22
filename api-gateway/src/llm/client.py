@@ -60,6 +60,27 @@ class LLMClient:
         "hak düşürücü",
         "hak dusurucu",
     )
+    _COMPLEX_ANSWER_SIGNAL_TERMS = (
+        "istisna",
+        "muaf",
+        "hariç",
+        "haric",
+        "saklı",
+        "sakli",
+        "uygulanmaz",
+        "koşul",
+        "kosul",
+        "şart",
+        "sart",
+        "hangi hallerde",
+        "fark",
+        "karşılaştır",
+        "karsilastir",
+        "yoksa",
+        "eski",
+        "güncel",
+        "guncel",
+    )
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -321,8 +342,9 @@ class LLMClient:
             "- Belge ailesini ve prefixlerini asla karıştırma; kanun/tüzük/yönetmelik/tebliğ/kararname ayrımını koru.\n"
             "- Komşu veya benzer maddeyi yalnız yakın olduğu için cite etme; sadece gerçekten dayandığın maddeyi yaz.\n"
             "- Cross-law sorularda cevap gerçekten iki kanuna dayanıyorsa her iki kanundan da açık kaynak göster; dayanmıyorsa gereksiz ikinci kanun ekleme.\n"
-            "- Önce kısa sonucu ver, sonra en fazla üç kısa dayanak maddesiyle devam et.\n"
-            "- Kaynak yetersizse açıkça bunu söyle ve tahmin yürütme."
+            "- Önce kısa sonucu ver; ardından sorunun gerektirdiği şart, istisna, süre, usul adımı, karşılaştırma veya yürürlük unsurunu atlamadan açıkla.\n"
+            "- Kaynak aynı maddede birden fazla koşul, fıkra, istisna veya prosedür içeriyorsa sadece ilk cümleyi ya da madde başlığını özetleyip bırakma.\n"
+            "- Kaynak yetersizse kısmi cevabı ver, hangi unsurun kaynaklarda açık olmadığını belirt ve tahmin yürütme."
         )
         if cls._is_procedure_or_timeline_query(query):
             system_prompt += (
@@ -331,11 +353,17 @@ class LLMClient:
                 "- Kaynakta arabulucuya başvuru zorunlu deniyorsa bunu mahkemeye doğrudan başvuru diye yeniden yazma.\n"
                 "- Süreleri yalnız kaynakta açıkça geçtiği şekliyle ver; kendi hukuk bilgisinden süre ekleme."
             )
+        if any(term in cls._normalize_query(query) for term in cls._COMPLEX_ANSWER_SIGNAL_TERMS):
+            system_prompt += (
+                "\n- Çok koşullu, istisnalı, karşılaştırmalı veya güncellik sorularında en az şu unsurları kapsa: "
+                "kısa sonuç, uygulanacak kural, varsa istisna/ön koşul/süre/yürürlük notu ve dayanak kaynak."
+            )
         user_prompt = (
             "Aşağıdaki kaynak metinlerini kullanarak soruyu yanıtla. "
-            "Önce tek cümlelik sonucu ver. Ardından yalnız gerçekten dayandığın maddeleri "
+            "Önce tek cümlelik sonucu ver. Ardından sorunun türüne göre gerekli tüm şart, istisna, süre, usul, "
+            "karşılaştırma ve yürürlük unsurlarını yalnız gerçekten dayandığın maddelerle "
             "'[Kaynak: X]' biçiminde göster. Soruda açık madde numarası geçiyorsa ve kaynaklarda "
-            "varsa o maddeyi atlama.\n\n"
+            "varsa o maddeyi atlama. Kaynakta cevabın bir unsuru yoksa bunu açıkça 'kaynaklarda bu unsur yok' diye belirt.\n\n"
             f"KAYNAKLAR:\n{context}\n\n"
             f"SORU:\n{query}"
         )
