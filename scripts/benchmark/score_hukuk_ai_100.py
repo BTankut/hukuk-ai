@@ -128,6 +128,10 @@ SCORED_FIELDS = [
     "cross_family_fallback_used",
     "family_override_reason",
     "selected_family_confidence",
+    "pre_filter_family_set",
+    "reranked_family_set",
+    "selected_family_source",
+    "family_gate_status",
     "missing_trace",
     "empty_or_refused",
     "api_error",
@@ -556,6 +560,10 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "cross_family_fallback_used": answer.get("cross_family_fallback_used", ""),
         "family_override_reason": answer.get("family_override_reason", ""),
         "selected_family_confidence": answer.get("selected_family_confidence", ""),
+        "pre_filter_family_set": answer.get("pre_filter_family_set", ""),
+        "reranked_family_set": answer.get("reranked_family_set", ""),
+        "selected_family_source": answer.get("selected_family_source", ""),
+        "family_gate_status": answer.get("family_gate_status", ""),
         "missing_trace": bool_text(missing_trace),
         "empty_or_refused": bool_text(empty_or_refused),
         "api_error": bool_text(api_error),
@@ -632,6 +640,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     query_article_alignment_counts = Counter(row.get("query_article_alignment", "") or "unknown" for row in rows)
     expected_family_prior_counts = Counter(row.get("expected_family_prior", "") or "unknown" for row in rows)
     family_override_reason_counts = Counter(row.get("family_override_reason", "") or "unknown" for row in rows)
+    family_gate_status_counts = Counter(row.get("family_gate_status", "") or "unknown" for row in rows)
     completeness_degrade_reason_counts = Counter(
         row.get("completeness_degrade_reason", "") or "unknown" for row in rows
     )
@@ -731,6 +740,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "query_article_alignment_counts": dict(sorted(query_article_alignment_counts.items())),
         "expected_family_prior_counts": dict(sorted(expected_family_prior_counts.items())),
         "family_override_reason_counts": dict(sorted(family_override_reason_counts.items())),
+        "family_gate_status_counts": dict(sorted(family_gate_status_counts.items())),
         "completeness_degrade_reason_counts": dict(sorted(completeness_degrade_reason_counts.items())),
         "task_type_answer_template_counts": dict(sorted(task_type_answer_template_counts.items())),
         "rubric_aligned_completeness_class_counts": dict(sorted(rubric_aligned_completeness_counts.items())),
@@ -883,6 +893,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Family Override Reason"])
     for status, count in summary["family_override_reason_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Family Gate Status"])
+    for status, count in summary["family_gate_status_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Completeness Degrade Reason"])
     for status, count in summary["completeness_degrade_reason_counts"].items():

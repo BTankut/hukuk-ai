@@ -657,8 +657,12 @@ class TestLawSignalParsing:
         assert policy["preferred_family_pool_size"] == 1
         assert policy["cross_family_fallback_used"] is False
         assert policy["family_override_reason"] == "strong_preferred_family_pool"
+        assert policy["family_gate_status"] == "locked_preferred_family"
+        assert policy["pre_filter_family_set"] == ["yonetmelik", "cb_karar"]
+        assert policy["reranked_family_set"] == ["cb_karar"]
+        assert policy["selected_family_source"] == "cb_karar"
 
-    def test_pre_generation_family_pool_uses_controlled_alias_fallback(self):
+    def test_pre_generation_family_pool_blocks_cross_family_for_hard_family(self):
         resolution = _resolve_source_family_prior(
             "Devlet Arşivleri yönetmeliği kapsamında saklama yükümlülüğü nedir?"
         )
@@ -678,10 +682,11 @@ class TestLawSignalParsing:
             top_k_effective=10,
         )
 
-        assert filtered == chunks
+        assert filtered == []
         assert policy["preferred_family_pool_size"] == 0
-        assert policy["cross_family_fallback_used"] is True
-        assert policy["family_override_reason"] == "preferred_family_pool_empty_controlled_alias_fallback"
+        assert policy["cross_family_fallback_used"] is False
+        assert policy["family_override_reason"] == "hard_family_gate_no_preferred_candidates"
+        assert policy["family_gate_status"] == "hard_gate_no_preferred_candidates"
 
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(

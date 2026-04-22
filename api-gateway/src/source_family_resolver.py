@@ -40,6 +40,15 @@ ROUTING_ALIASES: dict[str, tuple[str, ...]] = {
     "kky": ("kky", "yonetmelik"),
     "uy": ("uy", "yonetmelik"),
 }
+HARD_POLICY_FAMILIES = {
+    "cb_karar",
+    "cb_genelge",
+    "cb_yonetmelik",
+    "yonetmelik",
+    "uy",
+    "mulga_kanun",
+    "teblig",
+}
 
 QUERY_EXPANSIONS: dict[str, str] = {
     "kanun": "kanun madde yürürlük resmi gazete",
@@ -193,7 +202,8 @@ def _family_policy_for_resolution(
     if not predicted_family:
         return None, [], [], "no_family_prior"
 
-    if family_confidence >= 0.75:
+    strong_threshold = 0.70 if predicted_family in HARD_POLICY_FAMILIES else 0.75
+    if family_confidence >= strong_threshold:
         preferred = [predicted_family]
         fallback = [family for family in routing_families if family not in preferred]
         return predicted_family, preferred, fallback, "strong_family_prior"
@@ -296,6 +306,10 @@ def resolve_source_family_prior(
             "arsiv hizmetleri",
             "arşiv mevzuatı",
             "arsiv mevzuati",
+            "cumhurbaşkanlığı teşkilatı",
+            "cumhurbaskanligi teskilati",
+            "devlet teşkilatı",
+            "devlet teskilati",
         ),
         score=6.0,
         signal="cb_yonetmelik_document_type",
@@ -311,6 +325,8 @@ def resolve_source_family_prior(
             "cumhurbaskanligi karari",
             "karar sayısı",
             "karar sayisi",
+            "karar sayılı",
+            "karar sayili",
             "karar no",
             "karar numarası",
             "karar numarasi",
@@ -339,10 +355,15 @@ def resolve_source_family_prior(
             "cumhurbaskanligi genelgesi",
             "cumhurbaşkanı genelgesi",
             "cumhurbaskani genelgesi",
+            "cumhurbaşkanlığı genelge",
+            "cumhurbaskanligi genelge",
             "tasarruf genelgesi",
             "mobbing genelgesi",
             "genelge sayısı",
             "genelge sayisi",
+            "genelge no",
+            "genelge numarası",
+            "genelge numarasi",
             "genelge",
             "genelgesi",
         ),
@@ -374,6 +395,9 @@ def resolve_source_family_prior(
             "mulga",
             "yürürlükten kaldır",
             "yururlukten kaldir",
+            "yürürlükten kaldırılmış",
+            "yururlukten kaldirilmis",
+            "ilga",
             "eski kanun",
             "tarihsel metin",
         ),
@@ -392,8 +416,14 @@ def resolve_source_family_prior(
     university_terms = (
         "üniversite",
         "universite",
+        "üniversitesi",
+        "universitesi",
         "yükseköğretim",
         "yuksekogretim",
+        "senato",
+        "ön lisans",
+        "on lisans",
+        "lisans",
         "yüksek lisans",
         "yuksek lisans",
         "lisansüstü",

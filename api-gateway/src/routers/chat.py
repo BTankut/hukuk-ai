@@ -267,6 +267,15 @@ _WEAK_SOURCE_FAMILY_ROUTE_TOPK_FAMILIES = {
     "kky",
     "uy",
 }
+_HARD_PRE_GENERATION_FAMILY_GATES = {
+    "cb_karar",
+    "cb_genelge",
+    "cb_yonetmelik",
+    "yonetmelik",
+    "uy",
+    "mulga_kanun",
+    "teblig",
+}
 _RETRIEVAL_PRIORITY_TOKEN_RE = re.compile(r"[a-z0-9]+")
 _RETRIEVAL_PRIORITY_STOPWORDS = {
     "ve",
@@ -4498,6 +4507,10 @@ def _build_retrieval_verification_features(
     fallback_families: list[str] = []
     selected_family_confidence = 0.0
     family_override_reason = "no_family_prior"
+    pre_filter_family_set: list[str] = []
+    reranked_family_set: list[str] = []
+    selected_family_source: str | None = None
+    family_gate_status = "not_applied"
     if isinstance(source_family_resolution, dict):
         predicted_family = source_family_resolution.get("predicted_family")
         try:
@@ -4535,6 +4548,17 @@ def _build_retrieval_verification_features(
             pass
         if family_routing_policy.get("family_override_reason"):
             family_override_reason = str(family_routing_policy.get("family_override_reason"))
+        for key, target in (
+            ("pre_filter_family_set", pre_filter_family_set),
+            ("reranked_family_set", reranked_family_set),
+        ):
+            raw_values = family_routing_policy.get(key)
+            if isinstance(raw_values, list):
+                target.extend(str(item) for item in raw_values if str(item or "").strip())
+        if family_routing_policy.get("selected_family_source"):
+            selected_family_source = str(family_routing_policy.get("selected_family_source"))
+        if family_routing_policy.get("family_gate_status"):
+            family_gate_status = str(family_routing_policy.get("family_gate_status"))
 
     identifier_tokens = sorted(_extract_source_identifier_tokens(query))
     chunk_families = [_resolve_chunk_source_family(chunk) or "unknown" for chunk in chunks]
@@ -4605,6 +4629,10 @@ def _build_retrieval_verification_features(
         "selected_family_confidence": round(selected_family_confidence, 3),
         "preferred_families": preferred_families,
         "fallback_families": fallback_families,
+        "pre_filter_family_set": dedupe_strings(pre_filter_family_set),
+        "reranked_family_set": dedupe_strings(reranked_family_set),
+        "selected_family_source": selected_family_source,
+        "family_gate_status": family_gate_status,
     }
 
 
@@ -4906,6 +4934,9 @@ def _apply_pre_generation_family_pool(
     top_k_effective: int,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
+    pre_filter_family_set = dedupe_strings(
+        (_resolve_chunk_source_family(chunk) or "unknown") for chunk in chunks
+    )
     preferred_families = (
         list(source_family_resolution.preferred_families)
         if source_family_resolution.family_confidence >= 0.75
@@ -4920,6 +4951,10 @@ def _apply_pre_generation_family_pool(
         "cross_family_fallback_used": False,
         "selected_family_confidence": round(source_family_resolution.selected_family_confidence, 3),
         "family_override_reason": source_family_resolution.family_override_reason,
+        "pre_filter_family_set": pre_filter_family_set,
+        "reranked_family_set": pre_filter_family_set,
+        "selected_family_source": pre_filter_family_set[0] if pre_filter_family_set else None,
+        "family_gate_status": "no_gate",
     }
     if not chunks or not preferred_families:
         return chunks, policy
@@ -4932,9 +4967,22 @@ def _apply_pre_generation_family_pool(
     policy["preferred_family_pool_size"] = len(preferred_chunks)
     if preferred_chunks:
         policy["family_override_reason"] = "strong_preferred_family_pool"
+        reranked_family_set = dedupe_strings(
+            (_resolve_chunk_source_family(chunk) or "unknown") for chunk in preferred_chunks
+        )
+        policy["reranked_family_set"] = reranked_family_set
+        policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
+        policy["family_gate_status"] = "locked_preferred_family"
         return preferred_chunks[:top_k_effective], policy
 
     fallback_family_set = set(fallback_families)
+    if expected_family_prior in _HARD_PRE_GENERATION_FAMILY_GATES:
+        policy["family_override_reason"] = "hard_family_gate_no_preferred_candidates"
+        policy["family_gate_status"] = "hard_gate_no_preferred_candidates"
+        policy["reranked_family_set"] = []
+        policy["selected_family_source"] = None
+        return [], policy
+
     fallback_chunks = [
         chunk for chunk in chunks
         if fallback_family_set and (_resolve_chunk_source_family(chunk) or "unknown") in fallback_family_set
@@ -4942,10 +4990,23 @@ def _apply_pre_generation_family_pool(
     policy["cross_family_fallback_used"] = True
     if fallback_chunks:
         policy["family_override_reason"] = "preferred_family_pool_empty_controlled_alias_fallback"
+        reranked_family_set = dedupe_strings(
+            (_resolve_chunk_source_family(chunk) or "unknown") for chunk in fallback_chunks
+        )
+        policy["reranked_family_set"] = reranked_family_set
+        policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
+        policy["family_gate_status"] = "controlled_alias_fallback"
         return fallback_chunks[:top_k_effective], policy
 
     policy["family_override_reason"] = "preferred_family_pool_empty_global_fallback"
-    return chunks[:top_k_effective], policy
+    filtered = chunks[:top_k_effective]
+    reranked_family_set = dedupe_strings(
+        (_resolve_chunk_source_family(chunk) or "unknown") for chunk in filtered
+    )
+    policy["reranked_family_set"] = reranked_family_set
+    policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
+    policy["family_gate_status"] = "global_fallback"
+    return filtered, policy
 
 
 def _build_trace_payload(
@@ -5018,6 +5079,10 @@ def _build_trace_payload(
             "expected_family_prior": (source_family_resolution or {}).get("expected_family_prior"),
             "selected_family_confidence": (source_family_resolution or {}).get("selected_family_confidence"),
             "family_override_reason": (retrieval_verification_features or {}).get("family_override_reason"),
+            "pre_filter_family_set": (retrieval_verification_features or {}).get("pre_filter_family_set"),
+            "reranked_family_set": (retrieval_verification_features or {}).get("reranked_family_set"),
+            "selected_family_source": (retrieval_verification_features or {}).get("selected_family_source"),
+            "family_gate_status": (retrieval_verification_features or {}).get("family_gate_status"),
             "family_candidates": (source_family_resolution or {}).get("family_candidates", []),
             "source_family_resolution": source_family_resolution,
             "retrieval_verification_features": retrieval_verification_features,
@@ -5113,6 +5178,10 @@ def _build_trace_payload(
             "cross_family_fallback_used": (retrieval_verification_features or {}).get("cross_family_fallback_used"),
             "family_override_reason": (retrieval_verification_features or {}).get("family_override_reason"),
             "selected_family_confidence": (retrieval_verification_features or {}).get("selected_family_confidence"),
+            "pre_filter_family_set": (retrieval_verification_features or {}).get("pre_filter_family_set"),
+            "reranked_family_set": (retrieval_verification_features or {}).get("reranked_family_set"),
+            "selected_family_source": (retrieval_verification_features or {}).get("selected_family_source"),
+            "family_gate_status": (retrieval_verification_features or {}).get("family_gate_status"),
             "retrieval_verification_features": retrieval_verification_features,
             "article_span_selector": article_span_selector,
             "pre_rerank_chunks": [
