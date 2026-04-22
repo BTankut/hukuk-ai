@@ -847,6 +847,28 @@ def build_or_repair_answer_contract(
     if isinstance(retrieval_features, dict) and retrieval_features.get("cross_family_conflict_flag") is True:
         verification_findings.append("cross_family_evidence_conflict")
 
+    article_selector = {}
+    if isinstance(trace_payload, dict):
+        retrieval = trace_payload.get("retrieval")
+        if isinstance(retrieval, dict):
+            article_selector = retrieval.get("article_span_selector") or {}
+    if isinstance(article_selector, dict):
+        selector_sufficiency = str(article_selector.get("selector_evidence_sufficiency") or "")
+        selector_review_reason = str(article_selector.get("manual_review_trigger_reason") or "")
+        metadata_strength = str(article_selector.get("metadata_identity_strength") or "")
+        if selector_sufficiency == "insufficient_support":
+            verification_findings.append("selector_insufficient_support")
+        elif selector_sufficiency == "partially_supported" and selector_review_reason:
+            verification_findings.append("selector_partial_support_review")
+        if selector_review_reason:
+            finding = f"selector_{selector_review_reason}"
+            if finding not in verification_findings:
+                verification_findings.append(finding)
+        if metadata_strength == "weak" and selector_sufficiency != "exact_enough":
+            finding = "selector_weak_metadata_identity"
+            if finding not in verification_findings:
+                verification_findings.append(finding)
+
     if verification_findings and grounding_status == "fully_grounded":
         grounding_status = "partially_grounded"
         answer_mode = "qualified_answer"

@@ -108,6 +108,13 @@ def test_enrich_metadata_adds_phase4_canonical_fields(tmp_path, monkeypatch):
     assert enriched["canonical_identifier"] == "10868"
     assert enriched["canonical_identifier_type"] == "karar_sayisi"
     assert enriched["issuer_normalized"] == "cumhurbaskanligi"
+    assert enriched["issuer_canonical"] == "Cumhurbaşkanlığı"
+    assert enriched["issuing_body_level"] == "cumhurbaskanligi"
+    assert enriched["decision_year"] == "2026"
+    assert enriched["decision_number"] == "10868"
+    assert enriched["is_repealed"] is False
+    assert enriched["canonical_title_family_normalized"].startswith("2026 yili yatirim programinin")
+    assert enriched["metadata_provenance"]["decision_number"] == "inferred-normalized"
     assert "2026" in enriched["year_signals"]
     assert "10868" in enriched["cross_refs"]
     load_source_title_catalog.cache_clear()
@@ -165,6 +172,8 @@ def test_phase5_canonical_catalog_groups_source_identity(tmp_path, monkeypatch):
     assert record["canonical_identifier"] == "3350"
     assert record["canonical_identifier_type"] == "karar_sayisi"
     assert record["issuer"] == "Cumhurbaşkanlığı"
+    assert record["decision_number"] == "3350"
+    assert record["decision_year"] == "2020"
     assert "2020" in record["year_signals"]
     assert "2021" in record["year_signals"]
     assert "3350" in record["cross_refs"]
@@ -172,6 +181,38 @@ def test_phase5_canonical_catalog_groups_source_identity(tmp_path, monkeypatch):
     assert audit["record_count"] == 1
     assert audit["missing"]["canonical_title"] == 0
     load_canonical_source_catalog.cache_clear()
+
+
+def test_phase6_family_metadata_backfill_extracts_teblig_and_university_fields(tmp_path, monkeypatch):
+    article_rows = tmp_path / "article_rows.jsonl"
+    article_rows.write_text("", encoding="utf-8")
+    monkeypatch.setenv("MEVZUAT_ARTICLE_ROWS_PATH", str(article_rows))
+    load_source_metadata_catalog.cache_clear()
+    load_source_title_catalog.cache_clear()
+
+    teblig = enrich_metadata_with_source_title(
+        {
+            "belge_turu": "teblig",
+            "belge_no": "19186",
+            "belge_adi": "VERGİ USUL KANUNU GENEL TEBLİĞİ (SIRA NO: 431)",
+            "resmi_gazete_tarih": "2013-12-30",
+        }
+    )
+    university = enrich_metadata_with_source_title(
+        {
+            "belge_turu": "uy",
+            "belge_no": "40969",
+            "belge_adi": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+        }
+    )
+
+    assert teblig["sira_no"] == "431"
+    assert teblig["decision_year"] == "2013"
+    assert teblig["metadata_provenance"]["sira_no"] == "inferred-normalized"
+    assert university["university_name_canonical"] == "KIRKLARELİ ÜNİVERSİTESİ"
+    assert university["issuing_body_level"] == "universite"
+    load_source_title_catalog.cache_clear()
+    load_source_metadata_catalog.cache_clear()
 
 
 def test_phase5_normalization_and_identifier_type_helpers():

@@ -190,3 +190,50 @@ def test_repair_accepts_phase4_canonical_same_evidence_fields():
     assert contract["grounding_status"] == "fully_grounded"
     assert contract["needs_manual_review"] is False
     assert contract["verification_findings"] == []
+
+
+def test_repair_uses_phase6_selector_insufficient_support_as_confidence_ceiling():
+    result = build_or_repair_answer_contract(
+        qid="PHASE6-SELECTOR",
+        answer_text="Tez danışmanı madde 12'de düzenlenir. [Kaynak: 2547 m.12]",
+        citations=["2547 m.12"],
+        answer_contract={
+            "answer_text": "Tez danışmanı madde 12'de düzenlenir. [Kaynak: 2547 m.12]",
+            "primary_source_id": "2547 m.12",
+            "source_family_claimed": "KANUN",
+            "source_identifier_claimed": "2547 m.12",
+            "article_or_section_claimed": "madde:12",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "article_span_selector": {
+                    "selector_evidence_sufficiency": "insufficient_support",
+                    "metadata_identity_strength": "weak",
+                    "manual_review_trigger_reason": "insufficient_selector_support",
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "2547:m12:f0",
+                    "citation": "2547 m.12/f.0",
+                    "source_family": "kanun",
+                    "source_identifier": "2547 m.12",
+                    "source_title": "YÜKSEKÖĞRETİM KANUNU",
+                    "article_or_section": "12",
+                    "effective_state": "active",
+                    "quoted_or_extracted_span": "Genel kanun hükmü.",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "partially_grounded"
+    assert contract["confidence_0_100"] < 70
+    assert contract["needs_manual_review"] is True
+    assert "selector_insufficient_support" in contract["verification_findings"]
+    assert "selector_insufficient_selector_support" in contract["verification_findings"]

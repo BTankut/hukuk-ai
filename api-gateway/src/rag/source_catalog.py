@@ -316,6 +316,150 @@ def _extract_cross_refs(*values: Any) -> list[str]:
     return sorted(refs)
 
 
+def _first_regex_group(pattern: str, *values: Any, flags: int = re.IGNORECASE) -> str:
+    for value in values:
+        text = _clean(value)
+        if not text:
+            continue
+        match = re.search(pattern, text, flags=flags)
+        if match:
+            return _clean(match.group(1))
+    return ""
+
+
+def _year_from_date(value: Any) -> str:
+    match = re.search(r"\b(18\d{2}|19\d{2}|20\d{2})\b", _clean(value))
+    return match.group(1) if match else ""
+
+
+def _issuing_body_level(family: str, issuer: str) -> str:
+    normalized_issuer = normalize_canonical_text(issuer)
+    if family in {"kanun", "mulga_kanun"} or "turkiye buyuk millet meclisi" in normalized_issuer:
+        return "tbmm"
+    if family in {"cb_karar", "cb_kararname", "cb_genelge", "cb_yonetmelik"} or "cumhurbaskanligi" in normalized_issuer:
+        return "cumhurbaskanligi"
+    if family in {"khk", "tuzuk"} or "bakanlar kurulu" in normalized_issuer:
+        return "bakanlar_kurulu"
+    if "universitesi" in normalized_issuer:
+        return "universite"
+    if "bakanligi" in normalized_issuer:
+        return "bakanlik"
+    if issuer:
+        return "kurum"
+    return "unknown"
+
+
+def _family_title_normalized(title: str) -> str:
+    normalized = normalize_canonical_text(title)
+    replacements = (
+        r"\bhakkinda yonetmelik\b",
+        r"\biliskin yonetmelik\b",
+        r"\bkarar sayisi \d+\b",
+        r"\bkararname numarasi \d+\b",
+        r"\bsira no \d+\b",
+        r"\bseri no \d+\b",
+        r"\bteblig no [0-9/\-]+\b",
+    )
+    for pattern in replacements:
+        normalized = re.sub(pattern, " ", normalized)
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _structured_metadata_backfill(metadata: dict[str, Any]) -> dict[str, Any]:
+    title = _first_present(
+        metadata.get("full_title"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+        metadata.get("kanun_adi"),
+        metadata.get("law_name"),
+        metadata.get("title"),
+    )
+    family = canonical_source_family(metadata)
+    source_key = _source_key_from_row(metadata)
+    identifier = _first_present(
+        metadata.get("canonical_identifier"),
+        metadata.get("belge_no"),
+        metadata.get("kanun_no"),
+        metadata.get("law_no"),
+        metadata.get("belge_kisa_adi"),
+        metadata.get("kanun_kisa_adi"),
+        metadata.get("law_short_name"),
+        source_key,
+    )
+    issuer = infer_issuer(metadata) or ""
+    official_gazette_date = _first_present(metadata.get("official_gazette_date"), metadata.get("resmi_gazete_tarih"))
+    effective_start = _first_present(metadata.get("effective_start"), metadata.get("yururluk_baslangic"))
+    year = _first_present(
+        metadata.get("decision_year"),
+        _year_from_date(official_gazette_date),
+        _year_from_date(effective_start),
+        *(_extract_year_signals(title, metadata.get("source_id"))[:1] or [""]),
+    )
+
+    decision_number = _first_present(
+        metadata.get("decision_number"),
+        _first_regex_group(r"karar\s+say[ıi]s[ıi]\s*:?\s*([0-9]+)", title),
+        identifier if family == "cb_karar" else "",
+    )
+    kararname_number = _first_present(
+        metadata.get("kararname_number"),
+        _first_regex_group(r"kararname\s+numaras[ıi]\s*:?\s*([0-9]+)", title),
+        identifier if family == "cb_kararname" else "",
+    )
+    genelge_number = _first_present(
+        metadata.get("genelge_number"),
+        metadata.get("generalge_number"),
+        _first_regex_group(r"\b([0-9]{4}/[0-9]+)\s+say[ıi]l[ıi].*genelge", title),
+        identifier if family == "cb_genelge" else "",
+    )
+    teblig_number = _first_present(
+        metadata.get("teblig_number"),
+        _first_regex_group(r"tebli[ğg]\s+no\s*:?\s*([0-9][0-9A-Za-z/\-.]*)", title),
+    )
+    sira_no = _first_present(
+        metadata.get("sira_no"),
+        metadata.get("sıra_no"),
+        _first_regex_group(r"s[ıi]ra\s+no\s*:?\s*([0-9]+)", title),
+    )
+    seri_no = _first_present(
+        metadata.get("seri_no"),
+        _first_regex_group(r"seri\s+no\s*:?\s*([0-9A-Za-z/\-.]+)", title),
+    )
+    university_name = _extract_university_issuer(title)
+    effective_state = resolve_effective_state(metadata)
+    is_amended = bool(
+        metadata.get("is_amended")
+        or "degisiklik" in normalize_canonical_text(title)
+        or "degistirilmesi" in normalize_canonical_text(title)
+    )
+
+    backfill = {
+        "issuer_canonical": issuer,
+        "issuing_body_level": _issuing_body_level(family, issuer),
+        "decision_year": year,
+        "decision_number": decision_number,
+        "kararname_number": kararname_number,
+        "regulation_number": identifier if family in {"yonetmelik", "cb_yonetmelik", "kky", "uy"} else "",
+        "genelge_number": genelge_number,
+        "generalge_number": genelge_number,
+        "teblig_number": teblig_number,
+        "sira_no": sira_no,
+        "seri_no": seri_no,
+        "is_repealed": effective_state == "repealed",
+        "is_amended": is_amended,
+        "university_name_canonical": university_name,
+        "canonical_title_family_normalized": _family_title_normalized(title),
+    }
+    provenance = {
+        key: "inferred-normalized"
+        for key, value in backfill.items()
+        if value not in (None, "", [])
+    }
+    if provenance:
+        backfill["metadata_provenance"] = provenance
+    return {key: value for key, value in backfill.items() if value not in (None, "", [])}
+
+
 def canonical_source_record_from_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
     if not metadata:
         return {}
@@ -350,6 +494,7 @@ def canonical_source_record_from_metadata(metadata: dict[str, Any] | None) -> di
     effective_start = _first_present(metadata.get("effective_start"), metadata.get("yururluk_baslangic"))
     effective_end = _first_present(metadata.get("effective_end"), metadata.get("yururluk_bitis"))
     issuer = infer_issuer(metadata) or ""
+    structured = _structured_metadata_backfill(metadata)
     alias_titles = [
         value
         for value in dict.fromkeys(
@@ -377,17 +522,34 @@ def canonical_source_record_from_metadata(metadata: dict[str, Any] | None) -> di
         "canonical_identifier_type": canonical_identifier_type(metadata),
         "issuer": issuer,
         "issuer_normalized": normalize_canonical_text(issuer),
+        "issuer_canonical": structured.get("issuer_canonical"),
+        "issuing_body_level": structured.get("issuing_body_level"),
         "official_gazette_no": official_gazette_no,
         "official_gazette_date": official_gazette_date,
+        "decision_year": structured.get("decision_year"),
+        "decision_number": structured.get("decision_number"),
+        "kararname_number": structured.get("kararname_number"),
+        "regulation_number": structured.get("regulation_number"),
+        "genelge_number": structured.get("genelge_number"),
+        "generalge_number": structured.get("generalge_number"),
+        "teblig_number": structured.get("teblig_number"),
+        "sira_no": structured.get("sira_no"),
+        "seri_no": structured.get("seri_no"),
         "effective_start": effective_start,
         "effective_end": effective_end,
         "effective_state": resolve_effective_state(metadata),
+        "is_repealed": structured.get("is_repealed"),
+        "is_amended": structured.get("is_amended"),
+        "university_name_canonical": structured.get("university_name_canonical"),
+        "canonical_title_family_normalized": structured.get("canonical_title_family_normalized"),
+        "metadata_provenance": structured.get("metadata_provenance"),
         "year_signals": _extract_year_signals(
             title,
             official_gazette_date,
             effective_start,
             effective_end,
             metadata.get("source_id"),
+            structured.get("decision_year"),
         ),
         "alias_titles": alias_titles,
         "cross_refs": _extract_cross_refs(title, metadata.get("source_id")),
@@ -403,6 +565,9 @@ def _merge_canonical_records(current: dict[str, Any] | None, incoming: dict[str,
         for key, value in incoming.items():
             if key in {"alias_titles", "cross_refs", "year_signals"}:
                 merged[key] = sorted(set(merged.get(key) or []) | set(value or []))
+            elif key == "metadata_provenance" and isinstance(value, dict):
+                current_provenance = merged.get(key) if isinstance(merged.get(key), dict) else {}
+                merged[key] = {**current_provenance, **value}
             elif not merged.get(key) and value:
                 merged[key] = value
 
@@ -444,6 +609,22 @@ def _metadata_record_from_row(row: dict[str, Any]) -> dict[str, Any]:
         "canonical_identifier": canonical_record.get("canonical_identifier"),
         "canonical_identifier_type": canonical_record.get("canonical_identifier_type"),
         "issuer_normalized": canonical_record.get("issuer_normalized"),
+        "issuer_canonical": canonical_record.get("issuer_canonical"),
+        "issuing_body_level": canonical_record.get("issuing_body_level"),
+        "decision_year": canonical_record.get("decision_year"),
+        "decision_number": canonical_record.get("decision_number"),
+        "kararname_number": canonical_record.get("kararname_number"),
+        "regulation_number": canonical_record.get("regulation_number"),
+        "genelge_number": canonical_record.get("genelge_number"),
+        "generalge_number": canonical_record.get("generalge_number"),
+        "teblig_number": canonical_record.get("teblig_number"),
+        "sira_no": canonical_record.get("sira_no"),
+        "seri_no": canonical_record.get("seri_no"),
+        "is_repealed": canonical_record.get("is_repealed"),
+        "is_amended": canonical_record.get("is_amended"),
+        "university_name_canonical": canonical_record.get("university_name_canonical"),
+        "canonical_title_family_normalized": canonical_record.get("canonical_title_family_normalized"),
+        "metadata_provenance": canonical_record.get("metadata_provenance"),
         "year_signals": canonical_record.get("year_signals"),
         "alias_titles": canonical_record.get("alias_titles"),
         "cross_refs": canonical_record.get("cross_refs"),
@@ -519,11 +700,25 @@ def canonical_catalog_audit(catalog: dict[str, dict[str, Any]] | None = None) ->
         "canonical_identifier_type",
         "issuer",
         "issuer_normalized",
+        "issuer_canonical",
+        "issuing_body_level",
         "official_gazette_no",
         "official_gazette_date",
+        "decision_year",
+        "decision_number",
+        "kararname_number",
+        "regulation_number",
+        "genelge_number",
+        "teblig_number",
+        "sira_no",
+        "seri_no",
         "effective_start",
         "effective_end",
         "effective_state",
+        "is_repealed",
+        "is_amended",
+        "university_name_canonical",
+        "canonical_title_family_normalized",
         "year_signals",
         "alias_titles",
         "cross_refs",
@@ -643,6 +838,22 @@ def enrich_metadata_with_source_title(metadata: dict[str, Any] | None) -> dict[s
         "canonical_identifier",
         "canonical_identifier_type",
         "issuer_normalized",
+        "issuer_canonical",
+        "issuing_body_level",
+        "decision_year",
+        "decision_number",
+        "kararname_number",
+        "regulation_number",
+        "genelge_number",
+        "generalge_number",
+        "teblig_number",
+        "sira_no",
+        "seri_no",
+        "is_repealed",
+        "is_amended",
+        "university_name_canonical",
+        "canonical_title_family_normalized",
+        "metadata_provenance",
         "year_signals",
         "alias_titles",
         "cross_refs",
