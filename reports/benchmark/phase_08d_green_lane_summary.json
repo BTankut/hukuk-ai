@@ -1,0 +1,7 @@
+{
+  "status": "pass",
+  "python": "/Users/btmacstudio/Projects/hukuk-ai/api-gateway/.venv/bin/python",
+  "ci_mode": false,
+  "run_validation": "pass",
+  "out_dir": "reports/benchmark/green_lane/20260422T140047Z_phase8d_full"
+}
