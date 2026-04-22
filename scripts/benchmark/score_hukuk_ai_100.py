@@ -87,6 +87,8 @@ SCORED_FIELDS = [
     "selector_reason",
     "article_match_type",
     "selector_article_lock_type",
+    "preferred_source_families",
+    "selector_preferred_family_hit",
     "query_article_alignment",
     "article_alignment",
     "selected_article_equals_claimed_article",
@@ -477,6 +479,8 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "selector_reason": answer.get("selector_reason", ""),
         "article_match_type": answer.get("article_match_type", ""),
         "selector_article_lock_type": answer.get("selector_article_lock_type", ""),
+        "preferred_source_families": answer.get("preferred_source_families", ""),
+        "selector_preferred_family_hit": answer.get("selector_preferred_family_hit", ""),
         "query_article_alignment": answer.get("query_article_alignment", ""),
         "article_alignment": article_alignment,
         "selected_article_equals_claimed_article": bool_text(selected_article_equals_claimed_article),
@@ -539,6 +543,10 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
     selector_reason_counts = Counter(row.get("selector_reason", "") or "unknown" for row in rows)
     selector_article_lock_type_counts = Counter(row.get("selector_article_lock_type", "") or "unknown" for row in rows)
+    preferred_family_rows = [row for row in rows if row.get("preferred_source_families")]
+    preferred_family_hit_rows = [
+        row for row in preferred_family_rows if bool_field(str(row.get("selector_preferred_family_hit", ""))) is True
+    ]
     article_match_type_counts = Counter(row.get("article_match_type", "") or "unknown" for row in rows)
     article_alignment_counts = Counter(row.get("article_alignment", "") or "unknown" for row in rows)
     query_article_alignment_counts = Counter(row.get("query_article_alignment", "") or "unknown" for row in rows)
@@ -588,6 +596,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
         "selector_reason_counts": dict(sorted(selector_reason_counts.items())),
         "selector_article_lock_type_counts": dict(sorted(selector_article_lock_type_counts.items())),
+        "selector_preferred_family_hit_rate": round(len(preferred_family_hit_rows) / len(preferred_family_rows), 4)
+        if preferred_family_rows
+        else 0.0,
         "article_match_type_counts": dict(sorted(article_match_type_counts.items())),
         "article_alignment_counts": dict(sorted(article_alignment_counts.items())),
         "query_article_alignment_counts": dict(sorted(query_article_alignment_counts.items())),
@@ -661,6 +672,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- selector_same_document_hit_rate: {summary['selector_same_document_hit_rate']}",
         f"- selected_article_equals_claimed_article_count: {summary['selected_article_equals_claimed_article_count']}",
         f"- selected_article_equals_claimed_article_rate: {summary['selected_article_equals_claimed_article_rate']}",
+        f"- selector_preferred_family_hit_rate: {summary['selector_preferred_family_hit_rate']}",
         f"- avg_selector_support_span_count: {summary['avg_selector_support_span_count']}",
         f"- temporal_state_resolved_count: {summary['temporal_state_resolved_count']}",
         f"- article_lock_failed_count: {summary['article_lock_failed_count']}",

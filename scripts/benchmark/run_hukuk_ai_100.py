@@ -74,6 +74,8 @@ ANSWER_FIELDS = [
     "selector_reason",
     "article_match_type",
     "selector_article_lock_type",
+    "preferred_source_families",
+    "selector_preferred_family_hit",
     "query_article_alignment",
     "article_alignment",
     "selected_article_equals_claimed_article",
@@ -372,6 +374,8 @@ def selector_value(response: dict[str, Any], key: str) -> str:
         return "True" if value else "False"
     if value is None:
         return ""
+    if isinstance(value, list):
+        return stringify_list(value)
     return str(value)
 
 
@@ -442,6 +446,8 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "selector_reason": selector_value(response, "selector_reason"),
         "article_match_type": selector_value(response, "article_match_type"),
         "selector_article_lock_type": selector_value(response, "selector_article_lock_type"),
+        "preferred_source_families": selector_value(response, "preferred_source_families"),
+        "selector_preferred_family_hit": selector_value(response, "selector_preferred_family_hit"),
         "query_article_alignment": selector_value(response, "query_article_alignment"),
         "article_alignment": extracted_article_alignment(response),
         "selected_article_equals_claimed_article": (

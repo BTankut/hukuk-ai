@@ -1825,6 +1825,51 @@ def _contains_exception_signal(text: str) -> bool:
     )
 
 
+def _selector_preferred_source_families(query: str, requested_source_families: list[str]) -> set[str]:
+    normalized = _normalize_tr_text(query or "")
+    preferred: list[str] = []
+    if any(term in normalized for term in ("cumhurbaskanligi yonetmeligi", "devlet arsiv")):
+        preferred.append("cb_yonetmelik")
+    if any(term in normalized for term in ("cumhurbaskanligi genelgesi", "cumhurbaskani genelgesi", "genelge")):
+        preferred.append("cb_genelge")
+    if any(
+        term in normalized
+        for term in (
+            "cumhurbaskanligi karari",
+            "cumhurbaskani karari",
+            "yatirim programi karari",
+            "ithalat rejimi karari",
+        )
+    ):
+        preferred.append("cb_karar")
+    if "teblig" in normalized:
+        preferred.append("teblig")
+    if any(
+        term in normalized
+        for term in (
+            "universite",
+            "universitesi",
+            "yuksek lisans",
+            "lisansustu",
+            "tez savunma",
+            "ogrenci yonetmeligi",
+            "yatay gecis",
+            "cift anadal",
+        )
+    ):
+        preferred.append("uy")
+    if any(term in normalized for term in ("kurum yonetmeligi", "bddk", "sgk", "epdk", "btk", "rtuk")):
+        preferred.append("kky")
+    if "mulga" in normalized:
+        preferred.append("mulga_kanun")
+
+    requested_expanded = set(_expand_source_family_aliases(requested_source_families))
+    preferred_set = set(dedupe_strings(preferred))
+    if requested_expanded:
+        preferred_set = {family for family in preferred_set if family in requested_expanded}
+    return preferred_set
+
+
 def _selector_article_lock_type(
     *,
     top_trace: dict[str, Any] | None,
@@ -1878,7 +1923,8 @@ def _select_article_span_evidence(
     identifier_tokens = _extract_source_identifier_tokens(query)
     article_tokens = _extract_query_article_tokens(query, explicit_article_refs)
     clause_tokens = _extract_query_clause_tokens(query)
-    requested_family_set = set(requested_source_families)
+    requested_family_set = set(_expand_source_family_aliases(requested_source_families))
+    preferred_family_set = _selector_preferred_source_families(query, requested_source_families)
     selected_source_key_set = {
         value
         for key in (selected_source_keys or set())
@@ -1931,6 +1977,7 @@ def _select_article_span_evidence(
         clause_match = bool(clause_tokens and clause_token and clause_token in clause_tokens)
         identifier_match = _chunk_matches_identifier_tokens(chunk, identifier_tokens)
         family_match = bool(requested_family_set and family in requested_family_set)
+        preferred_family_match = bool(preferred_family_set and family in preferred_family_set)
         selected_source_match = bool(
             selected_source_key_set
             and (
@@ -1960,6 +2007,10 @@ def _select_article_span_evidence(
             score += 45
         if family_match:
             score += 40
+        if preferred_family_match:
+            score += 45
+        elif preferred_family_set:
+            score -= 45
         if law_match:
             score += 30
         score += min(title_overlap, 8) * 7
@@ -2011,6 +2062,7 @@ def _select_article_span_evidence(
                     ),
                     "identifier_match": identifier_match,
                     "family_match": family_match,
+                    "preferred_family_match": preferred_family_match,
                     "selected_source_match": selected_source_match,
                     "law_match": law_match,
                     "title_overlap": title_overlap,
@@ -2034,6 +2086,21 @@ def _select_article_span_evidence(
         document_lock_candidates = [item for item in ranked if item[3].get("identifier_match")]
         if document_lock_candidates:
             document_lock_reason = "identifier_lock"
+    if not document_lock_candidates and preferred_family_set:
+        document_lock_candidates = [
+            item
+            for item in ranked
+            if item[3].get("preferred_family_match")
+            and (
+                item[3].get("title_overlap", 0) >= 1
+                or item[3].get("heading_overlap", 0) >= 1
+                or item[3].get("text_overlap", 0) >= 2
+                or item[3].get("article_match")
+                or item[3].get("adjacent_article_match")
+            )
+        ]
+        if document_lock_candidates:
+            document_lock_reason = "preferred_family_lock"
     if not document_lock_candidates and requested_family_set:
         document_lock_candidates = [
             item
@@ -2104,6 +2171,9 @@ def _select_article_span_evidence(
         if identifier_tokens and trace.get("identifier_match"):
             selector_document_rank = rank
             break
+        if preferred_family_set and trace.get("preferred_family_match"):
+            selector_document_rank = rank
+            break
         if not selected_source_keys and not identifier_tokens and requested_family_set and trace.get("family_match"):
             selector_document_rank = rank
             break
@@ -2161,6 +2231,8 @@ def _select_article_span_evidence(
         "query_clause_tokens": sorted(clause_tokens),
         "identifier_tokens": sorted(identifier_tokens),
         "requested_source_families": requested_source_families,
+        "preferred_source_families": sorted(preferred_family_set),
+        "selector_preferred_family_hit": bool(top_trace and top_trace.get("preferred_family_match")),
         "selected_source_keys": sorted(selected_source_key_set),
         "selected_document_id": primary_source_key or None,
         "selected_article": selected_article,

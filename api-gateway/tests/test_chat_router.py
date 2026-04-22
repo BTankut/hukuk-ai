@@ -1414,11 +1414,50 @@ class TestLawSignalParsing:
 
         assert selected[0].citation == "40969 m.27/f.0"
         assert "kirklareli" in selector["selected_document_id"]
-        assert selector["selector_reason"] == "family_title_lock"
+        assert selector["selector_reason"] == "preferred_family_lock"
         assert selector["article_match_type"] == "source_local_support"
         assert selector["selector_article_lock_type"] == "semantic_exact"
         assert selector["selector_exact_article_hit"] is True
         assert selector["query_article_alignment"] == "unknown"
+
+    def test_article_span_selector_prefers_specific_family_inside_broad_yonetmelik_alias(self):
+        chunks = [
+            RetrievedChunk(
+                text="Genel yönetmelikte tez danışmanı için farklı bir kurul usulü anlatılır.",
+                citation="GENEL-YON m.27/f.0",
+                source="GENEL-YON",
+                score=0.99,
+                metadata={
+                    "source_title": "GENEL BİR YÖNETMELİK",
+                    "belge_turu": "yonetmelik",
+                    "madde_no": "27",
+                },
+            ),
+            RetrievedChunk(
+                text="Üniversite lisansüstü yönetmeliğinde tez danışmanı öğrencinin çalışmasına göre atanır.",
+                citation="40969 m.12/f.0",
+                source="40969",
+                score=0.50,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "madde_no": "12",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="Üniversite yüksek lisans yönetmeliğine göre tez danışmanı nasıl atanır?",
+            chunks=chunks,
+            requested_source_families=["yonetmelik"],
+            explicit_article_refs=[],
+        )
+
+        assert selected[0].citation == "40969 m.12/f.0"
+        assert selector["preferred_source_families"] == ["uy"]
+        assert selector["selector_preferred_family_hit"] is True
+        assert selector["selector_reason"] == "preferred_family_lock"
+        assert selector["top_scores"][0]["source_family"] == "uy"
 
     def test_article_span_selector_marks_semantic_exact_when_question_has_no_article_number(self):
         chunks = [
