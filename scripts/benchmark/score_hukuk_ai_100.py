@@ -72,6 +72,12 @@ SCORED_FIELDS = [
     "selector_article_rank",
     "selector_exact_article_hit",
     "selector_support_span_count",
+    "selected_document_id",
+    "selected_article",
+    "selected_paragraph_or_clause",
+    "support_span_count",
+    "selector_reason",
+    "article_match_type",
     "selector_evidence_sufficiency",
     "metadata_identity_strength",
     "temporal_state_resolved",
@@ -437,6 +443,12 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "selector_article_rank": answer.get("selector_article_rank", ""),
         "selector_exact_article_hit": answer.get("selector_exact_article_hit", ""),
         "selector_support_span_count": answer.get("selector_support_span_count", ""),
+        "selected_document_id": answer.get("selected_document_id", ""),
+        "selected_article": answer.get("selected_article", ""),
+        "selected_paragraph_or_clause": answer.get("selected_paragraph_or_clause", ""),
+        "support_span_count": answer.get("support_span_count", ""),
+        "selector_reason": answer.get("selector_reason", ""),
+        "article_match_type": answer.get("article_match_type", ""),
         "selector_evidence_sufficiency": answer.get("selector_evidence_sufficiency", ""),
         "metadata_identity_strength": answer.get("metadata_identity_strength", ""),
         "temporal_state_resolved": answer.get("temporal_state_resolved", ""),
@@ -490,6 +502,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     ]
     metadata_strength_counts = Counter(row.get("metadata_identity_strength", "") or "unknown" for row in rows)
     evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
+    selector_reason_counts = Counter(row.get("selector_reason", "") or "unknown" for row in rows)
+    article_match_type_counts = Counter(row.get("article_match_type", "") or "unknown" for row in rows)
 
     summary = {
         "scoring_mode": "deterministic_proxy_phase_2_answer_contract_not_human_judge",
@@ -534,6 +548,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "avg_selector_support_span_count": round(sum(selector_support_counts) / len(rows), 3) if rows else 0.0,
         "metadata_identity_strength_counts": dict(sorted(metadata_strength_counts.items())),
         "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
+        "selector_reason_counts": dict(sorted(selector_reason_counts.items())),
+        "article_match_type_counts": dict(sorted(article_match_type_counts.items())),
         "temporal_state_resolved_count": sum(
             1 for row in rows if bool_field(str(row.get("temporal_state_resolved", ""))) is True
         ),
@@ -589,6 +605,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Metadata Identity Strength"])
     for status, count in summary["metadata_identity_strength_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Selector Reason"])
+    for status, count in summary["selector_reason_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Article Match Type"])
+    for status, count in summary["article_match_type_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(
         [

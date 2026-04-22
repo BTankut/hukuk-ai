@@ -1599,6 +1599,31 @@ def _chunk_article_token(chunk: RetrievedChunk) -> str:
     return ""
 
 
+def _extract_query_clause_tokens(query: str) -> set[str]:
+    normalized = _normalize_tr_text(query or "")
+    tokens: set[str] = set()
+    for match in re.finditer(r"\b(\d+)\s*(?:inci|nci|uncu|\.?)?\s*f[ıi]kra[a-z]*\b", normalized):
+        tokens.add(f"f{match.group(1)}")
+    for match in re.finditer(r"\b(?:f[ıi]kra|f)\.?\s*(\d+)\b", normalized):
+        tokens.add(f"f{match.group(1)}")
+    for match in re.finditer(r"\b([a-z])\s*bendi\b", normalized):
+        tokens.add(f"b{match.group(1)}")
+    for match in re.finditer(r"\bbent\s*[:.]?\s*([a-z])\b", normalized):
+        tokens.add(f"b{match.group(1)}")
+    return tokens
+
+
+def _chunk_clause_token(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    fikra = _normalize_whitespace(str(metadata.get("fikra_no") or metadata.get("paragraph_no") or ""))
+    if fikra and fikra != "0":
+        return f"f{fikra.lower()}"
+    bent = _normalize_whitespace(str(metadata.get("bent_no") or metadata.get("clause_no") or ""))
+    if bent:
+        return f"b{bent.lower()}"
+    return ""
+
+
 def _extract_query_article_tokens(
     query: str,
     explicit_article_refs: list[tuple[str, str]] | None = None,
@@ -1740,7 +1765,14 @@ def _select_article_span_evidence(
     query_terms = _extract_retrieval_priority_terms(query)
     identifier_tokens = _extract_source_identifier_tokens(query)
     article_tokens = _extract_query_article_tokens(query, explicit_article_refs)
+    clause_tokens = _extract_query_clause_tokens(query)
     requested_family_set = set(requested_source_families)
+    selected_source_key_set = {
+        value
+        for key in (selected_source_keys or set())
+        for value in (str(key).strip().lower(), _normalize_tr_text(str(key)), normalize_canonical_text(str(key)))
+        if value
+    }
     numbered_laws = set(extract_numbered_law_mentions(query))
     explicit_ref_set = {
         (law, _normalize_article_token(article))
@@ -1771,6 +1803,7 @@ def _select_article_span_evidence(
         title = _resolve_chunk_source_title(chunk)
         heading = metadata.get("heading") or metadata.get("article_heading")
         article_token = _chunk_article_token(chunk)
+        clause_token = _chunk_clause_token(chunk)
         chunk_laws = _chunk_law_candidates(chunk)
 
         explicit_ref_match = False
@@ -1783,9 +1816,17 @@ def _select_article_span_evidence(
         article_match = bool(article_tokens and article_token in article_tokens)
         article_distance = _article_window_distance(article_token, article_tokens)
         adjacent_article_match = article_distance == 1
+        clause_match = bool(clause_tokens and clause_token and clause_token in clause_tokens)
         identifier_match = _chunk_matches_identifier_tokens(chunk, identifier_tokens)
         family_match = bool(requested_family_set and family in requested_family_set)
-        selected_source_match = bool(selected_source_keys and source_key in selected_source_keys)
+        selected_source_match = bool(
+            selected_source_key_set
+            and (
+                source_key in selected_source_key_set
+                or _normalize_tr_text(source_key) in selected_source_key_set
+                or normalize_canonical_text(source_key) in selected_source_key_set
+            )
+        )
         law_match = bool(numbered_laws and numbered_laws & chunk_laws)
         title_overlap = _count_term_overlap(title, query_terms)
         heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
@@ -1799,6 +1840,8 @@ def _select_article_span_evidence(
             score += 70
         elif adjacent_article_match:
             score += 22
+        if clause_match:
+            score += 12
         if selected_source_match:
             score += 55
         if identifier_match:
@@ -1819,6 +1862,8 @@ def _select_article_span_evidence(
             score -= 35
         if numbered_laws and not law_match:
             score -= 18
+        if article_tokens and article_token == "0" and not article_match:
+            score -= 55
         if current_validity_query:
             score -= _chunk_active_rank(chunk) * 20
 
@@ -1835,10 +1880,23 @@ def _select_article_span_evidence(
                     "source_family": family or None,
                     "source_identifier": _resolve_chunk_source_identifier(chunk),
                     "article_or_section": article_token or None,
+                    "paragraph_or_clause": clause_token or None,
                     "explicit_ref_match": explicit_ref_match,
                     "article_match": article_match,
                     "adjacent_article_match": adjacent_article_match,
                     "article_window_distance": article_distance,
+                    "clause_match": clause_match,
+                    "article_match_type": (
+                        "explicit_exact"
+                        if explicit_ref_match
+                        else "exact"
+                        if article_match
+                        else "adjacent"
+                        if adjacent_article_match
+                        else "source_local_support"
+                        if title_overlap or heading_overlap or text_overlap
+                        else "none"
+                    ),
                     "identifier_match": identifier_match,
                     "family_match": family_match,
                     "selected_source_match": selected_source_match,
@@ -1852,7 +1910,38 @@ def _select_article_span_evidence(
         )
 
     ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
-    primary_source_key = _resolve_chunk_source_key(ranked[0][2]) if ranked else ""
+    document_lock_reason = "top_ranked"
+    document_lock_candidates: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
+    if selected_source_keys:
+        document_lock_candidates = [item for item in ranked if item[3].get("selected_source_match")]
+        if document_lock_candidates:
+            document_lock_reason = "selected_source_lock"
+    if not document_lock_candidates and identifier_tokens:
+        document_lock_candidates = [item for item in ranked if item[3].get("identifier_match")]
+        if document_lock_candidates:
+            document_lock_reason = "identifier_lock"
+    if not document_lock_candidates and requested_family_set:
+        document_lock_candidates = [
+            item
+            for item in ranked
+            if item[3].get("family_match")
+            and (
+                item[3].get("title_overlap", 0) >= 1
+                or item[3].get("heading_overlap", 0) >= 1
+                or item[3].get("text_overlap", 0) >= 2
+                or item[3].get("article_match")
+                or item[3].get("adjacent_article_match")
+            )
+        ]
+        if document_lock_candidates:
+            document_lock_reason = "family_title_lock"
+    if not document_lock_candidates and numbered_laws:
+        document_lock_candidates = [item for item in ranked if item[3].get("law_match")]
+        if document_lock_candidates:
+            document_lock_reason = "numbered_law_lock"
+    if not document_lock_candidates and ranked:
+        document_lock_candidates = [ranked[0]]
+    primary_source_key = _resolve_chunk_source_key(document_lock_candidates[0][2]) if document_lock_candidates else ""
     window_items: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
     if primary_source_key:
         exact_items = [
@@ -1878,10 +1967,11 @@ def _select_article_span_evidence(
                 item[3].get("heading_overlap", 0) >= 1
                 or item[3].get("text_overlap", 0) >= 2
                 or item[3].get("title_overlap", 0) >= 2
+                or (not article_tokens and item[3].get("family_match"))
             )
         ]
-        if exact_items or adjacent_items:
-            window_items = [*exact_items[:2], *adjacent_items[:2], *support_items[:2]]
+        if exact_items or adjacent_items or support_items:
+            window_items = [*exact_items[:2], *adjacent_items[:2], *support_items[:3]]
     seen_window_ids = {id(item[2]) for item in window_items}
     if window_items:
         reordered = [item[2] for item in window_items] + [
@@ -1945,9 +2035,17 @@ def _select_article_span_evidence(
         "applied": applied,
         "reason": "article_span_selector",
         "query_article_tokens": sorted(article_tokens),
+        "query_clause_tokens": sorted(clause_tokens),
         "identifier_tokens": sorted(identifier_tokens),
         "requested_source_families": requested_source_families,
-        "selected_source_keys": sorted(selected_source_keys or []),
+        "selected_source_keys": sorted(selected_source_key_set),
+        "selected_document_id": primary_source_key or None,
+        "selected_article": top_trace.get("article_or_section") if top_trace else None,
+        "selected_paragraph_or_clause": top_trace.get("paragraph_or_clause") if top_trace else None,
+        "support_span_count": support_span_count,
+        "selector_reason": document_lock_reason,
+        "document_lock_reason": document_lock_reason,
+        "article_match_type": top_trace.get("article_match_type") if top_trace else "none",
         "selector_document_rank": selector_document_rank,
         "selector_article_rank": selector_article_rank,
         "selector_exact_article_hit": selector_exact_article_hit,
