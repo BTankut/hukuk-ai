@@ -344,6 +344,7 @@ class LLMClient:
             "- Cross-law sorularda cevap gerçekten iki kanuna dayanıyorsa her iki kanundan da açık kaynak göster; dayanmıyorsa gereksiz ikinci kanun ekleme.\n"
             "- Önce kısa sonucu ver; ardından sorunun gerektirdiği şart, istisna, süre, usul adımı, karşılaştırma veya yürürlük unsurunu atlamadan açıkla.\n"
             "- Kaynak aynı maddede birden fazla koşul, fıkra, istisna veya prosedür içeriyorsa sadece ilk cümleyi ya da madde başlığını özetleyip bırakma.\n"
+            "- Cevabı kapatmadan önce şu zorunlu unsurları zihinsel olarak kontrol et: sonuç, uygulanacak kaynak, tam belge kimliği, ilgili madde/fıkra, varsa yürürlük tarihi, istisna/sınır, usul veya sonuç.\n"
             "- Kaynak yetersizse kısmi cevabı ver, hangi unsurun kaynaklarda açık olmadığını belirt ve tahmin yürütme."
         )
         if cls._is_procedure_or_timeline_query(query):
@@ -363,7 +364,8 @@ class LLMClient:
             "Önce tek cümlelik sonucu ver. Ardından sorunun türüne göre gerekli tüm şart, istisna, süre, usul, "
             "karşılaştırma ve yürürlük unsurlarını yalnız gerçekten dayandığın maddelerle "
             "'[Kaynak: X]' biçiminde göster. Soruda açık madde numarası geçiyorsa ve kaynaklarda "
-            "varsa o maddeyi atlama. Kaynakta cevabın bir unsuru yoksa bunu açıkça 'kaynaklarda bu unsur yok' diye belirt.\n\n"
+            "varsa o maddeyi atlama. Belge seçimi soruluyorsa neden o belgeyi merkez aldığını bir cümleyle belirt. "
+            "Kaynakta cevabın bir unsuru yoksa bunu açıkça 'kaynaklarda bu unsur yok' diye belirt.\n\n"
             f"KAYNAKLAR:\n{context}\n\n"
             f"SORU:\n{query}"
         )

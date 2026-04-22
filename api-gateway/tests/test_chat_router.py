@@ -525,6 +525,8 @@ class TestLawSignalParsing:
         assert features["task_type_answer_template_used"] == "procedure"
         assert features["minimum_answer_facts_present"] is False
         assert features["completeness_degrade_reason"] == "answer_too_short_for_template"
+        assert "procedure_or_consequence" in features["must_have_fact_slots"]
+        assert features["rubric_aligned_completeness_class"] == "insufficient_both"
 
     def test_completeness_synthesis_accepts_multi_fact_grounded_answer(self):
         features = _build_completeness_synthesis_features(
@@ -545,6 +547,23 @@ class TestLawSignalParsing:
         assert features["task_type_answer_template_used"] == "procedure"
         assert features["minimum_answer_facts_present"] is True
         assert features["required_fact_coverage_score"] == 1.0
+        assert features["missing_fact_slots"] == []
+        assert features["rubric_aligned_completeness_class"] == "rubric_sufficient"
+
+    def test_completeness_synthesis_gates_missing_temporal_slot(self):
+        features = _build_completeness_synthesis_features(
+            query="Bu düzenleme halen yürürlükte mi, güncel durum nedir?",
+            answer_text=(
+                "Düzenleme kaynakta yer alan kurala dayanır [Kaynak: X m.1]. "
+                "Uygulanacak sonuç kaynak kapsamıyla sınırlıdır [Kaynak: X m.1]."
+            ),
+            article_span_selector={"support_span_count": 2},
+            chunks=[RetrievedChunk(text="Kural", citation="X m.1", source="X", score=1.0, metadata={})],
+        )
+
+        assert features["minimum_answer_facts_present"] is False
+        assert "temporal_validity" in features["missing_fact_slots"]
+        assert features["completeness_degrade_reason"].startswith("missing_required_fact_slots:")
 
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(

@@ -4621,6 +4621,173 @@ def _answer_template_for_query(query: str) -> str:
     return "direct"
 
 
+def _query_contains_any(normalized_query: str, terms: tuple[str, ...]) -> bool:
+    return any(term in normalized_query for term in terms)
+
+
+def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
+    normalized = normalize_query_text(query or "")
+    slots = ["result_or_holding", "governing_source"]
+    if _query_contains_any(
+        normalized,
+        (
+            "hangi mevzuat",
+            "hangi duzenleme",
+            "hangi belge",
+            "hangi kaynak",
+            "tuzuk",
+            "yonetmelik",
+            "teblig",
+            "karar",
+            "genelge",
+            "kararname",
+        ),
+    ):
+        slots.extend(["exact_source_identity", "document_selection_reason"])
+    if _query_contains_any(normalized, ("madde", "fikra", "bent", "paragraf", "hukum")):
+        slots.append("article_or_span")
+    if template == "procedure":
+        slots.append("procedure_or_consequence")
+    if template == "exception":
+        slots.extend(["exception_or_limitation", "scenario_applicability"])
+    if template == "condition":
+        slots.append("scenario_applicability")
+    if _query_contains_any(normalized, ("istisna", "muaf", "haric", "sakli", "uygulanmaz")):
+        slots.append("exception_or_limitation")
+    if _query_contains_any(normalized, ("kosul", "sart", "hangi hallerde", "aranir", "gerekir")):
+        slots.append("scenario_applicability")
+    if template == "comparison_or_temporal":
+        slots.append("temporal_validity")
+    if _query_contains_any(
+        normalized,
+        (
+            "guncel",
+            "halen yururlukte",
+            "yururlukte mi",
+            "mulga",
+            "eski",
+            "son durum",
+            "ne zaman yururluge",
+        ),
+    ):
+        slots.append("temporal_validity")
+    if _query_contains_any(
+        normalized,
+        (
+            "yeterli midir",
+            "yoksa",
+            "ust norm",
+            "alt norm",
+            "kanun mu",
+            "yonetmelik mi",
+            "hangisi uygulanir",
+        ),
+    ):
+        slots.append("hierarchy_or_conflict_rule")
+    return dedupe_strings(slots)
+
+
+def _answer_contains_any(normalized_answer: str, terms: tuple[str, ...]) -> bool:
+    return any(term in normalized_answer for term in terms)
+
+
+def _chunk_identity_surface(chunks: list[RetrievedChunk]) -> str:
+    parts: list[str] = []
+    for chunk in chunks[:5]:
+        parts.extend(
+            [
+                chunk.citation or "",
+                chunk.source or "",
+                _resolve_chunk_source_title(chunk),
+                _resolve_chunk_source_identifier(chunk),
+            ]
+        )
+    return normalize_query_text(" ".join(part for part in parts if part))
+
+
+def _satisfied_completeness_slots(
+    *,
+    required_slots: list[str],
+    query: str,
+    answer_text: str,
+    article_span_selector: dict[str, Any] | None,
+    chunks: list[RetrievedChunk],
+    answer_fact_units: int,
+    citation_count: int,
+    support_span_count: int,
+) -> list[str]:
+    normalized_answer = normalize_query_text(answer_text or "")
+    normalized_query = normalize_query_text(query or "")
+    chunk_surface = _chunk_identity_surface(chunks)
+    selector = article_span_selector if isinstance(article_span_selector, dict) else {}
+    support_contains_article = bool(selector.get("support_contains_article_number"))
+    support_contains_temporal = bool(selector.get("support_contains_temporal_clause"))
+    support_contains_exception = bool(selector.get("support_contains_exception_signal"))
+    source_identity_visible = bool(citation_count or chunk_surface)
+    exact_identity_visible = bool(
+        source_identity_visible
+        and (
+            chunk_surface
+            and any(token in normalized_answer for token in chunk_surface.split() if len(token) >= 4)
+            or citation_count
+        )
+    )
+
+    satisfied: list[str] = []
+    for slot in required_slots:
+        if slot == "result_or_holding" and answer_fact_units >= 1:
+            satisfied.append(slot)
+        elif slot == "governing_source" and source_identity_visible:
+            satisfied.append(slot)
+        elif slot == "exact_source_identity" and exact_identity_visible:
+            satisfied.append(slot)
+        elif slot == "document_selection_reason" and (
+            exact_identity_visible
+            and _answer_contains_any(
+                normalized_answer,
+                ("uygulanir", "dayanir", "duzenler", "kapsar", "merkez", "esas alinir"),
+            )
+        ):
+            satisfied.append(slot)
+        elif slot == "article_or_span" and (support_contains_article or support_span_count > 0 or citation_count > 0):
+            satisfied.append(slot)
+        elif slot == "temporal_validity" and (
+            support_contains_temporal
+            or _answer_contains_any(
+                normalized_answer,
+                ("yururluk", "guncel", "mulga", "tarih", "halen", "gecerli", "kaldiril"),
+            )
+        ):
+            satisfied.append(slot)
+        elif slot == "exception_or_limitation" and (
+            support_contains_exception
+            or _answer_contains_any(
+                normalized_answer,
+                ("istisna", "sakli", "haric", "muaf", "sinirli", "uygulanmaz"),
+            )
+        ):
+            satisfied.append(slot)
+        elif slot == "procedure_or_consequence" and _answer_contains_any(
+            normalized_answer,
+            ("usul", "sure", "basvuru", "itiraz", "adim", "sonuc", "yaptirim", "zorunlu"),
+        ):
+            satisfied.append(slot)
+        elif slot == "scenario_applicability" and _answer_contains_any(
+            normalized_answer,
+            ("sart", "kosul", "halinde", "hallerde", "kapsam", "uygulanir", "aranir"),
+        ):
+            satisfied.append(slot)
+        elif slot == "hierarchy_or_conflict_rule" and (
+            _answer_contains_any(
+                normalized_answer,
+                ("oncelik", "ust norm", "alt norm", "ozel duzenleme", "genel duzenleme", "yeterli"),
+            )
+            or ("kanun" in normalized_query and "yonetmelik" in normalized_query and "kanun" in normalized_answer)
+        ):
+            satisfied.append(slot)
+    return dedupe_strings(satisfied)
+
+
 def _count_answer_fact_units(answer_text: str) -> int:
     stripped = re.sub(r"\[Kaynak:[^\]]+\]", " ", answer_text or "")
     pieces = re.split(r"(?:\n+|(?<=[.!?])\s+|(?:^|\s)(?:[-*]|\d+[.)])\s+)", stripped)
@@ -4641,7 +4808,8 @@ def _build_completeness_synthesis_features(
     chunks: list[RetrievedChunk],
 ) -> dict[str, Any]:
     template = _answer_template_for_query(query)
-    minimum_required_facts = 2 if template == "direct" else 3
+    required_slots = _must_have_fact_slots_for_query(query, template)
+    minimum_required_facts = max(2 if template == "direct" else 3, min(len(required_slots), 3))
     answer_fact_units = _count_answer_fact_units(answer_text)
     citation_count = len(_INLINE_CITATION_RE.findall(answer_text or ""))
     support_span_count = 0
@@ -4652,11 +4820,37 @@ def _build_completeness_synthesis_features(
             support_span_count = 0
 
     has_answer = bool((answer_text or "").strip()) and not str(answer_text).startswith("REFUSED_OR_EMPTY:")
+    satisfied_slots = (
+        _satisfied_completeness_slots(
+            required_slots=required_slots,
+            query=query,
+            answer_text=answer_text,
+            article_span_selector=article_span_selector,
+            chunks=chunks,
+            answer_fact_units=answer_fact_units,
+            citation_count=citation_count,
+            support_span_count=support_span_count,
+        )
+        if has_answer
+        else []
+    )
+    missing_slots = [slot for slot in required_slots if slot not in set(satisfied_slots)]
+    slot_factor = len(satisfied_slots) / len(required_slots) if required_slots else 1.0
     answer_factor = min(1.0, answer_fact_units / minimum_required_facts) if has_answer else 0.0
-    citation_factor = min(1.0, citation_count / max(1, min(minimum_required_facts, 2))) if has_answer else 0.0
-    evidence_factor = min(1.0, support_span_count / minimum_required_facts) if support_span_count else (0.5 if chunks else 0.0)
-    coverage_score = round((0.50 * answer_factor) + (0.25 * citation_factor) + (0.25 * evidence_factor), 3)
+    evidence_factor = (
+        min(1.0, support_span_count / max(1, minimum_required_facts))
+        if support_span_count
+        else (0.5 if chunks else 0.0)
+    )
+    coverage_score = round((0.55 * slot_factor) + (0.25 * answer_factor) + (0.20 * evidence_factor), 3)
     minimum_answer_facts_present = bool(
+        has_answer
+        and answer_fact_units >= minimum_required_facts
+        and citation_count >= 1
+        and (support_span_count >= 1 or bool(chunks))
+        and not missing_slots
+    )
+    structurally_full = bool(
         has_answer
         and answer_fact_units >= minimum_required_facts
         and citation_count >= 1
@@ -4664,24 +4858,38 @@ def _build_completeness_synthesis_features(
     )
     if not has_answer:
         degrade_reason = "no_answer"
+        rubric_class = "insufficient_both"
+    elif missing_slots:
+        degrade_reason = "missing_required_fact_slots:" + ",".join(missing_slots)
+        rubric_class = "structurally_full_but_legally_misaligned" if structurally_full else "insufficient_both"
     elif answer_fact_units < minimum_required_facts:
         degrade_reason = "answer_too_short_for_template"
+        rubric_class = "insufficient_both"
     elif citation_count == 0:
         degrade_reason = "missing_source_citations"
+        rubric_class = "insufficient_both"
     elif not chunks:
         degrade_reason = "no_retrieved_evidence"
+        rubric_class = "insufficient_both"
     elif support_span_count == 0:
         degrade_reason = "no_selector_support_spans"
+        rubric_class = "legally_aligned_but_partial"
     elif not minimum_answer_facts_present:
         degrade_reason = "partial_evidence_only"
+        rubric_class = "legally_aligned_but_partial"
     else:
         degrade_reason = "complete_enough"
+        rubric_class = "rubric_sufficient"
 
     return {
         "required_fact_coverage_score": coverage_score,
         "minimum_answer_facts_present": minimum_answer_facts_present,
         "completeness_degrade_reason": degrade_reason,
         "task_type_answer_template_used": template,
+        "must_have_fact_slots": required_slots,
+        "satisfied_fact_slots": satisfied_slots,
+        "missing_fact_slots": missing_slots,
+        "rubric_aligned_completeness_class": rubric_class,
     }
 
 
@@ -4849,6 +5057,10 @@ def _build_trace_payload(
             "minimum_answer_facts_present": answer_contract.get("minimum_answer_facts_present"),
             "completeness_degrade_reason": answer_contract.get("completeness_degrade_reason"),
             "task_type_answer_template_used": answer_contract.get("task_type_answer_template_used"),
+            "must_have_fact_slots": answer_contract.get("must_have_fact_slots"),
+            "satisfied_fact_slots": answer_contract.get("satisfied_fact_slots"),
+            "missing_fact_slots": answer_contract.get("missing_fact_slots"),
+            "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
         },
         "model_cited_source_ids": model_cited_source_ids,
         "verifier_verdict": verification.get("verdict") if isinstance(verification, dict) else None,
@@ -4929,6 +5141,10 @@ def _build_trace_payload(
                 "minimum_answer_facts_present": answer_contract.get("minimum_answer_facts_present"),
                 "completeness_degrade_reason": answer_contract.get("completeness_degrade_reason"),
                 "task_type_answer_template_used": answer_contract.get("task_type_answer_template_used"),
+                "must_have_fact_slots": answer_contract.get("must_have_fact_slots"),
+                "satisfied_fact_slots": answer_contract.get("satisfied_fact_slots"),
+                "missing_fact_slots": answer_contract.get("missing_fact_slots"),
+                "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
             },
         },
     }

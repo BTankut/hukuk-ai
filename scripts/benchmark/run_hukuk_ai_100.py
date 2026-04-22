@@ -99,6 +99,10 @@ ANSWER_FIELDS = [
     "minimum_answer_facts_present",
     "completeness_degrade_reason",
     "task_type_answer_template_used",
+    "must_have_fact_slots",
+    "satisfied_fact_slots",
+    "missing_fact_slots",
+    "rubric_aligned_completeness_class",
     "expected_family_prior",
     "preferred_family_pool_size",
     "cross_family_fallback_used",
@@ -373,6 +377,8 @@ def contract_value(response: dict[str, Any], key: str) -> str:
         return "True" if value else "False"
     if value is None:
         return ""
+    if isinstance(value, list):
+        return stringify_list(value)
     return str(value)
 
 
@@ -543,6 +549,10 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "minimum_answer_facts_present": contract_value(response, "minimum_answer_facts_present"),
         "completeness_degrade_reason": contract_value(response, "completeness_degrade_reason"),
         "task_type_answer_template_used": contract_value(response, "task_type_answer_template_used"),
+        "must_have_fact_slots": contract_value(response, "must_have_fact_slots"),
+        "satisfied_fact_slots": contract_value(response, "satisfied_fact_slots"),
+        "missing_fact_slots": contract_value(response, "missing_fact_slots"),
+        "rubric_aligned_completeness_class": contract_value(response, "rubric_aligned_completeness_class"),
         "expected_family_prior": retrieval_feature_value(response, "expected_family_prior"),
         "preferred_family_pool_size": retrieval_feature_value(response, "preferred_family_pool_size"),
         "cross_family_fallback_used": retrieval_feature_value(response, "cross_family_fallback_used"),

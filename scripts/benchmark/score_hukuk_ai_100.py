@@ -117,6 +117,10 @@ SCORED_FIELDS = [
     "minimum_answer_facts_present",
     "completeness_degrade_reason",
     "task_type_answer_template_used",
+    "must_have_fact_slots",
+    "satisfied_fact_slots",
+    "missing_fact_slots",
+    "rubric_aligned_completeness_class",
     "rubric_completeness_class",
     "right_document_wrong_article_or_span",
     "expected_family_prior",
@@ -541,6 +545,10 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "minimum_answer_facts_present": answer.get("minimum_answer_facts_present", ""),
         "completeness_degrade_reason": answer.get("completeness_degrade_reason", ""),
         "task_type_answer_template_used": answer.get("task_type_answer_template_used", ""),
+        "must_have_fact_slots": answer.get("must_have_fact_slots", ""),
+        "satisfied_fact_slots": answer.get("satisfied_fact_slots", ""),
+        "missing_fact_slots": answer.get("missing_fact_slots", ""),
+        "rubric_aligned_completeness_class": answer.get("rubric_aligned_completeness_class", ""),
         "rubric_completeness_class": canonical_rubric_completeness_class,
         "right_document_wrong_article_or_span": bool_text(canonical_right_doc_wrong_span),
         "expected_family_prior": answer.get("expected_family_prior", ""),
@@ -629,6 +637,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     )
     task_type_answer_template_counts = Counter(
         row.get("task_type_answer_template_used", "") or "unknown" for row in rows
+    )
+    rubric_aligned_completeness_counts = Counter(
+        row.get("rubric_aligned_completeness_class", "") or "unknown" for row in rows
     )
     minimum_answer_facts_present_count = sum(
         1 for row in rows if bool_field(str(row.get("minimum_answer_facts_present", ""))) is True
@@ -722,6 +733,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "family_override_reason_counts": dict(sorted(family_override_reason_counts.items())),
         "completeness_degrade_reason_counts": dict(sorted(completeness_degrade_reason_counts.items())),
         "task_type_answer_template_counts": dict(sorted(task_type_answer_template_counts.items())),
+        "rubric_aligned_completeness_class_counts": dict(sorted(rubric_aligned_completeness_counts.items())),
         "minimum_answer_facts_present_count": minimum_answer_facts_present_count,
         "avg_required_fact_coverage_score": round(
             sum(required_fact_coverage_scores) / len(required_fact_coverage_scores),
@@ -877,6 +889,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Task Type Answer Template"])
     for status, count in summary["task_type_answer_template_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Runtime Rubric-Aligned Completeness Class"])
+    for status, count in summary["rubric_aligned_completeness_class_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Rubric Completeness Class"])
     for status, count in summary["rubric_completeness_class_counts"].items():
