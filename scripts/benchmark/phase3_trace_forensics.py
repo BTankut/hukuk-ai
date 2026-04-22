@@ -12,12 +12,22 @@ import argparse
 import csv
 import json
 import re
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.benchmark.hukuk_ai_100_metric_registry import (
+    aggregate_scored_metrics,
+    right_document_wrong_article_or_span,
+    rubric_completeness_class,
+)
+
 DEFAULT_RUN_DIR = REPO_ROOT / "reports/benchmark/runs/20260421T134133Z_phase2_answer_contract_rerun"
 DEFAULT_OUT_MD = REPO_ROOT / "reports/benchmark/phase_03_trace_forensics.md"
 DEFAULT_OUT_CSV = REPO_ROOT / "reports/benchmark/phase_03_failure_clusters.csv"
@@ -161,14 +171,16 @@ def derive_mechanism(scored: dict[str, str], pre_families: Counter[str], post_fa
         if expected not in pre_families:
             return "retrieval miss"
         return "right-family wrong-document"
-    if "wrong_article" in flags:
+    if right_document_wrong_article_or_span(scored):
         return "right-document wrong-article/span"
+    if "wrong_article" in flags:
+        return "article-span gap with unresolved document identity"
     if "unsupported_confident_claim" in flags:
         if answer_family != "UNKNOWN" and answer_family not in post_families:
             return "generation overreach"
         return "evidence insufficiency"
     if "partial_grounding_only" in flags or "missing_required_content_signal" in flags:
-        return "right-document wrong-article/span"
+        return "rubric content gap before document alignment"
     return "no_failure_or_unclassified"
 
 
@@ -186,9 +198,16 @@ def write_cluster_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "claimed_family",
         "score_0_10_proxy",
         "pass_fail_proxy",
+        "family_match_score",
+        "document_match_score",
         "mechanism",
         "article_alignment",
         "query_article_alignment",
+        "right_document_wrong_article_or_span",
+        "rubric_completeness_class",
+        "required_fact_coverage_score",
+        "minimum_answer_facts_present",
+        "selected_article_equals_claimed_article",
         "failure_classes",
         "pre_top_family",
         "post_top_family",
@@ -210,6 +229,7 @@ def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> Non
     mechanism_counts = Counter(row["mechanism"] for row in failing)
     family_counts_summary = Counter(row["expected_family"] for row in failing)
     flag_counts: Counter[str] = Counter()
+    canonical_metrics = aggregate_scored_metrics(rows)
     weak_rows = [row for row in failing if row["expected_family"] in WEAK_FAMILIES]
     weak_mechanisms = Counter(row["mechanism"] for row in weak_rows)
     article_alignment_counts = Counter(row.get("article_alignment") or "unknown" for row in rows)
@@ -224,9 +244,21 @@ def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> Non
         f"- rows_analyzed: {total}",
         f"- failing_rows_with_failure_classes: {len(failing)}",
         f"- weak_family_failing_rows: {len(weak_rows)}",
-        "",
-        "## Dominant Failure Mechanisms",
     ]
+    lines.extend(
+        [
+            "",
+            "## Canonical Metric Counts",
+            f"- right_document_wrong_article_or_span: {canonical_metrics['right_document_wrong_article_or_span']}",
+            f"- missing_required_content_signal: {canonical_metrics['missing_required_content_signal']}",
+            f"- partial_grounding_only: {canonical_metrics['partial_grounding_only']}",
+            f"- minimum_answer_facts_present_count: {canonical_metrics['minimum_answer_facts_present_count']}",
+            f"- avg_required_fact_coverage_score: {canonical_metrics['avg_required_fact_coverage_score']}",
+            f"- selected_article_equals_claimed_article_count: {canonical_metrics['selected_article_equals_claimed_article_count']}",
+            "",
+            "## Dominant Failure Mechanisms",
+        ]
+    )
     for mechanism, count in mechanism_counts.most_common():
         lines.append(f"- {mechanism}: {count} ({pct(count, len(failing))})")
     lines.extend(["", "## Failure Classes"])
@@ -291,9 +323,20 @@ def main() -> int:
                 "claimed_family": canonical_family(scored.get("source_family_canonical")),
                 "score_0_10_proxy": scored.get("score_0_10_proxy", ""),
                 "pass_fail_proxy": scored.get("pass_fail_proxy", ""),
+                "family_match_score": scored.get("family_match_score", ""),
+                "document_match_score": scored.get("document_match_score", ""),
                 "mechanism": derive_mechanism(scored, pre_counts, post_counts),
                 "article_alignment": scored.get("article_alignment", ""),
                 "query_article_alignment": scored.get("query_article_alignment", ""),
+                "right_document_wrong_article_or_span": str(
+                    right_document_wrong_article_or_span(scored)
+                ).lower(),
+                "rubric_completeness_class": rubric_completeness_class(scored),
+                "required_fact_coverage_score": scored.get("required_fact_coverage_score", ""),
+                "minimum_answer_facts_present": scored.get("minimum_answer_facts_present", ""),
+                "selected_article_equals_claimed_article": scored.get(
+                    "selected_article_equals_claimed_article", ""
+                ),
                 "failure_classes": scored.get("failure_classes", ""),
                 "pre_top_family": pre_top_family,
                 "post_top_family": post_top_family,

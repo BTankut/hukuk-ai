@@ -30,6 +30,11 @@ from evaluation.hukuk_ai_100_article_alignment import (
     articles_equal,
     classify_article_alignment,
 )
+from scripts.benchmark.hukuk_ai_100_metric_registry import (
+    aggregate_scored_metrics,
+    right_document_wrong_article_or_span,
+    rubric_completeness_class,
+)
 
 
 DEFAULT_ANSWER_KEY = REPO_ROOT / "evaluation/private/hukuk_ai_100_answer_key_private.csv"
@@ -112,6 +117,8 @@ SCORED_FIELDS = [
     "minimum_answer_facts_present",
     "completeness_degrade_reason",
     "task_type_answer_template_used",
+    "rubric_completeness_class",
+    "right_document_wrong_article_or_span",
     "expected_family_prior",
     "preferred_family_pool_size",
     "cross_family_fallback_used",
@@ -425,6 +432,19 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
     if 0 < grounding_score < 1:
         failure_classes.append("partial_grounding_only")
 
+    canonical_metric_row = {
+        "failure_classes": " | ".join(failure_classes),
+        "family_match_score": f"{family_match_score:.2f}",
+        "document_match_score": f"{document_match_score:.2f}",
+        "article_lock_failed": answer.get("article_lock_failed", ""),
+        "support_insufficient_for_specific_claim": answer.get("support_insufficient_for_specific_claim", ""),
+        "required_fact_coverage_score": answer.get("required_fact_coverage_score", ""),
+        "minimum_answer_facts_present": answer.get("minimum_answer_facts_present", ""),
+        "selected_article_equals_claimed_article": bool_text(selected_article_equals_claimed_article),
+    }
+    canonical_right_doc_wrong_span = right_document_wrong_article_or_span(canonical_metric_row)
+    canonical_rubric_completeness_class = rubric_completeness_class(canonical_metric_row)
+
     max_points = float(key.get("max_points") or 10)
     if auto_fail_triggered or empty_or_refused or api_error:
         score = 0.0
@@ -521,6 +541,8 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "minimum_answer_facts_present": answer.get("minimum_answer_facts_present", ""),
         "completeness_degrade_reason": answer.get("completeness_degrade_reason", ""),
         "task_type_answer_template_used": answer.get("task_type_answer_template_used", ""),
+        "rubric_completeness_class": canonical_rubric_completeness_class,
+        "right_document_wrong_article_or_span": bool_text(canonical_right_doc_wrong_span),
         "expected_family_prior": answer.get("expected_family_prior", ""),
         "preferred_family_pool_size": answer.get("preferred_family_pool_size", ""),
         "cross_family_fallback_used": answer.get("cross_family_fallback_used", ""),
@@ -554,6 +576,7 @@ def breakdown(rows: list[dict[str, Any]], field: str) -> dict[str, dict[str, Any
 
 
 def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
+    canonical_metrics = aggregate_scored_metrics(rows)
     failure_counter: Counter[str] = Counter()
     for row in rows:
         for failure in split_rubric(row.get("failure_classes", "")):
@@ -738,6 +761,10 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "answer_suppressed_due_to_evidence_gap_count": sum(
             1 for row in rows if bool_field(str(row.get("answer_suppressed_due_to_evidence_gap", ""))) is True
         ),
+        "right_document_wrong_article_or_span": canonical_metrics["right_document_wrong_article_or_span"],
+        "canonical_missing_required_content_signal": canonical_metrics["missing_required_content_signal"],
+        "canonical_partial_grounding_only": canonical_metrics["partial_grounding_only"],
+        "rubric_completeness_class_counts": canonical_metrics["rubric_completeness_class_counts"],
         "failure_class_counts": dict(sorted(failure_counter.items())),
         "by_primary_type": breakdown(rows, "primary_type"),
         "by_source_family_canonical": breakdown(rows, "source_family_canonical"),
@@ -795,6 +822,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- support_insufficient_for_specific_claim_count: {summary['support_insufficient_for_specific_claim_count']}",
         f"- temporal_clause_missing_count: {summary['temporal_clause_missing_count']}",
         f"- answer_suppressed_due_to_evidence_gap_count: {summary['answer_suppressed_due_to_evidence_gap_count']}",
+        f"- right_document_wrong_article_or_span: {summary['right_document_wrong_article_or_span']}",
+        f"- canonical_missing_required_content_signal: {summary['canonical_missing_required_content_signal']}",
+        f"- canonical_partial_grounding_only: {summary['canonical_partial_grounding_only']}",
         "",
         "## Selector Evidence Sufficiency",
     ]
@@ -847,6 +877,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Task Type Answer Template"])
     for status, count in summary["task_type_answer_template_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Rubric Completeness Class"])
+    for status, count in summary["rubric_completeness_class_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(
         [

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,6 +15,11 @@ import phase4_coverage_backlog as phase4
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.benchmark.hukuk_ai_100_metric_registry import aggregate_scored_metrics
+
 DEFAULT_RUN_DIR = REPO_ROOT / "reports/benchmark/runs/20260422T050311Z_phase5_corpus_identity_final"
 DEFAULT_ANSWER_KEY = REPO_ROOT / "evaluation/private/hukuk_ai_100_answer_key_private.csv"
 DEFAULT_OUT_CSV = REPO_ROOT / "reports/benchmark/phase_05_coverage_backlog.csv"
@@ -63,6 +69,13 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "claimed_source",
         "score_0_10_proxy",
         "pass_fail_proxy",
+        "family_match_score",
+        "document_match_score",
+        "right_document_wrong_article_or_span",
+        "rubric_completeness_class",
+        "required_fact_coverage_score",
+        "minimum_answer_facts_present",
+        "selected_article_equals_claimed_article",
         "failure_classes",
         "pre_family_counts",
         "post_family_counts",
@@ -82,6 +95,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> None:
     owner_counts = Counter(row["primary_owner"] for row in rows)
     status_counts = Counter(row["coverage_status"] for row in rows)
+    canonical_metrics = aggregate_scored_metrics(rows)
     failing_rows = [row for row in rows if row["failure_classes"]]
     lines = [
         "# Phase 5 Coverage Owner Backlog",
@@ -89,6 +103,13 @@ def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> Non
         f"- source_run_dir: `{run_dir}`",
         f"- rows_analyzed: {len(rows)}",
         f"- failing_rows: {len(failing_rows)}",
+        "",
+        "## Canonical Metric Counts",
+        f"- right_document_wrong_article_or_span: {canonical_metrics['right_document_wrong_article_or_span']}",
+        f"- missing_required_content_signal: {canonical_metrics['missing_required_content_signal']}",
+        f"- partial_grounding_only: {canonical_metrics['partial_grounding_only']}",
+        f"- minimum_answer_facts_present_count: {canonical_metrics['minimum_answer_facts_present_count']}",
+        f"- avg_required_fact_coverage_score: {canonical_metrics['avg_required_fact_coverage_score']}",
         "",
         "## Primary Owner Counts",
     ]

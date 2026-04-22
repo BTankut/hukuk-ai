@@ -12,6 +12,7 @@ import argparse
 import csv
 import json
 import re
+import sys
 import unicodedata
 from collections import Counter
 from pathlib import Path
@@ -19,6 +20,15 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.benchmark.hukuk_ai_100_metric_registry import (
+    aggregate_scored_metrics,
+    right_document_wrong_article_or_span,
+    rubric_completeness_class,
+)
+
 DEFAULT_RUN_DIR = REPO_ROOT / "reports/benchmark/runs/20260421T211914Z_phase4_verification_first_final_v4"
 DEFAULT_ANSWER_KEY = REPO_ROOT / "evaluation/private/hukuk_ai_100_answer_key_private.csv"
 DEFAULT_OUT_CSV = REPO_ROOT / "reports/benchmark/phase_04_coverage_backlog.csv"
@@ -243,8 +253,10 @@ def derive_status(
         return "gold_document_not_retrieved", "expected family present but gold document not seen in initial candidates", True, metadata_gap
     if ("wrong_document" in flags or "missing_gold_document_signal" in flags) and not gold_in_post:
         return "candidate_collision_or_metadata", "expected family present but gold document lost or indistinguishable after selection", False, True
-    if "wrong_article" in flags or "partial_grounding_only" in flags or "missing_required_content_signal" in flags:
+    if right_document_wrong_article_or_span(scored):
         return "right_doc_wrong_article_or_span", "document-level evidence exists but article/span/support is insufficient", False, metadata_gap
+    if "wrong_article" in flags or "partial_grounding_only" in flags or "missing_required_content_signal" in flags:
+        return "rubric_gap_before_document_alignment", "private rubric/span gap remains but family/document identity is not yet canonical-aligned", False, metadata_gap
     if "wrong_family" in flags:
         return "generation_overreach_or_claim_mismatch", "retrieved evidence and claimed source family diverged", False, metadata_gap
     if "unsupported_confident_claim" in flags or "hallucinated_identifier" in flags:
@@ -280,6 +292,17 @@ def build_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
                 "claimed_source": answer.get("source_identifier_claimed") or scored.get("source_identifier_canonical"),
                 "score_0_10_proxy": scored.get("score_0_10_proxy", ""),
                 "pass_fail_proxy": scored.get("pass_fail_proxy", ""),
+                "family_match_score": scored.get("family_match_score", ""),
+                "document_match_score": scored.get("document_match_score", ""),
+                "right_document_wrong_article_or_span": str(
+                    right_document_wrong_article_or_span(scored)
+                ).lower(),
+                "rubric_completeness_class": rubric_completeness_class(scored),
+                "required_fact_coverage_score": scored.get("required_fact_coverage_score", ""),
+                "minimum_answer_facts_present": scored.get("minimum_answer_facts_present", ""),
+                "selected_article_equals_claimed_article": scored.get(
+                    "selected_article_equals_claimed_article", ""
+                ),
                 "failure_classes": scored.get("failure_classes", ""),
                 "pre_family_counts": family_counts(pre_chunks),
                 "post_family_counts": family_counts(post_chunks),
@@ -307,6 +330,13 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "claimed_source",
         "score_0_10_proxy",
         "pass_fail_proxy",
+        "family_match_score",
+        "document_match_score",
+        "right_document_wrong_article_or_span",
+        "rubric_completeness_class",
+        "required_fact_coverage_score",
+        "minimum_answer_facts_present",
+        "selected_article_equals_claimed_article",
         "failure_classes",
         "pre_family_counts",
         "post_family_counts",
@@ -324,6 +354,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> None:
     status_counts = Counter(row["coverage_status"] for row in rows)
+    canonical_metrics = aggregate_scored_metrics(rows)
     corpus_rows = [row for row in rows if row["needs_corpus_acquisition"] == "true"]
     metadata_rows = [row for row in rows if row["needs_metadata_enrichment"] == "true"]
     failing_rows = [row for row in rows if row["failure_classes"]]
@@ -336,6 +367,13 @@ def write_markdown(path: Path, rows: list[dict[str, Any]], run_dir: Path) -> Non
         f"- failing_rows: {len(failing_rows)}",
         f"- needs_corpus_acquisition: {len(corpus_rows)}",
         f"- needs_metadata_enrichment: {len(metadata_rows)}",
+        "",
+        "## Canonical Metric Counts",
+        f"- right_document_wrong_article_or_span: {canonical_metrics['right_document_wrong_article_or_span']}",
+        f"- missing_required_content_signal: {canonical_metrics['missing_required_content_signal']}",
+        f"- partial_grounding_only: {canonical_metrics['partial_grounding_only']}",
+        f"- minimum_answer_facts_present_count: {canonical_metrics['minimum_answer_facts_present_count']}",
+        f"- avg_required_fact_coverage_score: {canonical_metrics['avg_required_fact_coverage_score']}",
         "",
         "## Coverage Status Counts",
     ]
