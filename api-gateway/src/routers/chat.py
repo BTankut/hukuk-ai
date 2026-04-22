@@ -1825,6 +1825,198 @@ def _chunk_active_rank(chunk: RetrievedChunk) -> int:
     return 0 if start or _metadata_flag_is_false(mulga) or end in _ACTIVE_END_DATE_SENTINELS else 1
 
 
+def _source_identity_reranker_enabled() -> bool:
+    return os.getenv("SOURCE_IDENTITY_RERANKER_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+
+
+def _chunk_source_identity_values(chunk: RetrievedChunk) -> set[str]:
+    metadata = chunk.metadata or {}
+    values: set[str] = set()
+    for value in (
+        metadata.get("source_id"),
+        metadata.get("belge_no"),
+        metadata.get("kanun_no"),
+        metadata.get("law_no"),
+        metadata.get("belge_kisa_adi"),
+        metadata.get("kanun_kisa_adi"),
+        metadata.get("law_short_name"),
+        metadata.get("canonical_identifier"),
+        metadata.get("canonical_identifier_display"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+        metadata.get("kanun_adi"),
+        metadata.get("full_title"),
+        chunk.source,
+        chunk.citation,
+    ):
+        raw = str(value or "").strip()
+        if not raw:
+            continue
+        values.add(raw.lower())
+        normalized = normalize_canonical_text(raw)
+        if normalized:
+            values.add(normalized)
+        source_prefix = raw.split(":", 1)[0]
+        if source_prefix:
+            values.add(source_prefix.lower())
+    return values
+
+
+def _chunk_matches_metadata_first_candidate(chunk: RetrievedChunk, candidate: dict[str, Any]) -> bool:
+    values = _chunk_source_identity_values(chunk)
+    for value in (
+        candidate.get("source_key"),
+        candidate.get("canonical_identifier"),
+        candidate.get("canonical_title"),
+    ):
+        raw = str(value or "").strip()
+        if not raw:
+            continue
+        if raw.lower() in values or normalize_canonical_text(raw) in values:
+            return True
+    return False
+
+
+def _chunk_year_values(chunk: RetrievedChunk) -> set[str]:
+    metadata = chunk.metadata or {}
+    values: set[str] = set()
+    for value in (
+        metadata.get("year_signals"),
+        metadata.get("official_gazette_date"),
+        metadata.get("effective_start"),
+        metadata.get("effective_end"),
+        metadata.get("yururluk_baslangic"),
+        metadata.get("yururluk_bitis"),
+        metadata.get("source_id"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+    ):
+        if isinstance(value, list):
+            for item in value:
+                values.update(_extract_year_tokens(str(item)))
+        else:
+            values.update(_extract_year_tokens(str(value or "")))
+    return values
+
+
+def _rerank_chunks_by_source_identity(
+    *,
+    query: str,
+    chunks: list[RetrievedChunk],
+    requested_source_families: list[str],
+    metadata_first_selector: dict[str, Any] | None,
+) -> tuple[list[RetrievedChunk], dict[str, Any]]:
+    if not chunks or not _source_identity_reranker_enabled():
+        return chunks, {"applied": False, "reason": "disabled_or_no_chunks"}
+
+    query_terms = _extract_retrieval_priority_terms(query)
+    strict_identifier_tokens = _extract_source_identity_identifier_tokens(query)
+    year_tokens = set(_extract_year_tokens(query))
+    requested_family_set = set(_expand_source_family_aliases(requested_source_families))
+    current_validity_query = _asks_current_validity_query(query)
+    historical_contrast_query = _asks_current_validity_over_historical_contrast(query)
+    metadata_candidates = (metadata_first_selector or {}).get("candidates") or []
+
+    scored: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
+    for original_index, chunk in enumerate(chunks):
+        family = _resolve_chunk_source_family(chunk) or ""
+        title = _resolve_chunk_source_title(chunk)
+        metadata = chunk.metadata or {}
+        source_identity_values = _chunk_source_identity_values(chunk)
+        chunk_years = _chunk_year_values(chunk)
+        title_overlap = _count_term_overlap(title, query_terms)
+        issuer_overlap = _count_term_overlap(str(metadata.get("issuer") or ""), query_terms)
+        identifier_match = _chunk_matches_identifier_tokens(chunk, strict_identifier_tokens)
+        metadata_first_match = any(_chunk_matches_metadata_first_candidate(chunk, candidate) for candidate in metadata_candidates)
+        family_match = bool(requested_family_set and family in requested_family_set)
+        year_match = bool(year_tokens and year_tokens & chunk_years)
+        active_rank = _chunk_active_rank(chunk)
+        article_token = _chunk_article_token(chunk)
+        source_key = _resolve_chunk_source_key(chunk)
+
+        score = float(chunk.score or 0.0)
+        reasons: list[str] = []
+        if metadata_first_match:
+            score += 90
+            reasons.append("metadata_first_match")
+        if identifier_match:
+            score += 50
+            reasons.append("identifier_match")
+        if family_match:
+            score += 35
+            reasons.append("family_match")
+        elif requested_family_set:
+            score -= 35
+            reasons.append("family_mismatch_penalty")
+        if title_overlap:
+            score += min(title_overlap, 10) * 8
+            reasons.append(f"title_overlap:{title_overlap}")
+        if issuer_overlap:
+            score += min(issuer_overlap, 6) * 4
+            reasons.append(f"issuer_overlap:{issuer_overlap}")
+        if year_match:
+            score += 10
+            reasons.append("year_match")
+        elif year_tokens:
+            score -= 8
+            reasons.append("year_mismatch_penalty")
+        if current_validity_query:
+            score -= active_rank * 35
+            reasons.append(f"current_active_rank:{active_rank}")
+        if historical_contrast_query and _is_temporally_inactive_chunk(chunk):
+            score += 8
+            reasons.append("historical_contrast_repealed_context")
+        if article_token == "0" and query_terms and title_overlap == 0 and not identifier_match:
+            score -= 10
+            reasons.append("m0_without_title_anchor_penalty")
+        if source_identity_values & strict_identifier_tokens:
+            score += 10
+            reasons.append("source_value_identifier_overlap")
+
+        scored.append(
+            (
+                score,
+                original_index,
+                chunk,
+                {
+                    "source_id": _resolve_trace_source_id(chunk),
+                    "citation": chunk.citation,
+                    "source_key": source_key,
+                    "source_family": family or None,
+                    "source_identifier": _resolve_chunk_source_identifier(chunk),
+                    "article_or_section": article_token or None,
+                    "score": round(score, 4),
+                    "metadata_first_match": metadata_first_match,
+                    "identifier_match": identifier_match,
+                    "family_match": family_match,
+                    "title_overlap": title_overlap,
+                    "issuer_overlap": issuer_overlap,
+                    "year_match": year_match,
+                    "active_rank": active_rank,
+                    "reasons": reasons,
+                },
+            )
+        )
+
+    ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
+    reordered = [chunk for _score, _index, chunk, _trace in ranked]
+    first_changed = bool(reordered and chunks and reordered[0].citation != chunks[0].citation)
+    return reordered, {
+        "applied": True,
+        "reason": "source_identity_reranker",
+        "first_changed": first_changed,
+        "requested_source_families": requested_source_families,
+        "query_identifier_tokens": sorted(strict_identifier_tokens),
+        "query_year_tokens": sorted(year_tokens),
+        "metadata_first_candidate_keys": [
+            str(candidate.get("source_key") or "")
+            for candidate in metadata_candidates
+            if candidate.get("source_key")
+        ],
+        "top_scores": [trace for _score, _index, _chunk, trace in ranked[:10]],
+    }
+
+
 
 def _build_retrieved_chunk(result: Any) -> RetrievedChunk:
     metadata = enrich_metadata_with_source_title(getattr(result, "metadata", None) or {})
@@ -3712,6 +3904,7 @@ def _build_trace_payload(
     final_reason: str | None,
     retrieval_plan: dict[str, Any] | None = None,
     metadata_first_selector: dict[str, Any] | None = None,
+    source_identity_reranker: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
     article_span_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
@@ -3750,6 +3943,7 @@ def _build_trace_payload(
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
             "metadata_first_selector": metadata_first_selector,
+            "source_identity_reranker": source_identity_reranker,
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,
             "explicit_article_refs": [
@@ -3790,6 +3984,7 @@ def _build_trace_payload(
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
             "metadata_first_selector": metadata_first_selector,
+            "source_identity_reranker": source_identity_reranker,
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,
             "explicit_article_refs": [
@@ -3808,6 +4003,7 @@ def _build_trace_payload(
             "reranker_enabled": reranker_enabled,
             "source_family_resolution": source_family_resolution,
             "metadata_first_selector": metadata_first_selector,
+            "source_identity_reranker": source_identity_reranker,
             "reranker_family_bonus": (retrieval_verification_features or {}).get("reranker_family_bonus"),
             "identifier_match_flag": (retrieval_verification_features or {}).get("identifier_match_flag"),
             "temporal_alignment_flag": (retrieval_verification_features or {}).get("temporal_alignment_flag"),
@@ -4899,6 +5095,7 @@ def _pre_answer_stage_payload(
     reranker_enabled: bool,
     retrieval_plan: dict[str, Any] | None = None,
     metadata_first_selector: dict[str, Any] | None = None,
+    source_identity_reranker: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
     article_span_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
@@ -4916,6 +5113,7 @@ def _pre_answer_stage_payload(
         "applied_expansions": applied_expansions,
         "retrieval_plan": retrieval_plan,
         "metadata_first_selector": metadata_first_selector,
+        "source_identity_reranker": source_identity_reranker,
         "source_cluster_selector": source_cluster_selector,
         "article_span_selector": article_span_selector,
         "source_family_resolution": source_family_resolution,
@@ -6384,6 +6582,7 @@ async def chat_completions(
     pre_rerank_chunks: list[RetrievedChunk] = []
     post_rerank_chunks: list[RetrievedChunk] = []
     source_cluster_selector: dict[str, Any] | None = None
+    source_identity_reranker: dict[str, Any] | None = None
     article_span_selector: dict[str, Any] | None = None
     selected_source_keys: set[str] = set()
     if metadata_first_selector:
@@ -6734,6 +6933,12 @@ async def chat_completions(
             logger.warning("Reranker bypass (hata): %s", exc, exc_info=True)
 
     if retrieved_chunks:
+        retrieved_chunks, source_identity_reranker = _rerank_chunks_by_source_identity(
+            query=last_user_msg,
+            chunks=retrieved_chunks,
+            requested_source_families=requested_source_families,
+            metadata_first_selector=metadata_first_selector,
+        )
         retrieved_chunks, article_span_selector = _select_article_span_evidence(
             query=last_user_msg,
             chunks=retrieved_chunks,
@@ -6834,6 +7039,7 @@ async def chat_completions(
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
         metadata_first_selector=metadata_first_selector,
+        source_identity_reranker=source_identity_reranker,
         source_cluster_selector=source_cluster_selector,
         article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,
@@ -6855,6 +7061,7 @@ async def chat_completions(
         reranker_enabled=_reranker_enabled,
         retrieval_plan=retrieval_plan,
         metadata_first_selector=metadata_first_selector,
+        source_identity_reranker=source_identity_reranker,
         source_cluster_selector=source_cluster_selector,
         article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,

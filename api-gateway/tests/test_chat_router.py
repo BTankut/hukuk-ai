@@ -53,6 +53,7 @@ from routers.chat import (
     _extract_law_mentions,
     _infer_requested_source_families,
     _prioritize_chunks_for_source_families,
+    _rerank_chunks_by_source_identity,
     _resolve_chunk_source_family,
     _resolve_source_family_prior,
     _resolve_public_answer_text,
@@ -1017,6 +1018,96 @@ class TestLawSignalParsing:
 
         assert stats.hit_count == 1
         assert results[0].metadata["belge_no"] == "3350"
+
+    def test_source_identity_reranker_promotes_metadata_first_match(self):
+        wrong_chunk = RetrievedChunk(
+            text="Arazi devrine ilişkin yönetmelik hükmü.",
+            citation="20047114 m.0",
+            source="20047114",
+            score=0.99,
+            metadata={
+                "belge_turu": "yonetmelik",
+                "belge_no": "20047114",
+                "source_title": "HAZİNE ARAZİLERİNİN BEDELSİZ DEVRİNE İLİŞKİN YÖNETMELİK",
+                "madde_no": "0",
+            },
+        )
+        right_chunk = RetrievedChunk(
+            text="Yatırım teşvik belgesi ve geçiş hükümleri.",
+            citation="9903 m.1",
+            source="9903",
+            score=0.42,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "9903",
+                "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                "canonical_identifier": "9903",
+                "madde_no": "1",
+                "yururluk_baslangic": "2025-05-30",
+                "yururluk_bitis": "9999-12-31",
+            },
+        )
+        selector = {
+            "candidates": [
+                {
+                    "source_key": "9903",
+                    "canonical_identifier": "9903",
+                    "canonical_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                }
+            ]
+        }
+
+        reranked, trace = _rerank_chunks_by_source_identity(
+            query="Yatırım teşvik belgesi için 9903 sayılı karar uygulanır mı?",
+            chunks=[wrong_chunk, right_chunk],
+            requested_source_families=["cb_karar"],
+            metadata_first_selector=selector,
+        )
+
+        assert reranked[0].citation == "9903 m.1"
+        assert trace["applied"] is True
+        assert trace["top_scores"][0]["metadata_first_match"] is True
+
+    def test_source_identity_reranker_demotes_repealed_chunk_for_current_query(self):
+        repealed_chunk = RetrievedChunk(
+            text="Eski yürürlükten kalkmış metin.",
+            citation="6763 m.20",
+            source="6763",
+            score=0.99,
+            metadata={
+                "belge_turu": "mulga_kanun",
+                "belge_no": "6763",
+                "source_title": "MÜLGA KANUN",
+                "madde_no": "20",
+                "yururluk_bitis": "1900-01-01",
+                "mulga": True,
+            },
+        )
+        active_chunk = RetrievedChunk(
+            text="Güncel yürürlükteki metin.",
+            citation="9903 m.1",
+            source="9903",
+            score=0.5,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "9903",
+                "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                "madde_no": "1",
+                "yururluk_baslangic": "2025-05-30",
+                "yururluk_bitis": "9999-12-31",
+                "mulga": False,
+            },
+        )
+
+        reranked, trace = _rerank_chunks_by_source_identity(
+            query="Bu düzenleme halen yürürlükte mi, güncel metin hangisi?",
+            chunks=[repealed_chunk, active_chunk],
+            requested_source_families=[],
+            metadata_first_selector=None,
+        )
+
+        assert reranked[0].citation == "9903 m.1"
+        assert trace["top_scores"][0]["active_rank"] == 0
 
     def test_clamp_families_removes_planner_family_that_conflicts_with_strong_resolution(self):
         resolution = _resolve_source_family_prior(
