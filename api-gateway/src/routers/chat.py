@@ -2469,6 +2469,8 @@ def _title_match_type(*, title: str, query: str, query_terms: set[str], title_ov
     normalized_query = normalize_query_text(query or "")
     if normalized_title and len(normalized_title) >= 18 and normalized_title in normalized_query:
         return "exact_phrase"
+    if title_overlap <= 1:
+        return "none"
     title_terms = _extract_retrieval_priority_terms(title)
     return _field_overlap_match_type(
         overlap=title_overlap,
@@ -2556,6 +2558,12 @@ def _rerank_chunks_by_source_identity(
         family_match = bool(requested_family_set and family in requested_family_set)
         year_match = bool(year_tokens and year_tokens & chunk_years)
         year_match_type = _year_match_type(year_tokens=year_tokens, year_match=year_match)
+        official_gazette_date = str(metadata.get("official_gazette_date") or "").strip()
+        official_gazette_date_match = bool(
+            official_gazette_date
+            and normalize_canonical_text(official_gazette_date)
+            and normalize_canonical_text(official_gazette_date) in normalize_canonical_text(query)
+        )
         active_rank = _chunk_active_rank(chunk)
         article_token = _chunk_article_token(chunk)
         source_key = _resolve_chunk_source_key(chunk)
@@ -2563,13 +2571,13 @@ def _rerank_chunks_by_source_identity(
         score = float(chunk.score or 0.0)
         reasons: list[str] = []
         if metadata_first_match:
-            score += 90
+            score += 100
             reasons.append("metadata_first_match")
         if identifier_match_type == "exact_identifier":
-            score += 90
+            score += 110
             reasons.append("identifier_exact")
         elif identifier_match_type == "normalized_identifier_overlap":
-            score += 35
+            score += 25
             reasons.append("identifier_normalized_overlap")
         if family_match:
             score += 35
@@ -2578,19 +2586,19 @@ def _rerank_chunks_by_source_identity(
             score -= 35
             reasons.append("family_mismatch_penalty")
         if title_match_type == "exact_phrase":
-            score += 85
+            score += 120
             reasons.append("title_exact_phrase")
         elif title_match_type == "strong_overlap":
-            score += 60
+            score += 85
             reasons.append("title_strong_overlap")
         elif title_match_type == "medium_overlap":
-            score += 30
+            score += 25
             reasons.append("title_medium_overlap")
         elif title_match_type == "weak_overlap":
-            score += 8
+            score += 2
             reasons.append("title_weak_overlap")
         if title_overlap:
-            score += min(title_overlap, 10) * 8
+            score += min(title_overlap, 10) * (10 if title_match_type in {"exact_phrase", "strong_overlap"} else 4)
             reasons.append(f"title_overlap:{title_overlap}")
         if issuer_match_type == "strong_overlap":
             score += 16
@@ -2610,8 +2618,11 @@ def _rerank_chunks_by_source_identity(
         elif year_tokens:
             score -= 8
             reasons.append("year_mismatch_penalty")
+        if official_gazette_date_match:
+            score += 16
+            reasons.append("official_gazette_date_match")
         if family_match and title_match_type == "none" and identifier_match_type == "none" and year_match_type == "none":
-            score -= 12
+            score -= 28 if family in {"cb_karar", "cb_genelge", "uy", "yonetmelik", "teblig"} else 12
             reasons.append("generic_family_without_identity_penalty")
         if current_validity_query:
             score -= active_rank * 35
@@ -2650,6 +2661,7 @@ def _rerank_chunks_by_source_identity(
                     "issuer_overlap": issuer_overlap,
                     "year_match": year_match,
                     "year_match_type": year_match_type,
+                    "official_gazette_date_match": official_gazette_date_match,
                     "active_rank": active_rank,
                     "document_rerank_reason": " | ".join(reasons),
                     "reasons": reasons,

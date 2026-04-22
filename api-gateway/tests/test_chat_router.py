@@ -1367,6 +1367,43 @@ class TestLawSignalParsing:
         assert reranked[0].citation == "9903 m.1"
         assert trace["top_scores"][0]["active_rank"] == 0
 
+    def test_source_identity_reranker_does_not_reward_single_token_weak_title(self):
+        generic_chunk = RetrievedChunk(
+            text="Genel karar metni.",
+            citation="100 m.1",
+            source="100",
+            score=0.9,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "100",
+                "source_title": "GENEL KARAR",
+                "madde_no": "1",
+            },
+        )
+        specific_chunk = RetrievedChunk(
+            text="Yatırımlarda devlet yardımları hükmü.",
+            citation="9903 m.1",
+            source="9903",
+            score=0.2,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "9903",
+                "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                "madde_no": "1",
+            },
+        )
+
+        reranked, trace = _rerank_chunks_by_source_identity(
+            query="Yatırımlarda devlet yardımları hakkında karar ne düzenler?",
+            chunks=[generic_chunk, specific_chunk],
+            requested_source_families=["cb_karar"],
+            metadata_first_selector=None,
+        )
+
+        assert reranked[0].citation == "9903 m.1"
+        generic_trace = next(item for item in trace["top_scores"] if item["citation"] == "100 m.1")
+        assert generic_trace["title_match_type"] == "none"
+
     def test_clamp_families_removes_planner_family_that_conflicts_with_strong_resolution(self):
         resolution = _resolve_source_family_prior(
             "Yalnız 2547 yeterli midir, yoksa hangi üniversite yönetmeliği merkezde olmalıdır?"

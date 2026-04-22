@@ -465,6 +465,49 @@ def test_repair_replaces_mismatched_identifier_when_selector_evidence_is_authori
     assert "claimed_identifier_replaced_by_selected_evidence" in contract["verification_findings"]
 
 
+def test_repair_suppresses_selected_identifier_without_query_or_identity_anchor():
+    result = build_or_repair_answer_contract(
+        qid="PHASE10D-ID-SUPPRESS",
+        answer_text="Başvuru usulü kaynakta açıklanır. [Kaynak: 40969 m.27]",
+        citations=["40969 m.27"],
+        answer_contract={
+            "answer_text": "Başvuru usulü kaynakta açıklanır. [Kaynak: 40969 m.27]",
+            "source_family_claimed": "UY",
+            "article_or_section_claimed": "madde:27",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "Başvuru usulü nedir?",
+            "retrieval": {
+                "source_identity_reranker": {
+                    "document_identity_score": 30,
+                    "title_match_type": "none",
+                    "identifier_match_type": "not_requested",
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "40969:m27:f0",
+                    "citation": "40969 m.27/f.0",
+                    "source_family": "uy",
+                    "source_identifier": "40969 m.27",
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "article_or_section": "27",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_identifier_claimed"] == "unknown"
+    assert contract["identifier_integrity_status"] == "selected_evidence_identifier_suppressed"
+    assert "selected_identifier_suppressed_without_query_anchor" in contract["verification_findings"]
+
+
 def test_repair_uses_phase6_selector_insufficient_support_as_confidence_ceiling():
     result = build_or_repair_answer_contract(
         qid="PHASE6-SELECTOR",

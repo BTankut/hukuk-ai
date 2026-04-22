@@ -509,6 +509,69 @@ def _trace_family_resolution(trace_payload: dict[str, Any] | None) -> dict[str, 
     return {}
 
 
+def _trace_source_identity_reranker(trace_payload: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(trace_payload, dict):
+        return {}
+    for parent_key in ("retrieval", "parsed_query", "query_signals"):
+        parent = trace_payload.get(parent_key)
+        if not isinstance(parent, dict):
+            continue
+        reranker = parent.get("source_identity_reranker")
+        if isinstance(reranker, dict):
+            return reranker
+    return {}
+
+
+def _trace_question_text(trace_payload: dict[str, Any] | None) -> str:
+    if not isinstance(trace_payload, dict):
+        return ""
+    direct = _clean(trace_payload.get("question_raw"))
+    if direct:
+        return direct
+    for parent_key in ("query_signals", "parsed_query"):
+        parent = trace_payload.get(parent_key)
+        if isinstance(parent, dict):
+            value = _first_string(parent.get("user_query"), parent.get("retrieval_query"), parent.get("enriched_query"))
+            if value:
+                return value
+    return ""
+
+
+def _query_requests_source_identifier(trace_payload: dict[str, Any] | None) -> bool:
+    normalized = _lower_asciiish(_trace_question_text(trace_payload))
+    if not normalized:
+        return False
+    return bool(
+        re.search(
+            r"\b(?:sayili|sayisi|no|numarasi|karar sayisi|genelge sayisi|teblig no|sira no)\b",
+            normalized,
+        )
+    )
+
+
+def _selected_evidence_identity_trusted(trace_payload: dict[str, Any] | None) -> bool:
+    selector = _trace_article_selector(trace_payload)
+    if selector:
+        metadata_strength = str(selector.get("metadata_identity_strength") or "")
+        selector_sufficiency = str(selector.get("selector_evidence_sufficiency") or "")
+        if metadata_strength == "strong" and selector_sufficiency in {"exact_enough", "sufficient"}:
+            return True
+    reranker = _trace_source_identity_reranker(trace_payload)
+    if not reranker:
+        return False
+    title_match_type = str(reranker.get("title_match_type") or "")
+    identifier_match_type = str(reranker.get("identifier_match_type") or "")
+    try:
+        document_identity_score = float(reranker.get("document_identity_score") or 0.0)
+    except (TypeError, ValueError):
+        document_identity_score = 0.0
+    return (
+        identifier_match_type == "exact_identifier"
+        or title_match_type in {"exact_phrase", "strong_overlap"}
+        or document_identity_score >= 120.0
+    )
+
+
 def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
     raw_family = _first_string(
         evidence.get("belge_turu") if isinstance(evidence, dict) else "",
@@ -876,8 +939,14 @@ def build_or_repair_answer_contract(
         source_family = selected_evidence_family
 
     selected_identifier = _detect_identifier(combined_text, [], selected_evidence)
-    if selected_evidence_forced_by_family:
+    query_requests_identifier = _query_requests_source_identifier(trace_payload)
+    selected_identity_trusted = _selected_evidence_identity_trusted(trace_payload)
+    source_identity_trace_present = bool(_trace_source_identity_reranker(trace_payload))
+    allow_selected_identifier = query_requests_identifier or selected_identity_trusted or not source_identity_trace_present
+    if selected_evidence_forced_by_family and allow_selected_identifier:
         source_identifier = _first_string(selected_identifier, contract.get("source_identifier_claimed"), legacy_primary)
+    elif selected_evidence_forced_by_family:
+        source_identifier = _first_string(contract.get("source_identifier_claimed"), legacy_primary)
     else:
         source_identifier = _first_string(
             contract.get("source_identifier_claimed"),
@@ -901,7 +970,7 @@ def build_or_repair_answer_contract(
             selected_evidence_forced_by_selector
             or selected_evidence_forced_by_family
             or not raw_identifier_claim_present
-        ):
+        ) and allow_selected_identifier:
             pre_verification_findings.append("identifier_integrity_failed")
             pre_verification_findings.append("same_evidence_identifier_mismatch")
             pre_verification_findings.append("claimed_identifier_replaced_by_selected_evidence")
@@ -913,9 +982,23 @@ def build_or_repair_answer_contract(
             pre_verification_findings.append("claimed_identifier_suppressed")
             source_identifier = ""
             identifier_integrity_status = "unverified_claim_suppressed"
-    elif selected_identifier:
+    elif selected_identifier and allow_selected_identifier:
         source_identifier = selected_identifier
         identifier_integrity_status = "selected_evidence"
+    elif selected_identifier:
+        pre_verification_findings.append("selected_identifier_suppressed_without_query_anchor")
+        source_identifier = ""
+        identifier_integrity_status = "selected_evidence_identifier_suppressed"
+    if (
+        identifier_integrity_status == "exact"
+        and source_identity_trace_present
+        and not query_requests_identifier
+        and not selected_identity_trusted
+        and selected_identifier
+    ):
+        pre_verification_findings.append("selected_identifier_suppressed_without_query_anchor")
+        source_identifier = ""
+        identifier_integrity_status = "selected_evidence_identifier_suppressed"
 
     raw_claimed_title = _first_string(contract.get("source_title_claimed"))
     selected_evidence_title = _first_string(
