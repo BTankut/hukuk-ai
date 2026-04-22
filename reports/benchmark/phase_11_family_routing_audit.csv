@@ -1,0 +1,13 @@
+expected_family,total,wrong_family_rows,locked_preferred_family,preferred_family_hit_rows,avg_selected_family_confidence,no_gate_rows,family_gate_reason_counts
+CB_GENELGE,4,0,4,4,0.860,0,preferred_family_pool_available:4
+CB_KARAR,8,3,4,4,0.590,4,no_family_prior:2 | preferred_family_pool_available:4 | weak_family_prior_cross_family_allowed:2
+CB_KARARNAME,6,0,5,0,0.823,1,preferred_family_pool_available:5 | weak_family_prior_cross_family_allowed:1
+CB_YONETMELIK,6,4,1,1,0.553,5,no_family_prior:1 | preferred_family_pool_available:1 | weak_family_prior_cross_family_allowed:4
+KANUN,21,8,2,1,0.128,19,low_confidence_family_prior:2 | no_family_prior:17 | preferred_family_pool_available:2
+KHK,6,1,5,0,0.823,1,preferred_family_pool_available:5 | weak_family_prior_cross_family_allowed:1
+KKY,11,2,1,7,0.599,10,preferred_family_pool_available:1 | weak_family_prior_cross_family_allowed:10
+MULGA,5,4,3,1,0.516,2,no_family_prior:2 | preferred_family_pool_available:3
+TEBLIGLER,8,0,8,8,0.860,0,preferred_family_pool_available:8
+TUZUK,5,1,0,0,0.662,5,weak_family_prior_cross_family_allowed:5
+UY,10,2,7,8,0.757,3,preferred_family_pool_available:7 | weak_family_prior_cross_family_allowed:3
+YONETMELIK,10,10,2,2,0.600,8,preferred_family_pool_available:2 | weak_family_prior_cross_family_allowed:8
