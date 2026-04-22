@@ -80,6 +80,11 @@ class SourceFamilyResolution:
     family_candidates: list[SourceFamilyCandidate] = field(default_factory=list)
     routing_families: list[str] = field(default_factory=list)
     query_expansions: list[str] = field(default_factory=list)
+    expected_family_prior: str | None = None
+    preferred_families: list[str] = field(default_factory=list)
+    fallback_families: list[str] = field(default_factory=list)
+    selected_family_confidence: float = 0.0
+    family_override_reason: str = "no_family_prior"
 
     def to_trace_dict(self) -> dict[str, object]:
         return {
@@ -88,6 +93,11 @@ class SourceFamilyResolution:
             "family_candidates": [candidate.to_trace_dict() for candidate in self.family_candidates],
             "routing_families": self.routing_families,
             "query_expansions": self.query_expansions,
+            "expected_family_prior": self.expected_family_prior,
+            "preferred_families": self.preferred_families,
+            "fallback_families": self.fallback_families,
+            "selected_family_confidence": round(self.selected_family_confidence, 3),
+            "family_override_reason": self.family_override_reason,
         }
 
 
@@ -172,6 +182,26 @@ def _route_families_for_candidates(candidates: list[SourceFamilyCandidate], top_
             continue
         selected.extend(ROUTING_ALIASES.get(candidate.family, (candidate.family,)))
     return dedupe(selected)
+
+
+def _family_policy_for_resolution(
+    *,
+    predicted_family: str | None,
+    family_confidence: float,
+    routing_families: list[str],
+) -> tuple[str | None, list[str], list[str], str]:
+    if not predicted_family:
+        return None, [], [], "no_family_prior"
+
+    if family_confidence >= 0.75:
+        preferred = [predicted_family]
+        fallback = [family for family in routing_families if family not in preferred]
+        return predicted_family, preferred, fallback, "strong_family_prior"
+
+    if family_confidence >= 0.50:
+        return predicted_family, [], routing_families, "weak_family_prior_cross_family_allowed"
+
+    return predicted_family, [], routing_families, "low_confidence_family_prior"
 
 
 def _demote_generic_law_signal_when_specific_type_is_present(
@@ -402,6 +432,11 @@ def resolve_source_family_prior(
             family_candidates=[],
             routing_families=[],
             query_expansions=[],
+            expected_family_prior=None,
+            preferred_families=[],
+            fallback_families=[],
+            selected_family_confidence=0.0,
+            family_override_reason="no_family_prior",
         )
 
     raw_candidates = sorted(
@@ -435,10 +470,21 @@ def resolve_source_family_prior(
         for family in routing_families
         if family in QUERY_EXPANSIONS and (top_confidence >= 0.50 or family == candidates[0].family)
     )
+    predicted_family = candidates[0].family if candidates else None
+    expected_family_prior, preferred_families, fallback_families, family_override_reason = _family_policy_for_resolution(
+        predicted_family=predicted_family,
+        family_confidence=top_confidence,
+        routing_families=routing_families,
+    )
     return SourceFamilyResolution(
-        predicted_family=candidates[0].family if candidates else None,
+        predicted_family=predicted_family,
         family_confidence=top_confidence,
         family_candidates=candidates,
         routing_families=routing_families,
         query_expansions=query_expansions[:4],
+        expected_family_prior=expected_family_prior,
+        preferred_families=preferred_families,
+        fallback_families=fallback_families,
+        selected_family_confidence=top_confidence if predicted_family else 0.0,
+        family_override_reason=family_override_reason,
     )

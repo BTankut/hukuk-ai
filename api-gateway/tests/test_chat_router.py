@@ -40,6 +40,7 @@ from routers.chat import (
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
+    _build_retrieval_verification_features,
     _build_retrieval_plan_expansion,
     _build_metadata_first_query_expansion,
     _build_source_cluster_candidates,
@@ -460,6 +461,48 @@ class TestLawSignalParsing:
         assert resolution.predicted_family == "cb_karar"
         assert resolution.family_confidence >= 0.75
         assert "cb_karar" in resolution.routing_families
+
+    def test_source_family_prior_exports_phase9_trace_policy(self):
+        resolution = _resolve_source_family_prior(
+            "Karar Sayısı: 3350 olan İthalat Rejimi Kararı hangi belge ailesindedir?"
+        )
+        trace = resolution.to_trace_dict()
+
+        assert trace["expected_family_prior"] == "cb_karar"
+        assert trace["preferred_families"] == ["cb_karar"]
+        assert trace["selected_family_confidence"] >= 0.75
+        assert trace["family_override_reason"] == "strong_family_prior"
+
+    def test_retrieval_verification_features_export_phase9_family_pool_fields(self):
+        resolution = _resolve_source_family_prior(
+            "Karar Sayısı: 3350 olan İthalat Rejimi Kararı hangi belge ailesindedir?"
+        )
+        chunks = [
+            RetrievedChunk(
+                text="İthalat Rejimi Kararı madde metni",
+                citation="3350 m.1",
+                source="3350",
+                score=1.0,
+                metadata={
+                    "belge_turu": "cb_karar",
+                    "belge_adi": "İTHALAT REJİMİ KARARI",
+                    "belge_no": "3350",
+                    "madde_no": "1",
+                },
+            )
+        ]
+
+        features = _build_retrieval_verification_features(
+            query="Karar Sayısı: 3350 olan İthalat Rejimi Kararı hangi belge ailesindedir?",
+            requested_source_families=["cb_karar"],
+            source_family_resolution=resolution.to_trace_dict(),
+            chunks=chunks,
+        )
+
+        assert features["expected_family_prior"] == "cb_karar"
+        assert features["preferred_family_pool_size"] == 1
+        assert features["cross_family_fallback_used"] is False
+        assert features["family_override_reason"] == "strong_family_prior"
 
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(

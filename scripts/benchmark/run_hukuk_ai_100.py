@@ -89,6 +89,11 @@ ANSWER_FIELDS = [
     "support_insufficient_for_specific_claim",
     "temporal_clause_missing",
     "answer_suppressed_due_to_evidence_gap",
+    "expected_family_prior",
+    "preferred_family_pool_size",
+    "cross_family_fallback_used",
+    "family_override_reason",
+    "selected_family_confidence",
     "retrieval_trace_id",
     "final_mode",
     "blocked",
@@ -381,6 +386,27 @@ def selector_value(response: dict[str, Any], key: str) -> str:
     return str(value)
 
 
+def retrieval_feature_value(response: dict[str, Any], key: str) -> str:
+    trace = trace_payload(response)
+    for container_name in ("retrieval", "parsed_query", "query_signals", "context_assembly"):
+        container = trace.get(container_name)
+        if not isinstance(container, dict):
+            continue
+        if key in container:
+            value = container.get(key)
+        else:
+            features = container.get("retrieval_verification_features")
+            value = features.get(key) if isinstance(features, dict) else None
+        if isinstance(value, bool):
+            return "True" if value else "False"
+        if value is None:
+            continue
+        if isinstance(value, list):
+            return stringify_list(value)
+        return str(value)
+    return ""
+
+
 def extracted_article_alignment(response: dict[str, Any]) -> str:
     selected_article = selector_value(response, "selected_article")
     claimed_article = contract_value(response, "article_or_section_claimed")
@@ -470,6 +496,11 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "support_insufficient_for_specific_claim": contract_value(response, "support_insufficient_for_specific_claim"),
         "temporal_clause_missing": contract_value(response, "temporal_clause_missing"),
         "answer_suppressed_due_to_evidence_gap": contract_value(response, "answer_suppressed_due_to_evidence_gap"),
+        "expected_family_prior": retrieval_feature_value(response, "expected_family_prior"),
+        "preferred_family_pool_size": retrieval_feature_value(response, "preferred_family_pool_size"),
+        "cross_family_fallback_used": retrieval_feature_value(response, "cross_family_fallback_used"),
+        "family_override_reason": retrieval_feature_value(response, "family_override_reason"),
+        "selected_family_confidence": retrieval_feature_value(response, "selected_family_confidence"),
         "retrieval_trace_id": extract_trace_id(response),
         "final_mode": str(response.get("final_mode", "")),
         "blocked": str(response.get("blocked", "")),

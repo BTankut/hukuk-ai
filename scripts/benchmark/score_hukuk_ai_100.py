@@ -102,6 +102,11 @@ SCORED_FIELDS = [
     "support_insufficient_for_specific_claim",
     "temporal_clause_missing",
     "answer_suppressed_due_to_evidence_gap",
+    "expected_family_prior",
+    "preferred_family_pool_size",
+    "cross_family_fallback_used",
+    "family_override_reason",
+    "selected_family_confidence",
     "missing_trace",
     "empty_or_refused",
     "api_error",
@@ -496,6 +501,11 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "support_insufficient_for_specific_claim": answer.get("support_insufficient_for_specific_claim", ""),
         "temporal_clause_missing": answer.get("temporal_clause_missing", ""),
         "answer_suppressed_due_to_evidence_gap": answer.get("answer_suppressed_due_to_evidence_gap", ""),
+        "expected_family_prior": answer.get("expected_family_prior", ""),
+        "preferred_family_pool_size": answer.get("preferred_family_pool_size", ""),
+        "cross_family_fallback_used": answer.get("cross_family_fallback_used", ""),
+        "family_override_reason": answer.get("family_override_reason", ""),
+        "selected_family_confidence": answer.get("selected_family_confidence", ""),
         "missing_trace": bool_text(missing_trace),
         "empty_or_refused": bool_text(empty_or_refused),
         "api_error": bool_text(api_error),
@@ -556,6 +566,20 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     article_match_type_counts = Counter(row.get("article_match_type", "") or "unknown" for row in rows)
     article_alignment_counts = Counter(row.get("article_alignment", "") or "unknown" for row in rows)
     query_article_alignment_counts = Counter(row.get("query_article_alignment", "") or "unknown" for row in rows)
+    expected_family_prior_counts = Counter(row.get("expected_family_prior", "") or "unknown" for row in rows)
+    family_override_reason_counts = Counter(row.get("family_override_reason", "") or "unknown" for row in rows)
+    cross_family_fallback_used_count = sum(
+        1 for row in rows if bool_field(str(row.get("cross_family_fallback_used", ""))) is True
+    )
+    selected_family_confidences: list[float] = []
+    for row in rows:
+        raw_confidence = str(row.get("selected_family_confidence", "")).strip()
+        if not raw_confidence:
+            continue
+        try:
+            selected_family_confidences.append(float(raw_confidence))
+        except ValueError:
+            continue
 
     summary = {
         "scoring_mode": "deterministic_proxy_phase_2_answer_contract_not_human_judge",
@@ -610,6 +634,15 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "article_match_type_counts": dict(sorted(article_match_type_counts.items())),
         "article_alignment_counts": dict(sorted(article_alignment_counts.items())),
         "query_article_alignment_counts": dict(sorted(query_article_alignment_counts.items())),
+        "expected_family_prior_counts": dict(sorted(expected_family_prior_counts.items())),
+        "family_override_reason_counts": dict(sorted(family_override_reason_counts.items())),
+        "cross_family_fallback_used_count": cross_family_fallback_used_count,
+        "avg_selected_family_confidence": round(
+            sum(selected_family_confidences) / len(selected_family_confidences),
+            3,
+        )
+        if selected_family_confidences
+        else 0.0,
         "selected_article_equals_claimed_article_count": sum(
             1 for row in rows if bool_field(str(row.get("selected_article_equals_claimed_article", ""))) is True
         ),
@@ -681,6 +714,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- selected_article_equals_claimed_article_count: {summary['selected_article_equals_claimed_article_count']}",
         f"- selected_article_equals_claimed_article_rate: {summary['selected_article_equals_claimed_article_rate']}",
         f"- selector_preferred_family_hit_rate: {summary['selector_preferred_family_hit_rate']}",
+        f"- cross_family_fallback_used_count: {summary['cross_family_fallback_used_count']}",
+        f"- avg_selected_family_confidence: {summary['avg_selected_family_confidence']}",
         f"- avg_selector_support_span_count: {summary['avg_selector_support_span_count']}",
         f"- temporal_state_resolved_count: {summary['temporal_state_resolved_count']}",
         f"- article_lock_failed_count: {summary['article_lock_failed_count']}",
@@ -715,6 +750,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Query Article Alignment"])
     for status, count in summary["query_article_alignment_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Expected Family Prior"])
+    for status, count in summary["expected_family_prior_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Family Override Reason"])
+    for status, count in summary["family_override_reason_counts"].items():
         lines.append(f"- {status}: {count}")
     lines.extend(
         [

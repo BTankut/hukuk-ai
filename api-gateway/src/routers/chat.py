@@ -4379,12 +4379,32 @@ def _build_retrieval_verification_features(
 ) -> dict[str, Any]:
     predicted_family = None
     family_confidence = 0.0
+    expected_family_prior = None
+    preferred_families: list[str] = []
+    fallback_families: list[str] = []
+    selected_family_confidence = 0.0
+    family_override_reason = "no_family_prior"
     if isinstance(source_family_resolution, dict):
         predicted_family = source_family_resolution.get("predicted_family")
         try:
             family_confidence = float(source_family_resolution.get("family_confidence") or 0.0)
         except (TypeError, ValueError):
             family_confidence = 0.0
+        expected_family_prior = source_family_resolution.get("expected_family_prior") or predicted_family
+        raw_preferred = source_family_resolution.get("preferred_families")
+        if isinstance(raw_preferred, list):
+            preferred_families = [str(family) for family in raw_preferred if str(family or "").strip()]
+        raw_fallback = source_family_resolution.get("fallback_families")
+        if isinstance(raw_fallback, list):
+            fallback_families = [str(family) for family in raw_fallback if str(family or "").strip()]
+        try:
+            selected_family_confidence = float(
+                source_family_resolution.get("selected_family_confidence") or family_confidence
+            )
+        except (TypeError, ValueError):
+            selected_family_confidence = family_confidence
+        if source_family_resolution.get("family_override_reason"):
+            family_override_reason = str(source_family_resolution.get("family_override_reason"))
 
     identifier_tokens = sorted(_extract_source_identifier_tokens(query))
     chunk_families = [_resolve_chunk_source_family(chunk) or "unknown" for chunk in chunks]
@@ -4401,6 +4421,20 @@ def _build_retrieval_verification_features(
         if predicted_family
         else 0
     )
+    preferred_family_set = set(preferred_families)
+    preferred_family_pool_size = (
+        sum(1 for family in chunk_families if family in preferred_family_set)
+        if preferred_family_set
+        else 0
+    )
+    cross_family_fallback_used = bool(
+        preferred_family_set
+        and chunks
+        and preferred_family_pool_size == 0
+        and any(family not in preferred_family_set and family != "unknown" for family in chunk_families)
+    )
+    if cross_family_fallback_used:
+        family_override_reason = "preferred_family_pool_empty_cross_family_fallback_observed"
     current_validity_query = _asks_current_validity_query(query)
     temporal_alignment_flag = (
         all(not _is_temporally_inactive_chunk(chunk) for chunk in chunks[:5])
@@ -4422,6 +4456,13 @@ def _build_retrieval_verification_features(
         "cross_family_conflict_flag": cross_family_conflict_flag,
         "selected_evidence_families": unique_families,
         "predicted_family_match_count": predicted_family_match_count,
+        "expected_family_prior": expected_family_prior,
+        "preferred_family_pool_size": preferred_family_pool_size,
+        "cross_family_fallback_used": cross_family_fallback_used,
+        "family_override_reason": family_override_reason,
+        "selected_family_confidence": round(selected_family_confidence, 3),
+        "preferred_families": preferred_families,
+        "fallback_families": fallback_families,
     }
 
 
@@ -4498,6 +4539,9 @@ def _build_trace_payload(
             "requested_source_families": requested_source_families,
             "predicted_family": (source_family_resolution or {}).get("predicted_family"),
             "family_confidence": (source_family_resolution or {}).get("family_confidence"),
+            "expected_family_prior": (source_family_resolution or {}).get("expected_family_prior"),
+            "selected_family_confidence": (source_family_resolution or {}).get("selected_family_confidence"),
+            "family_override_reason": (retrieval_verification_features or {}).get("family_override_reason"),
             "family_candidates": (source_family_resolution or {}).get("family_candidates", []),
             "source_family_resolution": source_family_resolution,
             "retrieval_verification_features": retrieval_verification_features,
@@ -4539,6 +4583,9 @@ def _build_trace_payload(
             "cross_law_mode": cross_law_mode,
             "predicted_family": (source_family_resolution or {}).get("predicted_family"),
             "family_confidence": (source_family_resolution or {}).get("family_confidence"),
+            "expected_family_prior": (source_family_resolution or {}).get("expected_family_prior"),
+            "selected_family_confidence": (source_family_resolution or {}).get("selected_family_confidence"),
+            "family_override_reason": (retrieval_verification_features or {}).get("family_override_reason"),
             "family_candidates": (source_family_resolution or {}).get("family_candidates", []),
             "source_family_resolution": source_family_resolution,
             "retrieval_verification_features": retrieval_verification_features,
@@ -4569,6 +4616,11 @@ def _build_trace_payload(
             "temporal_alignment_flag": (retrieval_verification_features or {}).get("temporal_alignment_flag"),
             "selected_evidence_count": (retrieval_verification_features or {}).get("selected_evidence_count"),
             "cross_family_conflict_flag": (retrieval_verification_features or {}).get("cross_family_conflict_flag"),
+            "expected_family_prior": (retrieval_verification_features or {}).get("expected_family_prior"),
+            "preferred_family_pool_size": (retrieval_verification_features or {}).get("preferred_family_pool_size"),
+            "cross_family_fallback_used": (retrieval_verification_features or {}).get("cross_family_fallback_used"),
+            "family_override_reason": (retrieval_verification_features or {}).get("family_override_reason"),
+            "selected_family_confidence": (retrieval_verification_features or {}).get("selected_family_confidence"),
             "retrieval_verification_features": retrieval_verification_features,
             "article_span_selector": article_span_selector,
             "pre_rerank_chunks": [
