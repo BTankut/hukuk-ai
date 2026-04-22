@@ -996,6 +996,34 @@ class TestLawSignalParsing:
         assert selector is None
         load_canonical_source_catalog.cache_clear()
 
+    def test_metadata_first_rejects_weak_title_overlap_without_identifier(self, tmp_path, monkeypatch):
+        article_rows = tmp_path / "article_rows.jsonl"
+        article_rows.write_text(
+            json.dumps(
+                {
+                    "source_id": "3082:3082:m1:f0:from1984-01-01:to9999-12-31",
+                    "belge_turu": "kanun",
+                    "belge_no": "3082",
+                    "belge_kisa_adi": "3082",
+                    "belge_adi": "KAMU YARARININ ZORUNLU KILDIĞI HALLERDE KAMU HİZMETİ NİTELİĞİ TAŞIYAN ÖZEL TEŞEBBÜSLERİN DEVLETLEŞTİRİLMESİ USUL VE ESASLARI HAKKINDA KANUN",
+                },
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("MEVZUAT_ARTICLE_ROWS_PATH", str(article_rows))
+        load_canonical_source_catalog.cache_clear()
+
+        selector = _select_metadata_first_source_candidates(
+            query="42 çalışanlı işyerinde performans gerekçesiyle fesihte işe iade olur mu?",
+            requested_source_families=["kanun"],
+            source_family_resolution=_resolve_source_family_prior("işe iade fesih kanun sorusu"),
+        )
+
+        assert selector is None
+        load_canonical_source_catalog.cache_clear()
+
     def test_metadata_filter_law_no_matches_general_belge_no(self):
         metadata_filter = MetadataFilter(law_no="3350")
         expr = metadata_filter.to_milvus_expr()

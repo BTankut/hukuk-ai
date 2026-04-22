@@ -733,9 +733,18 @@ def _select_metadata_first_source_candidates(
             requested_source_families=requested_source_families,
             source_family_resolution=source_family_resolution,
         )
-        if score < 22.0:
+        title_overlap = 0
+        for reason in reasons:
+            if reason.startswith("title_overlap:"):
+                try:
+                    title_overlap = max(title_overlap, int(reason.split(":", 1)[1]))
+                except ValueError:
+                    pass
+        has_identifier_anchor = "identifier_exact" in reasons
+        has_strong_title_anchor = title_overlap >= 3
+        if not has_identifier_anchor and not has_strong_title_anchor:
             continue
-        if "identifier_exact" not in reasons and not any(reason.startswith("title_overlap:") for reason in reasons):
+        if score < (24.0 if has_identifier_anchor else 34.0):
             continue
         scored.append(
             {
