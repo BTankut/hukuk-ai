@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import unicodedata
+from collections import Counter
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -60,7 +62,13 @@ def _clean(value: Any) -> str:
 
 
 def _normalize(value: Any) -> str:
-    return _clean(value).casefold().translate(_TR_ASCII_TRANS)
+    text = _clean(value).casefold().translate(_TR_ASCII_TRANS)
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
+
+
+def normalize_canonical_text(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", _normalize(value)).strip()
 
 
 def _first_present(*values: Any) -> str:
@@ -74,6 +82,18 @@ def _first_present(*values: Any) -> str:
 def _source_prefix(value: Any) -> str:
     text = _clean(value)
     return text.split(":", 1)[0] if text else ""
+
+
+def _source_key_from_row(row: dict[str, Any]) -> str:
+    return _first_present(
+        _source_prefix(row.get("source_id")),
+        row.get("belge_no"),
+        row.get("kanun_no"),
+        row.get("law_no"),
+        row.get("belge_kisa_adi"),
+        row.get("kanun_kisa_adi"),
+        row.get("law_short_name"),
+    )
 
 
 def _family_value(metadata: dict[str, Any]) -> str:
@@ -244,6 +264,158 @@ def _canonical_identifier_display(metadata: dict[str, Any]) -> str:
     return short_name or _clean(metadata.get("source_id"))
 
 
+def canonical_identifier_type(metadata: dict[str, Any] | None) -> str:
+    if not metadata:
+        return ""
+    family = canonical_source_family(metadata)
+    title = _first_present(
+        metadata.get("full_title"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+        metadata.get("kanun_adi"),
+        metadata.get("law_name"),
+        metadata.get("title"),
+    )
+    normalized_title = normalize_canonical_text(title)
+    if family in {"kanun", "mulga_kanun"}:
+        return "kanun_no"
+    if family == "khk":
+        return "khk_no"
+    if family == "cb_karar":
+        return "karar_sayisi"
+    if family == "cb_kararname":
+        return "kararname_no"
+    if family == "cb_genelge":
+        return "genelge_no"
+    if family == "teblig" or "teblig no" in normalized_title:
+        return "teblig_no"
+    if metadata.get("official_gazette_no") or metadata.get("resmi_gazete_sayi"):
+        return "rg_sayi"
+    return "source_no"
+
+
+def _extract_year_signals(*values: Any) -> list[str]:
+    years: set[str] = set()
+    for value in values:
+        text = _clean(value)
+        if not text:
+            continue
+        for year in re.findall(r"\b(18\d{2}|19\d{2}|20\d{2})\b", text):
+            years.add(year)
+    return sorted(years)
+
+
+def _extract_cross_refs(*values: Any) -> list[str]:
+    refs: set[str] = set()
+    for value in values:
+        text = _clean(value)
+        if not text:
+            continue
+        for number in re.findall(r"\b\d{2,5}\b", text):
+            refs.add(number)
+    return sorted(refs)
+
+
+def canonical_source_record_from_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
+    if not metadata:
+        return {}
+    title = _first_present(
+        metadata.get("full_title"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+        metadata.get("kanun_adi"),
+        metadata.get("law_name"),
+        metadata.get("title"),
+    )
+    source_key = _source_key_from_row(metadata)
+    canonical_identifier = _first_present(
+        metadata.get("canonical_identifier"),
+        metadata.get("belge_no"),
+        metadata.get("kanun_no"),
+        metadata.get("law_no"),
+        metadata.get("belge_kisa_adi"),
+        metadata.get("kanun_kisa_adi"),
+        metadata.get("law_short_name"),
+        source_key,
+    )
+    official_gazette_no = _first_present(
+        metadata.get("official_gazette_no"),
+        metadata.get("official_gazette_number"),
+        metadata.get("resmi_gazete_sayi"),
+    )
+    official_gazette_date = _first_present(
+        metadata.get("official_gazette_date"),
+        metadata.get("resmi_gazete_tarih"),
+    )
+    effective_start = _first_present(metadata.get("effective_start"), metadata.get("yururluk_baslangic"))
+    effective_end = _first_present(metadata.get("effective_end"), metadata.get("yururluk_bitis"))
+    issuer = infer_issuer(metadata) or ""
+    alias_titles = [
+        value
+        for value in dict.fromkeys(
+            _clean(value)
+            for value in (
+                metadata.get("source_title"),
+                metadata.get("belge_adi"),
+                metadata.get("kanun_adi"),
+                metadata.get("law_name"),
+                metadata.get("title"),
+                metadata.get("belge_kisa_adi"),
+                metadata.get("kanun_kisa_adi"),
+                metadata.get("law_short_name"),
+            )
+        )
+        if value and value != title
+    ]
+    record = {
+        "source_key": source_key,
+        "source_family_canonical": canonical_source_family(metadata),
+        "canonical_title": title,
+        "canonical_title_normalized": normalize_canonical_text(title),
+        "canonical_identifier": canonical_identifier,
+        "canonical_identifier_display": _canonical_identifier_display(metadata),
+        "canonical_identifier_type": canonical_identifier_type(metadata),
+        "issuer": issuer,
+        "issuer_normalized": normalize_canonical_text(issuer),
+        "official_gazette_no": official_gazette_no,
+        "official_gazette_date": official_gazette_date,
+        "effective_start": effective_start,
+        "effective_end": effective_end,
+        "effective_state": resolve_effective_state(metadata),
+        "year_signals": _extract_year_signals(
+            title,
+            official_gazette_date,
+            effective_start,
+            effective_end,
+            metadata.get("source_id"),
+        ),
+        "alias_titles": alias_titles,
+        "cross_refs": _extract_cross_refs(title, metadata.get("source_id")),
+    }
+    return {key: value for key, value in record.items() if value not in (None, "", [])}
+
+
+def _merge_canonical_records(current: dict[str, Any] | None, incoming: dict[str, Any]) -> dict[str, Any]:
+    if not current:
+        merged = dict(incoming)
+    else:
+        merged = dict(current)
+        for key, value in incoming.items():
+            if key in {"alias_titles", "cross_refs", "year_signals"}:
+                merged[key] = sorted(set(merged.get(key) or []) | set(value or []))
+            elif not merged.get(key) and value:
+                merged[key] = value
+
+    aliases = set(merged.get("alias_titles") or [])
+    title = merged.get("canonical_title")
+    if title:
+        aliases.discard(title)
+    merged["alias_titles"] = sorted(aliases)
+    merged["year_signals"] = sorted(set(merged.get("year_signals") or []))
+    merged["cross_refs"] = sorted(set(merged.get("cross_refs") or []))
+    return merged
+
+
 def _metadata_record_from_row(row: dict[str, Any]) -> dict[str, Any]:
     title = _first_present(
         row.get("full_title"),
@@ -253,6 +425,7 @@ def _metadata_record_from_row(row: dict[str, Any]) -> dict[str, Any]:
         row.get("law_name"),
         row.get("title"),
     )
+    canonical_record = canonical_source_record_from_metadata(row)
     record = {
         "full_title": title,
         "source_title": title,
@@ -266,8 +439,16 @@ def _metadata_record_from_row(row: dict[str, Any]) -> dict[str, Any]:
         "canonical_identifier_display": _canonical_identifier_display(row),
         "source_family_canonical": canonical_source_family(row),
         "effective_state": resolve_effective_state(row),
+        "canonical_title": canonical_record.get("canonical_title"),
+        "canonical_title_normalized": canonical_record.get("canonical_title_normalized"),
+        "canonical_identifier": canonical_record.get("canonical_identifier"),
+        "canonical_identifier_type": canonical_record.get("canonical_identifier_type"),
+        "issuer_normalized": canonical_record.get("issuer_normalized"),
+        "year_signals": canonical_record.get("year_signals"),
+        "alias_titles": canonical_record.get("alias_titles"),
+        "cross_refs": canonical_record.get("cross_refs"),
     }
-    return {key: value for key, value in record.items() if value not in {None, ""}}
+    return {key: value for key, value in record.items() if value not in (None, "", [])}
 
 
 def _catalog_keys_for_row(row: dict[str, Any]) -> list[str]:
@@ -306,6 +487,66 @@ def load_source_metadata_catalog() -> dict[str, dict[str, Any]]:
                 if key and key not in catalog:
                     catalog[key] = record
     return catalog
+
+
+@lru_cache(maxsize=1)
+def load_canonical_source_catalog() -> dict[str, dict[str, Any]]:
+    path = _resolve_article_rows_path()
+    if path is None:
+        return {}
+
+    catalog: dict[str, dict[str, Any]] = {}
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            row = json.loads(line)
+            source_key = _source_key_from_row(row)
+            if not source_key:
+                continue
+            record = canonical_source_record_from_metadata(row)
+            if not record:
+                continue
+            catalog[source_key] = _merge_canonical_records(catalog.get(source_key), record)
+    return catalog
+
+
+def canonical_catalog_audit(catalog: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+    records = list((catalog or load_canonical_source_catalog()).values())
+    fields = (
+        "source_family_canonical",
+        "canonical_title",
+        "canonical_title_normalized",
+        "canonical_identifier",
+        "canonical_identifier_type",
+        "issuer",
+        "issuer_normalized",
+        "official_gazette_no",
+        "official_gazette_date",
+        "effective_start",
+        "effective_end",
+        "effective_state",
+        "year_signals",
+        "alias_titles",
+        "cross_refs",
+    )
+    missing = Counter()
+    family_counts = Counter()
+    identifier_type_counts = Counter()
+    for record in records:
+        family_counts[str(record.get("source_family_canonical") or "unknown")] += 1
+        identifier_type_counts[str(record.get("canonical_identifier_type") or "unknown")] += 1
+        for field in fields:
+            value = record.get(field)
+            if value in (None, "", []):
+                missing[field] += 1
+    for field in fields:
+        missing.setdefault(field, 0)
+    return {
+        "record_count": len(records),
+        "fields": list(fields),
+        "missing": dict(missing),
+        "family_counts": dict(family_counts.most_common()),
+        "identifier_type_counts": dict(identifier_type_counts.most_common()),
+    }
 
 
 @lru_cache(maxsize=1)
@@ -395,6 +636,20 @@ def enrich_metadata_with_source_title(metadata: dict[str, Any] | None) -> dict[s
     enriched.setdefault("source_family_canonical", canonical_source_family(enriched))
     enriched.setdefault("effective_state", resolve_effective_state(enriched))
     enriched.setdefault("canonical_identifier_display", _canonical_identifier_display(enriched))
+    canonical_record = canonical_source_record_from_metadata(enriched)
+    for key in (
+        "canonical_title",
+        "canonical_title_normalized",
+        "canonical_identifier",
+        "canonical_identifier_type",
+        "issuer_normalized",
+        "year_signals",
+        "alias_titles",
+        "cross_refs",
+    ):
+        value = canonical_record.get(key)
+        if value not in (None, "", []):
+            enriched.setdefault(key, value)
 
     official_gazette_no = _first_present(enriched.get("official_gazette_no"), enriched.get("resmi_gazete_sayi"))
     official_gazette_date = _first_present(enriched.get("official_gazette_date"), enriched.get("resmi_gazete_tarih"))
