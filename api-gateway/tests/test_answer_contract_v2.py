@@ -417,8 +417,68 @@ def test_repair_uses_phase6_selector_insufficient_support_as_confidence_ceiling(
     )
 
     contract = result.contract
-    assert contract["grounding_status"] == "partially_grounded"
-    assert contract["confidence_0_100"] < 70
+    assert contract["grounding_status"] == "not_grounded"
+    assert contract["confidence_0_100"] < 40
     assert contract["needs_manual_review"] is True
+    assert contract["answer_suppressed_due_to_evidence_gap"] is True
     assert "selector_insufficient_support" in contract["verification_findings"]
     assert "selector_insufficient_selector_support" in contract["verification_findings"]
+
+
+def test_repair_suppresses_answer_when_article_lock_fails_for_specific_claim():
+    result = build_or_repair_answer_contract(
+        qid="PHASE7-ARTICLE-LOCK",
+        answer_text="Tez danışmanı kesin olarak madde 12'de düzenlenir. [Kaynak: 2547 m.12]",
+        citations=["2547 m.12"],
+        answer_contract={
+            "answer_text": "Tez danışmanı kesin olarak madde 12'de düzenlenir. [Kaynak: 2547 m.12]",
+            "primary_source_id": "2547 m.12",
+            "source_family_claimed": "KANUN",
+            "source_identifier_claimed": "2547 m.12",
+            "article_or_section_claimed": "madde:12",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "article_span_selector": {
+                    "query_article_tokens": ["12"],
+                    "selector_exact_article_hit": False,
+                    "selector_support_span_count": 1,
+                    "support_span_count": 1,
+                    "selector_evidence_sufficiency": "insufficient_support",
+                    "metadata_identity_strength": "weak",
+                    "article_match_type": "source_local_support",
+                    "manual_review_trigger_reason": "article_span_not_found",
+                    "temporal_state_resolved": False,
+                }
+            },
+            "target_date": "current",
+            "assembled_evidence": [
+                {
+                    "source_id": "2547:m9:f0",
+                    "citation": "2547 m.9/f.0",
+                    "source_family": "kanun",
+                    "source_identifier": "2547 m.9",
+                    "source_title": "YÜKSEKÖĞRETİM KANUNU",
+                    "article_or_section": "9",
+                    "effective_state": "active",
+                    "quoted_or_extracted_span": "Genel kanun hükmü.",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "not_grounded"
+    assert contract["answer_mode"] == "insufficient_grounding"
+    assert contract["confidence_0_100"] < 40
+    assert contract["article_lock_failed"] is True
+    assert contract["support_insufficient_for_specific_claim"] is True
+    assert contract["temporal_clause_missing"] is True
+    assert contract["answer_suppressed_due_to_evidence_gap"] is True
+    assert contract["unsupported_reason"] == "evidence_gap"
+    assert "answer_suppressed_due_to_evidence_gap" in contract["verification_findings"]
+    assert contract["answer_text"].startswith("Bu soruya mevcut kaynaklarla tam destekli")

@@ -678,6 +678,21 @@ def _confidence_policy_ok(grounding_status: str, confidence: int) -> bool:
     return False
 
 
+def _bool_flag(value: Any) -> bool:
+    if value is True:
+        return True
+    if isinstance(value, str):
+        return _lower_asciiish(value) in {"1", "true", "yes", "evet", "on"}
+    return False
+
+
+def _int_value(value: Any) -> int | None:
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
 def _format_final_reason(
     *,
     source_family: str,
@@ -898,6 +913,10 @@ def build_or_repair_answer_contract(
         verification_findings.append("cross_family_evidence_conflict")
 
     article_selector = {}
+    article_lock_failed = False
+    support_insufficient_for_specific_claim = False
+    temporal_clause_missing = False
+    answer_suppressed_due_to_evidence_gap = False
     if isinstance(trace_payload, dict):
         retrieval = trace_payload.get("retrieval")
         if isinstance(retrieval, dict):
@@ -906,6 +925,28 @@ def build_or_repair_answer_contract(
         selector_sufficiency = str(article_selector.get("selector_evidence_sufficiency") or "")
         selector_review_reason = str(article_selector.get("manual_review_trigger_reason") or "")
         metadata_strength = str(article_selector.get("metadata_identity_strength") or "")
+        query_article_tokens = article_selector.get("query_article_tokens")
+        if not isinstance(query_article_tokens, list):
+            query_article_tokens = []
+        selector_exact_article_hit = _bool_flag(article_selector.get("selector_exact_article_hit"))
+        article_match_type = str(article_selector.get("article_match_type") or "")
+        support_span_count = _int_value(
+            article_selector.get("support_span_count")
+            or article_selector.get("selector_support_span_count")
+        )
+        if query_article_tokens and not selector_exact_article_hit:
+            article_lock_failed = True
+            verification_findings.append("article_lock_failed")
+        claim_article = _article_token(article_or_section)
+        if claim_article and (
+            selector_sufficiency == "insufficient_support"
+            or (support_span_count is not None and support_span_count < 2 and article_match_type not in {"exact", "explicit_exact"})
+        ):
+            support_insufficient_for_specific_claim = True
+            verification_findings.append("support_insufficient_for_specific_claim")
+        if article_selector.get("temporal_state_resolved") is False and temporal_qualification not in {"", "unknown"}:
+            temporal_clause_missing = True
+            verification_findings.append("temporal_clause_missing")
         if selector_sufficiency == "insufficient_support":
             verification_findings.append("selector_insufficient_support")
         elif selector_sufficiency == "partially_supported" and selector_review_reason:
@@ -918,8 +959,20 @@ def build_or_repair_answer_contract(
             finding = "selector_weak_metadata_identity"
             if finding not in verification_findings:
                 verification_findings.append(finding)
+        answer_suppressed_due_to_evidence_gap = (
+            selector_sufficiency == "insufficient_support"
+            or article_lock_failed
+            or support_insufficient_for_specific_claim
+        )
+        if answer_suppressed_due_to_evidence_gap:
+            verification_findings.append("answer_suppressed_due_to_evidence_gap")
 
-    if verification_findings and grounding_status == "fully_grounded":
+    verification_findings = list(dict.fromkeys(verification_findings))
+
+    if answer_suppressed_due_to_evidence_gap:
+        grounding_status = "not_grounded"
+        answer_mode = "insufficient_grounding"
+    elif verification_findings and grounding_status == "fully_grounded":
         grounding_status = "partially_grounded"
         answer_mode = "qualified_answer"
 
@@ -976,8 +1029,20 @@ def build_or_repair_answer_contract(
             "temporal_qualification": temporal_qualification_claim,
             "needs_manual_review": bool(needs_manual_review),
             "verification_findings": verification_findings,
+            "article_lock_failed": bool(article_lock_failed),
+            "support_insufficient_for_specific_claim": bool(support_insufficient_for_specific_claim),
+            "temporal_clause_missing": bool(temporal_clause_missing),
+            "answer_suppressed_due_to_evidence_gap": bool(answer_suppressed_due_to_evidence_gap),
+            "unsupported_reason": (
+                contract.get("unsupported_reason")
+                or ("evidence_gap" if answer_suppressed_due_to_evidence_gap else None)
+            ),
         }
     )
+    if answer_suppressed_due_to_evidence_gap:
+        suppressed_answer = controlled_fallback_answer(contract)
+        contract["answer_text"] = suppressed_answer
+        contract["final_answer"] = suppressed_answer
 
     required_fields = (
         "qid",

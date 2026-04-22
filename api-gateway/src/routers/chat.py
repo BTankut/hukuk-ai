@@ -4992,6 +4992,10 @@ def _finalize_boundary_proxy_response(
             verification=verification,
         )
     answer_contract = contract_repair.contract
+    answer_text = _resolve_contract_suppressed_answer_text(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+    )
     trace_payload = dict(trace_payload)
     trace_payload["answer_contract"] = answer_contract
     trace_payload["answer_contract_validation"] = contract_repair.validation
@@ -5194,6 +5198,16 @@ def _sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> 
     sanitized = dict(answer_contract)
     sanitized["final_mode"] = _sanitize_public_final_mode(answer_contract.get("final_mode"))
     return sanitized
+
+
+def _resolve_contract_suppressed_answer_text(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any] | None,
+) -> str:
+    if isinstance(answer_contract, dict) and answer_contract.get("answer_suppressed_due_to_evidence_gap") is True:
+        return controlled_fallback_answer(answer_contract)
+    return answer_text
 
 
 def _resolve_public_answer_text(
@@ -6054,6 +6068,10 @@ def _finalize_chat_response(
             verification=verification,
         )
     answer_contract = contract_repair.contract
+    answer_text = _resolve_contract_suppressed_answer_text(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+    )
     trace_payload = dict(trace_payload)
     trace_payload["answer_contract"] = answer_contract
     trace_payload["answer_contract_validation"] = contract_repair.validation
