@@ -1,0 +1,7 @@
+# Benchmark Green Lane
+
+- status: pass
+- python: `/Users/btmacstudio/Projects/hukuk-ai/api-gateway/.venv/bin/python`
+- ci_mode: `false`
+- run_validation: `pass`
+- out_dir: `reports/benchmark/green_lane/20260422T153521Z_phase9_full`
