@@ -1070,7 +1070,7 @@ def _candidate_has_selector_support(
         or [0]
     )
     family = str(candidate.get("source_family") or "")
-    requested_family_set = set(requested_source_families)
+    requested_family_set = set(_expand_source_family_aliases(requested_source_families))
     if requested_family_set and family in requested_family_set:
         return title_overlap >= 1 or excerpt_overlap >= 5
     return title_overlap >= 2 or (title_overlap >= 1 and excerpt_overlap >= 4)
@@ -1614,6 +1614,100 @@ def _chunk_article_matches(chunk: RetrievedChunk, article_tokens: set[str]) -> b
     return bool(chunk_token and chunk_token in article_tokens)
 
 
+def _article_numeric_value(token: str) -> tuple[str, int] | None:
+    normalized = _normalize_article_token(token)
+    if not normalized:
+        return None
+    prefix = "gecici" if normalized.startswith("gecici-") else "normal"
+    number_part = normalized.split("-", 1)[1] if prefix == "gecici" else normalized
+    if not number_part.isdigit():
+        return None
+    return prefix, int(number_part)
+
+
+def _article_window_distance(chunk_token: str, article_tokens: set[str]) -> int | None:
+    chunk_value = _article_numeric_value(chunk_token)
+    if chunk_value is None:
+        return None
+    distances: list[int] = []
+    for token in article_tokens:
+        query_value = _article_numeric_value(token)
+        if query_value is None or query_value[0] != chunk_value[0]:
+            continue
+        distances.append(abs(chunk_value[1] - query_value[1]))
+    return min(distances) if distances else None
+
+
+def _chunk_effective_state_resolved(chunk: RetrievedChunk) -> bool:
+    metadata = chunk.metadata or {}
+    state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
+    if state and state not in {"unknown", "bilinmiyor"}:
+        return True
+    return bool(metadata.get("effective_start") or metadata.get("yururluk_baslangic"))
+
+
+def _selector_metadata_identity_strength(
+    *,
+    top_trace: dict[str, Any] | None,
+    identifier_tokens: set[str],
+    requested_family_set: set[str],
+    selected_source_keys: set[str] | None,
+) -> str:
+    if not top_trace:
+        return "none"
+    strong_hits = 0
+    if top_trace.get("selected_source_match"):
+        strong_hits += 1
+    if top_trace.get("identifier_match"):
+        strong_hits += 1
+    if top_trace.get("family_match"):
+        strong_hits += 1
+    if top_trace.get("law_match"):
+        strong_hits += 1
+    if top_trace.get("title_overlap", 0) >= 3:
+        strong_hits += 1
+    if strong_hits >= 2:
+        return "strong"
+    if strong_hits == 1:
+        return "medium"
+    if identifier_tokens or requested_family_set or selected_source_keys:
+        return "weak"
+    return "none"
+
+
+def _selector_manual_review_reason(
+    *,
+    top_traces: list[dict[str, Any]],
+    article_tokens: set[str],
+    requested_family_set: set[str],
+    evidence_sufficiency: str,
+    temporal_state_resolved: bool,
+) -> str:
+    if not top_traces:
+        return "no_evidence"
+    if evidence_sufficiency == "insufficient_support":
+        return "insufficient_selector_support"
+    if article_tokens and not any(trace.get("article_match") or trace.get("explicit_ref_match") for trace in top_traces[:5]):
+        return "article_span_not_found"
+    if not temporal_state_resolved:
+        return "temporal_state_unresolved"
+    top_families = {
+        str(trace.get("source_family") or "")
+        for trace in top_traces[:5]
+        if trace.get("source_family")
+    }
+    if requested_family_set and top_families and not (top_families & requested_family_set):
+        return "requested_family_not_in_top_evidence"
+    top_sources = {
+        str(trace.get("source_key") or trace.get("source_id") or "")
+        for trace in top_traces[:5]
+        if trace.get("source_key") or trace.get("source_id")
+    }
+    if len(top_sources) >= 3 and len(top_families) >= 2:
+        return "source_identity_collision"
+    return ""
+
+
 def _build_chunk_evidence_span(chunk: RetrievedChunk, *, query: str | None = None, max_len: int = 700) -> str:
     if query:
         return RAGOrchestrator._build_query_focused_excerpt(chunk.text, query=query, max_len=max_len)
@@ -1675,6 +1769,8 @@ def _select_article_span_evidence(
                 break
 
         article_match = bool(article_tokens and article_token in article_tokens)
+        article_distance = _article_window_distance(article_token, article_tokens)
+        adjacent_article_match = article_distance == 1
         identifier_match = _chunk_matches_identifier_tokens(chunk, identifier_tokens)
         family_match = bool(requested_family_set and family in requested_family_set)
         selected_source_match = bool(selected_source_keys and source_key in selected_source_keys)
@@ -1689,6 +1785,8 @@ def _select_article_span_evidence(
             score += 140
         if article_match:
             score += 70
+        elif adjacent_article_match:
+            score += 22
         if selected_source_match:
             score += 55
         if identifier_match:
@@ -1701,8 +1799,12 @@ def _select_article_span_evidence(
         score += min(heading_overlap, 8) * 6
         score += min(text_overlap, 10) * 2
         score += min(cluster_size, 6) * 1.5
+        if selected_source_match and (article_match or adjacent_article_match or heading_overlap or text_overlap >= 2):
+            score += 18
+        if identifier_match and (article_match or adjacent_article_match):
+            score += 16
         if requested_family_set and not family_match:
-            score -= 25
+            score -= 35
         if numbered_laws and not law_match:
             score -= 18
         if current_validity_query:
@@ -1716,25 +1818,115 @@ def _select_article_span_evidence(
                 {
                     "source_id": _resolve_trace_source_id(chunk),
                     "citation": chunk.citation,
+                    "source_key": source_key,
                     "score": round(score, 4),
                     "source_family": family or None,
                     "source_identifier": _resolve_chunk_source_identifier(chunk),
                     "article_or_section": article_token or None,
                     "explicit_ref_match": explicit_ref_match,
                     "article_match": article_match,
+                    "adjacent_article_match": adjacent_article_match,
+                    "article_window_distance": article_distance,
                     "identifier_match": identifier_match,
                     "family_match": family_match,
                     "selected_source_match": selected_source_match,
+                    "law_match": law_match,
                     "title_overlap": title_overlap,
                     "heading_overlap": heading_overlap,
                     "text_overlap": text_overlap,
+                    "temporal_state_resolved": _chunk_effective_state_resolved(chunk),
                 },
             )
         )
 
     ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
-    reordered = [chunk for _score, _index, chunk, _trace in ranked]
-    top_traces = [trace for _score, _index, _chunk, trace in ranked[:10]]
+    primary_source_key = _resolve_chunk_source_key(ranked[0][2]) if ranked else ""
+    window_items: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
+    if primary_source_key:
+        exact_items = [
+            item
+            for item in ranked
+            if _resolve_chunk_source_key(item[2]) == primary_source_key
+            and (item[3].get("explicit_ref_match") or item[3].get("article_match"))
+        ]
+        adjacent_items = [
+            item
+            for item in ranked
+            if _resolve_chunk_source_key(item[2]) == primary_source_key
+            and item not in exact_items
+            and item[3].get("adjacent_article_match")
+        ]
+        support_items = [
+            item
+            for item in ranked
+            if _resolve_chunk_source_key(item[2]) == primary_source_key
+            and item not in exact_items
+            and item not in adjacent_items
+            and (
+                item[3].get("heading_overlap", 0) >= 1
+                or item[3].get("text_overlap", 0) >= 2
+                or item[3].get("title_overlap", 0) >= 2
+            )
+        ]
+        if exact_items or adjacent_items:
+            window_items = [*exact_items[:2], *adjacent_items[:2], *support_items[:2]]
+    seen_window_ids = {id(item[2]) for item in window_items}
+    if window_items:
+        reordered = [item[2] for item in window_items] + [
+            chunk for _score, _index, chunk, _trace in ranked if id(chunk) not in seen_window_ids
+        ]
+        trace_by_chunk_id = {id(chunk): trace for _score, _index, chunk, trace in ranked}
+        top_traces = [trace_by_chunk_id[id(chunk)] for chunk in reordered[:10] if id(chunk) in trace_by_chunk_id]
+    else:
+        reordered = [chunk for _score, _index, chunk, _trace in ranked]
+        top_traces = [trace for _score, _index, _chunk, trace in ranked[:10]]
+    selector_document_rank = None
+    for rank, (_score, _index, _chunk, trace) in enumerate(ranked, start=1):
+        if selected_source_keys and trace.get("selected_source_match"):
+            selector_document_rank = rank
+            break
+        if identifier_tokens and trace.get("identifier_match"):
+            selector_document_rank = rank
+            break
+        if not selected_source_keys and not identifier_tokens and requested_family_set and trace.get("family_match"):
+            selector_document_rank = rank
+            break
+    if selector_document_rank is None and ranked:
+        selector_document_rank = 1
+    selector_article_rank = None
+    for rank, (_score, _index, _chunk, trace) in enumerate(ranked, start=1):
+        if trace.get("explicit_ref_match") or trace.get("article_match"):
+            selector_article_rank = rank
+            break
+    top_trace = top_traces[0] if top_traces else None
+    selector_exact_article_hit = bool(top_trace and (top_trace.get("explicit_ref_match") or top_trace.get("article_match")))
+    support_span_count = len(window_items) if window_items else min(len(reordered), 1 if reordered else 0)
+    metadata_identity_strength = _selector_metadata_identity_strength(
+        top_trace=top_trace,
+        identifier_tokens=identifier_tokens,
+        requested_family_set=requested_family_set,
+        selected_source_keys=selected_source_keys,
+    )
+    temporal_state_resolved = bool(top_trace and top_trace.get("temporal_state_resolved"))
+    if selector_exact_article_hit and metadata_identity_strength in {"strong", "medium"}:
+        evidence_sufficiency = "exact_enough"
+    elif top_trace and (
+        top_trace.get("selected_source_match")
+        or top_trace.get("identifier_match")
+        or top_trace.get("family_match")
+        or top_trace.get("law_match")
+        or support_span_count >= 2
+    ):
+        evidence_sufficiency = "partially_supported"
+    else:
+        evidence_sufficiency = "insufficient_support"
+    manual_review_reason = _selector_manual_review_reason(
+        top_traces=top_traces,
+        article_tokens=article_tokens,
+        requested_family_set=requested_family_set,
+        evidence_sufficiency=evidence_sufficiency,
+        temporal_state_resolved=temporal_state_resolved,
+    )
     first_changed = bool(reordered and chunks and reordered[0].citation != chunks[0].citation)
     applied = bool(first_changed or article_tokens or identifier_tokens or selected_source_keys or requested_family_set)
     return reordered, {
@@ -1744,6 +1936,14 @@ def _select_article_span_evidence(
         "identifier_tokens": sorted(identifier_tokens),
         "requested_source_families": requested_source_families,
         "selected_source_keys": sorted(selected_source_keys or []),
+        "selector_document_rank": selector_document_rank,
+        "selector_article_rank": selector_article_rank,
+        "selector_exact_article_hit": selector_exact_article_hit,
+        "selector_support_span_count": support_span_count,
+        "selector_evidence_sufficiency": evidence_sufficiency,
+        "metadata_identity_strength": metadata_identity_strength,
+        "temporal_state_resolved": temporal_state_resolved,
+        "manual_review_trigger_reason": manual_review_reason,
         "selected_source_ids": [trace["source_id"] for trace in top_traces if trace.get("source_id")],
         "selected_articles": dedupe_strings(
             [str(trace["article_or_section"]) for trace in top_traces if trace.get("article_or_section")]

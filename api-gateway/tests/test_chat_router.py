@@ -1262,6 +1262,84 @@ class TestLawSignalParsing:
         assert selected[0].citation == "40969 m.27/f.0"
         assert selector["top_scores"][0]["source_family"] == "uy"
 
+    def test_article_span_selector_builds_source_local_adjacent_window_metrics(self):
+        chunks = [
+            RetrievedChunk(
+                text="Başka kaynakta madde 12 benzer konuyu düzenler.",
+                citation="2547 m.12/f.0",
+                source="2547",
+                score=0.99,
+                metadata={"source_title": "YÜKSEKÖĞRETİM KANUNU", "belge_turu": "kanun", "madde_no": "12"},
+            ),
+            RetrievedChunk(
+                text="Tez danışmanı atanması madde 12 kapsamında düzenlenir.",
+                citation="40969 m.12/f.0",
+                source="40969",
+                score=0.80,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "law_no": "40969",
+                    "madde_no": "12",
+                    "effective_state": "active",
+                },
+            ),
+            RetrievedChunk(
+                text="Tez izleme ve danışmanlık desteği madde 13 kapsamında devam eder.",
+                citation="40969 m.13/f.0",
+                source="40969",
+                score=0.70,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "law_no": "40969",
+                    "madde_no": "13",
+                    "effective_state": "active",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="40969 sayılı üniversite yönetmeliğinin 12. maddesinde tez danışmanı nasıl düzenlenir?",
+            chunks=chunks,
+            requested_source_families=["uy", "yonetmelik"],
+            explicit_article_refs=[],
+            selected_source_keys={"kırklareli üniversitesi lisansüstü eğitim ve öğretim yönetmeliği"},
+        )
+
+        assert selected[0].citation == "40969 m.12/f.0"
+        assert selected[1].citation == "40969 m.13/f.0"
+        assert selector["selector_exact_article_hit"] is True
+        assert selector["selector_article_rank"] == 1
+        assert selector["selector_support_span_count"] >= 2
+        assert selector["selector_evidence_sufficiency"] == "exact_enough"
+        assert selector["metadata_identity_strength"] == "strong"
+        assert selector["temporal_state_resolved"] is True
+        assert selector["manual_review_trigger_reason"] == ""
+
+    def test_article_span_selector_surfaces_insufficient_support_metrics(self):
+        chunks = [
+            RetrievedChunk(
+                text="Genel kanun hükmü.",
+                citation="2547 m.12/f.0",
+                source="2547",
+                score=0.90,
+                metadata={"source_title": "YÜKSEKÖĞRETİM KANUNU", "belge_turu": "kanun", "madde_no": "12"},
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="Üniversite yönetmeliğine göre tez danışmanı hangi maddede düzenlenir?",
+            chunks=chunks,
+            requested_source_families=["uy"],
+            explicit_article_refs=[],
+        )
+
+        assert selected[0].citation == "2547 m.12/f.0"
+        assert selector["selector_evidence_sufficiency"] == "insufficient_support"
+        assert selector["metadata_identity_strength"] == "weak"
+        assert selector["manual_review_trigger_reason"] == "insufficient_selector_support"
+
     def test_assembled_evidence_exposes_phase4_canonical_span_fields(self):
         chunk = RetrievedChunk(
             text=(

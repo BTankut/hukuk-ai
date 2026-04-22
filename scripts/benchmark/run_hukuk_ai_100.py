@@ -51,6 +51,14 @@ ANSWER_FIELDS = [
     "uncertainty_disclosed",
     "manual_review_flag",
     "unsupported_confident_answer",
+    "selector_document_rank",
+    "selector_article_rank",
+    "selector_exact_article_hit",
+    "selector_support_span_count",
+    "selector_evidence_sufficiency",
+    "metadata_identity_strength",
+    "temporal_state_resolved",
+    "manual_review_trigger_reason",
     "retrieval_trace_id",
     "final_mode",
     "blocked",
@@ -284,6 +292,23 @@ def answer_contract(response: dict[str, Any]) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def trace_payload(response: dict[str, Any]) -> dict[str, Any]:
+    value = response.get("trace")
+    return value if isinstance(value, dict) else {}
+
+
+def article_span_selector(response: dict[str, Any]) -> dict[str, Any]:
+    trace = trace_payload(response)
+    for container_name in ("retrieval", "parsed_query", "query_signals", "context_assembly"):
+        container = trace.get(container_name)
+        if not isinstance(container, dict):
+            continue
+        selector = container.get("article_span_selector")
+        if isinstance(selector, dict):
+            return selector
+    return {}
+
+
 def contract_validation(response: dict[str, Any]) -> dict[str, Any]:
     contract = answer_contract(response)
     value = contract.get("contract_validation")
@@ -308,6 +333,15 @@ def contract_value(response: dict[str, Any], key: str) -> str:
 
 def validation_value(response: dict[str, Any], key: str) -> str:
     value = contract_validation(response).get(key)
+    if isinstance(value, bool):
+        return "True" if value else "False"
+    if value is None:
+        return ""
+    return str(value)
+
+
+def selector_value(response: dict[str, Any], key: str) -> str:
+    value = article_span_selector(response).get(key)
     if isinstance(value, bool):
         return "True" if value else "False"
     if value is None:
@@ -356,6 +390,14 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "uncertainty_disclosed": validation_value(response, "uncertainty_disclosed"),
         "manual_review_flag": validation_value(response, "manual_review_flag"),
         "unsupported_confident_answer": validation_value(response, "unsupported_confident_answer"),
+        "selector_document_rank": selector_value(response, "selector_document_rank"),
+        "selector_article_rank": selector_value(response, "selector_article_rank"),
+        "selector_exact_article_hit": selector_value(response, "selector_exact_article_hit"),
+        "selector_support_span_count": selector_value(response, "selector_support_span_count"),
+        "selector_evidence_sufficiency": selector_value(response, "selector_evidence_sufficiency"),
+        "metadata_identity_strength": selector_value(response, "metadata_identity_strength"),
+        "temporal_state_resolved": selector_value(response, "temporal_state_resolved"),
+        "manual_review_trigger_reason": selector_value(response, "manual_review_trigger_reason"),
         "retrieval_trace_id": extract_trace_id(response),
         "final_mode": str(response.get("final_mode", "")),
         "blocked": str(response.get("blocked", "")),

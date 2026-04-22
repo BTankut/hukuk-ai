@@ -68,6 +68,14 @@ SCORED_FIELDS = [
     "claimed_source_parse_success",
     "uncertainty_disclosed",
     "manual_review_flag",
+    "selector_document_rank",
+    "selector_article_rank",
+    "selector_exact_article_hit",
+    "selector_support_span_count",
+    "selector_evidence_sufficiency",
+    "metadata_identity_strength",
+    "temporal_state_resolved",
+    "manual_review_trigger_reason",
     "missing_trace",
     "empty_or_refused",
     "api_error",
@@ -139,6 +147,13 @@ def bool_field(value: str) -> bool | None:
     if normalized in {"false", "0", "no", "hayir", "hayır"}:
         return False
     return None
+
+
+def int_field(value: str) -> int | None:
+    if not value:
+        return None
+    match = re.search(r"\d+", str(value))
+    return int(match.group(0)) if match else None
 
 
 def confidence_policy_consistent(grounding_status: str, confidence: float | None) -> bool:
@@ -418,6 +433,14 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "claimed_source_parse_success": bool_text(claimed_source_parse_success),
         "uncertainty_disclosed": bool_text(uncertainty_disclosed),
         "manual_review_flag": bool_text(manual_review_flag),
+        "selector_document_rank": answer.get("selector_document_rank", ""),
+        "selector_article_rank": answer.get("selector_article_rank", ""),
+        "selector_exact_article_hit": answer.get("selector_exact_article_hit", ""),
+        "selector_support_span_count": answer.get("selector_support_span_count", ""),
+        "selector_evidence_sufficiency": answer.get("selector_evidence_sufficiency", ""),
+        "metadata_identity_strength": answer.get("metadata_identity_strength", ""),
+        "temporal_state_resolved": answer.get("temporal_state_resolved", ""),
+        "manual_review_trigger_reason": answer.get("manual_review_trigger_reason", ""),
         "missing_trace": bool_text(missing_trace),
         "empty_or_refused": bool_text(empty_or_refused),
         "api_error": bool_text(api_error),
@@ -450,6 +473,23 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     for row in rows:
         for failure in split_rubric(row.get("failure_classes", "")):
             failure_counter[failure] += 1
+    selector_exact_rows = [
+        row for row in rows if bool_field(str(row.get("selector_exact_article_hit", ""))) is True
+    ]
+    selector_ranked_rows = [
+        row for row in rows if int_field(str(row.get("selector_document_rank", ""))) is not None
+    ]
+    selector_same_document_rows = [
+        row
+        for row in rows
+        if int_field(str(row.get("selector_document_rank", ""))) == 1
+    ]
+    selector_support_counts = [
+        int_field(str(row.get("selector_support_span_count", ""))) or 0
+        for row in rows
+    ]
+    metadata_strength_counts = Counter(row.get("metadata_identity_strength", "") or "unknown" for row in rows)
+    evidence_sufficiency_counts = Counter(row.get("selector_evidence_sufficiency", "") or "unknown" for row in rows)
 
     summary = {
         "scoring_mode": "deterministic_proxy_phase_2_answer_contract_not_human_judge",
@@ -484,6 +524,19 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         )
         if rows
         else 0.0,
+        "manual_review_count": sum(1 for row in rows if row["manual_review_flag"] == "True"),
+        "selector_exact_article_hit_rate": round(len(selector_exact_rows) / len(rows), 4) if rows else 0.0,
+        "selector_same_document_hit_rate": round(
+            len(selector_same_document_rows) / len(selector_ranked_rows), 4
+        )
+        if selector_ranked_rows
+        else 0.0,
+        "avg_selector_support_span_count": round(sum(selector_support_counts) / len(rows), 3) if rows else 0.0,
+        "metadata_identity_strength_counts": dict(sorted(metadata_strength_counts.items())),
+        "selector_evidence_sufficiency_counts": dict(sorted(evidence_sufficiency_counts.items())),
+        "temporal_state_resolved_count": sum(
+            1 for row in rows if bool_field(str(row.get("temporal_state_resolved", ""))) is True
+        ),
         "failure_class_counts": dict(sorted(failure_counter.items())),
         "by_primary_type": breakdown(rows, "primary_type"),
         "by_source_family_canonical": breakdown(rows, "source_family_canonical"),
@@ -524,9 +577,25 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- repealed_as_active_count: {summary['repealed_as_active_count']}",
         f"- temporal_validity_miss_count: {summary['temporal_validity_miss_count']}",
         f"- contract_completeness_rate: {summary['contract_completeness_rate']}",
+        f"- manual_review_count: {summary['manual_review_count']}",
+        f"- selector_exact_article_hit_rate: {summary['selector_exact_article_hit_rate']}",
+        f"- selector_same_document_hit_rate: {summary['selector_same_document_hit_rate']}",
+        f"- avg_selector_support_span_count: {summary['avg_selector_support_span_count']}",
+        f"- temporal_state_resolved_count: {summary['temporal_state_resolved_count']}",
+        "",
+        "## Selector Evidence Sufficiency",
+    ]
+    for status, count in summary["selector_evidence_sufficiency_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Metadata Identity Strength"])
+    for status, count in summary["metadata_identity_strength_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(
+        [
         "",
         "## Failure Classes",
-    ]
+        ]
+    )
     for failure, count in summary["failure_class_counts"].items():
         lines.append(f"- {failure}: {count}")
     lines.extend(["", "## Worst 10 QIDs"])
