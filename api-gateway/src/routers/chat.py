@@ -916,9 +916,15 @@ def _extract_metadata_lookup_temporal_cues(query: str) -> list[dict[str, str]]:
 
 
 def _parse_metadata_lookup_query_signals(query: str) -> dict[str, Any]:
+    identifier_candidates = _extract_metadata_lookup_identifier_candidates(query)
     family_candidates = dedupe_strings(
         [
             *_infer_requested_source_families(query),
+            *[
+                candidate.get("kind")
+                for candidate in identifier_candidates
+                if isinstance(candidate, dict) and candidate.get("kind") not in {"", "numeric_identifier"}
+            ],
             *[
                 candidate.family
                 for candidate in _resolve_source_family_prior(query).family_candidates
@@ -928,7 +934,7 @@ def _parse_metadata_lookup_query_signals(query: str) -> dict[str, Any]:
     )
     return {
         "parsed_family_candidates": family_candidates,
-        "parsed_identifier_candidates": _extract_metadata_lookup_identifier_candidates(query),
+        "parsed_identifier_candidates": identifier_candidates,
         "parsed_issuer_candidates": _extract_metadata_lookup_issuer_candidates(query),
         "parsed_title_ngrams": _extract_metadata_lookup_title_ngrams(query),
         "parsed_temporal_cues": _extract_metadata_lookup_temporal_cues(query),
@@ -1100,6 +1106,38 @@ def _metadata_lookup_has_strong_query_anchor(query_metadata_signals: dict[str, A
     return False
 
 
+def _query_has_academic_regulation_intent(query: str) -> bool:
+    normalized = f" {normalize_query_text(query)} "
+    return any(
+        token in normalized
+        for token in (
+            " universite ",
+            " universitesi ",
+            " yuksekogretim ",
+            " yok ",
+            " ogrenci ",
+            " lisansustu ",
+            " yuksek lisans ",
+            " doktora ",
+            " tez ",
+            " ders ",
+            " kredi ",
+            " kayit ",
+            " egitim ogretim ",
+            " egitim-ogretim ",
+            " sinav ",
+            " tek ders ",
+            " butunleme ",
+            " mazeret sinavi ",
+            " hazirlik ",
+            " yandal ",
+            " yan dal ",
+            " cift anadal ",
+            " senato ",
+        )
+    )
+
+
 def _source_identity_record_score(
     record: dict[str, Any],
     *,
@@ -1151,6 +1189,7 @@ def _source_identity_record_score(
         )
     )
     parsed_issuer_values = _metadata_lookup_signal_values(query_metadata_signals, "parsed_issuer_candidates")
+    academic_regulation_intent = _query_has_academic_regulation_intent(query)
     score = 0.0
     reasons: list[str] = []
 
@@ -1193,6 +1232,9 @@ def _source_identity_record_score(
     if exact_identifier_hits:
         score += 32.0 + min(len(exact_identifier_hits), 3) * 3.0
         reasons.append("identifier_exact")
+    elif identifier_tokens and identifier_values:
+        score -= 26.0
+        reasons.append("identifier_conflict_penalty")
 
     title_overlap = len(query_terms & title_tokens)
     alias_overlap = len(query_terms & alias_tokens)
@@ -1251,6 +1293,9 @@ def _source_identity_record_score(
     if family == "uy" and ("universite" in normalized_query or "universitesi" in normalized_query):
         score += 5.0
         reasons.append("uy_playbook")
+    elif family == "uy" and not academic_regulation_intent:
+        score -= 22.0
+        reasons.append("uy_without_academic_query_penalty")
 
     dominant_family_intent: set[str] = set()
     if requested_family_set:
@@ -1261,8 +1306,18 @@ def _source_identity_record_score(
         dominant_family_intent = set(
             _expand_source_family_aliases([source_family_resolution.predicted_family])
         )
+    relation_primary_group = str(
+        _relation_query_family_profile(
+            query,
+            source_family_resolution=source_family_resolution,
+        ).get("primary_group")
+        or ""
+    )
+    if relation_primary_group:
+        dominant_family_intent = {relation_primary_group}
     if dominant_family_intent:
         strict_kanun_intent = dominant_family_intent <= {"kanun", "mulga_kanun"}
+        strict_khk_intent = dominant_family_intent <= {"khk"}
         strict_cb_karar_intent = dominant_family_intent <= {"cb_karar"}
         strict_cb_genelge_intent = dominant_family_intent <= {"cb_genelge"}
         strict_cb_yonetmelik_intent = dominant_family_intent <= {"cb_yonetmelik", "yonetmelik"}
@@ -1278,8 +1333,20 @@ def _source_identity_record_score(
         }:
             score -= 22.0
             reasons.append("strict_kanun_document_type_penalty")
-        elif strict_cb_karar_intent and raw_family in {"teblig", "cb_genelge"}:
-            score -= 20.0
+        elif strict_khk_intent and raw_family in {
+            "cb_kararname",
+            "cb_karar",
+            "cb_genelge",
+            "teblig",
+            "yonetmelik",
+            "kky",
+            "uy",
+            "cb_yonetmelik",
+        }:
+            score -= 24.0
+            reasons.append("strict_khk_document_type_penalty")
+        elif strict_cb_karar_intent and raw_family in {"teblig", "cb_genelge", "cb_kararname"}:
+            score -= 24.0
             reasons.append("strict_cb_karar_document_type_penalty")
         elif strict_cb_genelge_intent and raw_family in {"teblig", "cb_karar"}:
             score -= 20.0
@@ -1287,6 +1354,9 @@ def _source_identity_record_score(
         elif strict_cb_yonetmelik_intent and raw_family in {"cb_kararname", "cb_karar", "cb_genelge"}:
             score -= 18.0
             reasons.append("strict_cb_yonetmelik_document_type_penalty")
+        if dominant_family_intent <= {"yonetmelik", "kky", "cb_yonetmelik"} and raw_family == "uy" and not academic_regulation_intent:
+            score -= 20.0
+            reasons.append("strict_regulation_nonacademic_uy_penalty")
 
     if exact_identifier_hits or title_overlap >= 2:
         score += 4.0
@@ -1389,6 +1459,7 @@ def _select_metadata_first_source_candidates(
     ranked = sorted(
         scored,
         key=lambda item: (
+            -int(item.get("metadata_lookup_source") == "exact_identifier_lookup"),
             -float(item["score"]),
             str(item.get("source_family") or ""),
             str(item.get("canonical_title") or ""),
@@ -1471,11 +1542,25 @@ def _apply_metadata_lookup_family_prior(
         query or "",
         source_family_resolution=source_family_resolution,
     )
+    relation_primary_group = str(relation_profile.get("primary_group") or "")
+    predicted_relation_group = _source_family_relation_group(source_family_resolution.predicted_family)
+    metadata_relation_group = _source_family_relation_group(metadata_family)
     if (
         relation_profile.get("relation_query_detected")
-        and str(relation_profile.get("primary_group") or "") == "kanun"
-        and _source_family_relation_group(metadata_family) == "yonetmelik"
-        and _source_family_relation_group(source_family_resolution.predicted_family) == "kanun"
+        and relation_primary_group
+        and predicted_relation_group == relation_primary_group
+        and metadata_relation_group
+        and metadata_relation_group != relation_primary_group
+    ):
+        return source_family_resolution
+
+    metadata_lookup_source = str(
+        top.get("metadata_lookup_source") or metadata_first_selector.get("metadata_lookup_source") or ""
+    )
+    if (
+        metadata_family == "uy"
+        and metadata_lookup_source in {"normalized_title_lookup", "title_ngram_family_lookup"}
+        and not _query_has_academic_regulation_intent(query or "")
     ):
         return source_family_resolution
 
@@ -1513,7 +1598,7 @@ def _apply_metadata_lookup_family_prior(
             confidence=round(confidence, 3),
             signals=[
                 "metadata_lookup_family_prior",
-                str(top.get("metadata_lookup_source") or metadata_first_selector.get("metadata_lookup_source") or "metadata_lookup"),
+                metadata_lookup_source or "metadata_lookup",
             ],
         ),
         *source_family_resolution.family_candidates,
@@ -3628,8 +3713,26 @@ def _relation_query_detected(
             " goster",
             " hangisi esas",
             " hangisi uygulan",
+            " yoksa ",
+            " aranmali",
+            " kontrol ",
+            " hangi karar ",
+            " cevaplayip ",
+            " bakarsin",
         )
     )
+    mentions_cb_karar = any(
+        token in normalized
+        for token in (" karar ", " karar sayisi", " cumhurbaskani karari", " yatirim programi")
+    )
+    mentions_cb_genelge = any(token in normalized for token in (" genelge", " uygulama genelgesi"))
+    mentions_khk = any(token in normalized for token in (" khk ", " kanun hukmunde kararname"))
+    mentions_cb_kararname = any(
+        token in normalized
+        for token in (" cbk ", " kararname ", " cumhurbaskanligi kararnamesi")
+    )
+    if relation_signal and ((mentions_cb_karar and mentions_cb_genelge) or (mentions_khk and mentions_cb_kararname)):
+        return True
     return bool(mentions_kanun and mentions_regulation and relation_signal)
 
 
@@ -3645,6 +3748,50 @@ def _relation_query_family_profile(
             "primary_group": "",
             "supporting_group": "",
             "reason": "",
+        }
+
+    normalized = f" {normalize_query_text(query)} "
+    relation_signal = any(
+        token in normalized
+        for token in (
+            " iliski",
+            " hiyerarsi",
+            " dayanak",
+            " birlikte",
+            " goster",
+            " hangisi esas",
+            " hangisi uygulan",
+            " yoksa ",
+            " aranmali",
+            " kontrol ",
+            " hangi karar ",
+            " cevaplayip ",
+            " bakarsin",
+        )
+    )
+    mentions_cb_karar = any(
+        token in normalized
+        for token in (" karar ", " karar sayisi", " cumhurbaskani karari", " yatirim programi")
+    )
+    mentions_cb_genelge = any(token in normalized for token in (" genelge", " uygulama genelgesi"))
+    mentions_khk = any(token in normalized for token in (" khk ", " kanun hukmunde kararname"))
+    mentions_cb_kararname = any(
+        token in normalized
+        for token in (" cbk ", " kararname ", " cumhurbaskanligi kararnamesi")
+    )
+    if relation_signal and mentions_cb_karar and mentions_cb_genelge:
+        return {
+            "relation_query_detected": True,
+            "primary_group": "cb_karar",
+            "supporting_group": "cb_genelge",
+            "reason": "cb_karar_cb_genelge_relation_primary",
+        }
+    if relation_signal and mentions_khk and mentions_cb_kararname:
+        return {
+            "relation_query_detected": True,
+            "primary_group": "khk",
+            "supporting_group": "cb_kararname",
+            "reason": "khk_cbk_relation_primary",
         }
 
     collision_reason = ""
@@ -4109,8 +4256,20 @@ def _rerank_chunks_by_source_identity(
     relation_query_detected = bool(relation_profile.get("relation_query_detected"))
     relation_primary_group = str(relation_profile.get("primary_group") or "")
     relation_supporting_group = str(relation_profile.get("supporting_group") or "")
+    academic_regulation_intent = _query_has_academic_regulation_intent(query)
     legacy_query_years = set(_extract_year_tokens(query))
     metadata_candidates = (metadata_first_selector or {}).get("candidates") or []
+    dominant_family_intent = set(requested_family_set)
+    if not dominant_family_intent and source_family_resolution is not None:
+        predicted_family = (
+            str(source_family_resolution.get("predicted_family") or "")
+            if isinstance(source_family_resolution, dict)
+            else str(source_family_resolution.predicted_family or "")
+        )
+        if predicted_family:
+            dominant_family_intent = set(_expand_source_family_aliases([predicted_family]))
+    if relation_primary_group:
+        dominant_family_intent = {relation_primary_group}
     if metadata_candidates:
         identity_rerank_input_source = "metadata_lookup_selector"
     elif strict_identifier_tokens:
@@ -4180,6 +4339,9 @@ def _rerank_chunks_by_source_identity(
         title_bias_applied = 0.0
         issuer_bias_applied = 0.0
         year_bias_applied = 0.0
+        strict_kanun_intent = bool(dominant_family_intent and dominant_family_intent <= {"kanun", "mulga_kanun"})
+        strict_khk_intent = bool(dominant_family_intent and dominant_family_intent <= {"khk"})
+        strict_cb_karar_intent = bool(dominant_family_intent and dominant_family_intent <= {"cb_karar"})
         if metadata_first_match:
             score += 100
             reasons.append("metadata_first_match")
@@ -4246,9 +4408,19 @@ def _rerank_chunks_by_source_identity(
             if metadata_first_match or identifier_match_type == "exact_identifier" or title_match_type in {
                 "exact_phrase",
                 "strong_overlap",
-                "medium_overlap",
             }:
                 score += 10
+                reasons.append("metadata_lane_supported")
+            elif title_match_type == "medium_overlap" and family not in {
+                "uy",
+                "cb_genelge",
+                "teblig",
+                "kky",
+                "yonetmelik",
+                "cb_kararname",
+                "cb_yonetmelik",
+            }:
+                score += 4
                 reasons.append("metadata_lane_supported")
             else:
                 score -= 18
@@ -4270,8 +4442,38 @@ def _rerank_chunks_by_source_identity(
                 if metadata_first_match and identifier_match_type == "none":
                     score -= 38
                     reasons.append("relation_metadata_supporting_penalty")
+        if family == "uy" and not academic_regulation_intent:
+            score -= 52
+            reasons.append("uy_without_academic_query_penalty")
+        if strict_kanun_intent and family in {
+            "teblig",
+            "yonetmelik",
+            "kky",
+            "uy",
+            "cb_yonetmelik",
+            "cb_genelge",
+            "cb_karar",
+            "cb_kararname",
+        }:
+            score -= 28
+            reasons.append("strict_kanun_query_penalty")
+        if strict_khk_intent and family in {
+            "cb_kararname",
+            "cb_karar",
+            "cb_genelge",
+            "teblig",
+            "yonetmelik",
+            "kky",
+            "uy",
+            "cb_yonetmelik",
+        }:
+            score -= 40
+            reasons.append("strict_khk_query_penalty")
+        if strict_cb_karar_intent and family in {"cb_genelge", "cb_kararname", "teblig"}:
+            score -= 36
+            reasons.append("strict_cb_karar_query_penalty")
         if family_match and title_match_type == "none" and identifier_match_type == "none" and year_match_type == "none":
-            score -= 45 if family in {"cb_karar", "cb_genelge", "uy", "yonetmelik", "teblig", "kky"} else 18
+            score -= 45 if family in {"cb_karar", "cb_genelge", "uy", "yonetmelik", "teblig", "kky", "cb_yonetmelik", "cb_kararname"} else 18
             reasons.append("generic_family_without_identity_penalty")
         if current_validity_query:
             score -= active_rank * 35
@@ -4309,9 +4511,21 @@ def _rerank_chunks_by_source_identity(
             identity_lock_strength = "none"
 
         replacement_guard_triggered = bool(
-            title_match_type in {"none", "weak_overlap"}
-            and identifier_match_type != "exact_identifier"
+            identifier_match_type != "exact_identifier"
             and recall_lane_rank <= 1
+            and (
+                title_match_type in {"none", "weak_overlap"}
+                or (
+                    title_match_type == "medium_overlap"
+                    and family in {"uy", "cb_genelge", "teblig", "cb_kararname", "cb_yonetmelik", "kky"}
+                )
+                or (
+                    relation_query_detected
+                    and relation_supporting_group
+                    and relation_group == relation_supporting_group
+                    and title_match_type != "exact_phrase"
+                )
+            )
         )
         post_identity_article_alignment = _query_article_alignment(
             selected_article=article_token,
@@ -6167,17 +6381,24 @@ def _retrieve_source_key_chunks(
     retriever: Any,
     query: str,
     source_keys: list[str],
+    source_family_by_key: dict[str, str] | None = None,
     top_k: int,
 ) -> list[RetrievedChunk]:
     from rag.retriever import MetadataFilter
 
     bucket_chunks: list[RetrievedChunk] = []
     for source_key in source_keys:
+        source_family = str((source_family_by_key or {}).get(source_key) or "").strip().lower()
+        if source_family == "mulga_kanun":
+            source_family = "mulga"
         try:
             results, _stats = retriever.retrieve(
                 query=query,
                 top_k=top_k,
-                metadata_filter=MetadataFilter(law_no=source_key),
+                metadata_filter=MetadataFilter(
+                    law_no=source_key,
+                    belge_turu=source_family or None,
+                ),
             )
         except Exception as exc:
             logger.warning("Source-key retrieval bypass (source_key=%s): %s", source_key, exc)
@@ -10077,10 +10298,18 @@ async def chat_completions(
                         for key in metadata_first_selector.get("selected_source_keys") or []
                         if isinstance(key, str) and key.strip()
                     ]
+                    metadata_first_source_family_by_key = {
+                        str(candidate.get("source_key") or "").strip(): str(
+                            candidate.get("source_family_raw") or candidate.get("source_family") or ""
+                        ).strip()
+                        for candidate in metadata_first_selector.get("candidates") or []
+                        if str(candidate.get("source_key") or "").strip()
+                    }
                     metadata_first_chunks = _retrieve_source_key_chunks(
                         retriever=retriever,
                         query=retrieval_query,
                         source_keys=metadata_first_source_keys,
+                        source_family_by_key=metadata_first_source_family_by_key,
                         top_k=max(4, min(8, top_k_effective)),
                     )
                     metadata_first_selector["metadata_lookup_retrieval_added_count"] = len(metadata_first_chunks)
@@ -10142,6 +10371,17 @@ async def chat_completions(
                             len(exact_chunks),
                             len(retrieved_chunks),
                         )
+                if selected_source_keys:
+                    retrieved_chunks = _prioritize_chunks_for_source_families(
+                        query=routing_query,
+                        chunks=retrieved_chunks,
+                        source_families=requested_source_families,
+                        selected_source_keys=selected_source_keys,
+                    )
+                    retrieved_chunks = _focus_chunks_on_selected_sources(
+                        chunks=retrieved_chunks,
+                        selected_source_keys=selected_source_keys,
+                    )
                 retrieved_chunks = _prioritize_chunks_for_source_families(
                     query=routing_query,
                     chunks=retrieved_chunks,
@@ -10181,11 +10421,13 @@ async def chat_completions(
                                 session_id,
                                 sorted(strong_family_gate),
                             )
-                    selected_source_keys = {
+                    selected_source_keys.update(
+                        {
                         candidate_by_id[cluster_id]["source_key"]
                         for cluster_id in selected_cluster_ids
                         if cluster_id in candidate_by_id
-                    }
+                        }
+                    )
                     selected_laws = (
                         dedupe_strings(source_cluster_selector.get("selected_law_hints") or [])
                         if selected_cluster_ids

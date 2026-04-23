@@ -133,6 +133,49 @@ def test_repair_uses_mapped_evidence_family_when_predicted_family_is_strong():
     assert result.contract["source_family_claimed"] == "YONETMELIK"
 
 
+def test_repair_prefers_specific_mapped_family_over_generic_selected_evidence_family():
+    result = build_or_repair_answer_contract(
+        qid="KKY-MAPPED",
+        answer_text="Uzaktan müşteri edinme bakımından ilgili kurum yönetmeliği uygulanır. [Kaynak: 38568 m.1]",
+        citations=["38568 m.1"],
+        answer_contract={
+            "answer_text": "Uzaktan müşteri edinme bakımından ilgili kurum yönetmeliği uygulanır. [Kaynak: 38568 m.1]",
+            "primary_source_id": "38568 m.1",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "yonetmelik",
+                    "family_confidence": 0.82,
+                },
+                "article_span_selector": {
+                    "requested_source_families": ["kky", "yonetmelik", "cb_yonetmelik", "uy"],
+                    "preferred_source_families": ["kky"],
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "38568:38568:m1:f0",
+                    "citation": "38568 m.1/f.0",
+                    "source_title": "UZAKTAN KİMLİK TESPİTİ YÖNETMELİĞİ",
+                    "source_family": "yonetmelik",
+                    "source_family_canonical": "yonetmelik",
+                    "source_family_mapped": "kky",
+                    "source_identifier": "38568 m.1",
+                    "article_or_section": "1",
+                    "effective_state": "active",
+                },
+            ],
+        },
+    )
+
+    assert result.contract["source_family_claimed"] == "KKY"
+
+
 def test_repair_replacement_guard_blocks_identifier_rewrite_from_selected_evidence():
     result = build_or_repair_answer_contract(
         qid="GUARD-01",
@@ -803,6 +846,55 @@ def test_repair_marks_legacy_khk_query_as_repealed_mulga_family():
 
     contract = result.contract
     assert contract["source_family_claimed"] == "MULGA"
+    assert contract["effective_state_claimed"] == "repealed"
+
+
+def test_repair_preserves_explicit_legacy_khk_family_when_query_is_bound_to_khk():
+    result = build_or_repair_answer_contract(
+        qid="KHK-03",
+        answer_text="Geçiş bakımından önce 703 sayılı KHK, ardından ilgili CBK bağlantısı kontrol edilmelidir. [Kaynak: 703 m.1]",
+        citations=["703 m.1"],
+        answer_contract={
+            "answer_text": "Geçiş bakımından önce 703 sayılı KHK, ardından ilgili CBK bağlantısı kontrol edilmelidir. [Kaynak: 703 m.1]",
+            "primary_source_id": "703 m.1",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "Mevzuat hâlâ Bakanlar Kurulu veya eski teşkilat isimlerine atıf yapıyorsa, Cumhurbaşkanlığı Hükümet Sistemine geçiş bakımından hangi KHK ve hangi CBK bağlantısı kontrol edilmelidir?",
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "khk",
+                    "preferred_families": ["khk"],
+                    "historical_or_repealed_question": True,
+                    "historical_scope_detected": True,
+                    "repealed_scope_detected": False,
+                },
+                "article_span_selector": {
+                    "legacy_intent_binding_active": True,
+                    "legacy_candidate_preferred": True,
+                    "preferred_source_families": ["khk"],
+                    "document_state_binding_reason": "legacy_scope_candidate_preferred",
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "703:703:m1:f0:from2018-07-09:to9999-12-31",
+                    "citation": "703 m.1/f.0",
+                    "source_title": "703 SAYILI KANUN HÜKMÜNDE KARARNAME",
+                    "source_family": "khk",
+                    "source_identifier": "703 m.1",
+                    "article_or_section": "1",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "KHK"
     assert contract["effective_state_claimed"] == "repealed"
 
 

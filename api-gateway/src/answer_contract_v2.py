@@ -536,6 +536,28 @@ def _trace_source_identity_reranker(trace_payload: dict[str, Any] | None) -> dic
     return {}
 
 
+def _trace_requested_source_families(trace_payload: dict[str, Any] | None) -> set[str]:
+    selector = _trace_article_selector(trace_payload)
+    families: list[str] = []
+    for key in ("preferred_source_families",):
+        value = selector.get(key)
+        if isinstance(value, list):
+            families.extend(_clean(item) for item in value)
+
+    family_resolution = _trace_family_resolution(trace_payload)
+    for key in ("preferred_families",):
+        value = family_resolution.get(key)
+        if isinstance(value, list):
+            families.extend(_clean(item) for item in value)
+
+    normalized = {
+        _canonical_trace_family(family)
+        for family in families
+        if _canonical_trace_family(family) != UNKNOWN
+    }
+    return normalized
+
+
 def _trace_question_text(trace_payload: dict[str, Any] | None) -> str:
     if not isinstance(trace_payload, dict):
         return ""
@@ -630,6 +652,14 @@ def _normalize_legacy_family_claim(
     if effective_state != "repealed":
         return source_family
     if not _legacy_query_intent(trace_payload):
+        return source_family
+    requested_families = _trace_requested_source_families(trace_payload)
+    family_resolution = _trace_family_resolution(trace_payload)
+    predicted_family = _canonical_trace_family(family_resolution.get("predicted_family"))
+    explicitly_bound_legacy_family = source_family in {"KANUN", "KHK", "TUZUK"} and (
+        source_family in requested_families or predicted_family == source_family
+    )
+    if explicitly_bound_legacy_family:
         return source_family
     if source_family in {"KANUN", "KHK", "TUZUK", "MULGA"}:
         return "MULGA"
@@ -1066,17 +1096,29 @@ def build_or_repair_answer_contract(
     source_family = raw_claimed_family
     if not source_family or source_family == UNKNOWN:
         source_family = _detect_family(combined_text, selected_evidence)
+    requested_trace_families = _trace_requested_source_families(trace_payload)
     selected_evidence_family = _evidence_family(selected_evidence)
     selected_evidence_mapped_family = _evidence_mapped_family(selected_evidence)
-    family_compatibility_status = _family_compatibility_status(raw_claimed_family, selected_evidence_family)
-    if (
+    selected_evidence_best_family = (
+        selected_evidence_mapped_family
+        if selected_evidence_mapped_family != UNKNOWN
+        else selected_evidence_family
+    )
+    family_compatibility_status = _family_compatibility_status(raw_claimed_family, selected_evidence_best_family)
+    selected_specific_family_requested = (
+        selected_evidence_family in {"KKY", "UY", "CB_YONETMELIK"}
+        and selected_evidence_family in requested_trace_families
+    )
+    if selected_specific_family_requested:
+        source_family = selected_evidence_family
+    elif (
         predicted_family != UNKNOWN
         and predicted_confidence >= 0.75
         and selected_evidence_mapped_family == predicted_family
     ):
         source_family = predicted_family
-    elif selected_evidence_family != UNKNOWN:
-        source_family = selected_evidence_family
+    elif selected_evidence_best_family != UNKNOWN:
+        source_family = selected_evidence_best_family
 
     selected_identifier = _detect_identifier(combined_text, [], selected_evidence)
     query_requests_identifier = _query_requests_source_identifier(trace_payload)
@@ -1192,7 +1234,7 @@ def build_or_repair_answer_contract(
     )
     if normalized_legacy_family != source_family:
         source_family = normalized_legacy_family
-        family_compatibility_status = _family_compatibility_status(source_family, selected_evidence_family)
+        family_compatibility_status = _family_compatibility_status(source_family, selected_evidence_best_family)
     temporal_qualification = _first_string(
         contract.get("temporal_qualification"),
         _detect_temporal_qualification(combined_text, trace_payload),

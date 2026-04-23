@@ -63,6 +63,7 @@ from routers.chat import (
     _extract_explicit_article_refs,
     _extract_law_mentions,
     _extract_source_identifier_tokens,
+    _focus_chunks_on_selected_sources,
     _infer_requested_source_families,
     _prioritize_chunks_for_source_families,
     _rerank_chunks_by_source_identity,
@@ -828,6 +829,50 @@ class TestLawSignalParsing:
         assert resolution.preferred_families == ["cb_karar"]
         assert resolution.family_collision_detected is True
         assert resolution.family_collision_pair == "cb_karar|yonetmelik"
+
+    def test_source_family_prior_prefers_cb_karar_for_decision_vs_genelge_relation_query(self):
+        resolution = _resolve_source_family_prior(
+            "2026 Yılı Kamu Yatırım Programında yer almayan bir proje için ihale yapılabilir mi? "
+            "Soruyu hangi karar üzerinden cevaplayıp hangi uygulama genelgesine bakarsın?"
+        )
+
+        assert resolution.predicted_family == "cb_karar"
+        assert resolution.preferred_families == ["cb_karar"]
+        assert "cb_genelge" in resolution.fallback_families
+        assert resolution.family_collision_detected is True
+        assert resolution.family_collision_pair == "cb_genelge|cb_karar"
+        assert resolution.collision_resolution_reason == "cb_karar_relation_prefers_primary_decision"
+
+    def test_source_family_prior_prefers_khk_for_transition_relation_query(self):
+        resolution = _resolve_source_family_prior(
+            "Mevzuat hâlâ Bakanlar Kurulu veya eski teşkilat isimlerine atıf yapıyorsa, "
+            "Cumhurbaşkanlığı Hükümet Sistemine geçiş bakımından hangi KHK ve hangi CBK bağlantısı kontrol edilmelidir?"
+        )
+
+        assert resolution.predicted_family == "khk"
+        assert resolution.preferred_families == ["khk"]
+        assert "cb_kararname" in resolution.fallback_families
+        assert resolution.family_collision_detected is True
+        assert resolution.family_collision_pair == "khk|cb_kararname"
+        assert resolution.collision_resolution_reason == "khk_cbk_transition_prefers_khk"
+
+    def test_source_family_prior_does_not_treat_sector_license_terms_as_university_signal(self):
+        resolution = _resolve_source_family_prior(
+            "Elektrik piyasasında önlisans/lisans başvurusu ve lisans sahibinin hak-yükümlülükleri sorusunda "
+            "hangi kurum yönetmeliği ana eksendir?"
+        )
+
+        assert resolution.predicted_family == "yonetmelik"
+        assert "uy" not in [candidate.family for candidate in resolution.family_candidates]
+
+    def test_source_family_prior_prefers_kky_for_rtuk_broadcast_license_query(self):
+        resolution = _resolve_source_family_prior(
+            "Bir platform internet üzerinden isteğe bağlı yayın hizmeti sunmak istiyor. "
+            "İnternet yayın lisansı ve iletim yetkisi bakımından hangi RTÜK yönetmeliği aranmalı?"
+        )
+
+        assert resolution.predicted_family == "kky"
+        assert resolution.preferred_families == ["kky"]
 
     def test_pre_generation_family_pool_locks_strong_preferred_family(self):
         resolution = _resolve_source_family_prior(
@@ -1821,6 +1866,40 @@ class TestLawSignalParsing:
         assert enriched.predicted_family == "kanun"
         assert enriched.preferred_families == ["kanun"]
 
+    def test_metadata_lookup_family_prior_rejects_nonacademic_uy_title_lookup_transition(self):
+        query = (
+            "Sosyal medya içerik üreticisinin örtülü reklam yapıp yapmadığı sorusunda "
+            "hangi yönetmelik ana uygulama metni olarak aranmalıdır?"
+        )
+        base_resolution = _resolve_source_family_prior(query)
+        selector = {
+            "metadata_lookup_hit": True,
+            "metadata_lookup_confidence": 0.93,
+            "metadata_lookup_source": "title_ngram_family_lookup",
+            "candidates": [
+                {
+                    "source_key": "31497",
+                    "source_family": "uy",
+                    "source_family_raw": "uy",
+                    "effective_state": "active",
+                    "metadata_lookup_confidence": 0.93,
+                    "metadata_lookup_source": "title_ngram_family_lookup",
+                    "score": 41.0,
+                }
+            ],
+        }
+
+        enriched = _apply_metadata_lookup_family_prior(
+            base_resolution,
+            selector,
+            query=query,
+        )
+
+        assert base_resolution.predicted_family == "yonetmelik"
+        assert enriched.predicted_family == "yonetmelik"
+        assert enriched.preferred_families == ["yonetmelik"]
+        assert enriched.family_override_reason == base_resolution.family_override_reason
+
     def test_relation_query_metadata_focus_promotes_primary_kanun_candidate(self):
         query = (
             "Elektronik tebligat muhatabın elektronik adresine ulaştığı anda mı, "
@@ -1857,6 +1936,119 @@ class TestLawSignalParsing:
         assert focused["supporting_source_candidate"] == "20631"
         assert focused["selected_source_keys"] == ["7201"]
         assert focused["selected_families"] == ["kanun"]
+
+    @patch("routers.chat.load_canonical_source_catalog")
+    def test_metadata_first_selector_prefers_cb_karar_over_cb_kararname_for_decision_query(
+        self, mock_catalog
+    ):
+        mock_catalog.return_value = {
+            "9903": {
+                "source_key": "9903",
+                "canonical_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                "canonical_title_normalized": "yatirimlarda devlet yardimlari hakkinda karar karar sayisi 9903",
+                "canonical_identifier": "9903",
+                "canonical_identifier_type": "decision_number",
+                "source_family_canonical": "cb_karar",
+                "source_family_mapped": "cb_karar",
+                "source_family_raw": "cb_karar",
+                "source_family_title_inferred": "cb_karar",
+                "source_family_mapping_reason": "native_family",
+                "issuer": "Cumhurbaşkanı",
+                "issuer_normalized": "cumhurbaskani",
+                "year_signals": ["2025"],
+                "effective_state": "active",
+                "alias_titles": [],
+            },
+            "95": {
+                "source_key": "95",
+                "canonical_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA CUMHURBAŞKANLIĞI KARARNAMESİ",
+                "canonical_title_normalized": "yatirimlarda devlet yardimlari hakkinda cumhurbaskanligi kararnamesi",
+                "canonical_identifier": "95",
+                "canonical_identifier_type": "kararname_number",
+                "source_family_canonical": "cb_kararname",
+                "source_family_mapped": "cb_kararname",
+                "source_family_raw": "cb_kararname",
+                "source_family_title_inferred": "cb_kararname",
+                "source_family_mapping_reason": "native_family",
+                "issuer": "Cumhurbaşkanlığı",
+                "issuer_normalized": "cumhurbaskanligi",
+                "year_signals": ["2025"],
+                "effective_state": "active",
+                "alias_titles": [],
+            },
+        }
+
+        selector = _select_metadata_first_source_candidates(
+            query="Yatırımlarda devlet yardımları hakkında karar uygulanır mı?",
+            requested_source_families=["cb_karar"],
+            source_family_resolution=None,
+            query_metadata_signals=_parse_metadata_lookup_query_signals(
+                "Yatırımlarda devlet yardımları hakkında karar uygulanır mı?"
+            ),
+        )
+
+        assert selector is not None
+        assert selector["candidates"][0]["source_family"] == "cb_karar"
+        assert selector["candidates"][0]["source_key"] == "9903"
+
+    @patch("routers.chat.load_canonical_source_catalog")
+    def test_metadata_first_selector_prioritizes_exact_identifier_over_noisy_title_overlap(
+        self, mock_catalog
+    ):
+        mock_catalog.return_value = {
+            "9903": {
+                "source_key": "9903",
+                "canonical_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                "canonical_title_normalized": "yatirimlarda devlet yardimlari hakkinda karar karar sayisi 9903",
+                "canonical_identifier": "9903",
+                "canonical_identifier_type": "decision_number",
+                "source_family_canonical": "cb_karar",
+                "source_family_mapped": "cb_karar",
+                "source_family_raw": "cb_karar",
+                "source_family_title_inferred": "cb_karar",
+                "source_family_mapping_reason": "native_family",
+                "issuer": "Cumhurbaşkanı",
+                "issuer_normalized": "cumhurbaskani",
+                "year_signals": ["2025", "2026"],
+                "effective_state": "active",
+                "alias_titles": [],
+            },
+            "10019": {
+                "source_key": "10019",
+                "canonical_title": "7452 SAYILI OLAĞANÜSTÜ HAL KAPSAMINDA YERLEŞME VE YAPILAŞMAYA İLİŞKİN CUMHURBAŞKANLIĞI KARARNAMESİNİN KABUL EDİLMESİNE DAİR KANUNUN EK 1 İNCİ MADDESİ KAPSAMINDA YAPILACAK YENİ YAPILARIN BULUNDUĞU PARSELLERİN MALİKİ OLAN GERÇEK VEYA TÜZEL KİŞİLERE HİBE VE YAPIM KREDİSİ VERİLMESİNE İLİŞKİN 5/10/2023 TARİHLİ VE 7700 SAYILI CUMHURBAŞKANI KARARINDA DEĞİŞİKLİK YAPILMASINA DAİR KARAR (KARAR SAYISI: 10019)",
+                "canonical_title_normalized": "7452 sayili olaganustu hal kapsaminda yerlesme ve yapilasmaya iliskin cumhurbaskanligi kararnamesinin kabul edilmesine dair kanunun ek 1 inci maddesi kapsaminda yapilacak yeni yapilarin bulundugu parsellerin maliki olan gercek veya tuzel kisilere hibe ve yapim kredisi verilmesine iliskin 5 10 2023 tarihli ve 7700 sayili cumhurbaskani kararinda degisiklik yapilmasina dair karar karar sayisi 10019",
+                "canonical_identifier": "10019",
+                "canonical_identifier_type": "decision_number",
+                "source_family_canonical": "cb_karar",
+                "source_family_mapped": "cb_karar",
+                "source_family_raw": "cb_karar",
+                "source_family_title_inferred": "cb_karar",
+                "source_family_mapping_reason": "native_family",
+                "issuer": "Cumhurbaşkanı",
+                "issuer_normalized": "cumhurbaskani",
+                "year_signals": ["2025", "2026"],
+                "effective_state": "active",
+                "alias_titles": [],
+            },
+        }
+
+        query = (
+            "Bir yatırımcı 20.05.2025'te yaptığı başvuru için 2026'da işlem tesis ettiriyor. "
+            "Yeni 9903 sayılı karar mı uygulanır, yoksa geçiş nedeniyle eski rejim de devrede kalabilir mi?"
+        )
+        selector = _select_metadata_first_source_candidates(
+            query=query,
+            requested_source_families=[],
+            source_family_resolution=None,
+            query_metadata_signals=_parse_metadata_lookup_query_signals(query),
+        )
+
+        assert selector is not None
+        assert selector["candidates"][0]["source_key"] == "9903"
+        assert selector["metadata_lookup_source"] == "exact_identifier_lookup"
+        assert "identifier_exact" in selector["candidates"][0]["match_reasons"]
+        noisy_candidate = next(item for item in selector["candidates"] if item["source_key"] == "10019")
+        assert "identifier_conflict_penalty" in noisy_candidate["match_reasons"]
 
     def test_metadata_first_identifier_tokens_ignore_article_only_numbers(self, tmp_path, monkeypatch):
         article_rows = tmp_path / "article_rows.jsonl"
@@ -1974,6 +2166,78 @@ class TestLawSignalParsing:
         metadata_filter = mock_retriever.retrieve.call_args.kwargs["metadata_filter"]
         assert metadata_filter.law_no == "AU-DISIPLIN"
         assert metadata_filter.law_short_name is None
+        assert metadata_filter.belge_turu is None
+
+    def test_source_key_recall_can_bind_family_to_avoid_cross_family_numeric_noise(self):
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        class FakeRetriever:
+            def __init__(self) -> None:
+                self.last_filters: list[MetadataFilter] = []
+
+            def retrieve(self, *, query, top_k, metadata_filter=None):
+                self.last_filters.append(metadata_filter)
+                fixtures = [
+                    RetrievalResult(
+                        chunk_id="9903-cb",
+                        text="Yatırımlarda Devlet Yardımları Hakkında Karar.",
+                        score=0.80,
+                        metadata={
+                            "source_id": "9903:9903:m0:f0",
+                            "belge_no": "9903",
+                            "kanun_no": "9903",
+                            "belge_turu": "cb_karar",
+                            "madde_no": "0",
+                            "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                        },
+                    ),
+                    RetrievalResult(
+                        chunk_id="9903-teblig",
+                        text="Garanti belgesi sürelerinin uzatılmasına ilişkin tebliğ.",
+                        score=0.95,
+                        metadata={
+                            "source_id": "9903:9903:m1:f0",
+                            "belge_no": "9903",
+                            "kanun_no": "9903",
+                            "belge_turu": "teblig",
+                            "madde_no": "1",
+                            "source_title": "GARANTİ BELGESİ SÜRELERİNİN UZATILMASINA İLİŞKİN TEBLİĞ",
+                        },
+                    ),
+                ]
+                filtered = []
+                for item in fixtures:
+                    if metadata_filter and not MockRetriever._matches_filter(
+                        {"metadata": item.metadata},
+                        metadata_filter,
+                    ):
+                        continue
+                    filtered.append(item)
+                stats = RetrievalStats(
+                    collection="test",
+                    query_preview=query,
+                    top_k=top_k,
+                    filter_expr=metadata_filter.to_milvus_expr() if metadata_filter else None,
+                    hit_count=len(filtered),
+                    latency_ms=1.0,
+                )
+                return filtered[:top_k], stats
+
+        retriever = FakeRetriever()
+        chunks = _retrieve_source_key_chunks(
+            retriever=retriever,
+            query="Yeni 9903 sayılı karar mı uygulanır?",
+            source_keys=["9903"],
+            source_family_by_key={"9903": "cb_karar"},
+            top_k=8,
+        )
+
+        assert len(chunks) == 1
+        assert chunks[0].metadata["belge_turu"] == "cb_karar"
+        assert chunks[0].metadata["belge_no"] == "9903"
+        metadata_filter = retriever.last_filters[-1]
+        assert metadata_filter.law_no == "9903"
+        assert metadata_filter.belge_turu == "cb_karar"
 
     def test_source_identity_reranker_promotes_metadata_first_match(self):
         wrong_chunk = RetrievedChunk(
@@ -2175,6 +2439,115 @@ class TestLawSignalParsing:
         generic_trace = next(item for item in trace["top_scores"] if item["citation"] == "100 m.1")
         assert generic_trace["title_match_type"] == "none"
 
+    def test_source_identity_reranker_demotes_university_regulation_without_academic_intent(self):
+        university_chunk = RetrievedChunk(
+            text="Üniversite yerel yönetmelik hükmü.",
+            citation="3000 m.1",
+            source="3000",
+            score=0.95,
+            metadata={
+                "belge_turu": "uy",
+                "belge_no": "3000",
+                "source_title": "AMASYA ÜNİVERSİTESİ ÖNLİSANS VE LİSANS EĞİTİM-ÖĞRETİM VE SINAV YÖNETMELİĞİ",
+                "madde_no": "1",
+            },
+        )
+        regulator_chunk = RetrievedChunk(
+            text="Uzaktan kimlik tespiti ve sözleşme kuruluşuna ilişkin kurum yönetmeliği.",
+            citation="BANKA-UZAKTAN m.1",
+            source="BANKA-UZAKTAN",
+            score=0.2,
+            metadata={
+                "belge_turu": "kky",
+                "belge_no": "BANKA-UZAKTAN",
+                "source_title": "BANKALARCA KULLANILACAK UZAKTAN KİMLİK TESPİTİ YÖNTEMLERİNE VE ELEKTRONİK ORTAMDA SÖZLEŞME İLİŞKİSİNİN KURULMASINA İLİŞKİN YÖNETMELİK",
+                "madde_no": "1",
+            },
+        )
+        _annotate_recall_lane_chunks([university_chunk], lane="metadata_guided_recall")
+        _annotate_recall_lane_chunks([regulator_chunk], lane="dense")
+
+        reranked, trace = _rerank_chunks_by_source_identity(
+            query="Bir banka müşterisini uzaktan kimlik tespiti yaparak ve elektronik ortamda sözleşme ilişkisi kurarak edinmek istiyor. Hangi kurum yönetmeliği ana uygulama metnidir?",
+            chunks=[university_chunk, regulator_chunk],
+            requested_source_families=["uy"],
+            metadata_first_selector=None,
+        )
+
+        assert reranked[0].citation == "BANKA-UZAKTAN m.1"
+        university_trace = next(item for item in trace["top_scores"] if item["citation"] == "3000 m.1")
+        assert "uy_without_academic_query_penalty" in university_trace["document_rerank_reason"]
+        assert university_trace["replacement_guard_triggered"] is True
+
+    def test_apply_relation_query_metadata_focus_prefers_cb_karar_over_genelge(self):
+        selector = {
+            "candidates": [
+                {
+                    "source_key": "15",
+                    "canonical_identifier": "15",
+                    "canonical_title": "2026-2028 Dönemi Yatırım Programı Hazırlıkları ile İlgili",
+                    "source_family": "cb_genelge",
+                },
+                {
+                    "source_key": "10868",
+                    "canonical_identifier": "10868",
+                    "canonical_title": "2026 Yılı Kamu Yatırım Programının Kabulü ve Uygulanmasına Dair Karar (Karar Sayısı: 10868)",
+                    "source_family": "cb_karar",
+                },
+            ]
+        }
+
+        focused = _apply_relation_query_metadata_focus(
+            selector,
+            query="2026 Yılı Kamu Yatırım Programında yer almayan bir proje için ihale yapılabilir mi? Soruyu hangi karar üzerinden cevaplayıp hangi uygulama genelgesine bakarsın?",
+            source_family_resolution=None,
+        )
+
+        assert focused is not None
+        assert focused["candidates"][0]["source_family"] == "cb_karar"
+        assert focused["final_primary_source_reason"] == "cb_karar_cb_genelge_relation_primary"
+
+    def test_source_identity_reranker_prefers_khk_over_cbk_for_transition_relation_query(self):
+        cbk_chunk = RetrievedChunk(
+            text="Cumhurbaşkanlığı kararnamesi hükmü.",
+            citation="34 m.1",
+            source="34",
+            score=0.98,
+            metadata={
+                "belge_turu": "cb_kararname",
+                "belge_no": "34",
+                "source_title": "TÜRKİYE ADALET AKADEMİSİ HAKKINDA CUMHURBAŞKANLIĞI KARARNAMESİ (KARARNAME NUMARASI: 34)",
+                "kararname_number": "34",
+                "madde_no": "1",
+            },
+        )
+        khk_chunk = RetrievedChunk(
+            text="Eski teşkilat atfı ve geçiş hükmü.",
+            citation="703 m.1",
+            source="703",
+            score=0.25,
+            metadata={
+                "belge_turu": "khk",
+                "belge_no": "703",
+                "source_title": "703 SAYILI KANUN HÜKMÜNDE KARARNAME",
+                "kanun_no": "703",
+                "madde_no": "1",
+            },
+        )
+        _annotate_recall_lane_chunks([khk_chunk], lane="dense")
+
+        reranked, trace = _rerank_chunks_by_source_identity(
+            query="Mevzuat hâlâ Bakanlar Kurulu veya eski teşkilat isimlerine atıf yapıyorsa, Cumhurbaşkanlığı Hükümet Sistemine geçiş bakımından hangi KHK ve hangi CBK bağlantısı kontrol edilmelidir?",
+            chunks=[cbk_chunk, khk_chunk],
+            requested_source_families=["cb_kararname"],
+            metadata_first_selector=None,
+        )
+
+        assert reranked[0].citation == "703 m.1"
+        cbk_trace = next(item for item in trace["top_scores"] if item["citation"] == "34 m.1")
+        assert "strict_khk_query_penalty" in cbk_trace["document_rerank_reason"]
+        assert "relation_supporting_source_penalty" in cbk_trace["document_rerank_reason"]
+
     def test_clamp_families_removes_planner_family_that_conflicts_with_strong_resolution(self):
         resolution = _resolve_source_family_prior(
             "Yalnız 2547 yeterli midir, yoksa hangi üniversite yönetmeliği merkezde olmalıdır?"
@@ -2227,6 +2600,72 @@ class TestLawSignalParsing:
         )
 
         assert prioritized[0].citation == "IK m.21/f.0"
+
+    def test_focus_chunks_on_metadata_selected_source_before_same_family_dense_hits(self):
+        chunks = [
+            RetrievedChunk(
+                text="Bursa yatırımı için proje bazlı destek.",
+                citation="4924 m.9/f.0",
+                source="4924",
+                score=0.99,
+                metadata={
+                    "source_title": "BURSA İLİNDE YAPILACAK OLAN BATARYA HÜCRESİ VE MODÜL ÜRETİM TESİSİ YATIRIMINA PROJE BAZLI DEVLET YARDIMI VERİLMESİNE İLİŞKİN KARAR (KARAR SAYISI: 4924)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "4924",
+                    "madde_no": "9",
+                },
+            ),
+            RetrievedChunk(
+                text="Yatırım teşvik belgesi ve geçiş hükümleri.",
+                citation="9903 m.1/f.0",
+                source="9903",
+                score=0.42,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "madde_no": "1",
+                },
+            ),
+            RetrievedChunk(
+                text="Yatırım teşvik kararının genel çerçevesi.",
+                citation="9903 m.0/f.0",
+                source="9903",
+                score=0.40,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "madde_no": "0",
+                },
+            ),
+            RetrievedChunk(
+                text="Başka bir proje bazlı karar.",
+                citation="1593 m.2/f.0",
+                source="1593",
+                score=0.95,
+                metadata={
+                    "source_title": "YATIRIMLARA PROJE BAZLI DEVLET YARDIMI VERİLMESİNE İLİŞKİN KARARDA DEĞİŞİKLİK YAPILMASINA DAİR KARAR (KARAR SAYISI: 1593)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "1593",
+                    "madde_no": "2",
+                },
+            ),
+        ]
+
+        prioritized = _prioritize_chunks_for_source_families(
+            query="Yeni 9903 sayılı karar mı uygulanır?",
+            chunks=chunks,
+            source_families=["cb_karar"],
+            selected_source_keys={"9903"},
+        )
+        focused = _focus_chunks_on_selected_sources(
+            chunks=prioritized,
+            selected_source_keys={"9903"},
+        )
+
+        assert focused[0].citation == "9903 m.1/f.0"
+        assert focused[1].citation == "9903 m.0/f.0"
 
     def test_article_span_selector_prioritizes_explicit_article_in_same_document(self):
         chunks = [
