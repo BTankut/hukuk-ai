@@ -2920,6 +2920,61 @@ def _support_contains_exception_signal(query: str, traces: list[dict[str, Any]])
     return False
 
 
+def _asks_scope_or_applicability_query(query: str) -> bool:
+    normalized = _normalize_tr_text(query or "")
+    asks_source_selection = (
+        "hangi" in normalized
+        and any(
+            source_term in normalized
+            for source_term in (
+                "tuzuk",
+                "tuzug",
+                "yonetmel",
+                "genelge",
+                "teblig",
+                "karar",
+                "kararnam",
+                "metin",
+                "duzenlem",
+                "mevzuat",
+            )
+        )
+        and any(
+            intent_term in normalized
+            for intent_term in ("aran", "esas", "bakimindan", "uygulan", "dayanak", "kontrol")
+        )
+    )
+    if asks_source_selection:
+        return True
+    return any(
+        signal in normalized
+        for signal in (
+            "kapsam",
+            "tabi",
+            "uygulanir",
+            "uygulanacak",
+            "uygulanmasi",
+            "hangi lisans",
+            "yetki belgesi",
+            "ana uygulama metni",
+        )
+    )
+
+
+def _chunk_scope_or_applicability_match(chunk: RetrievedChunk) -> bool:
+    metadata = chunk.metadata or {}
+    heading = _normalize_tr_text(str(metadata.get("heading") or metadata.get("article_heading") or ""))
+    text = _normalize_tr_text(chunk.text or "")
+    if "kapsam" in heading:
+        return True
+    if re.search(r"\bkapsam\b", text[:240]):
+        return True
+    return _chunk_article_token(chunk) == "2" and any(
+        signal in text[:500]
+        for signal in ("kapsar", "kapsam", "uygulanir", "tabidir", "tabi")
+    )
+
+
 def _contains_temporal_clause_signal(text: str) -> bool:
     normalized = _normalize_tr_text(text or "")
     return any(
@@ -3090,6 +3145,7 @@ def _select_article_span_evidence(
     relation_query_detected = bool(relation_profile.get("relation_query_detected"))
     relation_primary_group = str(relation_profile.get("primary_group") or "")
     relation_supporting_group = str(relation_profile.get("supporting_group") or "")
+    scope_or_applicability_query = _asks_scope_or_applicability_query(query)
     query_year_tokens = set(_extract_year_tokens(query))
     legacy_intent_binding_active = historical_or_repealed_question
     temporal_guard_enabled = scenario_current_law_question and not historical_or_repealed_question
@@ -3131,6 +3187,7 @@ def _select_article_span_evidence(
             )
         )
         law_match = bool(numbered_laws and numbered_laws & chunk_laws)
+        scope_match = bool(scope_or_applicability_query and _chunk_scope_or_applicability_match(chunk))
         title_overlap = _count_term_overlap(title, query_terms)
         heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
         text_overlap = _count_term_overlap(chunk.text, query_terms)
@@ -3188,6 +3245,8 @@ def _select_article_span_evidence(
             score -= 45
         if law_match:
             score += 30
+        if scope_match:
+            score += 36
         score += min(title_overlap, 8) * 7
         score += min(heading_overlap, 8) * 6
         score += min(text_overlap, 10) * 2
@@ -3246,6 +3305,8 @@ def _select_article_span_evidence(
                         if article_match
                         else "adjacent"
                         if adjacent_article_match
+                        else "scope_or_applicability"
+                        if scope_match
                         else "source_local_support"
                         if title_overlap or heading_overlap or text_overlap
                         else "none"
@@ -3255,6 +3316,7 @@ def _select_article_span_evidence(
                     "preferred_family_match": preferred_family_match,
                     "selected_source_match": selected_source_match,
                     "law_match": law_match,
+                    "scope_match": scope_match,
                     "year_match": year_match,
                     "title_overlap": title_overlap,
                     "heading_overlap": heading_overlap,
@@ -3470,6 +3532,8 @@ def _select_article_span_evidence(
             return "exact_article"
         if trace.get("clause_match"):
             return "exact_clause"
+        if trace.get("scope_match"):
+            return "scope_or_applicability"
         if trace.get("heading_overlap", 0) >= 1 or trace.get("text_overlap", 0) >= 2:
             return "same_heading_or_section"
         if trace.get("adjacent_article_match"):
@@ -3509,11 +3573,20 @@ def _select_article_span_evidence(
             and (item[3].get("explicit_ref_match") or item[3].get("article_match") or item[3].get("clause_match"))
         ]
         exact_ids = {id(item[2]) for item in exact_items}
+        scope_items = [
+            item
+            for item in ranked
+            if _same_locked_document(item)
+            and id(item[2]) not in exact_ids
+            and item[3].get("scope_match")
+        ]
+        scope_ids = {id(item[2]) for item in scope_items}
         heading_items = [
             item
             for item in ranked
             if _same_locked_document(item)
             and id(item[2]) not in exact_ids
+            and id(item[2]) not in scope_ids
             and str(item[3].get("article_or_section") or "") != "0"
             and (item[3].get("heading_overlap", 0) >= 1 or item[3].get("text_overlap", 0) >= 2)
         ]
@@ -3523,6 +3596,7 @@ def _select_article_span_evidence(
             for item in ranked
             if _same_locked_document(item)
             and id(item[2]) not in exact_ids
+            and id(item[2]) not in scope_ids
             and id(item[2]) not in heading_ids
             and item[3].get("adjacent_article_match")
         ]
@@ -3532,6 +3606,7 @@ def _select_article_span_evidence(
             for item in ranked
             if _same_locked_document(item)
             and id(item[2]) not in exact_ids
+            and id(item[2]) not in scope_ids
             and id(item[2]) not in heading_ids
             and id(item[2]) not in adjacent_ids
             and (item[3].get("contains_temporal_clause") or item[3].get("contains_exception_signal"))
@@ -3542,6 +3617,7 @@ def _select_article_span_evidence(
             for item in ranked
             if _same_locked_document(item)
             and id(item[2]) not in exact_ids
+            and id(item[2]) not in scope_ids
             and id(item[2]) not in heading_ids
             and id(item[2]) not in adjacent_ids
             and id(item[2]) not in temporal_exception_ids
@@ -3552,10 +3628,11 @@ def _select_article_span_evidence(
                 or item[3].get("identifier_match")
             )
         ]
-        if exact_items or heading_items or adjacent_items or temporal_exception_items or fallback_items:
+        if exact_items or scope_items or heading_items or adjacent_items or temporal_exception_items or fallback_items:
             window_items = _dedupe_window_items(
                 [
                     exact_items[:3],
+                    scope_items[:2],
                     heading_items[:2],
                     adjacent_items[:2],
                     temporal_exception_items[:2],
@@ -3777,6 +3854,130 @@ def _select_article_span_evidence(
     }
 
 
+def _apply_selected_document_only_bundle(
+    *,
+    chunks: list[RetrievedChunk],
+    article_span_selector: dict[str, Any] | None,
+) -> list[RetrievedChunk]:
+    if not chunks or not isinstance(article_span_selector, dict):
+        return chunks
+
+    selected_document_key = str(article_span_selector.get("selected_document_key") or "").strip().lower()
+    if not selected_document_key:
+        article_span_selector["selected_document_only_bundle"] = False
+        return chunks
+    if article_span_selector.get("relation_query_detected"):
+        article_span_selector["selected_document_only_bundle"] = False
+        article_span_selector["selected_document_bundle_skip_reason"] = "relation_query_requires_supporting_sources"
+        return chunks
+
+    sufficiency = str(article_span_selector.get("selector_evidence_sufficiency") or "")
+    metadata_strength = str(article_span_selector.get("metadata_identity_strength") or "")
+    selector_reason = str(article_span_selector.get("selector_reason") or "")
+    strong_document_lock = (
+        metadata_strength in {"strong", "medium"}
+        or selector_reason
+        in {
+            "selected_source_lock",
+            "identifier_lock",
+            "preferred_family_lock",
+            "family_title_lock",
+            "numbered_law_lock",
+            "internal_document_arbitration",
+            "current_law_temporal_guard",
+            "legacy_scope_state_binding",
+        }
+    )
+    query_article_tokens = article_span_selector.get("query_article_tokens")
+    if not isinstance(query_article_tokens, list):
+        query_article_tokens = []
+    identifier_tokens = article_span_selector.get("identifier_tokens")
+    if not isinstance(identifier_tokens, list):
+        identifier_tokens = []
+    has_precise_span_lock = bool(
+        identifier_tokens
+        or query_article_tokens
+        or article_span_selector.get("selector_article_lock_type") == "explicit_exact"
+    )
+    if not has_precise_span_lock:
+        article_span_selector["selected_document_only_bundle"] = False
+        article_span_selector["selected_document_bundle_skip_reason"] = "no_exact_identifier_or_article_lock"
+        return chunks
+    if sufficiency == "insufficient_support" or not strong_document_lock:
+        article_span_selector["selected_document_only_bundle"] = False
+        article_span_selector["selected_document_bundle_skip_reason"] = "weak_document_lock_or_support"
+        return chunks
+
+    selected_document_chunks = [
+        chunk
+        for chunk in chunks
+        if _resolve_chunk_document_key(chunk) == selected_document_key
+    ]
+    if not selected_document_chunks:
+        article_span_selector["selected_document_only_bundle"] = False
+        article_span_selector["selected_document_bundle_skip_reason"] = "selected_document_chunks_missing"
+        return chunks
+
+    suppressed_count = len(chunks) - len(selected_document_chunks)
+    article_span_selector["selected_document_only_bundle"] = True
+    article_span_selector["selected_document_bundle_chunk_count"] = len(selected_document_chunks)
+    article_span_selector["selected_document_bundle_suppressed_count"] = suppressed_count
+    article_span_selector["span_cluster_noise_suppressed"] = bool(
+        article_span_selector.get("span_cluster_noise_suppressed") or suppressed_count > 0
+    )
+    article_span_selector["span_cluster_noise_suppressed_count"] = int(
+        article_span_selector.get("span_cluster_noise_suppressed_count") or 0
+    ) + suppressed_count
+    return selected_document_chunks
+
+
+def _annotate_article_span_selector_priority(
+    *,
+    chunks: list[RetrievedChunk],
+    article_span_selector: dict[str, Any] | None,
+) -> None:
+    if not chunks or not isinstance(article_span_selector, dict):
+        return
+
+    ordered_span_ids: list[str] = []
+    main_span_id = str(article_span_selector.get("selected_main_span_id") or "").strip()
+    if main_span_id:
+        ordered_span_ids.append(main_span_id)
+    for span_id in article_span_selector.get("selected_supporting_span_ids") or []:
+        normalized_span_id = str(span_id or "").strip()
+        if normalized_span_id:
+            ordered_span_ids.append(normalized_span_id)
+
+    span_rank: dict[str, int] = {}
+    for span_id in ordered_span_ids:
+        if span_id not in span_rank:
+            span_rank[span_id] = len(span_rank)
+    if not span_rank:
+        return
+
+    main_match_type = str(article_span_selector.get("main_span_match_type") or "")
+    support_match_types = [
+        str(value or "")
+        for value in (article_span_selector.get("supporting_span_match_types") or [])
+    ]
+    span_match_types: dict[str, str] = {}
+    if main_span_id:
+        span_match_types[main_span_id] = main_match_type
+    for index, span_id in enumerate(ordered_span_ids[1:]):
+        if index < len(support_match_types):
+            span_match_types[span_id] = support_match_types[index]
+
+    for chunk in chunks:
+        span_id = _resolve_chunk_span_id(chunk)
+        if span_id not in span_rank:
+            continue
+        metadata = dict(chunk.metadata or {})
+        metadata["_article_span_selector_rank"] = span_rank[span_id]
+        metadata["_article_span_selector_match_type"] = span_match_types.get(span_id) or "document_support"
+        metadata["_article_span_selector_selected"] = True
+        chunk.metadata = metadata
+
+
 def _asks_current_validity_over_historical_contrast(query: str) -> bool:
     normalized = normalize_query_text(query)
     year_count = len({match.group(0) for match in re.finditer(r"\b(19|20)\d{2}\b", query or "")})
@@ -3843,6 +4044,30 @@ def _asks_historical_or_repealed_query(query: str) -> bool:
             "onceki duzenleme",
         )
     )
+
+
+def _asks_constitutional_transition_khk_query(query: str) -> bool:
+    normalized = normalize_query_text(query)
+    has_transition_scope = any(
+        hint in normalized
+        for hint in (
+            "cumhurbaskanligi hukumet sistemi",
+            "bakanlar kurulu",
+            "eski teskilat",
+            "eski teşkilat",
+            "atif uyarlamasi",
+            "atıf uyarlaması",
+        )
+    )
+    has_transition_action = any(
+        hint in normalized
+        for hint in ("gecis", "geçiş", "uyum", "uyarlama", "kontrol")
+    )
+    has_khk_cbk_surface = any(
+        hint in normalized
+        for hint in ("khk", "kanun hukmunde kararname", "cbk", "cumhurbaskanligi kararnamesi")
+    )
+    return has_transition_scope and has_transition_action and has_khk_cbk_surface
 
 
 def _source_family_relation_group(family: str | None) -> str:
@@ -4146,6 +4371,15 @@ def _legacy_source_binding_profile(
     if family in {"khk", "tuzuk"}:
         score += 12.0
         reasons.append("legacy_family_profile")
+    if family == "khk" and _asks_constitutional_transition_khk_query(query):
+        document_key = _resolve_chunk_document_key(chunk)
+        title_normalized = normalize_query_text(_resolve_chunk_source_title(chunk))
+        if document_key == "703" or "anayasada yapilan degisikliklere uyum" in title_normalized:
+            score += 130.0
+            reasons.append("constitutional_transition_khk_703_anchor")
+        elif not any(term in title_normalized for term in ("uyum", "gecis", "geçiş", "anayasada")):
+            score -= 24.0
+            reasons.append("constitutional_transition_non_transition_khk_penalty")
     if family == "khk" and old_chunk_year_present:
         score += 18.0
         reasons.append("legacy_khk_pre2018_profile")
@@ -4940,6 +5174,33 @@ def _resolve_chunk_source_key(chunk: RetrievedChunk) -> str:
     )
 
 
+def _chunk_matches_selected_source_key(
+    chunk: RetrievedChunk,
+    selected_source_keys: set[str] | None,
+) -> bool:
+    if not selected_source_keys:
+        return False
+    selected_key_set = {
+        value
+        for key in selected_source_keys
+        for value in (
+            str(key).strip().lower(),
+            _normalize_tr_text(str(key)),
+            normalize_canonical_text(str(key)),
+        )
+        if value
+    }
+    for candidate in (_resolve_chunk_source_key(chunk), _resolve_chunk_document_key(chunk)):
+        for value in (
+            str(candidate).strip().lower(),
+            _normalize_tr_text(str(candidate)),
+            normalize_canonical_text(str(candidate)),
+        ):
+            if value and value in selected_key_set:
+                return True
+    return False
+
+
 def _prioritize_chunks_for_source_families(
     *,
     query: str,
@@ -4957,7 +5218,7 @@ def _prioritize_chunks_for_source_families(
     current_validity_query = _asks_current_validity_query(query)
     source_cluster_sizes: dict[str, int] = {}
     for chunk in chunks:
-        source_key = _resolve_chunk_source_key(chunk)
+        source_key = _resolve_chunk_document_key(chunk)
         source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
 
     if source_families and not any(
@@ -4977,10 +5238,10 @@ def _prioritize_chunks_for_source_families(
             or metadata.get("law_name")
         )
         heading = metadata.get("heading") or metadata.get("article_heading")
-        cluster_size = source_cluster_sizes.get(_resolve_chunk_source_key(chunk), 1)
+        cluster_size = source_cluster_sizes.get(_resolve_chunk_document_key(chunk), 1)
         selected_source_rank = (
             0
-            if not selected_source_keys or _resolve_chunk_source_key(chunk) in selected_source_keys
+            if not selected_source_keys or _chunk_matches_selected_source_key(chunk, selected_source_keys)
             else 1
         )
         lane_rank = _chunk_recall_lane_rank(chunk)
@@ -5049,14 +5310,14 @@ def _focus_chunks_on_selected_sources(
 
     selected_chunks = [
         chunk for chunk in chunks
-        if _resolve_chunk_source_key(chunk) in selected_source_keys
+        if _chunk_matches_selected_source_key(chunk, selected_source_keys)
     ]
-    if len(selected_chunks) < 2:
+    if not selected_chunks:
         return chunks
 
     other_chunks = [
         chunk for chunk in chunks
-        if _resolve_chunk_source_key(chunk) not in selected_source_keys
+        if not _chunk_matches_selected_source_key(chunk, selected_source_keys)
     ]
     max_selected = max(4, min(8, len(selected_chunks)))
     max_other = 2 if len(selected_chunks) >= 4 else 3
@@ -10339,8 +10600,10 @@ async def chat_completions(
     selected_source_keys: set[str] = set()
     family_routing_policy: dict[str, Any] | None = None
     if metadata_first_selector:
-        for candidate in metadata_first_selector.get("candidates") or []:
-            selected_source_keys.update(candidate.get("focus_keys") or [])
+        metadata_lookup_source = str(metadata_first_selector.get("metadata_lookup_source") or "")
+        if metadata_lookup_source == "exact_identifier_lookup" or metadata_first_selector.get("query_identifier_tokens"):
+            for candidate in metadata_first_selector.get("candidates") or []:
+                selected_source_keys.update(candidate.get("focus_keys") or [])
     top_k_effective = retrieval_top_k
     retriever = _get_retriever(request)
 
@@ -10471,6 +10734,25 @@ async def chat_completions(
                             "Retrieval planner-law-buckets: session=%s laws=%s total=%d",
                             session_id,
                             sorted(planner_law_hints),
+                            len(retrieved_chunks),
+                        )
+
+                if _asks_constitutional_transition_khk_query(routing_query) and not request_body.law_filter:
+                    transition_khk_chunks = _retrieve_law_bucket_chunks(
+                        retriever=retriever,
+                        query=(
+                            "703 sayılı Kanun Hükmünde Kararname "
+                            "Cumhurbaşkanlığı Hükümet Sistemi geçiş atıf uyarlaması"
+                        ),
+                        laws=["703"],
+                        top_k=max(4, min(8, top_k_effective)),
+                    )
+                    if transition_khk_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(transition_khk_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval constitutional-transition-khk: session=%s added=%d total=%d",
+                            session_id,
+                            len(transition_khk_chunks),
                             len(retrieved_chunks),
                         )
 
@@ -10754,6 +11036,14 @@ async def chat_completions(
             explicit_article_refs=all_exact_article_refs,
             selected_source_keys=selected_source_keys,
             source_family_resolution=source_family_resolution,
+        )
+        retrieved_chunks = _apply_selected_document_only_bundle(
+            chunks=retrieved_chunks,
+            article_span_selector=article_span_selector,
+        )
+        _annotate_article_span_selector_priority(
+            chunks=retrieved_chunks,
+            article_span_selector=article_span_selector,
         )
         logger.info(
             "Response timing: session=%s stage=selector_stack latency=%.0fms chunks=%d",

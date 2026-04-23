@@ -501,6 +501,30 @@ class RAGOrchestrator:
         if not query:
             return [chunk for _, chunk in candidates[:max_chunks]]
 
+        selector_ranked_chunks: list[tuple[int, int, RetrievedChunk]] = []
+        for position, chunk in candidates:
+            metadata = chunk.metadata or {}
+            if not metadata.get("_article_span_selector_selected"):
+                continue
+            try:
+                selector_rank = int(metadata.get("_article_span_selector_rank"))
+            except (TypeError, ValueError):
+                continue
+            if selector_rank < 0:
+                continue
+            selector_ranked_chunks.append((selector_rank, position, chunk))
+        if selector_ranked_chunks:
+            selector_ranked_chunks.sort(key=lambda item: (item[0], item[1]))
+            selected_chunks = [chunk for _rank, _position, chunk in selector_ranked_chunks[:max_chunks]]
+            if len(selected_chunks) < max_chunks:
+                selected_ids = {id(chunk) for chunk in selected_chunks}
+                selected_chunks.extend(
+                    chunk
+                    for _position, chunk in candidates
+                    if id(chunk) not in selected_ids
+                )
+            return selected_chunks[:max_chunks]
+
         query_terms = cls._extract_priority_terms(query)
         query_clauses = cls._extract_query_clauses(query)
         requested_source_families = cls._extract_requested_source_families(query)

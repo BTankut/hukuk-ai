@@ -40,6 +40,7 @@ from routers.chat import (
     _apply_metadata_lookup_family_prior,
     _apply_relation_query_metadata_focus,
     _apply_pre_generation_family_pool,
+    _apply_selected_document_only_bundle,
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
@@ -2667,6 +2668,49 @@ class TestLawSignalParsing:
         assert focused[0].citation == "9903 m.1/f.0"
         assert focused[1].citation == "9903 m.0/f.0"
 
+    def test_focus_chunks_matches_document_key_when_source_key_is_article_scoped(self):
+        chunks = [
+            RetrievedChunk(
+                text="Başka kararın yüksek skorlu hükmü.",
+                citation="4924 m.9/f.0",
+                source="4924",
+                score=0.99,
+                metadata={
+                    "source_title": "BAŞKA KARAR (KARAR SAYISI: 4924)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "4924",
+                    "canonical_identifier_display": "4924 m.9",
+                    "madde_no": "9",
+                },
+            ),
+            RetrievedChunk(
+                text="9903 sayılı kararın geçiş hükmü.",
+                citation="9903 m.1/f.0",
+                source="9903",
+                score=0.40,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "canonical_identifier_display": "9903 m.1",
+                    "madde_no": "1",
+                },
+            ),
+        ]
+
+        prioritized = _prioritize_chunks_for_source_families(
+            query="Yeni 9903 sayılı karar mı uygulanır?",
+            chunks=chunks,
+            source_families=["cb_karar"],
+            selected_source_keys={"9903"},
+        )
+        focused = _focus_chunks_on_selected_sources(
+            chunks=prioritized,
+            selected_source_keys={"9903"},
+        )
+
+        assert focused[0].citation == "9903 m.1/f.0"
+
     def test_article_span_selector_prioritizes_explicit_article_in_same_document(self):
         chunks = [
             RetrievedChunk(
@@ -2971,6 +3015,86 @@ class TestLawSignalParsing:
         assert selector["top_scores"][0]["selected_source_match"] is True
         assert selector["metadata_identity_strength"] == "strong"
 
+    def test_selected_document_only_bundle_filters_generation_chunks_after_strong_lock(self):
+        chunks = [
+            RetrievedChunk(
+                text="9903 sayılı kararda faiz desteği şartları madde 8 altında düzenlenir.",
+                citation="9903 m.8/f.0",
+                source="9903",
+                score=0.74,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "madde_no": "8",
+                },
+            ),
+            RetrievedChunk(
+                text="Başka kararın yatırım programı hükmü.",
+                citation="1593 m.8/f.0",
+                source="1593",
+                score=0.99,
+                metadata={
+                    "source_title": "PROJE BAZLI DEVLET YARDIMI KARARI (KARAR SAYISI: 1593)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "1593",
+                    "madde_no": "8",
+                },
+            ),
+        ]
+        selector = {
+            "selected_document_key": "9903",
+            "selector_evidence_sufficiency": "exact_enough",
+            "metadata_identity_strength": "strong",
+            "selector_reason": "selected_source_lock",
+            "identifier_tokens": ["9903"],
+            "span_cluster_noise_suppressed_count": 0,
+        }
+
+        filtered = _apply_selected_document_only_bundle(
+            chunks=chunks,
+            article_span_selector=selector,
+        )
+
+        assert [chunk.citation for chunk in filtered] == ["9903 m.8/f.0"]
+        assert selector["selected_document_only_bundle"] is True
+        assert selector["selected_document_bundle_suppressed_count"] == 1
+        assert selector["span_cluster_noise_suppressed"] is True
+
+    def test_selected_document_only_bundle_skips_relation_queries(self):
+        chunks = [
+            RetrievedChunk(
+                text="Kanun hükmü.",
+                citation="7201 m.7/a/f.0",
+                source="7201",
+                score=0.80,
+                metadata={"belge_turu": "kanun", "belge_no": "7201", "madde_no": "7/a"},
+            ),
+            RetrievedChunk(
+                text="Yönetmelik destek hükmü.",
+                citation="20631 m.11/f.0",
+                source="20631",
+                score=0.70,
+                metadata={"belge_turu": "yonetmelik", "belge_no": "20631", "madde_no": "11"},
+            ),
+        ]
+        selector = {
+            "selected_document_key": "7201",
+            "selector_evidence_sufficiency": "exact_enough",
+            "metadata_identity_strength": "strong",
+            "selector_reason": "selected_source_lock",
+            "relation_query_detected": True,
+        }
+
+        filtered = _apply_selected_document_only_bundle(
+            chunks=chunks,
+            article_span_selector=selector,
+        )
+
+        assert filtered == chunks
+        assert selector["selected_document_only_bundle"] is False
+        assert selector["selected_document_bundle_skip_reason"] == "relation_query_requires_supporting_sources"
+
     def test_article_span_selector_uses_document_lock_before_cross_document_article_hit(self):
         chunks = [
             RetrievedChunk(
@@ -3093,6 +3217,52 @@ class TestLawSignalParsing:
         assert selector["support_contains_article_number"] is True
         assert selector["support_span_diversity"] >= 1
         assert selector["selector_evidence_sufficiency"] == "exact_enough"
+
+    def test_article_span_selector_prioritizes_scope_article_for_applicability_query(self):
+        chunks = [
+            RetrievedChunk(
+                text="Yetki belgesi sahiplerinin bildirim yükümlülükleri ve belge yenileme usulü açıklanır.",
+                citation="32695 m.5/f.0",
+                source="32695",
+                score=0.99,
+                metadata={
+                    "source_title": "ELEKTRONİK HABERLEŞME SEKTÖRÜNE İLİŞKİN YETKİLENDİRME YÖNETMELİĞİ",
+                    "belge_turu": "kky",
+                    "belge_no": "32695",
+                    "madde_no": "5",
+                    "heading": "Yetki belgesi",
+                    "effective_state": "active",
+                },
+            ),
+            RetrievedChunk(
+                text="Kapsam MADDE 2 - Bu Yönetmelik yetki belgesi sahipleri hakkında uygulanır ve ilgili faaliyetleri kapsar.",
+                citation="32695 m.2/f.0",
+                source="32695",
+                score=0.45,
+                metadata={
+                    "source_title": "ELEKTRONİK HABERLEŞME SEKTÖRÜNE İLİŞKİN YETKİLENDİRME YÖNETMELİĞİ",
+                    "belge_turu": "kky",
+                    "belge_no": "32695",
+                    "madde_no": "2",
+                    "heading": "Kapsam",
+                    "effective_state": "active",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="İnternet yayın lisansı ve iletim yetkisi bakımından hangi RTÜK yönetmeliği aranmalıdır?",
+            chunks=chunks,
+            requested_source_families=["kky", "yonetmelik"],
+            explicit_article_refs=[],
+            selected_source_keys={"32695"},
+        )
+
+        assert selected[0].citation == "32695 m.2/f.0"
+        assert selector["selected_main_article"] == "2"
+        assert selector["main_span_match_type"] == "scope_or_applicability"
+        assert selector["article_match_type"] == "scope_or_applicability"
+        assert selector["top_scores"][0]["scope_match"] is True
 
     def test_article_span_selector_surfaces_temporal_and_exception_support_metrics(self):
         chunks = [
@@ -3297,6 +3467,52 @@ class TestLawSignalParsing:
         assert "patent haklarinin korunmasi hakkinda kanun hükmünde kararname" in selector[
             "selected_document_id"
         ].replace("i̇", "i").lower()
+
+    def test_article_span_selector_prefers_703_for_constitutional_transition_khk_query(self):
+        query = (
+            "Mevzuat hâlâ Bakanlar Kurulu veya eski teşkilat isimlerine atıf yapıyorsa, "
+            "Cumhurbaşkanlığı Hükümet Sistemine geçiş bakımından hangi KHK ve hangi CBK bağlantısı kontrol edilmelidir?"
+        )
+        chunks = [
+            RetrievedChunk(
+                text="Kamu gözetimi kurumunun teşkilat hükümleri düzenlenir.",
+                citation="660 m.14/f.0",
+                source="660",
+                score=0.95,
+                metadata={
+                    "source_title": "KAMU GÖZETİMİ, MUHASEBE VE DENETİM STANDARTLARI KURUMUNUN TEŞKİLAT VE GÖREVLERİ HAKKINDA KANUN HÜKMÜNDE KARARNAME",
+                    "belge_turu": "khk",
+                    "kanun_no": "660",
+                    "madde_no": "14",
+                    "effective_state": "active",
+                },
+            ),
+            RetrievedChunk(
+                text="Bakanlar Kurulu ve eski teşkilat atıflarının Cumhurbaşkanlığı sistemine uyarlanmasına ilişkin geçiş hükümleri yer alır.",
+                citation="703 m.216/f.0",
+                source="703",
+                score=0.40,
+                metadata={
+                    "source_title": "ANAYASADA YAPILAN DEĞİŞİKLİKLERE UYUM SAĞLANMASI AMACIYLA BAZI KANUN VE KANUN HÜKMÜNDE KARARNAMELERDE DEĞİŞİKLİK YAPILMASI HAKKINDA KANUN HÜKMÜNDE KARARNAME",
+                    "belge_turu": "khk",
+                    "kanun_no": "703",
+                    "madde_no": "216",
+                    "effective_state": "active",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["khk"],
+            explicit_article_refs=[],
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+
+        assert selected[0].citation == "703 m.216/f.0"
+        assert selector["legacy_candidate_preferred"] is True
+        assert "constitutional_transition_khk_703_anchor" in selector["top_scores"][0]["document_state_binding_reason"]
 
     def test_assembled_evidence_exposes_phase4_canonical_span_fields(self):
         chunk = RetrievedChunk(

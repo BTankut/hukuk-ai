@@ -584,6 +584,35 @@ def test_orchestrator_source_lock_prefers_query_matching_chunk_for_single_source
     assert "[Kaynak: TMK m.120]" not in response.answer
 
 
+def test_extract_priority_chunks_preserves_upstream_article_span_selector_order():
+    selected = RAGOrchestrator._extract_priority_chunks(
+        [
+            RetrievedChunk(
+                text="Kapsam MADDE 2 - Bu Yönetmelik internet ortamından isteğe bağlı yayın hizmetlerini kapsar.",
+                citation="32695 m.2",
+                metadata={
+                    "_article_span_selector_selected": True,
+                    "_article_span_selector_rank": 0,
+                    "_article_span_selector_match_type": "scope_or_applicability",
+                },
+            ),
+            RetrievedChunk(
+                text="MADDE 5 - İnternet ortamından yayın lisans tipleri ile internet yayın iletim yetki belgesi düzenlenir.",
+                citation="32695 m.5",
+                metadata={
+                    "_article_span_selector_selected": True,
+                    "_article_span_selector_rank": 1,
+                    "_article_span_selector_match_type": "same_heading_or_section",
+                },
+            ),
+        ],
+        query="İnternet yayın lisansı ve iletim yetkisi bakımından hangi RTÜK yönetmeliği aranmalı?",
+        max_chunks=2,
+    )
+
+    assert [chunk.citation for chunk in selected] == ["32695 m.2", "32695 m.5"]
+
+
 def test_extract_priority_chunks_prefers_requested_tuzuk_family_with_matching_title():
     selected = RAGOrchestrator._extract_priority_chunks(
         [
