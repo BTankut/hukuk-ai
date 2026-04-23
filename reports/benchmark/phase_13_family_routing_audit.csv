@@ -1,0 +1,13 @@
+expected_family,total,wrong_family_rows,locked_preferred_family,preferred_family_hit_rows,avg_selected_family_confidence,no_gate_rows,family_gate_reason_counts
+CB_GENELGE,4,0,4,4,0.870,0,preferred_family_pool_available:4
+CB_KARAR,8,4,8,5,0.875,0,preferred_family_pool_available:8
+CB_KARARNAME,6,0,6,0,0.823,0,preferred_family_pool_available:6
+CB_YONETMELIK,6,2,6,0,0.796,0,preferred_family_pool_available:6
+KANUN,21,5,8,0,0.372,13,"no_family_prior:11, preferred_family_pool_available:8, low_confidence_family_prior:2"
+KHK,6,1,6,0,0.823,0,preferred_family_pool_available:6
+KKY,11,8,7,0,0.808,1,"preferred_family_pool_available:7, global_fallback:3, weak_family_prior_cross_family_allowed:1"
+MULGA,5,3,5,0,0.846,0,preferred_family_pool_available:5
+TEBLIGLER,8,1,6,7,0.703,2,"preferred_family_pool_available:6, no_family_prior:2"
+TUZUK,5,1,5,0,0.662,0,preferred_family_pool_available:5
+UY,10,0,8,9,0.804,2,"preferred_family_pool_available:8, weak_family_prior_cross_family_allowed:2"
+YONETMELIK,10,6,6,1,0.747,3,"preferred_family_pool_available:6, weak_family_prior_cross_family_allowed:3, global_fallback:1"

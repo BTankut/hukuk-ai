@@ -245,6 +245,8 @@ def derive_status(
         return "runtime_trace_gap", "runtime output missing or incomplete", False, metadata_gap
     if "repealed_source_used_as_active" in flags or "missing_temporal_qualification" in flags:
         return "temporal_state_gap", "effective_state or repealed/current separation failed", False, True
+    if right_document_wrong_article_or_span(scored):
+        return "right_doc_wrong_article_or_span", "document-level evidence exists but article/span/support is insufficient", False, metadata_gap
     if not expected_in_pre:
         return "not_retrieved_or_not_indexed", "expected family absent from initial retrieval", True, metadata_gap
     if expected_in_pre and not expected_in_post:
@@ -253,8 +255,6 @@ def derive_status(
         return "gold_document_not_retrieved", "expected family present but gold document not seen in initial candidates", True, metadata_gap
     if ("wrong_document" in flags or "missing_gold_document_signal" in flags) and not gold_in_post:
         return "candidate_collision_or_metadata", "expected family present but gold document lost or indistinguishable after selection", False, True
-    if right_document_wrong_article_or_span(scored):
-        return "right_doc_wrong_article_or_span", "document-level evidence exists but article/span/support is insufficient", False, metadata_gap
     if "wrong_article" in flags or "partial_grounding_only" in flags or "missing_required_content_signal" in flags:
         return "rubric_gap_before_document_alignment", "private rubric/span gap remains but family/document identity is not yet canonical-aligned", False, metadata_gap
     if "wrong_family" in flags:

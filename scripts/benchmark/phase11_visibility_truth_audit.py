@@ -498,7 +498,16 @@ def classify_visibility(
 
 
 def build_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
-    coverage_rows = [row for row in read_csv(args.coverage_csv) if row.get("primary_owner") == "needs_corpus_acquisition"]
+    coverage_source_rows = read_csv(args.coverage_csv)
+    coverage_rows: list[dict[str, str]] = []
+    for row in coverage_source_rows:
+        primary_owner = str(row.get("primary_owner") or "").strip()
+        needs_corpus_acquisition = str(row.get("needs_corpus_acquisition") or "").strip().lower()
+        if primary_owner == "needs_corpus_acquisition":
+            coverage_rows.append(row)
+            continue
+        if needs_corpus_acquisition in {"true", "1", "yes"}:
+            coverage_rows.append(row)
     answer_key = {row["q_id"]: row for row in read_csv(args.answer_key)} if args.answer_key.exists() else {}
     traces = read_jsonl_by_qid(args.run_dir / "trace.jsonl")
     catalog = load_canonical_source_catalog()
