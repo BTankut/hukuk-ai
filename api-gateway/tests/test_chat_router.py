@@ -587,6 +587,51 @@ class TestLawSignalParsing:
         assert features["missing_fact_slots"] == []
         assert features["completeness_degrade_reason"] == "complete_enough"
 
+    def test_completeness_synthesis_reenters_evidence_slots_when_selector_identity_is_strong(self):
+        features = _build_completeness_synthesis_features(
+            query="Başvuru usulü ve süresi nedir?",
+            answer_text=(
+                "Kaynakta belirtilen birinci kural uygulanır [Kaynak: X m.1]. "
+                "İkinci kural kapsamı belirler [Kaynak: X m.2]. "
+                "Üçüncü kural dayanak oluşturur [Kaynak: X m.3]."
+            ),
+            article_span_selector={
+                "support_span_count": 2,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "partially_supported",
+            },
+            chunks=[
+                RetrievedChunk(text="Başvuru usulü ve süre koşulları düzenlenir.", citation="X m.1", source="X", score=1.0, metadata={}),
+                RetrievedChunk(text="Başvuruda bildirim ve işlem adımları gösterilir.", citation="X m.2", source="X", score=1.0, metadata={}),
+            ],
+        )
+
+        assert "procedure_or_consequence" in features["satisfied_fact_slots"]
+        assert features["evidence_slot_reentry_applied"] is True
+        assert features["evidence_slot_reentry_slots"] == ["procedure_or_consequence"]
+        assert features["completeness_degrade_reason"] == "complete_enough"
+
+    def test_completeness_synthesis_does_not_reenter_slots_when_selector_identity_is_weak(self):
+        features = _build_completeness_synthesis_features(
+            query="Başvuru usulü ve süresi nedir?",
+            answer_text=(
+                "Kaynakta belirtilen birinci kural uygulanır [Kaynak: X m.1]. "
+                "İkinci kural kapsamı belirler [Kaynak: X m.2]. "
+                "Üçüncü kural dayanak oluşturur [Kaynak: X m.3]."
+            ),
+            article_span_selector={
+                "support_span_count": 2,
+                "metadata_identity_strength": "none",
+                "selector_evidence_sufficiency": "insufficient_support",
+            },
+            chunks=[
+                RetrievedChunk(text="Başvuru usulü ve süre koşulları düzenlenir.", citation="X m.1", source="X", score=1.0, metadata={}),
+            ],
+        )
+
+        assert "procedure_or_consequence" in features["missing_fact_slots"]
+        assert features["evidence_slot_reentry_applied"] is False
+
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(
             "Elektronik tebligat yönetmeliği kapsamında muhatabın bildirim yükümlülüğü nedir?"

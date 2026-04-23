@@ -5543,6 +5543,99 @@ def _satisfied_completeness_slots(
     return dedupe_strings(satisfied)
 
 
+def _selector_allows_evidence_slot_reentry(article_span_selector: dict[str, Any] | None) -> bool:
+    if not isinstance(article_span_selector, dict):
+        return False
+    identity_strength = str(article_span_selector.get("metadata_identity_strength") or "")
+    evidence_sufficiency = str(article_span_selector.get("selector_evidence_sufficiency") or "")
+    try:
+        support_span_count = int(article_span_selector.get("support_span_count") or 0)
+    except (TypeError, ValueError):
+        support_span_count = 0
+    return bool(
+        support_span_count >= 1
+        and (
+            identity_strength in {"strong", "medium"}
+            or evidence_sufficiency in {"exact_enough", "partially_supported"}
+        )
+    )
+
+
+def _evidence_supported_completeness_slots(
+    *,
+    required_slots: list[str],
+    article_span_selector: dict[str, Any] | None,
+    chunks: list[RetrievedChunk],
+) -> list[str]:
+    if not chunks or not _selector_allows_evidence_slot_reentry(article_span_selector):
+        return []
+    evidence_surface = normalize_query_text(
+        " ".join(
+            part
+            for chunk in chunks[:5]
+            for part in (
+                chunk.text,
+                chunk.citation,
+                _resolve_chunk_source_title(chunk),
+                _resolve_chunk_source_identifier(chunk),
+                str((chunk.metadata or {}).get("effective_state") or ""),
+                str((chunk.metadata or {}).get("yururluk_baslangic") or ""),
+                str((chunk.metadata or {}).get("yururluk_bitis") or ""),
+            )
+            if part
+        )
+    )
+    supported: list[str] = []
+    for slot in required_slots:
+        if slot == "procedure_or_consequence" and _answer_contains_any(
+            evidence_surface,
+            (
+                "usul",
+                "sure",
+                "basvuru",
+                "itiraz",
+                "sonuc",
+                "yaptirim",
+                "zorunlu",
+                "yukumluluk",
+                "bildirim",
+                "islem",
+            ),
+        ):
+            supported.append(slot)
+        elif slot == "scenario_applicability" and _answer_contains_any(
+            evidence_surface,
+            ("sart", "kosul", "halinde", "hallerde", "durumda", "kapsam", "uygulanir", "aranir"),
+        ):
+            supported.append(slot)
+        elif slot == "exception_or_limitation" and _answer_contains_any(
+            evidence_surface,
+            ("istisna", "sakli", "haric", "muaf", "sinirli", "uygulanmaz"),
+        ):
+            supported.append(slot)
+        elif slot == "temporal_validity" and _answer_contains_any(
+            evidence_surface,
+            ("yururluk", "guncel", "mulga", "tarih", "halen", "gecerli", "9999 12 31"),
+        ):
+            supported.append(slot)
+        elif slot == "hierarchy_or_conflict_rule" and _answer_contains_any(
+            evidence_surface,
+            (
+                "oncelik",
+                "ust norm",
+                "alt norm",
+                "ozel duzenleme",
+                "genel duzenleme",
+                "ikincil duzenleme",
+                "normlar hiyerarsisi",
+                "kanuna aykiri",
+                "dayanak",
+            ),
+        ):
+            supported.append(slot)
+    return dedupe_strings(supported)
+
+
 def _count_answer_fact_units(answer_text: str) -> int:
     stripped = re.sub(r"\[Kaynak:[^\]]+\]", " ", answer_text or "")
     pieces = re.split(r"(?:\n+|(?<=[.!?])\s+|(?:^|\s)(?:[-*]|\d+[.)])\s+)", stripped)
@@ -5592,6 +5685,17 @@ def _build_completeness_synthesis_features(
         if has_answer
         else []
     )
+    evidence_reentry_slots = [
+        slot
+        for slot in _evidence_supported_completeness_slots(
+            required_slots=required_slots,
+            article_span_selector=article_span_selector,
+            chunks=chunks,
+        )
+        if slot not in set(satisfied_slots)
+    ]
+    if has_answer and evidence_reentry_slots:
+        satisfied_slots = dedupe_strings([*satisfied_slots, *evidence_reentry_slots])
     missing_slots = [slot for slot in required_slots if slot not in set(satisfied_slots)]
     slot_factor = len(satisfied_slots) / len(required_slots) if required_slots else 1.0
     answer_factor = min(1.0, answer_fact_units / minimum_required_facts) if has_answer else 0.0
@@ -5647,6 +5751,8 @@ def _build_completeness_synthesis_features(
         "must_have_fact_slots": required_slots,
         "satisfied_fact_slots": satisfied_slots,
         "missing_fact_slots": missing_slots,
+        "evidence_slot_reentry_applied": bool(evidence_reentry_slots),
+        "evidence_slot_reentry_slots": evidence_reentry_slots,
         "rubric_aligned_completeness_class": rubric_class,
     }
 
@@ -5876,6 +5982,8 @@ def _build_trace_payload(
             "must_have_fact_slots": answer_contract.get("must_have_fact_slots"),
             "satisfied_fact_slots": answer_contract.get("satisfied_fact_slots"),
             "missing_fact_slots": answer_contract.get("missing_fact_slots"),
+            "evidence_slot_reentry_applied": answer_contract.get("evidence_slot_reentry_applied"),
+            "evidence_slot_reentry_slots": answer_contract.get("evidence_slot_reentry_slots"),
             "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
         },
         "model_cited_source_ids": model_cited_source_ids,
@@ -5974,6 +6082,8 @@ def _build_trace_payload(
                 "must_have_fact_slots": answer_contract.get("must_have_fact_slots"),
                 "satisfied_fact_slots": answer_contract.get("satisfied_fact_slots"),
                 "missing_fact_slots": answer_contract.get("missing_fact_slots"),
+                "evidence_slot_reentry_applied": answer_contract.get("evidence_slot_reentry_applied"),
+                "evidence_slot_reentry_slots": answer_contract.get("evidence_slot_reentry_slots"),
                 "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
             },
         },
