@@ -3106,6 +3106,14 @@ def _rerank_chunks_by_source_identity(
     current_validity_query = _asks_current_validity_query(query)
     historical_contrast_query = _asks_current_validity_over_historical_contrast(query)
     metadata_candidates = (metadata_first_selector or {}).get("candidates") or []
+    if metadata_candidates:
+        identity_rerank_input_source = "metadata_lookup_selector"
+    elif strict_identifier_tokens:
+        identity_rerank_input_source = "identifier_tokens"
+    elif requested_family_set:
+        identity_rerank_input_source = "source_family_prior"
+    else:
+        identity_rerank_input_source = "dense_retrieval"
 
     scored: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
     for original_index, chunk in enumerate(chunks):
@@ -3271,6 +3279,7 @@ def _rerank_chunks_by_source_identity(
                     "identity_lock_strength": identity_lock_strength,
                     "selected_document_original_rank": original_index + 1,
                     "document_rerank_reason": " | ".join(reasons),
+                    "identity_rerank_input_source": identity_rerank_input_source,
                     "reasons": reasons,
                 },
             )
@@ -3288,6 +3297,7 @@ def _rerank_chunks_by_source_identity(
     return reordered, {
         "applied": True,
         "reason": "source_identity_reranker",
+        "identity_rerank_input_source": identity_rerank_input_source,
         "first_changed": first_changed,
         "requested_source_families": requested_source_families,
         "query_identifier_tokens": sorted(strict_identifier_tokens),
@@ -5834,6 +5844,7 @@ def _build_trace_payload(
             "identifier_match_type": (source_identity_reranker or {}).get("identifier_match_type"),
             "issuer_match_type": (source_identity_reranker or {}).get("issuer_match_type"),
             "year_match_type": (source_identity_reranker or {}).get("year_match_type"),
+            "identity_rerank_input_source": (source_identity_reranker or {}).get("identity_rerank_input_source"),
             "document_rerank_reason": (source_identity_reranker or {}).get("document_rerank_reason"),
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,

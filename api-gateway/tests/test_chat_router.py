@@ -1552,6 +1552,7 @@ class TestLawSignalParsing:
         assert trace["identifier_match_type"] == "exact_identifier"
         assert trace["document_identity_score"] == trace["top_scores"][0]["document_identity_score"]
         assert trace["identity_lock_strength"] == "strong"
+        assert trace["identity_rerank_input_source"] == "metadata_lookup_selector"
         assert trace["selected_document_rank_after_identity_rerank"] == 1
         assert trace["selected_document_original_rank"] == 2
         assert trace["top_scores"][0]["title_bias_applied"] > 0
