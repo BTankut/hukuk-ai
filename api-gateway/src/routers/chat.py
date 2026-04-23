@@ -2678,6 +2678,48 @@ def _chunk_article_token(chunk: RetrievedChunk) -> str:
     return ""
 
 
+def _resolve_chunk_span_id(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    chunk_id = metadata.get("chunk_id")
+    if chunk_id:
+        return str(chunk_id)
+    citation = _normalize_whitespace(chunk.citation or "")
+    if citation:
+        return citation
+    document_key = _resolve_chunk_document_key(chunk)
+    article = _chunk_article_token(chunk)
+    clause = _chunk_clause_token(chunk)
+    parts = [part for part in (document_key, article, clause) if part]
+    return ":".join(parts)
+
+
+def _resolve_chunk_document_key(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    return (
+        str(
+            metadata.get("belge_no")
+            or metadata.get("kanun_no")
+            or metadata.get("law_no")
+            or metadata.get("decision_number")
+            or metadata.get("kararname_number")
+            or metadata.get("genelge_number")
+            or metadata.get("generalge_number")
+            or metadata.get("teblig_number")
+            or metadata.get("regulation_number")
+            or metadata.get("law_short_name")
+            or metadata.get("kanun_kisa_adi")
+            or chunk.source
+            or metadata.get("source_title")
+            or metadata.get("belge_adi")
+            or metadata.get("kanun_adi")
+            or metadata.get("law_name")
+            or chunk.citation
+        )
+        .strip()
+        .lower()
+    )
+
+
 def _extract_query_clause_tokens(query: str) -> set[str]:
     normalized = _normalize_tr_text(query or "")
     tokens: set[str] = set()
@@ -3017,10 +3059,10 @@ def _select_article_span_evidence(
         for law, article in (explicit_article_refs or [])
         if law and _normalize_article_token(article)
     }
-    source_cluster_sizes: dict[str, int] = {}
+    document_cluster_sizes: dict[str, int] = {}
     for chunk in chunks:
-        source_key = _resolve_chunk_source_key(chunk)
-        source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
+        document_key = _resolve_chunk_document_key(chunk)
+        document_cluster_sizes[document_key] = document_cluster_sizes.get(document_key, 0) + 1
 
     has_selector_signal = bool(
         article_tokens
@@ -3056,6 +3098,7 @@ def _select_article_span_evidence(
         metadata = chunk.metadata or {}
         family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
         source_key = _resolve_chunk_source_key(chunk)
+        document_key = _resolve_chunk_document_key(chunk)
         title = _resolve_chunk_source_title(chunk)
         heading = metadata.get("heading") or metadata.get("article_heading")
         article_token = _chunk_article_token(chunk)
@@ -3080,15 +3123,18 @@ def _select_article_span_evidence(
             selected_source_key_set
             and (
                 source_key in selected_source_key_set
+                or document_key in selected_source_key_set
                 or _normalize_tr_text(source_key) in selected_source_key_set
+                or _normalize_tr_text(document_key) in selected_source_key_set
                 or normalize_canonical_text(source_key) in selected_source_key_set
+                or normalize_canonical_text(document_key) in selected_source_key_set
             )
         )
         law_match = bool(numbered_laws and numbered_laws & chunk_laws)
         title_overlap = _count_term_overlap(title, query_terms)
         heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
         text_overlap = _count_term_overlap(chunk.text, query_terms)
-        cluster_size = source_cluster_sizes.get(source_key, 1)
+        cluster_size = document_cluster_sizes.get(document_key, 1)
         effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
         temporally_inactive = _is_temporally_inactive_chunk(chunk) or effective_state == "repealed"
         chunk_years = _chunk_year_values(chunk)
@@ -3180,6 +3226,8 @@ def _select_article_span_evidence(
                     "source_id": _resolve_trace_source_id(chunk),
                     "citation": chunk.citation,
                     "source_key": source_key,
+                    "document_key": document_key,
+                    "span_id": _resolve_chunk_span_id(chunk),
                     "source_title": title,
                     "score": round(score, 4),
                     "source_family": family or None,
@@ -3343,14 +3391,14 @@ def _select_article_span_evidence(
         seen_internal_keys: set[str] = set()
         for item in candidate_pool:
             trace = item[3]
-            source_key = str(trace.get("source_key") or "")
-            if not source_key or source_key in seen_internal_keys:
+            document_key = str(trace.get("document_key") or trace.get("source_key") or "")
+            if not document_key or document_key in seen_internal_keys:
                 continue
-            seen_internal_keys.add(source_key)
+            seen_internal_keys.add(document_key)
             source_items = [
                 source_item
                 for source_item in candidate_pool
-                if str(source_item[3].get("source_key") or "") == source_key
+                if str(source_item[3].get("document_key") or source_item[3].get("source_key") or "") == document_key
             ]
             state_rank = min(
                 int(source_item[3].get("legacy_state_rank"))
@@ -3372,7 +3420,7 @@ def _select_article_span_evidence(
             ) else 1
             internal_records.append(
                 {
-                    "source_key": source_key,
+                    "source_key": document_key,
                     "state_rank": state_rank,
                     "identifier_rank": identifier_rank,
                     "year_rank": year_rank,
@@ -3395,55 +3443,159 @@ def _select_article_span_evidence(
             if item.get("source_key")
         ]
         if internal_records:
-            chosen_source_key = str(internal_records[0].get("source_key") or "")
+            chosen_document_key = str(internal_records[0].get("source_key") or "")
             internal_document_state_rank = int(internal_records[0].get("state_rank") or 0)
-            current_source_key = _resolve_chunk_source_key(document_lock_candidates[0][2])
-            if chosen_source_key and chosen_source_key != current_source_key:
+            current_document_key = _resolve_chunk_document_key(document_lock_candidates[0][2])
+            if chosen_document_key and chosen_document_key != current_document_key:
                 document_lock_candidates = [
                     item
                     for item in candidate_pool
-                    if _resolve_chunk_source_key(item[2]) == chosen_source_key
+                    if _resolve_chunk_document_key(item[2]) == chosen_document_key
                 ]
                 document_lock_reason = "internal_document_arbitration"
                 internal_document_choice_reason = "state_rank_then_identity_priority"
             else:
                 internal_document_choice_reason = "locked_document_retained_after_internal_arbitration"
     primary_source_key = _resolve_chunk_source_key(document_lock_candidates[0][2]) if document_lock_candidates else ""
+    primary_document_key = _resolve_chunk_document_key(document_lock_candidates[0][2]) if document_lock_candidates else ""
+
+    def _same_locked_document(item: tuple[float, int, RetrievedChunk, dict[str, Any]]) -> bool:
+        return bool(primary_document_key and _resolve_chunk_document_key(item[2]) == primary_document_key)
+
+    def _selector_trace_match_type(trace: dict[str, Any]) -> str:
+        article = str(trace.get("article_or_section") or "")
+        if trace.get("explicit_ref_match"):
+            return "exact_article"
+        if trace.get("article_match"):
+            return "exact_article"
+        if trace.get("clause_match"):
+            return "exact_clause"
+        if trace.get("heading_overlap", 0) >= 1 or trace.get("text_overlap", 0) >= 2:
+            return "same_heading_or_section"
+        if trace.get("adjacent_article_match"):
+            return "neighbor_article"
+        if trace.get("contains_temporal_clause"):
+            return "temporal_clause"
+        if trace.get("contains_exception_signal"):
+            return "exception_clause"
+        if article == "0" or trace.get("article_match_type") == "title_only":
+            return "title_only"
+        if trace.get("selected_source_match") or trace.get("identifier_match") or trace.get("family_match"):
+            return "document_support"
+        return "none"
+
+    def _dedupe_window_items(
+        groups: list[list[tuple[float, int, RetrievedChunk, dict[str, Any]]]],
+    ) -> list[tuple[float, int, RetrievedChunk, dict[str, Any]]]:
+        selected: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
+        seen_ids: set[int] = set()
+        for group in groups:
+            for item in group:
+                chunk_id = id(item[2])
+                if chunk_id in seen_ids:
+                    continue
+                selected.append(item)
+                seen_ids.add(chunk_id)
+        return selected
+
     window_items: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
-    if primary_source_key:
+    article_precision_guard_triggered = False
+    span_cluster_noise_suppressed_count = 0
+    if primary_document_key:
         exact_items = [
             item
             for item in ranked
-            if _resolve_chunk_source_key(item[2]) == primary_source_key
-            and (item[3].get("explicit_ref_match") or item[3].get("article_match"))
+            if _same_locked_document(item)
+            and (item[3].get("explicit_ref_match") or item[3].get("article_match") or item[3].get("clause_match"))
         ]
+        exact_ids = {id(item[2]) for item in exact_items}
+        heading_items = [
+            item
+            for item in ranked
+            if _same_locked_document(item)
+            and id(item[2]) not in exact_ids
+            and str(item[3].get("article_or_section") or "") != "0"
+            and (item[3].get("heading_overlap", 0) >= 1 or item[3].get("text_overlap", 0) >= 2)
+        ]
+        heading_ids = {id(item[2]) for item in heading_items}
         adjacent_items = [
             item
             for item in ranked
-            if _resolve_chunk_source_key(item[2]) == primary_source_key
-            and item not in exact_items
+            if _same_locked_document(item)
+            and id(item[2]) not in exact_ids
+            and id(item[2]) not in heading_ids
             and item[3].get("adjacent_article_match")
         ]
-        support_items = [
+        adjacent_ids = {id(item[2]) for item in adjacent_items}
+        temporal_exception_items = [
             item
             for item in ranked
-            if _resolve_chunk_source_key(item[2]) == primary_source_key
-            and item not in exact_items
-            and item not in adjacent_items
+            if _same_locked_document(item)
+            and id(item[2]) not in exact_ids
+            and id(item[2]) not in heading_ids
+            and id(item[2]) not in adjacent_ids
+            and (item[3].get("contains_temporal_clause") or item[3].get("contains_exception_signal"))
+        ]
+        temporal_exception_ids = {id(item[2]) for item in temporal_exception_items}
+        fallback_items = [
+            item
+            for item in ranked
+            if _same_locked_document(item)
+            and id(item[2]) not in exact_ids
+            and id(item[2]) not in heading_ids
+            and id(item[2]) not in adjacent_ids
+            and id(item[2]) not in temporal_exception_ids
             and (
-                item[3].get("heading_overlap", 0) >= 1
-                or item[3].get("text_overlap", 0) >= 2
-                or item[3].get("title_overlap", 0) >= 2
+                item[3].get("title_overlap", 0) >= 2
                 or (not article_tokens and item[3].get("family_match"))
+                or item[3].get("selected_source_match")
+                or item[3].get("identifier_match")
             )
         ]
-        if exact_items or adjacent_items or support_items:
-            window_items = [*exact_items[:2], *adjacent_items[:2], *support_items[:3]]
+        if exact_items or heading_items or adjacent_items or temporal_exception_items or fallback_items:
+            window_items = _dedupe_window_items(
+                [
+                    exact_items[:3],
+                    heading_items[:2],
+                    adjacent_items[:2],
+                    temporal_exception_items[:2],
+                    fallback_items[:2],
+                ]
+            )
+        if ranked and window_items:
+            ranked_top_trace = ranked[0][3]
+            window_top_trace = window_items[0][3]
+            article_precision_guard_triggered = bool(
+                ranked[0][2] is not window_items[0][2]
+                and (
+                    str(ranked_top_trace.get("article_or_section") or "") == "0"
+                    or ranked_top_trace.get("article_match_type") == "title_only"
+                    or not _same_locked_document(ranked[0])
+                    or (
+                        window_top_trace.get("explicit_ref_match")
+                        or window_top_trace.get("article_match")
+                        or window_top_trace.get("clause_match")
+                    )
+                )
+            )
+        selected_doc_window_size = max(len(window_items), 3)
+        span_cluster_noise_suppressed_count = sum(
+            1 for item in ranked[:selected_doc_window_size] if primary_document_key and not _same_locked_document(item)
+        )
     seen_window_ids = {id(item[2]) for item in window_items}
-    if window_items:
-        reordered = [item[2] for item in window_items] + [
-            chunk for _score, _index, chunk, _trace in ranked if id(chunk) not in seen_window_ids
+    if window_items or primary_document_key:
+        selected_document_items = [
+            item
+            for item in ranked
+            if primary_document_key and _same_locked_document(item) and id(item[2]) not in seen_window_ids
         ]
+        non_document_items = [
+            item
+            for item in ranked
+            if not primary_document_key or not _same_locked_document(item)
+        ]
+        reordered_items = [*window_items, *selected_document_items, *non_document_items]
+        reordered = [chunk for _score, _index, chunk, _trace in reordered_items]
         trace_by_chunk_id = {id(chunk): trace for _score, _index, chunk, trace in ranked}
         top_traces = [trace_by_chunk_id[id(chunk)] for chunk in reordered[:10] if id(chunk) in trace_by_chunk_id]
     else:
@@ -3485,6 +3637,23 @@ def _select_article_span_evidence(
     selected_article = top_trace.get("article_or_section") if top_trace else None
     selected_paragraph_or_clause = top_trace.get("paragraph_or_clause") if top_trace else None
     article_match_type = top_trace.get("article_match_type") if top_trace else "none"
+    supporting_span_traces = [
+        trace
+        for trace in top_traces[1:8]
+        if not primary_document_key or str(trace.get("document_key") or "") == primary_document_key
+    ][:5]
+    selected_main_span_id = str(top_trace.get("span_id") or "") if top_trace else ""
+    selected_main_article = str(selected_article or "")
+    selected_supporting_span_ids = [
+        str(trace.get("span_id") or "")
+        for trace in supporting_span_traces
+        if trace.get("span_id")
+    ]
+    main_span_match_type = _selector_trace_match_type(top_trace) if top_trace else "none"
+    supporting_span_match_types = [
+        _selector_trace_match_type(trace)
+        for trace in supporting_span_traces
+    ]
     support_span_count = len(window_items) if window_items else min(len(reordered), 1 if reordered else 0)
     metadata_identity_strength = _selector_metadata_identity_strength(
         top_trace=top_trace,
@@ -3534,6 +3703,17 @@ def _select_article_span_evidence(
         "selected_document_id": (
             _resolve_chunk_source_display_label(document_lock_candidates[0][2]) if document_lock_candidates else None
         ),
+        "selected_document_source_key": primary_source_key or None,
+        "selected_document_key": primary_document_key or None,
+        "selected_main_span_id": selected_main_span_id,
+        "selected_main_article": selected_main_article,
+        "selected_supporting_span_ids": selected_supporting_span_ids,
+        "main_span_match_type": main_span_match_type,
+        "supporting_span_match_types": supporting_span_match_types,
+        "selected_document_only_bundle": False,
+        "span_cluster_noise_suppressed": span_cluster_noise_suppressed_count > 0,
+        "span_cluster_noise_suppressed_count": span_cluster_noise_suppressed_count,
+        "article_precision_guard_triggered": article_precision_guard_triggered,
         "selected_article": selected_article,
         "selected_paragraph_or_clause": selected_paragraph_or_clause,
         "support_span_count": support_span_count,
@@ -6502,6 +6682,8 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "source_family_mapped": family_profile.get("mapped_family") or source_family,
         "source_family_mapping_reason": family_profile.get("mapping_reason"),
         "source_identifier": source_identifier,
+        "document_key": _resolve_chunk_document_key(chunk),
+        "span_id": _resolve_chunk_span_id(chunk),
         "article_or_section": article_or_section or None,
         "full_title": metadata.get("full_title") or source_title,
         "issuer": metadata.get("issuer"),

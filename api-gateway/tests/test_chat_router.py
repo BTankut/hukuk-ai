@@ -2844,6 +2844,133 @@ class TestLawSignalParsing:
         assert selector["query_article_alignment"] == "exact"
         assert selector["selected_article"] == "12"
 
+    def test_article_span_selector_demotes_title_only_inside_locked_document_without_article_query(self):
+        chunks = [
+            RetrievedChunk(
+                text="9903 sayılı yatırım teşvik kararının başlık ve genel tanıtım metni.",
+                citation="9903 m.0/f.0",
+                source="9903",
+                score=0.99,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "madde_no": "0",
+                },
+            ),
+            RetrievedChunk(
+                text="Faiz desteği ve yatırım teşvik şartları bu maddede düzenlenir.",
+                citation="9903 m.8/f.0",
+                source="9903",
+                score=0.70,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "madde_no": "8",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="9903 sayılı yatırım teşvik kararında faiz desteği şartı nedir?",
+            chunks=chunks,
+            requested_source_families=["cb_karar"],
+            explicit_article_refs=[],
+            selected_source_keys={"9903"},
+        )
+
+        assert selected[0].citation == "9903 m.8/f.0"
+        assert selector["selected_main_span_id"] == "9903 m.8/f.0"
+        assert selector["selected_main_article"] == "8"
+        assert selector["main_span_match_type"] == "same_heading_or_section"
+        assert selector["article_precision_guard_triggered"] is True
+
+    def test_article_span_selector_suppresses_cross_document_noise_after_exact_lock(self):
+        chunks = [
+            RetrievedChunk(
+                text="Başka kararın aynı maddesi yatırım programına ilişkindir.",
+                citation="1593 m.8/f.0",
+                source="1593",
+                score=0.99,
+                metadata={
+                    "source_title": "PROJE BAZLI DEVLET YARDIMI KARARI (KARAR SAYISI: 1593)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "1593",
+                    "madde_no": "8",
+                },
+            ),
+            RetrievedChunk(
+                text="9903 sayılı kararda faiz desteği şartları madde 8 altında düzenlenir.",
+                citation="9903 m.8/f.0",
+                source="9903",
+                score=0.74,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "madde_no": "8",
+                },
+            ),
+            RetrievedChunk(
+                text="9903 sayılı kararın yürürlük hükmü ve istisnaları saklıdır.",
+                citation="9903 m.30/f.0",
+                source="9903",
+                score=0.60,
+                metadata={
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR (KARAR SAYISI: 9903)",
+                    "belge_turu": "cb_karar",
+                    "decision_number": "9903",
+                    "madde_no": "30",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="9903 sayılı kararın 8. maddesine göre faiz desteği şartı nedir?",
+            chunks=chunks,
+            requested_source_families=["cb_karar"],
+            explicit_article_refs=[],
+            selected_source_keys={"9903"},
+        )
+
+        assert selected[0].citation == "9903 m.8/f.0"
+        assert selected[1].citation == "9903 m.30/f.0"
+        assert selector["selected_document_key"] == "9903"
+        assert selector["selected_supporting_span_ids"] == ["9903 m.30/f.0"]
+        assert selector["supporting_span_match_types"] == ["same_heading_or_section"]
+        assert selector["span_cluster_noise_suppressed"] is True
+
+    def test_article_span_selector_matches_selected_source_by_document_key_not_article_display(self):
+        chunks = [
+            RetrievedChunk(
+                text="Tez danışmanı öğrencinin programına göre atanır.",
+                citation="40969 m.12/f.0",
+                source="40969",
+                score=0.72,
+                metadata={
+                    "source_title": "KIRKLARELİ ÜNİVERSİTESİ LİSANSÜSTÜ EĞİTİM VE ÖĞRETİM YÖNETMELİĞİ",
+                    "belge_turu": "uy",
+                    "law_no": "40969",
+                    "canonical_identifier_display": "40969 m.12",
+                    "madde_no": "12",
+                },
+            )
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query="40969 sayılı yönetmeliğe göre tez danışmanı nasıl atanır?",
+            chunks=chunks,
+            requested_source_families=["uy"],
+            explicit_article_refs=[],
+            selected_source_keys={"40969"},
+        )
+
+        assert selected[0].citation == "40969 m.12/f.0"
+        assert selector["selected_document_key"] == "40969"
+        assert selector["top_scores"][0]["selected_source_match"] is True
+        assert selector["metadata_identity_strength"] == "strong"
+
     def test_article_span_selector_uses_document_lock_before_cross_document_article_hit(self):
         chunks = [
             RetrievedChunk(
