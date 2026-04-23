@@ -915,12 +915,76 @@ def _record_identifier_values(record: dict[str, Any]) -> set[str]:
     return values
 
 
+def _metadata_lookup_signal_values(
+    query_metadata_signals: dict[str, Any] | None,
+    field: str,
+    *,
+    value_key: str = "value",
+) -> set[str]:
+    values: set[str] = set()
+    if not isinstance(query_metadata_signals, dict):
+        return values
+    raw_items = query_metadata_signals.get(field)
+    if not isinstance(raw_items, list):
+        return values
+    for item in raw_items:
+        if isinstance(item, dict):
+            value = item.get(value_key)
+            values.add(normalize_canonical_text(value))
+            if item.get("base_value"):
+                values.add(normalize_canonical_text(item.get("base_value")))
+        elif isinstance(item, str):
+            values.add(normalize_canonical_text(item))
+    return {value for value in values if value}
+
+
+def _metadata_lookup_title_signal_score(
+    *,
+    title_normalized: str,
+    title_tokens: set[str],
+    query_metadata_signals: dict[str, Any] | None,
+) -> tuple[float, list[str], str | None]:
+    raw_items = (query_metadata_signals or {}).get("parsed_title_ngrams") if query_metadata_signals else None
+    if not isinstance(raw_items, list):
+        return 0.0, [], None
+
+    best_score = 0.0
+    best_reason: str | None = None
+    reasons: list[str] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        phrase = normalize_canonical_text(item.get("value"))
+        phrase_tokens = set(phrase.split())
+        if len(phrase_tokens) < 2:
+            continue
+        overlap = len(phrase_tokens & title_tokens)
+        ratio = overlap / max(1, len(phrase_tokens))
+        if phrase and phrase in title_normalized:
+            score = 22.0 + min(len(phrase_tokens), 6) * 2.0
+            reason = f"title_ngram_exact:{len(phrase_tokens)}"
+        elif overlap >= 3 and ratio >= 0.60:
+            score = 15.0 + min(overlap, 6) * 1.5
+            reason = f"title_ngram_strong:{overlap}"
+        elif overlap >= 2 and ratio >= 0.67:
+            score = 8.0
+            reason = f"title_ngram_medium:{overlap}"
+        else:
+            continue
+        reasons.append(reason)
+        if score > best_score:
+            best_score = score
+            best_reason = reason
+    return best_score, reasons, best_reason
+
+
 def _source_identity_record_score(
     record: dict[str, Any],
     *,
     query: str,
     requested_source_families: list[str],
     source_family_resolution: SourceFamilyResolution | None,
+    query_metadata_signals: dict[str, Any] | None = None,
 ) -> tuple[float, list[str]]:
     normalized_query = normalize_canonical_text(query)
     query_terms = {
@@ -936,11 +1000,32 @@ def _source_identity_record_score(
         alias_tokens.update(normalize_canonical_text(alias).split())
     issuer_tokens = set(str(record.get("issuer_normalized") or "").split())
     identifier_tokens = _extract_source_identity_identifier_tokens(query)
+    identifier_tokens |= _metadata_lookup_signal_values(query_metadata_signals, "parsed_identifier_candidates")
     identifier_values = _record_identifier_values(record)
     year_tokens = set(_extract_year_tokens(query))
+    year_tokens |= {
+        value
+        for value in _metadata_lookup_signal_values(query_metadata_signals, "parsed_temporal_cues")
+        if re.fullmatch(r"(?:18|19|20)\d{2}", value)
+    }
     year_values = set(record.get("year_signals") or [])
     family = str(record.get("source_family_canonical") or "")
     requested_family_set = set(_expand_source_family_aliases(requested_source_families))
+    raw_parsed_families = (
+        query_metadata_signals.get("parsed_family_candidates")
+        if isinstance(query_metadata_signals, dict)
+        else []
+    )
+    parsed_family_set = set(
+        _expand_source_family_aliases(
+            [
+                str(family)
+                for family in (raw_parsed_families if isinstance(raw_parsed_families, list) else [])
+                if isinstance(family, str) and family.strip()
+            ]
+        )
+    )
+    parsed_issuer_values = _metadata_lookup_signal_values(query_metadata_signals, "parsed_issuer_candidates")
     score = 0.0
     reasons: list[str] = []
 
@@ -958,6 +1043,14 @@ def _source_identity_record_score(
             score += 8.0
             reasons.append("prior_family_match")
 
+    if parsed_family_set:
+        if family in parsed_family_set:
+            score += 7.0
+            reasons.append("parsed_family_match")
+        elif not requested_family_set:
+            score -= 5.0
+            reasons.append("parsed_family_mismatch_penalty")
+
     exact_identifier_hits = sorted(identifier_tokens & identifier_values)
     if exact_identifier_hits:
         score += 32.0 + min(len(exact_identifier_hits), 3) * 3.0
@@ -966,6 +1059,14 @@ def _source_identity_record_score(
     title_overlap = len(query_terms & title_tokens)
     alias_overlap = len(query_terms & alias_tokens)
     issuer_overlap = len(query_terms & issuer_tokens)
+    title_ngram_score, title_ngram_reasons, _best_title_ngram_reason = _metadata_lookup_title_signal_score(
+        title_normalized=title_normalized,
+        title_tokens=title_tokens | alias_tokens,
+        query_metadata_signals=query_metadata_signals,
+    )
+    if title_ngram_score:
+        score += title_ngram_score
+        reasons.extend(title_ngram_reasons)
     if title_overlap:
         score += title_overlap * 4.0
         reasons.append(f"title_overlap:{title_overlap}")
@@ -978,6 +1079,16 @@ def _source_identity_record_score(
     if issuer_overlap:
         score += issuer_overlap * 3.0
         reasons.append(f"issuer_overlap:{issuer_overlap}")
+    if parsed_issuer_values:
+        issuer_text = str(record.get("issuer_normalized") or "")
+        issuer_value_overlap = {
+            value
+            for value in parsed_issuer_values
+            if value and (value in issuer_text or value in title_normalized)
+        }
+        if issuer_value_overlap:
+            score += 12.0 + min(len(issuer_value_overlap), 2) * 2.0
+            reasons.append("issuer_exact")
 
     if year_tokens:
         if year_tokens & year_values:
@@ -1014,10 +1125,13 @@ def _select_metadata_first_source_candidates(
     query: str,
     requested_source_families: list[str],
     source_family_resolution: SourceFamilyResolution | None,
+    query_metadata_signals: dict[str, Any] | None = None,
     limit: int = 6,
 ) -> dict[str, Any] | None:
     if not _metadata_first_candidate_generation_enabled():
         return None
+    if query_metadata_signals is None:
+        query_metadata_signals = _parse_metadata_lookup_query_signals(query)
     catalog = load_canonical_source_catalog()
     if not catalog:
         return None
@@ -1029,6 +1143,7 @@ def _select_metadata_first_source_candidates(
             query=query,
             requested_source_families=requested_source_families,
             source_family_resolution=source_family_resolution,
+            query_metadata_signals=query_metadata_signals,
         )
         title_overlap = 0
         for reason in reasons:
@@ -1039,10 +1154,26 @@ def _select_metadata_first_source_candidates(
                     pass
         has_identifier_anchor = "identifier_exact" in reasons
         has_strong_title_anchor = title_overlap >= 3
-        if not has_identifier_anchor and not has_strong_title_anchor:
+        has_title_ngram_anchor = any(
+            reason.startswith("title_ngram_exact:") or reason.startswith("title_ngram_strong:")
+            for reason in reasons
+        )
+        has_issuer_family_anchor = "issuer_exact" in reasons and (
+            "parsed_family_match" in reasons or "family_match" in reasons or "prior_family_match" in reasons
+        )
+        if not has_identifier_anchor and not has_strong_title_anchor and not has_title_ngram_anchor and not has_issuer_family_anchor:
             continue
-        if score < (24.0 if has_identifier_anchor else 34.0):
+        threshold = 24.0 if has_identifier_anchor else 30.0 if has_issuer_family_anchor else 32.0
+        if score < threshold:
             continue
+        if has_identifier_anchor:
+            lookup_source = "exact_identifier_lookup"
+        elif has_title_ngram_anchor:
+            lookup_source = "normalized_title_lookup"
+        elif has_issuer_family_anchor:
+            lookup_source = "issuer_family_lookup"
+        else:
+            lookup_source = "title_ngram_family_lookup"
         scored.append(
             {
                 "source_key": record.get("source_key"),
@@ -1054,6 +1185,8 @@ def _select_metadata_first_source_candidates(
                 "year_signals": record.get("year_signals") or [],
                 "effective_state": record.get("effective_state"),
                 "score": round(score, 3),
+                "metadata_lookup_source": lookup_source,
+                "metadata_lookup_confidence": round(min(0.99, 0.45 + score / 100.0), 3),
                 "match_reasons": reasons,
                 "focus_keys": [
                     key
@@ -1076,14 +1209,21 @@ def _select_metadata_first_source_candidates(
             str(item.get("canonical_title") or ""),
         ),
     )[:limit]
+    for rank, item in enumerate(ranked, start=1):
+        item["metadata_lookup_rank"] = rank
     return {
         "applied": True,
         "reason": "metadata_first_source_identity",
+        "metadata_lookup_hit": True,
+        "metadata_lookup_source": ranked[0].get("metadata_lookup_source"),
+        "metadata_lookup_rank": ranked[0].get("metadata_lookup_rank"),
+        "metadata_lookup_confidence": ranked[0].get("metadata_lookup_confidence"),
         "candidate_count": len(scored),
         "selected_source_keys": dedupe_strings([str(item.get("source_key") or "") for item in ranked if item.get("source_key")]),
         "selected_families": dedupe_strings([str(item.get("source_family") or "") for item in ranked if item.get("source_family")]),
         "query_identifier_tokens": sorted(_extract_source_identity_identifier_tokens(query)),
         "query_year_tokens": _extract_year_tokens(query),
+        "query_metadata_signals": query_metadata_signals,
         "candidates": ranked,
     }
 
@@ -5518,6 +5658,7 @@ def _build_trace_payload(
     final_mode: str,
     final_reason: str | None,
     retrieval_plan: dict[str, Any] | None = None,
+    metadata_lookup_query_signals: dict[str, Any] | None = None,
     metadata_first_selector: dict[str, Any] | None = None,
     source_identity_reranker: dict[str, Any] | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
@@ -5564,6 +5705,11 @@ def _build_trace_payload(
             "source_family_resolution": source_family_resolution,
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
+            "metadata_lookup_query_signals": metadata_lookup_query_signals,
+            "metadata_lookup_hit": bool((metadata_first_selector or {}).get("metadata_lookup_hit")),
+            "metadata_lookup_source": (metadata_first_selector or {}).get("metadata_lookup_source"),
+            "metadata_lookup_rank": (metadata_first_selector or {}).get("metadata_lookup_rank"),
+            "metadata_lookup_confidence": (metadata_first_selector or {}).get("metadata_lookup_confidence"),
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
             "document_identity_score": (source_identity_reranker or {}).get("document_identity_score"),
@@ -5624,6 +5770,11 @@ def _build_trace_payload(
             "source_family_resolution": source_family_resolution,
             "retrieval_verification_features": retrieval_verification_features,
             "retrieval_plan": retrieval_plan,
+            "metadata_lookup_query_signals": metadata_lookup_query_signals,
+            "metadata_lookup_hit": bool((metadata_first_selector or {}).get("metadata_lookup_hit")),
+            "metadata_lookup_source": (metadata_first_selector or {}).get("metadata_lookup_source"),
+            "metadata_lookup_rank": (metadata_first_selector or {}).get("metadata_lookup_rank"),
+            "metadata_lookup_confidence": (metadata_first_selector or {}).get("metadata_lookup_confidence"),
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
             "source_cluster_selector": source_cluster_selector,
@@ -5643,6 +5794,11 @@ def _build_trace_payload(
             "top_k_effective": top_k_effective,
             "reranker_enabled": reranker_enabled,
             "source_family_resolution": source_family_resolution,
+            "metadata_lookup_query_signals": metadata_lookup_query_signals,
+            "metadata_lookup_hit": bool((metadata_first_selector or {}).get("metadata_lookup_hit")),
+            "metadata_lookup_source": (metadata_first_selector or {}).get("metadata_lookup_source"),
+            "metadata_lookup_rank": (metadata_first_selector or {}).get("metadata_lookup_rank"),
+            "metadata_lookup_confidence": (metadata_first_selector or {}).get("metadata_lookup_confidence"),
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
             "reranker_family_bonus": (retrieval_verification_features or {}).get("reranker_family_bonus"),
@@ -7997,10 +8153,12 @@ async def chat_completions(
             annual_investment_program_expansion,
         )
         retrieval_top_k = max(retrieval_top_k, 20)
+    metadata_lookup_query_signals = _parse_metadata_lookup_query_signals(last_user_msg)
     metadata_first_selector = _select_metadata_first_source_candidates(
         query=last_user_msg,
         requested_source_families=requested_source_families,
         source_family_resolution=source_family_resolution,
+        query_metadata_signals=metadata_lookup_query_signals,
     )
     if metadata_first_selector:
         requested_source_families = dedupe_strings(
@@ -8744,6 +8902,7 @@ async def chat_completions(
         final_mode=hardening.final_mode,
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
+        metadata_lookup_query_signals=metadata_lookup_query_signals,
         metadata_first_selector=metadata_first_selector,
         source_identity_reranker=source_identity_reranker,
         source_cluster_selector=source_cluster_selector,

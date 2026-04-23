@@ -1242,6 +1242,10 @@ class TestLawSignalParsing:
         assert selector["selected_source_keys"] == ["9903"]
         assert selector["selected_families"] == ["cb_karar"]
         assert selector["candidates"][0]["canonical_identifier"] == "9903"
+        assert selector["metadata_lookup_hit"] is True
+        assert selector["metadata_lookup_source"] == "exact_identifier_lookup"
+        assert selector["metadata_lookup_rank"] == 1
+        assert selector["metadata_lookup_confidence"] >= 0.80
         assert "identifier_exact" in selector["candidates"][0]["match_reasons"]
         assert "YATIRIMLARDA DEVLET YARDIMLARI" in _build_metadata_first_query_expansion(selector)
         load_canonical_source_catalog.cache_clear()
@@ -1268,6 +1272,41 @@ class TestLawSignalParsing:
         assert "teblig" in signals["parsed_family_candidates"]
         assert any(item["value"] == "ticaret bakanligi" for item in signals["parsed_issuer_candidates"])
         assert any("ithalat rejimi tebligi" in item["value"] for item in signals["parsed_title_ngrams"])
+
+    def test_metadata_first_uses_parser_issuer_family_anchor_for_catalog_lookup(self, tmp_path, monkeypatch):
+        article_rows = tmp_path / "article_rows.jsonl"
+        article_rows.write_text(
+            json.dumps(
+                {
+                    "source_id": "AU-DISIPLIN:AU-DISIPLIN:m1:f0:from2024-01-01:to9999-12-31",
+                    "belge_turu": "uy",
+                    "belge_no": "AU-DISIPLIN",
+                    "belge_kisa_adi": "AU-DISIPLIN",
+                    "belge_adi": "ANKARA ÜNİVERSİTESİ DİSİPLİN YÖNETMELİĞİ",
+                    "issuer": "Ankara Üniversitesi",
+                },
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("MEVZUAT_ARTICLE_ROWS_PATH", str(article_rows))
+        load_canonical_source_catalog.cache_clear()
+
+        selector = _select_metadata_first_source_candidates(
+            query="Ankara Üniversitesi öğrencileri için yaptırım kuralları hangi yönetmelikte?",
+            requested_source_families=[],
+            source_family_resolution=_resolve_source_family_prior(
+                "Ankara Üniversitesi öğrencileri için yaptırım kuralları hangi yönetmelikte?"
+            ),
+        )
+
+        assert selector is not None
+        assert selector["selected_source_keys"] == ["AU-DISIPLIN"]
+        assert selector["metadata_lookup_source"] == "issuer_family_lookup"
+        assert "issuer_exact" in selector["candidates"][0]["match_reasons"]
+        assert "parsed_family_match" in selector["candidates"][0]["match_reasons"]
+        load_canonical_source_catalog.cache_clear()
 
     def test_metadata_first_identifier_tokens_ignore_article_only_numbers(self, tmp_path, monkeypatch):
         article_rows = tmp_path / "article_rows.jsonl"
