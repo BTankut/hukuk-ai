@@ -1,0 +1,19 @@
+{
+  "canonical_metrics": {
+    "avg_required_fact_coverage_score": 0.943,
+    "minimum_answer_facts_present_count": 80,
+    "missing_required_content_signal": 98,
+    "partial_grounding_only": 98,
+    "right_document_wrong_article_or_span": 54,
+    "rubric_completeness_class_counts": {
+      "insufficient_both": 20,
+      "rubric_sufficient": 2,
+      "structurally_full_but_legally_misaligned": 78
+    },
+    "selected_article_equals_claimed_article_count": 65,
+    "selected_article_equals_claimed_article_rate": 0.65,
+    "total": 100
+  },
+  "mismatches": [],
+  "valid": true
+}

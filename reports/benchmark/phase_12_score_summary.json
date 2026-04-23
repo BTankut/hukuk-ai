@@ -1,0 +1,432 @@
+{
+  "answer_contract_invalid_count": 0,
+  "answer_suppressed_due_to_evidence_gap_count": 17,
+  "article_alignment_counts": {
+    "exact": 54,
+    "neighbor": 5,
+    "none": 25,
+    "title_only": 15,
+    "unknown": 1
+  },
+  "article_lock_failed_count": 0,
+  "article_match_type_counts": {
+    "source_local_support": 99,
+    "unknown": 1
+  },
+  "average_score_0_10_proxy": 6.79,
+  "avg_answer_contract_score": 0.998,
+  "avg_article_match_score": 0.81,
+  "avg_claimed_source_parse_success_score": 0.99,
+  "avg_confidence_policy_consistency_score": 1.0,
+  "avg_document_identity_score": 112.246,
+  "avg_document_match_score": 0.708,
+  "avg_family_match_score": 0.65,
+  "avg_groundedness_confidence_consistency_score": 1.0,
+  "avg_grounding_score": 0.408,
+  "avg_issuer_bias_applied": 0.303,
+  "avg_required_fact_coverage_score": 0.943,
+  "avg_selected_family_confidence": 0.682,
+  "avg_selector_support_span_count": 2.6,
+  "avg_temporal_validity_score": 0.88,
+  "avg_title_bias_applied": 27.768,
+  "avg_uncertainty_honesty_score": 1.0,
+  "by_primary_type": {
+    "CB_GENELGE": {
+      "avg_score_0_10_proxy": 2.61,
+      "count": 4,
+      "fail": 4,
+      "pass": 0
+    },
+    "CB_KARAR": {
+      "avg_score_0_10_proxy": 7.65,
+      "count": 8,
+      "fail": 3,
+      "pass": 5
+    },
+    "CB_KARARNAME": {
+      "avg_score_0_10_proxy": 9.22,
+      "count": 6,
+      "fail": 0,
+      "pass": 6
+    },
+    "CB_YONETMELIK": {
+      "avg_score_0_10_proxy": 6.34,
+      "count": 6,
+      "fail": 3,
+      "pass": 3
+    },
+    "KANUN": {
+      "avg_score_0_10_proxy": 6.82,
+      "count": 21,
+      "fail": 9,
+      "pass": 12
+    },
+    "KHK": {
+      "avg_score_0_10_proxy": 8.59,
+      "count": 6,
+      "fail": 1,
+      "pass": 5
+    },
+    "KKY": {
+      "avg_score_0_10_proxy": 6.6,
+      "count": 11,
+      "fail": 5,
+      "pass": 6
+    },
+    "MULGA": {
+      "avg_score_0_10_proxy": 3.26,
+      "count": 5,
+      "fail": 5,
+      "pass": 0
+    },
+    "TEBLIGLER": {
+      "avg_score_0_10_proxy": 8.09,
+      "count": 8,
+      "fail": 1,
+      "pass": 7
+    },
+    "TUZUK": {
+      "avg_score_0_10_proxy": 7.02,
+      "count": 5,
+      "fail": 2,
+      "pass": 3
+    },
+    "UY": {
+      "avg_score_0_10_proxy": 7.93,
+      "count": 10,
+      "fail": 2,
+      "pass": 8
+    },
+    "YONETMELIK": {
+      "avg_score_0_10_proxy": 5.1,
+      "count": 10,
+      "fail": 9,
+      "pass": 1
+    }
+  },
+  "by_source_family_canonical": {
+    "CB_GENELGE": {
+      "avg_score_0_10_proxy": 2.61,
+      "count": 4,
+      "fail": 4,
+      "pass": 0
+    },
+    "CB_KARAR": {
+      "avg_score_0_10_proxy": 7.21,
+      "count": 7,
+      "fail": 3,
+      "pass": 4
+    },
+    "CB_KARARNAME": {
+      "avg_score_0_10_proxy": 8.43,
+      "count": 8,
+      "fail": 1,
+      "pass": 7
+    },
+    "CB_YONETMELIK": {
+      "avg_score_0_10_proxy": 6.0,
+      "count": 3,
+      "fail": 1,
+      "pass": 2
+    },
+    "KANUN": {
+      "avg_score_0_10_proxy": 7.95,
+      "count": 16,
+      "fail": 4,
+      "pass": 12
+    },
+    "KHK": {
+      "avg_score_0_10_proxy": 7.76,
+      "count": 6,
+      "fail": 1,
+      "pass": 5
+    },
+    "KKY": {
+      "avg_score_0_10_proxy": 6.32,
+      "count": 19,
+      "fail": 13,
+      "pass": 6
+    },
+    "MULGA": {
+      "avg_score_0_10_proxy": 3.75,
+      "count": 2,
+      "fail": 2,
+      "pass": 0
+    },
+    "TEBLIGLER": {
+      "avg_score_0_10_proxy": 6.43,
+      "count": 15,
+      "fail": 7,
+      "pass": 8
+    },
+    "TUZUK": {
+      "avg_score_0_10_proxy": 6.09,
+      "count": 5,
+      "fail": 2,
+      "pass": 3
+    },
+    "UNKNOWN": {
+      "avg_score_0_10_proxy": 3.1,
+      "count": 1,
+      "fail": 1,
+      "pass": 0
+    },
+    "UY": {
+      "avg_score_0_10_proxy": 7.23,
+      "count": 14,
+      "fail": 5,
+      "pass": 9
+    }
+  },
+  "by_task_type": {
+    "compliance_checklist": {
+      "avg_score_0_10_proxy": 4.81,
+      "count": 8,
+      "fail": 7,
+      "pass": 1
+    },
+    "current_update": {
+      "avg_score_0_10_proxy": 6.56,
+      "count": 5,
+      "fail": 3,
+      "pass": 2
+    },
+    "document_selection": {
+      "avg_score_0_10_proxy": 7.95,
+      "count": 36,
+      "fail": 7,
+      "pass": 29
+    },
+    "exception_analysis": {
+      "avg_score_0_10_proxy": 5.05,
+      "count": 2,
+      "fail": 1,
+      "pass": 1
+    },
+    "hierarchy_conflict": {
+      "avg_score_0_10_proxy": 6.8,
+      "count": 8,
+      "fail": 4,
+      "pass": 4
+    },
+    "precise_retrieval": {
+      "avg_score_0_10_proxy": 7.07,
+      "count": 10,
+      "fail": 4,
+      "pass": 6
+    },
+    "scenario_applicability": {
+      "avg_score_0_10_proxy": 6.54,
+      "count": 12,
+      "fail": 5,
+      "pass": 7
+    },
+    "temporal_validity": {
+      "avg_score_0_10_proxy": 5.68,
+      "count": 19,
+      "fail": 13,
+      "pass": 6
+    }
+  },
+  "canonical_missing_required_content_signal": 98,
+  "canonical_partial_grounding_only": 98,
+  "completeness_degrade_reason_counts": {
+    "complete_enough": 80,
+    "missing_required_fact_slots:document_selection_reason": 11,
+    "missing_required_fact_slots:document_selection_reason,hierarchy_or_conflict_rule": 4,
+    "missing_required_fact_slots:hierarchy_or_conflict_rule": 4,
+    "no_answer": 1
+  },
+  "contract_completeness_rate": 1.0,
+  "contract_repaired_count": 100,
+  "cross_family_fallback_used_count": 1,
+  "evidence_slot_reentry_count": 6,
+  "expected_family_prior_counts": {
+    "cb_genelge": 4,
+    "cb_karar": 8,
+    "cb_kararname": 8,
+    "cb_yonetmelik": 1,
+    "kanun": 3,
+    "khk": 6,
+    "kky": 14,
+    "teblig": 14,
+    "tuzuk": 5,
+    "unknown": 17,
+    "uy": 13,
+    "yonetmelik": 7
+  },
+  "fail_proxy": 44,
+  "failure_class_counts": {
+    "auto_fail_triggered": 3,
+    "claimed_source_parse_failed": 1,
+    "hallucinated_identifier": 32,
+    "missing_gold_document_signal": 16,
+    "missing_required_content_signal": 98,
+    "partial_grounding_only": 98,
+    "repealed_source_used_as_active": 5,
+    "unsupported_confident_claim": 8,
+    "wrong_article": 3,
+    "wrong_document": 16,
+    "wrong_family": 35
+  },
+  "family_compatibility_status_counts": {
+    "exact": 95,
+    "generic_specific_compatible": 1,
+    "incompatible": 3,
+    "unknown": 1
+  },
+  "family_gate_reason_counts": {
+    "global_fallback": 1,
+    "hard_family_gate_no_preferred_candidates": 1,
+    "low_confidence_family_prior": 2,
+    "no_family_prior": 17,
+    "preferred_family_pool_available": 63,
+    "weak_family_prior_cross_family_allowed": 16
+  },
+  "family_gate_status_counts": {
+    "global_fallback": 1,
+    "hard_gate_no_preferred_candidates": 1,
+    "locked_preferred_family": 63,
+    "no_gate": 35
+  },
+  "family_override_reason_counts": {
+    "hard_family_gate_no_preferred_candidates": 1,
+    "low_confidence_family_prior": 2,
+    "no_family_prior": 17,
+    "preferred_family_pool_empty_global_fallback": 1,
+    "strong_preferred_family_pool": 63,
+    "weak_family_prior_cross_family_allowed": 16
+  },
+  "hallucinated_source_count": 16,
+  "identifier_integrity_status_counts": {
+    "exact": 46,
+    "missing": 1,
+    "replaced_by_selected_evidence": 32,
+    "selected_evidence_identifier_suppressed": 9,
+    "unverified_claim_suppressed": 12
+  },
+  "identifier_match_type_counts": {
+    "exact_identifier": 9,
+    "not_requested": 90,
+    "unknown": 1
+  },
+  "identity_lock_strength_counts": {
+    "medium": 9,
+    "none": 1,
+    "strong": 48,
+    "unknown": 1,
+    "weak": 41
+  },
+  "identity_rerank_input_source_counts": {
+    "dense_retrieval": 3,
+    "metadata_lookup_selector": 53,
+    "source_family_prior": 43,
+    "unknown": 1
+  },
+  "issuer_match_type_counts": {
+    "none": 93,
+    "unknown": 1,
+    "weak_overlap": 6
+  },
+  "manual_review_count": 80,
+  "max_score": 1000.0,
+  "metadata_identity_strength_counts": {
+    "medium": 19,
+    "none": 3,
+    "strong": 77,
+    "unknown": 1
+  },
+  "metadata_lookup_hit_count": 54,
+  "metadata_lookup_source_counts": {
+    "exact_identifier_lookup": 12,
+    "issuer_family_lookup": 2,
+    "none": 46,
+    "normalized_title_lookup": 9,
+    "title_ngram_family_lookup": 31
+  },
+  "minimum_answer_facts_present_count": 80,
+  "no_gate_reason_counts": {
+    "no_preferred_family_prior": 35,
+    "none": 65
+  },
+  "pass_proxy": 56,
+  "query_article_alignment_counts": {
+    "title_only": 14,
+    "unknown": 86
+  },
+  "raw_score_proxy": 678.91,
+  "repealed_as_active_count": 5,
+  "right_document_wrong_article_or_span": 54,
+  "rubric_aligned_completeness_class_counts": {
+    "insufficient_both": 1,
+    "rubric_sufficient": 80,
+    "structurally_full_but_legally_misaligned": 19
+  },
+  "rubric_completeness_class_counts": {
+    "insufficient_both": 20,
+    "rubric_sufficient": 2,
+    "structurally_full_but_legally_misaligned": 78
+  },
+  "scoring_mode": "deterministic_proxy_phase_2_answer_contract_not_human_judge",
+  "selected_article_equals_claimed_article_count": 65,
+  "selected_article_equals_claimed_article_rate": 0.65,
+  "selector_article_lock_type_counts": {
+    "none": 3,
+    "semantic_exact": 82,
+    "title_only": 14,
+    "unknown": 1
+  },
+  "selector_evidence_sufficiency_counts": {
+    "exact_enough": 82,
+    "partially_supported": 17,
+    "unknown": 1
+  },
+  "selector_exact_article_hit_rate": 0.82,
+  "selector_preferred_family_hit_rate": 0.825,
+  "selector_reason_counts": {
+    "family_title_lock": 19,
+    "identifier_lock": 3,
+    "preferred_family_lock": 4,
+    "selected_source_lock": 70,
+    "top_ranked": 3,
+    "unknown": 1
+  },
+  "selector_same_document_hit_rate": 1.0,
+  "support_insufficient_for_specific_claim_count": 17,
+  "task_type_answer_template_counts": {
+    "comparison_or_temporal": 60,
+    "condition": 11,
+    "exception": 5,
+    "procedure": 24
+  },
+  "temporal_clause_missing_count": 0,
+  "temporal_state_resolved_count": 99,
+  "temporal_validity_miss_count": 0,
+  "title_match_type_counts": {
+    "exact_phrase": 3,
+    "medium_overlap": 32,
+    "none": 42,
+    "strong_overlap": 5,
+    "unknown": 1,
+    "weak_overlap": 17
+  },
+  "total": 100,
+  "unsupported_confident_answer_count": 8,
+  "worst_10_qids": [
+    "KANUN-01",
+    "MULGA-03",
+    "MULGA-04",
+    "CBG-03",
+    "CBY-05",
+    "KANUN-02",
+    "KANUN-06",
+    "KKY-02",
+    "YON-02",
+    "YON-06"
+  ],
+  "year_match_type_counts": {
+    "exact_year": 13,
+    "none": 86,
+    "unknown": 1
+  }
+}
