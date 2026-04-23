@@ -68,6 +68,10 @@ ANSWER_FIELDS = [
     "selected_document_id",
     "selected_article",
     "selected_paragraph_or_clause",
+    "scenario_current_law_question",
+    "active_candidate_available",
+    "repealed_candidate_demoted",
+    "temporal_family_guard_triggered",
     "support_span_count",
     "support_span_diversity",
     "support_contains_article_number",
@@ -76,6 +80,10 @@ ANSWER_FIELDS = [
     "selector_reason",
     "article_match_type",
     "selector_article_lock_type",
+    "relation_query_detected",
+    "primary_source_candidate",
+    "supporting_source_candidate",
+    "final_primary_source_reason",
     "preferred_source_families",
     "selector_preferred_family_hit",
     "query_article_alignment",
@@ -96,6 +104,12 @@ ANSWER_FIELDS = [
     "issuer_bias_applied",
     "identity_lock_strength",
     "identity_rerank_input_source",
+    "identity_rerank_input_lane",
+    "replacement_guard_triggered",
+    "post_identity_article_alignment",
+    "metadata_lane_present",
+    "dense_lane_present",
+    "merged_lane_present",
     "selected_document_rank_after_identity_rerank",
     "selected_document_original_rank",
     "document_rerank_reason",
@@ -116,6 +130,21 @@ ANSWER_FIELDS = [
     "evidence_slot_reentry_slots",
     "rubric_aligned_completeness_class",
     "expected_family_prior",
+    "scenario_current_law_prior",
+    "historical_or_repealed_question",
+    "historical_scope_detected",
+    "repealed_scope_detected",
+    "legacy_intent_binding_active",
+    "active_candidate_demoted_due_to_legacy_scope",
+    "legacy_candidate_preferred",
+    "document_state_binding_reason",
+    "locked_family_internal_candidates",
+    "internal_document_state_rank",
+    "internal_document_choice_reason",
+    "current_law_prior_blocked_by_historical_scope",
+    "family_collision_detected",
+    "family_collision_pair",
+    "collision_resolution_reason",
     "preferred_family_pool_size",
     "cross_family_fallback_used",
     "family_override_reason",
@@ -147,6 +176,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--retries", type=int, default=int(os.getenv("HUKUK_AI_BENCHMARK_RETRIES", "2")))
     parser.add_argument("--sleep", type=float, default=float(os.getenv("HUKUK_AI_BENCHMARK_SLEEP", "0.4")))
     parser.add_argument("--limit", type=int, help="Run only the first N questions for smoke testing.")
+    parser.add_argument(
+        "--qids",
+        nargs="*",
+        help="Run only the provided qids. Accepts space- or comma-separated values.",
+    )
     parser.add_argument("--no-trace", action="store_true", help="Disable include_trace. Phase 0 default is trace-on.")
     parser.add_argument(
         "--resume",
@@ -168,9 +202,26 @@ def endpoint_from_api_url(api_url: str) -> str:
     return f"{url}/chat/completions"
 
 
-def load_questions(path: Path, limit: int | None) -> list[dict[str, str]]:
+def normalize_requested_qids(raw_qids: list[str] | None) -> list[str]:
+    normalized: list[str] = []
+    for raw in raw_qids or []:
+        normalized.extend(part.strip() for part in str(raw).split(",") if part.strip())
+    return normalized
+
+
+def load_questions(path: Path, limit: int | None, qids: list[str] | None = None) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8-sig") as f:
-        rows = list(csv.DictReader(f))
+        all_rows = list(csv.DictReader(f))
+    if qids:
+        qid_order = {qid: index for index, qid in enumerate(qids)}
+        rows = [
+            row
+            for index, row in enumerate(all_rows)
+            if question_qid(row, index) in qid_order
+        ]
+        rows.sort(key=lambda row: qid_order.get(question_qid(row, 0), len(qid_order)))
+    else:
+        rows = all_rows
     if limit is not None:
         rows = rows[:limit]
     return rows
@@ -529,6 +580,11 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "selected_document_id": selector_value(response, "selected_document_id"),
         "selected_article": selector_value(response, "selected_article"),
         "selected_paragraph_or_clause": selector_value(response, "selected_paragraph_or_clause"),
+        "scenario_current_law_question": selector_value(response, "scenario_current_law_question")
+        or retrieval_feature_value(response, "scenario_current_law_question"),
+        "active_candidate_available": selector_value(response, "active_candidate_available"),
+        "repealed_candidate_demoted": selector_value(response, "repealed_candidate_demoted"),
+        "temporal_family_guard_triggered": selector_value(response, "temporal_family_guard_triggered"),
         "support_span_count": selector_value(response, "support_span_count"),
         "support_span_diversity": selector_value(response, "support_span_diversity"),
         "support_contains_article_number": selector_value(response, "support_contains_article_number"),
@@ -537,6 +593,10 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "selector_reason": selector_value(response, "selector_reason"),
         "article_match_type": selector_value(response, "article_match_type"),
         "selector_article_lock_type": selector_value(response, "selector_article_lock_type"),
+        "relation_query_detected": selector_value(response, "relation_query_detected"),
+        "primary_source_candidate": selector_value(response, "primary_source_candidate"),
+        "supporting_source_candidate": selector_value(response, "supporting_source_candidate"),
+        "final_primary_source_reason": selector_value(response, "final_primary_source_reason"),
         "preferred_source_families": selector_value(response, "preferred_source_families"),
         "selector_preferred_family_hit": selector_value(response, "selector_preferred_family_hit"),
         "query_article_alignment": selector_value(response, "query_article_alignment"),
@@ -564,6 +624,12 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "issuer_bias_applied": source_identity_value(response, "issuer_bias_applied"),
         "identity_lock_strength": source_identity_value(response, "identity_lock_strength"),
         "identity_rerank_input_source": source_identity_value(response, "identity_rerank_input_source"),
+        "identity_rerank_input_lane": source_identity_value(response, "identity_rerank_input_lane"),
+        "replacement_guard_triggered": source_identity_value(response, "replacement_guard_triggered"),
+        "post_identity_article_alignment": source_identity_value(response, "post_identity_article_alignment"),
+        "metadata_lane_present": source_identity_value(response, "metadata_lane_present"),
+        "dense_lane_present": source_identity_value(response, "dense_lane_present"),
+        "merged_lane_present": source_identity_value(response, "merged_lane_present"),
         "selected_document_rank_after_identity_rerank": source_identity_value(
             response,
             "selected_document_rank_after_identity_rerank",
@@ -587,6 +653,27 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "evidence_slot_reentry_slots": contract_value(response, "evidence_slot_reentry_slots"),
         "rubric_aligned_completeness_class": contract_value(response, "rubric_aligned_completeness_class"),
         "expected_family_prior": retrieval_feature_value(response, "expected_family_prior"),
+        "scenario_current_law_prior": retrieval_feature_value(response, "scenario_current_law_prior"),
+        "historical_or_repealed_question": retrieval_feature_value(response, "historical_or_repealed_question"),
+        "historical_scope_detected": retrieval_feature_value(response, "historical_scope_detected"),
+        "repealed_scope_detected": retrieval_feature_value(response, "repealed_scope_detected"),
+        "legacy_intent_binding_active": selector_value(response, "legacy_intent_binding_active"),
+        "active_candidate_demoted_due_to_legacy_scope": selector_value(
+            response,
+            "active_candidate_demoted_due_to_legacy_scope",
+        ),
+        "legacy_candidate_preferred": selector_value(response, "legacy_candidate_preferred"),
+        "document_state_binding_reason": selector_value(response, "document_state_binding_reason"),
+        "locked_family_internal_candidates": selector_value(response, "locked_family_internal_candidates"),
+        "internal_document_state_rank": selector_value(response, "internal_document_state_rank"),
+        "internal_document_choice_reason": selector_value(response, "internal_document_choice_reason"),
+        "current_law_prior_blocked_by_historical_scope": retrieval_feature_value(
+            response,
+            "current_law_prior_blocked_by_historical_scope",
+        ),
+        "family_collision_detected": retrieval_feature_value(response, "family_collision_detected"),
+        "family_collision_pair": retrieval_feature_value(response, "family_collision_pair"),
+        "collision_resolution_reason": retrieval_feature_value(response, "collision_resolution_reason"),
         "preferred_family_pool_size": retrieval_feature_value(response, "preferred_family_pool_size"),
         "cross_family_fallback_used": retrieval_feature_value(response, "cross_family_fallback_used"),
         "family_override_reason": retrieval_feature_value(response, "family_override_reason"),
@@ -638,7 +725,7 @@ def main() -> int:
     run_dir = args.out_dir or (DEFAULT_RUNS_DIR / timestamp)
     run_dir.mkdir(parents=True, exist_ok=True)
     endpoint = endpoint_from_api_url(args.api_url)
-    questions = load_questions(args.questions, args.limit)
+    questions = load_questions(args.questions, args.limit, normalize_requested_qids(args.qids))
 
     answers_path = run_dir / "candidate_answers.csv"
     trace_path = run_dir / "trace.jsonl"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -229,6 +230,19 @@ def _evidence_family(evidence: dict[str, Any] | None) -> str:
     if family != UNKNOWN:
         return family
     return title_family
+
+
+def _evidence_mapped_family(evidence: dict[str, Any] | None) -> str:
+    if not isinstance(evidence, dict):
+        return UNKNOWN
+    mapped_family = _canonical_trace_family(
+        evidence.get("source_family_mapped")
+        or evidence.get("source_family")
+        or evidence.get("source_family_canonical")
+    )
+    if mapped_family != UNKNOWN:
+        return mapped_family
+    return _evidence_family(evidence)
 
 
 def _family_compatibility_status(claimed_family: str, evidence_family: str) -> str:
@@ -537,6 +551,91 @@ def _trace_question_text(trace_payload: dict[str, Any] | None) -> str:
     return ""
 
 
+def _trace_query_years(trace_payload: dict[str, Any] | None) -> list[int]:
+    years: list[int] = []
+    for match in re.finditer(r"\b(?:19|20)\d{2}\b", _trace_question_text(trace_payload)):
+        years.append(int(match.group(0)))
+    return years
+
+
+def _legacy_query_intent(trace_payload: dict[str, Any] | None) -> bool:
+    family_resolution = _trace_family_resolution(trace_payload)
+    selector = _trace_article_selector(trace_payload)
+    if bool(selector.get("legacy_intent_binding_active")):
+        return True
+    return bool(
+        family_resolution.get("historical_or_repealed_question")
+        or family_resolution.get("historical_scope_detected")
+        or family_resolution.get("repealed_scope_detected")
+    )
+
+
+def _should_force_legacy_repealed_state(
+    *,
+    source_family: str,
+    effective_state: str,
+    evidence: dict[str, Any] | None,
+    trace_payload: dict[str, Any] | None,
+) -> bool:
+    if effective_state == "repealed":
+        return True
+    if not _legacy_query_intent(trace_payload):
+        return False
+
+    selector = _trace_article_selector(trace_payload)
+    if bool(selector.get("legacy_candidate_preferred")):
+        return True
+
+    query_years = _trace_query_years(trace_payload)
+    old_query_year_present = bool(
+        query_years and min(query_years) < datetime.now(timezone.utc).year
+    )
+    source_years = [
+        int(match.group(0))
+        for match in re.finditer(
+            r"\b(?:19|20)\d{2}\b",
+            " ".join(
+                _clean(evidence.get(key))
+                for key in (
+                    "source_id",
+                    "citation",
+                    "source_identifier",
+                    "source_title",
+                    "full_title",
+                    "belge_adi",
+                    "kanun_adi",
+                    "effective_start",
+                    "yururluk_baslangic",
+                )
+            )
+            if isinstance(evidence, dict)
+            else "",
+        )
+    ]
+    if source_family == "KHK":
+        return bool(source_years and min(source_years) <= 2017)
+    if source_family == "TUZUK":
+        return old_query_year_present
+    if source_family == "MULGA":
+        return True
+    return False
+
+
+def _normalize_legacy_family_claim(
+    source_family: str,
+    *,
+    effective_state: str,
+    trace_payload: dict[str, Any] | None,
+) -> str:
+    if effective_state != "repealed":
+        return source_family
+    if not _legacy_query_intent(trace_payload):
+        return source_family
+    if source_family in {"KANUN", "KHK", "TUZUK", "MULGA"}:
+        return "MULGA"
+    return source_family
+
+
 def _query_requests_source_identifier(trace_payload: dict[str, Any] | None) -> bool:
     normalized = _lower_asciiish(_trace_question_text(trace_payload))
     if not normalized:
@@ -556,20 +655,54 @@ def _selected_evidence_identity_trusted(trace_payload: dict[str, Any] | None) ->
         selector_sufficiency = str(selector.get("selector_evidence_sufficiency") or "")
         if metadata_strength == "strong" and selector_sufficiency in {"exact_enough", "sufficient"}:
             return True
+        if _selector_supports_natural_identifier_inference(selector):
+            return True
     reranker = _trace_source_identity_reranker(trace_payload)
     if not reranker:
         return False
     title_match_type = str(reranker.get("title_match_type") or "")
     identifier_match_type = str(reranker.get("identifier_match_type") or "")
+    replacement_guard_triggered = bool(reranker.get("replacement_guard_triggered"))
     try:
         document_identity_score = float(reranker.get("document_identity_score") or 0.0)
     except (TypeError, ValueError):
         document_identity_score = 0.0
+    if replacement_guard_triggered:
+        return False
     return (
         identifier_match_type == "exact_identifier"
         or title_match_type in {"exact_phrase", "strong_overlap"}
         or document_identity_score >= 120.0
     )
+
+
+def _selector_supports_natural_identifier_inference(selector: dict[str, Any] | None) -> bool:
+    if not isinstance(selector, dict) or not selector:
+        return False
+
+    metadata_strength = str(selector.get("metadata_identity_strength") or "")
+    selector_sufficiency = str(selector.get("selector_evidence_sufficiency") or "")
+    if metadata_strength not in {"medium", "strong"}:
+        return False
+    if selector_sufficiency not in {"exact_enough", "sufficient"}:
+        return False
+    if not _bool_flag(selector.get("selector_exact_article_hit")):
+        return False
+
+    support_span_count = _int_value(
+        selector.get("support_span_count") or selector.get("selector_support_span_count")
+    )
+    if support_span_count is not None and support_span_count < 1:
+        return False
+
+    document_rank = _int_value(selector.get("selector_document_rank"))
+    scenario_current_law_question = _bool_flag(selector.get("scenario_current_law_question"))
+    has_selected_document = bool(_clean(selector.get("selected_document_id")))
+    if document_rank not in {None, 1} and not scenario_current_law_question and not has_selected_document:
+        return False
+
+    temporal_state_resolved = selector.get("temporal_state_resolved")
+    return temporal_state_resolved is not False
 
 
 def _detect_family(text: str, evidence: dict[str, Any] | None = None) -> str:
@@ -934,14 +1067,23 @@ def build_or_repair_answer_contract(
     if not source_family or source_family == UNKNOWN:
         source_family = _detect_family(combined_text, selected_evidence)
     selected_evidence_family = _evidence_family(selected_evidence)
+    selected_evidence_mapped_family = _evidence_mapped_family(selected_evidence)
     family_compatibility_status = _family_compatibility_status(raw_claimed_family, selected_evidence_family)
-    if selected_evidence_family != UNKNOWN:
+    if (
+        predicted_family != UNKNOWN
+        and predicted_confidence >= 0.75
+        and selected_evidence_mapped_family == predicted_family
+    ):
+        source_family = predicted_family
+    elif selected_evidence_family != UNKNOWN:
         source_family = selected_evidence_family
 
     selected_identifier = _detect_identifier(combined_text, [], selected_evidence)
     query_requests_identifier = _query_requests_source_identifier(trace_payload)
     selected_identity_trusted = _selected_evidence_identity_trusted(trace_payload)
-    source_identity_trace_present = bool(_trace_source_identity_reranker(trace_payload))
+    source_identity_reranker = _trace_source_identity_reranker(trace_payload)
+    source_identity_trace_present = bool(source_identity_reranker)
+    replacement_guard_triggered = bool(source_identity_reranker.get("replacement_guard_triggered"))
     allow_selected_identifier = query_requests_identifier or selected_identity_trusted or not source_identity_trace_present
     if selected_evidence_forced_by_family and allow_selected_identifier:
         source_identifier = _first_string(selected_identifier, contract.get("source_identifier_claimed"), legacy_primary)
@@ -970,12 +1112,17 @@ def build_or_repair_answer_contract(
             selected_evidence_forced_by_selector
             or selected_evidence_forced_by_family
             or not raw_identifier_claim_present
-        ) and allow_selected_identifier:
+        ) and allow_selected_identifier and not replacement_guard_triggered:
             pre_verification_findings.append("identifier_integrity_failed")
             pre_verification_findings.append("same_evidence_identifier_mismatch")
             pre_verification_findings.append("claimed_identifier_replaced_by_selected_evidence")
             source_identifier = selected_identifier
             identifier_integrity_status = "replaced_by_selected_evidence"
+        elif selected_identifier and replacement_guard_triggered:
+            pre_verification_findings.append("selected_evidence_replacement_guard_triggered")
+            pre_verification_findings.append("claimed_identifier_suppressed")
+            source_identifier = ""
+            identifier_integrity_status = "unverified_claim_suppressed"
         else:
             pre_verification_findings.append("identifier_integrity_failed")
             pre_verification_findings.append("same_evidence_identifier_mismatch")
@@ -1031,6 +1178,21 @@ def build_or_repair_answer_contract(
         selected_evidence,
         contract.get("source_validity"),
     )
+    if _should_force_legacy_repealed_state(
+        source_family=source_family,
+        effective_state=effective_state,
+        evidence=selected_evidence,
+        trace_payload=trace_payload,
+    ):
+        effective_state = "repealed"
+    normalized_legacy_family = _normalize_legacy_family_claim(
+        source_family,
+        effective_state=effective_state,
+        trace_payload=trace_payload,
+    )
+    if normalized_legacy_family != source_family:
+        source_family = normalized_legacy_family
+        family_compatibility_status = _family_compatibility_status(source_family, selected_evidence_family)
     temporal_qualification = _first_string(
         contract.get("temporal_qualification"),
         _detect_temporal_qualification(combined_text, trace_payload),
@@ -1137,13 +1299,21 @@ def build_or_repair_answer_contract(
             article_selector.get("support_span_count")
             or article_selector.get("selector_support_span_count")
         )
+        natural_identifier_inference_supported = (
+            not query_article_tokens and _selector_supports_natural_identifier_inference(article_selector)
+        )
         if query_article_tokens and not selector_exact_article_hit:
             article_lock_failed = True
             verification_findings.append("article_lock_failed")
         claim_article = _article_token(article_or_section)
         if claim_article and (
             selector_sufficiency == "insufficient_support"
-            or (support_span_count is not None and support_span_count < 2 and article_match_type not in {"exact", "explicit_exact"})
+            or (
+                not natural_identifier_inference_supported
+                and support_span_count is not None
+                and support_span_count < 2
+                and article_match_type not in {"exact", "explicit_exact"}
+            )
         ):
             support_insufficient_for_specific_claim = True
             verification_findings.append("support_insufficient_for_specific_claim")

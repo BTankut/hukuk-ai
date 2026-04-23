@@ -86,6 +86,10 @@ SCORED_FIELDS = [
     "selected_document_id",
     "selected_article",
     "selected_paragraph_or_clause",
+    "scenario_current_law_question",
+    "active_candidate_available",
+    "repealed_candidate_demoted",
+    "temporal_family_guard_triggered",
     "support_span_count",
     "support_span_diversity",
     "support_contains_article_number",
@@ -94,6 +98,10 @@ SCORED_FIELDS = [
     "selector_reason",
     "article_match_type",
     "selector_article_lock_type",
+    "relation_query_detected",
+    "primary_source_candidate",
+    "supporting_source_candidate",
+    "final_primary_source_reason",
     "preferred_source_families",
     "selector_preferred_family_hit",
     "query_article_alignment",
@@ -114,6 +122,12 @@ SCORED_FIELDS = [
     "issuer_bias_applied",
     "identity_lock_strength",
     "identity_rerank_input_source",
+    "identity_rerank_input_lane",
+    "replacement_guard_triggered",
+    "post_identity_article_alignment",
+    "metadata_lane_present",
+    "dense_lane_present",
+    "merged_lane_present",
     "selected_document_rank_after_identity_rerank",
     "selected_document_original_rank",
     "document_rerank_reason",
@@ -136,6 +150,21 @@ SCORED_FIELDS = [
     "rubric_completeness_class",
     "right_document_wrong_article_or_span",
     "expected_family_prior",
+    "scenario_current_law_prior",
+    "historical_or_repealed_question",
+    "historical_scope_detected",
+    "repealed_scope_detected",
+    "legacy_intent_binding_active",
+    "active_candidate_demoted_due_to_legacy_scope",
+    "legacy_candidate_preferred",
+    "document_state_binding_reason",
+    "locked_family_internal_candidates",
+    "internal_document_state_rank",
+    "internal_document_choice_reason",
+    "current_law_prior_blocked_by_historical_scope",
+    "family_collision_detected",
+    "family_collision_pair",
+    "collision_resolution_reason",
     "preferred_family_pool_size",
     "cross_family_fallback_used",
     "family_override_reason",
@@ -532,6 +561,10 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "selected_document_id": answer.get("selected_document_id", ""),
         "selected_article": answer.get("selected_article", ""),
         "selected_paragraph_or_clause": answer.get("selected_paragraph_or_clause", ""),
+        "scenario_current_law_question": answer.get("scenario_current_law_question", ""),
+        "active_candidate_available": answer.get("active_candidate_available", ""),
+        "repealed_candidate_demoted": answer.get("repealed_candidate_demoted", ""),
+        "temporal_family_guard_triggered": answer.get("temporal_family_guard_triggered", ""),
         "support_span_count": answer.get("support_span_count", ""),
         "support_span_diversity": answer.get("support_span_diversity", ""),
         "support_contains_article_number": answer.get("support_contains_article_number", ""),
@@ -540,6 +573,10 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "selector_reason": answer.get("selector_reason", ""),
         "article_match_type": answer.get("article_match_type", ""),
         "selector_article_lock_type": answer.get("selector_article_lock_type", ""),
+        "relation_query_detected": answer.get("relation_query_detected", ""),
+        "primary_source_candidate": answer.get("primary_source_candidate", ""),
+        "supporting_source_candidate": answer.get("supporting_source_candidate", ""),
+        "final_primary_source_reason": answer.get("final_primary_source_reason", ""),
         "preferred_source_families": answer.get("preferred_source_families", ""),
         "selector_preferred_family_hit": answer.get("selector_preferred_family_hit", ""),
         "query_article_alignment": answer.get("query_article_alignment", ""),
@@ -560,6 +597,12 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "issuer_bias_applied": answer.get("issuer_bias_applied", ""),
         "identity_lock_strength": answer.get("identity_lock_strength", ""),
         "identity_rerank_input_source": answer.get("identity_rerank_input_source", ""),
+        "identity_rerank_input_lane": answer.get("identity_rerank_input_lane", ""),
+        "replacement_guard_triggered": answer.get("replacement_guard_triggered", ""),
+        "post_identity_article_alignment": answer.get("post_identity_article_alignment", ""),
+        "metadata_lane_present": answer.get("metadata_lane_present", ""),
+        "dense_lane_present": answer.get("dense_lane_present", ""),
+        "merged_lane_present": answer.get("merged_lane_present", ""),
         "selected_document_rank_after_identity_rerank": answer.get(
             "selected_document_rank_after_identity_rerank",
             "",
@@ -585,6 +628,27 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "rubric_completeness_class": canonical_rubric_completeness_class,
         "right_document_wrong_article_or_span": bool_text(canonical_right_doc_wrong_span),
         "expected_family_prior": answer.get("expected_family_prior", ""),
+        "scenario_current_law_prior": answer.get("scenario_current_law_prior", ""),
+        "historical_or_repealed_question": answer.get("historical_or_repealed_question", ""),
+        "historical_scope_detected": answer.get("historical_scope_detected", ""),
+        "repealed_scope_detected": answer.get("repealed_scope_detected", ""),
+        "legacy_intent_binding_active": answer.get("legacy_intent_binding_active", ""),
+        "active_candidate_demoted_due_to_legacy_scope": answer.get(
+            "active_candidate_demoted_due_to_legacy_scope",
+            "",
+        ),
+        "legacy_candidate_preferred": answer.get("legacy_candidate_preferred", ""),
+        "document_state_binding_reason": answer.get("document_state_binding_reason", ""),
+        "locked_family_internal_candidates": answer.get("locked_family_internal_candidates", ""),
+        "internal_document_state_rank": answer.get("internal_document_state_rank", ""),
+        "internal_document_choice_reason": answer.get("internal_document_choice_reason", ""),
+        "current_law_prior_blocked_by_historical_scope": answer.get(
+            "current_law_prior_blocked_by_historical_scope",
+            "",
+        ),
+        "family_collision_detected": answer.get("family_collision_detected", ""),
+        "family_collision_pair": answer.get("family_collision_pair", ""),
+        "collision_resolution_reason": answer.get("collision_resolution_reason", ""),
         "preferred_family_pool_size": answer.get("preferred_family_pool_size", ""),
         "cross_family_fallback_used": answer.get("cross_family_fallback_used", ""),
         "family_override_reason": answer.get("family_override_reason", ""),
@@ -656,6 +720,24 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     identity_rerank_input_source_counts = Counter(
         row.get("identity_rerank_input_source", "") or "unknown" for row in rows
     )
+    identity_rerank_input_lane_counts = Counter(
+        row.get("identity_rerank_input_lane", "") or "unknown" for row in rows
+    )
+    post_identity_article_alignment_counts = Counter(
+        row.get("post_identity_article_alignment", "") or "unknown" for row in rows
+    )
+    replacement_guard_triggered_count = sum(
+        1 for row in rows if bool_field(str(row.get("replacement_guard_triggered", ""))) is True
+    )
+    metadata_lane_present_count = sum(
+        1 for row in rows if bool_field(str(row.get("metadata_lane_present", ""))) is True
+    )
+    dense_lane_present_count = sum(
+        1 for row in rows if bool_field(str(row.get("dense_lane_present", ""))) is True
+    )
+    merged_lane_present_count = sum(
+        1 for row in rows if bool_field(str(row.get("merged_lane_present", ""))) is True
+    )
     document_identity_scores: list[float] = []
     title_bias_values: list[float] = []
     issuer_bias_values: list[float] = []
@@ -691,6 +773,42 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     article_alignment_counts = Counter(row.get("article_alignment", "") or "unknown" for row in rows)
     query_article_alignment_counts = Counter(row.get("query_article_alignment", "") or "unknown" for row in rows)
     expected_family_prior_counts = Counter(row.get("expected_family_prior", "") or "unknown" for row in rows)
+    scenario_current_law_question_count = sum(
+        1 for row in rows if bool_field(str(row.get("scenario_current_law_question", ""))) is True
+    )
+    scenario_current_law_prior_count = sum(
+        1 for row in rows if bool_field(str(row.get("scenario_current_law_prior", ""))) is True
+    )
+    historical_or_repealed_question_count = sum(
+        1 for row in rows if bool_field(str(row.get("historical_or_repealed_question", ""))) is True
+    )
+    historical_scope_detected_count = sum(
+        1 for row in rows if bool_field(str(row.get("historical_scope_detected", ""))) is True
+    )
+    repealed_scope_detected_count = sum(
+        1 for row in rows if bool_field(str(row.get("repealed_scope_detected", ""))) is True
+    )
+    current_law_prior_blocked_by_historical_scope_count = sum(
+        1
+        for row in rows
+        if bool_field(str(row.get("current_law_prior_blocked_by_historical_scope", ""))) is True
+    )
+    active_candidate_available_count = sum(
+        1 for row in rows if bool_field(str(row.get("active_candidate_available", ""))) is True
+    )
+    repealed_candidate_demoted_count = sum(
+        1 for row in rows if bool_field(str(row.get("repealed_candidate_demoted", ""))) is True
+    )
+    temporal_family_guard_triggered_count = sum(
+        1 for row in rows if bool_field(str(row.get("temporal_family_guard_triggered", ""))) is True
+    )
+    family_collision_detected_count = sum(
+        1 for row in rows if bool_field(str(row.get("family_collision_detected", ""))) is True
+    )
+    family_collision_pair_counts = Counter(row.get("family_collision_pair", "") or "none" for row in rows)
+    collision_resolution_reason_counts = Counter(
+        row.get("collision_resolution_reason", "") or "none" for row in rows
+    )
     family_override_reason_counts = Counter(row.get("family_override_reason", "") or "unknown" for row in rows)
     family_gate_status_counts = Counter(row.get("family_gate_status", "") or "unknown" for row in rows)
     family_gate_reason_counts = Counter(row.get("family_gate_reason", "") or "unknown" for row in rows)
@@ -782,6 +900,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "metadata_lookup_hit_count": metadata_lookup_hit_count,
         "metadata_lookup_source_counts": dict(sorted(metadata_lookup_source_counts.items())),
         "identity_rerank_input_source_counts": dict(sorted(identity_rerank_input_source_counts.items())),
+        "identity_rerank_input_lane_counts": dict(sorted(identity_rerank_input_lane_counts.items())),
+        "post_identity_article_alignment_counts": dict(sorted(post_identity_article_alignment_counts.items())),
+        "replacement_guard_triggered_count": replacement_guard_triggered_count,
+        "metadata_lane_present_count": metadata_lane_present_count,
+        "dense_lane_present_count": dense_lane_present_count,
+        "merged_lane_present_count": merged_lane_present_count,
         "avg_document_identity_score": round(
             sum(document_identity_scores) / len(document_identity_scores),
             3,
@@ -806,6 +930,18 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "article_alignment_counts": dict(sorted(article_alignment_counts.items())),
         "query_article_alignment_counts": dict(sorted(query_article_alignment_counts.items())),
         "expected_family_prior_counts": dict(sorted(expected_family_prior_counts.items())),
+        "scenario_current_law_question_count": scenario_current_law_question_count,
+        "scenario_current_law_prior_count": scenario_current_law_prior_count,
+        "historical_or_repealed_question_count": historical_or_repealed_question_count,
+        "historical_scope_detected_count": historical_scope_detected_count,
+        "repealed_scope_detected_count": repealed_scope_detected_count,
+        "current_law_prior_blocked_by_historical_scope_count": current_law_prior_blocked_by_historical_scope_count,
+        "active_candidate_available_count": active_candidate_available_count,
+        "repealed_candidate_demoted_count": repealed_candidate_demoted_count,
+        "temporal_family_guard_triggered_count": temporal_family_guard_triggered_count,
+        "family_collision_detected_count": family_collision_detected_count,
+        "family_collision_pair_counts": dict(sorted(family_collision_pair_counts.items())),
+        "collision_resolution_reason_counts": dict(sorted(collision_resolution_reason_counts.items())),
         "family_override_reason_counts": dict(sorted(family_override_reason_counts.items())),
         "family_gate_status_counts": dict(sorted(family_gate_status_counts.items())),
         "family_gate_reason_counts": dict(sorted(family_gate_reason_counts.items())),
@@ -947,6 +1083,21 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     lines.extend(["", "## Identity Rerank Input Source"])
     for status, count in summary["identity_rerank_input_source_counts"].items():
         lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Identity Rerank Input Lane"])
+    for status, count in summary["identity_rerank_input_lane_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(
+        [
+            "",
+            "## Identity Guard / Recall Lanes",
+            f"- replacement_guard_triggered_count: {summary['replacement_guard_triggered_count']}",
+            f"- metadata_lane_present_count: {summary['metadata_lane_present_count']}",
+            f"- dense_lane_present_count: {summary['dense_lane_present_count']}",
+            f"- merged_lane_present_count: {summary['merged_lane_present_count']}",
+        ]
+    )
+    for status, count in summary["post_identity_article_alignment_counts"].items():
+        lines.append(f"- post_identity_article_alignment.{status}: {count}")
     lines.extend(["", "## Selector Reason"])
     for status, count in summary["selector_reason_counts"].items():
         lines.append(f"- {status}: {count}")
@@ -971,6 +1122,27 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     lines.extend(["", "## Expected Family Prior"])
     for status, count in summary["expected_family_prior_counts"].items():
         lines.append(f"- {status}: {count}")
+    lines.extend(
+        [
+            "",
+            "## Current-Law Guard",
+            f"- scenario_current_law_question_count: {summary['scenario_current_law_question_count']}",
+            f"- scenario_current_law_prior_count: {summary['scenario_current_law_prior_count']}",
+            f"- historical_or_repealed_question_count: {summary['historical_or_repealed_question_count']}",
+            f"- historical_scope_detected_count: {summary['historical_scope_detected_count']}",
+            f"- repealed_scope_detected_count: {summary['repealed_scope_detected_count']}",
+            f"- current_law_prior_blocked_by_historical_scope_count: {summary['current_law_prior_blocked_by_historical_scope_count']}",
+            f"- active_candidate_available_count: {summary['active_candidate_available_count']}",
+            f"- repealed_candidate_demoted_count: {summary['repealed_candidate_demoted_count']}",
+            f"- temporal_family_guard_triggered_count: {summary['temporal_family_guard_triggered_count']}",
+        ]
+    )
+    lines.extend(["", "## Family Collision"])
+    lines.append(f"- family_collision_detected_count: {summary['family_collision_detected_count']}")
+    for status, count in summary["family_collision_pair_counts"].items():
+        lines.append(f"- family_collision_pair.{status}: {count}")
+    for status, count in summary["collision_resolution_reason_counts"].items():
+        lines.append(f"- collision_resolution_reason.{status}: {count}")
     lines.extend(["", "## Family Override Reason"])
     for status, count in summary["family_override_reason_counts"].items():
         lines.append(f"- {status}: {count}")

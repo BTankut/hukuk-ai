@@ -10,6 +10,7 @@ from rag.source_catalog import (
     load_source_metadata_catalog,
     load_source_title_catalog,
     normalize_canonical_text,
+    source_family_mapping_profile,
 )
 
 
@@ -213,6 +214,35 @@ def test_phase6_family_metadata_backfill_extracts_teblig_and_university_fields(t
     assert university["issuing_body_level"] == "universite"
     load_source_title_catalog.cache_clear()
     load_source_metadata_catalog.cache_clear()
+
+
+def test_source_family_mapping_profile_bridges_generic_regulation_surfaces():
+    kky_profile = source_family_mapping_profile(
+        {
+            "belge_turu": "kky",
+            "belge_adi": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ",
+        }
+    )
+    teblig_profile = source_family_mapping_profile(
+        {
+            "belge_turu": "teblig",
+            "belge_adi": "ELEKTRONİK TEBLİGAT YÖNETMELİĞİ",
+        }
+    )
+    mulga_profile = source_family_mapping_profile(
+        {
+            "belge_turu": "mulga",
+            "belge_adi": "MÜLGA BORÇLAR KANUNU",
+        }
+    )
+
+    assert kky_profile["source_family_canonical"] == "kky"
+    assert kky_profile["source_family_mapped"] == "yonetmelik"
+    assert kky_profile["source_family_mapping_reason"] == "kky_to_yonetmelik"
+    assert teblig_profile["source_family_mapped"] == "yonetmelik"
+    assert teblig_profile["source_family_mapping_reason"] == "teblig_to_yonetmelik"
+    assert mulga_profile["source_family_mapped"] == "kanun"
+    assert mulga_profile["source_family_mapping_reason"] == "mulga_to_kanun"
 
 
 def test_phase5_normalization_and_identifier_type_helpers():

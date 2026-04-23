@@ -68,6 +68,7 @@ from rag.source_catalog import (
     load_canonical_source_catalog,
     normalize_canonical_text,
     resolve_effective_state,
+    source_family_mapping_profile,
 )
 from rag.token_manager import estimate_tokens
 from release_controls import (
@@ -512,7 +513,54 @@ def _normalize_retrieval_planner_term_hint(value: Any) -> str | None:
     return raw
 
 
-def _sanitize_retrieval_plan_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+def _planner_term_supported_by_query(term: str, user_query: str | None = None) -> bool:
+    if not user_query:
+        return True
+
+    normalized_term = normalize_query_text(term)
+    normalized_query = normalize_query_text(user_query)
+    if not normalized_term or not normalized_query:
+        return False
+    if normalized_term in normalized_query:
+        return True
+
+    query_terms = set(_extract_retrieval_priority_terms(user_query))
+    term_tokens = [token for token in normalized_term.split() if len(token) >= 3 or token.isdigit()]
+    if not term_tokens:
+        return False
+    overlap = sum(
+        1
+        for token in term_tokens
+        if token in query_terms or (len(token) >= 4 and token in normalized_query)
+    )
+    if len(term_tokens) <= 3:
+        return True
+
+    titleish_tokens = {
+        "kanun",
+        "yonetmelik",
+        "yonetmeligi",
+        "tuzuk",
+        "tuzugu",
+        "karar",
+        "karari",
+        "kararname",
+        "kararnamesi",
+        "genelge",
+        "teblig",
+        "tebligi",
+        "khk",
+    }
+    if any(token in titleish_tokens for token in term_tokens):
+        return overlap >= 2
+    return overlap >= max(2, len(term_tokens) // 2)
+
+
+def _sanitize_retrieval_plan_payload(
+    payload: dict[str, Any] | None,
+    *,
+    user_query: str | None = None,
+) -> dict[str, Any] | None:
     if not isinstance(payload, dict):
         return None
 
@@ -549,7 +597,7 @@ def _sanitize_retrieval_plan_payload(payload: dict[str, Any] | None) -> dict[str
                 _normalize_retrieval_planner_term_hint(item)
                 for item in (raw_terms if isinstance(raw_terms, list) else [])
             )
-            if normalized
+            if normalized and _planner_term_supported_by_query(normalized, user_query)
         ]
     )[:6]
 
@@ -887,6 +935,50 @@ def _parse_metadata_lookup_query_signals(query: str) -> dict[str, Any]:
     }
 
 
+def _extract_effective_legal_query(query: str) -> str:
+    raw = str(query or "").strip()
+    if not raw:
+        return ""
+
+    lines = [_normalize_whitespace(line) for line in raw.splitlines()]
+    filtered_lines: list[str] = []
+    for line in lines:
+        if not line:
+            continue
+        normalized = _normalize_tr_text(line)
+        if (
+            normalized.startswith("bu soruyu ")
+            and "tarihindeki yururluk durumuna gore cevapla" in normalized
+        ):
+            continue
+        if normalized.startswith("beklenen cikti tipi:"):
+            continue
+        if normalized == "[kaynak ailesi onceligi]":
+            continue
+        if normalized.startswith("kullanici ozellikle su belge ailesini soruyor:"):
+            continue
+        if normalized.startswith("yaniti kurarken once bu ailedeki duzenlemeyi merkez al."):
+            continue
+        if normalized.startswith("ust normu veya paralel normu ancak gercekten gerekliyse"):
+            continue
+        if normalized.startswith("kullanici 'hangi tuzuk/yonetmelik/genelge/kararname' diye soruyorsa"):
+            continue
+        filtered_lines.append(line)
+
+    if not filtered_lines:
+        return _normalize_whitespace(raw)
+
+    question_lines = [line for line in filtered_lines if "?" in line]
+    if question_lines:
+        return max(question_lines, key=lambda item: (len(item), item.count(" ")))
+
+    if len(filtered_lines) == 1:
+        return filtered_lines[0]
+
+    combined = _normalize_whitespace(" ".join(filtered_lines))
+    return combined or _normalize_whitespace(raw)
+
+
 def _extract_source_identity_identifier_tokens(query: str) -> set[str]:
     normalized = _normalize_tr_text(query or "")
     tokens: set[str] = set()
@@ -989,6 +1081,25 @@ def _metadata_lookup_title_signal_score(
     return best_score, reasons, best_reason
 
 
+def _metadata_lookup_has_strong_query_anchor(query_metadata_signals: dict[str, Any] | None) -> bool:
+    if not isinstance(query_metadata_signals, dict):
+        return False
+    if _metadata_lookup_signal_values(query_metadata_signals, "parsed_identifier_candidates"):
+        return True
+    if _metadata_lookup_signal_values(query_metadata_signals, "parsed_issuer_candidates"):
+        return True
+    raw_title_items = query_metadata_signals.get("parsed_title_ngrams")
+    if isinstance(raw_title_items, list):
+        for item in raw_title_items:
+            if not isinstance(item, dict):
+                continue
+            phrase = normalize_canonical_text(item.get("value"))
+            token_count = int(item.get("token_count") or len(phrase.split()))
+            if token_count >= 2 and phrase:
+                return True
+    return False
+
+
 def _source_identity_record_score(
     record: dict[str, Any],
     *,
@@ -1020,7 +1131,10 @@ def _source_identity_record_score(
         if re.fullmatch(r"(?:18|19|20)\d{2}", value)
     }
     year_values = set(record.get("year_signals") or [])
-    family = str(record.get("source_family_canonical") or "")
+    family = str(record.get("source_family_mapped") or record.get("source_family_canonical") or "")
+    raw_family = str(record.get("source_family_canonical") or record.get("source_family_raw") or family)
+    if raw_family == "mulga_kanun" and str(record.get("effective_state") or "") == "repealed":
+        family = raw_family
     requested_family_set = set(_expand_source_family_aliases(requested_source_families))
     raw_parsed_families = (
         query_metadata_signals.get("parsed_family_candidates")
@@ -1053,6 +1167,19 @@ def _source_identity_record_score(
         if family in predicted:
             score += 8.0
             reasons.append("prior_family_match")
+    scenario_current_law_guard = bool(
+        source_family_resolution
+        and source_family_resolution.scenario_current_law_question
+        and not source_family_resolution.historical_or_repealed_question
+    )
+    effective_state = str(record.get("effective_state") or "").strip().lower()
+    if scenario_current_law_guard:
+        if raw_family == "mulga_kanun" or effective_state == "repealed":
+            score -= 14.0
+            reasons.append("scenario_current_law_repealed_penalty")
+        elif effective_state in {"active", "amended"}:
+            score += 6.0
+            reasons.append("scenario_current_law_active_bonus")
 
     if parsed_family_set:
         if family in parsed_family_set:
@@ -1125,6 +1252,42 @@ def _source_identity_record_score(
         score += 5.0
         reasons.append("uy_playbook")
 
+    dominant_family_intent: set[str] = set()
+    if requested_family_set:
+        dominant_family_intent = set(requested_family_set)
+    elif parsed_family_set:
+        dominant_family_intent = set(parsed_family_set)
+    elif source_family_resolution and source_family_resolution.predicted_family:
+        dominant_family_intent = set(
+            _expand_source_family_aliases([source_family_resolution.predicted_family])
+        )
+    if dominant_family_intent:
+        strict_kanun_intent = dominant_family_intent <= {"kanun", "mulga_kanun"}
+        strict_cb_karar_intent = dominant_family_intent <= {"cb_karar"}
+        strict_cb_genelge_intent = dominant_family_intent <= {"cb_genelge"}
+        strict_cb_yonetmelik_intent = dominant_family_intent <= {"cb_yonetmelik", "yonetmelik"}
+        if strict_kanun_intent and raw_family in {
+            "teblig",
+            "yonetmelik",
+            "kky",
+            "uy",
+            "cb_yonetmelik",
+            "cb_genelge",
+            "cb_karar",
+            "cb_kararname",
+        }:
+            score -= 22.0
+            reasons.append("strict_kanun_document_type_penalty")
+        elif strict_cb_karar_intent and raw_family in {"teblig", "cb_genelge"}:
+            score -= 20.0
+            reasons.append("strict_cb_karar_document_type_penalty")
+        elif strict_cb_genelge_intent and raw_family in {"teblig", "cb_karar"}:
+            score -= 20.0
+            reasons.append("strict_cb_genelge_document_type_penalty")
+        elif strict_cb_yonetmelik_intent and raw_family in {"cb_kararname", "cb_karar", "cb_genelge"}:
+            score -= 18.0
+            reasons.append("strict_cb_yonetmelik_document_type_penalty")
+
     if exact_identifier_hits or title_overlap >= 2:
         score += 4.0
         reasons.append("identity_anchor")
@@ -1143,6 +1306,8 @@ def _select_metadata_first_source_candidates(
         return None
     if query_metadata_signals is None:
         query_metadata_signals = _parse_metadata_lookup_query_signals(query)
+    if not _metadata_lookup_has_strong_query_anchor(query_metadata_signals):
+        return None
     catalog = load_canonical_source_catalog()
     if not catalog:
         return None
@@ -1177,6 +1342,12 @@ def _select_metadata_first_source_candidates(
         threshold = 24.0 if has_identifier_anchor else 30.0 if has_issuer_family_anchor else 32.0
         if score < threshold:
             continue
+        strict_document_type_conflict = any(
+            reason.startswith("strict_") and reason.endswith("_document_type_penalty")
+            for reason in reasons
+        )
+        if strict_document_type_conflict and not has_identifier_anchor and not has_issuer_family_anchor:
+            continue
         if has_identifier_anchor:
             lookup_source = "exact_identifier_lookup"
         elif has_title_ngram_anchor:
@@ -1191,7 +1362,10 @@ def _select_metadata_first_source_candidates(
                 "canonical_title": record.get("canonical_title"),
                 "canonical_identifier": record.get("canonical_identifier"),
                 "canonical_identifier_type": record.get("canonical_identifier_type"),
-                "source_family": record.get("source_family_canonical"),
+                "source_family": record.get("source_family_mapped") or record.get("source_family_canonical"),
+                "source_family_raw": record.get("source_family_canonical") or record.get("source_family_raw"),
+                "source_family_title_inferred": record.get("source_family_title_inferred"),
+                "source_family_mapping_reason": record.get("source_family_mapping_reason"),
                 "issuer": record.get("issuer"),
                 "year_signals": record.get("year_signals") or [],
                 "effective_state": record.get("effective_state"),
@@ -1220,6 +1394,26 @@ def _select_metadata_first_source_candidates(
             str(item.get("canonical_title") or ""),
         ),
     )[:limit]
+    scenario_current_law_guard = bool(
+        source_family_resolution
+        and source_family_resolution.scenario_current_law_question
+        and not source_family_resolution.historical_or_repealed_question
+    )
+    active_candidate_available = any(
+        str(item.get("effective_state") or "").strip().lower() in {"active", "amended"}
+        for item in ranked
+    )
+    repealed_candidate_demoted = False
+    if scenario_current_law_guard and active_candidate_available:
+        active_ranked = [
+            item
+            for item in ranked
+            if str(item.get("effective_state") or "").strip().lower() in {"active", "amended"}
+            and str(item.get("source_family_raw") or "") != "mulga_kanun"
+        ]
+        if active_ranked and len(active_ranked) != len(ranked):
+            ranked = active_ranked[:limit]
+            repealed_candidate_demoted = True
     for rank, item in enumerate(ranked, start=1):
         item["metadata_lookup_rank"] = rank
     return {
@@ -1234,6 +1428,10 @@ def _select_metadata_first_source_candidates(
         "selected_families": dedupe_strings([str(item.get("source_family") or "") for item in ranked if item.get("source_family")]),
         "query_identifier_tokens": sorted(_extract_source_identity_identifier_tokens(query)),
         "query_year_tokens": _extract_year_tokens(query),
+        "scenario_current_law_question": scenario_current_law_guard,
+        "active_candidate_available": active_candidate_available,
+        "repealed_candidate_demoted": repealed_candidate_demoted,
+        "temporal_family_guard_triggered": repealed_candidate_demoted,
         "query_metadata_signals": query_metadata_signals,
         "candidates": ranked,
     }
@@ -1242,6 +1440,8 @@ def _select_metadata_first_source_candidates(
 def _apply_metadata_lookup_family_prior(
     source_family_resolution: SourceFamilyResolution,
     metadata_first_selector: dict[str, Any] | None,
+    *,
+    query: str | None = None,
 ) -> SourceFamilyResolution:
     if not metadata_first_selector or not metadata_first_selector.get("metadata_lookup_hit"):
         return source_family_resolution
@@ -1255,6 +1455,28 @@ def _apply_metadata_lookup_family_prior(
         return source_family_resolution
     confidence = float(top.get("metadata_lookup_confidence") or metadata_first_selector.get("metadata_lookup_confidence") or 0.0)
     if confidence < 0.65:
+        return source_family_resolution
+
+    scenario_current_law_guard = bool(
+        source_family_resolution.scenario_current_law_question
+        and not source_family_resolution.historical_or_repealed_question
+    )
+    raw_metadata_family = str(top.get("source_family_raw") or metadata_family).strip()
+    top_effective_state = str(top.get("effective_state") or "").strip().lower()
+    if scenario_current_law_guard and (
+        raw_metadata_family == "mulga_kanun" or top_effective_state == "repealed"
+    ):
+        return source_family_resolution
+    relation_profile = _relation_query_family_profile(
+        query or "",
+        source_family_resolution=source_family_resolution,
+    )
+    if (
+        relation_profile.get("relation_query_detected")
+        and str(relation_profile.get("primary_group") or "") == "kanun"
+        and _source_family_relation_group(metadata_family) == "yonetmelik"
+        and _source_family_relation_group(source_family_resolution.predicted_family) == "kanun"
+    ):
         return source_family_resolution
 
     predicted = source_family_resolution.predicted_family
@@ -1316,6 +1538,17 @@ def _apply_metadata_lookup_family_prior(
             if negative_transition
             else "metadata_lookup_family_prior"
         ),
+        scenario_current_law_question=source_family_resolution.scenario_current_law_question,
+        scenario_current_law_prior=source_family_resolution.scenario_current_law_prior,
+        historical_or_repealed_question=source_family_resolution.historical_or_repealed_question,
+        historical_scope_detected=source_family_resolution.historical_scope_detected,
+        repealed_scope_detected=source_family_resolution.repealed_scope_detected,
+        current_law_prior_blocked_by_historical_scope=(
+            source_family_resolution.current_law_prior_blocked_by_historical_scope
+        ),
+        family_collision_detected=source_family_resolution.family_collision_detected,
+        family_collision_pair=source_family_resolution.family_collision_pair,
+        collision_resolution_reason=source_family_resolution.collision_resolution_reason,
     )
 
 
@@ -1442,16 +1675,31 @@ def _build_source_cluster_candidates(chunks: list[RetrievedChunk], *, limit: int
                     or chunk.source
                     or chunk.citation
                 ),
-                "source_family": _resolve_chunk_source_family(chunk),
+                "source_family": _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk),
                 "laws": [],
                 "citations": [],
                 "excerpts": [],
                 "max_score": chunk.score or 0.0,
                 "chunk_count": 0,
+                "state_rank": 2,
+                "effective_states": [],
             },
         )
         cluster["max_score"] = max(cluster["max_score"], chunk.score or 0.0)
         cluster["chunk_count"] += 1
+        effective_state = str(
+            (chunk.metadata or {}).get("effective_state") or resolve_effective_state(chunk.metadata or {}) or ""
+        ).strip().lower()
+        state_rank = (
+            2
+            if _is_temporally_inactive_chunk(chunk) or effective_state == "repealed"
+            else 0
+            if effective_state in {"active", "amended"} or _chunk_active_rank(chunk) == 0
+            else 1
+        )
+        if effective_state and effective_state not in cluster["effective_states"]:
+            cluster["effective_states"].append(effective_state)
+        cluster["state_rank"] = min(cluster["state_rank"], state_rank)
         law_hint = _extract_chunk_law_hint(chunk)
         if law_hint and law_hint not in cluster["laws"]:
             cluster["laws"].append(law_hint)
@@ -1479,6 +1727,15 @@ def _build_source_cluster_candidates(chunks: list[RetrievedChunk], *, limit: int
                 "excerpts": cluster["excerpts"],
                 "chunk_count": cluster["chunk_count"],
                 "max_score": round(float(cluster["max_score"] or 0.0), 6),
+                "state_rank": int(cluster["state_rank"]),
+                "effective_states": cluster["effective_states"],
+                "effective_state": (
+                    "active"
+                    if int(cluster["state_rank"]) == 0
+                    else "unknown"
+                    if int(cluster["state_rank"]) == 1
+                    else "repealed"
+                ),
             }
         )
     return candidates
@@ -1610,6 +1867,8 @@ def _apply_source_cluster_deterministic_overrides(
     candidates: list[dict[str, Any]],
     user_query: str,
     requested_source_families: list[str],
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+    planner_law_hints: set[str] | None = None,
 ) -> dict[str, Any]:
     candidate_by_id = {candidate["cluster_id"]: candidate for candidate in candidates}
     requested_family_set = set(requested_source_families)
@@ -1621,6 +1880,24 @@ def _apply_source_cluster_deterministic_overrides(
 
     scoped_candidates = candidates
     family_order = {family: index for index, family in enumerate(requested_source_families)}
+
+    scenario_current_law_question = _source_family_resolution_trace_bool(
+        source_family_resolution,
+        "scenario_current_law_question",
+    )
+    historical_or_repealed_question = _source_family_resolution_trace_bool(
+        source_family_resolution,
+        "historical_or_repealed_question",
+    )
+    normalized_planner_laws = {
+        normalized
+        for normalized in (
+            canonicalize_law_code(item) or _normalize_whitespace(str(item or ""))
+            for item in (planner_law_hints or set())
+        )
+        if normalized
+    }
+
     if requested_family_set and any(candidate.get("source_family") in requested_family_set for candidate in candidates):
         scoped_candidates = sorted(
             [
@@ -1642,6 +1919,50 @@ def _apply_source_cluster_deterministic_overrides(
             selected_cluster_ids = [candidate["cluster_id"] for candidate in scoped_candidates[:2]]
 
     identifier_tokens = _extract_source_identifier_tokens(user_query)
+    if normalized_planner_laws and not identifier_tokens:
+        planner_matches = [
+            candidate
+            for candidate in scoped_candidates
+            if normalized_planner_laws
+            & {
+                canonicalize_law_code(law) or _normalize_whitespace(str(law or ""))
+                for law in (candidate.get("laws") or [])
+            }
+        ]
+        if planner_matches:
+            scoped_candidates = planner_matches
+            selected_cluster_ids = [
+                cluster_id
+                for cluster_id in selected_cluster_ids
+                if cluster_id in {candidate["cluster_id"] for candidate in planner_matches}
+            ]
+
+    if scenario_current_law_question and not historical_or_repealed_question:
+        active_candidates = [
+            candidate for candidate in scoped_candidates if int(candidate.get("state_rank") or 2) == 0
+        ]
+        if active_candidates:
+            scoped_candidates = active_candidates
+            selected_cluster_ids = [
+                cluster_id
+                for cluster_id in selected_cluster_ids
+                if cluster_id in {candidate["cluster_id"] for candidate in active_candidates}
+            ]
+    elif historical_or_repealed_question:
+        legacy_candidates = [
+            candidate
+            for candidate in scoped_candidates
+            if int(candidate.get("state_rank") or 1) >= 2
+            or str(candidate.get("source_family") or "") == "mulga_kanun"
+        ]
+        if legacy_candidates:
+            scoped_candidates = legacy_candidates
+            selected_cluster_ids = [
+                cluster_id
+                for cluster_id in selected_cluster_ids
+                if cluster_id in {candidate["cluster_id"] for candidate in legacy_candidates}
+            ]
+
     if identifier_tokens:
         identifier_matches = [
             candidate
@@ -1673,7 +1994,18 @@ def _apply_source_cluster_deterministic_overrides(
     if supported_cluster_ids:
         selected_cluster_ids = supported_cluster_ids
     else:
-        selected_cluster_ids = []
+        selected_cluster_ids = [
+            candidate["cluster_id"]
+            for candidate in scoped_candidates
+            if _candidate_has_selector_support(
+                candidate,
+                user_query=user_query,
+                requested_source_families=requested_source_families,
+                identifier_tokens=identifier_tokens,
+            )
+        ][:2]
+        if not selected_cluster_ids and scoped_candidates:
+            selected_cluster_ids = [scoped_candidates[0]["cluster_id"]]
 
     selected_laws = [
         law
@@ -1711,6 +2043,8 @@ async def _run_source_cluster_selector(
     user_query: str,
     requested_source_families: list[str],
     chunks: list[RetrievedChunk],
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+    planner_law_hints: set[str] | None = None,
 ) -> dict[str, Any] | None:
     if not _source_cluster_selector_enabled():
         return None
@@ -1738,6 +2072,7 @@ async def _run_source_cluster_selector(
                 "Görevin, cevabı kurmak için en muhtemel 1-3 kaynak kümesini seçmek. "
                 "Yalnızca verilen adaylardan seçim yap. "
                 "Belge adı ve kapsamı soruyu gerçekten yönetmeli; genel başlık benzerliğine aldanma. "
+                "Adaylarda effective_state varsa, historical/repealed istenmedikçe active/amended kümeyi öncele. "
                 "Özellikle 'İade hükümleri' gibi jenerik başlıklar yüzünden alakasız metin seçme. "
                 "JSON dışında hiçbir şey döndürme. "
                 'Şema: {"selected_cluster_ids":["C1"],"selected_law_hints":["IK"]}'
@@ -1776,6 +2111,8 @@ async def _run_source_cluster_selector(
         candidates=candidates,
         user_query=user_query,
         requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        planner_law_hints=planner_law_hints,
     )
     if not payload.get("selected_cluster_ids"):
         return None
@@ -1847,7 +2184,7 @@ async def _run_retrieval_planner(
 
     raw_text = result.text if isinstance(getattr(result, "text", None), str) else ""
     payload = _extract_json_object(raw_text)
-    sanitized = _sanitize_retrieval_plan_payload(payload)
+    sanitized = _sanitize_retrieval_plan_payload(payload, user_query=user_query)
     if sanitized is None:
         return None
     sanitized["raw_text"] = raw_text
@@ -1979,21 +2316,29 @@ def _canonical_source_family_value(value: Any) -> str | None:
     return aliases.get(raw, raw if raw in _RETRIEVAL_PLANNER_ALLOWED_FAMILIES else None)
 
 
-def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
+def _resolve_chunk_source_family_profile(chunk: RetrievedChunk) -> dict[str, str | None]:
     metadata = chunk.metadata or {}
-    title_family = _infer_family_from_source_title(
+    title_family = _canonical_source_family_value(
+        metadata.get("source_family_title_inferred")
+    ) or _infer_family_from_source_title(
         metadata.get("source_title")
         or metadata.get("belge_adi")
         or metadata.get("kanun_adi")
         or metadata.get("law_name")
+    )
+    raw_family = _canonical_source_family_value(
+        metadata.get("source_family_raw")
+        or metadata.get("belge_turu")
+        or metadata.get("source_type")
     )
     canonical_family = _canonical_source_family_value(
         metadata.get("source_family_canonical")
         or metadata.get("source_family")
         or metadata.get("canonical_source_family")
     )
-    if canonical_family and title_family:
-        if canonical_family in {"teblig", "kanun", "mulga_kanun"} and title_family in {
+    resolved_family = canonical_family or raw_family or title_family
+    if resolved_family and title_family:
+        if resolved_family in {"teblig", "kanun", "mulga_kanun"} and title_family in {
             "yonetmelik",
             "teblig",
             "tuzuk",
@@ -2003,7 +2348,7 @@ def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
             "cb_kararname",
             "cb_yonetmelik",
         }:
-            return title_family
+            resolved_family = title_family
     if title_family in {
         "khk",
         "tuzuk",
@@ -2013,16 +2358,45 @@ def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
         "cb_kararname",
         "cb_karar",
     }:
-        return title_family
-    if canonical_family:
-        return canonical_family
-    family = metadata.get("belge_turu") or metadata.get("source_type")
-    canonical_family = _canonical_source_family_value(family)
-    if canonical_family:
-        return canonical_family
-    if isinstance(family, str) and family.strip():
-        return family.strip().lower()
-    return title_family
+        resolved_family = title_family
+    mapped_family = _canonical_source_family_value(metadata.get("source_family_mapped"))
+    mapping_reason = str(metadata.get("source_family_mapping_reason") or "")
+    if not mapped_family and metadata:
+        profile = source_family_mapping_profile(metadata)
+        mapped_family = _canonical_source_family_value(profile.get("source_family_mapped"))
+        mapping_reason = mapping_reason or str(profile.get("source_family_mapping_reason") or "")
+        raw_family = raw_family or _canonical_source_family_value(profile.get("source_family_raw"))
+        canonical_family = canonical_family or _canonical_source_family_value(
+            profile.get("source_family_canonical")
+        )
+        title_family = title_family or _canonical_source_family_value(
+            profile.get("source_family_title_inferred")
+        )
+    if not mapped_family:
+        mapped_family = resolved_family
+    return {
+        "raw_family": raw_family,
+        "canonical_family": canonical_family or resolved_family,
+        "title_inferred_family": title_family,
+        "resolved_family": resolved_family,
+        "mapped_family": mapped_family,
+        "mapping_reason": mapping_reason or "canonical_family",
+    }
+
+
+def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
+    return str(_resolve_chunk_source_family_profile(chunk).get("resolved_family") or "") or None
+
+
+def _resolve_chunk_routing_family(chunk: RetrievedChunk) -> str | None:
+    profile = _resolve_chunk_source_family_profile(chunk)
+    mapped_family = str(profile.get("mapped_family") or "")
+    if (
+        str(profile.get("mapping_reason") or "") == "mulga_to_kanun"
+        and _is_temporally_inactive_chunk(chunk)
+    ):
+        return str(profile.get("resolved_family") or profile.get("canonical_family") or "") or None
+    return mapped_family or None
 
 
 def _chunk_law_candidates(chunk: RetrievedChunk) -> set[str]:
@@ -2054,15 +2428,22 @@ def _chunk_law_candidates(chunk: RetrievedChunk) -> set[str]:
 def _extract_source_identifier_tokens(text: str) -> set[str]:
     without_dates = re.sub(r"\b(?:19|20)\d{2}-\d{1,2}-\d{1,2}\b", " ", text or "")
     tokens: set[str] = set()
-    for match in re.finditer(
-        r"\b(?:karar|kararname|tebliğ|teblig|genelge)?\s*(?:sayısı|sayisi|no|numarası|numarasi)?\s*:?\s*(\d{2,9}(?:[-/]\d{1,4})?)\b",
-        _normalize_tr_text(without_dates),
-    ):
-        token = match.group(1)
-        if re.fullmatch(r"(?:19|20)\d{2}", token):
+    normalized = _normalize_tr_text(without_dates)
+    patterns = (
+        r"\b(\d{2,9}(?:[-/]\d{1,4})?)\s+sayili\s+(?:[a-z0-9]{2,}\s+){0,8}(?:kanun hukmunde kararname|cumhurbaskanligi kararnamesi|cumhurbaskani karari|cumhurbaskanligi karari|cumhurbaskanligi genelgesi|kanun|kanunu|khk|cbk|kararname|kararnamesi|karar|karari|genelge|genelgesi|teblig|tebligi)\b",
+        r"\b(?:kanun hukmunde kararname|cumhurbaskanligi kararnamesi|cumhurbaskani karari|cumhurbaskanligi karari|cumhurbaskanligi genelgesi|kanun|kanunu|khk|cbk|kararname|kararnamesi|karar|karari|genelge|genelgesi|teblig|tebligi)\s+(?:sayisi|sayili|no|numarasi)\s*:?\s*(\d{2,9}(?:[-/]\d{1,4})?)\b",
+    )
+    for pattern in patterns:
+        for match in re.finditer(pattern, normalized):
+            token = match.group(1)
+            if re.fullmatch(r"(?:19|20)\d{2}", token):
+                continue
+            tokens.add(token)
+            tokens.add(token.split("-", 1)[0].split("/", 1)[0])
+    for law in extract_numbered_law_mentions(text):
+        if re.fullmatch(r"(?:19|20)\d{2}", law):
             continue
-        tokens.add(token)
-        tokens.add(token.split("-", 1)[0].split("/", 1)[0])
+        tokens.add(law)
     return {token for token in tokens if len(token) >= 2}
 
 
@@ -2153,6 +2534,30 @@ def _resolve_chunk_source_identifier(chunk: RetrievedChunk) -> str:
         )
     )
     return identifier or _resolve_trace_source_id(chunk)
+
+
+def _resolve_chunk_source_display_label(chunk: RetrievedChunk) -> str:
+    return _resolve_chunk_source_title(chunk) or _resolve_chunk_source_identifier(chunk) or _resolve_chunk_source_key(chunk)
+
+
+def _resolve_trace_source_display_label(trace: dict[str, Any]) -> str:
+    return str(
+        trace.get("source_title")
+        or trace.get("source_identifier")
+        or trace.get("source_key")
+        or trace.get("source_id")
+        or ""
+    )
+
+
+def _resolve_candidate_source_display_label(candidate: dict[str, Any]) -> str:
+    return str(
+        candidate.get("canonical_title")
+        or candidate.get("display_title")
+        or candidate.get("source_key")
+        or candidate.get("canonical_identifier")
+        or ""
+    )
 
 
 def _normalize_article_token(value: Any) -> str:
@@ -2504,6 +2909,7 @@ def _select_article_span_evidence(
     requested_source_families: list[str],
     explicit_article_refs: list[tuple[str, str]] | None = None,
     selected_source_keys: set[str] | None = None,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     if not chunks:
         return chunks, {"applied": False, "reason": "no_chunks"}
@@ -2542,10 +2948,28 @@ def _select_article_span_evidence(
         return chunks, {"applied": False, "reason": "no_selector_signal"}
 
     current_validity_query = _asks_current_validity_query(query)
+    scenario_current_law_question = (
+        _source_family_resolution_trace_bool(source_family_resolution, "scenario_current_law_question")
+        or current_validity_query
+    )
+    historical_or_repealed_question = (
+        _source_family_resolution_trace_bool(source_family_resolution, "historical_or_repealed_question")
+        or _asks_historical_or_repealed_query(query)
+    )
+    relation_profile = _relation_query_family_profile(
+        query,
+        source_family_resolution=source_family_resolution,
+    )
+    relation_query_detected = bool(relation_profile.get("relation_query_detected"))
+    relation_primary_group = str(relation_profile.get("primary_group") or "")
+    relation_supporting_group = str(relation_profile.get("supporting_group") or "")
+    query_year_tokens = set(_extract_year_tokens(query))
+    legacy_intent_binding_active = historical_or_repealed_question
+    temporal_guard_enabled = scenario_current_law_question and not historical_or_repealed_question
     scored: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
     for original_index, chunk in enumerate(chunks):
         metadata = chunk.metadata or {}
-        family = _resolve_chunk_source_family(chunk) or ""
+        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
         source_key = _resolve_chunk_source_key(chunk)
         title = _resolve_chunk_source_title(chunk)
         heading = metadata.get("heading") or metadata.get("article_heading")
@@ -2580,6 +3004,37 @@ def _select_article_span_evidence(
         heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
         text_overlap = _count_term_overlap(chunk.text, query_terms)
         cluster_size = source_cluster_sizes.get(source_key, 1)
+        effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
+        temporally_inactive = _is_temporally_inactive_chunk(chunk) or effective_state == "repealed"
+        chunk_years = _chunk_year_values(chunk)
+        year_match = bool(query_year_tokens and chunk_years & query_year_tokens)
+        relation_group = _source_family_relation_group(family)
+        temporal_state_bucket = (
+            "repealed"
+            if temporally_inactive
+            else "active"
+            if effective_state in {"active", "amended"} or _chunk_active_rank(chunk) == 0
+            else "unknown"
+        )
+        temporal_guard_support = bool(
+            selected_source_match
+            or identifier_match
+            or family_match
+            or preferred_family_match
+            or law_match
+            or article_match
+            or adjacent_article_match
+            or title_overlap >= 1
+            or heading_overlap >= 1
+            or text_overlap >= 2
+        )
+        legacy_profile = _legacy_source_binding_profile(
+            chunk,
+            query=query,
+            source_family_resolution=source_family_resolution,
+            identifier_tokens=identifier_tokens,
+            year_tokens=query_year_tokens,
+        )
 
         score = float(chunk.score or 0.0)
         if explicit_ref_match:
@@ -2618,6 +3073,18 @@ def _select_article_span_evidence(
             score -= 55
         if current_validity_query:
             score -= _chunk_active_rank(chunk) * 20
+        if temporal_guard_enabled:
+            if temporally_inactive:
+                score -= 90
+            elif temporal_state_bucket == "active":
+                score += 16
+        if relation_query_detected and relation_primary_group:
+            if relation_group == relation_primary_group:
+                score += 38
+            elif relation_supporting_group and relation_group == relation_supporting_group:
+                score -= 24
+        if legacy_profile["legacy_intent_binding_active"]:
+            score += float(legacy_profile["score"])
 
         scored.append(
             (
@@ -2628,6 +3095,7 @@ def _select_article_span_evidence(
                     "source_id": _resolve_trace_source_id(chunk),
                     "citation": chunk.citation,
                     "source_key": source_key,
+                    "source_title": title,
                     "score": round(score, 4),
                     "source_family": family or None,
                     "source_identifier": _resolve_chunk_source_identifier(chunk),
@@ -2654,9 +3122,21 @@ def _select_article_span_evidence(
                     "preferred_family_match": preferred_family_match,
                     "selected_source_match": selected_source_match,
                     "law_match": law_match,
+                    "year_match": year_match,
                     "title_overlap": title_overlap,
                     "heading_overlap": heading_overlap,
                     "text_overlap": text_overlap,
+                    "effective_state": effective_state or "unknown",
+                    "temporally_inactive": temporally_inactive,
+                    "temporal_state_bucket": temporal_state_bucket,
+                    "temporal_guard_support": temporal_guard_support,
+                    "relation_query_detected": relation_query_detected,
+                    "relation_group": relation_group or None,
+                    "legacy_intent_binding_active": legacy_profile["legacy_intent_binding_active"],
+                    "legacy_candidate_preferred": legacy_profile["legacy_candidate_preferred"],
+                    "document_state_binding_reason": legacy_profile["binding_reason"] or None,
+                    "legacy_state_rank": legacy_profile["state_rank"],
+                    "legacy_source_years": legacy_profile["source_years"],
                     "contains_temporal_clause": _contains_temporal_clause_signal(chunk.text),
                     "contains_exception_signal": _contains_exception_signal(chunk.text),
                     "temporal_state_resolved": _chunk_effective_state_resolved(chunk),
@@ -2665,6 +3145,16 @@ def _select_article_span_evidence(
         )
 
     ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
+    active_guard_candidates = [
+        item
+        for item in ranked
+        if not item[3].get("temporally_inactive") and _selector_trace_supports_temporal_guard(item[3])
+    ]
+    active_candidate_available = bool(active_guard_candidates)
+    repealed_candidate_demoted = False
+    temporal_family_guard_triggered = False
+    active_candidate_demoted_due_to_legacy_scope = False
+    document_state_binding_reason = ""
     document_lock_reason = "top_ranked"
     document_lock_candidates: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
     if selected_source_keys:
@@ -2711,6 +3201,128 @@ def _select_article_span_evidence(
             document_lock_reason = "numbered_law_lock"
     if not document_lock_candidates and ranked:
         document_lock_candidates = [ranked[0]]
+    if temporal_guard_enabled and document_lock_candidates and active_candidate_available:
+        locked_trace = document_lock_candidates[0][3]
+        if locked_trace.get("temporally_inactive"):
+            locked_family = str(locked_trace.get("source_family") or "")
+            compatible_active_candidates = [
+                item
+                for item in active_guard_candidates
+                if _temporal_guard_family_compatible(str(item[3].get("source_family") or ""), locked_family)
+            ]
+            if compatible_active_candidates:
+                document_lock_candidates = compatible_active_candidates
+                document_lock_reason = "current_law_temporal_guard"
+                repealed_candidate_demoted = True
+                temporal_family_guard_triggered = True
+    if legacy_intent_binding_active and document_lock_candidates:
+        legacy_guard_candidates = [
+            item
+            for item in ranked
+            if item[3].get("legacy_candidate_preferred")
+            and _selector_trace_supports_temporal_guard(item[3])
+        ]
+        if legacy_guard_candidates:
+            document_state_binding_reason = "legacy_scope_candidate_preferred"
+            if not document_lock_candidates[0][3].get("legacy_candidate_preferred"):
+                document_lock_candidates = legacy_guard_candidates
+                document_lock_reason = "legacy_scope_state_binding"
+                active_candidate_demoted_due_to_legacy_scope = True
+        else:
+            document_state_binding_reason = "legacy_scope_no_compatible_candidate"
+    locked_family_internal_candidates: list[str] = []
+    internal_document_state_rank: int | None = None
+    internal_document_choice_reason = ""
+    if document_lock_candidates and (legacy_intent_binding_active or relation_query_detected):
+        locked_trace = document_lock_candidates[0][3]
+        locked_family = str(locked_trace.get("source_family") or "")
+        candidate_pool = [
+            item
+            for item in ranked
+            if (
+                not locked_family
+                or str(item[3].get("source_family") or "") == locked_family
+                or _temporal_guard_family_compatible(str(item[3].get("source_family") or ""), locked_family)
+            )
+        ]
+        if relation_query_detected and relation_primary_group:
+            relation_primary_candidates = [
+                item
+                for item in candidate_pool
+                if _source_family_relation_group(item[3].get("source_family")) == relation_primary_group
+            ]
+            if relation_primary_candidates:
+                candidate_pool = relation_primary_candidates
+
+        internal_records: list[dict[str, Any]] = []
+        seen_internal_keys: set[str] = set()
+        for item in candidate_pool:
+            trace = item[3]
+            source_key = str(trace.get("source_key") or "")
+            if not source_key or source_key in seen_internal_keys:
+                continue
+            seen_internal_keys.add(source_key)
+            source_items = [
+                source_item
+                for source_item in candidate_pool
+                if str(source_item[3].get("source_key") or "") == source_key
+            ]
+            state_rank = min(
+                int(source_item[3].get("legacy_state_rank"))
+                if source_item[3].get("legacy_state_rank") is not None
+                else 2
+                for source_item in source_items
+            )
+            best_score = max(float(source_item[3].get("score") or 0.0) for source_item in source_items)
+            identifier_rank = 0 if any(
+                source_item[3].get("identifier_match")
+                or source_item[3].get("selected_source_match")
+                or source_item[3].get("law_match")
+                for source_item in source_items
+            ) else 1
+            year_rank = 0 if any(source_item[3].get("year_match") for source_item in source_items) else 1
+            relation_rank = 0 if any(
+                _source_family_relation_group(source_item[3].get("source_family")) == relation_primary_group
+                for source_item in source_items
+            ) else 1
+            internal_records.append(
+                {
+                    "source_key": source_key,
+                    "state_rank": state_rank,
+                    "identifier_rank": identifier_rank,
+                    "year_rank": year_rank,
+                    "relation_rank": relation_rank,
+                    "best_score": round(best_score, 4),
+                }
+            )
+        internal_records.sort(
+            key=lambda item: (
+                item["state_rank"],
+                item["relation_rank"],
+                item["identifier_rank"],
+                item["year_rank"],
+                -float(item["best_score"]),
+            )
+        )
+        locked_family_internal_candidates = [
+            str(item.get("source_key") or "")
+            for item in internal_records[:5]
+            if item.get("source_key")
+        ]
+        if internal_records:
+            chosen_source_key = str(internal_records[0].get("source_key") or "")
+            internal_document_state_rank = int(internal_records[0].get("state_rank") or 0)
+            current_source_key = _resolve_chunk_source_key(document_lock_candidates[0][2])
+            if chosen_source_key and chosen_source_key != current_source_key:
+                document_lock_candidates = [
+                    item
+                    for item in candidate_pool
+                    if _resolve_chunk_source_key(item[2]) == chosen_source_key
+                ]
+                document_lock_reason = "internal_document_arbitration"
+                internal_document_choice_reason = "state_rank_then_identity_priority"
+            else:
+                internal_document_choice_reason = "locked_document_retained_after_internal_arbitration"
     primary_source_key = _resolve_chunk_source_key(document_lock_candidates[0][2]) if document_lock_candidates else ""
     window_items: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
     if primary_source_key:
@@ -2752,6 +3364,17 @@ def _select_article_span_evidence(
     else:
         reordered = [chunk for _score, _index, chunk, _trace in ranked]
         top_traces = [trace for _score, _index, _chunk, trace in ranked[:10]]
+    primary_source_candidate = ""
+    supporting_source_candidate = ""
+    if relation_query_detected:
+        for _score, _index, _chunk, trace in ranked:
+            if _source_family_relation_group(trace.get("source_family")) == relation_primary_group:
+                primary_source_candidate = _resolve_trace_source_display_label(trace)
+                break
+        for _score, _index, _chunk, trace in ranked:
+            if _source_family_relation_group(trace.get("source_family")) == relation_supporting_group:
+                supporting_source_candidate = _resolve_trace_source_display_label(trace)
+                break
     selector_document_rank = None
     for rank, (_score, _index, _chunk, trace) in enumerate(ranked, start=1):
         if selected_source_keys and trace.get("selected_source_match"):
@@ -2823,7 +3446,9 @@ def _select_article_span_evidence(
         "preferred_source_families": sorted(preferred_family_set),
         "selector_preferred_family_hit": bool(top_trace and top_trace.get("preferred_family_match")),
         "selected_source_keys": sorted(selected_source_key_set),
-        "selected_document_id": primary_source_key or None,
+        "selected_document_id": (
+            _resolve_chunk_source_display_label(document_lock_candidates[0][2]) if document_lock_candidates else None
+        ),
         "selected_article": selected_article,
         "selected_paragraph_or_clause": selected_paragraph_or_clause,
         "support_span_count": support_span_count,
@@ -2841,6 +3466,28 @@ def _select_article_span_evidence(
         "support_contains_exception_signal": _support_contains_exception_signal(query, top_traces),
         "selector_reason": document_lock_reason,
         "document_lock_reason": document_lock_reason,
+        "relation_query_detected": relation_query_detected,
+        "primary_source_candidate": primary_source_candidate,
+        "supporting_source_candidate": supporting_source_candidate,
+        "final_primary_source_reason": (
+            str(relation_profile.get("reason") or "relation_query_primary_selector")
+            if primary_source_candidate
+            else ""
+        ),
+        "scenario_current_law_question": scenario_current_law_question,
+        "active_candidate_available": active_candidate_available,
+        "repealed_candidate_demoted": repealed_candidate_demoted,
+        "temporal_family_guard_triggered": temporal_family_guard_triggered,
+        "legacy_intent_binding_active": legacy_intent_binding_active,
+        "active_candidate_demoted_due_to_legacy_scope": active_candidate_demoted_due_to_legacy_scope,
+        "legacy_candidate_preferred": bool(top_trace and top_trace.get("legacy_candidate_preferred")),
+        "document_state_binding_reason": (
+            document_state_binding_reason
+            or (str(top_trace.get("document_state_binding_reason") or "") if top_trace else "")
+        ),
+        "locked_family_internal_candidates": locked_family_internal_candidates,
+        "internal_document_state_rank": internal_document_state_rank,
+        "internal_document_choice_reason": internal_document_choice_reason,
         "article_match_type": article_match_type,
         "selector_article_lock_type": selector_article_lock_type,
         "query_article_alignment": _query_article_alignment(
@@ -2907,6 +3554,354 @@ def _asks_current_validity_query(query: str) -> bool:
             "hangi metin",
             "kullanilmali",
         )
+    )
+
+
+def _asks_historical_or_repealed_query(query: str) -> bool:
+    normalized = normalize_query_text(query)
+    return any(
+        hint in normalized
+        for hint in (
+            "mulga mevzuat",
+            "mulga kanun",
+            "mulga duzenleme",
+            "tarihsel metin",
+            "eski metin",
+            "eski khk",
+            "eski tuzuk",
+            "eski tüzük",
+            "o tarihte",
+            "yururlukten kalkmis",
+            "yururlukten kaldiril",
+            "ilga",
+            "gecis hukmu",
+            "onceki duzenleme",
+        )
+    )
+
+
+def _source_family_relation_group(family: str | None) -> str:
+    normalized = str(family or "").strip()
+    if normalized in {"kanun", "mulga_kanun"}:
+        return "kanun"
+    if normalized in {"yonetmelik", "cb_yonetmelik", "kky", "uy", "teblig"}:
+        return "yonetmelik"
+    return normalized
+
+
+def _relation_query_detected(
+    query: str,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+) -> bool:
+    collision_reason = ""
+    if isinstance(source_family_resolution, dict):
+        collision_reason = str(source_family_resolution.get("collision_resolution_reason") or "")
+    elif source_family_resolution is not None:
+        collision_reason = str(source_family_resolution.collision_resolution_reason or "")
+    if collision_reason == "kanun_yonetmelik_relation_prefers_kanun":
+        return True
+
+    normalized = f" {normalize_query_text(query)} "
+    mentions_kanun = any(
+        token in normalized
+        for token in (
+            " kanun ",
+            " tebligat kanunu",
+            " is kanunu",
+            " borclar kanunu",
+            " medeni kanun",
+            " ticaret kanunu",
+            " sayili kanun",
+        )
+    ) or bool(extract_numbered_law_mentions(query))
+    mentions_regulation = any(
+        token in normalized
+        for token in (" yonetmelik", " teblig", " alt duzenleme", " ikincil duzenleme")
+    )
+    relation_signal = any(
+        token in normalized
+        for token in (
+            " iliski",
+            " hiyerarsi",
+            " dayanak",
+            " birlikte",
+            " goster",
+            " hangisi esas",
+            " hangisi uygulan",
+        )
+    )
+    return bool(mentions_kanun and mentions_regulation and relation_signal)
+
+
+def _relation_query_family_profile(
+    query: str,
+    *,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+) -> dict[str, str | bool]:
+    detected = _relation_query_detected(query, source_family_resolution=source_family_resolution)
+    if not detected:
+        return {
+            "relation_query_detected": False,
+            "primary_group": "",
+            "supporting_group": "",
+            "reason": "",
+        }
+
+    collision_reason = ""
+    predicted_family = ""
+    if isinstance(source_family_resolution, dict):
+        collision_reason = str(source_family_resolution.get("collision_resolution_reason") or "")
+        predicted_family = str(source_family_resolution.get("predicted_family") or "")
+    elif source_family_resolution is not None:
+        collision_reason = str(source_family_resolution.collision_resolution_reason or "")
+        predicted_family = str(source_family_resolution.predicted_family or "")
+
+    if collision_reason == "kanun_yonetmelik_relation_prefers_kanun":
+        return {
+            "relation_query_detected": True,
+            "primary_group": "kanun",
+            "supporting_group": "yonetmelik",
+            "reason": collision_reason,
+        }
+
+    if _source_family_relation_group(predicted_family) == "kanun":
+        return {
+            "relation_query_detected": True,
+            "primary_group": "kanun",
+            "supporting_group": "yonetmelik",
+            "reason": "predicted_family_relation_primary",
+        }
+
+    return {
+        "relation_query_detected": True,
+        "primary_group": "",
+        "supporting_group": "",
+        "reason": "relation_query_detected_without_family_resolution",
+    }
+
+
+def _apply_relation_query_metadata_focus(
+    metadata_first_selector: dict[str, Any] | None,
+    *,
+    query: str,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    if not metadata_first_selector or not metadata_first_selector.get("candidates"):
+        return metadata_first_selector
+
+    relation_profile = _relation_query_family_profile(
+        query,
+        source_family_resolution=source_family_resolution,
+    )
+    selector = dict(metadata_first_selector)
+    selector["relation_query_detected"] = relation_profile.get("relation_query_detected") or False
+    selector.setdefault("primary_source_candidate", "")
+    selector.setdefault("supporting_source_candidate", "")
+    selector.setdefault("final_primary_source_reason", "")
+    if not relation_profile.get("relation_query_detected"):
+        return selector
+
+    primary_group = str(relation_profile.get("primary_group") or "")
+    supporting_group = str(relation_profile.get("supporting_group") or "")
+    candidates = [item for item in (selector.get("candidates") or []) if isinstance(item, dict)]
+    if not primary_group:
+        selector["final_primary_source_reason"] = str(
+            relation_profile.get("reason") or "relation_query_detected"
+        )
+        return selector
+
+    primary_candidates = [
+        candidate
+        for candidate in candidates
+        if _source_family_relation_group(candidate.get("source_family")) == primary_group
+    ]
+    supporting_candidates = [
+        candidate
+        for candidate in candidates
+        if _source_family_relation_group(candidate.get("source_family")) == supporting_group
+    ]
+    selector["primary_source_candidate"] = str(
+        (
+            (_resolve_candidate_source_display_label(primary_candidates[0]) if primary_candidates else None)
+            or (primary_candidates[0].get("canonical_identifier") if primary_candidates else None)
+            or ""
+        )
+    )
+    selector["supporting_source_candidate"] = str(
+        (
+            (_resolve_candidate_source_display_label(supporting_candidates[0]) if supporting_candidates else None)
+            or (supporting_candidates[0].get("canonical_identifier") if supporting_candidates else None)
+            or ""
+        )
+    )
+    if not primary_candidates:
+        selector["final_primary_source_reason"] = "relation_query_no_primary_metadata_candidate"
+        return selector
+
+    selector["candidates"] = primary_candidates + [
+        candidate for candidate in candidates if candidate not in primary_candidates
+    ]
+    selector["selected_source_keys"] = dedupe_strings(
+        [
+            str(candidate.get("source_key") or "")
+            for candidate in primary_candidates
+            if candidate.get("source_key")
+        ]
+    )
+    selector["selected_families"] = dedupe_strings(
+        [
+            str(candidate.get("source_family") or "")
+            for candidate in primary_candidates
+            if candidate.get("source_family")
+        ]
+    )
+    selector["final_primary_source_reason"] = str(
+        relation_profile.get("reason") or "relation_query_primary_metadata_focus"
+    )
+    return selector
+
+
+def _legacy_source_binding_profile(
+    chunk: RetrievedChunk,
+    *,
+    query: str,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+    identifier_tokens: set[str] | None = None,
+    year_tokens: set[str] | None = None,
+) -> dict[str, Any]:
+    legacy_intent_binding_active = bool(
+        _source_family_resolution_trace_bool(source_family_resolution, "historical_or_repealed_question")
+        or _source_family_resolution_trace_bool(source_family_resolution, "historical_scope_detected")
+        or _source_family_resolution_trace_bool(source_family_resolution, "repealed_scope_detected")
+        or _asks_historical_or_repealed_query(query)
+    )
+    if not legacy_intent_binding_active:
+        return {
+            "legacy_intent_binding_active": False,
+            "legacy_candidate_preferred": False,
+            "score": 0.0,
+            "binding_reason": "",
+            "state_rank": 1,
+            "identifier_match": False,
+            "year_match": False,
+            "source_years": [],
+        }
+
+    family = _resolve_chunk_source_family(chunk) or _resolve_chunk_routing_family(chunk) or ""
+    effective_state = str(
+        (chunk.metadata or {}).get("effective_state") or resolve_effective_state(chunk.metadata or {}) or ""
+    ).strip().lower()
+    query_year_set = {str(year) for year in (year_tokens or set()) if str(year).isdigit()}
+    chunk_year_set = {str(year) for year in _chunk_year_values(chunk) if str(year).isdigit()}
+    query_years_int = {int(year) for year in query_year_set}
+    chunk_years_int = {int(year) for year in chunk_year_set}
+    identifier_match = _chunk_matches_identifier_tokens(chunk, identifier_tokens or set())
+    year_match = bool(query_year_set and chunk_year_set & query_year_set)
+    old_query_year_present = bool(
+        query_years_int and min(query_years_int) < datetime.now(timezone.utc).year
+    )
+    old_chunk_year_present = bool(chunk_years_int and min(chunk_years_int) <= 2017)
+
+    score = 0.0
+    reasons: list[str] = []
+    if _is_temporally_inactive_chunk(chunk) or effective_state == "repealed":
+        score += 120.0
+        reasons.append("legacy_state_metadata_repealed")
+    if identifier_match:
+        score += 24.0
+        reasons.append("legacy_query_identifier_anchor")
+    if year_match:
+        score += 36.0
+        reasons.append("legacy_query_year_match")
+    if family == "mulga_kanun":
+        score += 28.0
+        reasons.append("legacy_family_mulga")
+    if family in {"khk", "tuzuk"}:
+        score += 12.0
+        reasons.append("legacy_family_profile")
+    if family == "khk" and old_chunk_year_present:
+        score += 18.0
+        reasons.append("legacy_khk_pre2018_profile")
+    elif family == "khk":
+        score -= 18.0
+        reasons.append("legacy_khk_post2017_penalty")
+    if family == "tuzuk" and old_query_year_present:
+        score += 8.0
+        reasons.append("legacy_tuzuk_old_year_query")
+    if (
+        _source_family_resolution_trace_bool(source_family_resolution, "historical_scope_detected")
+        and family in {"khk", "tuzuk", "mulga_kanun"}
+    ):
+        score += 10.0
+        reasons.append("historical_scope_family_bonus")
+    if (
+        _source_family_resolution_trace_bool(source_family_resolution, "repealed_scope_detected")
+        and family in {"khk", "tuzuk", "mulga_kanun"}
+    ):
+        score += 10.0
+        reasons.append("repealed_scope_family_bonus")
+    if query_year_set and chunk_year_set and not year_match and family in {"khk", "tuzuk"}:
+        score -= 12.0
+        reasons.append("legacy_year_mismatch_penalty")
+
+    legacy_candidate_preferred = score >= 35.0
+    state_rank = (
+        0
+        if legacy_candidate_preferred
+        else 1
+        if effective_state in {"active", "amended"} or not _is_temporally_inactive_chunk(chunk)
+        else 2
+    )
+    return {
+        "legacy_intent_binding_active": True,
+        "legacy_candidate_preferred": legacy_candidate_preferred,
+        "score": round(score, 4),
+        "binding_reason": " | ".join(reasons),
+        "state_rank": state_rank,
+        "identifier_match": identifier_match,
+        "year_match": year_match,
+        "source_years": sorted(chunk_year_set),
+    }
+
+
+def _source_family_resolution_trace_bool(
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
+    key: str,
+) -> bool:
+    if isinstance(source_family_resolution, dict):
+        return bool(source_family_resolution.get(key))
+    if source_family_resolution is None:
+        return False
+    return bool(getattr(source_family_resolution, key, False))
+
+
+def _temporal_guard_family_group(family: str | None) -> str:
+    normalized = str(family or "").strip()
+    if normalized in {"kanun", "mulga_kanun"}:
+        return "kanun"
+    if normalized in {"yonetmelik", "kky", "uy", "cb_yonetmelik"}:
+        return "yonetmelik"
+    return normalized
+
+
+def _temporal_guard_family_compatible(left: str | None, right: str | None) -> bool:
+    if not left or not right:
+        return False
+    return _temporal_guard_family_group(left) == _temporal_guard_family_group(right)
+
+
+def _selector_trace_supports_temporal_guard(trace: dict[str, Any]) -> bool:
+    return bool(
+        trace.get("selected_source_match")
+        or trace.get("identifier_match")
+        or trace.get("family_match")
+        or trace.get("preferred_family_match")
+        or trace.get("law_match")
+        or trace.get("article_match")
+        or trace.get("adjacent_article_match")
+        or int(trace.get("title_overlap") or 0) >= 1
+        or int(trace.get("heading_overlap") or 0) >= 1
+        or int(trace.get("text_overlap") or 0) >= 2
     )
 
 
@@ -3095,6 +4090,7 @@ def _rerank_chunks_by_source_identity(
     chunks: list[RetrievedChunk],
     requested_source_families: list[str],
     metadata_first_selector: dict[str, Any] | None,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     if not chunks or not _source_identity_reranker_enabled():
         return chunks, {"applied": False, "reason": "disabled_or_no_chunks"}
@@ -3102,9 +4098,18 @@ def _rerank_chunks_by_source_identity(
     query_terms = _extract_retrieval_priority_terms(query)
     strict_identifier_tokens = _extract_source_identity_identifier_tokens(query)
     year_tokens = set(_extract_year_tokens(query))
+    query_article_tokens = _extract_query_article_tokens(query)
     requested_family_set = set(_expand_source_family_aliases(requested_source_families))
     current_validity_query = _asks_current_validity_query(query)
     historical_contrast_query = _asks_current_validity_over_historical_contrast(query)
+    relation_profile = _relation_query_family_profile(
+        query,
+        source_family_resolution=source_family_resolution,
+    )
+    relation_query_detected = bool(relation_profile.get("relation_query_detected"))
+    relation_primary_group = str(relation_profile.get("primary_group") or "")
+    relation_supporting_group = str(relation_profile.get("supporting_group") or "")
+    legacy_query_years = set(_extract_year_tokens(query))
     metadata_candidates = (metadata_first_selector or {}).get("candidates") or []
     if metadata_candidates:
         identity_rerank_input_source = "metadata_lookup_selector"
@@ -3117,7 +4122,9 @@ def _rerank_chunks_by_source_identity(
 
     scored: list[tuple[float, int, RetrievedChunk, dict[str, Any]]] = []
     for original_index, chunk in enumerate(chunks):
-        family = _resolve_chunk_source_family(chunk) or ""
+        family_profile = _resolve_chunk_source_family_profile(chunk)
+        family = str(family_profile.get("resolved_family") or "")
+        mapped_family = str(family_profile.get("mapped_family") or family)
         title = _resolve_chunk_source_title(chunk)
         metadata = chunk.metadata or {}
         source_identity_values = _chunk_source_identity_values(chunk)
@@ -3143,7 +4150,9 @@ def _rerank_chunks_by_source_identity(
             source_identity_values=source_identity_values,
         )
         metadata_first_match = any(_chunk_matches_metadata_first_candidate(chunk, candidate) for candidate in metadata_candidates)
-        family_match = bool(requested_family_set and family in requested_family_set)
+        family_match = bool(
+            requested_family_set and (mapped_family in requested_family_set or family in requested_family_set)
+        )
         year_match = bool(year_tokens and year_tokens & chunk_years)
         year_match_type = _year_match_type(year_tokens=year_tokens, year_match=year_match)
         official_gazette_date = str(metadata.get("official_gazette_date") or "").strip()
@@ -3155,6 +4164,16 @@ def _rerank_chunks_by_source_identity(
         active_rank = _chunk_active_rank(chunk)
         article_token = _chunk_article_token(chunk)
         source_key = _resolve_chunk_source_key(chunk)
+        recall_lane_sources = _chunk_recall_lane_sources(chunk)
+        recall_lane_rank = _chunk_recall_lane_rank(chunk)
+        relation_group = _source_family_relation_group(mapped_family or family)
+        legacy_profile = _legacy_source_binding_profile(
+            chunk,
+            query=query,
+            source_family_resolution=source_family_resolution,
+            identifier_tokens=strict_identifier_tokens,
+            year_tokens=legacy_query_years,
+        )
 
         score = float(chunk.score or 0.0)
         reasons: list[str] = []
@@ -3176,6 +4195,9 @@ def _rerank_chunks_by_source_identity(
         elif requested_family_set:
             score -= 35
             reasons.append("family_mismatch_penalty")
+        if mapped_family != family and requested_family_set and mapped_family in requested_family_set:
+            score += 12
+            reasons.append("family_mapping_bridge_match")
         if title_match_type == "exact_phrase":
             title_bias_applied += 125
             reasons.append("title_exact_phrase")
@@ -3217,6 +4239,37 @@ def _rerank_chunks_by_source_identity(
         if official_gazette_date_match:
             score += 16
             reasons.append("official_gazette_date_match")
+        if recall_lane_rank == 0:
+            score += 24
+            reasons.append("dual_lane_confirmation")
+        elif recall_lane_rank == 1:
+            if metadata_first_match or identifier_match_type == "exact_identifier" or title_match_type in {
+                "exact_phrase",
+                "strong_overlap",
+                "medium_overlap",
+            }:
+                score += 10
+                reasons.append("metadata_lane_supported")
+            else:
+                score -= 18
+                reasons.append("metadata_lane_without_identity_penalty")
+        elif recall_lane_rank == 2 and family_match and title_match_type in {
+            "exact_phrase",
+            "strong_overlap",
+            "medium_overlap",
+        }:
+            score += 6
+            reasons.append("dense_lane_supported")
+        if relation_query_detected and relation_primary_group:
+            if relation_group == relation_primary_group:
+                score += 42
+                reasons.append("relation_primary_source_bonus")
+            elif relation_supporting_group and relation_group == relation_supporting_group:
+                score -= 26
+                reasons.append("relation_supporting_source_penalty")
+                if metadata_first_match and identifier_match_type == "none":
+                    score -= 38
+                    reasons.append("relation_metadata_supporting_penalty")
         if family_match and title_match_type == "none" and identifier_match_type == "none" and year_match_type == "none":
             score -= 45 if family in {"cb_karar", "cb_genelge", "uy", "yonetmelik", "teblig", "kky"} else 18
             reasons.append("generic_family_without_identity_penalty")
@@ -3226,6 +4279,14 @@ def _rerank_chunks_by_source_identity(
         if historical_contrast_query and _is_temporally_inactive_chunk(chunk):
             score += 8
             reasons.append("historical_contrast_repealed_context")
+        if legacy_profile["legacy_intent_binding_active"]:
+            score += float(legacy_profile["score"])
+            if legacy_profile["binding_reason"]:
+                reasons.extend(
+                    reason
+                    for reason in str(legacy_profile["binding_reason"]).split(" | ")
+                    if reason
+                )
         if article_token == "0" and query_terms and title_overlap == 0 and not identifier_match:
             score -= 10
             reasons.append("m0_without_title_anchor_penalty")
@@ -3247,6 +4308,21 @@ def _rerank_chunks_by_source_identity(
         else:
             identity_lock_strength = "none"
 
+        replacement_guard_triggered = bool(
+            title_match_type in {"none", "weak_overlap"}
+            and identifier_match_type != "exact_identifier"
+            and recall_lane_rank <= 1
+        )
+        post_identity_article_alignment = _query_article_alignment(
+            selected_article=article_token,
+            query_article_tokens=query_article_tokens,
+            article_match_type=(
+                "source_local_support"
+                if article_token and article_token != "0"
+                else "title_only"
+            ),
+        )
+
         scored.append(
             (
                 score,
@@ -3256,7 +4332,11 @@ def _rerank_chunks_by_source_identity(
                     "source_id": _resolve_trace_source_id(chunk),
                     "citation": chunk.citation,
                     "source_key": source_key,
+                    "source_title": title,
                     "source_family": family or None,
+                    "source_family_mapped": mapped_family or None,
+                    "source_family_raw": family_profile.get("raw_family"),
+                    "source_family_mapping_reason": family_profile.get("mapping_reason"),
                     "source_identifier": _resolve_chunk_source_identifier(chunk),
                     "article_or_section": article_token or None,
                     "score": round(score, 4),
@@ -3276,7 +4356,19 @@ def _rerank_chunks_by_source_identity(
                     "year_bias_applied": round(year_bias_applied, 4),
                     "official_gazette_date_match": official_gazette_date_match,
                     "active_rank": active_rank,
+                    "relation_query_detected": relation_query_detected,
+                    "relation_group": relation_group or None,
+                    "legacy_intent_binding_active": legacy_profile["legacy_intent_binding_active"],
+                    "legacy_candidate_preferred": legacy_profile["legacy_candidate_preferred"],
+                    "document_state_binding_reason": legacy_profile["binding_reason"] or None,
+                    "legacy_state_rank": legacy_profile["state_rank"],
+                    "legacy_year_match": legacy_profile["year_match"],
+                    "legacy_source_years": legacy_profile["source_years"],
+                    "retrieval_lane_sources": recall_lane_sources,
+                    "identity_rerank_input_lane": recall_lane_sources[0] if recall_lane_sources else "unknown",
                     "identity_lock_strength": identity_lock_strength,
+                    "replacement_guard_triggered": replacement_guard_triggered,
+                    "post_identity_article_alignment": post_identity_article_alignment,
                     "selected_document_original_rank": original_index + 1,
                     "document_rerank_reason": " | ".join(reasons),
                     "identity_rerank_input_source": identity_rerank_input_source,
@@ -3294,6 +4386,17 @@ def _rerank_chunks_by_source_identity(
         trace_with_rank["selected_document_rank_after_identity_rerank"] = reranked_index
         ranked_traces.append(trace_with_rank)
     top_trace = ranked_traces[0] if ranked_traces else {}
+    relation_primary_candidate = ""
+    relation_supporting_candidate = ""
+    if relation_query_detected:
+        for trace in ranked_traces:
+            if _source_family_relation_group(trace.get("source_family")) == relation_primary_group:
+                relation_primary_candidate = _resolve_trace_source_display_label(trace)
+                break
+        for trace in ranked_traces:
+            if _source_family_relation_group(trace.get("source_family")) == relation_supporting_group:
+                relation_supporting_candidate = _resolve_trace_source_display_label(trace)
+                break
     return reordered, {
         "applied": True,
         "reason": "source_identity_reranker",
@@ -3310,6 +4413,20 @@ def _rerank_chunks_by_source_identity(
         "title_bias_applied": top_trace.get("title_bias_applied"),
         "issuer_bias_applied": top_trace.get("issuer_bias_applied"),
         "identity_lock_strength": top_trace.get("identity_lock_strength"),
+        "identity_rerank_input_lane": top_trace.get("identity_rerank_input_lane"),
+        "replacement_guard_triggered": top_trace.get("replacement_guard_triggered"),
+        "post_identity_article_alignment": top_trace.get("post_identity_article_alignment"),
+        "relation_query_detected": relation_query_detected,
+        "primary_source_candidate": relation_primary_candidate,
+        "supporting_source_candidate": relation_supporting_candidate,
+        "final_primary_source_reason": (
+            str(relation_profile.get("reason") or "relation_query_primary_rerank")
+            if relation_primary_candidate
+            else ""
+        ),
+        "legacy_intent_binding_active": top_trace.get("legacy_intent_binding_active"),
+        "legacy_candidate_preferred": top_trace.get("legacy_candidate_preferred"),
+        "document_state_binding_reason": top_trace.get("document_state_binding_reason"),
         "selected_document_rank_after_identity_rerank": top_trace.get(
             "selected_document_rank_after_identity_rerank"
         ),
@@ -3336,6 +4453,54 @@ def _build_retrieved_chunk(result: Any) -> RetrievedChunk:
     )
 
 
+def _annotate_recall_lane_chunks(
+    chunks: list[RetrievedChunk],
+    *,
+    lane: str,
+) -> list[RetrievedChunk]:
+    for chunk in chunks:
+        metadata = dict(chunk.metadata or {})
+        existing = metadata.get("retrieval_lane_sources")
+        lanes = [
+            value
+            for value in (existing if isinstance(existing, list) else [])
+            if isinstance(value, str) and value.strip()
+        ]
+        if lane not in lanes:
+            lanes.append(lane)
+        metadata["retrieval_lane_sources"] = lanes
+        metadata["metadata_lane_present"] = "metadata_guided_recall" in lanes
+        metadata["dense_lane_present"] = "semantic_dense_recall" in lanes
+        metadata["merged_lane_present"] = (
+            metadata["metadata_lane_present"] and metadata["dense_lane_present"]
+        )
+        chunk.metadata = metadata
+    return chunks
+
+
+def _chunk_recall_lane_sources(chunk: RetrievedChunk) -> list[str]:
+    metadata = chunk.metadata or {}
+    lanes = metadata.get("retrieval_lane_sources")
+    if not isinstance(lanes, list):
+        return []
+    return [
+        str(value)
+        for value in lanes
+        if isinstance(value, str) and value.strip()
+    ]
+
+
+def _chunk_recall_lane_rank(chunk: RetrievedChunk) -> int:
+    lanes = set(_chunk_recall_lane_sources(chunk))
+    if {"metadata_guided_recall", "semantic_dense_recall"} <= lanes:
+        return 0
+    if "metadata_guided_recall" in lanes:
+        return 1
+    if "semantic_dense_recall" in lanes:
+        return 2
+    return 3
+
+
 def _extract_retrieval_priority_terms(text: str) -> set[str]:
     normalized = normalize_query_text(text or "")
     return {
@@ -3356,13 +4521,23 @@ def _resolve_chunk_source_key(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
     return (
         str(
-            metadata.get("source_title")
+            metadata.get("canonical_identifier_display")
+            or metadata.get("canonical_identifier")
+            or metadata.get("belge_no")
+            or metadata.get("kanun_no")
+            or metadata.get("law_no")
+            or metadata.get("decision_number")
+            or metadata.get("kararname_number")
+            or metadata.get("genelge_number")
+            or metadata.get("generalge_number")
+            or metadata.get("teblig_number")
+            or metadata.get("regulation_number")
+            or metadata.get("law_short_name")
+            or metadata.get("kanun_kisa_adi")
+            or metadata.get("source_title")
             or metadata.get("belge_adi")
             or metadata.get("kanun_adi")
             or metadata.get("law_name")
-            or metadata.get("law_short_name")
-            or metadata.get("kanun_kisa_adi")
-            or metadata.get("source_id")
             or chunk.source
             or chunk.citation
         )
@@ -3391,13 +4566,16 @@ def _prioritize_chunks_for_source_families(
         source_key = _resolve_chunk_source_key(chunk)
         source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
 
-    if source_families and not any(_resolve_chunk_source_family(chunk) in family_order for chunk in chunks):
+    if source_families and not any(
+        (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk)) in family_order
+        for chunk in chunks
+    ):
         return chunks
 
     def _rank_tuple(item: tuple[int, RetrievedChunk]) -> tuple[Any, ...]:
         original_index, chunk = item
         metadata = chunk.metadata or {}
-        family = _resolve_chunk_source_family(chunk) or ""
+        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
         source_title = (
             metadata.get("source_title")
             or metadata.get("belge_adi")
@@ -3411,6 +4589,7 @@ def _prioritize_chunks_for_source_families(
             if not selected_source_keys or _resolve_chunk_source_key(chunk) in selected_source_keys
             else 1
         )
+        lane_rank = _chunk_recall_lane_rank(chunk)
         family_match = 0 if not source_families else (0 if family in family_order else 1)
         family_rank = family_order.get(family, len(family_order))
         title_overlap = _count_term_overlap(str(source_title or ""), query_terms)
@@ -3430,6 +4609,7 @@ def _prioritize_chunks_for_source_families(
         if source_families:
             return (
                 active_rank,
+                lane_rank,
                 selected_source_rank,
                 family_match,
                 family_rank,
@@ -3444,6 +4624,7 @@ def _prioritize_chunks_for_source_families(
                 original_index,
             )
         return (
+            lane_rank,
             identifier_match_rank,
             law_match_rank,
             active_rank,
@@ -4853,14 +6034,41 @@ def _should_use_cross_law_retrieval(query: str, mentioned_laws: list[str]) -> bo
 
 def _dedupe_retrieved_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
     deduped: list[RetrievedChunk] = []
-    seen: set[tuple[str, str]] = set()
+    seen_index: dict[tuple[str, str], int] = {}
 
     for chunk in chunks:
         key = (chunk.citation, chunk.text)
-        if key in seen:
+        if key in seen_index:
+            existing = deduped[seen_index[key]]
+            existing_meta = dict(existing.metadata or {})
+            incoming_meta = dict(chunk.metadata or {})
+            existing_lanes = [
+                str(value)
+                for value in (existing_meta.get("retrieval_lane_sources") or [])
+                if isinstance(value, str) and value.strip()
+            ]
+            incoming_lanes = [
+                str(value)
+                for value in (incoming_meta.get("retrieval_lane_sources") or [])
+                if isinstance(value, str) and value.strip()
+            ]
+            merged_lanes = dedupe_strings([*existing_lanes, *incoming_lanes])
+            if merged_lanes:
+                existing_meta["retrieval_lane_sources"] = merged_lanes
+                existing_meta["metadata_lane_present"] = "metadata_guided_recall" in merged_lanes
+                existing_meta["dense_lane_present"] = "semantic_dense_recall" in merged_lanes
+                existing_meta["merged_lane_present"] = (
+                    existing_meta["metadata_lane_present"] and existing_meta["dense_lane_present"]
+                )
+            if (chunk.score or 0.0) > (existing.score or 0.0):
+                existing.score = chunk.score
+            for field, value in incoming_meta.items():
+                if existing_meta.get(field) in (None, "", [], False) and value not in (None, "", []):
+                    existing_meta[field] = value
+            existing.metadata = existing_meta
             continue
         deduped.append(chunk)
-        seen.add(key)
+        seen_index[key] = len(deduped) - 1
 
     return deduped
 
@@ -4920,7 +6128,7 @@ def _retrieve_explicit_article_chunks(
 
         exact_chunks.extend(_build_retrieved_chunk(result) for result in results)
 
-    return exact_chunks
+    return _annotate_recall_lane_chunks(exact_chunks, lane="metadata_guided_recall")
 
 
 def _retrieve_law_bucket_chunks(
@@ -4951,7 +6159,7 @@ def _retrieve_law_bucket_chunks(
 
         bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
 
-    return bucket_chunks
+    return _annotate_recall_lane_chunks(bucket_chunks, lane="metadata_guided_recall")
 
 
 def _retrieve_source_key_chunks(
@@ -4977,7 +6185,7 @@ def _retrieve_source_key_chunks(
 
         bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
 
-    return bucket_chunks
+    return _annotate_recall_lane_chunks(bucket_chunks, lane="metadata_guided_recall")
 
 
 def _retrieve_active_chunks(
@@ -4998,7 +6206,10 @@ def _retrieve_active_chunks(
         logger.warning("Active-source retrieval bypass: %s", exc)
         return []
 
-    return [_build_retrieved_chunk(result) for result in results]
+    return _annotate_recall_lane_chunks(
+        [_build_retrieved_chunk(result) for result in results],
+        lane="metadata_guided_recall",
+    )
 
 
 def _retrieve_source_family_chunks(
@@ -5025,7 +6236,7 @@ def _retrieve_source_family_chunks(
 
         bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
 
-    return bucket_chunks
+    return _annotate_recall_lane_chunks(bucket_chunks, lane="metadata_guided_recall")
 
 
 def _resolve_trace_source_id(chunk: RetrievedChunk) -> str:
@@ -5046,10 +6257,12 @@ def _resolve_trace_source_id(chunk: RetrievedChunk) -> str:
 def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
     metadata = chunk.metadata or {}
     source_title = _resolve_chunk_source_title(chunk)
-    source_family = _resolve_chunk_source_family(chunk)
+    family_profile = _resolve_chunk_source_family_profile(chunk)
+    source_family = family_profile.get("resolved_family")
     source_identifier = _resolve_chunk_source_identifier(chunk)
     article_or_section = _chunk_article_token(chunk)
     effective_state = metadata.get("effective_state") or resolve_effective_state(metadata)
+    recall_lane_sources = _chunk_recall_lane_sources(chunk)
     return {
         "source_id": _resolve_trace_source_id(chunk),
         "citation": chunk.citation,
@@ -5062,6 +6275,11 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "belge_adi": metadata.get("belge_adi") or metadata.get("kanun_adi"),
         "belge_turu": metadata.get("belge_turu") or metadata.get("source_type"),
         "source_family": source_family,
+        "source_family_raw": family_profile.get("raw_family"),
+        "source_family_canonical": family_profile.get("canonical_family") or source_family,
+        "source_family_title_inferred": family_profile.get("title_inferred_family"),
+        "source_family_mapped": family_profile.get("mapped_family") or source_family,
+        "source_family_mapping_reason": family_profile.get("mapping_reason"),
         "source_identifier": source_identifier,
         "article_or_section": article_or_section or None,
         "full_title": metadata.get("full_title") or source_title,
@@ -5087,8 +6305,11 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "canonical_title_family_normalized": metadata.get("canonical_title_family_normalized"),
         "metadata_provenance": metadata.get("metadata_provenance"),
         "canonical_identifier_display": metadata.get("canonical_identifier_display"),
-        "source_family_canonical": metadata.get("source_family_canonical") or source_family,
         "effective_state": effective_state,
+        "retrieval_lane_sources": recall_lane_sources,
+        "metadata_lane_present": "metadata_guided_recall" in recall_lane_sources,
+        "dense_lane_present": "semantic_dense_recall" in recall_lane_sources,
+        "merged_lane_present": {"metadata_guided_recall", "semantic_dense_recall"} <= set(recall_lane_sources),
         "heading": metadata.get("heading") or metadata.get("article_heading"),
         "madde_no": metadata.get("madde_no"),
         "fikra_no": metadata.get("fikra_no"),
@@ -5180,6 +6401,15 @@ def _build_retrieval_verification_features(
     family_gate_status = "not_applied"
     family_gate_reason = "not_applied"
     no_gate_reason = ""
+    scenario_current_law_question = False
+    scenario_current_law_prior = False
+    historical_or_repealed_question = False
+    historical_scope_detected = False
+    repealed_scope_detected = False
+    current_law_prior_blocked_by_historical_scope = False
+    family_collision_detected = False
+    family_collision_pair = ""
+    collision_resolution_reason = ""
     if isinstance(source_family_resolution, dict):
         predicted_family = source_family_resolution.get("predicted_family")
         try:
@@ -5199,6 +6429,17 @@ def _build_retrieval_verification_features(
             )
         except (TypeError, ValueError):
             selected_family_confidence = family_confidence
+        scenario_current_law_question = bool(source_family_resolution.get("scenario_current_law_question"))
+        scenario_current_law_prior = bool(source_family_resolution.get("scenario_current_law_prior"))
+        historical_or_repealed_question = bool(source_family_resolution.get("historical_or_repealed_question"))
+        historical_scope_detected = bool(source_family_resolution.get("historical_scope_detected"))
+        repealed_scope_detected = bool(source_family_resolution.get("repealed_scope_detected"))
+        current_law_prior_blocked_by_historical_scope = bool(
+            source_family_resolution.get("current_law_prior_blocked_by_historical_scope")
+        )
+        family_collision_detected = bool(source_family_resolution.get("family_collision_detected"))
+        family_collision_pair = str(source_family_resolution.get("family_collision_pair") or "")
+        collision_resolution_reason = str(source_family_resolution.get("collision_resolution_reason") or "")
         if source_family_resolution.get("family_override_reason"):
             family_override_reason = str(source_family_resolution.get("family_override_reason"))
             family_gate_reason = family_override_reason
@@ -5235,7 +6476,10 @@ def _build_retrieval_verification_features(
             no_gate_reason = str(family_routing_policy.get("no_gate_reason"))
 
     identifier_tokens = sorted(_extract_source_identifier_tokens(query))
-    chunk_families = [_resolve_chunk_source_family(chunk) or "unknown" for chunk in chunks]
+    chunk_families = [
+        _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown"
+        for chunk in chunks
+    ]
     unique_families = dedupe_strings(chunk_families)
     identifier_match_flag = (
         any(_chunk_matches_identifier_tokens(chunk, set(identifier_tokens)) for chunk in chunks)
@@ -5305,6 +6549,15 @@ def _build_retrieval_verification_features(
         "cross_family_fallback_used": cross_family_fallback_used,
         "family_override_reason": family_override_reason,
         "selected_family_confidence": round(selected_family_confidence, 3),
+        "scenario_current_law_question": scenario_current_law_question,
+        "scenario_current_law_prior": scenario_current_law_prior,
+        "historical_or_repealed_question": historical_or_repealed_question,
+        "historical_scope_detected": historical_scope_detected,
+        "repealed_scope_detected": repealed_scope_detected,
+        "current_law_prior_blocked_by_historical_scope": current_law_prior_blocked_by_historical_scope,
+        "family_collision_detected": family_collision_detected,
+        "family_collision_pair": family_collision_pair,
+        "collision_resolution_reason": collision_resolution_reason,
         "preferred_families": preferred_families,
         "fallback_families": fallback_families,
         "pre_filter_family_set": dedupe_strings(pre_filter_family_set),
@@ -5773,7 +7026,8 @@ def _apply_pre_generation_family_pool(
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
     pre_filter_family_set = dedupe_strings(
-        (_resolve_chunk_source_family(chunk) or "unknown") for chunk in chunks
+        (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+        for chunk in chunks
     )
     preferred_families = dedupe_strings(_expand_source_family_aliases(source_family_resolution.preferred_families))
     fallback_families = list(source_family_resolution.fallback_families)
@@ -5804,7 +7058,7 @@ def _apply_pre_generation_family_pool(
     preferred_family_set = set(preferred_families)
     preferred_chunks = [
         chunk for chunk in chunks
-        if (_resolve_chunk_source_family(chunk) or "unknown") in preferred_family_set
+        if (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown") in preferred_family_set
     ]
     policy["preferred_family_pool_size"] = len(preferred_chunks)
     if preferred_chunks:
@@ -5812,7 +7066,8 @@ def _apply_pre_generation_family_pool(
         policy["family_gate_reason"] = "preferred_family_pool_available"
         policy["no_gate_reason"] = ""
         reranked_family_set = dedupe_strings(
-            (_resolve_chunk_source_family(chunk) or "unknown") for chunk in preferred_chunks
+            (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+            for chunk in preferred_chunks
         )
         policy["reranked_family_set"] = reranked_family_set
         policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
@@ -5831,7 +7086,9 @@ def _apply_pre_generation_family_pool(
 
     fallback_chunks = [
         chunk for chunk in chunks
-        if fallback_family_set and (_resolve_chunk_source_family(chunk) or "unknown") in fallback_family_set
+        if fallback_family_set
+        and (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+        in fallback_family_set
     ]
     policy["cross_family_fallback_used"] = True
     if fallback_chunks:
@@ -5839,7 +7096,8 @@ def _apply_pre_generation_family_pool(
         policy["family_gate_reason"] = "controlled_alias_fallback"
         policy["no_gate_reason"] = ""
         reranked_family_set = dedupe_strings(
-            (_resolve_chunk_source_family(chunk) or "unknown") for chunk in fallback_chunks
+            (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+            for chunk in fallback_chunks
         )
         policy["reranked_family_set"] = reranked_family_set
         policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
@@ -5851,7 +7109,8 @@ def _apply_pre_generation_family_pool(
     policy["no_gate_reason"] = ""
     filtered = chunks[:top_k_effective]
     reranked_family_set = dedupe_strings(
-        (_resolve_chunk_source_family(chunk) or "unknown") for chunk in filtered
+        (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+        for chunk in filtered
     )
     policy["reranked_family_set"] = reranked_family_set
     policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
@@ -8318,17 +9577,19 @@ async def chat_completions(
         last_user_message=last_user_msg,
         conversation_history=conversation_history,
     )
+    effective_user_query = _extract_effective_legal_query(last_user_msg)
+    routing_query = effective_user_query or last_user_msg
 
     # Terminoloji / eşanlamlı genişletmesi (Retrieval için)
-    retrieval_query = last_user_msg
+    retrieval_query = routing_query
     retrieval_top_k = request_body.top_k
-    mentioned_laws = _extract_law_mentions(last_user_msg)
-    explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
-    requested_source_families = _infer_requested_source_families(last_user_msg)
+    mentioned_laws = _extract_law_mentions(routing_query)
+    explicit_article_refs = _extract_explicit_article_refs(routing_query)
+    requested_source_families = _infer_requested_source_families(routing_query)
     forced_article_refs: list[tuple[str, str]] = []
     applied_expansions: list[str] = []
     source_family_resolution = _resolve_source_family_prior(
-        last_user_msg,
+        routing_query,
         mentioned_laws=mentioned_laws,
         explicit_article_refs=explicit_article_refs,
         law_filter=request_body.law_filter,
@@ -8342,7 +9603,7 @@ async def chat_completions(
     )
     retrieval_plan = await _run_retrieval_planner(
         request=request,
-        user_query=last_user_msg,
+        user_query=routing_query,
         mentioned_laws=mentioned_laws,
         requested_source_families=requested_source_families,
         explicit_article_refs=explicit_article_refs,
@@ -8367,15 +9628,15 @@ async def chat_completions(
         requested_source_families,
         source_family_resolution,
     )
-    if _asks_current_validity_over_historical_contrast(last_user_msg):
+    if _asks_current_validity_over_historical_contrast(routing_query):
         retrieval_query = _append_unique_expansion(
             retrieval_query,
             applied_expansions,
             "güncel yürürlükte metin yürürlükten kaldırılan eski metin",
         )
         retrieval_top_k = max(retrieval_top_k, 20)
-    numbered_law_mentions = extract_numbered_law_mentions(last_user_msg)
-    numbered_law_reference_expansion = _build_numbered_law_reference_expansion(last_user_msg)
+    numbered_law_mentions = extract_numbered_law_mentions(routing_query)
+    numbered_law_reference_expansion = _build_numbered_law_reference_expansion(routing_query)
     if numbered_law_reference_expansion:
         retrieval_query = _append_unique_expansion(
             retrieval_query,
@@ -8383,7 +9644,7 @@ async def chat_completions(
             numbered_law_reference_expansion,
         )
         retrieval_top_k = max(retrieval_top_k, 20)
-    annual_investment_program_expansion = _build_annual_investment_program_expansion(last_user_msg)
+    annual_investment_program_expansion = _build_annual_investment_program_expansion(routing_query)
     if annual_investment_program_expansion:
         retrieval_query = _append_unique_expansion(
             retrieval_query,
@@ -8391,9 +9652,9 @@ async def chat_completions(
             annual_investment_program_expansion,
         )
         retrieval_top_k = max(retrieval_top_k, 20)
-    metadata_lookup_query_signals = _parse_metadata_lookup_query_signals(last_user_msg)
+    metadata_lookup_query_signals = _parse_metadata_lookup_query_signals(routing_query)
     metadata_first_selector = _select_metadata_first_source_candidates(
-        query=last_user_msg,
+        query=routing_query,
         requested_source_families=requested_source_families,
         source_family_resolution=source_family_resolution,
         query_metadata_signals=metadata_lookup_query_signals,
@@ -8402,6 +9663,12 @@ async def chat_completions(
         source_family_resolution = _apply_metadata_lookup_family_prior(
             source_family_resolution,
             metadata_first_selector,
+            query=routing_query,
+        )
+        metadata_first_selector = _apply_relation_query_metadata_focus(
+            metadata_first_selector,
+            query=routing_query,
+            source_family_resolution=source_family_resolution,
         )
         requested_source_families = dedupe_strings(
             [
@@ -8416,9 +9683,9 @@ async def chat_completions(
                 retrieval_query,
                 applied_expansions,
                 metadata_first_expansion,
-            )
+                )
             retrieval_top_k = max(retrieval_top_k, 20)
-    cross_law_mode = _should_use_cross_law_retrieval(last_user_msg, mentioned_laws)
+    cross_law_mode = _should_use_cross_law_retrieval(routing_query, mentioned_laws)
 
     concept_anchor_rules: list[
         tuple[tuple[tuple[str, ...], ...], str, list[tuple[str, str]], bool]
@@ -8628,7 +9895,7 @@ async def chat_completions(
         ),
     ]
 
-    expansion_match_query = last_user_msg
+    expansion_match_query = routing_query
     if _legacy_query_expansions_enabled():
         for term_groups, expansion, exact_refs, boost_top_k in concept_anchor_rules:
             if all(_contains_any_query_term(expansion_match_query, terms) for terms in term_groups):
@@ -8698,7 +9965,10 @@ async def chat_completions(
                     top_k=top_k_effective,
                     metadata_filter=metadata_filter,
                 )
-                retrieved_chunks = [_build_retrieved_chunk(r) for r in results]
+                retrieved_chunks = _annotate_recall_lane_chunks(
+                    [_build_retrieved_chunk(r) for r in results],
+                    lane="semantic_dense_recall",
+                )
                 logger.info(
                     "Retrieval: session=%s hits=%d latency=%.0fms reranker=%s",
                     session_id,
@@ -8715,7 +9985,10 @@ async def chat_completions(
                         top_k=planner_top_k,
                         metadata_filter=metadata_filter,
                     )
-                    planner_chunks = [_build_retrieved_chunk(r) for r in planner_results]
+                    planner_chunks = _annotate_recall_lane_chunks(
+                        [_build_retrieved_chunk(r) for r in planner_results],
+                        lane="semantic_dense_recall",
+                    )
                     if planner_chunks:
                         retrieved_chunks = _dedupe_retrieved_chunks(planner_chunks + retrieved_chunks)
                         logger.info(
@@ -8767,7 +10040,10 @@ async def chat_completions(
                         top_k=reference_top_k,
                         metadata_filter=metadata_filter,
                     )
-                    reference_chunks = [_build_retrieved_chunk(result) for result in reference_results]
+                    reference_chunks = _annotate_recall_lane_chunks(
+                        [_build_retrieved_chunk(result) for result in reference_results],
+                        lane="metadata_guided_recall",
+                    )
                     if reference_chunks:
                         retrieved_chunks = _dedupe_retrieved_chunks(reference_chunks + retrieved_chunks)
                         logger.info(
@@ -8854,7 +10130,7 @@ async def chat_completions(
                 if all_exact_article_refs:
                     exact_chunks = _retrieve_explicit_article_chunks(
                         retriever=retriever,
-                        query=last_user_msg,
+                        query=routing_query,
                         article_refs=all_exact_article_refs,
                     )
                     if exact_chunks:
@@ -8867,16 +10143,18 @@ async def chat_completions(
                             len(retrieved_chunks),
                         )
                 retrieved_chunks = _prioritize_chunks_for_source_families(
-                    query=last_user_msg,
+                    query=routing_query,
                     chunks=retrieved_chunks,
                     source_families=requested_source_families,
                 )
 
                 source_cluster_selector = await _run_source_cluster_selector(
                     request=request,
-                    user_query=last_user_msg,
+                    user_query=routing_query,
                     requested_source_families=requested_source_families,
                     chunks=retrieved_chunks,
+                    source_family_resolution=source_family_resolution,
+                    planner_law_hints=planner_law_hints,
                 )
                 if source_cluster_selector:
                     selected_cluster_ids = set(source_cluster_selector.get("selected_cluster_ids") or [])
@@ -8925,7 +10203,7 @@ async def chat_completions(
                             retrieved_chunks = _dedupe_retrieved_chunks(selected_law_chunks + retrieved_chunks)
 
                     retrieved_chunks = _prioritize_chunks_for_source_families(
-                        query=last_user_msg,
+                        query=routing_query,
                         chunks=retrieved_chunks,
                         source_families=requested_source_families,
                         selected_source_keys=selected_source_keys,
@@ -9037,23 +10315,32 @@ async def chat_completions(
             logger.warning("Reranker bypass (hata): %s", exc, exc_info=True)
 
     if retrieved_chunks:
+        selector_started_at = time.perf_counter()
         retrieved_chunks, source_identity_reranker = _rerank_chunks_by_source_identity(
-            query=last_user_msg,
+            query=routing_query,
             chunks=retrieved_chunks,
             requested_source_families=requested_source_families,
             metadata_first_selector=metadata_first_selector,
+            source_family_resolution=source_family_resolution,
         )
         retrieved_chunks, article_span_selector = _select_article_span_evidence(
-            query=last_user_msg,
+            query=routing_query,
             chunks=retrieved_chunks,
             requested_source_families=requested_source_families,
             explicit_article_refs=all_exact_article_refs,
             selected_source_keys=selected_source_keys,
+            source_family_resolution=source_family_resolution,
+        )
+        logger.info(
+            "Response timing: session=%s stage=selector_stack latency=%.0fms chunks=%d",
+            session_id,
+            (time.perf_counter() - selector_started_at) * 1000.0,
+            len(retrieved_chunks),
         )
     post_rerank_chunks = list(retrieved_chunks)
     source_family_resolution_trace = source_family_resolution.to_trace_dict()
     retrieval_verification_features = _build_retrieval_verification_features(
-        query=last_user_msg,
+        query=routing_query,
         requested_source_families=requested_source_families,
         source_family_resolution=source_family_resolution_trace,
         chunks=post_rerank_chunks,
@@ -9070,11 +10357,19 @@ async def chat_completions(
         logger.debug("Verification request'te istendi ama orchestrator'da kapalı; atlanıyor.")
 
     try:
+        orch_started_at = time.perf_counter()
         orch_response = await orchestrator.answer(
             query=answer_query,
             retrieved_chunks=retrieved_chunks,
             source_lock_target_citations=source_lock_target_citations,
             max_tokens=request_body.max_tokens,
+        )
+        logger.info(
+            "Response timing: session=%s stage=orchestrator_answer latency=%.0fms citations=%d blocked=%s",
+            session_id,
+            (time.perf_counter() - orch_started_at) * 1000.0,
+            len(orch_response.citations or []),
+            orch_response.blocked,
         )
     except Exception as exc:
         logger.error("Orchestrator hatası: %s", exc, exc_info=True)
@@ -9088,7 +10383,7 @@ async def chat_completions(
     blocked = orch_response.blocked
     guardrails_reasons = orch_response.guardrails_reasons
     verification = orch_response.verification
-    assembled_evidence = _build_assembled_evidence(post_rerank_chunks, query=last_user_msg)
+    assembled_evidence = _build_assembled_evidence(post_rerank_chunks, query=routing_query)
     allowed_source_whitelist = _build_allowed_source_whitelist(post_rerank_chunks)
     if not assembled_evidence and citations:
         assembled_evidence = _build_fallback_assembled_evidence(
@@ -9100,6 +10395,7 @@ async def chat_completions(
             for item in assembled_evidence
             if item.get("source_id")
         ]
+    hardening_started_at = time.perf_counter()
     hardening = harden_answer(
         answer_text=answer_text,
         citations=citations,
@@ -9112,20 +10408,27 @@ async def chat_completions(
         assembled_evidence=assembled_evidence,
         allowed_source_whitelist=allowed_source_whitelist,
     )
+    logger.info(
+        "Response timing: session=%s stage=harden_answer latency=%.0fms final_mode=%s",
+        session_id,
+        (time.perf_counter() - hardening_started_at) * 1000.0,
+        hardening.final_mode,
+    )
     completeness_synthesis = _build_completeness_synthesis_features(
-        query=last_user_msg,
+        query=routing_query,
         answer_text=hardening.answer_text,
         article_span_selector=article_span_selector,
         chunks=post_rerank_chunks,
     )
     hardening.answer_contract.update(completeness_synthesis)
+    trace_started_at = time.perf_counter()
     trace_payload = _build_trace_payload(
         request_id=response_id,
         decision_lane="rag",
         user_query=last_user_msg,
         enriched_query=answer_query,
         retrieval_query=retrieval_query,
-        question_normalized=normalize_query_text(last_user_msg),
+        question_normalized=normalize_query_text(routing_query),
         question_type=hardening.question_type,
         target_date=hardening.target_date,
         law_scope_signal=hardening.law_scope_signal,
@@ -9158,6 +10461,11 @@ async def chat_completions(
         source_family_resolution=source_family_resolution_trace,
         retrieval_verification_features=retrieval_verification_features,
     )
+    logger.info(
+        "Response timing: session=%s stage=trace_payload latency=%.0fms",
+        session_id,
+        (time.perf_counter() - trace_started_at) * 1000.0,
+    )
     pre_answer_payload = _pre_answer_stage_payload(
         decision_lane="rag",
         user_message=last_user_msg,
@@ -9179,7 +10487,8 @@ async def chat_completions(
         article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,
     )
-    return _finalize_chat_response(
+    finalize_started_at = time.perf_counter()
+    response = _finalize_chat_response(
         request=request,
         request_body=request_body,
         store=store,
@@ -9200,6 +10509,12 @@ async def chat_completions(
         upstream_usage=orch_response.usage,
         llm_trace=orch_response.llm_trace,
     )
+    logger.info(
+        "Response timing: session=%s stage=finalize_chat_response latency=%.0fms",
+        session_id,
+        (time.perf_counter() - finalize_started_at) * 1000.0,
+    )
+    return response
 
 
 @router.get(

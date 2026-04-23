@@ -94,6 +94,85 @@ def test_repair_does_not_match_short_law_abbreviation_as_source_identifier():
     assert "same_evidence_article_mismatch" not in contract["verification_findings"]
 
 
+def test_repair_uses_mapped_evidence_family_when_predicted_family_is_strong():
+    result = build_or_repair_answer_contract(
+        qid="YON-MAPPED",
+        answer_text="Mesafeli sözleşmeler için ilgili yönetmelik uygulanır. [Kaynak: 20237 m.1]",
+        citations=["20237 m.1"],
+        answer_contract={
+            "answer_text": "Mesafeli sözleşmeler için ilgili yönetmelik uygulanır. [Kaynak: 20237 m.1]",
+            "primary_source_id": "20237 m.1",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "yonetmelik",
+                    "family_confidence": 0.86,
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "20237:20237:m1:f0",
+                    "citation": "20237 m.1/f.0",
+                    "source_title": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ",
+                    "source_family": "kky",
+                    "source_family_canonical": "kky",
+                    "source_family_mapped": "yonetmelik",
+                    "source_identifier": "20237 m.1",
+                    "article_or_section": "1",
+                    "effective_state": "active",
+                },
+            ],
+        },
+    )
+
+    assert result.contract["source_family_claimed"] == "YONETMELIK"
+
+
+def test_repair_replacement_guard_blocks_identifier_rewrite_from_selected_evidence():
+    result = build_or_repair_answer_contract(
+        qid="GUARD-01",
+        answer_text="İlgili karar uygulanır. [Kaynak: 3350 m.1]",
+        citations=["3350 m.1"],
+        answer_contract={
+            "answer_text": "İlgili karar uygulanır. [Kaynak: 3350 m.1]",
+            "primary_source_id": "1901",
+            "source_identifier_claimed": "1901",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "source_identity_reranker": {
+                    "title_match_type": "weak_overlap",
+                    "document_identity_score": 72.0,
+                    "replacement_guard_triggered": True,
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "3350:3350:m1:f0",
+                    "citation": "3350 m.1/f.0",
+                    "source_title": "İTHALAT REJİMİ KARARI (KARAR SAYISI: 3350)",
+                    "source_family": "cb_karar",
+                    "source_identifier": "3350 m.1",
+                    "article_or_section": "1",
+                    "effective_state": "active",
+                },
+            ],
+        },
+    )
+
+    assert result.contract["identifier_integrity_status"] == "unverified_claim_suppressed"
+    assert "claimed_identifier_replaced_by_selected_evidence" not in result.contract["verification_findings"]
+
+
 def test_repair_does_not_treat_article_number_as_source_identity():
     result = build_or_repair_answer_contract(
         qid="ARTICLE-ONLY-MISMATCH",
@@ -508,6 +587,72 @@ def test_repair_suppresses_selected_identifier_without_query_or_identity_anchor(
     assert "selected_identifier_suppressed_without_query_anchor" in contract["verification_findings"]
 
 
+def test_repair_trusts_selector_exact_identifier_for_natural_language_question():
+    result = build_or_repair_answer_contract(
+        qid="KANUN-01-NATURAL",
+        answer_text="İşe iade güvencesi İş Kanunu m.18 kapsamında değerlendirilir. [Kaynak: IK m.18]",
+        citations=["IK m.18", "IK m.20", "IK m.21"],
+        answer_contract={
+            "answer_text": "İşe iade güvencesi İş Kanunu m.18 kapsamında değerlendirilir. [Kaynak: IK m.18]",
+            "primary_source_id": "IK m.18",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": (
+                "42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan işçi performans gerekçesiyle çıkarılırsa "
+                "işe iade davası açabilir mi?"
+            ),
+            "retrieval": {
+                "source_identity_reranker": {
+                    "document_identity_score": 59.9,
+                    "title_match_type": "none",
+                    "identifier_match_type": "not_requested",
+                    "replacement_guard_triggered": True,
+                },
+                "article_span_selector": {
+                    "selected_document_id": "İŞ KANUNU",
+                    "selected_article": "18",
+                    "selector_document_rank": 1,
+                    "selector_exact_article_hit": True,
+                    "selector_evidence_sufficiency": "exact_enough",
+                    "metadata_identity_strength": "medium",
+                    "support_span_count": 1,
+                    "selector_support_span_count": 1,
+                    "article_match_type": "source_local_support",
+                    "scenario_current_law_question": True,
+                    "temporal_state_resolved": True,
+                    "query_article_tokens": [],
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "IK:4857:m18:f0:from1900-01-01:to9999-12-31",
+                    "citation": "IK m.18/f.0",
+                    "source_title": "İŞ KANUNU",
+                    "source_family": "kanun",
+                    "source_identifier": "IK m.18",
+                    "article_or_section": "18",
+                    "effective_state": "active",
+                    "quoted_or_extracted_span": "Otuz veya daha fazla işçi çalıştıran işyerlerinde en az altı aylık kıdemi olan işçi işe iade korumasından yararlanır.",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_identifier_claimed"] == "IK m.18"
+    assert contract["identifier_integrity_status"] == "exact"
+    assert contract["grounding_status"] == "fully_grounded"
+    assert contract["answer_mode"] == "direct_answer"
+    assert contract["answer_suppressed_due_to_evidence_gap"] is False
+    assert "selected_identifier_suppressed_without_query_anchor" not in contract["verification_findings"]
+    assert "support_insufficient_for_specific_claim" not in contract["verification_findings"]
+    assert contract["needs_manual_review"] is False
+
+
 def test_repair_uses_phase6_selector_insufficient_support_as_confidence_ceiling():
     result = build_or_repair_answer_contract(
         qid="PHASE6-SELECTOR",
@@ -613,3 +758,94 @@ def test_repair_suppresses_answer_when_article_lock_fails_for_specific_claim():
     assert contract["unsupported_reason"] == "evidence_gap"
     assert "answer_suppressed_due_to_evidence_gap" in contract["verification_findings"]
     assert contract["answer_text"].startswith("Bu soruya mevcut kaynaklarla tam destekli")
+
+
+def test_repair_marks_legacy_khk_query_as_repealed_mulga_family():
+    result = build_or_repair_answer_contract(
+        qid="MULGA-04",
+        answer_text="551 sayılı eski KHK'larla 2026'da doğrudan hüküm kurmak risklidir. [Kaynak: 551 m.1]",
+        citations=["551 m.1"],
+        answer_contract={
+            "answer_text": "551 sayılı eski KHK'larla 2026'da doğrudan hüküm kurmak risklidir. [Kaynak: 551 m.1]",
+            "primary_source_id": "551 m.1",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "Marka ve patent uyuşmazlığında 551 sayılı eski KHK'larla 2026'da hüküm kurmak neden risklidir?",
+            "retrieval": {
+                "source_family_resolution": {
+                    "historical_or_repealed_question": True,
+                    "historical_scope_detected": True,
+                    "repealed_scope_detected": True,
+                },
+                "article_span_selector": {
+                    "legacy_intent_binding_active": True,
+                    "legacy_candidate_preferred": True,
+                    "document_state_binding_reason": "legacy_scope_candidate_preferred",
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "551:551:m1:f0:from1995-06-27:to9999-12-31",
+                    "citation": "551 m.1/f.0",
+                    "source_title": "PATENT HAKLARININ KORUNMASI HAKKINDA KANUN HÜKMÜNDE KARARNAME",
+                    "source_family": "khk",
+                    "source_identifier": "551 m.1",
+                    "article_or_section": "1",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "MULGA"
+    assert contract["effective_state_claimed"] == "repealed"
+
+
+def test_repair_marks_legacy_tuzuk_query_as_repealed_when_old_year_is_explicit():
+    result = build_or_repair_answer_contract(
+        qid="MULGA-03",
+        answer_text="1994 tarihli Tapu Sicili Tüzüğünü bugün doğrudan kullanmak hata üretir. [Kaynak: 20135150 m.90]",
+        citations=["20135150 m.90"],
+        answer_contract={
+            "answer_text": "1994 tarihli Tapu Sicili Tüzüğünü bugün doğrudan kullanmak hata üretir. [Kaynak: 20135150 m.90]",
+            "primary_source_id": "20135150 m.90",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "Tapu işlemlerinde 1994 tarihli Tapu Sicili Tüzüğünü kullanmak neden doğrudan hata üretir?",
+            "retrieval": {
+                "source_family_resolution": {
+                    "historical_or_repealed_question": True,
+                    "historical_scope_detected": True,
+                },
+                "article_span_selector": {
+                    "legacy_intent_binding_active": True,
+                    "legacy_candidate_preferred": False,
+                    "document_state_binding_reason": "legacy_scope_no_compatible_candidate",
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "20135150:20135150:m90:f0:from1900-01-01:to9999-12-31",
+                    "citation": "20135150 m.90/f.0",
+                    "source_title": "TAPU SİCİLİ TÜZÜĞÜ",
+                    "source_family": "tuzuk",
+                    "source_identifier": "20135150 m.90",
+                    "article_or_section": "90",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "MULGA"
+    assert contract["effective_state_claimed"] == "repealed"

@@ -100,6 +100,34 @@ def _family_value(metadata: dict[str, Any]) -> str:
     return _normalize(metadata.get("belge_turu") or metadata.get("source_type"))
 
 
+def raw_source_family(metadata: dict[str, Any] | None) -> str:
+    if not metadata:
+        return ""
+    family = _family_value(metadata)
+    aliases = {
+        "tebligler": "teblig",
+        "teblig": "teblig",
+        "mulga": "mulga_kanun",
+        "mulga kanun": "mulga_kanun",
+        "mulga_kanun": "mulga_kanun",
+        "khk": "khk",
+        "kanun": "kanun",
+        "tuzuk": "tuzuk",
+        "yonetmelik": "yonetmelik",
+        "cb kararnamesi": "cb_kararname",
+        "cb_kararname": "cb_kararname",
+        "cb karar": "cb_karar",
+        "cb_karar": "cb_karar",
+        "cb genelge": "cb_genelge",
+        "cb_genelge": "cb_genelge",
+        "cb yonetmelik": "cb_yonetmelik",
+        "cb_yonetmelik": "cb_yonetmelik",
+        "kky": "kky",
+        "uy": "uy",
+    }
+    return aliases.get(family, family)
+
+
 def _family_from_title(title: str) -> str:
     normalized = _normalize(title)
     if "cumhurbaskanligi kararnamesi" in normalized:
@@ -112,14 +140,14 @@ def _family_from_title(title: str) -> str:
         return "cb_karar"
     if "kanun hukmunde kararname" in normalized or re.search(r"\bkhk\b", normalized):
         return "khk"
-    if "teblig" in normalized:
-        return "teblig"
     if "tuzugu" in normalized or normalized.endswith("tuzuk"):
         return "tuzuk"
     if "universitesi" in normalized and "yonetmeligi" in normalized:
         return "uy"
-    if "yonetmelik" in normalized:
+    if "yonetmelik" in normalized or "yonetmeligi" in normalized:
         return "yonetmelik"
+    if re.search(r"(?<![a-z0-9])teblig(?!at)[a-z0-9]*(?![a-z0-9])", normalized):
+        return "teblig"
     if "kanunu" in normalized or normalized.endswith("kanun"):
         return "kanun"
     return ""
@@ -148,29 +176,59 @@ def canonical_source_family(metadata: dict[str, Any] | None) -> str:
         "uy",
     }:
         return title_family
-    family = _family_value(metadata)
-    aliases = {
-        "tebligler": "teblig",
-        "teblig": "teblig",
-        "mulga": "mulga_kanun",
-        "mulga kanun": "mulga_kanun",
-        "mulga_kanun": "mulga_kanun",
-        "khk": "khk",
-        "kanun": "kanun",
-        "tuzuk": "tuzuk",
-        "yonetmelik": "yonetmelik",
-        "cb kararnamesi": "cb_kararname",
-        "cb_kararname": "cb_kararname",
-        "cb karar": "cb_karar",
-        "cb_karar": "cb_karar",
-        "cb genelge": "cb_genelge",
-        "cb_genelge": "cb_genelge",
-        "cb yonetmelik": "cb_yonetmelik",
-        "cb_yonetmelik": "cb_yonetmelik",
-        "kky": "kky",
-        "uy": "uy",
+    family = raw_source_family(metadata)
+    return family or title_family
+
+
+def source_family_mapping_profile(metadata: dict[str, Any] | None) -> dict[str, str]:
+    if not metadata:
+        return {
+            "source_family_raw": "",
+            "source_family_canonical": "",
+            "source_family_title_inferred": "",
+            "source_family_mapped": "",
+            "source_family_mapping_reason": "",
+        }
+
+    title = _first_present(
+        metadata.get("full_title"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+        metadata.get("kanun_adi"),
+        metadata.get("law_name"),
+        metadata.get("title"),
+    )
+    raw_family = raw_source_family(metadata)
+    canonical_family = canonical_source_family(metadata)
+    title_family = _family_from_title(title)
+    mapped_family = canonical_family or title_family
+    mapping_reason = "canonical_family"
+
+    if canonical_family == "mulga_kanun":
+        mapped_family = "kanun"
+        mapping_reason = "mulga_to_kanun"
+    elif canonical_family == "kky" and title_family == "yonetmelik":
+        mapped_family = "yonetmelik"
+        mapping_reason = "kky_to_yonetmelik"
+    elif canonical_family == "uy" and title_family == "yonetmelik":
+        mapped_family = "yonetmelik"
+        mapping_reason = "uy_to_yonetmelik"
+    elif canonical_family == "teblig" and title_family == "yonetmelik":
+        mapped_family = "yonetmelik"
+        mapping_reason = "teblig_to_yonetmelik"
+    elif canonical_family == "cb_genelge" and title_family == "cb_karar":
+        mapped_family = "cb_karar"
+        mapping_reason = "cb_genelge_to_cb_karar"
+    elif title_family and canonical_family and canonical_family != title_family:
+        mapping_reason = "title_family_override_visible_only"
+
+    return {
+        "source_family_raw": raw_family,
+        "source_family_canonical": canonical_family,
+        "source_family_title_inferred": title_family,
+        "source_family_mapped": mapped_family,
+        "source_family_mapping_reason": mapping_reason,
     }
-    return aliases.get(family, family or title_family)
 
 
 def _extract_university_issuer(title: str) -> str:
@@ -512,9 +570,14 @@ def canonical_source_record_from_metadata(metadata: dict[str, Any] | None) -> di
         )
         if value and value != title
     ]
+    family_profile = source_family_mapping_profile(metadata)
     record = {
         "source_key": source_key,
-        "source_family_canonical": canonical_source_family(metadata),
+        "source_family_raw": family_profile.get("source_family_raw"),
+        "source_family_canonical": family_profile.get("source_family_canonical"),
+        "source_family_title_inferred": family_profile.get("source_family_title_inferred"),
+        "source_family_mapped": family_profile.get("source_family_mapped"),
+        "source_family_mapping_reason": family_profile.get("source_family_mapping_reason"),
         "canonical_title": title,
         "canonical_title_normalized": normalize_canonical_text(title),
         "canonical_identifier": canonical_identifier,
@@ -693,7 +756,11 @@ def load_canonical_source_catalog() -> dict[str, dict[str, Any]]:
 def canonical_catalog_audit(catalog: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     records = list((catalog or load_canonical_source_catalog()).values())
     fields = (
+        "source_family_raw",
         "source_family_canonical",
+        "source_family_title_inferred",
+        "source_family_mapped",
+        "source_family_mapping_reason",
         "canonical_title",
         "canonical_title_normalized",
         "canonical_identifier",
@@ -725,9 +792,13 @@ def canonical_catalog_audit(catalog: dict[str, dict[str, Any]] | None = None) ->
     )
     missing = Counter()
     family_counts = Counter()
+    mapped_family_counts = Counter()
+    mapping_reason_counts = Counter()
     identifier_type_counts = Counter()
     for record in records:
         family_counts[str(record.get("source_family_canonical") or "unknown")] += 1
+        mapped_family_counts[str(record.get("source_family_mapped") or "unknown")] += 1
+        mapping_reason_counts[str(record.get("source_family_mapping_reason") or "unknown")] += 1
         identifier_type_counts[str(record.get("canonical_identifier_type") or "unknown")] += 1
         for field in fields:
             value = record.get(field)
@@ -740,6 +811,8 @@ def canonical_catalog_audit(catalog: dict[str, dict[str, Any]] | None = None) ->
         "fields": list(fields),
         "missing": dict(missing),
         "family_counts": dict(family_counts.most_common()),
+        "mapped_family_counts": dict(mapped_family_counts.most_common()),
+        "mapping_reason_counts": dict(mapping_reason_counts.most_common()),
         "identifier_type_counts": dict(identifier_type_counts.most_common()),
     }
 
@@ -828,15 +901,24 @@ def enrich_metadata_with_source_title(metadata: dict[str, Any] | None) -> dict[s
     issuer = infer_issuer(enriched)
     if issuer:
         enriched.setdefault("issuer", issuer)
-    enriched.setdefault("source_family_canonical", canonical_source_family(enriched))
+    family_profile = source_family_mapping_profile(enriched)
+    enriched.setdefault("source_family_raw", family_profile.get("source_family_raw"))
+    enriched.setdefault("source_family_canonical", family_profile.get("source_family_canonical"))
+    enriched.setdefault("source_family_title_inferred", family_profile.get("source_family_title_inferred"))
+    enriched.setdefault("source_family_mapped", family_profile.get("source_family_mapped"))
+    enriched.setdefault("source_family_mapping_reason", family_profile.get("source_family_mapping_reason"))
     enriched.setdefault("effective_state", resolve_effective_state(enriched))
     enriched.setdefault("canonical_identifier_display", _canonical_identifier_display(enriched))
     canonical_record = canonical_source_record_from_metadata(enriched)
     for key in (
+        "source_family_raw",
         "canonical_title",
         "canonical_title_normalized",
         "canonical_identifier",
         "canonical_identifier_type",
+        "source_family_title_inferred",
+        "source_family_mapped",
+        "source_family_mapping_reason",
         "issuer_normalized",
         "issuer_canonical",
         "issuing_body_level",

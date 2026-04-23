@@ -7,6 +7,7 @@ It must stay systemic: no benchmark QID or single-question rule belongs here.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import re
 from dataclasses import dataclass, field
 from typing import Iterable
@@ -94,6 +95,15 @@ class SourceFamilyResolution:
     fallback_families: list[str] = field(default_factory=list)
     selected_family_confidence: float = 0.0
     family_override_reason: str = "no_family_prior"
+    scenario_current_law_question: bool = False
+    scenario_current_law_prior: bool = False
+    historical_or_repealed_question: bool = False
+    historical_scope_detected: bool = False
+    repealed_scope_detected: bool = False
+    current_law_prior_blocked_by_historical_scope: bool = False
+    family_collision_detected: bool = False
+    family_collision_pair: str = ""
+    collision_resolution_reason: str = ""
 
     def to_trace_dict(self) -> dict[str, object]:
         return {
@@ -107,6 +117,15 @@ class SourceFamilyResolution:
             "fallback_families": self.fallback_families,
             "selected_family_confidence": round(self.selected_family_confidence, 3),
             "family_override_reason": self.family_override_reason,
+            "scenario_current_law_question": self.scenario_current_law_question,
+            "scenario_current_law_prior": self.scenario_current_law_prior,
+            "historical_or_repealed_question": self.historical_or_repealed_question,
+            "historical_scope_detected": self.historical_scope_detected,
+            "repealed_scope_detected": self.repealed_scope_detected,
+            "current_law_prior_blocked_by_historical_scope": self.current_law_prior_blocked_by_historical_scope,
+            "family_collision_detected": self.family_collision_detected,
+            "family_collision_pair": self.family_collision_pair,
+            "collision_resolution_reason": self.collision_resolution_reason,
         }
 
 
@@ -131,7 +150,24 @@ def contains_any(normalized_query: str, terms: Iterable[str]) -> bool:
 def contains_legal_teblig_term(normalized_query: str, term: str) -> bool:
     normalized_term = normalize_tr(term)
     if normalized_term == "teblig":
-        return re.search(r"(?<![a-z0-9])teblig(?!at)[a-z0-9]*(?![a-z0-9])", normalized_query) is not None
+        if re.search(
+            r"(?<![a-z0-9])teblig(?!at)\s+(?:edil|ol|sayil|sayilir|sayildigi|sayilacagi)",
+            normalized_query,
+        ):
+            return False
+        return (
+            re.search(
+                r"(?<![a-z0-9])(?:genel\s+)?teblig(?!at)(?:\s*\(|\s+no|\s+numarasi|\s+sayili|\s+sira|\s+seri|\s+ile)",
+                normalized_query,
+            )
+            is not None
+            or re.search(
+                r"(?<![a-z0-9])(?:ithalat|vergi|uygulama|sira|seri)\s+[a-z0-9\s]{0,30}teblig(?!at)",
+                normalized_query,
+            )
+            is not None
+            or re.search(r"(?<![a-z0-9])genel\s+teblig[a-z0-9]*(?![a-z0-9])", normalized_query) is not None
+        )
     if normalized_term == "teblig no":
         return (
             re.search(
@@ -253,6 +289,434 @@ def _confidence(top_score: float, second_score: float) -> float:
     return round(min(base, 0.95), 3)
 
 
+def _extract_query_years(normalized_query: str) -> list[int]:
+    years = [int(match.group(0)) for match in re.finditer(r"(?<!\d)(?:19|20)\d{2}(?!\d)", normalized_query)]
+    return sorted(set(years))
+
+
+def _looks_like_repealed_scope_question(normalized_query: str) -> bool:
+    if contains_any(
+        normalized_query,
+        (
+            "mülga",
+            "mulga",
+            "yürürlükten kaldır",
+            "yururlukten kaldir",
+            "yürürlükten kalk",
+            "yururlukten kalk",
+            "ilga",
+            "eski metin",
+            "tarihsel",
+            "o tarihte",
+            "geçiş hükmü",
+            "gecis hukmu",
+            "önceki düzenleme",
+            "onceki duzenleme",
+        ),
+    ):
+        return True
+    return bool(
+        re.search(
+            r"(?<![a-z0-9])eski\s+(?:khk|kanun\s+hukmunde\s+kararname)(?![a-z0-9])",
+            normalized_query,
+        )
+    )
+
+
+def _looks_like_historical_scope_question(normalized_query: str) -> bool:
+    if contains_any(
+        normalized_query,
+        (
+            "eski",
+            "önceki düzenleme",
+            "onceki duzenleme",
+            "geçiş hükmü",
+            "gecis hukmu",
+            "geçiş rejimi",
+            "gecis rejimi",
+            "meriyet",
+            "tatbik",
+            "ilk metin",
+            "orijinal metin",
+            "yürürlük tarihi",
+            "yururluk tarihi",
+            "yürürlükteki eski metin",
+            "yururlukteki eski metin",
+        ),
+    ):
+        return True
+
+    years = _extract_query_years(normalized_query)
+    if not years:
+        return False
+    current_year = datetime.now(timezone.utc).year
+    has_old_year = any(year <= current_year - 5 for year in years)
+    if not has_old_year:
+        return False
+    return contains_any(
+        normalized_query,
+        (
+            "risklidir",
+            "riskli",
+            "hata uretir",
+            "dogrudan hata",
+            "dogrudan hukum",
+            "dogrudan uygulan",
+            "kullanmak neden",
+            "uygulamak neden",
+            "halen kullanmak",
+        ),
+    )
+
+
+def _looks_like_scenario_current_law_question(normalized_query: str) -> bool:
+    current_law_terms = (
+        "halen",
+        "bugün",
+        "bugun",
+        "mevcut",
+        "güncel",
+        "guncel",
+        "yürürlükte",
+        "yururlukte",
+        "uygulanır",
+        "uygulanir",
+        "uygulanmakta",
+        "geçerli",
+        "gecerli",
+        "yürürlük durumuna göre",
+        "yururluk durumuna gore",
+    )
+    scenario_actor_terms = (
+        "işçi",
+        "isci",
+        "işveren",
+        "isveren",
+        "çalışan",
+        "calisan",
+        "işyeri",
+        "isyeri",
+        "kiracı",
+        "kiraci",
+        "kiraya veren",
+        "eş",
+        "ogrenci",
+        "öğrenci",
+        "sigortalı",
+        "sigortali",
+        "memur",
+        "başvuru",
+        "basvuru",
+    )
+    scenario_legal_terms = (
+        "hak",
+        "yükümlülük",
+        "yukumluluk",
+        "uygulanır",
+        "uygulanir",
+        "fesih",
+        "işten çıkar",
+        "isten cikar",
+        "ücret",
+        "ucret",
+        "izin",
+        "süre",
+        "sure",
+        "dava",
+        "başvur",
+        "basvur",
+        "olur mu",
+        "açabilir mi",
+        "acabilir mi",
+        "gerekir mi",
+        "nasıl",
+        "nasil",
+        "hangi hallerde",
+        "nedir",
+    )
+    present_day_applicability_terms = (
+        "dogrudan hukum",
+        "dogrudan uygulan",
+        "esas alinmali",
+        "uygulanmali",
+        "kullanmak neden",
+        "uygulamak neden",
+        "halen kullanmak",
+    )
+    has_current_law_signal = contains_any(normalized_query, current_law_terms)
+    has_scenario_signal = contains_any(normalized_query, scenario_actor_terms) and contains_any(
+        normalized_query,
+        scenario_legal_terms,
+    )
+    years = _extract_query_years(normalized_query)
+    has_present_day_year = any(year >= datetime.now(timezone.utc).year for year in years)
+    has_present_day_applicability_signal = has_present_day_year and contains_any(
+        normalized_query,
+        present_day_applicability_terms,
+    )
+    return has_current_law_signal or has_scenario_signal or has_present_day_applicability_signal
+
+
+def _score_value(scores: dict[str, dict[str, object]], family: str) -> float:
+    bucket = scores.get(family) or {}
+    try:
+        return float(bucket.get("score") or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _has_signal(scores: dict[str, dict[str, object]], family: str) -> bool:
+    return _score_value(scores, family) > 0
+
+
+def _apply_family_collision_rules(
+    scores: dict[str, dict[str, object]],
+    *,
+    normalized_query: str,
+    historical_scope_detected: bool,
+    repealed_scope_detected: bool,
+) -> tuple[bool, str, str]:
+    collision_detected = False
+    collision_pair = ""
+    resolution_reason = ""
+
+    def apply_collision(
+        *,
+        pair: str,
+        preferred_family: str,
+        preferred_boost: float,
+        demoted_families: tuple[str, ...] = (),
+        demote_amount: float = 0.0,
+        fallback_families: tuple[str, ...] = (),
+        fallback_boost: float = 0.0,
+        reason: str,
+    ) -> None:
+        nonlocal collision_detected, collision_pair, resolution_reason
+        collision_detected = True
+        collision_pair = pair
+        resolution_reason = reason
+        _add(scores, preferred_family, preferred_boost, reason)
+        for family in fallback_families:
+            _add(scores, family, fallback_boost, reason)
+        for family in demoted_families:
+            if family not in scores:
+                continue
+            bucket = scores[family]
+            bucket["score"] = float(bucket.get("score") or 0.0) - demote_amount
+            signals = bucket.get("signals")
+            if isinstance(signals, list) and reason not in signals:
+                signals.append(reason)
+
+    explicit_yonetmelik_request = contains_any(
+        normalized_query,
+        (
+            "hangi yonetmelik",
+            "yonetmelik duzeyinde",
+            "yonetmelik bakimindan",
+            "yonetmelige gore",
+            "yonetmelik iliskisi",
+            "cb/bk yonetmeligi",
+            "cb yonetmeligi",
+            "bk yonetmeligi",
+            "bakanlar kurulu yonetmeligi",
+        ),
+    )
+    public_administration_terms = contains_any(
+        normalized_query,
+        (
+            "kamu kurumu",
+            "kamu idaresi",
+            "personel servis",
+            "servis hizmeti",
+            "tasarruf genelgesi",
+            "resmi tasit",
+            "kurum personeli",
+            "idari tasarruf",
+        ),
+    )
+    decision_tariff_terms = contains_any(
+        normalized_query,
+        (
+            "gtip",
+            "ithalat vergisi",
+            "ek mali yukumluluk",
+            "ek mali yukumlulugu",
+            "ithalat rejimi",
+            "ana karar",
+            "degisiklik karari",
+            "degisiklik kararlari",
+            "ithalat",
+        ),
+    )
+    kanun_yonetmelik_relation = contains_any(
+        normalized_query,
+        (
+            "kanun ve yonetmelik iliskisi",
+            "kanun ve yonetmelik",
+            "kanuni cerceve",
+            "kanun ve yonetmelik duzeyi",
+        ),
+    )
+    comparison_query = contains_any(
+        normalized_query,
+        (
+            "yoksa",
+            "mi aranmali",
+            "mi aranmalı",
+            "mi, yoksa",
+            "mi yoksa",
+        ),
+    )
+
+    if repealed_scope_detected and (_has_signal(scores, "kanun") or _has_signal(scores, "mulga_kanun")):
+        apply_collision(
+            pair="kanun|mulga_kanun",
+            preferred_family="mulga_kanun",
+            preferred_boost=4.5,
+            demoted_families=("kanun",),
+            demote_amount=3.5,
+            reason="historical_scope_prefers_mulga",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if decision_tariff_terms and (_has_signal(scores, "cb_karar") or _has_signal(scores, "yonetmelik")):
+        apply_collision(
+            pair="cb_karar|yonetmelik",
+            preferred_family="cb_karar",
+            preferred_boost=5.0,
+            demoted_families=("yonetmelik", "cb_genelge"),
+            demote_amount=4.0,
+            reason="decision_tariff_terms_prefer_cb_karar",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if explicit_yonetmelik_request and public_administration_terms and _has_signal(scores, "cb_genelge") and (
+        _has_signal(scores, "cb_yonetmelik") or explicit_yonetmelik_request
+    ):
+        apply_collision(
+            pair="cb_genelge|cb_yonetmelik",
+            preferred_family="cb_yonetmelik",
+            preferred_boost=5.0,
+            fallback_families=("cb_genelge",),
+            fallback_boost=1.0,
+            demoted_families=("cb_genelge",),
+            demote_amount=1.0,
+            reason="public_administration_prefers_cb_yonetmelik",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if explicit_yonetmelik_request and _has_signal(scores, "teblig"):
+        apply_collision(
+            pair="teblig|yonetmelik",
+            preferred_family="yonetmelik",
+            preferred_boost=4.0,
+            demoted_families=("teblig",),
+            demote_amount=4.0,
+            reason="explicit_regulation_request_prefer_yonetmelik",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if kanun_yonetmelik_relation and (_has_signal(scores, "kanun") or _has_signal(scores, "yonetmelik")):
+        apply_collision(
+            pair="kanun|yonetmelik",
+            preferred_family="kanun",
+            preferred_boost=6.0,
+            fallback_families=("yonetmelik",),
+            fallback_boost=1.0,
+            demoted_families=("teblig",),
+            demote_amount=3.0,
+            reason="kanun_yonetmelik_relation_prefers_kanun",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if (
+        not comparison_query
+        and _has_signal(scores, "cb_genelge")
+        and _has_signal(scores, "cb_karar")
+        and contains_any(
+        normalized_query,
+        ("tasarruf", "genelge", "yonetimsel"),
+        )
+    ):
+        apply_collision(
+            pair="cb_genelge|cb_karar",
+            preferred_family="cb_genelge",
+            preferred_boost=3.0,
+            demoted_families=("cb_karar",),
+            demote_amount=2.0,
+            reason="administrative_guidance_prefers_cb_genelge",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if historical_scope_detected and _has_signal(scores, "kanun") and _has_signal(scores, "mulga_kanun"):
+        apply_collision(
+            pair="kanun|mulga_kanun",
+            preferred_family="mulga_kanun",
+            preferred_boost=3.0,
+            demoted_families=("kanun",),
+            demote_amount=2.0,
+            reason="historical_scope_prefers_legacy_family",
+        )
+
+    return collision_detected, collision_pair, resolution_reason
+
+
+def _maybe_upgrade_weak_family_prior(
+    *,
+    expected_family_prior: str | None,
+    preferred_families: list[str],
+    fallback_families: list[str],
+    predicted_family: str | None,
+    family_confidence: float,
+    routing_families: list[str],
+    family_override_reason: str,
+    top_candidate: SourceFamilyCandidate | None,
+    collision_resolution_reason: str,
+) -> tuple[str | None, list[str], list[str], str]:
+    if not predicted_family:
+        return expected_family_prior, preferred_families, fallback_families, family_override_reason
+    if family_override_reason not in {"weak_family_prior_cross_family_allowed", "low_confidence_family_prior"}:
+        return expected_family_prior, preferred_families, fallback_families, family_override_reason
+    top_signals = set(top_candidate.signals if top_candidate else [])
+    explicit_signal = any(
+        signal.endswith("_document_type")
+        or signal in {
+            "explicit_regulation_level_signal",
+            "explicit_cb_bk_regulation_signal",
+            "public_administration_namespace_signal",
+            "public_administration_regulation_signal",
+        }
+        for signal in top_signals
+    )
+    if collision_resolution_reason or explicit_signal or family_confidence >= 0.60:
+        preferred = [predicted_family]
+        fallback = [family for family in routing_families if family not in preferred]
+        if collision_resolution_reason:
+            return predicted_family, preferred, fallback, "collision_resolved_family_prior"
+        if explicit_signal:
+            return predicted_family, preferred, fallback, "explicit_family_signal_fallback"
+        return predicted_family, preferred, fallback, "controlled_family_signal_fallback"
+    return expected_family_prior, preferred_families, fallback_families, family_override_reason
+
+
+def _merge_collision_fallback_families(
+    *,
+    predicted_family: str | None,
+    fallback_families: list[str],
+    family_candidates: list[SourceFamilyCandidate],
+    family_collision_pair: str,
+) -> list[str]:
+    if not predicted_family or not family_collision_pair:
+        return fallback_families
+    candidate_families = {candidate.family for candidate in family_candidates}
+    merged = list(fallback_families)
+    for family in family_collision_pair.split("|"):
+        if family == predicted_family or family not in candidate_families or family in merged:
+            continue
+        merged.append(family)
+    return merged
+
+
 def resolve_source_family_prior(
     query: str,
     *,
@@ -262,6 +726,15 @@ def resolve_source_family_prior(
 ) -> SourceFamilyResolution:
     normalized_query = normalize_tr(query or "")
     scores: dict[str, dict[str, object]] = {}
+    repealed_scope_detected = _looks_like_repealed_scope_question(normalized_query)
+    historical_scope_detected = repealed_scope_detected or _looks_like_historical_scope_question(normalized_query)
+    historical_or_repealed_question = historical_scope_detected or repealed_scope_detected
+    raw_scenario_current_law_question = _looks_like_scenario_current_law_question(normalized_query)
+    scenario_current_law_question = raw_scenario_current_law_question and not historical_or_repealed_question
+    current_law_prior_blocked_by_historical_scope = bool(
+        raw_scenario_current_law_question and historical_or_repealed_question
+    )
+    scenario_current_law_prior = False
 
     law_signals = list(mentioned_laws) or ([law_filter] if law_filter else [])
     explicit_article_ref_list = list(explicit_article_refs)
@@ -300,6 +773,14 @@ def resolve_source_family_prior(
         terms=(
             "cumhurbaşkanlığı yönetmeliği",
             "cumhurbaskanligi yonetmeligi",
+            "cb/bk yönetmeliği",
+            "cb/bk yonetmeligi",
+            "cb yönetmeliği",
+            "cb yonetmeligi",
+            "bk yönetmeliği",
+            "bk yonetmeligi",
+            "bakanlar kurulu yönetmeliği",
+            "bakanlar kurulu yonetmeligi",
             "devlet arşiv",
             "devlet arsiv",
             "arşiv hizmetleri",
@@ -332,6 +813,13 @@ def resolve_source_family_prior(
             "karar numarasi",
             "ithalat rejimi kararı",
             "ithalat rejimi karari",
+            "ana karar",
+            "degisiklik karari",
+            "degisiklik kararlari",
+            "gtip",
+            "ek mali yukumluluk",
+            "ek mali yukumlulugu",
+            "ithalat vergisi",
             "yatırım programı kararı",
             "yatirim programi karari",
             "yatırım programı",
@@ -382,7 +870,7 @@ def resolve_source_family_prior(
         scores,
         normalized_query,
         family="tuzuk",
-        terms=("tüzük", "tuzuk", "nizamname"),
+        terms=("tüzük", "tuzuk", "tüzüğü", "tuzugu", "tüzüğünü", "tuzugunu", "nizamname"),
         score=5.0,
         signal="tuzuk_document_type",
     )
@@ -467,8 +955,60 @@ def resolve_source_family_prior(
 
     if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
         _add(scores, "yonetmelik", 3.0, "generic_regulation_signal")
+    if contains_any(
+        normalized_query,
+        (
+            "hangi yonetmelik",
+            "yonetmelik duzeyinde",
+            "yonetmelik bakimindan",
+            "yonetmelige gore",
+            "hangi cb/bk yonetmeligi",
+            "hangi cb yonetmeligi",
+            "hangi bk yonetmeligi",
+        ),
+    ):
+        _add(scores, "yonetmelik", 4.0, "explicit_regulation_level_signal")
+    if contains_any(
+        normalized_query,
+        (
+            "cb/bk yonetmeligi",
+            "cb yonetmeligi",
+            "bk yonetmeligi",
+            "bakanlar kurulu yonetmeligi",
+        ),
+    ):
+        _add(scores, "cb_yonetmelik", 4.0, "explicit_cb_bk_regulation_signal")
+    if contains_any(
+        normalized_query,
+        (
+            "kamu kurumu",
+            "kamu idaresi",
+            "personel servis",
+            "servis hizmeti",
+            "resmi tasit",
+            "kurum personeli",
+        ),
+    ):
+        _add(scores, "cb_yonetmelik", 3.5, "public_administration_regulation_signal")
+        _add(scores, "cb_genelge", 2.5, "public_administration_namespace_signal")
+
+    if current_law_prior_blocked_by_historical_scope:
+        scenario_current_law_prior = False
+    elif scenario_current_law_question and not scores:
+        # Natural-language current-law scenarios must not drift into a no-prior state.
+        # The default controlled stack is active kanun > yonetmelik > teblig.
+        _add(scores, "kanun", 6.0, "scenario_current_law_prior")
+        _add(scores, "yonetmelik", 4.0, "scenario_current_law_fallback")
+        _add(scores, "teblig", 2.0, "scenario_current_law_fallback")
+        scenario_current_law_prior = True
 
     _demote_generic_law_signal_when_specific_type_is_present(scores)
+    family_collision_detected, family_collision_pair, collision_resolution_reason = _apply_family_collision_rules(
+        scores,
+        normalized_query=normalized_query,
+        historical_scope_detected=historical_scope_detected,
+        repealed_scope_detected=repealed_scope_detected,
+    )
 
     if not scores:
         return SourceFamilyResolution(
@@ -482,6 +1022,15 @@ def resolve_source_family_prior(
             fallback_families=[],
             selected_family_confidence=0.0,
             family_override_reason="no_family_prior",
+            scenario_current_law_question=scenario_current_law_question,
+            scenario_current_law_prior=scenario_current_law_prior,
+            historical_or_repealed_question=historical_or_repealed_question,
+            historical_scope_detected=historical_scope_detected,
+            repealed_scope_detected=repealed_scope_detected,
+            current_law_prior_blocked_by_historical_scope=current_law_prior_blocked_by_historical_scope,
+            family_collision_detected=family_collision_detected,
+            family_collision_pair=family_collision_pair,
+            collision_resolution_reason=collision_resolution_reason,
         )
 
     raw_candidates = sorted(
@@ -521,6 +1070,25 @@ def resolve_source_family_prior(
         family_confidence=top_confidence,
         routing_families=routing_families,
     )
+    expected_family_prior, preferred_families, fallback_families, family_override_reason = _maybe_upgrade_weak_family_prior(
+        expected_family_prior=expected_family_prior,
+        preferred_families=preferred_families,
+        fallback_families=fallback_families,
+        predicted_family=predicted_family,
+        family_confidence=top_confidence,
+        routing_families=routing_families,
+        family_override_reason=family_override_reason,
+        top_candidate=candidates[0] if candidates else None,
+        collision_resolution_reason=collision_resolution_reason,
+    )
+    fallback_families = _merge_collision_fallback_families(
+        predicted_family=predicted_family,
+        fallback_families=fallback_families,
+        family_candidates=candidates,
+        family_collision_pair=family_collision_pair,
+    )
+    if scenario_current_law_prior and family_override_reason != "no_family_prior":
+        family_override_reason = "scenario_current_law_prior"
     return SourceFamilyResolution(
         predicted_family=predicted_family,
         family_confidence=top_confidence,
@@ -532,4 +1100,13 @@ def resolve_source_family_prior(
         fallback_families=fallback_families,
         selected_family_confidence=top_confidence if predicted_family else 0.0,
         family_override_reason=family_override_reason,
+        scenario_current_law_question=scenario_current_law_question,
+        scenario_current_law_prior=scenario_current_law_prior,
+        historical_or_repealed_question=historical_or_repealed_question,
+        historical_scope_detected=historical_scope_detected,
+        repealed_scope_detected=repealed_scope_detected,
+        current_law_prior_blocked_by_historical_scope=current_law_prior_blocked_by_historical_scope,
+        family_collision_detected=family_collision_detected,
+        family_collision_pair=family_collision_pair,
+        collision_resolution_reason=collision_resolution_reason,
     )

@@ -246,12 +246,12 @@ class GuardrailsPipeline:
 
     @classmethod
     def _extract_stringified_response_payload(cls, result: str) -> list[dict[str, Any]] | None:
+        if not result.startswith("response="):
+            return None
+
         match = cls._STRINGIFIED_RESPONSE_RE.search(result)
         if match:
             return cls._safe_literal_list(match.group(1))
-
-        if not result.startswith("response="):
-            return None
 
         start = len("response=")
         end_positions = [

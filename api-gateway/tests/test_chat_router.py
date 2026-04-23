@@ -38,6 +38,7 @@ from routers.chat import (
     _apply_source_cluster_deterministic_overrides,
     _apply_retrieval_plan_hints,
     _apply_metadata_lookup_family_prior,
+    _apply_relation_query_metadata_focus,
     _apply_pre_generation_family_pool,
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
@@ -47,7 +48,11 @@ from routers.chat import (
     _build_retrieval_plan_expansion,
     _build_metadata_first_query_expansion,
     _build_source_cluster_candidates,
+    _metadata_lookup_has_strong_query_anchor,
     _parse_metadata_lookup_query_signals,
+    _annotate_recall_lane_chunks,
+    _dedupe_retrieved_chunks,
+    _extract_effective_legal_query,
     _retrieve_source_key_chunks,
     _select_metadata_first_source_candidates,
     _select_article_span_evidence,
@@ -57,10 +62,13 @@ from routers.chat import (
     _extract_json_object,
     _extract_explicit_article_refs,
     _extract_law_mentions,
+    _extract_source_identifier_tokens,
     _infer_requested_source_families,
     _prioritize_chunks_for_source_families,
     _rerank_chunks_by_source_identity,
     _resolve_chunk_source_family,
+    _resolve_chunk_source_family_profile,
+    _resolve_chunk_routing_family,
     _resolve_source_family_prior,
     _resolve_public_answer_text,
     _sanitize_source_cluster_selector_payload,
@@ -510,6 +518,55 @@ class TestLawSignalParsing:
         assert features["cross_family_fallback_used"] is False
         assert features["family_override_reason"] == "strong_family_prior"
 
+    def test_retrieval_verification_features_export_current_law_scenario_flags(self):
+        resolution = _resolve_source_family_prior(
+            "İşveren performans gerekçesiyle işçiyi işten çıkarırsa işe iade davası açılabilir mi?"
+        )
+        chunks = [
+            RetrievedChunk(
+                text="Geçersiz nedenle fesih halinde işçi işe iade talep edebilir.",
+                citation="4857 m.21/f.0",
+                source="4857",
+                score=1.0,
+                metadata={
+                    "belge_turu": "kanun",
+                    "belge_adi": "İŞ KANUNU",
+                    "belge_no": "4857",
+                    "madde_no": "21",
+                    "effective_state": "active",
+                },
+            )
+        ]
+
+        features = _build_retrieval_verification_features(
+            query="İşveren performans gerekçesiyle işçiyi işten çıkarırsa işe iade davası açılabilir mi?",
+            requested_source_families=["kanun"],
+            source_family_resolution=resolution.to_trace_dict(),
+            chunks=chunks,
+        )
+
+        assert features["scenario_current_law_question"] is True
+        assert features["scenario_current_law_prior"] is True
+        assert features["historical_or_repealed_question"] is False
+
+    def test_retrieval_verification_features_export_historical_and_collision_flags(self):
+        resolution = _resolve_source_family_prior(
+            "1475 sayılı mülga İş Kanunu ile 2026'da doğrudan hüküm kurmak neden risklidir?"
+        )
+
+        features = _build_retrieval_verification_features(
+            query="1475 sayılı mülga İş Kanunu ile 2026'da doğrudan hüküm kurmak neden risklidir?",
+            requested_source_families=["mulga_kanun"],
+            source_family_resolution=resolution.to_trace_dict(),
+            chunks=[],
+        )
+
+        assert features["historical_scope_detected"] is True
+        assert features["repealed_scope_detected"] is True
+        assert features["current_law_prior_blocked_by_historical_scope"] is True
+        assert features["family_collision_detected"] is True
+        assert features["family_collision_pair"] == "kanun|mulga_kanun"
+
     def test_completeness_synthesis_flags_short_complex_answer(self):
         features = _build_completeness_synthesis_features(
             query="Başvuru usulü ve süresi nedir?",
@@ -692,6 +749,85 @@ class TestLawSignalParsing:
 
         assert resolution.predicted_family == "cb_yonetmelik"
         assert "cb_yonetmelik" in resolution.routing_families
+
+    def test_source_family_prior_uses_current_law_scenario_fallback_for_natural_language_query(self):
+        resolution = _resolve_source_family_prior(
+            "İşveren performans gerekçesiyle işçiyi işten çıkarırsa işe iade davası açılabilir mi?"
+        )
+
+        assert resolution.predicted_family == "kanun"
+        assert resolution.preferred_families == ["kanun"]
+        assert "kanun" in resolution.routing_families
+        assert "yonetmelik" in resolution.routing_families
+        assert resolution.scenario_current_law_question is True
+        assert resolution.scenario_current_law_prior is True
+        assert resolution.historical_or_repealed_question is False
+        assert resolution.family_override_reason == "scenario_current_law_prior"
+
+    def test_source_family_prior_blocks_current_law_fallback_when_historical_scope_is_explicit(self):
+        resolution = _resolve_source_family_prior(
+            "1475 sayılı mülga İş Kanunu ile 2026'da doğrudan hüküm kurmak neden risklidir?"
+        )
+
+        assert resolution.scenario_current_law_question is False
+        assert resolution.scenario_current_law_prior is False
+        assert resolution.historical_scope_detected is True
+        assert resolution.repealed_scope_detected is True
+        assert resolution.current_law_prior_blocked_by_historical_scope is True
+        assert resolution.predicted_family == "mulga_kanun"
+        assert resolution.family_collision_detected is True
+        assert resolution.family_collision_pair == "kanun|mulga_kanun"
+
+    def test_source_family_prior_detects_old_year_historical_scope_for_legacy_tuzuk_query(self):
+        resolution = _resolve_source_family_prior(
+            "Tapu işlemlerinde 1994 tarihli Tapu Sicili Tüzüğünü kullanmak neden doğrudan hata üretir?"
+        )
+
+        assert resolution.historical_scope_detected is True
+        assert resolution.current_law_prior_blocked_by_historical_scope is False
+        assert resolution.predicted_family == "tuzuk"
+
+    def test_source_family_prior_prefers_kanun_when_teblig_is_passive_verb_and_query_names_kanun_yonetmelik(self):
+        resolution = _resolve_source_family_prior(
+            "Elektronik tebligat muhatabın elektronik adresine ulaştığı anda mı, yoksa daha sonraki bir tarihte mi tebliğ edilmiş sayılır? Kanun ve yönetmelik ilişkisini de göster."
+        )
+
+        assert resolution.predicted_family == "kanun"
+        assert resolution.preferred_families == ["kanun"]
+        assert "yonetmelik" in resolution.routing_families
+        assert resolution.family_collision_detected is True
+        assert resolution.family_collision_pair == "kanun|yonetmelik"
+
+    def test_source_family_prior_prefers_yonetmelik_for_yonetmelik_duzeyinde_tebligat_question(self):
+        resolution = _resolve_source_family_prior(
+            "Elektronik tebligatın hangi tarihte tebliğ edilmiş sayılacağını yönetmelik düzeyinde açıkla."
+        )
+
+        assert resolution.predicted_family == "yonetmelik"
+        assert resolution.preferred_families == ["yonetmelik"]
+        assert resolution.family_collision_detected is False
+
+    def test_source_family_prior_resolves_cb_yonetmelik_vs_cb_genelge_public_admin_collision(self):
+        resolution = _resolve_source_family_prior(
+            "Kamu kurumunun personel servis hizmeti kurması veya kiralama yoluyla yürütmesi sorusunda hangi CB/BK yönetmeliği ve hangi güncel tasarruf genelgesi birlikte kontrol edilmelidir?"
+        )
+
+        assert resolution.predicted_family == "cb_yonetmelik"
+        assert resolution.preferred_families == ["cb_yonetmelik"]
+        assert "cb_genelge" in resolution.fallback_families
+        assert resolution.family_collision_detected is True
+        assert resolution.family_collision_pair == "cb_genelge|cb_yonetmelik"
+        assert resolution.collision_resolution_reason == "public_administration_prefers_cb_yonetmelik"
+
+    def test_source_family_prior_prefers_cb_karar_for_gtip_change_decision_query(self):
+        resolution = _resolve_source_family_prior(
+            "2026'da belirli bir GTİP için ithalat vergisi veya ek mali yükümlülük soruluyor. Hangi ana karar ve değişiklik kararları takip edilmelidir?"
+        )
+
+        assert resolution.predicted_family == "cb_karar"
+        assert resolution.preferred_families == ["cb_karar"]
+        assert resolution.family_collision_detected is True
+        assert resolution.family_collision_pair == "cb_karar|yonetmelik"
 
     def test_pre_generation_family_pool_locks_strong_preferred_family(self):
         resolution = _resolve_source_family_prior(
@@ -886,6 +1022,76 @@ class TestLawSignalParsing:
 
         assert _resolve_chunk_source_family(chunk) == "yonetmelik"
 
+    def test_chunk_source_family_profile_keeps_raw_kky_but_maps_routing_family_to_generic_regulation(self):
+        chunk = RetrievedChunk(
+            text="Mesafeli sözleşmeler yönetmeliği parçası.",
+            citation="20237 m.1/f.0",
+            source="20237",
+            score=0.9,
+            metadata={
+                "source_family_canonical": "kky",
+                "source_family_raw": "kky",
+                "source_family_mapped": "yonetmelik",
+                "source_family_mapping_reason": "kky_to_yonetmelik",
+                "source_title": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ",
+                "belge_turu": "kky",
+            },
+        )
+
+        profile = _resolve_chunk_source_family_profile(chunk)
+        assert profile["raw_family"] == "kky"
+        assert profile["resolved_family"] == "kky"
+        assert profile["mapped_family"] == "yonetmelik"
+        assert _resolve_chunk_routing_family(chunk) == "yonetmelik"
+
+    def test_chunk_routing_family_does_not_bridge_repealed_mulga_into_active_kanun_pool(self):
+        chunk = RetrievedChunk(
+            text="Mülga iş kanunu hükmü.",
+            citation="1475 m.98/f.0",
+            source="1475",
+            score=0.9,
+            metadata={
+                "source_family_canonical": "mulga_kanun",
+                "source_family_raw": "mulga_kanun",
+                "source_family_mapped": "kanun",
+                "source_family_mapping_reason": "mulga_to_kanun",
+                "source_title": "İŞ KANUNUNUN YÜRÜRLÜKTEN KALDIRILMIŞ HÜKÜMLERİ",
+                "mulga": True,
+            },
+        )
+
+        assert _resolve_chunk_source_family(chunk) == "mulga_kanun"
+        assert _resolve_chunk_routing_family(chunk) == "mulga_kanun"
+
+    def test_dedupe_retrieved_chunks_merges_recall_lane_sources(self):
+        dense_chunk = RetrievedChunk(
+            text="Aynı metin",
+            citation="20237 m.1/f.0",
+            source="20237",
+            score=0.5,
+            metadata={"source_title": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ"},
+        )
+        metadata_chunk = RetrievedChunk(
+            text="Aynı metin",
+            citation="20237 m.1/f.0",
+            source="20237",
+            score=0.8,
+            metadata={"source_title": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ"},
+        )
+
+        _annotate_recall_lane_chunks([dense_chunk], lane="semantic_dense_recall")
+        _annotate_recall_lane_chunks([metadata_chunk], lane="metadata_guided_recall")
+        deduped = _dedupe_retrieved_chunks([dense_chunk, metadata_chunk])
+
+        assert len(deduped) == 1
+        merged = deduped[0]
+        assert merged.score == 0.8
+        assert set((merged.metadata or {}).get("retrieval_lane_sources") or []) == {
+            "semantic_dense_recall",
+            "metadata_guided_recall",
+        }
+        assert (merged.metadata or {}).get("merged_lane_present") is True
+
     def test_prioritize_chunks_for_source_families_prefers_matching_family(self):
         from rag.orchestrator import RetrievedChunk
 
@@ -1004,6 +1210,64 @@ class TestLawSignalParsing:
             "term_hints": ["işe iade", "geçerli sebep"],
         }
 
+    def test_sanitize_retrieval_plan_payload_drops_fabricated_long_title_terms(self):
+        payload = _sanitize_retrieval_plan_payload(
+            {
+                "law_hints": ["4857"],
+                "source_family_hints": ["kanun"],
+                "term_hints": [
+                    "işçi haklarının korunması hakkında kanun",
+                    "işe iade",
+                ],
+            },
+            user_query=(
+                "42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan personel işe iade "
+                "yoluna gidebilir mi?"
+            ),
+        )
+
+        assert payload == {
+            "law_hints": ["4857"],
+            "source_family_hints": ["kanun", "mulga_kanun"],
+            "term_hints": ["işe iade"],
+        }
+
+    def test_metadata_lookup_anchor_gate_skips_generic_scenario_query(self):
+        signals = _parse_metadata_lookup_query_signals(
+            "42 çalışanlı işyerinde 8 aylık kıdemi bulunan personel işe iade davası açabilir mi?"
+        )
+
+        assert _metadata_lookup_has_strong_query_anchor(signals) is False
+
+    def test_extract_effective_legal_query_strips_benchmark_scaffolding(self):
+        query = (
+            "Bu soruyu 2026-04-19 tarihindeki yururluk durumuna gore cevapla. "
+            "Yaniti kisa sonuc, kisa gerekce, dayanak belge zinciri ve gerekiyorsa "
+            "yururluk/guncellik notu seklinde ver.\n"
+            "Beklenen çıktı tipi: Kısa sonuç + gerekçe + dayanak belge zinciri.\n\n"
+            "42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan personel işe iade "
+            "davası açabilir mi?"
+        )
+
+        assert _extract_effective_legal_query(query) == (
+            "42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan personel işe iade "
+            "davası açabilir mi?"
+        )
+
+    def test_extract_source_identifier_tokens_ignores_plain_scenario_numbers(self):
+        tokens = _extract_source_identifier_tokens(
+            "42 çalışanlı bir işyerinde 8 aylık kıdemi bulunan personel işe iade davası açabilir mi?"
+        )
+
+        assert tokens == set()
+
+    def test_extract_source_identifier_tokens_keeps_explicit_legal_identifiers(self):
+        tokens = _extract_source_identifier_tokens(
+            "4857 sayılı İş Kanunu ile Karar Sayısı: 3350 olan düzenleme birlikte nasıl uygulanır?"
+        )
+
+        assert {"4857", "3350"} <= tokens
+
     def test_build_retrieval_plan_expansion_includes_numeric_law_hints_as_search_terms(self):
         expansion = _build_retrieval_plan_expansion(
             {
@@ -1054,31 +1318,53 @@ class TestLawSignalParsing:
                 citation="IK m.21/f.0",
                 source="IK",
                 score=0.91,
-                metadata={"source_title": "İŞ KANUNU", "law_short_name": "IK", "belge_turu": "kanun"},
+                metadata={
+                    "source_title": "İŞ KANUNU",
+                    "law_short_name": "IK",
+                    "law_no": "4857",
+                    "belge_turu": "kanun",
+                    "effective_state": "active",
+                },
             ),
             RetrievedChunk(
                 text="Toplu işçi çıkarma",
                 citation="1475 m.24/f.0",
                 source="1475",
                 score=0.89,
-                metadata={"source_title": "İŞ KANUNU", "law_short_name": "1475", "belge_turu": "mulga_kanun"},
+                metadata={
+                    "source_title": "İŞ KANUNU",
+                    "law_short_name": "1475",
+                    "law_no": "1475",
+                    "belge_turu": "mulga_kanun",
+                    "effective_state": "repealed",
+                    "mulga": True,
+                    "yururluk_bitis": "2003-06-10",
+                },
             ),
             RetrievedChunk(
                 text="Tapu sicili",
                 citation="20135150 m.7/f.0",
                 source="20135150",
                 score=0.93,
-                metadata={"source_title": "TAPU SİCİLİ TÜZÜĞÜ", "law_short_name": "20135150", "belge_turu": "tuzuk"},
+                metadata={
+                    "source_title": "TAPU SİCİLİ TÜZÜĞÜ",
+                    "law_short_name": "20135150",
+                    "belge_turu": "tuzuk",
+                },
             ),
         ]
 
         candidates = _build_source_cluster_candidates(chunks, limit=8)
 
-        assert [item["cluster_id"] for item in candidates] == ["C1", "C2"]
-        assert candidates[0]["display_title"] == "İŞ KANUNU"
-        assert candidates[0]["laws"] == ["IK", "1475"]
-        assert candidates[0]["chunk_count"] == 2
-        assert candidates[1]["display_title"] == "TAPU SİCİLİ TÜZÜĞÜ"
+        assert len(candidates) == 3
+        candidate_by_key = {item["source_key"]: item for item in candidates}
+        assert candidate_by_key["4857"]["display_title"] == "İŞ KANUNU"
+        assert candidate_by_key["4857"]["laws"] == ["IK"]
+        assert candidate_by_key["4857"]["effective_state"] == "active"
+        assert candidate_by_key["1475"]["display_title"] == "İŞ KANUNU"
+        assert candidate_by_key["1475"]["laws"] == ["1475"]
+        assert candidate_by_key["1475"]["effective_state"] == "repealed"
+        assert candidate_by_key["20135150"]["display_title"] == "TAPU SİCİLİ TÜZÜĞÜ"
 
     def test_sanitize_source_cluster_selector_payload_keeps_only_known_clusters_and_laws(self):
         candidates = [
@@ -1242,6 +1528,50 @@ class TestLawSignalParsing:
 
         assert payload["selected_cluster_ids"] == ["C2"]
         assert payload["selected_law_hints"] == ["9903"]
+
+    def test_source_cluster_overrides_prefers_active_planner_law_in_current_law_scenario(self):
+        candidates = [
+            {
+                "cluster_id": "C1",
+                "source_key": "1475",
+                "display_title": "İŞ KANUNU",
+                "source_family": "mulga_kanun",
+                "laws": ["1475"],
+                "citations": ["1475 m.24/f.0"],
+                "excerpts": ["Toplu işçi çıkarma ve eski fesih rejimi."],
+                "state_rank": 2,
+                "effective_state": "repealed",
+            },
+            {
+                "cluster_id": "C2",
+                "source_key": "4857",
+                "display_title": "İŞ KANUNU",
+                "source_family": "kanun",
+                "laws": ["4857", "IK"],
+                "citations": ["4857 m.21/f.0"],
+                "excerpts": ["İşe iade, fesih bildirimi ve geçerli sebep rejimi."],
+                "state_rank": 0,
+                "effective_state": "active",
+            },
+        ]
+
+        payload = _apply_source_cluster_deterministic_overrides(
+            payload={"selected_cluster_ids": ["C1"], "selected_law_hints": ["1475"]},
+            candidates=candidates,
+            user_query=(
+                "42 çalışanlı işyerinde 8 aylık kıdemi bulunan personel performans gerekçesiyle "
+                "işten çıkarılırsa işe iade yoluna gidebilir mi?"
+            ),
+            requested_source_families=["kanun", "mulga_kanun"],
+            source_family_resolution=_resolve_source_family_prior(
+                "42 çalışanlı işyerinde 8 aylık kıdemi bulunan personel performans gerekçesiyle "
+                "işten çıkarılırsa işe iade yoluna gidebilir mi?"
+            ),
+            planner_law_hints={"4857"},
+        )
+
+        assert payload["selected_cluster_ids"] == ["C2"]
+        assert payload["selected_law_hints"] == ["4857", "IK"]
 
     def test_metadata_first_source_candidates_rank_title_identifier_and_family(self, tmp_path, monkeypatch):
         article_rows = tmp_path / "article_rows.jsonl"
@@ -1429,6 +1759,105 @@ class TestLawSignalParsing:
         assert enriched.preferred_families == ["teblig"]
         assert enriched.family_override_reason == "metadata_lookup_negative_transition"
 
+    def test_metadata_lookup_family_prior_keeps_current_law_guard_against_repealed_mulga(self):
+        base_resolution = _resolve_source_family_prior(
+            "İşveren performans gerekçesiyle işçiyi işten çıkarırsa işe iade davası açılabilir mi?"
+        )
+        selector = {
+            "metadata_lookup_hit": True,
+            "metadata_lookup_confidence": 0.91,
+            "metadata_lookup_source": "normalized_title_lookup",
+            "candidates": [
+                {
+                    "source_family": "kanun",
+                    "source_family_raw": "mulga_kanun",
+                    "effective_state": "repealed",
+                    "metadata_lookup_confidence": 0.91,
+                    "metadata_lookup_source": "normalized_title_lookup",
+                    "score": 41.0,
+                }
+            ],
+        }
+
+        enriched = _apply_metadata_lookup_family_prior(base_resolution, selector)
+
+        assert enriched.predicted_family == "kanun"
+        assert enriched.preferred_families == ["kanun"]
+        assert enriched.scenario_current_law_question is True
+        assert enriched.scenario_current_law_prior is True
+        assert enriched.family_override_reason == "scenario_current_law_prior"
+
+    def test_metadata_lookup_family_prior_keeps_relation_primary_kanun_against_regulation_metadata(self):
+        query = (
+            "Elektronik tebligat muhatabın elektronik adresine ulaştığı anda mı, "
+            "yoksa daha sonraki bir tarihte mi tebliğ edilmiş sayılır? "
+            "Kanun ve yönetmelik ilişkisini de göster."
+        )
+        base_resolution = _resolve_source_family_prior(query)
+        selector = {
+            "metadata_lookup_hit": True,
+            "metadata_lookup_confidence": 0.91,
+            "metadata_lookup_source": "normalized_title_lookup",
+            "candidates": [
+                {
+                    "source_key": "20631",
+                    "source_family": "yonetmelik",
+                    "source_family_raw": "teblig",
+                    "effective_state": "active",
+                    "metadata_lookup_confidence": 0.91,
+                    "metadata_lookup_source": "normalized_title_lookup",
+                    "score": 41.0,
+                }
+            ],
+        }
+
+        enriched = _apply_metadata_lookup_family_prior(
+            base_resolution,
+            selector,
+            query=query,
+        )
+
+        assert base_resolution.collision_resolution_reason == "kanun_yonetmelik_relation_prefers_kanun"
+        assert enriched.predicted_family == "kanun"
+        assert enriched.preferred_families == ["kanun"]
+
+    def test_relation_query_metadata_focus_promotes_primary_kanun_candidate(self):
+        query = (
+            "Elektronik tebligat muhatabın elektronik adresine ulaştığı anda mı, "
+            "yoksa daha sonraki bir tarihte mi tebliğ edilmiş sayılır? "
+            "Kanun ve yönetmelik ilişkisini de göster."
+        )
+        resolution = _resolve_source_family_prior(query)
+        selector = {
+            "metadata_lookup_hit": True,
+            "candidates": [
+                {
+                    "source_key": "20631",
+                    "canonical_identifier": "20631",
+                    "source_family": "yonetmelik",
+                },
+                {
+                    "source_key": "7201",
+                    "canonical_identifier": "7201",
+                    "source_family": "kanun",
+                },
+            ],
+            "selected_source_keys": ["20631", "7201"],
+            "selected_families": ["yonetmelik", "kanun"],
+        }
+
+        focused = _apply_relation_query_metadata_focus(
+            selector,
+            query=query,
+            source_family_resolution=resolution,
+        )
+
+        assert focused["relation_query_detected"] is True
+        assert focused["primary_source_candidate"] == "7201"
+        assert focused["supporting_source_candidate"] == "20631"
+        assert focused["selected_source_keys"] == ["7201"]
+        assert focused["selected_families"] == ["kanun"]
+
     def test_metadata_first_identifier_tokens_ignore_article_only_numbers(self, tmp_path, monkeypatch):
         article_rows = tmp_path / "article_rows.jsonl"
         article_rows.write_text(
@@ -1598,9 +2027,38 @@ class TestLawSignalParsing:
         assert trace["document_identity_score"] == trace["top_scores"][0]["document_identity_score"]
         assert trace["identity_lock_strength"] == "strong"
         assert trace["identity_rerank_input_source"] == "metadata_lookup_selector"
+        assert trace["identity_rerank_input_lane"] == "unknown"
+        assert trace["replacement_guard_triggered"] is False
         assert trace["selected_document_rank_after_identity_rerank"] == 1
         assert trace["selected_document_original_rank"] == 2
         assert trace["top_scores"][0]["title_bias_applied"] > 0
+
+    def test_source_identity_reranker_triggers_replacement_guard_for_metadata_only_weak_match(self):
+        weak_chunk = RetrievedChunk(
+            text="İthalata ilişkin tebliğ hükmü.",
+            citation="42854 m.0",
+            source="42854",
+            score=0.91,
+            metadata={
+                "belge_turu": "teblig",
+                "belge_no": "42854",
+                "source_title": "KULLANILMIŞ VEYA YENİLEŞTİRİLMİŞ EŞYA İTHALATINA İLİŞKİN TEBLİĞ (İTHALAT: 2026/9)",
+                "madde_no": "0",
+            },
+        )
+        _annotate_recall_lane_chunks([weak_chunk], lane="metadata_guided_recall")
+
+        reranked, trace = _rerank_chunks_by_source_identity(
+            query="İthalat rejimi kararı hangisidir?",
+            chunks=[weak_chunk],
+            requested_source_families=["cb_karar"],
+            metadata_first_selector={"candidates": []},
+        )
+
+        assert reranked[0].citation == "42854 m.0"
+        assert trace["identity_rerank_input_lane"] == "metadata_guided_recall"
+        assert trace["replacement_guard_triggered"] is True
+        assert trace["top_scores"][0]["replacement_guard_triggered"] is True
 
     def test_source_identity_reranker_prefers_strong_title_match_over_generic_family(self):
         generic_chunk = RetrievedChunk(
@@ -1765,7 +2223,7 @@ class TestLawSignalParsing:
             query="Performans gerekçesiyle işten çıkarılan işçi işe iade davası açabilir mi?",
             chunks=chunks,
             source_families=["kanun"],
-            selected_source_keys={"İŞ KANUNU".strip().lower()},
+            selected_source_keys={"ik"},
         )
 
         assert prioritized[0].citation == "IK m.21/f.0"
@@ -1884,7 +2342,7 @@ class TestLawSignalParsing:
             chunks=chunks,
             requested_source_families=["uy", "yonetmelik"],
             explicit_article_refs=[],
-            selected_source_keys={"kırklareli üniversitesi lisansüstü eğitim ve öğretim yönetmeliği"},
+            selected_source_keys={"40969"},
         )
 
         assert selected[0].citation == "40969 m.12/f.0"
@@ -1977,7 +2435,7 @@ class TestLawSignalParsing:
         )
 
         assert selected[0].citation == "40969 m.27/f.0"
-        assert "kirklareli" in selector["selected_document_id"]
+        assert "kirklareli" in selector["selected_document_id"].replace("İ", "i").replace("I", "i").lower()
         assert selector["selector_reason"] == "preferred_family_lock"
         assert selector["article_match_type"] == "source_local_support"
         assert selector["selector_article_lock_type"] == "semantic_exact"
@@ -2058,7 +2516,7 @@ class TestLawSignalParsing:
             chunks=chunks,
             requested_source_families=["uy", "yonetmelik"],
             explicit_article_refs=[],
-            selected_source_keys={"kırklareli üniversitesi lisansüstü eğitim ve öğretim yönetmeliği"},
+            selected_source_keys={"40969"},
         )
 
         assert selected[0].citation == "40969 m.12/f.0"
@@ -2121,6 +2579,158 @@ class TestLawSignalParsing:
         assert selector["selector_article_lock_type"] == "none"
         assert selector["selector_exact_article_hit"] is False
         assert selector["manual_review_trigger_reason"] == "insufficient_selector_support"
+
+    def test_article_span_selector_demotes_repealed_candidate_when_active_kanun_exists(self):
+        query = "İşveren performans gerekçesiyle işçiyi işten çıkarırsa işe iade davası açılabilir mi?"
+        chunks = [
+            RetrievedChunk(
+                text="İşe iade başvurusu eski düzenlemede farklı sonuçlara bağlanır.",
+                citation="1475 m.98/f.0",
+                source="1475",
+                score=0.98,
+                metadata={
+                    "source_title": "İŞ KANUNUNUN YÜRÜRLÜKTEN KALDIRILMIŞ HÜKÜMLERİ",
+                    "belge_turu": "mulga_kanun",
+                    "belge_no": "1475",
+                    "madde_no": "98",
+                    "effective_state": "repealed",
+                    "mulga": True,
+                    "yururluk_bitis": "2003-06-10",
+                },
+            ),
+            RetrievedChunk(
+                text="Geçersiz nedenle yapılan fesihte işçi işe iade talep edebilir.",
+                citation="4857 m.21/f.0",
+                source="4857",
+                score=0.74,
+                metadata={
+                    "source_title": "İŞ KANUNU",
+                    "belge_turu": "kanun",
+                    "belge_no": "4857",
+                    "madde_no": "21",
+                    "effective_state": "active",
+                    "mulga": False,
+                    "yururluk_baslangic": "2003-06-10",
+                    "yururluk_bitis": "9999-12-31",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["kanun"],
+            explicit_article_refs=[],
+            selected_source_keys={"1475"},
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+
+        assert selected[0].citation == "4857 m.21/f.0"
+        assert "kanunu" in str(selector["selected_document_id"]).lower()
+        assert selector["selector_reason"] == "current_law_temporal_guard"
+        assert selector["scenario_current_law_question"] is True
+        assert selector["active_candidate_available"] is True
+        assert selector["repealed_candidate_demoted"] is True
+        assert selector["temporal_family_guard_triggered"] is True
+
+    def test_article_span_selector_prefers_primary_kanun_for_relation_query(self):
+        query = (
+            "Elektronik tebligat muhatabın elektronik adresine ulaştığı anda mı, "
+            "yoksa daha sonraki bir tarihte mi tebliğ edilmiş sayılır? "
+            "Kanun ve yönetmelik ilişkisini de göster."
+        )
+        chunks = [
+            RetrievedChunk(
+                text="Elektronik tebligat yönetmeliğinde iletim kayıtları ayrıca düzenlenir.",
+                citation="20631 m.11/f.0",
+                source="20631",
+                score=0.97,
+                metadata={
+                    "source_title": "ELEKTRONİK TEBLİGAT YÖNETMELİĞİ",
+                    "belge_turu": "yonetmelik",
+                    "belge_no": "20631",
+                    "madde_no": "11",
+                    "effective_state": "active",
+                },
+            ),
+            RetrievedChunk(
+                text="Elektronik tebligatın tebliğ edilmiş sayılması Tebligat Kanununda düzenlenir.",
+                citation="7201 m.7/a/f.0",
+                source="7201",
+                score=0.78,
+                metadata={
+                    "source_title": "TEBLİGAT KANUNU",
+                    "belge_turu": "kanun",
+                    "belge_no": "7201",
+                    "madde_no": "7/a",
+                    "effective_state": "active",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["kanun", "yonetmelik"],
+            explicit_article_refs=[],
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+
+        assert selected[0].citation == "7201 m.7/a/f.0"
+        assert selector["relation_query_detected"] is True
+        assert "kanunu" in selector["primary_source_candidate"].replace("i̇", "i").lower()
+        assert "YÖNETMELİĞİ" in selector["supporting_source_candidate"]
+
+    def test_article_span_selector_prefers_legacy_khk_inside_locked_family(self):
+        query = "Eski KHK'larla 2026'da doğrudan hüküm kurmak neden risklidir?"
+        chunks = [
+            RetrievedChunk(
+                text="Bu Kanun Hükmünde Kararname nükleer düzenleme kurumuna ilişkindir.",
+                citation="702 m.1/f.0",
+                source="702",
+                score=0.95,
+                metadata={
+                    "source_title": "NÜKLEER DÜZENLEME KURUMUNUN TEŞKİLAT VE GÖREVLERİ HAKKINDA KANUN HÜKMÜNDE KARARNAME",
+                    "belge_turu": "kanun",
+                    "belge_no": "702",
+                    "madde_no": "1",
+                    "effective_state": "active",
+                    "yururluk_baslangic": "2018-07-09",
+                    "yururluk_bitis": "9999-12-31",
+                },
+            ),
+            RetrievedChunk(
+                text="Patent haklarının korunmasına ilişkin eski KHK hükmüdür.",
+                citation="551 m.1/f.0",
+                source="551",
+                score=0.71,
+                metadata={
+                    "source_title": "PATENT HAKLARININ KORUNMASI HAKKINDA KANUN HÜKMÜNDE KARARNAME",
+                    "belge_turu": "kanun",
+                    "belge_no": "551",
+                    "madde_no": "1",
+                    "effective_state": "active",
+                    "yururluk_baslangic": "1995-06-27",
+                    "yururluk_bitis": "9999-12-31",
+                },
+            ),
+        ]
+
+        selected, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["khk"],
+            explicit_article_refs=[],
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+
+        assert selected[0].citation == "551 m.1/f.0"
+        assert selector["legacy_intent_binding_active"] is True
+        assert selector["legacy_candidate_preferred"] is True
+        assert selector["internal_document_state_rank"] == 0
+        assert "patent haklarinin korunmasi hakkinda kanun hükmünde kararname" in selector[
+            "selected_document_id"
+        ].replace("i̇", "i").lower()
 
     def test_assembled_evidence_exposes_phase4_canonical_span_fields(self):
         chunk = RetrievedChunk(

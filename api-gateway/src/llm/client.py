@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import ast
+import logging
 import os
 import re
+import time
 from dataclasses import dataclass
 from typing import Any, Sequence
 
 from config import Settings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -195,14 +199,33 @@ class LLMClient:
             max_tokens=resolved_max_tokens,
         )
         try:
+            request_started_at = time.perf_counter()
             response = await client.chat.completions.create(**request_payload)
+            logger.info(
+                "LLMClient timing: stage=openai_create latency=%.0fms messages=%d max_tokens=%d",
+                (time.perf_counter() - request_started_at) * 1000.0,
+                len(messages),
+                resolved_max_tokens,
+            )
+            raw_content = response.choices[0].message.content or ""
+            extract_started_at = time.perf_counter()
+            extracted_text = self._extract_text(raw_content)
+            logger.info(
+                "LLMClient timing: stage=extract_text latency=%.0fms raw_len=%d wrapped=%s",
+                (time.perf_counter() - extract_started_at) * 1000.0,
+                len(raw_content) if isinstance(raw_content, str) else len(str(raw_content)),
+                isinstance(raw_content, str) and raw_content.startswith("response="),
+            )
             return LLMResult(
-                text=self._extract_text(response.choices[0].message.content or ""),
+                text=extracted_text,
                 usage=self._extract_usage(response),
                 trace={
                     "model_request_payload": request_payload,
                     "generation_contract": generation_contract,
-                    "raw_answer_object": self._extract_raw_answer_object(response),
+                    "raw_answer_object": self._extract_raw_answer_object(
+                        response,
+                        extracted_text=extracted_text,
+                    ),
                 },
             )
         finally:
@@ -227,12 +250,12 @@ class LLMClient:
 
     @classmethod
     def _extract_stringified_response_payload(cls, result: str) -> list[dict[str, Any]] | None:
+        if not result.startswith("response="):
+            return None
+
         match = cls._STRINGIFIED_RESPONSE_RE.search(result)
         if match:
             return cls._safe_literal_list(match.group(1))
-
-        if not result.startswith("response="):
-            return None
 
         start = len("response=")
         end_positions = [
@@ -278,7 +301,12 @@ class LLMClient:
         )
 
     @classmethod
-    def _extract_raw_answer_object(cls, response: Any) -> dict[str, Any]:
+    def _extract_raw_answer_object(
+        cls,
+        response: Any,
+        *,
+        extracted_text: str | None = None,
+    ) -> dict[str, Any]:
         choices = getattr(response, "choices", None) or []
         if not choices:
             return {}
@@ -286,11 +314,14 @@ class LLMClient:
         choice = choices[0]
         message = getattr(choice, "message", None)
         raw_content = getattr(message, "content", "") if message is not None else ""
-        extracted_text = cls._extract_text(raw_content if raw_content is not None else "")
         return {
             "role": getattr(message, "role", "assistant") if message is not None else "assistant",
             "content": raw_content if isinstance(raw_content, str) else str(raw_content),
-            "extracted_text": extracted_text,
+            "extracted_text": (
+                extracted_text
+                if extracted_text is not None
+                else cls._extract_text(raw_content if raw_content is not None else "")
+            ),
             "finish_reason": getattr(choice, "finish_reason", None),
         }
 
