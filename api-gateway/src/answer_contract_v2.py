@@ -1341,6 +1341,10 @@ def build_or_repair_answer_contract(
             article_selector.get("support_span_count")
             or article_selector.get("selector_support_span_count")
         )
+        insufficient_canonical_span_evidence = _bool_flag(
+            article_selector.get("insufficient_canonical_span_evidence")
+        )
+        title_only_answer_degraded = _bool_flag(article_selector.get("title_only_answer_degraded"))
         natural_identifier_inference_supported = (
             not query_article_tokens and _selector_supports_natural_identifier_inference(article_selector)
         )
@@ -1366,6 +1370,11 @@ def build_or_repair_answer_contract(
             verification_findings.append("selector_insufficient_support")
         elif selector_sufficiency == "partially_supported" and selector_review_reason:
             verification_findings.append("selector_partial_support_review")
+        if insufficient_canonical_span_evidence:
+            support_insufficient_for_specific_claim = True
+            verification_findings.append("insufficient_canonical_span_evidence")
+        if title_only_answer_degraded:
+            verification_findings.append("title_only_answer_degraded")
         if selector_review_reason:
             finding = f"selector_{selector_review_reason}"
             if finding not in verification_findings:
@@ -1378,6 +1387,7 @@ def build_or_repair_answer_contract(
             selector_sufficiency == "insufficient_support"
             or article_lock_failed
             or support_insufficient_for_specific_claim
+            or insufficient_canonical_span_evidence
         )
         if answer_suppressed_due_to_evidence_gap:
             verification_findings.append("answer_suppressed_due_to_evidence_gap")

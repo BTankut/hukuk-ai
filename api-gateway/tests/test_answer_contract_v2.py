@@ -941,3 +941,51 @@ def test_repair_marks_legacy_tuzuk_query_as_repealed_when_old_year_is_explicit()
     contract = result.contract
     assert contract["source_family_claimed"] == "MULGA"
     assert contract["effective_state_claimed"] == "repealed"
+
+
+def test_repair_suppresses_title_only_canonical_span_gap():
+    result = build_or_repair_answer_contract(
+        qid="CBKAR-08",
+        answer_text="9903 sayılı Karar uygulanır. [Kaynak: 9903 m.0/f.0]",
+        citations=["9903 m.0/f.0"],
+        answer_contract={
+            "answer_text": "9903 sayılı Karar uygulanır. [Kaynak: 9903 m.0/f.0]",
+            "primary_source_id": "9903 m.0",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "retrieval": {
+                "article_span_selector": {
+                    "selected_document_key": "9903",
+                    "selected_main_span_id": "9903 m.0/f.0",
+                    "selected_article": "0",
+                    "selector_evidence_sufficiency": "partially_supported",
+                    "support_span_count": 1,
+                    "insufficient_canonical_span_evidence": True,
+                    "title_only_answer_degraded": True,
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "9903:9903:m0:f0",
+                    "citation": "9903 m.0/f.0",
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                    "source_family": "cb_karar",
+                    "source_identifier": "9903 m.0",
+                    "article_or_section": "0",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["answer_mode"] == "insufficient_grounding"
+    assert contract["grounding_status"] == "not_grounded"
+    assert contract["support_insufficient_for_specific_claim"] is True
+    assert contract["answer_suppressed_due_to_evidence_gap"] is True
+    assert "insufficient_canonical_span_evidence" in contract["verification_findings"]
+    assert result.validation["unsupported_confident_answer"] is False

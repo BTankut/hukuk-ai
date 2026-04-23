@@ -3084,6 +3084,254 @@ def _build_chunk_evidence_span(chunk: RetrievedChunk, *, query: str | None = Non
     return RAGOrchestrator._build_chunk_excerpt(chunk.text, max_len=max_len)
 
 
+def _strip_chunk_citation_prefix(text: str, chunk: RetrievedChunk) -> str:
+    lines = [line for line in str(text or "").splitlines()]
+    while lines:
+        first = lines[0].strip()
+        if not first:
+            lines.pop(0)
+            continue
+        normalized_first = _normalize_tr_text(first)
+        normalized_citation = _normalize_tr_text(chunk.citation or "")
+        normalized_span_id = _normalize_tr_text(_resolve_chunk_span_id(chunk))
+        citation_like = bool(
+            normalized_first
+            and (
+                normalized_first in {normalized_citation, normalized_span_id}
+                or re.fullmatch(r"[\w./:-]+\s+m\.?\s*[\w./:-]+(?:\s*/?\s*f\.?\s*[\w./:-]+)?", normalized_first)
+                or re.fullmatch(r"[\w./:-]+:[\w./:-]+:m?[\w./:-]+(?::f?[\w./:-]+)?", normalized_first)
+            )
+        )
+        if citation_like:
+            lines.pop(0)
+            continue
+        break
+    return "\n".join(lines).strip()
+
+
+def _chunk_body_text_for_quality(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    for key in ("body", "article_body", "article_text", "content", "metin"):
+        value = metadata.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return _strip_chunk_citation_prefix(chunk.text or "", chunk)
+
+
+def _chunk_body_text_quality(chunk: RetrievedChunk) -> dict[str, Any]:
+    body = _chunk_body_text_for_quality(chunk)
+    stripped = body.strip()
+    if not stripped:
+        return {
+            "body_text_length": 0,
+            "body_printable_ratio": 0.0,
+            "body_alpha_count": 0,
+            "body_control_count": 0,
+            "body_text_available": False,
+        }
+    printable_or_whitespace = sum(1 for char in stripped if char.isprintable() or char in "\n\r\t")
+    control_count = sum(1 for char in stripped if not char.isprintable() and char not in "\n\r\t")
+    alpha_count = sum(1 for char in stripped if char.isalpha())
+    printable_ratio = printable_or_whitespace / len(stripped)
+    control_ratio = control_count / len(stripped)
+    return {
+        "body_text_length": len(stripped),
+        "body_printable_ratio": round(printable_ratio, 4),
+        "body_alpha_count": alpha_count,
+        "body_control_count": control_count,
+        "body_text_available": bool(
+            len(stripped) >= 40
+            and printable_ratio >= 0.85
+            and alpha_count >= 20
+            and (control_count <= 3 or control_ratio <= 0.08)
+        ),
+    }
+
+
+def _chunk_has_selectable_body_span(chunk: RetrievedChunk) -> bool:
+    return bool(_chunk_body_text_quality(chunk).get("body_text_available"))
+
+
+def _chunk_has_non_title_body_span(chunk: RetrievedChunk) -> bool:
+    return bool(_chunk_article_token(chunk) not in {"", "0"} and _chunk_has_selectable_body_span(chunk))
+
+
+def _source_key_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any]:
+    grouped: dict[str, dict[tuple[str, str], int]] = {}
+    for chunk in chunks:
+        document_key = _resolve_chunk_document_key(chunk)
+        if not document_key:
+            continue
+        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown"
+        title = normalize_canonical_text(_resolve_chunk_source_title(chunk))
+        grouped.setdefault(document_key, {})
+        grouped[document_key][(family, title)] = grouped[document_key].get((family, title), 0) + 1
+
+    collision_keys: list[str] = []
+    collision_families_by_key: dict[str, list[str]] = {}
+    collision_pairs: list[str] = []
+    for document_key, pair_counts in sorted(grouped.items()):
+        pairs = sorted(pair_counts)
+        families = dedupe_strings(family for family, _title in pairs)
+        if len(pairs) <= 1 and len(families) <= 1:
+            continue
+        collision_keys.append(document_key)
+        collision_families_by_key[document_key] = families
+        pair_labels = []
+        for family, title in pairs[:4]:
+            title_label = title[:80] if title else "untitled"
+            pair_labels.append(f"{family}:{title_label}")
+        collision_pairs.append(f"{document_key}=" + "|".join(pair_labels))
+
+    return {
+        "source_key_collision_detected": bool(collision_keys),
+        "source_key_collision_keys": collision_keys,
+        "source_key_collision_pair": "; ".join(collision_pairs[:3]),
+        "source_key_collision_families_by_key": collision_families_by_key,
+    }
+
+
+def _annotate_canonical_span_materialization(
+    *,
+    chunks: list[RetrievedChunk],
+    article_span_selector: dict[str, Any] | None,
+    family_routing_policy: dict[str, Any] | None = None,
+) -> None:
+    if not isinstance(article_span_selector, dict):
+        return
+
+    selected_document_key = str(article_span_selector.get("selected_document_key") or "").strip().lower()
+    selected_span_ids = {
+        str(value or "").strip()
+        for value in [
+            article_span_selector.get("selected_main_span_id"),
+            *(article_span_selector.get("selected_supporting_span_ids") or []),
+        ]
+        if str(value or "").strip()
+    }
+    selected_chunks = [
+        chunk
+        for chunk in chunks
+        if selected_document_key and _resolve_chunk_document_key(chunk) == selected_document_key
+    ]
+    if not selected_chunks and selected_span_ids:
+        selected_chunks = [
+            chunk
+            for chunk in chunks
+            if _resolve_chunk_span_id(chunk) in selected_span_ids
+        ]
+    if not selected_chunks and chunks and not selected_document_key:
+        selected_chunks = chunks[:1]
+
+    main_span_id = str(article_span_selector.get("selected_main_span_id") or "").strip()
+    main_chunk = next(
+        (chunk for chunk in selected_chunks if main_span_id and _resolve_chunk_span_id(chunk) == main_span_id),
+        selected_chunks[0] if selected_chunks else None,
+    )
+    main_quality = _chunk_body_text_quality(main_chunk) if main_chunk else {
+        "body_text_length": 0,
+        "body_printable_ratio": 0.0,
+        "body_alpha_count": 0,
+        "body_control_count": 0,
+        "body_text_available": False,
+    }
+    quality_by_chunk = [(chunk, _chunk_body_text_quality(chunk)) for chunk in selected_chunks]
+    selected_document_has_body_span = any(bool(quality.get("body_text_available")) for _chunk, quality in quality_by_chunk)
+    selected_document_has_non_title_span = any(_chunk_has_non_title_body_span(chunk) for chunk, _quality in quality_by_chunk)
+
+    policy_collision_keys = []
+    policy_collision_detected = False
+    policy_collision_pair = ""
+    if isinstance(family_routing_policy, dict):
+        raw_keys = family_routing_policy.get("source_key_collision_keys")
+        if isinstance(raw_keys, list):
+            policy_collision_keys = [str(key).strip().lower() for key in raw_keys if str(key or "").strip()]
+        policy_collision_detected = bool(family_routing_policy.get("source_key_collision_detected"))
+        policy_collision_pair = str(family_routing_policy.get("source_key_collision_pair") or "")
+    if not policy_collision_detected:
+        collision_profile = _source_key_collision_profile(chunks)
+        policy_collision_detected = bool(collision_profile.get("source_key_collision_detected"))
+        policy_collision_keys = [
+            str(key).strip().lower()
+            for key in collision_profile.get("source_key_collision_keys") or []
+        ]
+        policy_collision_pair = str(collision_profile.get("source_key_collision_pair") or "")
+    source_key_collision_detected = bool(
+        policy_collision_detected
+        and (not selected_document_key or not policy_collision_keys or selected_document_key in policy_collision_keys)
+    )
+
+    selected_article = str(article_span_selector.get("selected_article") or "").strip()
+    main_match_type = str(article_span_selector.get("main_span_match_type") or "")
+    title_only_fallback_used = bool(
+        selected_article in {"", "0"}
+        or main_match_type == "title_only"
+        or not bool(main_quality.get("body_text_available"))
+    )
+    try:
+        support_span_count = int(article_span_selector.get("support_span_count") or 0)
+    except (TypeError, ValueError):
+        support_span_count = 0
+    candidate_completeness_score = 0.0
+    if selected_chunks:
+        candidate_completeness_score += 0.20
+    if selected_document_has_body_span:
+        candidate_completeness_score += 0.35
+    if selected_document_has_non_title_span:
+        candidate_completeness_score += 0.25
+    if support_span_count >= 2:
+        candidate_completeness_score += 0.10
+    if article_span_selector.get("support_contains_temporal_clause") or article_span_selector.get(
+        "support_contains_exception_signal"
+    ):
+        candidate_completeness_score += 0.10
+    candidate_completeness_score = round(min(candidate_completeness_score, 1.0), 3)
+
+    canonical_span_materialized = bool(selected_document_has_non_title_span)
+    corpus_materialization_required = bool(selected_chunks and not selected_document_has_non_title_span)
+    insufficient_canonical_span_evidence = bool(corpus_materialization_required)
+    if not selected_document_key:
+        materialization_reason = "selected_document_missing"
+    elif not selected_chunks:
+        materialization_reason = "selected_document_chunks_missing"
+    elif selected_document_has_non_title_span:
+        materialization_reason = "non_title_body_span_available"
+    elif selected_document_has_body_span:
+        materialization_reason = "body_span_available_but_title_or_article_zero"
+    elif source_key_collision_detected:
+        materialization_reason = "source_key_collision_without_family_body_span"
+    else:
+        materialization_reason = "title_only_or_unreadable_body"
+
+    article_span_selector.update(
+        {
+            "canonical_span_materialized": canonical_span_materialized,
+            "canonical_span_materialization_reason": materialization_reason,
+            "title_only_fallback_used": title_only_fallback_used,
+            "body_text_available": bool(main_quality.get("body_text_available")),
+            "body_text_length": int(main_quality.get("body_text_length") or 0),
+            "body_text_printable_ratio": main_quality.get("body_printable_ratio"),
+            "body_text_alpha_count": int(main_quality.get("body_alpha_count") or 0),
+            "body_text_control_count": int(main_quality.get("body_control_count") or 0),
+            "source_key_collision_detected": source_key_collision_detected,
+            "source_key_collision_keys": policy_collision_keys,
+            "source_key_collision_pair": policy_collision_pair,
+            "corpus_materialization_required": corpus_materialization_required,
+            "candidate_completeness_score": candidate_completeness_score,
+            "selected_document_has_body_span": selected_document_has_body_span,
+            "selected_document_has_non_title_span": selected_document_has_non_title_span,
+            "title_only_answer_degraded": bool(title_only_fallback_used and insufficient_canonical_span_evidence),
+            "insufficient_canonical_span_evidence": insufficient_canonical_span_evidence,
+            "selected_document_body_span_count": sum(
+                1 for _chunk, quality in quality_by_chunk if quality.get("body_text_available")
+            ),
+            "selected_document_non_title_span_count": sum(
+                1 for chunk, _quality in quality_by_chunk if _chunk_has_non_title_body_span(chunk)
+            ),
+        }
+    )
+
+
 def _select_article_span_evidence(
     *,
     query: str,
@@ -6923,6 +7171,7 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
     source_family = family_profile.get("resolved_family")
     source_identifier = _resolve_chunk_source_identifier(chunk)
     article_or_section = _chunk_article_token(chunk)
+    body_quality = _chunk_body_text_quality(chunk)
     effective_state = metadata.get("effective_state") or resolve_effective_state(metadata)
     recall_lane_sources = _chunk_recall_lane_sources(chunk)
     return {
@@ -6946,6 +7195,12 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "document_key": _resolve_chunk_document_key(chunk),
         "span_id": _resolve_chunk_span_id(chunk),
         "article_or_section": article_or_section or None,
+        "body_text_available": body_quality["body_text_available"],
+        "body_text_length": body_quality["body_text_length"],
+        "body_text_printable_ratio": body_quality["body_printable_ratio"],
+        "body_text_alpha_count": body_quality["body_alpha_count"],
+        "body_text_control_count": body_quality["body_control_count"],
+        "title_only": bool(article_or_section in {"", "0"} or not body_quality["body_text_available"]),
         "full_title": metadata.get("full_title") or source_title,
         "issuer": metadata.get("issuer"),
         "issuer_canonical": metadata.get("issuer_canonical"),
@@ -7074,6 +7329,10 @@ def _build_retrieval_verification_features(
     family_collision_detected = False
     family_collision_pair = ""
     collision_resolution_reason = ""
+    source_key_collision_detected = False
+    source_key_collision_keys: list[str] = []
+    source_key_collision_pair = ""
+    source_key_collision_families_by_key: dict[str, list[str]] = {}
     if isinstance(source_family_resolution, dict):
         predicted_family = source_family_resolution.get("predicted_family")
         try:
@@ -7138,6 +7397,25 @@ def _build_retrieval_verification_features(
             family_gate_reason = str(family_routing_policy.get("family_gate_reason"))
         if family_routing_policy.get("no_gate_reason"):
             no_gate_reason = str(family_routing_policy.get("no_gate_reason"))
+        source_key_collision_detected = bool(family_routing_policy.get("source_key_collision_detected"))
+        raw_collision_keys = family_routing_policy.get("source_key_collision_keys")
+        if isinstance(raw_collision_keys, list):
+            source_key_collision_keys = [
+                str(key) for key in raw_collision_keys if str(key or "").strip()
+            ]
+        if family_routing_policy.get("source_key_collision_pair"):
+            source_key_collision_pair = str(family_routing_policy.get("source_key_collision_pair"))
+        raw_families_by_key = family_routing_policy.get("source_key_collision_families_by_key")
+        if isinstance(raw_families_by_key, dict):
+            source_key_collision_families_by_key = {
+                str(key): [
+                    str(family)
+                    for family in families
+                    if str(family or "").strip()
+                ]
+                for key, families in raw_families_by_key.items()
+                if isinstance(families, list)
+            }
 
     identifier_tokens = sorted(_extract_source_identifier_tokens(query))
     chunk_families = [
@@ -7222,6 +7500,10 @@ def _build_retrieval_verification_features(
         "family_collision_detected": family_collision_detected,
         "family_collision_pair": family_collision_pair,
         "collision_resolution_reason": collision_resolution_reason,
+        "source_key_collision_detected": source_key_collision_detected,
+        "source_key_collision_keys": source_key_collision_keys,
+        "source_key_collision_pair": source_key_collision_pair,
+        "source_key_collision_families_by_key": source_key_collision_families_by_key,
         "preferred_families": preferred_families,
         "fallback_families": fallback_families,
         "pre_filter_family_set": dedupe_strings(pre_filter_family_set),
@@ -7578,6 +7860,12 @@ def _build_completeness_synthesis_features(
     answer_fact_units = _count_answer_fact_units(answer_text)
     citation_count = len(_INLINE_CITATION_RE.findall(answer_text or ""))
     support_span_count = 0
+    selector = article_span_selector if isinstance(article_span_selector, dict) else {}
+    candidate_completeness_score = selector.get("candidate_completeness_score")
+    selected_document_has_body_span = bool(selector.get("selected_document_has_body_span"))
+    selected_document_has_non_title_span = bool(selector.get("selected_document_has_non_title_span"))
+    title_only_answer_degraded = bool(selector.get("title_only_answer_degraded"))
+    insufficient_canonical_span_evidence = bool(selector.get("insufficient_canonical_span_evidence"))
     if isinstance(article_span_selector, dict):
         try:
             support_span_count = int(article_span_selector.get("support_span_count") or 0)
@@ -7628,6 +7916,7 @@ def _build_completeness_synthesis_features(
         and citation_count >= 1
         and effective_support_count >= 1
         and not missing_slots
+        and not insufficient_canonical_span_evidence
     )
     structurally_full = bool(
         has_answer
@@ -7635,7 +7924,14 @@ def _build_completeness_synthesis_features(
         and citation_count >= 1
         and effective_support_count >= 1
     )
-    if not has_answer:
+    if insufficient_canonical_span_evidence:
+        degrade_reason = "insufficient_canonical_span_evidence"
+        rubric_class = "legally_aligned_but_partial" if has_answer else "insufficient_both"
+        minimum_answer_facts_present = False
+        if "article_or_span" in required_slots and "article_or_span" not in missing_slots:
+            missing_slots = [*missing_slots, "article_or_span"]
+        satisfied_slots = [slot for slot in satisfied_slots if slot != "article_or_span"]
+    elif not has_answer:
         degrade_reason = "no_answer"
         rubric_class = "insufficient_both"
     elif missing_slots:
@@ -7671,6 +7967,11 @@ def _build_completeness_synthesis_features(
         "evidence_slot_reentry_applied": bool(evidence_reentry_slots),
         "evidence_slot_reentry_slots": evidence_reentry_slots,
         "rubric_aligned_completeness_class": rubric_class,
+        "candidate_completeness_score": candidate_completeness_score,
+        "selected_document_has_body_span": selected_document_has_body_span,
+        "selected_document_has_non_title_span": selected_document_has_non_title_span,
+        "title_only_answer_degraded": title_only_answer_degraded,
+        "insufficient_canonical_span_evidence": insufficient_canonical_span_evidence,
     }
 
 
@@ -7689,6 +7990,7 @@ def _apply_pre_generation_family_pool(
     top_k_effective: int,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
+    source_key_collision_profile = _source_key_collision_profile(chunks)
     pre_filter_family_set = dedupe_strings(
         (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
         for chunk in chunks
@@ -7715,6 +8017,7 @@ def _apply_pre_generation_family_pool(
         "family_gate_status": "no_gate",
         "family_gate_reason": family_gate_reason,
         "no_gate_reason": no_gate_reason,
+        **source_key_collision_profile,
     }
     if not chunks or not preferred_families:
         return chunks, policy
@@ -7908,6 +8211,11 @@ def _build_trace_payload(
             "evidence_slot_reentry_applied": answer_contract.get("evidence_slot_reentry_applied"),
             "evidence_slot_reentry_slots": answer_contract.get("evidence_slot_reentry_slots"),
             "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
+            "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
+            "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
+            "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
+            "title_only_answer_degraded": answer_contract.get("title_only_answer_degraded"),
+            "insufficient_canonical_span_evidence": answer_contract.get("insufficient_canonical_span_evidence"),
         },
         "model_cited_source_ids": model_cited_source_ids,
         "verifier_verdict": verification.get("verdict") if isinstance(verification, dict) else None,
@@ -8008,6 +8316,11 @@ def _build_trace_payload(
                 "evidence_slot_reentry_applied": answer_contract.get("evidence_slot_reentry_applied"),
                 "evidence_slot_reentry_slots": answer_contract.get("evidence_slot_reentry_slots"),
                 "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
+                "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
+                "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
+                "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
+                "title_only_answer_degraded": answer_contract.get("title_only_answer_degraded"),
+                "insufficient_canonical_span_evidence": answer_contract.get("insufficient_canonical_span_evidence"),
             },
         },
     }
@@ -11041,6 +11354,11 @@ async def chat_completions(
             chunks=retrieved_chunks,
             article_span_selector=article_span_selector,
         )
+        _annotate_canonical_span_materialization(
+            chunks=retrieved_chunks,
+            article_span_selector=article_span_selector,
+            family_routing_policy=family_routing_policy,
+        )
         _annotate_article_span_selector_priority(
             chunks=retrieved_chunks,
             article_span_selector=article_span_selector,
@@ -11135,6 +11453,17 @@ async def chat_completions(
         chunks=post_rerank_chunks,
     )
     hardening.answer_contract.update(completeness_synthesis)
+    if completeness_synthesis.get("insufficient_canonical_span_evidence"):
+        hardening.answer_contract["needs_manual_review"] = True
+        hardening.answer_contract["support_insufficient_for_specific_claim"] = True
+        hardening.answer_contract["answer_suppressed_due_to_evidence_gap"] = True
+        if hardening.answer_contract.get("answer_mode") != "insufficient_grounding":
+            hardening.answer_contract["answer_mode"] = "qualified_answer"
+        if hardening.answer_contract.get("grounding_status") not in {
+            "insufficient_supported_evidence",
+            "insufficient_grounding",
+        }:
+            hardening.answer_contract["grounding_status"] = "insufficient_supported_evidence"
     trace_started_at = time.perf_counter()
     trace_payload = _build_trace_payload(
         request_id=response_id,

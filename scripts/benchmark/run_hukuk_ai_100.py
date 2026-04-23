@@ -127,6 +127,20 @@ ANSWER_FIELDS = [
     "support_insufficient_for_specific_claim",
     "temporal_clause_missing",
     "answer_suppressed_due_to_evidence_gap",
+    "canonical_span_materialized",
+    "canonical_span_materialization_reason",
+    "title_only_fallback_used",
+    "body_text_available",
+    "body_text_length",
+    "source_key_collision_detected",
+    "source_key_collision_keys",
+    "source_key_collision_pair",
+    "corpus_materialization_required",
+    "candidate_completeness_score",
+    "selected_document_has_body_span",
+    "selected_document_has_non_title_span",
+    "title_only_answer_degraded",
+    "insufficient_canonical_span_evidence",
     "required_fact_coverage_score",
     "minimum_answer_facts_present",
     "completeness_degrade_reason",
@@ -658,6 +672,28 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "support_insufficient_for_specific_claim": contract_value(response, "support_insufficient_for_specific_claim"),
         "temporal_clause_missing": contract_value(response, "temporal_clause_missing"),
         "answer_suppressed_due_to_evidence_gap": contract_value(response, "answer_suppressed_due_to_evidence_gap"),
+        "canonical_span_materialized": selector_value(response, "canonical_span_materialized"),
+        "canonical_span_materialization_reason": selector_value(response, "canonical_span_materialization_reason"),
+        "title_only_fallback_used": selector_value(response, "title_only_fallback_used"),
+        "body_text_available": selector_value(response, "body_text_available"),
+        "body_text_length": selector_value(response, "body_text_length"),
+        "source_key_collision_detected": selector_value(response, "source_key_collision_detected")
+        or retrieval_feature_value(response, "source_key_collision_detected"),
+        "source_key_collision_keys": selector_value(response, "source_key_collision_keys")
+        or retrieval_feature_value(response, "source_key_collision_keys"),
+        "source_key_collision_pair": selector_value(response, "source_key_collision_pair")
+        or retrieval_feature_value(response, "source_key_collision_pair"),
+        "corpus_materialization_required": selector_value(response, "corpus_materialization_required"),
+        "candidate_completeness_score": contract_value(response, "candidate_completeness_score")
+        or selector_value(response, "candidate_completeness_score"),
+        "selected_document_has_body_span": contract_value(response, "selected_document_has_body_span")
+        or selector_value(response, "selected_document_has_body_span"),
+        "selected_document_has_non_title_span": contract_value(response, "selected_document_has_non_title_span")
+        or selector_value(response, "selected_document_has_non_title_span"),
+        "title_only_answer_degraded": contract_value(response, "title_only_answer_degraded")
+        or selector_value(response, "title_only_answer_degraded"),
+        "insufficient_canonical_span_evidence": contract_value(response, "insufficient_canonical_span_evidence")
+        or selector_value(response, "insufficient_canonical_span_evidence"),
         "required_fact_coverage_score": contract_value(response, "required_fact_coverage_score"),
         "minimum_answer_facts_present": contract_value(response, "minimum_answer_facts_present"),
         "completeness_degrade_reason": contract_value(response, "completeness_degrade_reason"),

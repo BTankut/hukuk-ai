@@ -41,6 +41,7 @@ from routers.chat import (
     _apply_relation_query_metadata_focus,
     _apply_pre_generation_family_pool,
     _apply_selected_document_only_bundle,
+    _annotate_canonical_span_materialization,
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
@@ -691,6 +692,41 @@ class TestLawSignalParsing:
         assert "procedure_or_consequence" in features["missing_fact_slots"]
         assert features["evidence_slot_reentry_applied"] is False
 
+    def test_completeness_synthesis_degrades_insufficient_canonical_span_evidence(self):
+        features = _build_completeness_synthesis_features(
+            query="9903 sayılı karar kapsamında faiz desteği şartı nedir?",
+            answer_text=(
+                "Karar, yatırım teşvik şartları bakımından uygulanır [Kaynak: 9903 m.0]. "
+                "Uygulama kaynak metindeki sınırlara göre değerlendirilir [Kaynak: 9903 m.0]. "
+                "Sonuç bakımından özel koşullar ayrıca kontrol edilir [Kaynak: 9903 m.0]."
+            ),
+            article_span_selector={
+                "support_span_count": 1,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "partially_supported",
+                "candidate_completeness_score": 0.2,
+                "selected_document_has_body_span": False,
+                "selected_document_has_non_title_span": False,
+                "title_only_answer_degraded": True,
+                "insufficient_canonical_span_evidence": True,
+            },
+            chunks=[
+                RetrievedChunk(
+                    text="9903 m.0\n" + ("\x00" * 80),
+                    citation="9903 m.0/f.0",
+                    source="9903",
+                    score=1.0,
+                    metadata={"belge_turu": "cb_karar", "belge_no": "9903", "madde_no": "0"},
+                )
+            ],
+        )
+
+        assert features["minimum_answer_facts_present"] is False
+        assert features["completeness_degrade_reason"] == "insufficient_canonical_span_evidence"
+        assert features["rubric_aligned_completeness_class"] == "legally_aligned_but_partial"
+        assert features["candidate_completeness_score"] == 0.2
+        assert features["selected_document_has_non_title_span"] is False
+
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(
             "Elektronik tebligat yönetmeliği kapsamında muhatabın bildirim yükümlülüğü nedir?"
@@ -973,6 +1009,55 @@ class TestLawSignalParsing:
         assert [chunk.citation for chunk in filtered] == ["20237 m.1"]
         assert policy["family_gate_status"] == "locked_preferred_family"
         assert policy["no_gate_reason"] == ""
+
+    def test_pre_generation_family_pool_reports_source_key_collision_before_family_lock(self):
+        resolution = SourceFamilyResolution(
+            predicted_family="cb_karar",
+            family_confidence=0.90,
+            routing_families=["cb_karar"],
+            expected_family_prior="cb_karar",
+            preferred_families=["cb_karar"],
+            selected_family_confidence=0.90,
+            family_override_reason="strong_family_prior",
+        )
+        chunks = [
+            RetrievedChunk(
+                text="9903 m.0\n" + ("\x00" * 80),
+                citation="9903 m.0/f.0",
+                source="9903",
+                score=1.0,
+                metadata={
+                    "belge_turu": "cb_karar",
+                    "belge_no": "9903",
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                    "madde_no": "0",
+                },
+            ),
+            RetrievedChunk(
+                text="Garanti belgesi süreleri tebliğ madde metni seçilebilir durumdadır.",
+                citation="9903 m.1/f.0",
+                source="9903",
+                score=0.9,
+                metadata={
+                    "belge_turu": "teblig",
+                    "belge_no": "9903",
+                    "source_title": "GARANTİ BELGESİ SÜRELERİNİN UZATILMASINA İLİŞKİN TEBLİĞ",
+                    "madde_no": "1",
+                },
+            ),
+        ]
+
+        filtered, policy = _apply_pre_generation_family_pool(
+            chunks=chunks,
+            source_family_resolution=resolution,
+            top_k_effective=10,
+        )
+
+        assert [chunk.metadata["belge_turu"] for chunk in filtered] == ["cb_karar"]
+        assert policy["source_key_collision_detected"] is True
+        assert policy["source_key_collision_keys"] == ["9903"]
+        assert "cb_karar" in policy["source_key_collision_pair"]
+        assert "teblig" in policy["source_key_collision_pair"]
 
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(
@@ -3094,6 +3179,131 @@ class TestLawSignalParsing:
         assert filtered == chunks
         assert selector["selected_document_only_bundle"] is False
         assert selector["selected_document_bundle_skip_reason"] == "relation_query_requires_supporting_sources"
+
+    def test_canonical_span_materialization_marks_title_only_collision_as_corpus_blocker(self):
+        chunks = [
+            RetrievedChunk(
+                text="9903 m.0/f.0\n" + ("\x00" * 96),
+                citation="9903 m.0/f.0",
+                source="9903",
+                score=0.99,
+                metadata={
+                    "belge_turu": "cb_karar",
+                    "belge_no": "9903",
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                    "madde_no": "0",
+                },
+            )
+        ]
+        selector = {
+            "selected_document_key": "9903",
+            "selected_main_span_id": "9903 m.0/f.0",
+            "selected_article": "0",
+            "main_span_match_type": "title_only",
+            "support_span_count": 1,
+        }
+
+        _annotate_canonical_span_materialization(
+            chunks=chunks,
+            article_span_selector=selector,
+            family_routing_policy={
+                "source_key_collision_detected": True,
+                "source_key_collision_keys": ["9903"],
+                "source_key_collision_pair": "9903=cb_karar:yatirim|teblig:garanti",
+            },
+        )
+
+        assert selector["canonical_span_materialized"] is False
+        assert selector["canonical_span_materialization_reason"] == "source_key_collision_without_family_body_span"
+        assert selector["title_only_fallback_used"] is True
+        assert selector["body_text_available"] is False
+        assert selector["corpus_materialization_required"] is True
+        assert selector["source_key_collision_detected"] is True
+        assert selector["selected_document_has_body_span"] is False
+        assert selector["selected_document_has_non_title_span"] is False
+        assert selector["title_only_answer_degraded"] is True
+        assert selector["insufficient_canonical_span_evidence"] is True
+
+    def test_canonical_span_materialization_accepts_non_title_body_span(self):
+        chunks = [
+            RetrievedChunk(
+                text=(
+                    "9903 m.8/f.0\n"
+                    "Faiz desteği, yatırım teşvik belgesi kapsamındaki yatırımlar için "
+                    "kararda belirtilen koşullar gerçekleştiğinde uygulanır."
+                ),
+                citation="9903 m.8/f.0",
+                source="9903",
+                score=0.99,
+                metadata={
+                    "belge_turu": "cb_karar",
+                    "belge_no": "9903",
+                    "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                    "madde_no": "8",
+                },
+            )
+        ]
+        selector = {
+            "selected_document_key": "9903",
+            "selected_main_span_id": "9903 m.8/f.0",
+            "selected_article": "8",
+            "main_span_match_type": "same_heading_or_section",
+            "support_span_count": 1,
+        }
+
+        _annotate_canonical_span_materialization(
+            chunks=chunks,
+            article_span_selector=selector,
+            family_routing_policy={},
+        )
+
+        assert selector["canonical_span_materialized"] is True
+        assert selector["canonical_span_materialization_reason"] == "non_title_body_span_available"
+        assert selector["title_only_fallback_used"] is False
+        assert selector["body_text_available"] is True
+        assert selector["corpus_materialization_required"] is False
+        assert selector["candidate_completeness_score"] >= 0.75
+        assert selector["selected_document_has_non_title_span"] is True
+        assert selector["insufficient_canonical_span_evidence"] is False
+
+    def test_canonical_span_materialization_accepts_readable_body_with_low_control_ratio(self):
+        readable = (
+            "MADDE 2 - Bu Karar ekinde yer alan yatırım programındaki projelerin "
+            "parametre değişikliği, programa proje alınması veya çıkarılması ve "
+            "ödenek tahsisi işlemleri yetkili kurumlarca yürütülür. "
+        ) * 12
+        chunks = [
+            RetrievedChunk(
+                text="767 m.2/f.0\n" + readable + ("\x00" * 90),
+                citation="767 m.2/f.0",
+                source="767",
+                score=0.99,
+                metadata={
+                    "belge_turu": "cb_karar",
+                    "belge_no": "767",
+                    "source_title": "2019 YILI YATIRIM PROGRAMININ KABULÜ VE UYGULANMASINA DAİR KARAR",
+                    "madde_no": "2",
+                },
+            )
+        ]
+        selector = {
+            "selected_document_key": "767",
+            "selected_main_span_id": "767 m.2/f.0",
+            "selected_article": "2",
+            "main_span_match_type": "same_heading_or_section",
+            "support_span_count": 1,
+        }
+
+        _annotate_canonical_span_materialization(
+            chunks=chunks,
+            article_span_selector=selector,
+            family_routing_policy={},
+        )
+
+        assert selector["body_text_available"] is True
+        assert selector["canonical_span_materialized"] is True
+        assert selector["corpus_materialization_required"] is False
+        assert selector["insufficient_canonical_span_evidence"] is False
 
     def test_article_span_selector_uses_document_lock_before_cross_document_article_hit(self):
         chunks = [

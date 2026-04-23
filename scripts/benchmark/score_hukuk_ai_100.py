@@ -145,6 +145,20 @@ SCORED_FIELDS = [
     "support_insufficient_for_specific_claim",
     "temporal_clause_missing",
     "answer_suppressed_due_to_evidence_gap",
+    "canonical_span_materialized",
+    "canonical_span_materialization_reason",
+    "title_only_fallback_used",
+    "body_text_available",
+    "body_text_length",
+    "source_key_collision_detected",
+    "source_key_collision_keys",
+    "source_key_collision_pair",
+    "corpus_materialization_required",
+    "candidate_completeness_score",
+    "selected_document_has_body_span",
+    "selected_document_has_non_title_span",
+    "title_only_answer_degraded",
+    "insufficient_canonical_span_evidence",
     "required_fact_coverage_score",
     "minimum_answer_facts_present",
     "completeness_degrade_reason",
@@ -490,6 +504,8 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         failure_classes.append("uncertainty_not_disclosed")
     if 0 < grounding_score < 1:
         failure_classes.append("partial_grounding_only")
+    if bool_field(answer.get("insufficient_canonical_span_evidence", "")) is True:
+        failure_classes.append("insufficient_canonical_span_evidence")
 
     canonical_metric_row = {
         "failure_classes": " | ".join(failure_classes),
@@ -631,6 +647,20 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "support_insufficient_for_specific_claim": answer.get("support_insufficient_for_specific_claim", ""),
         "temporal_clause_missing": answer.get("temporal_clause_missing", ""),
         "answer_suppressed_due_to_evidence_gap": answer.get("answer_suppressed_due_to_evidence_gap", ""),
+        "canonical_span_materialized": answer.get("canonical_span_materialized", ""),
+        "canonical_span_materialization_reason": answer.get("canonical_span_materialization_reason", ""),
+        "title_only_fallback_used": answer.get("title_only_fallback_used", ""),
+        "body_text_available": answer.get("body_text_available", ""),
+        "body_text_length": answer.get("body_text_length", ""),
+        "source_key_collision_detected": answer.get("source_key_collision_detected", ""),
+        "source_key_collision_keys": answer.get("source_key_collision_keys", ""),
+        "source_key_collision_pair": answer.get("source_key_collision_pair", ""),
+        "corpus_materialization_required": answer.get("corpus_materialization_required", ""),
+        "candidate_completeness_score": answer.get("candidate_completeness_score", ""),
+        "selected_document_has_body_span": answer.get("selected_document_has_body_span", ""),
+        "selected_document_has_non_title_span": answer.get("selected_document_has_non_title_span", ""),
+        "title_only_answer_degraded": answer.get("title_only_answer_degraded", ""),
+        "insufficient_canonical_span_evidence": answer.get("insufficient_canonical_span_evidence", ""),
         "required_fact_coverage_score": answer.get("required_fact_coverage_score", ""),
         "minimum_answer_facts_present": answer.get("minimum_answer_facts_present", ""),
         "completeness_degrade_reason": answer.get("completeness_degrade_reason", ""),
@@ -832,6 +862,36 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     completeness_degrade_reason_counts = Counter(
         row.get("completeness_degrade_reason", "") or "unknown" for row in rows
     )
+    canonical_span_materialized_count = sum(
+        1 for row in rows if bool_field(str(row.get("canonical_span_materialized", ""))) is True
+    )
+    corpus_materialization_required_count = sum(
+        1 for row in rows if bool_field(str(row.get("corpus_materialization_required", ""))) is True
+    )
+    title_only_answer_degraded_count = sum(
+        1 for row in rows if bool_field(str(row.get("title_only_answer_degraded", ""))) is True
+    )
+    insufficient_canonical_span_evidence_count = sum(
+        1 for row in rows if bool_field(str(row.get("insufficient_canonical_span_evidence", ""))) is True
+    )
+    canonical_span_materialization_reason_counts = Counter(
+        row.get("canonical_span_materialization_reason", "") or "unknown" for row in rows
+    )
+    source_key_collision_detected_count = sum(
+        1 for row in rows if bool_field(str(row.get("source_key_collision_detected", ""))) is True
+    )
+    source_key_collision_pair_counts = Counter(
+        row.get("source_key_collision_pair", "") or "none" for row in rows
+    )
+    candidate_completeness_scores: list[float] = []
+    for row in rows:
+        raw_score = str(row.get("candidate_completeness_score", "")).strip()
+        if not raw_score:
+            continue
+        try:
+            candidate_completeness_scores.append(float(raw_score))
+        except ValueError:
+            continue
     task_type_answer_template_counts = Counter(
         row.get("task_type_answer_template_used", "") or "unknown" for row in rows
     )
@@ -963,6 +1023,21 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "family_gate_reason_counts": dict(sorted(family_gate_reason_counts.items())),
         "no_gate_reason_counts": dict(sorted(no_gate_reason_counts.items())),
         "completeness_degrade_reason_counts": dict(sorted(completeness_degrade_reason_counts.items())),
+        "canonical_span_materialized_count": canonical_span_materialized_count,
+        "corpus_materialization_required_count": corpus_materialization_required_count,
+        "title_only_answer_degraded_count": title_only_answer_degraded_count,
+        "insufficient_canonical_span_evidence_count": insufficient_canonical_span_evidence_count,
+        "canonical_span_materialization_reason_counts": dict(
+            sorted(canonical_span_materialization_reason_counts.items())
+        ),
+        "source_key_collision_detected_count": source_key_collision_detected_count,
+        "source_key_collision_pair_counts": dict(sorted(source_key_collision_pair_counts.items())),
+        "avg_candidate_completeness_score": round(
+            sum(candidate_completeness_scores) / len(candidate_completeness_scores),
+            3,
+        )
+        if candidate_completeness_scores
+        else 0.0,
         "task_type_answer_template_counts": dict(sorted(task_type_answer_template_counts.items())),
         "rubric_aligned_completeness_class_counts": dict(sorted(rubric_aligned_completeness_counts.items())),
         "minimum_answer_facts_present_count": minimum_answer_facts_present_count,
@@ -1174,6 +1249,22 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     lines.extend(["", "## Completeness Degrade Reason"])
     for status, count in summary["completeness_degrade_reason_counts"].items():
         lines.append(f"- {status}: {count}")
+    lines.extend(
+        [
+            "",
+            "## Canonical Span Materialization",
+            f"- canonical_span_materialized_count: {summary['canonical_span_materialized_count']}",
+            f"- corpus_materialization_required_count: {summary['corpus_materialization_required_count']}",
+            f"- title_only_answer_degraded_count: {summary['title_only_answer_degraded_count']}",
+            f"- insufficient_canonical_span_evidence_count: {summary['insufficient_canonical_span_evidence_count']}",
+            f"- source_key_collision_detected_count: {summary['source_key_collision_detected_count']}",
+            f"- avg_candidate_completeness_score: {summary['avg_candidate_completeness_score']}",
+        ]
+    )
+    for status, count in summary["canonical_span_materialization_reason_counts"].items():
+        lines.append(f"- canonical_span_materialization_reason.{status}: {count}")
+    for status, count in summary["source_key_collision_pair_counts"].items():
+        lines.append(f"- source_key_collision_pair.{status}: {count}")
     lines.extend(["", "## Task Type Answer Template"])
     for status, count in summary["task_type_answer_template_counts"].items():
         lines.append(f"- {status}: {count}")
