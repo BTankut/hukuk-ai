@@ -102,6 +102,10 @@ SCORED_FIELDS = [
     "selector_evidence_sufficiency",
     "metadata_identity_strength",
     "document_identity_score",
+    "metadata_lookup_hit",
+    "metadata_lookup_source",
+    "metadata_lookup_rank",
+    "metadata_lookup_confidence",
     "title_match_type",
     "identifier_match_type",
     "issuer_match_type",
@@ -109,6 +113,7 @@ SCORED_FIELDS = [
     "title_bias_applied",
     "issuer_bias_applied",
     "identity_lock_strength",
+    "identity_rerank_input_source",
     "selected_document_rank_after_identity_rerank",
     "selected_document_original_rank",
     "document_rerank_reason",
@@ -125,6 +130,8 @@ SCORED_FIELDS = [
     "must_have_fact_slots",
     "satisfied_fact_slots",
     "missing_fact_slots",
+    "evidence_slot_reentry_applied",
+    "evidence_slot_reentry_slots",
     "rubric_aligned_completeness_class",
     "rubric_completeness_class",
     "right_document_wrong_article_or_span",
@@ -541,6 +548,10 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "selector_evidence_sufficiency": answer.get("selector_evidence_sufficiency", ""),
         "metadata_identity_strength": answer.get("metadata_identity_strength", ""),
         "document_identity_score": answer.get("document_identity_score", ""),
+        "metadata_lookup_hit": answer.get("metadata_lookup_hit", ""),
+        "metadata_lookup_source": answer.get("metadata_lookup_source", ""),
+        "metadata_lookup_rank": answer.get("metadata_lookup_rank", ""),
+        "metadata_lookup_confidence": answer.get("metadata_lookup_confidence", ""),
         "title_match_type": answer.get("title_match_type", ""),
         "identifier_match_type": answer.get("identifier_match_type", ""),
         "issuer_match_type": answer.get("issuer_match_type", ""),
@@ -548,6 +559,7 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "title_bias_applied": answer.get("title_bias_applied", ""),
         "issuer_bias_applied": answer.get("issuer_bias_applied", ""),
         "identity_lock_strength": answer.get("identity_lock_strength", ""),
+        "identity_rerank_input_source": answer.get("identity_rerank_input_source", ""),
         "selected_document_rank_after_identity_rerank": answer.get(
             "selected_document_rank_after_identity_rerank",
             "",
@@ -567,6 +579,8 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "must_have_fact_slots": answer.get("must_have_fact_slots", ""),
         "satisfied_fact_slots": answer.get("satisfied_fact_slots", ""),
         "missing_fact_slots": answer.get("missing_fact_slots", ""),
+        "evidence_slot_reentry_applied": answer.get("evidence_slot_reentry_applied", ""),
+        "evidence_slot_reentry_slots": answer.get("evidence_slot_reentry_slots", ""),
         "rubric_aligned_completeness_class": answer.get("rubric_aligned_completeness_class", ""),
         "rubric_completeness_class": canonical_rubric_completeness_class,
         "right_document_wrong_article_or_span": bool_text(canonical_right_doc_wrong_span),
@@ -635,6 +649,13 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     issuer_match_type_counts = Counter(row.get("issuer_match_type", "") or "unknown" for row in rows)
     year_match_type_counts = Counter(row.get("year_match_type", "") or "unknown" for row in rows)
     identity_lock_strength_counts = Counter(row.get("identity_lock_strength", "") or "unknown" for row in rows)
+    metadata_lookup_hit_count = sum(
+        1 for row in rows if bool_field(str(row.get("metadata_lookup_hit", ""))) is True
+    )
+    metadata_lookup_source_counts = Counter(row.get("metadata_lookup_source", "") or "none" for row in rows)
+    identity_rerank_input_source_counts = Counter(
+        row.get("identity_rerank_input_source", "") or "unknown" for row in rows
+    )
     document_identity_scores: list[float] = []
     title_bias_values: list[float] = []
     issuer_bias_values: list[float] = []
@@ -685,6 +706,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     )
     minimum_answer_facts_present_count = sum(
         1 for row in rows if bool_field(str(row.get("minimum_answer_facts_present", ""))) is True
+    )
+    evidence_slot_reentry_count = sum(
+        1 for row in rows if bool_field(str(row.get("evidence_slot_reentry_applied", ""))) is True
     )
     required_fact_coverage_scores: list[float] = []
     for row in rows:
@@ -755,6 +779,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "issuer_match_type_counts": dict(sorted(issuer_match_type_counts.items())),
         "year_match_type_counts": dict(sorted(year_match_type_counts.items())),
         "identity_lock_strength_counts": dict(sorted(identity_lock_strength_counts.items())),
+        "metadata_lookup_hit_count": metadata_lookup_hit_count,
+        "metadata_lookup_source_counts": dict(sorted(metadata_lookup_source_counts.items())),
+        "identity_rerank_input_source_counts": dict(sorted(identity_rerank_input_source_counts.items())),
         "avg_document_identity_score": round(
             sum(document_identity_scores) / len(document_identity_scores),
             3,
@@ -787,6 +814,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "task_type_answer_template_counts": dict(sorted(task_type_answer_template_counts.items())),
         "rubric_aligned_completeness_class_counts": dict(sorted(rubric_aligned_completeness_counts.items())),
         "minimum_answer_facts_present_count": minimum_answer_facts_present_count,
+        "evidence_slot_reentry_count": evidence_slot_reentry_count,
         "avg_required_fact_coverage_score": round(
             sum(required_fact_coverage_scores) / len(required_fact_coverage_scores),
             3,
@@ -912,6 +940,13 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     lines.extend(["", "## Identity Lock Strength"])
     for status, count in summary["identity_lock_strength_counts"].items():
         lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Metadata Lookup Source"])
+    lines.append(f"- metadata_lookup_hit_count: {summary['metadata_lookup_hit_count']}")
+    for status, count in summary["metadata_lookup_source_counts"].items():
+        lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Identity Rerank Input Source"])
+    for status, count in summary["identity_rerank_input_source_counts"].items():
+        lines.append(f"- {status}: {count}")
     lines.extend(["", "## Selector Reason"])
     for status, count in summary["selector_reason_counts"].items():
         lines.append(f"- {status}: {count}")
@@ -957,6 +992,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     lines.extend(["", "## Runtime Rubric-Aligned Completeness Class"])
     for status, count in summary["rubric_aligned_completeness_class_counts"].items():
         lines.append(f"- {status}: {count}")
+    lines.extend(["", "## Evidence Slot Reentry"])
+    lines.append(f"- evidence_slot_reentry_count: {summary['evidence_slot_reentry_count']}")
     lines.extend(["", "## Rubric Completeness Class"])
     for status, count in summary["rubric_completeness_class_counts"].items():
         lines.append(f"- {status}: {count}")
