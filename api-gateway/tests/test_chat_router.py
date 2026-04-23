@@ -46,6 +46,7 @@ from routers.chat import (
     _build_retrieval_plan_expansion,
     _build_metadata_first_query_expansion,
     _build_source_cluster_candidates,
+    _parse_metadata_lookup_query_signals,
     _select_metadata_first_source_candidates,
     _select_article_span_evidence,
     _clamp_families_to_strong_resolution,
@@ -1244,6 +1245,29 @@ class TestLawSignalParsing:
         assert "identifier_exact" in selector["candidates"][0]["match_reasons"]
         assert "YATIRIMLARDA DEVLET YARDIMLARI" in _build_metadata_first_query_expansion(selector)
         load_canonical_source_catalog.cache_clear()
+
+    def test_metadata_lookup_parser_extracts_family_identifier_title_and_temporal_signals(self):
+        signals = _parse_metadata_lookup_query_signals(
+            "2026'da 9903 sayılı Yatırımlarda Devlet Yardımları Hakkında Karar halen yürürlükte mi?"
+        )
+
+        assert "cb_karar" in signals["parsed_family_candidates"]
+        assert any(item["value"] == "9903" and item["kind"] == "cb_karar" for item in signals["parsed_identifier_candidates"])
+        assert any(
+            "yatirimlarda devlet yardimlari" in item["value"]
+            for item in signals["parsed_title_ngrams"]
+        )
+        assert {"value": "2026", "kind": "year", "source": "year_pattern"} in signals["parsed_temporal_cues"]
+        assert any(item["kind"] == "current" for item in signals["parsed_temporal_cues"])
+
+    def test_metadata_lookup_parser_extracts_issuer_and_regulation_title_without_qid_rules(self):
+        signals = _parse_metadata_lookup_query_signals(
+            "Ticaret Bakanlığı ithalat rejimi tebliği kapsamındaki başvuru usulünü açıklar mısın?"
+        )
+
+        assert "teblig" in signals["parsed_family_candidates"]
+        assert any(item["value"] == "ticaret bakanligi" for item in signals["parsed_issuer_candidates"])
+        assert any("ithalat rejimi tebligi" in item["value"] for item in signals["parsed_title_ngrams"])
 
     def test_metadata_first_identifier_tokens_ignore_article_only_numbers(self, tmp_path, monkeypatch):
         article_rows = tmp_path / "article_rows.jsonl"

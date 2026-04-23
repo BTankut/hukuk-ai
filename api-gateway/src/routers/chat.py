@@ -588,6 +588,294 @@ def _metadata_first_candidate_generation_enabled() -> bool:
     }
 
 
+_METADATA_LOOKUP_IDENTIFIER_KIND_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("cb_kararname", ("cumhurbaskanligi kararnamesi", "cbk", "kararname")),
+    ("cb_karar", ("cumhurbaskani karari", "cumhurbaskanligi karari", "karar")),
+    ("cb_genelge", ("cumhurbaskanligi genelgesi", "cumhurbaskani genelgesi", "genelge")),
+    ("teblig", ("teblig",)),
+    ("khk", ("kanun hukmunde kararname", "khk")),
+    ("kanun", ("kanun",)),
+)
+_METADATA_LOOKUP_ISSUER_TERMS: tuple[str, ...] = (
+    "cumhurbaşkanlığı",
+    "cumhurbaşkanı",
+    "adalet bakanlığı",
+    "ticaret bakanlığı",
+    "hazine ve maliye bakanlığı",
+    "çalışma ve sosyal güvenlik bakanlığı",
+    "içişleri bakanlığı",
+    "dışişleri bakanlığı",
+    "sağlık bakanlığı",
+    "milli eğitim bakanlığı",
+    "tarım ve orman bakanlığı",
+    "çevre şehircilik ve iklim değişikliği bakanlığı",
+    "sanayi ve teknoloji bakanlığı",
+    "ulaştırma ve altyapı bakanlığı",
+    "kültür ve turizm bakanlığı",
+    "enerji ve tabii kaynaklar bakanlığı",
+    "aile ve sosyal hizmetler bakanlığı",
+    "gençlik ve spor bakanlığı",
+    "milli savunma bakanlığı",
+    "yök",
+    "yükseköğretim kurulu",
+    "ösym",
+    "ölçme seçme ve yerleştirme merkezi",
+    "sgk",
+    "sosyal güvenlik kurumu",
+    "bddk",
+    "bankacılık düzenleme ve denetleme kurumu",
+    "epdk",
+    "enerji piyasası düzenleme kurumu",
+    "btk",
+    "bilgi teknolojileri ve iletişim kurumu",
+    "rtük",
+    "radyo ve televizyon üst kurulu",
+    "kvkk",
+    "kişisel verileri koruma kurumu",
+    "kamu ihale kurumu",
+    "rekabet kurumu",
+    "sayıştay",
+)
+_METADATA_LOOKUP_TITLE_MARKERS: tuple[str, ...] = (
+    "hakkinda",
+    "iliskin",
+    "dair",
+    "usul ve esaslar",
+    "usul ve esaslari",
+    "uygulama",
+    "uygulanmasina",
+    "yururluge konulmasi",
+)
+_METADATA_LOOKUP_TITLE_TYPE_TERMS: tuple[str, ...] = (
+    "kanunu",
+    "kanun",
+    "tuzugu",
+    "tuzuk",
+    "nizamnamesi",
+    "yonetmeligi",
+    "yonetmelik",
+    "tebligi",
+    "teblig",
+    "karari",
+    "karar",
+    "genelgesi",
+    "genelge",
+    "kararnamesi",
+    "kararname",
+)
+_METADATA_LOOKUP_TEMPORAL_TERMS: tuple[tuple[str, str], ...] = (
+    ("current", "guncel"),
+    ("current", "yururlukte"),
+    ("current", "halen"),
+    ("repealed", "mulga"),
+    ("repealed", "yururlukten kaldir"),
+    ("repealed", "ilga"),
+    ("historical", "eski"),
+    ("historical", "tarihsel"),
+    ("amended", "degisiklik"),
+    ("temporary", "gecici"),
+    ("additional", "ek madde"),
+)
+
+
+def _metadata_lookup_priority_tokens(text: str) -> list[str]:
+    stopwords = {normalize_canonical_text(item) for item in _RETRIEVAL_PRIORITY_STOPWORDS}
+    return [
+        token
+        for token in normalize_canonical_text(text).split()
+        if len(token) >= 3 and token not in stopwords
+    ]
+
+
+def _metadata_lookup_compact_phrase(text: str, *, max_tokens: int = 9) -> str:
+    tokens = _metadata_lookup_priority_tokens(text)
+    return " ".join(tokens[:max_tokens])
+
+
+def _metadata_lookup_identifier_kind(kind_text: str) -> str:
+    normalized_kind = normalize_canonical_text(kind_text)
+    for kind, terms in _METADATA_LOOKUP_IDENTIFIER_KIND_PATTERNS:
+        if any(term in normalized_kind for term in terms):
+            return kind
+    return "numeric_identifier"
+
+
+def _extract_metadata_lookup_identifier_candidates(query: str) -> list[dict[str, str]]:
+    normalized = normalize_canonical_text(query)
+    candidates: list[dict[str, str]] = []
+    explicit_article_numbers = {
+        article
+        for _law, article in _extract_explicit_article_refs(query)
+        if article and article.isdigit()
+    }
+    patterns = (
+        r"\b(?P<value>\d{1,9}(?:[-/]\d{1,4})?)\s+sayili\s+(?P<kind>kanun hukmunde kararname|cumhurbaskanligi kararnamesi|cumhurbaskani karari|cumhurbaskanligi karari|cumhurbaskanligi genelgesi|kanun|khk|cbk|kararname|karar|genelge|teblig)\b",
+        r"\b(?P<value>\d{1,9}(?:[-/]\d{1,4})?)\s+sayili\s+(?:[a-z0-9]{3,}\s+){0,8}(?P<kind>kanun hukmunde kararname|cumhurbaskanligi kararnamesi|cumhurbaskani karari|cumhurbaskanligi karari|cumhurbaskanligi genelgesi|kanun|khk|cbk|kararname|karar|genelge|teblig)\b",
+        r"\b(?P<kind>kanun hukmunde kararname|cumhurbaskanligi kararnamesi|cumhurbaskani karari|cumhurbaskanligi karari|cumhurbaskanligi genelgesi|kanun|khk|cbk|kararname|karar|genelge|teblig)\s+(?:sayisi|sayili|no|numarasi)\s*:?\s*(?P<value>\d{1,9}(?:[-/]\d{1,4})?)\b",
+        r"\b(?:sayisi|sayili|no|numarasi)\s*:?\s*(?P<value>\d{2,9}(?:[-/]\d{1,4})?)\b",
+    )
+    for pattern in patterns:
+        for match in re.finditer(pattern, normalized):
+            value = match.group("value")
+            if value in explicit_article_numbers or re.fullmatch(r"(?:18|19|20)\d{2}", value):
+                continue
+            kind = _metadata_lookup_identifier_kind(match.groupdict().get("kind") or "")
+            candidates.append(
+                {
+                    "value": value,
+                    "base_value": value.split("-", 1)[0].split("/", 1)[0],
+                    "kind": kind,
+                    "source": "numbered_source_pattern",
+                }
+            )
+    for law in extract_numbered_law_mentions(query):
+        if law in explicit_article_numbers or re.fullmatch(r"(?:18|19|20)\d{2}", law):
+            continue
+        candidates.append(
+            {
+                "value": law,
+                "base_value": law.split("-", 1)[0].split("/", 1)[0],
+                "kind": "kanun",
+                "source": "extract_numbered_law_mentions",
+            }
+        )
+    deduped: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for candidate in candidates:
+        key = (candidate["value"], candidate["kind"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(candidate)
+    return deduped
+
+
+def _extract_metadata_lookup_issuer_candidates(query: str) -> list[dict[str, str]]:
+    normalized = normalize_canonical_text(query)
+    candidates: list[dict[str, str]] = []
+    for issuer in _METADATA_LOOKUP_ISSUER_TERMS:
+        normalized_issuer = normalize_canonical_text(issuer)
+        if normalized_issuer and re.search(rf"(?<![a-z0-9]){re.escape(normalized_issuer)}(?![a-z0-9])", normalized):
+            candidates.append({"value": normalized_issuer, "source": "known_issuer_term"})
+
+    for match in re.finditer(r"\b(?P<issuer>(?:[a-z0-9]{3,}\s+){0,4}(?:universitesi|bakanligi|baskanligi|kurumu|kurulu))\b", normalized):
+        issuer = _metadata_lookup_compact_phrase(match.group("issuer"), max_tokens=6)
+        if issuer:
+            candidates.append({"value": issuer, "source": "issuer_suffix_pattern"})
+
+    deduped: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        value = candidate["value"]
+        if value in seen:
+            continue
+        seen.add(value)
+        deduped.append(candidate)
+    return deduped[:8]
+
+
+def _extract_metadata_lookup_title_ngrams(query: str) -> list[dict[str, Any]]:
+    normalized = normalize_canonical_text(query)
+    phrases: list[dict[str, Any]] = []
+
+    for quoted in re.findall(r"[\"'“”‘’](.{6,120}?)[\"'“”‘’]", query or ""):
+        phrase = _metadata_lookup_compact_phrase(quoted, max_tokens=10)
+        if len(phrase.split()) >= 2:
+            phrases.append({"value": phrase, "source": "quoted_phrase", "token_count": len(phrase.split())})
+
+    marker_regex = "|".join(re.escape(marker) for marker in _METADATA_LOOKUP_TITLE_MARKERS)
+    type_regex = "|".join(re.escape(term) for term in _METADATA_LOOKUP_TITLE_TYPE_TERMS)
+    for match in re.finditer(
+        rf"\b(?P<prefix>(?:[a-z0-9]{{3,}}\s+){{1,8}})(?P<marker>{marker_regex})(?:\s+(?P<suffix>(?:[a-z0-9]{{3,}}\s+){{0,6}}(?P<type>{type_regex})))?",
+        normalized,
+    ):
+        phrase_text = " ".join(
+            part
+            for part in (
+                match.group("prefix"),
+                match.group("marker"),
+                match.group("suffix") or "",
+            )
+            if part
+        )
+        phrase = _metadata_lookup_compact_phrase(phrase_text, max_tokens=12)
+        if len(phrase.split()) >= 2:
+            phrases.append({"value": phrase, "source": "title_marker_pattern", "token_count": len(phrase.split())})
+
+    for match in re.finditer(
+        rf"\b(?P<title>(?:[a-z0-9]{{3,}}\s+){{1,8}}(?P<type>{type_regex}))\b",
+        normalized,
+    ):
+        phrase = _metadata_lookup_compact_phrase(match.group("title"), max_tokens=10)
+        if len(phrase.split()) >= 2:
+            phrases.append({"value": phrase, "source": "document_type_suffix_pattern", "token_count": len(phrase.split())})
+
+    tokens = _metadata_lookup_priority_tokens(query)
+    if len(tokens) >= 4:
+        for width in (5, 4, 3):
+            for index in range(0, max(0, len(tokens) - width + 1)):
+                window = tokens[index : index + width]
+                if not any(token in _METADATA_LOOKUP_TITLE_TYPE_TERMS or token in {"hakkinda", "iliskin", "dair"} for token in window):
+                    continue
+                phrases.append(
+                    {
+                        "value": " ".join(window),
+                        "source": "priority_window",
+                        "token_count": len(window),
+                    }
+                )
+
+    deduped: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for phrase in phrases:
+        value = str(phrase.get("value") or "").strip()
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        deduped.append(phrase)
+    return deduped[:12]
+
+
+def _extract_metadata_lookup_temporal_cues(query: str) -> list[dict[str, str]]:
+    normalized = normalize_canonical_text(query)
+    cues: list[dict[str, str]] = []
+    for year in _extract_year_tokens(query):
+        cues.append({"value": year, "kind": "year", "source": "year_pattern"})
+    for kind, term in _METADATA_LOOKUP_TEMPORAL_TERMS:
+        normalized_term = normalize_canonical_text(term)
+        if normalized_term and normalized_term in normalized:
+            cues.append({"value": normalized_term, "kind": kind, "source": "temporal_term"})
+    deduped: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for cue in cues:
+        key = (cue["kind"], cue["value"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(cue)
+    return deduped
+
+
+def _parse_metadata_lookup_query_signals(query: str) -> dict[str, Any]:
+    family_candidates = dedupe_strings(
+        [
+            *_infer_requested_source_families(query),
+            *[
+                candidate.family
+                for candidate in _resolve_source_family_prior(query).family_candidates
+                if candidate.confidence >= 0.45
+            ],
+        ]
+    )
+    return {
+        "parsed_family_candidates": family_candidates,
+        "parsed_identifier_candidates": _extract_metadata_lookup_identifier_candidates(query),
+        "parsed_issuer_candidates": _extract_metadata_lookup_issuer_candidates(query),
+        "parsed_title_ngrams": _extract_metadata_lookup_title_ngrams(query),
+        "parsed_temporal_cues": _extract_metadata_lookup_temporal_cues(query),
+    }
+
+
 def _extract_source_identity_identifier_tokens(query: str) -> set[str]:
     normalized = _normalize_tr_text(query or "")
     tokens: set[str] = set()
