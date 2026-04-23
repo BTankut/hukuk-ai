@@ -88,6 +88,7 @@ from token_accounting import (
     token_accounting_fallback_allowed,
 )
 from source_family_resolver import (
+    SourceFamilyCandidate,
     SourceFamilyResolution,
     resolve_source_family_prior,
 )
@@ -275,6 +276,16 @@ _HARD_PRE_GENERATION_FAMILY_GATES = {
     "uy",
     "mulga_kanun",
     "teblig",
+}
+_METADATA_LOOKUP_NEGATIVE_FAMILY_TRANSITIONS = {
+    ("cb_karar", "teblig"),
+    ("cb_karar", "cb_genelge"),
+    ("cb_yonetmelik", "cb_kararname"),
+    ("yonetmelik", "kky"),
+    ("yonetmelik", "uy"),
+    ("kanun", "kky"),
+    ("kanun", "mulga_kanun"),
+    ("uy", "kanun"),
 }
 _RETRIEVAL_PRIORITY_TOKEN_RE = re.compile(r"[a-z0-9]+")
 _RETRIEVAL_PRIORITY_STOPWORDS = {
@@ -1226,6 +1237,86 @@ def _select_metadata_first_source_candidates(
         "query_metadata_signals": query_metadata_signals,
         "candidates": ranked,
     }
+
+
+def _apply_metadata_lookup_family_prior(
+    source_family_resolution: SourceFamilyResolution,
+    metadata_first_selector: dict[str, Any] | None,
+) -> SourceFamilyResolution:
+    if not metadata_first_selector or not metadata_first_selector.get("metadata_lookup_hit"):
+        return source_family_resolution
+    candidates = metadata_first_selector.get("candidates") or []
+    if not candidates:
+        return source_family_resolution
+
+    top = candidates[0]
+    metadata_family = str(top.get("source_family") or "").strip()
+    if not metadata_family:
+        return source_family_resolution
+    confidence = float(top.get("metadata_lookup_confidence") or metadata_first_selector.get("metadata_lookup_confidence") or 0.0)
+    if confidence < 0.65:
+        return source_family_resolution
+
+    predicted = source_family_resolution.predicted_family
+    transition = (predicted or "", metadata_family)
+    negative_transition = transition in _METADATA_LOOKUP_NEGATIVE_FAMILY_TRANSITIONS
+    weak_or_no_gate = (
+        not source_family_resolution.preferred_families
+        or source_family_resolution.family_override_reason in {"no_family_prior", "low_confidence_family_prior"}
+        or source_family_resolution.family_confidence < 0.70
+    )
+    if metadata_family == predicted and source_family_resolution.preferred_families:
+        return source_family_resolution
+    if not negative_transition and not weak_or_no_gate and confidence < 0.82:
+        return source_family_resolution
+
+    routing_families = dedupe_strings(
+        [
+            *_expand_source_family_aliases([metadata_family]),
+            *source_family_resolution.routing_families,
+        ]
+    )
+    preferred_families = [metadata_family] if confidence >= 0.70 else list(source_family_resolution.preferred_families)
+    fallback_families = dedupe_strings(
+        [
+            family
+            for family in [*source_family_resolution.preferred_families, *source_family_resolution.fallback_families, *routing_families]
+            if family != metadata_family
+        ]
+    )
+    family_candidates = [
+        SourceFamilyCandidate(
+            family=metadata_family,
+            score=float(top.get("score") or 0.0),
+            confidence=round(confidence, 3),
+            signals=[
+                "metadata_lookup_family_prior",
+                str(top.get("metadata_lookup_source") or metadata_first_selector.get("metadata_lookup_source") or "metadata_lookup"),
+            ],
+        ),
+        *source_family_resolution.family_candidates,
+    ]
+    return SourceFamilyResolution(
+        predicted_family=metadata_family,
+        family_confidence=max(source_family_resolution.family_confidence, confidence),
+        family_candidates=family_candidates,
+        routing_families=routing_families,
+        query_expansions=dedupe_strings(
+            [
+                _SOURCE_FAMILY_DISPLAY_LABELS.get(metadata_family, metadata_family),
+                *source_family_resolution.query_expansions,
+            ]
+        )[:4],
+        expected_family_prior=metadata_family,
+        preferred_families=preferred_families,
+        fallback_families=fallback_families,
+        selected_family_confidence=max(source_family_resolution.selected_family_confidence, confidence),
+        family_override_reason=(
+            "metadata_lookup_negative_transition"
+            if negative_transition
+            else "metadata_lookup_family_prior"
+        ),
+    )
 
 
 def _build_metadata_first_query_expansion(selector: dict[str, Any] | None) -> str:
@@ -4853,6 +4944,32 @@ def _retrieve_law_bucket_chunks(
     return bucket_chunks
 
 
+def _retrieve_source_key_chunks(
+    *,
+    retriever: Any,
+    query: str,
+    source_keys: list[str],
+    top_k: int,
+) -> list[RetrievedChunk]:
+    from rag.retriever import MetadataFilter
+
+    bucket_chunks: list[RetrievedChunk] = []
+    for source_key in source_keys:
+        try:
+            results, _stats = retriever.retrieve(
+                query=query,
+                top_k=top_k,
+                metadata_filter=MetadataFilter(law_no=source_key),
+            )
+        except Exception as exc:
+            logger.warning("Source-key retrieval bypass (source_key=%s): %s", source_key, exc)
+            continue
+
+        bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
+
+    return bucket_chunks
+
+
 def _retrieve_active_chunks(
     *,
     retriever: Any,
@@ -8161,8 +8278,16 @@ async def chat_completions(
         query_metadata_signals=metadata_lookup_query_signals,
     )
     if metadata_first_selector:
+        source_family_resolution = _apply_metadata_lookup_family_prior(
+            source_family_resolution,
+            metadata_first_selector,
+        )
         requested_source_families = dedupe_strings(
-            [*requested_source_families, *(metadata_first_selector.get("selected_families") or [])]
+            [
+                *requested_source_families,
+                *(metadata_first_selector.get("selected_families") or []),
+                *source_family_resolution.routing_families,
+            ]
         )
         metadata_first_expansion = _build_metadata_first_query_expansion(metadata_first_selector)
         if metadata_first_expansion:
@@ -8555,12 +8680,14 @@ async def chat_completions(
                         for key in metadata_first_selector.get("selected_source_keys") or []
                         if isinstance(key, str) and key.strip()
                     ]
-                    metadata_first_chunks = _retrieve_law_bucket_chunks(
+                    metadata_first_chunks = _retrieve_source_key_chunks(
                         retriever=retriever,
                         query=retrieval_query,
-                        laws=metadata_first_source_keys,
+                        source_keys=metadata_first_source_keys,
                         top_k=max(4, min(8, top_k_effective)),
                     )
+                    metadata_first_selector["metadata_lookup_retrieval_added_count"] = len(metadata_first_chunks)
+                    metadata_first_selector["metadata_lookup_retrieval_channel"] = "source_key_filter"
                     if metadata_first_chunks:
                         retrieved_chunks = _dedupe_retrieved_chunks(metadata_first_chunks + retrieved_chunks)
                         logger.info(

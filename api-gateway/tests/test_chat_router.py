@@ -37,6 +37,7 @@ from routers.chat import (
     ConversationMessage,
     _apply_source_cluster_deterministic_overrides,
     _apply_retrieval_plan_hints,
+    _apply_metadata_lookup_family_prior,
     _apply_pre_generation_family_pool,
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
@@ -47,6 +48,7 @@ from routers.chat import (
     _build_metadata_first_query_expansion,
     _build_source_cluster_candidates,
     _parse_metadata_lookup_query_signals,
+    _retrieve_source_key_chunks,
     _select_metadata_first_source_candidates,
     _select_article_span_evidence,
     _clamp_families_to_strong_resolution,
@@ -75,7 +77,7 @@ from rag.orchestrator import OrchestratorResponse, RetrievedChunk
 from rag.source_catalog import load_canonical_source_catalog
 from rag.retriever import MetadataFilter, MockRetriever
 from session_store import RedisSessionBackend
-from source_family_resolver import SourceFamilyResolution
+from source_family_resolver import SourceFamilyCandidate, SourceFamilyResolution
 
 
 # ---------------------------------------------------------------------------
@@ -1308,6 +1310,80 @@ class TestLawSignalParsing:
         assert "parsed_family_match" in selector["candidates"][0]["match_reasons"]
         load_canonical_source_catalog.cache_clear()
 
+    def test_metadata_lookup_family_prior_closes_no_gate_from_selector_family(self):
+        base_resolution = SourceFamilyResolution(
+            predicted_family=None,
+            family_confidence=0.0,
+            family_candidates=[],
+            routing_families=[],
+            query_expansions=[],
+            expected_family_prior=None,
+            preferred_families=[],
+            fallback_families=[],
+            selected_family_confidence=0.0,
+            family_override_reason="no_family_prior",
+        )
+        selector = {
+            "metadata_lookup_hit": True,
+            "metadata_lookup_confidence": 0.78,
+            "metadata_lookup_source": "issuer_family_lookup",
+            "candidates": [
+                {
+                    "source_family": "uy",
+                    "metadata_lookup_confidence": 0.78,
+                    "metadata_lookup_source": "issuer_family_lookup",
+                    "score": 33.0,
+                }
+            ],
+        }
+
+        enriched = _apply_metadata_lookup_family_prior(base_resolution, selector)
+
+        assert enriched.expected_family_prior == "uy"
+        assert enriched.preferred_families == ["uy"]
+        assert "uy" in enriched.routing_families
+        assert enriched.family_override_reason == "metadata_lookup_family_prior"
+
+    def test_metadata_lookup_family_prior_allows_controlled_negative_transition(self):
+        base_resolution = SourceFamilyResolution(
+            predicted_family="cb_karar",
+            family_confidence=0.86,
+            family_candidates=[
+                SourceFamilyCandidate(
+                    family="cb_karar",
+                    score=6.0,
+                    confidence=0.86,
+                    signals=["cb_karar_document_type"],
+                )
+            ],
+            routing_families=["cb_karar"],
+            query_expansions=["Cumhurbaşkanı kararı karar sayısı madde"],
+            expected_family_prior="cb_karar",
+            preferred_families=["cb_karar"],
+            fallback_families=[],
+            selected_family_confidence=0.86,
+            family_override_reason="strong_family_prior",
+        )
+        selector = {
+            "metadata_lookup_hit": True,
+            "metadata_lookup_confidence": 0.74,
+            "metadata_lookup_source": "normalized_title_lookup",
+            "candidates": [
+                {
+                    "source_family": "teblig",
+                    "metadata_lookup_confidence": 0.74,
+                    "metadata_lookup_source": "normalized_title_lookup",
+                    "score": 29.0,
+                }
+            ],
+        }
+
+        enriched = _apply_metadata_lookup_family_prior(base_resolution, selector)
+
+        assert enriched.expected_family_prior == "teblig"
+        assert enriched.preferred_families == ["teblig"]
+        assert enriched.family_override_reason == "metadata_lookup_negative_transition"
+
     def test_metadata_first_identifier_tokens_ignore_article_only_numbers(self, tmp_path, monkeypatch):
         article_rows = tmp_path / "article_rows.jsonl"
         article_rows.write_text(
@@ -1386,6 +1462,44 @@ class TestLawSignalParsing:
 
         assert stats.hit_count == 1
         assert results[0].metadata["belge_no"] == "3350"
+
+    def test_source_key_recall_uses_general_belge_no_filter_for_non_numeric_catalog_keys(self):
+        mock_retriever = MagicMock()
+        from rag.retriever import RetrievalResult, RetrievalStats
+
+        stats = RetrievalStats(
+            collection="test",
+            query_preview="ankara",
+            top_k=4,
+            filter_expr=None,
+            hit_count=1,
+            latency_ms=1.0,
+        )
+        mock_retriever.retrieve = MagicMock(
+            return_value=(
+                [
+                    RetrievalResult(
+                        chunk_id="au",
+                        text="Disiplin yönetmeliği metni",
+                        score=0.8,
+                        metadata={"belge_no": "AU-DISIPLIN", "madde_no": "1"},
+                    )
+                ],
+                stats,
+            )
+        )
+
+        chunks = _retrieve_source_key_chunks(
+            retriever=mock_retriever,
+            query="Ankara Üniversitesi yaptırım kuralları",
+            source_keys=["AU-DISIPLIN"],
+            top_k=4,
+        )
+
+        assert chunks[0].metadata["belge_no"] == "AU-DISIPLIN"
+        metadata_filter = mock_retriever.retrieve.call_args.kwargs["metadata_filter"]
+        assert metadata_filter.law_no == "AU-DISIPLIN"
+        assert metadata_filter.law_short_name is None
 
     def test_source_identity_reranker_promotes_metadata_first_match(self):
         wrong_chunk = RetrievedChunk(
