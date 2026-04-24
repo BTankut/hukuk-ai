@@ -1,0 +1,10 @@
+qid,family,canonical_span_materialized,canonical_span_materialization_reason,corpus_materialization_required,title_only_fallback_used,document_level_body_span,materialized_body_span,legacy_source_key_collision,source_key_v2_collision,legacy_source_key,selected_canonical_document_key_v2
+CBG-01,CB_GENELGE,True,document_level_body_span_materialized,False,False,True,True,False,False,14 m.0,fam=cb_genelge|id=14|title=640315330ad3|start=unknown|state=active
+CBG-02,CB_GENELGE,True,document_level_body_span_materialized,False,False,True,True,True,False,29 m.0,fam=cb_genelge|id=29|title=17d4e7a201cb|start=2019-12-24|state=active
+CBG-03,CB_GENELGE,True,document_level_body_span_materialized,False,False,True,True,False,False,18 m.0,fam=cb_genelge|id=18|title=cd86ef38ef4b|start=2022-12-03|state=active
+CBG-04,CB_GENELGE,False,source_key_collision_without_family_body_span,True,True,False,False,True,False,3 m.0,fam=cb_genelge|id=3|title=f6c0ea9c1138|start=2023-01-28|state=active
+CBKAR-07,CB_KARAR,True,document_level_body_span_materialized,False,False,True,True,False,False,8688 m.0,fam=cb_karar|id=8688|title=bc46a4cfb9dc|start=2024-06-30|state=active
+CBKAR-08,CB_KARAR,False,source_key_collision_without_family_body_span,True,True,False,False,True,False,9903 m.0,fam=cb_karar|id=9903|title=7f373410dfea|start=2025-05-30|state=active
+TEB-01,TEBLIGLER,True,document_level_body_span_materialized,False,False,True,True,False,False,44999 m.0,fam=teblig|id=44999|title=4412950c2377|start=2026-01-22|state=active
+TEB-03,TEBLIGLER,True,document_level_body_span_materialized,False,False,True,True,False,False,42805 m.0,fam=teblig|id=42805|title=764efd569e1f|start=2025-12-25|state=active
+TEB-04,TEBLIGLER,True,document_level_body_span_materialized,False,False,True,True,False,False,18937 m.0,fam=teblig|id=18937|title=c2187c73ab5a|start=2013-10-10|state=active
