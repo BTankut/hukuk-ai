@@ -197,6 +197,9 @@ SCORED_FIELDS = [
     "required_slot_schema",
     "evidence_required_slot_values",
     "evidence_required_slot_value_count",
+    "evidence_slot_synthesis_applied",
+    "evidence_slot_synthesis_slots",
+    "evidence_slot_synthesis_reason",
     "rubric_completeness_class",
     "right_document_wrong_article_or_span",
     "expected_family_prior",
@@ -736,6 +739,9 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "required_slot_schema": answer.get("required_slot_schema", ""),
         "evidence_required_slot_values": answer.get("evidence_required_slot_values", ""),
         "evidence_required_slot_value_count": answer.get("evidence_required_slot_value_count", ""),
+        "evidence_slot_synthesis_applied": answer.get("evidence_slot_synthesis_applied", ""),
+        "evidence_slot_synthesis_slots": answer.get("evidence_slot_synthesis_slots", ""),
+        "evidence_slot_synthesis_reason": answer.get("evidence_slot_synthesis_reason", ""),
         "rubric_completeness_class": canonical_rubric_completeness_class,
         "right_document_wrong_article_or_span": bool_text(canonical_right_doc_wrong_span),
         "expected_family_prior": answer.get("expected_family_prior", ""),
@@ -1005,6 +1011,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     evidence_slot_reentry_count = sum(
         1 for row in rows if bool_field(str(row.get("evidence_slot_reentry_applied", ""))) is True
     )
+    evidence_slot_synthesis_count = sum(
+        1 for row in rows if bool_field(str(row.get("evidence_slot_synthesis_applied", ""))) is True
+    )
+    evidence_slot_synthesis_reason_counts = Counter(
+        row.get("evidence_slot_synthesis_reason", "") or "unknown" for row in rows
+    )
     evidence_required_slot_value_counts: list[int] = []
     answer_slot_coverage_scores: list[float] = []
     answer_slot_missing_reason_counts: Counter[str] = Counter()
@@ -1184,6 +1196,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "rubric_aligned_completeness_class_counts": dict(sorted(rubric_aligned_completeness_counts.items())),
         "minimum_answer_facts_present_count": minimum_answer_facts_present_count,
         "evidence_slot_reentry_count": evidence_slot_reentry_count,
+        "evidence_slot_synthesis_count": evidence_slot_synthesis_count,
+        "evidence_slot_synthesis_reason_counts": dict(sorted(evidence_slot_synthesis_reason_counts.items())),
         "evidence_required_slot_value_count_total": sum(evidence_required_slot_value_counts),
         "avg_evidence_required_slot_value_count": round(
             sum(evidence_required_slot_value_counts) / len(evidence_required_slot_value_counts),
@@ -1449,6 +1463,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Evidence Slot Reentry"])
     lines.append(f"- evidence_slot_reentry_count: {summary['evidence_slot_reentry_count']}")
+    lines.append(f"- evidence_slot_synthesis_count: {summary['evidence_slot_synthesis_count']}")
+    for status, count in summary["evidence_slot_synthesis_reason_counts"].items():
+        lines.append(f"- evidence_slot_synthesis_reason.{status}: {count}")
     lines.append(
         f"- evidence_required_slot_value_count_total: {summary['evidence_required_slot_value_count_total']}"
     )

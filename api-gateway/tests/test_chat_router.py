@@ -37,6 +37,7 @@ from routers.chat import (
     ConversationMessage,
     _apply_source_cluster_deterministic_overrides,
     _apply_answer_slot_synthesis_hint,
+    _apply_evidence_slot_synthesis_to_answer_text,
     _apply_retrieval_plan_hints,
     _apply_metadata_lookup_family_prior,
     _apply_relation_query_metadata_focus,
@@ -820,6 +821,95 @@ class TestLawSignalParsing:
         assert values["procedure_or_consequence"]["slot_value"]
         assert values["procedure_or_consequence"]["evidence_quote_hash"]
         assert features["evidence_required_slot_value_count"] >= 3
+
+    def test_procedure_slot_prefers_usul_span_over_sureli_contract_text(self):
+        features = _build_completeness_synthesis_features(
+            query="İşe iade için ön usul ve temel süreler nedir?",
+            answer_text=(
+                "İşe iade bakımından geçerli sebep ve ön usul birlikte değerlendirilir [Kaynak: IK m.18]. "
+                "Arabulucuya başvuru ve dava süresi ayrıca uygulanır [Kaynak: IK m.20]. "
+                "Sonuç seçili kanıtlarla sınırlıdır [Kaynak: IK m.20]."
+            ),
+            article_span_selector={
+                "support_span_count": 2,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "exact_enough",
+            },
+            chunks=[
+                RetrievedChunk(
+                    text="Belirsiz süreli iş sözleşmesini fesheden işveren geçerli sebebe dayanmak zorundadır.",
+                    citation="IK m.18",
+                    source="IK",
+                    score=1.0,
+                    metadata={"madde_no": "18"},
+                ),
+                RetrievedChunk(
+                    text=(
+                        "Fesih bildirimine itiraz ve usulü. İşçi bir ay içinde arabulucuya başvurmak "
+                        "zorundadır; anlaşma olmazsa iki hafta içinde dava açılabilir."
+                    ),
+                    citation="IK m.20",
+                    source="IK",
+                    score=0.9,
+                    metadata={"madde_no": "20"},
+                ),
+            ],
+        )
+
+        values = {row["slot_name"]: row for row in features["evidence_required_slot_values"]}
+        assert values["procedure_or_consequence"]["evidence_span_id"] == "IK m.20"
+        assert "arabulucu" in values["procedure_or_consequence"]["slot_value"]
+
+    def test_evidence_slot_synthesis_appends_only_confident_missing_slots(self):
+        answer, meta = _apply_evidence_slot_synthesis_to_answer_text(
+            answer_text="Kısa sonuç kaynakla sınırlıdır [Kaynak: X m.1].",
+            final_mode="answer",
+            answer_contract={
+                "missing_fact_slots": ["procedure_or_consequence", "transition_or_replacement_rule"],
+                "evidence_required_slot_values": [
+                    {
+                        "slot_name": "procedure_or_consequence",
+                        "slot_value": "Başvuru usulü ve süre koşulları bu maddede düzenlenir.",
+                        "evidence_span_id": "X m.1/f.0",
+                        "slot_confidence": 0.7,
+                    },
+                    {
+                        "slot_name": "transition_or_replacement_rule",
+                        "slot_value": "Seçili kanıtta ayrıca geçiş kuralı açıkça görünmüyor.",
+                        "evidence_span_id": "X m.1/f.0",
+                        "slot_confidence": 0.5,
+                    },
+                ],
+            },
+        )
+
+        assert meta["evidence_slot_synthesis_applied"] is True
+        assert meta["evidence_slot_synthesis_slots"] == ["procedure_or_consequence"]
+        assert "Kaynaklardan çıkarılan zorunlu noktalar" in answer
+        assert "Usul/sonuç" in answer
+        assert "Geçiş/yerine geçen düzenleme" not in answer
+
+    def test_evidence_slot_synthesis_skips_canonical_gap(self):
+        answer, meta = _apply_evidence_slot_synthesis_to_answer_text(
+            answer_text="Kısa sonuç [Kaynak: X m.1].",
+            final_mode="answer",
+            answer_contract={
+                "missing_fact_slots": ["procedure_or_consequence"],
+                "insufficient_canonical_span_evidence": True,
+                "evidence_required_slot_values": [
+                    {
+                        "slot_name": "procedure_or_consequence",
+                        "slot_value": "Başvuru usulü düzenlenir.",
+                        "evidence_span_id": "X m.1/f.0",
+                        "slot_confidence": 0.7,
+                    }
+                ],
+            },
+        )
+
+        assert answer == "Kısa sonuç [Kaynak: X m.1]."
+        assert meta["evidence_slot_synthesis_applied"] is False
+        assert meta["evidence_slot_synthesis_reason"] == "canonical_evidence_gap"
 
     def test_completeness_synthesis_does_not_reenter_slots_when_selector_identity_is_weak(self):
         features = _build_completeness_synthesis_features(

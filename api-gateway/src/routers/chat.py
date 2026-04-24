@@ -8477,11 +8477,43 @@ def _slot_keyword_hints(slot: str) -> tuple[str, ...]:
         "current_applicability": ("bugun", "guncel", "halen", "hala", "dogrudan", "uygulanmaz", "gecerli"),
         "transition_or_replacement_rule": ("gecis", "gecici", "yerine gecen", "yerini alan", "kaldiril", "mevcut rejim"),
         "exception_or_limitation": ("istisna", "sakli", "haric", "muaf", "sinir", "uygulanmaz"),
-        "procedure_or_consequence": ("usul", "sure", "basvuru", "itiraz", "sonuc", "yaptirim", "bildirim", "islem"),
+        "procedure_or_consequence": (
+            "usul",
+            "sure",
+            "basvuru",
+            "arabulucu",
+            "dava",
+            "mahkeme",
+            "tutanak",
+            "bir ay",
+            "iki hafta",
+            "itiraz",
+            "sonuc",
+            "yaptirim",
+            "bildirim",
+            "islem",
+        ),
         "scenario_applicability": ("sart", "kosul", "halinde", "kapsam", "uygulan", "aranir", "bakimindan"),
         "hierarchy_or_conflict_rule": ("oncelik", "ust norm", "alt norm", "ozel duzenleme", "kanuna aykiri", "dayanak"),
     }
     return hints.get(slot, ())
+
+
+def _slot_hint_in_surface(surface: str, hint: str) -> bool:
+    normalized_hint = normalize_query_text(hint or "")
+    if not normalized_hint:
+        return False
+    if " " in normalized_hint:
+        return normalized_hint in surface
+    if normalized_hint == "sure":
+        return bool(re.search(r"(?<![a-z0-9])sure(?:si|sin|ler|de|ye|yi|nin|leri)?(?![a-z0-9])", surface))
+    if len(normalized_hint) <= 4:
+        return bool(re.search(rf"(?<![a-z0-9]){re.escape(normalized_hint)}(?![a-z0-9])", surface))
+    return normalized_hint in surface
+
+
+def _slot_hint_score(surface: str, hints: tuple[str, ...]) -> int:
+    return sum(1 for hint in hints if _slot_hint_in_surface(surface, hint))
 
 
 def _chunk_span_id(chunk: RetrievedChunk) -> str:
@@ -8534,13 +8566,106 @@ def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
     ):
         return True
     if slot == "transition_or_replacement_rule" and (
-        _answer_contains_any(surface, hints)
+        _slot_hint_score(surface, hints) > 0
         or str(metadata.get("effective_state") or "").strip().lower() in {"repealed", "mulga"}
         or _metadata_flag_is_true(metadata.get("is_repealed"))
         or _metadata_flag_is_true(metadata.get("mulga"))
     ):
         return True
-    return any(hint in surface for hint in hints)
+    return _slot_hint_score(surface, hints) > 0
+
+
+def _select_chunk_for_slot(chunks: list[RetrievedChunk], slot: str) -> RetrievedChunk | None:
+    best_chunk: RetrievedChunk | None = None
+    best_score = 0
+    hints = _slot_keyword_hints(slot)
+    for index, chunk in enumerate(chunks):
+        if not _chunk_supports_slot(chunk, slot):
+            continue
+        surface = normalize_query_text(
+            " ".join(
+                part
+                for part in (
+                    chunk.text,
+                    chunk.citation,
+                    _resolve_chunk_source_title(chunk),
+                    _resolve_chunk_source_identifier(chunk),
+                )
+                if part
+            )
+        )
+        score = _slot_hint_score(surface, hints)
+        if slot in {"governing_source", "exact_source_identity", "article_or_span", "document_selection_reason"}:
+            score += 3
+        if slot == "result_or_holding" and _chunk_has_selectable_body_span(chunk):
+            score += 2
+        score = max(score, 1) * 100 - index
+        if score > best_score:
+            best_score = score
+            best_chunk = chunk
+    return best_chunk
+
+
+def _selector_primary_chunk(
+    chunks: list[RetrievedChunk],
+    article_span_selector: dict[str, Any] | None,
+) -> RetrievedChunk | None:
+    if not isinstance(article_span_selector, dict):
+        return None
+    selector_values = {
+        str(value).strip()
+        for value in (
+            article_span_selector.get("selected_main_span_id"),
+            article_span_selector.get("selected_document_id"),
+            article_span_selector.get("selected_document_source_key"),
+            article_span_selector.get("binding_source_key"),
+            article_span_selector.get("selected_canonical_source_key_v2"),
+            article_span_selector.get("selected_canonical_document_key_v2"),
+        )
+        if str(value or "").strip()
+    }
+    if not selector_values:
+        return None
+    normalized_selector_values = {
+        candidate
+        for value in selector_values
+        for candidate in (
+            value,
+            value.lower(),
+            normalize_canonical_text(value),
+            _normalize_tr_text(value),
+        )
+        if candidate
+    }
+    for chunk in chunks:
+        chunk_values = {
+            str(value).strip()
+            for value in (
+                _chunk_span_id(chunk),
+                _resolve_trace_source_id(chunk),
+                chunk.citation,
+                _resolve_chunk_source_title(chunk),
+                _resolve_chunk_binding_source_key(chunk, include_span=False),
+                _resolve_chunk_binding_source_key(chunk, include_span=True),
+                _resolve_chunk_canonical_source_key_v2(chunk, include_span=False),
+                _resolve_chunk_canonical_source_key_v2(chunk, include_span=True),
+            )
+            if str(value or "").strip()
+        }
+        normalized_chunk_values = {
+            candidate
+            for value in chunk_values
+            for candidate in (
+                value,
+                value.lower(),
+                normalize_canonical_text(value),
+                _normalize_tr_text(value),
+            )
+            if candidate
+        }
+        if normalized_selector_values & normalized_chunk_values:
+            return chunk
+    return None
 
 
 _REQUIRED_SLOT_SCHEMA: dict[str, dict[str, str]] = {
@@ -8654,10 +8779,16 @@ def _best_slot_excerpt(chunk: RetrievedChunk, slot: str, *, query: str = "") -> 
         for sentence in re.split(r"(?<=[.!?])\s+|\n+", text)
         if _normalize_whitespace(sentence)
     ]
+    best_sentence = ""
+    best_score = 0
     for sentence in sentences:
         normalized = normalize_query_text(sentence)
-        if hints and any(hint in normalized for hint in hints):
-            return _compact_slot_value(sentence)
+        score = _slot_hint_score(normalized, hints) if hints else 0
+        if score > best_score:
+            best_score = score
+            best_sentence = sentence
+    if best_sentence:
+        return _compact_slot_value(best_sentence)
     if query:
         return _compact_slot_value(_build_chunk_evidence_span(chunk, query=query, max_len=360))
     if sentences:
@@ -8727,7 +8858,7 @@ def _slot_value_from_chunk(
     if slot == "transition_or_replacement_rule":
         excerpt = _best_slot_excerpt(chunk, slot, query=query)
         normalized_excerpt = normalize_query_text(excerpt)
-        if excerpt and _answer_contains_any(normalized_excerpt, _slot_keyword_hints(slot)):
+        if excerpt and _slot_hint_score(normalized_excerpt, _slot_keyword_hints(slot)) > 0:
             return excerpt, 0.70, "explicit_transition_or_replacement_clause"
         if is_repealed:
             return (
@@ -8759,8 +8890,14 @@ def _build_evidence_required_slot_values(
     selected_main_span_id = str(selector.get("selected_main_span_id") or "").strip()
     selected_article = str(selector.get("selected_article") or "").strip()
     rows: list[dict[str, Any]] = []
+    primary_chunk = _selector_primary_chunk(chunks, article_span_selector)
     for slot in required_slots:
-        matched_chunk = next((chunk for chunk in chunks if _chunk_supports_slot(chunk, slot)), None)
+        matched_chunk = (
+            primary_chunk
+            if slot in {"governing_source", "exact_source_identity", "document_selection_reason"}
+            and primary_chunk is not None
+            else _select_chunk_for_slot(chunks, slot)
+        )
         if matched_chunk is None and slot in {"result_or_holding", "governing_source", "exact_source_identity"} and chunks:
             matched_chunk = chunks[0]
         span_id = _chunk_span_id(matched_chunk) if matched_chunk is not None else ""
@@ -8830,9 +8967,15 @@ def _build_answer_slot_evidence_map(
     rows: list[dict[str, Any]] = []
     missing_reasons: list[str] = []
     confidence_sum = 0.0
+    primary_chunk = _selector_primary_chunk(chunks, article_span_selector)
 
     for slot in required_slots:
-        matched_chunk = next((chunk for chunk in chunks if _chunk_supports_slot(chunk, slot)), None)
+        matched_chunk = (
+            primary_chunk
+            if slot in {"governing_source", "exact_source_identity", "document_selection_reason"}
+            and primary_chunk is not None
+            else _select_chunk_for_slot(chunks, slot)
+        )
         span_id = _chunk_span_id(matched_chunk) if matched_chunk is not None else ""
         article = _chunk_article(matched_chunk) if matched_chunk is not None else ""
         if slot == "article_or_span" and selected_main_span_id:
@@ -9294,6 +9437,9 @@ def _build_trace_payload(
             "required_slot_schema": answer_contract.get("required_slot_schema"),
             "evidence_required_slot_values": answer_contract.get("evidence_required_slot_values"),
             "evidence_required_slot_value_count": answer_contract.get("evidence_required_slot_value_count"),
+            "evidence_slot_synthesis_applied": answer_contract.get("evidence_slot_synthesis_applied"),
+            "evidence_slot_synthesis_slots": answer_contract.get("evidence_slot_synthesis_slots"),
+            "evidence_slot_synthesis_reason": answer_contract.get("evidence_slot_synthesis_reason"),
             "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
             "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
             "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
@@ -9411,6 +9557,9 @@ def _build_trace_payload(
                 "required_slot_schema": answer_contract.get("required_slot_schema"),
                 "evidence_required_slot_values": answer_contract.get("evidence_required_slot_values"),
                 "evidence_required_slot_value_count": answer_contract.get("evidence_required_slot_value_count"),
+                "evidence_slot_synthesis_applied": answer_contract.get("evidence_slot_synthesis_applied"),
+                "evidence_slot_synthesis_slots": answer_contract.get("evidence_slot_synthesis_slots"),
+                "evidence_slot_synthesis_reason": answer_contract.get("evidence_slot_synthesis_reason"),
                 "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
                 "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
                 "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
@@ -10259,6 +10408,144 @@ def _resolve_contract_suppressed_answer_text(
     if isinstance(answer_contract, dict) and answer_contract.get("answer_suppressed_due_to_evidence_gap") is True:
         return controlled_fallback_answer(answer_contract)
     return answer_text
+
+
+_EVIDENCE_SLOT_SYNTHESIS_HEADER = "Kaynaklardan çıkarılan zorunlu noktalar:"
+_EVIDENCE_SLOT_SYNTHESIS_LABELS = {
+    "result_or_holding": "Sonuç/hüküm",
+    "governing_source": "Dayanak kaynak",
+    "exact_source_identity": "Belge kimliği",
+    "article_or_span": "Madde/span",
+    "temporal_validity": "Yürürlük/güncellik",
+    "historical_period": "Tarihsel dönem",
+    "current_applicability": "Güncel uygulanabilirlik",
+    "transition_or_replacement_rule": "Geçiş/yerine geçen düzenleme",
+    "procedure_or_consequence": "Usul/sonuç",
+    "scenario_applicability": "Somut olaya uygulanma",
+    "exception_or_limitation": "İstisna/sınırlama",
+    "document_selection_reason": "Belge seçimi",
+    "hierarchy_or_conflict_rule": "Norm ilişkisi",
+}
+
+
+def _apply_evidence_slot_synthesis_to_answer_text(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+) -> tuple[str, dict[str, Any]]:
+    if final_mode not in {"answer", "partial"} or not isinstance(answer_contract, dict):
+        return answer_text, {
+            "evidence_slot_synthesis_applied": False,
+            "evidence_slot_synthesis_slots": [],
+            "evidence_slot_synthesis_reason": "final_mode_not_answer_or_no_contract",
+        }
+    if not (answer_text or "").strip():
+        return answer_text, {
+            "evidence_slot_synthesis_applied": False,
+            "evidence_slot_synthesis_slots": [],
+            "evidence_slot_synthesis_reason": "empty_answer",
+        }
+    if _EVIDENCE_SLOT_SYNTHESIS_HEADER in answer_text:
+        return answer_text, {
+            "evidence_slot_synthesis_applied": False,
+            "evidence_slot_synthesis_slots": [],
+            "evidence_slot_synthesis_reason": "already_applied",
+        }
+    if (
+        answer_contract.get("answer_suppressed_due_to_evidence_gap") is True
+        or answer_contract.get("insufficient_canonical_span_evidence") is True
+    ):
+        return answer_text, {
+            "evidence_slot_synthesis_applied": False,
+            "evidence_slot_synthesis_slots": [],
+            "evidence_slot_synthesis_reason": "canonical_evidence_gap",
+        }
+    missing_slots = [
+        str(slot)
+        for slot in answer_contract.get("missing_fact_slots") or []
+        if isinstance(slot, str) and slot.strip()
+    ]
+    required_slots = [
+        str(slot)
+        for slot in answer_contract.get("must_have_fact_slots") or []
+        if isinstance(slot, str) and slot.strip()
+    ]
+    candidate_slots = missing_slots
+    synthesis_success_reason = "missing_slots_filled_from_selected_evidence"
+    if not candidate_slots:
+        try:
+            slot_coverage = float(answer_contract.get("answer_slot_coverage_score") or 0.0)
+        except (TypeError, ValueError):
+            slot_coverage = 0.0
+        controlled_evidence_surface = answer_text.strip().startswith(
+            "Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:"
+        )
+        if not required_slots or (slot_coverage >= 0.98 and not controlled_evidence_surface):
+            return answer_text, {
+                "evidence_slot_synthesis_applied": False,
+                "evidence_slot_synthesis_slots": [],
+                "evidence_slot_synthesis_reason": "no_missing_slots",
+            }
+        candidate_slots = required_slots
+        synthesis_success_reason = "slot_values_made_visible_from_selected_evidence"
+    slot_values = answer_contract.get("evidence_required_slot_values")
+    if not isinstance(slot_values, list):
+        return answer_text, {
+            "evidence_slot_synthesis_applied": False,
+            "evidence_slot_synthesis_slots": [],
+            "evidence_slot_synthesis_reason": "no_evidence_slot_values",
+        }
+
+    normalized_answer = normalize_query_text(answer_text)
+    rows_by_slot = {
+        str(row.get("slot_name") or ""): row
+        for row in slot_values
+        if isinstance(row, dict)
+    }
+    synthesis_lines: list[str] = []
+    synthesized_slots: list[str] = []
+    for slot in candidate_slots:
+        row = rows_by_slot.get(slot)
+        if not isinstance(row, dict):
+            continue
+        try:
+            confidence = float(row.get("slot_confidence") or 0.0)
+        except (TypeError, ValueError):
+            confidence = 0.0
+        slot_value = _compact_slot_value(str(row.get("slot_value") or ""), max_len=300)
+        evidence_span_id = str(row.get("evidence_span_id") or "").strip()
+        if confidence < 0.65 or not slot_value or not evidence_span_id:
+            continue
+        value_terms = [
+            token
+            for token in normalize_query_text(slot_value).split()
+            if len(token) >= 5
+        ][:8]
+        if value_terms and sum(1 for token in value_terms if token in normalized_answer) >= min(3, len(value_terms)):
+            continue
+        label = _EVIDENCE_SLOT_SYNTHESIS_LABELS.get(slot, slot)
+        synthesis_lines.append(f"- {label}: {slot_value} [Kaynak: {evidence_span_id}]")
+        synthesized_slots.append(slot)
+        if len(synthesis_lines) >= 5:
+            break
+
+    if not synthesis_lines:
+        return answer_text, {
+            "evidence_slot_synthesis_applied": False,
+            "evidence_slot_synthesis_slots": [],
+            "evidence_slot_synthesis_reason": "no_confident_missing_slot_values",
+        }
+    synthesized_answer = (
+        f"{answer_text.strip()}\n\n"
+        f"{_EVIDENCE_SLOT_SYNTHESIS_HEADER}\n"
+        + "\n".join(synthesis_lines)
+    )
+    return synthesized_answer, {
+        "evidence_slot_synthesis_applied": True,
+        "evidence_slot_synthesis_slots": synthesized_slots,
+        "evidence_slot_synthesis_reason": synthesis_success_reason,
+    }
 
 
 def _trace_chunks_for_completeness(trace_payload: dict[str, Any] | None) -> list[RetrievedChunk]:
@@ -11162,6 +11449,20 @@ def _finalize_chat_response(
         query=user_message,
         trace_payload=trace_payload,
     )
+    answer_text, evidence_slot_synthesis = _apply_evidence_slot_synthesis_to_answer_text(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+    )
+    answer_contract.update(evidence_slot_synthesis)
+    if evidence_slot_synthesis.get("evidence_slot_synthesis_applied") is True:
+        answer_contract = _refresh_contract_completeness_for_answer_text(
+            answer_contract=answer_contract,
+            answer_text=answer_text,
+            query=user_message,
+            trace_payload=trace_payload,
+        )
+        answer_contract.update(evidence_slot_synthesis)
     contract_repair = build_or_repair_answer_contract(
         qid=response_id,
         answer_text=answer_text,
