@@ -1,0 +1,11 @@
+{
+  "green_lane_dir": "reports/benchmark/green_lane/20260424T071506Z_phase14_full_diagnostic",
+  "source_summary": {
+    "ci_mode": false,
+    "out_dir": "reports/benchmark/green_lane/20260424T071506Z_phase14_full_diagnostic",
+    "python": "/Users/btmacstudio/Projects/hukuk-ai/api-gateway/.venv/bin/python",
+    "run_validation": "pass",
+    "status": "pass"
+  },
+  "status": "pass"
+}
