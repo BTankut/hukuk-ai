@@ -148,6 +148,8 @@ ANSWER_FIELDS = [
     "candidate_completeness_score",
     "selected_document_has_body_span",
     "selected_document_has_non_title_span",
+    "selected_document_has_document_level_body_span",
+    "selected_document_has_materialized_body_span",
     "title_only_answer_degraded",
     "insufficient_canonical_span_evidence",
     "required_fact_coverage_score",
@@ -714,6 +716,14 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         or selector_value(response, "selected_document_has_body_span"),
         "selected_document_has_non_title_span": contract_value(response, "selected_document_has_non_title_span")
         or selector_value(response, "selected_document_has_non_title_span"),
+        "selected_document_has_document_level_body_span": selector_value(
+            response,
+            "selected_document_has_document_level_body_span",
+        ),
+        "selected_document_has_materialized_body_span": selector_value(
+            response,
+            "selected_document_has_materialized_body_span",
+        ),
         "title_only_answer_degraded": contract_value(response, "title_only_answer_degraded")
         or selector_value(response, "title_only_answer_degraded"),
         "insufficient_canonical_span_evidence": contract_value(response, "insufficient_canonical_span_evidence")

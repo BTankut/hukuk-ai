@@ -790,6 +790,73 @@ class TestLawSignalParsing:
         assert features["candidate_completeness_score"] == 0.2
         assert features["selected_document_has_non_title_span"] is False
 
+    def test_document_level_body_span_materializes_cb_genelge_m0_body(self):
+        selector = {
+            "selected_document_key": "14",
+            "selected_document_source_key": "14",
+            "selected_article": "0",
+            "selected_main_span_id": "14 m.0/f.0",
+            "selected_supporting_span_ids": [],
+            "main_span_match_type": "document_support",
+            "support_span_count": 1,
+            "query_article_tokens": [],
+        }
+        chunks = [
+            RetrievedChunk(
+                text="Genelge kapsamındaki denetim faaliyetleri düzenli ve etkin yürütülür. " * 3,
+                citation="14 m.0/f.0",
+                source="14",
+                score=1.0,
+                metadata={
+                    "belge_turu": "cb_genelge",
+                    "belge_no": "14",
+                    "source_title": "DENETİM FAALİYETLERİ GENELGESİ",
+                    "madde_no": "0",
+                },
+            )
+        ]
+
+        _annotate_canonical_span_materialization(chunks=chunks, article_span_selector=selector)
+
+        assert selector["canonical_span_materialized"] is True
+        assert selector["corpus_materialization_required"] is False
+        assert selector["canonical_span_materialization_reason"] == "document_level_body_span_materialized"
+        assert selector["selected_document_has_document_level_body_span"] is True
+        assert selector["title_only_fallback_used"] is False
+
+    def test_document_level_body_span_does_not_override_explicit_article_request(self):
+        selector = {
+            "selected_document_key": "14",
+            "selected_document_source_key": "14",
+            "selected_article": "0",
+            "selected_main_span_id": "14 m.0/f.0",
+            "selected_supporting_span_ids": [],
+            "main_span_match_type": "document_support",
+            "support_span_count": 1,
+            "query_article_tokens": ["5"],
+        }
+        chunks = [
+            RetrievedChunk(
+                text="Genelge kapsamındaki denetim faaliyetleri düzenli ve etkin yürütülür. " * 3,
+                citation="14 m.0/f.0",
+                source="14",
+                score=1.0,
+                metadata={
+                    "belge_turu": "cb_genelge",
+                    "belge_no": "14",
+                    "source_title": "DENETİM FAALİYETLERİ GENELGESİ",
+                    "madde_no": "0",
+                },
+            )
+        ]
+
+        _annotate_canonical_span_materialization(chunks=chunks, article_span_selector=selector)
+
+        assert selector["canonical_span_materialized"] is False
+        assert selector["corpus_materialization_required"] is True
+        assert selector["canonical_span_materialization_reason"] == "body_span_available_but_title_or_article_zero"
+        assert selector["selected_document_has_document_level_body_span"] is False
+
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(
             "Elektronik tebligat yönetmeliği kapsamında muhatabın bildirim yükümlülüğü nedir?"

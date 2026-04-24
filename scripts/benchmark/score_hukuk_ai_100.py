@@ -166,6 +166,8 @@ SCORED_FIELDS = [
     "candidate_completeness_score",
     "selected_document_has_body_span",
     "selected_document_has_non_title_span",
+    "selected_document_has_document_level_body_span",
+    "selected_document_has_materialized_body_span",
     "title_only_answer_degraded",
     "insufficient_canonical_span_evidence",
     "required_fact_coverage_score",
@@ -680,6 +682,14 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "candidate_completeness_score": answer.get("candidate_completeness_score", ""),
         "selected_document_has_body_span": answer.get("selected_document_has_body_span", ""),
         "selected_document_has_non_title_span": answer.get("selected_document_has_non_title_span", ""),
+        "selected_document_has_document_level_body_span": answer.get(
+            "selected_document_has_document_level_body_span",
+            "",
+        ),
+        "selected_document_has_materialized_body_span": answer.get(
+            "selected_document_has_materialized_body_span",
+            "",
+        ),
         "title_only_answer_degraded": answer.get("title_only_answer_degraded", ""),
         "insufficient_canonical_span_evidence": answer.get("insufficient_canonical_span_evidence", ""),
         "required_fact_coverage_score": answer.get("required_fact_coverage_score", ""),
@@ -901,6 +911,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     canonical_span_materialization_reason_counts = Counter(
         row.get("canonical_span_materialization_reason", "") or "unknown" for row in rows
     )
+    selected_document_document_level_body_span_count = sum(
+        1 for row in rows if bool_field(str(row.get("selected_document_has_document_level_body_span", ""))) is True
+    )
+    selected_document_materialized_body_span_count = sum(
+        1 for row in rows if bool_field(str(row.get("selected_document_has_materialized_body_span", ""))) is True
+    )
     source_key_collision_detected_count = sum(
         1 for row in rows if bool_field(str(row.get("source_key_collision_detected", ""))) is True
     )
@@ -1080,6 +1096,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "canonical_span_materialization_reason_counts": dict(
             sorted(canonical_span_materialization_reason_counts.items())
         ),
+        "selected_document_document_level_body_span_count": selected_document_document_level_body_span_count,
+        "selected_document_materialized_body_span_count": selected_document_materialized_body_span_count,
         "source_key_collision_detected_count": source_key_collision_detected_count,
         "source_key_collision_pair_counts": dict(sorted(source_key_collision_pair_counts.items())),
         "source_key_v2_collision_detected_count": source_key_v2_collision_detected_count,
@@ -1321,6 +1339,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
             f"- corpus_materialization_required_count: {summary['corpus_materialization_required_count']}",
             f"- title_only_answer_degraded_count: {summary['title_only_answer_degraded_count']}",
             f"- insufficient_canonical_span_evidence_count: {summary['insufficient_canonical_span_evidence_count']}",
+            f"- selected_document_document_level_body_span_count: {summary['selected_document_document_level_body_span_count']}",
+            f"- selected_document_materialized_body_span_count: {summary['selected_document_materialized_body_span_count']}",
             f"- source_key_collision_detected_count: {summary['source_key_collision_detected_count']}",
             f"- source_key_v2_collision_detected_count: {summary['source_key_v2_collision_detected_count']}",
             f"- avg_candidate_completeness_score: {summary['avg_candidate_completeness_score']}",

@@ -3269,6 +3269,27 @@ def _chunk_has_non_title_body_span(chunk: RetrievedChunk) -> bool:
     return bool(_chunk_article_token(chunk) not in {"", "0"} and _chunk_has_selectable_body_span(chunk))
 
 
+_DOCUMENT_LEVEL_BODY_SPAN_FAMILIES = {"cb_genelge", "cb_karar", "teblig"}
+
+
+def _chunk_allows_document_level_body_span(
+    chunk: RetrievedChunk,
+    article_span_selector: dict[str, Any] | None,
+) -> bool:
+    family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
+    if family not in _DOCUMENT_LEVEL_BODY_SPAN_FAMILIES:
+        return False
+    if _chunk_article_token(chunk) not in {"", "0"}:
+        return False
+    if not _chunk_has_selectable_body_span(chunk):
+        return False
+    query_article_tokens = []
+    if isinstance(article_span_selector, dict):
+        raw_tokens = article_span_selector.get("query_article_tokens")
+        query_article_tokens = raw_tokens if isinstance(raw_tokens, list) else []
+    return not any(str(token or "").strip() not in {"", "0"} for token in query_article_tokens)
+
+
 def _source_key_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any]:
     grouped: dict[str, dict[tuple[str, str], int]] = {}
     for chunk in chunks:
@@ -3383,6 +3404,13 @@ def _annotate_canonical_span_materialization(
     quality_by_chunk = [(chunk, _chunk_body_text_quality(chunk)) for chunk in selected_chunks]
     selected_document_has_body_span = any(bool(quality.get("body_text_available")) for _chunk, quality in quality_by_chunk)
     selected_document_has_non_title_span = any(_chunk_has_non_title_body_span(chunk) for chunk, _quality in quality_by_chunk)
+    selected_document_has_document_level_body_span = any(
+        _chunk_allows_document_level_body_span(chunk, article_span_selector)
+        for chunk, _quality in quality_by_chunk
+    )
+    selected_document_has_materialized_body_span = bool(
+        selected_document_has_non_title_span or selected_document_has_document_level_body_span
+    )
 
     policy_collision_keys = []
     policy_collision_detected = False
@@ -3416,9 +3444,12 @@ def _annotate_canonical_span_materialization(
     selected_article = str(article_span_selector.get("selected_article") or "").strip()
     main_match_type = str(article_span_selector.get("main_span_match_type") or "")
     title_only_fallback_used = bool(
-        selected_article in {"", "0"}
-        or main_match_type == "title_only"
-        or not bool(main_quality.get("body_text_available"))
+        (
+            selected_article in {"", "0"}
+            or main_match_type == "title_only"
+            or not bool(main_quality.get("body_text_available"))
+        )
+        and not selected_document_has_document_level_body_span
     )
     try:
         support_span_count = int(article_span_selector.get("support_span_count") or 0)
@@ -3429,7 +3460,7 @@ def _annotate_canonical_span_materialization(
         candidate_completeness_score += 0.20
     if selected_document_has_body_span:
         candidate_completeness_score += 0.35
-    if selected_document_has_non_title_span:
+    if selected_document_has_materialized_body_span:
         candidate_completeness_score += 0.25
     if support_span_count >= 2:
         candidate_completeness_score += 0.10
@@ -3439,8 +3470,8 @@ def _annotate_canonical_span_materialization(
         candidate_completeness_score += 0.10
     candidate_completeness_score = round(min(candidate_completeness_score, 1.0), 3)
 
-    canonical_span_materialized = bool(selected_document_has_non_title_span)
-    corpus_materialization_required = bool(selected_chunks and not selected_document_has_non_title_span)
+    canonical_span_materialized = bool(selected_document_has_materialized_body_span)
+    corpus_materialization_required = bool(selected_chunks and not selected_document_has_materialized_body_span)
     insufficient_canonical_span_evidence = bool(corpus_materialization_required)
     if not selected_document_key:
         materialization_reason = "selected_document_missing"
@@ -3448,6 +3479,8 @@ def _annotate_canonical_span_materialization(
         materialization_reason = "selected_document_chunks_missing"
     elif selected_document_has_non_title_span:
         materialization_reason = "non_title_body_span_available"
+    elif selected_document_has_document_level_body_span:
+        materialization_reason = "document_level_body_span_materialized"
     elif selected_document_has_body_span:
         materialization_reason = "body_span_available_but_title_or_article_zero"
     elif source_key_collision_detected:
@@ -3484,6 +3517,8 @@ def _annotate_canonical_span_materialization(
             "candidate_completeness_score": candidate_completeness_score,
             "selected_document_has_body_span": selected_document_has_body_span,
             "selected_document_has_non_title_span": selected_document_has_non_title_span,
+            "selected_document_has_document_level_body_span": selected_document_has_document_level_body_span,
+            "selected_document_has_materialized_body_span": selected_document_has_materialized_body_span,
             "title_only_answer_degraded": bool(title_only_fallback_used and insufficient_canonical_span_evidence),
             "insufficient_canonical_span_evidence": insufficient_canonical_span_evidence,
             "selected_document_body_span_count": sum(
@@ -3491,6 +3526,11 @@ def _annotate_canonical_span_materialization(
             ),
             "selected_document_non_title_span_count": sum(
                 1 for chunk, _quality in quality_by_chunk if _chunk_has_non_title_body_span(chunk)
+            ),
+            "selected_document_document_level_body_span_count": sum(
+                1
+                for chunk, _quality in quality_by_chunk
+                if _chunk_allows_document_level_body_span(chunk, article_span_selector)
             ),
         }
     )
@@ -8303,6 +8343,12 @@ def _build_completeness_synthesis_features(
     candidate_completeness_score = selector.get("candidate_completeness_score")
     selected_document_has_body_span = bool(selector.get("selected_document_has_body_span"))
     selected_document_has_non_title_span = bool(selector.get("selected_document_has_non_title_span"))
+    selected_document_has_document_level_body_span = bool(
+        selector.get("selected_document_has_document_level_body_span")
+    )
+    selected_document_has_materialized_body_span = bool(
+        selector.get("selected_document_has_materialized_body_span")
+    )
     title_only_answer_degraded = bool(selector.get("title_only_answer_degraded"))
     insufficient_canonical_span_evidence = bool(selector.get("insufficient_canonical_span_evidence"))
     if isinstance(article_span_selector, dict):
@@ -8422,6 +8468,8 @@ def _build_completeness_synthesis_features(
         "candidate_completeness_score": candidate_completeness_score,
         "selected_document_has_body_span": selected_document_has_body_span,
         "selected_document_has_non_title_span": selected_document_has_non_title_span,
+        "selected_document_has_document_level_body_span": selected_document_has_document_level_body_span,
+        "selected_document_has_materialized_body_span": selected_document_has_materialized_body_span,
         "title_only_answer_degraded": title_only_answer_degraded,
         "insufficient_canonical_span_evidence": insufficient_canonical_span_evidence,
     }
@@ -8671,6 +8719,12 @@ def _build_trace_payload(
             "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
             "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
             "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
+            "selected_document_has_document_level_body_span": answer_contract.get(
+                "selected_document_has_document_level_body_span"
+            ),
+            "selected_document_has_materialized_body_span": answer_contract.get(
+                "selected_document_has_materialized_body_span"
+            ),
             "title_only_answer_degraded": answer_contract.get("title_only_answer_degraded"),
             "insufficient_canonical_span_evidence": answer_contract.get("insufficient_canonical_span_evidence"),
         },
@@ -8779,6 +8833,12 @@ def _build_trace_payload(
                 "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
                 "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
                 "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
+                "selected_document_has_document_level_body_span": answer_contract.get(
+                    "selected_document_has_document_level_body_span"
+                ),
+                "selected_document_has_materialized_body_span": answer_contract.get(
+                    "selected_document_has_materialized_body_span"
+                ),
                 "title_only_answer_degraded": answer_contract.get("title_only_answer_degraded"),
                 "insufficient_canonical_span_evidence": answer_contract.get("insufficient_canonical_span_evidence"),
             },
