@@ -7710,6 +7710,55 @@ def _retrieve_active_chunks(
     )
 
 
+def _should_retrieve_historical_current_counterpart(
+    *,
+    query: str,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
+) -> bool:
+    normalized = normalize_query_text(query or "")
+    return bool(
+        _query_needs_historical_transition_slots(normalized)
+        or _asks_current_validity_over_historical_contrast(query)
+        or (
+            _source_family_resolution_trace_bool(source_family_resolution, "historical_or_repealed_question")
+            and _query_needs_current_applicability_slot(normalized)
+        )
+    )
+
+
+def _build_historical_current_counterpart_query(query: str) -> str:
+    return (
+        f"{query} güncel yürürlükte aktif mevzuat yerine geçen düzenleme "
+        "mevcut rejim doğrudan uygulanacak kaynak"
+    )
+
+
+def _mark_historical_current_counterpart_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
+    marked: list[RetrievedChunk] = []
+    for chunk in chunks:
+        metadata = dict(chunk.metadata or {})
+        lanes = [
+            str(value)
+            for value in (metadata.get("retrieval_lane_sources") or [])
+            if isinstance(value, str) and value.strip()
+        ]
+        metadata["historical_current_counterpart"] = True
+        metadata["retrieval_lane_sources"] = dedupe_strings(
+            [*lanes, "historical_current_counterpart_recall"]
+        )
+        metadata["metadata_lane_present"] = True
+        marked.append(
+            RetrievedChunk(
+                text=chunk.text,
+                citation=chunk.citation,
+                source=chunk.source,
+                score=chunk.score,
+                metadata=metadata,
+            )
+        )
+    return marked
+
+
 def _retrieve_source_family_chunks(
     *,
     retriever: Any,
@@ -7814,6 +7863,7 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "canonical_identifier_display": metadata.get("canonical_identifier_display"),
         "effective_state": effective_state,
         "retrieval_lane_sources": recall_lane_sources,
+        "historical_current_counterpart": _chunk_is_historical_current_counterpart(chunk),
         "metadata_lane_present": "metadata_guided_recall" in recall_lane_sources,
         "dense_lane_present": "semantic_dense_recall" in recall_lane_sources,
         "merged_lane_present": {"metadata_guided_recall", "semantic_dense_recall"} <= set(recall_lane_sources),
@@ -8219,6 +8269,15 @@ def _query_needs_historical_transition_slots(normalized_query: str) -> bool:
             "yururlukten kaldir",
             "yururlukten kalk",
             "eski metin",
+            "eski khk",
+            "eski tuzuk",
+            "eski tüzük",
+            "eski yonetmelik",
+            "eski yönetmelik",
+            "eski yonetmeligi",
+            "eski yönetmeliği",
+            "eski duzenleme",
+            "eski düzenleme",
             "onceki duzenleme",
             "tarihsel",
             "o tarihte",
@@ -8516,6 +8575,19 @@ def _slot_hint_score(surface: str, hints: tuple[str, ...]) -> int:
     return sum(1 for hint in hints if _slot_hint_in_surface(surface, hint))
 
 
+def _chunk_is_historical_current_counterpart(chunk: RetrievedChunk) -> bool:
+    metadata = chunk.metadata or {}
+    lanes = {
+        str(value)
+        for value in (metadata.get("retrieval_lane_sources") or [])
+        if isinstance(value, str) and value.strip()
+    }
+    return bool(
+        _metadata_flag_is_true(metadata.get("historical_current_counterpart"))
+        or "historical_current_counterpart_recall" in lanes
+    )
+
+
 def _chunk_span_id(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
     for key in ("span_id", "chunk_id", "source_id", "citation"):
@@ -8565,6 +8637,8 @@ def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
         for key in ("effective_state", "effective_start", "effective_end", "yururluk_baslangic", "yururluk_bitis")
     ):
         return True
+    if slot in {"current_applicability", "transition_or_replacement_rule"} and _chunk_is_historical_current_counterpart(chunk):
+        return True
     if slot == "transition_or_replacement_rule" and (
         _slot_hint_score(surface, hints) > 0
         or str(metadata.get("effective_state") or "").strip().lower() in {"repealed", "mulga"}
@@ -8575,10 +8649,12 @@ def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
     return _slot_hint_score(surface, hints) > 0
 
 
-def _select_chunk_for_slot(chunks: list[RetrievedChunk], slot: str) -> RetrievedChunk | None:
+def _select_chunk_for_slot(chunks: list[RetrievedChunk], slot: str, *, query: str = "") -> RetrievedChunk | None:
     best_chunk: RetrievedChunk | None = None
     best_score = 0
     hints = _slot_keyword_hints(slot)
+    query_terms = _extract_retrieval_priority_terms(query)
+    academic_query = _query_has_academic_regulation_intent(query)
     for index, chunk in enumerate(chunks):
         if not _chunk_supports_slot(chunk, slot):
             continue
@@ -8599,6 +8675,12 @@ def _select_chunk_for_slot(chunks: list[RetrievedChunk], slot: str) -> Retrieved
             score += 3
         if slot == "result_or_holding" and _chunk_has_selectable_body_span(chunk):
             score += 2
+        if slot in {"current_applicability", "transition_or_replacement_rule"} and _chunk_is_historical_current_counterpart(chunk):
+            score += 6
+            score += min(5, _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms)) * 2
+            score += min(3, _count_term_overlap(chunk.text, query_terms))
+            if (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk)) == "uy" and not academic_query:
+                score -= 5
         score = max(score, 1) * 100 - index
         if score > best_score:
             best_score = score
@@ -8814,6 +8896,7 @@ def _slot_value_from_chunk(
         or _metadata_flag_is_true(metadata.get("mulga"))
     )
     is_active = bool(effective_state in {"active", "amended"} or str(metadata.get("effective_end") or "") in _ACTIVE_END_DATE_SENTINELS)
+    is_current_counterpart = _chunk_is_historical_current_counterpart(chunk)
 
     if slot == "governing_source":
         return source_label or citation, 0.82, "source_identity_metadata"
@@ -8841,6 +8924,12 @@ def _slot_value_from_chunk(
         excerpt = _best_slot_excerpt(chunk, slot, query=query)
         return excerpt or state_label, 0.62 if excerpt else 0.45, "historical_period_excerpt"
     if slot == "current_applicability":
+        if is_current_counterpart:
+            return (
+                f"Güncel/aktif karşılaştırma adayı: {source_label or citation}; doğrudan uygulama değerlendirmesi bu güncel kaynakla ayrıca kurulmalıdır ({state_label}).",
+                0.72,
+                "historical_current_counterpart_active_source",
+            )
         if is_repealed:
             return (
                 f"Seçili kaynak mülga/tarihsel görünüyor; bugünkü doğrudan uygulama için güncel kaynak ayrıca doğrulanmalıdır ({state_label}).",
@@ -8856,6 +8945,12 @@ def _slot_value_from_chunk(
         excerpt = _best_slot_excerpt(chunk, slot, query=query)
         return excerpt or state_label, 0.55 if excerpt or state_label else 0.0, "current_applicability_not_explicit"
     if slot == "transition_or_replacement_rule":
+        if is_current_counterpart:
+            return (
+                f"Mülga/tarihsel kaynakla birlikte güncel karşılaştırma kaynağı olarak seçildi: {source_label or citation}.",
+                0.72,
+                "historical_current_counterpart_relation",
+            )
         excerpt = _best_slot_excerpt(chunk, slot, query=query)
         normalized_excerpt = normalize_query_text(excerpt)
         if excerpt and _slot_hint_score(normalized_excerpt, _slot_keyword_hints(slot)) > 0:
@@ -8896,7 +8991,7 @@ def _build_evidence_required_slot_values(
             primary_chunk
             if slot in {"governing_source", "exact_source_identity", "document_selection_reason"}
             and primary_chunk is not None
-            else _select_chunk_for_slot(chunks, slot)
+            else _select_chunk_for_slot(chunks, slot, query=query)
         )
         if matched_chunk is None and slot in {"result_or_holding", "governing_source", "exact_source_identity"} and chunks:
             matched_chunk = chunks[0]
@@ -8974,7 +9069,7 @@ def _build_answer_slot_evidence_map(
             primary_chunk
             if slot in {"governing_source", "exact_source_identity", "document_selection_reason"}
             and primary_chunk is not None
-            else _select_chunk_for_slot(chunks, slot)
+            else _select_chunk_for_slot(chunks, slot, query=query)
         )
         span_id = _chunk_span_id(matched_chunk) if matched_chunk is not None else ""
         article = _chunk_article(matched_chunk) if matched_chunk is not None else ""
@@ -10434,7 +10529,24 @@ def _apply_evidence_slot_synthesis_to_answer_text(
     answer_contract: dict[str, Any] | None,
     final_mode: str | None,
 ) -> tuple[str, dict[str, Any]]:
-    if final_mode not in {"answer", "partial"} or not isinstance(answer_contract, dict):
+    if not isinstance(answer_contract, dict):
+        return answer_text, {
+            "evidence_slot_synthesis_applied": False,
+            "evidence_slot_synthesis_slots": [],
+            "evidence_slot_synthesis_reason": "final_mode_not_answer_or_no_contract",
+        }
+    required_slots = [
+        str(slot)
+        for slot in answer_contract.get("must_have_fact_slots") or []
+        if isinstance(slot, str) and slot.strip()
+    ]
+    answer_mode = str(answer_contract.get("answer_mode") or "")
+    mulga_controlled_mode = answer_mode in {
+        "historical_repealed_answer",
+        "repealed_transition_answer",
+        "not_currently_applicable_answer",
+    } or bool({"historical_period", "current_applicability", "transition_or_replacement_rule"} & set(required_slots))
+    if final_mode not in {"answer", "partial"} and not mulga_controlled_mode:
         return answer_text, {
             "evidence_slot_synthesis_applied": False,
             "evidence_slot_synthesis_slots": [],
@@ -10464,11 +10576,6 @@ def _apply_evidence_slot_synthesis_to_answer_text(
     missing_slots = [
         str(slot)
         for slot in answer_contract.get("missing_fact_slots") or []
-        if isinstance(slot, str) and slot.strip()
-    ]
-    required_slots = [
-        str(slot)
-        for slot in answer_contract.get("must_have_fact_slots") or []
         if isinstance(slot, str) and slot.strip()
     ]
     candidate_slots = missing_slots
@@ -11517,6 +11624,24 @@ def _finalize_chat_response(
         answer_contract = contract_repair.contract
     else:
         answer_text = resolved_answer_text
+    answer_text, post_fallback_synthesis = _apply_evidence_slot_synthesis_to_answer_text(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+    )
+    if (
+        post_fallback_synthesis.get("evidence_slot_synthesis_applied") is True
+        or answer_contract.get("evidence_slot_synthesis_reason") in {"empty_answer", "final_mode_not_answer_or_no_contract"}
+    ):
+        answer_contract.update(post_fallback_synthesis)
+        if post_fallback_synthesis.get("evidence_slot_synthesis_applied") is True:
+            answer_contract = _refresh_contract_completeness_for_answer_text(
+                answer_contract=answer_contract,
+                answer_text=answer_text,
+                query=user_message,
+                trace_payload=trace_payload,
+            )
+            answer_contract.update(post_fallback_synthesis)
     answer_contract = _refresh_contract_completeness_for_answer_text(
         answer_contract=answer_contract,
         answer_text=answer_text,
@@ -12779,6 +12904,32 @@ async def chat_completions(
                         len(retrieved_chunks),
                         family_routing_policy.get("family_override_reason") if family_routing_policy else None,
                     )
+                if (
+                    _should_retrieve_historical_current_counterpart(
+                        query=routing_query,
+                        source_family_resolution=source_family_resolution,
+                    )
+                    and not request_body.law_filter
+                ):
+                    counterpart_chunks = _mark_historical_current_counterpart_chunks(
+                        _retrieve_active_chunks(
+                            retriever=retriever,
+                            query=_build_historical_current_counterpart_query(routing_query),
+                            top_k=max(6, min(10, top_k_effective)),
+                        )
+                    )
+                    if counterpart_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(retrieved_chunks + counterpart_chunks)
+                        if family_routing_policy is not None:
+                            family_routing_policy["historical_current_counterpart_added_count"] = len(
+                                counterpart_chunks
+                            )
+                        logger.info(
+                            "Retrieval historical-current-counterpart: session=%s added=%d total=%d",
+                            session_id,
+                            len(counterpart_chunks),
+                            len(retrieved_chunks),
+                        )
                 pre_rerank_chunks = list(retrieved_chunks)
         except Exception as exc:
             logger.warning(

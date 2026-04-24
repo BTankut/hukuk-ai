@@ -911,6 +911,131 @@ class TestLawSignalParsing:
         assert meta["evidence_slot_synthesis_applied"] is False
         assert meta["evidence_slot_synthesis_reason"] == "canonical_evidence_gap"
 
+    def test_mulga_controlled_refusal_can_synthesize_evidence_slots(self):
+        answer, meta = _apply_evidence_slot_synthesis_to_answer_text(
+            answer_text="Sonuç: seçili kaynak mülga olduğu için bugün doğrudan uygulanmamalıdır [Kaynak: X m.1].",
+            final_mode="refusal",
+            answer_contract={
+                "answer_mode": "repealed_transition_answer",
+                "must_have_fact_slots": ["transition_or_replacement_rule"],
+                "missing_fact_slots": [],
+                "answer_slot_coverage_score": 0.5,
+                "evidence_required_slot_values": [
+                    {
+                        "slot_name": "transition_or_replacement_rule",
+                        "slot_value": "Güncel karşılaştırma kaynağı 6769 sayılı Kanundur.",
+                        "evidence_span_id": "6769 m.1/f.0",
+                        "slot_confidence": 0.72,
+                    }
+                ],
+            },
+        )
+
+        assert meta["evidence_slot_synthesis_applied"] is True
+        assert meta["evidence_slot_synthesis_slots"] == ["transition_or_replacement_rule"]
+        assert "6769 sayılı Kanundur" in answer
+
+    def test_mulga_current_counterpart_fills_transition_slots(self):
+        features = _build_completeness_synthesis_features(
+            query="Eski KHK'larla 2026'da doğrudan hüküm kurmak neden risklidir?",
+            answer_text=(
+                "Sonuç: eski kaynak tarihsel niteliktedir; güncel rejim ayrıca doğrulanmalıdır. "
+                "Bu nedenle doğrudan uygulama kurulamaz [Kaynak: 556 m.1]."
+            ),
+            article_span_selector={
+                "support_span_count": 2,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "exact_enough",
+            },
+            chunks=[
+                RetrievedChunk(
+                    text="556 sayılı eski KHK hükmü tarihsel kaynak olarak dikkate alınır.",
+                    citation="556 m.1",
+                    source="556",
+                    score=1.0,
+                    metadata={
+                        "source_family_canonical": "mulga_kanun",
+                        "effective_state": "repealed",
+                        "madde_no": "1",
+                    },
+                ),
+                RetrievedChunk(
+                    text="6769 sayılı Sınai Mülkiyet Kanunu güncel sınai mülkiyet rejimini düzenler.",
+                    citation="6769 m.1",
+                    source="6769",
+                    score=0.9,
+                    metadata={
+                        "source_family_canonical": "kanun",
+                        "effective_state": "active",
+                        "historical_current_counterpart": True,
+                        "madde_no": "1",
+                        "canonical_identifier_display": "6769",
+                    },
+                ),
+            ],
+        )
+
+        values = {row["slot_name"]: row for row in features["evidence_required_slot_values"]}
+        assert values["current_applicability"]["evidence_span_id"] == "6769 m.1"
+        assert values["transition_or_replacement_rule"]["evidence_span_id"] == "6769 m.1"
+        assert "Güncel/aktif karşılaştırma adayı" in values["current_applicability"]["slot_value"]
+
+    def test_mulga_current_counterpart_prefers_non_academic_title_match_over_generic_university_rule(self):
+        features = _build_completeness_synthesis_features(
+            query="Kamu kurumları belge hizmetleri için eski yönetmeliği esas almak neden hatalıdır?",
+            answer_text=(
+                "Sonuç: eski kaynak tarihsel niteliktedir; güncel rejim ayrıca doğrulanmalıdır "
+                "[Kaynak: 1988 m.1]."
+            ),
+            article_span_selector={
+                "support_span_count": 3,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "exact_enough",
+            },
+            chunks=[
+                RetrievedChunk(
+                    text="Eski arşiv düzenlemesi tarihsel kaynak olarak dikkate alınır.",
+                    citation="1988 m.1",
+                    source="1988",
+                    score=1.0,
+                    metadata={
+                        "source_family_canonical": "mulga_kanun",
+                        "effective_state": "repealed",
+                        "madde_no": "1",
+                    },
+                ),
+                RetrievedChunk(
+                    text="Üniversite belge hizmetleri özel kurum içi usulü düzenler.",
+                    citation="7385 m.3",
+                    source="7385",
+                    score=0.9,
+                    metadata={
+                        "source_family_canonical": "uy",
+                        "effective_state": "active",
+                        "historical_current_counterpart": True,
+                        "madde_no": "3",
+                        "source_title": "ÖRNEK ÜNİVERSİTESİ BELGE HİZMETLERİ YÖNETMELİĞİ",
+                    },
+                ),
+                RetrievedChunk(
+                    text="Kamu kurumları belge hizmetleri hakkında güncel yönetmelik kurum belge hizmetlerini düzenler.",
+                    citation="33899 m.1",
+                    source="33899",
+                    score=0.8,
+                    metadata={
+                        "source_family_canonical": "kky",
+                        "effective_state": "active",
+                        "historical_current_counterpart": True,
+                        "madde_no": "1",
+                        "source_title": "KAMU KURUMLARI BELGE HİZMETLERİ HAKKINDA YÖNETMELİK",
+                    },
+                ),
+            ],
+        )
+
+        values = {row["slot_name"]: row for row in features["evidence_required_slot_values"]}
+        assert values["current_applicability"]["evidence_span_id"] == "33899 m.1"
+
     def test_completeness_synthesis_does_not_reenter_slots_when_selector_identity_is_weak(self):
         features = _build_completeness_synthesis_features(
             query="Başvuru usulü ve süresi nedir?",

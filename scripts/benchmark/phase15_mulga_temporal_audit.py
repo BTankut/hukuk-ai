@@ -32,7 +32,7 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 
 
 def bool_text(value: Any) -> bool:
-    return str(value or "").strip().lower() in {"true", "1", "yes", "evet"}
+    return str(value or "").strip().lower() in {"true", "1", "yes", "evet", "pass"}
 
 
 def expected_family(row: dict[str, str]) -> str:
@@ -44,6 +44,8 @@ def split_classes(value: str) -> list[str]:
 
 
 def classify_mulga_row(row: dict[str, str]) -> tuple[str, str]:
+    if bool_text(row.get("pass_fail_proxy")):
+        return "candidate_passable", "No targeted MULGA remediation needed beyond full rerun validation."
     failures = set(split_classes(row.get("failure_classes", "")))
     source_family = (row.get("source_family_claimed") or "").strip().upper()
     effective_state = (row.get("effective_state_claimed") or "").strip().lower()
