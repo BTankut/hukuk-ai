@@ -5596,15 +5596,92 @@ def _apply_source_family_answer_hint(
     return f"{query}{hint}"
 
 
+def _predicted_source_family_from_resolution(
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
+) -> str:
+    if isinstance(source_family_resolution, dict):
+        return str(source_family_resolution.get("predicted_family") or "")
+    if source_family_resolution is None:
+        return ""
+    return str(source_family_resolution.predicted_family or "")
+
+
+def _has_mulga_or_temporal_answer_scope(
+    *,
+    routing_query: str,
+    requested_source_families: list[str] | None = None,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+) -> bool:
+    requested = set(_expand_source_family_aliases(requested_source_families or []))
+    predicted = _predicted_source_family_from_resolution(source_family_resolution)
+    predicted_set = set(_expand_source_family_aliases([predicted])) if predicted else set()
+    if "mulga_kanun" in requested or "mulga_kanun" in predicted_set:
+        return True
+    if (
+        _source_family_resolution_trace_bool(source_family_resolution, "historical_or_repealed_question")
+        or _source_family_resolution_trace_bool(source_family_resolution, "historical_scope_detected")
+        or _source_family_resolution_trace_bool(source_family_resolution, "repealed_scope_detected")
+        or _source_family_resolution_trace_bool(source_family_resolution, "current_law_prior_blocked_by_historical_scope")
+    ):
+        return True
+    normalized = normalize_query_text(routing_query)
+    if any(
+        token in normalized
+        for token in (
+            "mulga",
+            "yururlukten kaldir",
+            "yururlukten kalk",
+            "ilga",
+            "eski metin",
+            "onceki duzenleme",
+            "gecis hukmu",
+            "tarihsel",
+            "o tarihte",
+            "hala",
+            "halen yururlukte",
+            "guncel durum",
+            "guncellik hatasi",
+            "dogrudan hata",
+            "dogrudan hukum",
+            "guvenli midir",
+            "neden hatali",
+            "riskli",
+        )
+    ):
+        return True
+    if re.search(r"(?<!\d)(?:19|20)\d{2}(?!\d)", normalized) and any(
+        token in normalized
+        for token in (
+            "esas almak",
+            "kullanmak",
+            "uygulamak",
+            "dogrudan",
+            "hata",
+            "hatali",
+            "riskli",
+            "guvenli",
+        )
+    ):
+        return True
+    return False
+
+
 def _apply_answer_slot_synthesis_hint(
     *,
     query: str,
     routing_query: str,
     article_span_selector: dict[str, Any] | None,
+    requested_source_families: list[str] | None = None,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
 ) -> str:
     template = _answer_template_for_query(routing_query)
     required_slots = _must_have_fact_slots_for_query(routing_query, template)
-    if not required_slots:
+    has_temporal_scope = _has_mulga_or_temporal_answer_scope(
+        routing_query=routing_query,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+    )
+    if not required_slots and not has_temporal_scope:
         return query
     selected_article = ""
     support_span_count = 0
@@ -5616,17 +5693,27 @@ def _apply_answer_slot_synthesis_hint(
             support_span_count = int(article_span_selector.get("support_span_count") or 0)
         except (TypeError, ValueError):
             support_span_count = 0
-    slot_text = ", ".join(required_slots)
-    article_text = f" Secili madde/span: {selected_article}." if selected_article else ""
-    hint = (
-        "\n\n[KANIT-CEVAP SLOT TALİMATI]\n"
-        f"Bu yanitta su bilgi slotlarini kaynaklardan karsila: {slot_text}."
-        f"{article_text} Destek span sayisi: {support_span_count}; selector durumu: {evidence_sufficiency or 'unknown'}. "
-        "Her slotu secili kaynaklardan tasinan kisa bir dayanakla cevapla. "
-        "Bir slot secili kaynaklarda yoksa kesin hukum kurma; o slot icin kaynak desteginin yetersiz oldugunu belirt. "
-        "Kaynakta olmayan unsur ekleme ve dayanak zincirini cevapta gorunur tut."
-    )
-    return f"{query}{hint}"
+    hints: list[str] = []
+    if required_slots:
+        slot_text = ", ".join(required_slots)
+        article_text = f" Secili madde/span: {selected_article}." if selected_article else ""
+        hints.append(
+            "\n\n[KANIT-CEVAP SLOT TALİMATI]\n"
+            f"Bu yanitta su bilgi slotlarini kaynaklardan karsila: {slot_text}."
+            f"{article_text} Destek span sayisi: {support_span_count}; selector durumu: {evidence_sufficiency or 'unknown'}. "
+            "Her slotu secili kaynaklardan tasinan kisa bir dayanakla cevapla. "
+            "Bir slot secili kaynaklarda yoksa kesin hukum kurma; o slot icin kaynak desteginin yetersiz oldugunu belirt. "
+            "Kaynakta olmayan unsur ekleme ve dayanak zincirini cevapta gorunur tut."
+        )
+    if has_temporal_scope:
+        hints.append(
+            "\n\n[MULGA/TARIHSEL CEVAP TALIMATI]\n"
+            "Soru mulga, eski metin veya tarihsel yururluk kapsami tasiyorsa cevabi bugunku aktif hukuk gibi kurma. "
+            "Once secili kaynagin yururluk durumunu belirt: active, repealed/mulga veya belirsiz. "
+            "Ardindan kaynak destekliyorsa tarihsel uygulanabilirlik tarihini/donemini, gecis hukmunu ve bugun dogrudan uygulanip uygulanamayacagini ayri cumlelerle yaz. "
+            "Yururluk durumu veya gecis etkisi secili kaynaklarda yoksa bunu acikca 'kaynak destegi yetersiz' diye sinirla; aktif kaynak uydurma."
+        )
+    return f"{query}{''.join(hints)}"
 
 
 def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
@@ -7556,7 +7643,21 @@ def _answer_template_for_query(query: str) -> str:
         return "exception"
     if any(term in normalized for term in ("kosul", "sart", "hangi hallerde", "aranir", "gerekir")):
         return "condition"
-    if any(term in normalized for term in ("fark", "karsilastir", "yoksa", "eski", "guncel", "hangisi")):
+    if any(
+        term in normalized
+        for term in (
+            "fark",
+            "karsilastir",
+            "yoksa",
+            "eski",
+            "guncel",
+            "guncellik",
+            "hala",
+            "tarih",
+            "gecici",
+            "hangisi",
+        )
+    ):
         return "comparison_or_temporal"
     return "direct"
 
@@ -7602,12 +7703,21 @@ def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
         normalized,
         (
             "guncel",
+            "guncellik",
+            "hala",
             "halen yururlukte",
             "yururlukte mi",
+            "yururluk",
             "mulga",
             "eski",
+            "gecici",
             "son durum",
             "ne zaman yururluge",
+            "dogrudan uygulan",
+            "dogrudan hukum",
+            "guvenli midir",
+            "riskli",
+            "hatali",
         ),
     ):
         slots.append("temporal_validity")
@@ -11532,6 +11642,8 @@ async def chat_completions(
             query=answer_query,
             routing_query=routing_query,
             article_span_selector=article_span_selector,
+            requested_source_families=requested_source_families,
+            source_family_resolution=source_family_resolution,
         )
         logger.info(
             "Response timing: session=%s stage=selector_stack latency=%.0fms chunks=%d",

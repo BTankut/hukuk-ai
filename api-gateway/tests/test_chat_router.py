@@ -638,6 +638,37 @@ class TestLawSignalParsing:
         assert "Secili madde/span: 7" in hinted
         assert "Destek span sayisi: 2" in hinted
 
+    def test_answer_slot_synthesis_hint_adds_mulga_temporal_instruction(self):
+        hinted = _apply_answer_slot_synthesis_hint(
+            query="Mülga kanun bugün doğrudan uygulanabilir mi?",
+            routing_query="Mülga kanun bugün doğrudan uygulanabilir mi?",
+            article_span_selector={
+                "selected_article": "3",
+                "support_span_count": 1,
+                "selector_evidence_sufficiency": "partially_supported",
+            },
+            requested_source_families=["mulga_kanun"],
+            source_family_resolution={
+                "predicted_family": "mulga_kanun",
+                "historical_or_repealed_question": True,
+                "repealed_scope_detected": True,
+            },
+        )
+
+        assert "[MULGA/TARIHSEL CEVAP TALIMATI]" in hinted
+        assert "cevabi bugunku aktif hukuk gibi kurma" in hinted
+        assert "bugun dogrudan uygulanip uygulanamayacagini" in hinted
+
+    def test_answer_slot_synthesis_hint_detects_historical_year_risk_question(self):
+        hinted = _apply_answer_slot_synthesis_hint(
+            query="1988 tarihli yönetmeliği esas almak neden hatalıdır?",
+            routing_query="1988 tarihli yönetmeliği esas almak neden hatalıdır?",
+            article_span_selector={"support_span_count": 1},
+        )
+
+        assert "[MULGA/TARIHSEL CEVAP TALIMATI]" in hinted
+        assert "temporal_validity" in hinted
+
     def test_completeness_synthesis_gates_missing_temporal_slot(self):
         features = _build_completeness_synthesis_features(
             query="Bu düzenleme halen yürürlükte mi, güncel durum nedir?",
@@ -853,7 +884,17 @@ class TestLawSignalParsing:
 
         assert resolution.historical_scope_detected is True
         assert resolution.current_law_prior_blocked_by_historical_scope is False
-        assert resolution.predicted_family == "tuzuk"
+        assert resolution.predicted_family == "mulga_kanun"
+        assert resolution.family_collision_pair == "tuzuk|mulga_kanun"
+
+    def test_source_family_prior_prefers_mulga_for_still_relying_on_old_regulation_risk(self):
+        resolution = _resolve_source_family_prior(
+            "Yükseköğretim öğrencisine disiplin cezası verilirken hâlâ eski yönetmeliğe dayanmak güvenli midir?"
+        )
+
+        assert resolution.historical_scope_detected is True
+        assert resolution.predicted_family == "mulga_kanun"
+        assert "legacy_source_risk_signal" in resolution.family_candidates[0].signals
 
     def test_source_family_prior_prefers_kanun_when_teblig_is_passive_verb_and_query_names_kanun_yonetmelik(self):
         resolution = _resolve_source_family_prior(

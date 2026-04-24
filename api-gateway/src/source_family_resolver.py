@@ -369,6 +369,49 @@ def _looks_like_historical_scope_question(normalized_query: str) -> bool:
     )
 
 
+def _looks_like_legacy_source_risk_question(normalized_query: str) -> bool:
+    risk_terms = (
+        "risklidir",
+        "riskli",
+        "hata uretir",
+        "dogrudan hata",
+        "guncellik hatasi",
+        "neden hatali",
+        "hatali",
+        "guvenli midir",
+        "guvenli degil",
+    )
+    use_terms = (
+        "dayanmak",
+        "esas almak",
+        "kullanmak",
+        "uygulamak",
+        "otomatik uygulamak",
+        "dogrudan hukum",
+        "dogrudan uygulan",
+    )
+    if contains_any(normalized_query, ("hala", "halen")) and contains_any(normalized_query, use_terms):
+        return True
+    if contains_any(normalized_query, ("eski", "onceki duzenleme", "gecici")) and contains_any(
+        normalized_query,
+        (*risk_terms, *use_terms),
+    ):
+        return True
+    years = _extract_query_years(normalized_query)
+    current_year = datetime.now(timezone.utc).year
+    if any(year <= current_year - 5 for year in years) and contains_any(
+        normalized_query,
+        (*risk_terms, *use_terms),
+    ):
+        return True
+    if any(year >= current_year for year in years) and contains_any(
+        normalized_query,
+        ("gecici", "guncellik hatasi", "hala", "otomatik uygulamak", "dogrudan hukum"),
+    ):
+        return True
+    return False
+
+
 def _looks_like_scenario_current_law_question(normalized_query: str) -> bool:
     current_law_terms = (
         "halen",
@@ -579,6 +622,31 @@ def _apply_family_collision_rules(
         )
         return collision_detected, collision_pair, resolution_reason
 
+    legacy_competing_families = tuple(
+        family
+        for family in (
+            "kanun",
+            "khk",
+            "tuzuk",
+            "yonetmelik",
+            "cb_yonetmelik",
+            "kky",
+            "uy",
+        )
+        if family in scores
+    )
+    if historical_scope_detected and _has_signal(scores, "mulga_kanun") and legacy_competing_families:
+        pair = "|".join((*legacy_competing_families, "mulga_kanun"))
+        apply_collision(
+            pair=pair,
+            preferred_family="mulga_kanun",
+            preferred_boost=4.0,
+            demoted_families=legacy_competing_families,
+            demote_amount=3.0,
+            reason="legacy_source_risk_prefers_mulga_family",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
     if decision_tariff_terms and (_has_signal(scores, "cb_karar") or _has_signal(scores, "yonetmelik")):
         apply_collision(
             pair="cb_karar|yonetmelik",
@@ -727,7 +795,12 @@ def resolve_source_family_prior(
     normalized_query = normalize_tr(query or "")
     scores: dict[str, dict[str, object]] = {}
     repealed_scope_detected = _looks_like_repealed_scope_question(normalized_query)
-    historical_scope_detected = repealed_scope_detected or _looks_like_historical_scope_question(normalized_query)
+    legacy_source_risk_detected = _looks_like_legacy_source_risk_question(normalized_query)
+    historical_scope_detected = (
+        repealed_scope_detected
+        or _looks_like_historical_scope_question(normalized_query)
+        or legacy_source_risk_detected
+    )
     historical_or_repealed_question = historical_scope_detected or repealed_scope_detected
     raw_scenario_current_law_question = _looks_like_scenario_current_law_question(normalized_query)
     scenario_current_law_question = raw_scenario_current_law_question and not historical_or_repealed_question
@@ -892,6 +965,8 @@ def resolve_source_family_prior(
         score=4.0,
         signal="inactive_or_repealed_source_signal",
     )
+    if legacy_source_risk_detected:
+        _add(scores, "mulga_kanun", 5.5, "legacy_source_risk_signal")
     _add_term_rule(
         scores,
         normalized_query,
