@@ -1,0 +1,121 @@
+# Phase 17A Source-Key V2 Binding Audit
+
+- source_run_dir: `reports/benchmark/runs/20260424T212636_phase17f_full`
+- audited_rows: 100
+- canonical_key_binding_applied_rows: 100
+- legacy_source_key_collision_rows: 8
+- source_key_v2_collision_rows: 0
+- binding_source_key_collision_rows: 0
+- legacy_collision_materialization_blocker_rows: 0
+- corpus_materialization_required_rows: 2
+
+## Verdict Counts
+- v2_binding_clean: 92
+- v2_binding_removed_legacy_collision_blocker: 8
+
+## Rows
+- KANUN-01: binding=fam=kanun|id=4857|title=a9ce1f5ad459|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-02: binding=fam=kanun|id=6098|title=c3e804a02699|start=2011-02-04|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-03: binding=fam=yonetmelik|id=12459|title=e206dcd5b733|start=2008-09-27|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-04: binding=fam=teblig|id=15677|title=6ff48da55040|start=2011-12-29|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-05: binding=fam=kanun|id=6698|title=f34b2908d3d3|start=2016-04-07|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-06: binding=fam=mulga_kanun|id=6762|title=cebda1256f48|start=1956-07-09|state=repealed, legacy_collision=False, v2_collision=False, binding_collision=False, reason=title_only_or_unreadable_body, verdict=v2_binding_clean
+- KANUN-07: binding=fam=kanun|id=6102|title=112da0af0802|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-08: binding=fam=kanun|id=6502|title=484e370e5a8e|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-09: binding=fam=mulga_kanun|id=6570|title=751be76b867f|start=1955-05-27|state=repealed, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-10: binding=fam=kanun|id=6183|title=382093ad0c09|start=unknown|state=active, legacy_collision=True, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_removed_legacy_collision_blocker
+- KANUN-11: binding=fam=kanun|id=6183|title=382093ad0c09|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-12: binding=fam=kanun|id=5651|title=46777219470d|start=2007-05-23|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-13: binding=fam=kanun|id=6331|title=dbc03fd8e4f2|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-14: binding=fam=kanun|id=6098|title=c3e804a02699|start=2011-02-04|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-15: binding=fam=mulga_kanun|id=2981|title=b3806562f7b2|start=unknown|state=repealed, legacy_collision=True, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_removed_legacy_collision_blocker
+- KANUN-16: binding=fam=kanun|id=6325|title=d95d541789bb|start=2012-06-22|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-17: binding=fam=kanun|id=2004|title=d3515e76d48e|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-18: binding=fam=kanun|id=6098|title=c3e804a02699|start=2011-02-04|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-19: binding=fam=mulga_kanun|id=7201|title=adc2c3efc849|start=1959-02-19|state=repealed, legacy_collision=True, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_removed_legacy_collision_blocker
+- KANUN-20: binding=fam=kanun|id=4721|title=671c04dcb41c|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KANUN-21: binding=fam=kanun|id=6325|title=d95d541789bb|start=2012-06-22|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBK-01: binding=fam=cb_kararname|id=1|title=00ea5de87357|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBK-02: binding=fam=cb_kararname|id=11|title=70ed50fbde5d|start=2018-07-16|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBK-03: binding=fam=cb_kararname|id=3|title=c9489823cf17|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBK-04: binding=fam=cb_kararname|id=2|title=a2e1f7e5b3dc|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBK-05: binding=fam=cb_kararname|id=49|title=6855fe088fd4|start=2019-11-07|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBK-06: binding=fam=cb_kararname|id=49|title=6855fe088fd4|start=2019-11-07|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-01: binding=fam=yonetmelik|id=18615|title=8ac6a580821e|start=2013-07-20|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-02: binding=fam=mulga_kanun|id=4077|title=484e370e5a8e|start=1995-03-08|state=repealed, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-03: binding=fam=yonetmelik|id=16925|title=1267f2132be7|start=2012-12-29|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-04: binding=fam=yonetmelik|id=24038|title=996367c783cc|start=2017-10-28|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=article_zero_body_extracted_from_m0, verdict=v2_binding_clean
+- YON-05: binding=fam=kanun|id=3194|title=005c418f455c|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-06: binding=fam=yonetmelik|id=10128|title=4b4222435a1f|start=1982-08-03|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-07: binding=fam=yonetmelik|id=20435|title=974d702e6479|start=2015-01-10|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-08: binding=fam=uy|id=24445|title=e78d97ccfb50|start=2018-03-07|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-09: binding=fam=yonetmelik|id=20237|title=2bc97122aebe|start=2014-11-27|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- YON-10: binding=fam=yonetmelik|id=16925|title=1267f2132be7|start=2012-12-29|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBY-01: binding=fam=yonetmelik|id=15030|title=ae134675f253|start=2011-06-08|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBY-02: binding=fam=cb_yonetmelik|id=200915611|title=03313dd5e27d|start=2009-12-01|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBY-03: binding=fam=yonetmelik|id=33899|title=a49094ca5f1f|start=2019-10-18|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBY-04: binding=fam=cb_kararname|id=11|title=70ed50fbde5d|start=2018-07-16|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBY-05: binding=fam=cb_yonetmelik|id=20046801|title=18fa7d05f992|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBY-06: binding=fam=cb_yonetmelik|id=20046801|title=18fa7d05f992|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBKAR-01: binding=fam=cb_karar|id=1362|title=51e1b3a65567|start=2019-07-25|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBKAR-02: binding=fam=cb_karar|id=3350|title=001dcd03c7b4|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBKAR-03: binding=fam=cb_karar|id=4924|title=05d672443c21|start=2021-12-18|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBKAR-04: binding=fam=cb_karar|id=767|title=6630dc4a8e23|start=2019-02-18|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBKAR-05: binding=fam=teblig|id=11990|title=66f3d5038ba9|start=2008-02-28|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBKAR-06: binding=fam=cb_karar|id=767|title=6630dc4a8e23|start=2019-02-18|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- CBKAR-07: binding=fam=cb_karar|id=8688|title=bc46a4cfb9dc|start=2024-06-30|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=document_level_body_span_materialized, verdict=v2_binding_clean
+- CBKAR-08: binding=fam=cb_karar|id=9903|title=7f373410dfea|start=2025-05-30|state=active, legacy_collision=True, v2_collision=False, binding_collision=False, reason=title_only_or_unreadable_body, verdict=v2_binding_removed_legacy_collision_blocker
+- CBG-01: binding=fam=cb_genelge|id=14|title=640315330ad3|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=document_level_body_span_materialized, verdict=v2_binding_clean
+- CBG-02: binding=fam=cb_genelge|id=14|title=640315330ad3|start=unknown|state=active, legacy_collision=True, v2_collision=False, binding_collision=False, reason=document_level_body_span_materialized, verdict=v2_binding_removed_legacy_collision_blocker
+- CBG-03: binding=fam=cb_genelge|id=2025-3|title=f6c0ea9c1138|start=2025-03-06|state=active, legacy_collision=True, v2_collision=False, binding_collision=False, reason=document_level_body_span_materialized, verdict=v2_binding_removed_legacy_collision_blocker
+- CBG-04: binding=fam=cb_genelge|id=2025-3|title=f6c0ea9c1138|start=2025-03-06|state=active, legacy_collision=True, v2_collision=False, binding_collision=False, reason=document_level_body_span_materialized, verdict=v2_binding_removed_legacy_collision_blocker
+- KHK-01: binding=fam=khk|id=233|title=f27a787ae7d9|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KHK-02: binding=fam=khk|id=375|title=ec8d03106d0c|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KHK-03: binding=fam=khk|id=703|title=6fa01183bd2d|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KHK-04: binding=fam=khk|id=233|title=f27a787ae7d9|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KHK-05: binding=fam=khk|id=15698|title=145dd15d5bdb|start=2012-01-01|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=article_zero_body_extracted_from_m0, verdict=v2_binding_clean
+- KHK-06: binding=fam=khk|id=554|title=366fcce2914c|start=1995-06-08|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TUZUK-01: binding=fam=tuzuk|id=20135150|title=16de25435c34|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TUZUK-02: binding=fam=tuzuk|id=20135150|title=16de25435c34|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TUZUK-03: binding=fam=tuzuk|id=20135150|title=16de25435c34|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TUZUK-04: binding=fam=mulga_kanun|id=1475|title=a1a53e40a822|start=unknown|state=repealed, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TUZUK-05: binding=fam=tuzuk|id=315481|title=9cc058bb1faf|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=article_zero_body_extracted_from_m0, verdict=v2_binding_clean
+- KKY-01: binding=fam=yonetmelik|id=34360|title=aa4318373748|start=2020-03-15|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-02: binding=fam=yonetmelik|id=38568|title=52e5ae6839ab|start=2021-04-01|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-03: binding=fam=yonetmelik|id=34360|title=aa4318373748|start=2020-03-15|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-04: binding=fam=khk|id=4447|title=d01bf8f4aa8e|start=unknown|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-05: binding=fam=yonetmelik|id=36119|title=86aa1cbe74a4|start=2020-12-29|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-06: binding=fam=yonetmelik|id=18985|title=5c3c0fc56783|start=2013-11-02|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-07: binding=fam=yonetmelik|id=24630|title=fd2c52114c36|start=2018-05-30|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-08: binding=fam=yonetmelik|id=13078|title=da4558aa8a65|start=2009-05-28|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-09: binding=fam=yonetmelik|id=32695|title=c968a04aacf7|start=2019-08-01|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-01: binding=fam=uy|id=33847|title=00d9fdd2339b|start=2019-10-06|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-02: binding=fam=uy|id=20038|title=d097cf583bd2|start=2014-09-10|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-03: binding=fam=uy|id=14161|title=facc2827e0ee|start=2010-07-30|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-04: binding=fam=uy|id=23015|title=dc1d61f313b1|start=2016-11-04|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-05: binding=fam=uy|id=18365|title=7aeb0b5c42e1|start=2013-05-12|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-06: binding=fam=uy|id=23945|title=c357f21d752e|start=2017-10-05|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-07: binding=fam=uy|id=40291|title=da0348a68e5c|start=2023-08-28|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-08: binding=fam=uy|id=15894|title=cb1e8eab84c5|start=2012-02-16|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-09: binding=fam=uy|id=16588|title=654b28077978|start=2012-09-11|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- UY-10: binding=fam=uy|id=13219|title=1386e15b4653|start=2009-07-14|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-10: binding=fam=yonetmelik|id=13540|title=3a1592cde8d4|start=2009-11-12|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- KKY-11: binding=fam=yonetmelik|id=11180|title=b72d3bcd34ed|start=2007-03-10|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TEB-01: binding=fam=teblig|id=13354|title=c4fd7a9d6582|start=2009-08-22|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TEB-02: binding=fam=teblig|id=11990|title=66f3d5038ba9|start=2008-02-28|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TEB-03: binding=fam=teblig|id=42805|title=764efd569e1f|start=2025-12-25|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=document_level_body_span_materialized, verdict=v2_binding_clean
+- TEB-04: binding=fam=teblig|id=18937|title=c2187c73ab5a|start=2013-10-10|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=document_level_body_span_materialized, verdict=v2_binding_clean
+- TEB-05: binding=fam=teblig|id=18477|title=6150f64cb494|start=2013-06-13|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TEB-06: binding=fam=teblig|id=16558|title=ef38b9318bbc|start=2012-08-29|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TEB-07: binding=fam=teblig|id=42482|title=e8062a59c28a|start=2025-02-14|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- TEB-08: binding=fam=teblig|id=39511|title=91fc03d444b8|start=2022-04-22|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- MULGA-01: binding=fam=mulga_kanun|id=2547|title=6a30a2b72699|start=unknown|state=repealed, legacy_collision=True, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_removed_legacy_collision_blocker
+- MULGA-02: binding=fam=mulga_kanun|id=4045|title=e42604cee2d1|start=1994-11-03|state=repealed, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- MULGA-03: binding=fam=mulga_kanun|id=743|title=6df4e5520943|start=unknown|state=repealed, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- MULGA-04: binding=fam=khk|id=556|title=3bb00550a79c|start=1995-06-08|state=active, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+- MULGA-05: binding=fam=mulga_kanun|id=6570|title=751be76b867f|start=1955-05-27|state=repealed, legacy_collision=False, v2_collision=False, binding_collision=False, reason=non_title_body_span_available, verdict=v2_binding_clean
+
+## Conclusion
+- Legacy numeric source keys remain observable as aliases.
+- Runtime binding must be evaluated with `binding_source_key` and `binding_source_key_collision_detected`.
+- A row is no longer considered source-key blocked when canonical v2 binding is applied and binding collision is false.

@@ -1,0 +1,132 @@
+# Phase 17C Evidence-To-Answer Required Slot Audit
+
+- source_run_dir: `reports/benchmark/runs/20260424T212636_phase17f_full`
+- rows: 100
+- minimum_answer_facts_present_count: 88/100
+- evidence_slot_synthesis_count: 87/100
+- avg_evidence_required_slot_value_count: 5.35
+
+## Runtime Completeness
+- rubric_sufficient: 88
+- insufficient_both: 8
+- legally_aligned_but_partial: 2
+- structurally_full_but_legally_misaligned: 2
+
+## Synthesis Reasons
+- slot_values_made_visible_from_selected_evidence: 78
+- no_confident_missing_slot_values: 11
+- missing_slots_filled_from_selected_evidence: 9
+- canonical_evidence_gap: 2
+
+## Failure Classes
+- missing_required_content_signal: 98
+- partial_grounding_only: 98
+- hallucinated_identifier: 18
+- wrong_family: 12
+- missing_gold_document_signal: 10
+- wrong_document: 10
+- unsupported_confident_claim: 8
+- wrong_article: 3
+- insufficient_canonical_span_evidence: 2
+
+## Rows
+- KANUN-01: min_facts=True, synthesis=True:governing_source | procedure_or_consequence | temporal_validity | current_applicability, slot_values=5, must=2/6, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-02: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=1/4, score=3.59, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+- KANUN-03: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=5, must=1/4, score=6.09, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+- KANUN-04: min_facts=True, synthesis=True:document_selection_reason | current_applicability, slot_values=7, must=0/6, score=1.45, failures=missing_gold_document_signal | missing_required_content_signal | wrong_family | wrong_document | hallucinated_identifier | partial_grounding_only
+- KANUN-05: min_facts=True, synthesis=True:result_or_holding, slot_values=7, must=1/5, score=8.17, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-06: min_facts=False, synthesis=False:-, slot_values=4, must=0/4, score=7.15, failures=missing_required_content_signal | partial_grounding_only | insufficient_canonical_span_evidence
+- KANUN-07: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=1/4, score=7.52, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-08: min_facts=True, synthesis=True:result_or_holding | current_applicability, slot_values=6, must=2/4, score=9.32, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-09: min_facts=True, synthesis=True:result_or_holding | governing_source | temporal_validity | current_applicability, slot_values=4, must=1/3, score=5.35, failures=missing_required_content_signal | wrong_family | wrong_article | hallucinated_identifier | partial_grounding_only
+- KANUN-10: min_facts=True, synthesis=False:-, slot_values=5, must=2/5, score=9.19, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-11: min_facts=True, synthesis=True:governing_source | procedure_or_consequence | temporal_validity | current_applicability, slot_values=5, must=0/3, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-12: min_facts=False, synthesis=False:-, slot_values=5, must=0/4, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-13: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=4, must=0/5, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-14: min_facts=True, synthesis=True:governing_source | procedure_or_consequence | temporal_validity | current_applicability, slot_values=5, must=2/4, score=8.58, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-15: min_facts=True, synthesis=True:result_or_holding | current_applicability, slot_values=6, must=0/5, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-16: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=1/3, score=8.00, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-17: min_facts=True, synthesis=True:result_or_holding | scenario_applicability | current_applicability, slot_values=5, must=0/4, score=7.55, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-18: min_facts=True, synthesis=True:result_or_holding | governing_source | temporal_validity | current_applicability, slot_values=5, must=0/2, score=3.25, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | unsupported_confident_claim | partial_grounding_only
+- KANUN-19: min_facts=True, synthesis=True:result_or_holding | governing_source | exact_source_identity | document_selection_reason | temporal_validity, slot_values=6, must=0/3, score=6.05, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-20: min_facts=True, synthesis=True:result_or_holding | governing_source | procedure_or_consequence | temporal_validity | current_applicability, slot_values=5, must=2/4, score=9.32, failures=missing_required_content_signal | partial_grounding_only
+- KANUN-21: min_facts=True, synthesis=True:scenario_applicability | current_applicability, slot_values=6, must=1/4, score=7.89, failures=missing_required_content_signal | partial_grounding_only
+- CBK-01: min_facts=True, synthesis=True:document_selection_reason | current_applicability, slot_values=6, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- CBK-02: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- CBK-03: min_facts=True, synthesis=True:result_or_holding | temporal_validity | current_applicability, slot_values=4, must=3/3, score=9.25, failures=-
+- CBK-04: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=4, must=2/3, score=9.55, failures=missing_required_content_signal | partial_grounding_only
+- CBK-05: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=2/4, score=9.32, failures=missing_required_content_signal | partial_grounding_only
+- CBK-06: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=0/3, score=8.65, failures=missing_required_content_signal | unsupported_confident_claim | partial_grounding_only
+- YON-01: min_facts=True, synthesis=True:result_or_holding | governing_source | exact_source_identity | document_selection_reason | procedure_or_consequence, slot_values=7, must=0/3, score=7.55, failures=missing_required_content_signal | partial_grounding_only
+- YON-02: min_facts=True, synthesis=True:result_or_holding | governing_source | exact_source_identity | document_selection_reason | temporal_validity, slot_values=6, must=0/5, score=4.25, failures=missing_required_content_signal | wrong_family | partial_grounding_only
+- YON-03: min_facts=True, synthesis=True:result_or_holding | document_selection_reason | current_applicability, slot_values=6, must=0/5, score=7.55, failures=missing_required_content_signal | unsupported_confident_claim | partial_grounding_only
+- YON-04: min_facts=False, synthesis=True:current_applicability, slot_values=7, must=0/4, score=7.55, failures=missing_required_content_signal | partial_grounding_only
+- YON-05: min_facts=True, synthesis=True:temporal_validity, slot_values=4, must=1/3, score=7.30, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+- YON-06: min_facts=True, synthesis=True:result_or_holding | document_selection_reason | scenario_applicability | current_applicability, slot_values=7, must=0/4, score=3.25, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+- YON-07: min_facts=True, synthesis=False:-, slot_values=6, must=2/4, score=8.22, failures=missing_required_content_signal | partial_grounding_only
+- YON-08: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=1/3, score=6.55, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+- YON-09: min_facts=True, synthesis=True:document_selection_reason | current_applicability, slot_values=7, must=0/5, score=7.55, failures=missing_required_content_signal | unsupported_confident_claim | partial_grounding_only
+- YON-10: min_facts=True, synthesis=True:current_applicability, slot_values=6, must=0/3, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- CBY-01: min_facts=True, synthesis=True:result_or_holding | procedure_or_consequence | current_applicability, slot_values=7, must=2/3, score=7.75, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+- CBY-02: min_facts=True, synthesis=True:document_selection_reason, slot_values=6, must=0/3, score=8.65, failures=missing_required_content_signal | unsupported_confident_claim | partial_grounding_only
+- CBY-03: min_facts=True, synthesis=True:transition_or_replacement_rule, slot_values=6, must=1/3, score=8.35, failures=missing_required_content_signal | partial_grounding_only
+- CBY-04: min_facts=True, synthesis=True:current_applicability, slot_values=5, must=0/5, score=5.75, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | unsupported_confident_claim | partial_grounding_only
+- CBY-05: min_facts=True, synthesis=True:result_or_holding | current_applicability, slot_values=6, must=1/3, score=8.00, failures=missing_required_content_signal | partial_grounding_only
+- CBY-06: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=0/4, score=6.80, failures=missing_required_content_signal | partial_grounding_only
+- CBKAR-01: min_facts=True, synthesis=True:result_or_holding | document_selection_reason | current_applicability, slot_values=6, must=2/4, score=8.58, failures=missing_required_content_signal | partial_grounding_only
+- CBKAR-02: min_facts=True, synthesis=True:document_selection_reason | current_applicability, slot_values=6, must=1/3, score=7.25, failures=missing_required_content_signal | partial_grounding_only
+- CBKAR-03: min_facts=True, synthesis=True:governing_source, slot_values=5, must=2/3, score=8.80, failures=missing_required_content_signal | partial_grounding_only
+- CBKAR-04: min_facts=True, synthesis=False:-, slot_values=6, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- CBKAR-05: min_facts=True, synthesis=True:document_selection_reason | current_applicability, slot_values=6, must=1/4, score=7.19, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+- CBKAR-06: min_facts=True, synthesis=True:result_or_holding | current_applicability | hierarchy_or_conflict_rule, slot_values=7, must=1/2, score=9.32, failures=missing_required_content_signal | partial_grounding_only
+- CBKAR-07: min_facts=False, synthesis=True:result_or_holding, slot_values=6, must=0/3, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- CBKAR-08: min_facts=False, synthesis=False:-, slot_values=6, must=0/3, score=6.80, failures=missing_required_content_signal | partial_grounding_only | insufficient_canonical_span_evidence
+- CBG-01: min_facts=False, synthesis=False:-, slot_values=6, must=0/2, score=3.25, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+- CBG-02: min_facts=False, synthesis=True:document_selection_reason | current_applicability, slot_values=6, must=0/3, score=3.25, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+- CBG-03: min_facts=True, synthesis=True:document_selection_reason, slot_values=7, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- CBG-04: min_facts=False, synthesis=False:-, slot_values=6, must=1/3, score=8.35, failures=missing_required_content_signal | partial_grounding_only
+- KHK-01: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=4, must=1/2, score=9.32, failures=missing_required_content_signal | partial_grounding_only
+- KHK-02: min_facts=True, synthesis=True:current_applicability, slot_values=5, must=2/3, score=9.55, failures=missing_required_content_signal | partial_grounding_only
+- KHK-03: min_facts=True, synthesis=True:article_or_span | current_applicability, slot_values=5, must=1/3, score=7.25, failures=missing_required_content_signal | partial_grounding_only
+- KHK-04: min_facts=True, synthesis=True:result_or_holding | temporal_validity, slot_values=4, must=1/3, score=8.00, failures=missing_required_content_signal | partial_grounding_only
+- KHK-05: min_facts=False, synthesis=True:current_applicability, slot_values=4, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- KHK-06: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=4, must=0/2, score=6.80, failures=missing_required_content_signal | partial_grounding_only
+- TUZUK-01: min_facts=True, synthesis=True:current_applicability, slot_values=6, must=4/4, score=8.90, failures=-
+- TUZUK-02: min_facts=True, synthesis=True:article_or_span | current_applicability, slot_values=7, must=2/4, score=9.32, failures=missing_required_content_signal | partial_grounding_only
+- TUZUK-03: min_facts=True, synthesis=True:current_applicability | transition_or_replacement_rule, slot_values=7, must=0/2, score=7.90, failures=missing_required_content_signal | partial_grounding_only
+- TUZUK-04: min_facts=True, synthesis=True:result_or_holding | governing_source | exact_source_identity | document_selection_reason | temporal_validity, slot_values=7, must=0/3, score=4.63, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+- TUZUK-05: min_facts=False, synthesis=True:current_applicability, slot_values=6, must=0/2, score=3.25, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | partial_grounding_only
+- KKY-01: min_facts=True, synthesis=True:current_applicability, slot_values=6, must=1/3, score=6.20, failures=missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+- KKY-02: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=2/3, score=9.55, failures=missing_required_content_signal | partial_grounding_only
+- KKY-03: min_facts=True, synthesis=True:temporal_validity, slot_values=4, must=2/4, score=9.32, failures=missing_required_content_signal | partial_grounding_only
+- KKY-04: min_facts=False, synthesis=True:current_applicability, slot_values=5, must=0/2, score=6.85, failures=missing_required_content_signal | wrong_family | partial_grounding_only
+- KKY-05: min_facts=True, synthesis=True:result_or_holding | current_applicability, slot_values=5, must=0/3, score=7.55, failures=missing_required_content_signal | unsupported_confident_claim | partial_grounding_only
+- KKY-06: min_facts=True, synthesis=True:current_applicability, slot_values=5, must=2/4, score=8.22, failures=missing_required_content_signal | partial_grounding_only
+- KKY-07: min_facts=True, synthesis=True:current_applicability, slot_values=5, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- KKY-08: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=4, must=2/3, score=9.55, failures=missing_required_content_signal | partial_grounding_only
+- KKY-09: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=4, must=3/4, score=9.66, failures=missing_required_content_signal | partial_grounding_only
+- UY-01: min_facts=True, synthesis=True:temporal_validity | current_applicability | hierarchy_or_conflict_rule, slot_values=5, must=1/5, score=8.92, failures=missing_required_content_signal | partial_grounding_only
+- UY-02: min_facts=True, synthesis=True:governing_source | current_applicability, slot_values=5, must=0/4, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- UY-03: min_facts=True, synthesis=True:current_applicability, slot_values=5, must=3/5, score=9.46, failures=missing_required_content_signal | partial_grounding_only
+- UY-04: min_facts=True, synthesis=True:current_applicability, slot_values=6, must=2/5, score=9.19, failures=missing_required_content_signal | partial_grounding_only
+- UY-05: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=3/5, score=9.46, failures=missing_required_content_signal | partial_grounding_only
+- UY-06: min_facts=True, synthesis=True:current_applicability, slot_values=7, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- UY-07: min_facts=True, synthesis=True:governing_source | exact_source_identity | document_selection_reason | procedure_or_consequence | temporal_validity, slot_values=7, must=3/5, score=8.36, failures=missing_required_content_signal | partial_grounding_only
+- UY-08: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=2/3, score=8.80, failures=missing_required_content_signal | partial_grounding_only
+- UY-09: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=3/4, score=9.66, failures=missing_required_content_signal | partial_grounding_only
+- UY-10: min_facts=True, synthesis=False:-, slot_values=4, must=1/4, score=3.59, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+- KKY-10: min_facts=True, synthesis=True:temporal_validity | current_applicability, slot_values=4, must=1/4, score=7.89, failures=missing_required_content_signal | partial_grounding_only
+- KKY-11: min_facts=True, synthesis=True:current_applicability, slot_values=4, must=3/4, score=9.66, failures=missing_required_content_signal | partial_grounding_only
+- TEB-01: min_facts=True, synthesis=True:document_selection_reason | current_applicability, slot_values=6, must=1/3, score=8.35, failures=missing_required_content_signal | partial_grounding_only
+- TEB-02: min_facts=True, synthesis=False:-, slot_values=6, must=0/3, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- TEB-03: min_facts=True, synthesis=False:-, slot_values=6, must=0/3, score=7.15, failures=missing_required_content_signal | partial_grounding_only
+- TEB-04: min_facts=False, synthesis=True:result_or_holding | temporal_validity | current_applicability, slot_values=6, must=1/3, score=7.25, failures=missing_required_content_signal | partial_grounding_only
+- TEB-05: min_facts=True, synthesis=False:-, slot_values=6, must=1/4, score=7.89, failures=missing_required_content_signal | unsupported_confident_claim | partial_grounding_only
+- TEB-06: min_facts=True, synthesis=True:governing_source | exact_source_identity | document_selection_reason | current_applicability, slot_values=7, must=0/4, score=3.25, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+- TEB-07: min_facts=True, synthesis=True:result_or_holding | procedure_or_consequence, slot_values=7, must=3/4, score=9.66, failures=missing_required_content_signal | partial_grounding_only
+- TEB-08: min_facts=True, synthesis=False:-, slot_values=6, must=1/3, score=9.10, failures=missing_required_content_signal | partial_grounding_only
+- MULGA-01: min_facts=True, synthesis=True:result_or_holding | governing_source | temporal_validity | current_applicability, slot_values=4, must=1/3, score=6.43, failures=missing_required_content_signal | wrong_article | partial_grounding_only
+- MULGA-02: min_facts=True, synthesis=True:result_or_holding | governing_source | temporal_validity | current_applicability, slot_values=6, must=0/3, score=8.65, failures=missing_required_content_signal | partial_grounding_only
+- MULGA-03: min_facts=True, synthesis=True:result_or_holding | governing_source | temporal_validity | current_applicability, slot_values=5, must=0/3, score=7.55, failures=missing_required_content_signal | partial_grounding_only
+- MULGA-04: min_facts=True, synthesis=True:governing_source | article_or_span | current_applicability | transition_or_replacement_rule, slot_values=6, must=1/2, score=8.22, failures=missing_required_content_signal | partial_grounding_only
+- MULGA-05: min_facts=True, synthesis=True:result_or_holding | governing_source | temporal_validity | current_applicability, slot_values=4, must=0/3, score=2.50, failures=missing_gold_document_signal | missing_required_content_signal | wrong_document | wrong_article | hallucinated_identifier | partial_grounding_only

@@ -1,0 +1,13 @@
+family,count,pass,fail,avg_score,wrong_family,wrong_document,unsupported_confident_claim,missing_required_content_signal,partial_grounding_only,failed_qids
+CB_GENELGE,4,2,2,5.99,0,2,0,4,4,"CBG-01, CBG-02"
+CB_KARAR,8,7,1,8.21,1,0,0,8,8,CBKAR-08
+CB_KARARNAME,6,6,0,9.16,0,0,1,5,5,
+CB_YONETMELIK,6,4,2,7.55,2,0,2,6,6,"CBY-04, CBY-06"
+KANUN,21,15,6,7.25,3,3,1,21,21,"KANUN-02, KANUN-03, KANUN-04, KANUN-09, KANUN-18, KANUN-19"
+KHK,6,5,1,8.34,0,0,0,6,6,KHK-06
+KKY,11,9,2,8.5,2,0,1,11,11,"KKY-01, KKY-04"
+MULGA,5,3,2,6.67,0,1,0,5,5,"MULGA-01, MULGA-05"
+TEBLIGLER,8,7,1,7.66,0,1,1,8,8,TEB-06
+TUZUK,5,3,2,6.8,1,1,0,4,4,"TUZUK-04, TUZUK-05"
+UY,10,9,1,8.52,0,1,0,10,10,UY-10
+YONETMELIK,10,7,3,6.84,3,1,2,10,10,"YON-02, YON-06, YON-08"
