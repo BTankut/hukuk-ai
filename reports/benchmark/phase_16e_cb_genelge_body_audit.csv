@@ -1,0 +1,2 @@
+qid,selected_identifier,selected_title,comes_as_m0_or_title_only,body_text_available,body_text_length,parser_gap,source_acquisition_required,source_key_collision_detected,root_cause,remediation_status,reason
+CBG-04,3 m.0,İş Yerlerinde Psikolojik Tacizin (Mobbing) Önlenmesi ile İlgili,True,False,257,False,True,True,family_qualified_source_key_collision,blocked_by_family_source_key_collision,source_key_collision_without_family_body_span
