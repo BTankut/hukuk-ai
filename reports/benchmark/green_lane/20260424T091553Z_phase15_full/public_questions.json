@@ -1,0 +1,10 @@
+{
+  "duplicate_qids": [],
+  "empty_qids": 0,
+  "empty_questions": 0,
+  "expected_count": 100,
+  "missing_columns": [],
+  "questions": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/hukuk_ai_100_public_questions.csv",
+  "row_count": 100,
+  "status": "pass"
+}

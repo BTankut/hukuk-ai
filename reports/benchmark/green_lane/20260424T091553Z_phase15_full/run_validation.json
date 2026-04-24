@@ -1,0 +1,33 @@
+{
+  "answer_rows": 100,
+  "duplicate_answer_qids": [],
+  "error_rows": 0,
+  "expected_question_rows": 100,
+  "extra_qids": [],
+  "extra_trace_qids": [],
+  "invalid_contract_rows": 0,
+  "missing_answer_columns": [],
+  "missing_confidence_0_100": 0,
+  "missing_final_reason": 0,
+  "missing_phase2_contract_columns": [],
+  "missing_phase2_contract_fields": 0,
+  "missing_qids": [],
+  "missing_retrieval_trace_id": 0,
+  "missing_trace_qids": [],
+  "question_columns": [
+    "q_id",
+    "difficulty",
+    "primary_type",
+    "secondary_types",
+    "task_type",
+    "reference_date",
+    "question",
+    "expected_deliverable",
+    "source_hint_urls"
+  ],
+  "refused_or_empty_rows": 0,
+  "run_dir": "reports/benchmark/runs/20260424T081121Z_phase15_full",
+  "status": "pass",
+  "strict_contract": false,
+  "trace_rows": 100
+}
