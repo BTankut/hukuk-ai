@@ -145,6 +145,8 @@ SCORED_FIELDS = [
     "support_insufficient_for_specific_claim",
     "temporal_clause_missing",
     "answer_suppressed_due_to_evidence_gap",
+    "confidence_policy_adjusted",
+    "confidence_policy_adjustment_reasons",
     "canonical_span_materialized",
     "canonical_span_materialization_reason",
     "title_only_fallback_used",
@@ -647,6 +649,8 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "support_insufficient_for_specific_claim": answer.get("support_insufficient_for_specific_claim", ""),
         "temporal_clause_missing": answer.get("temporal_clause_missing", ""),
         "answer_suppressed_due_to_evidence_gap": answer.get("answer_suppressed_due_to_evidence_gap", ""),
+        "confidence_policy_adjusted": answer.get("confidence_policy_adjusted", ""),
+        "confidence_policy_adjustment_reasons": answer.get("confidence_policy_adjustment_reasons", ""),
         "canonical_span_materialized": answer.get("canonical_span_materialized", ""),
         "canonical_span_materialization_reason": answer.get("canonical_span_materialization_reason", ""),
         "title_only_fallback_used": answer.get("title_only_fallback_used", ""),
@@ -916,6 +920,15 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     cross_family_fallback_used_count = sum(
         1 for row in rows if bool_field(str(row.get("cross_family_fallback_used", ""))) is True
     )
+    confidence_policy_adjusted_count = sum(
+        1 for row in rows if bool_field(str(row.get("confidence_policy_adjusted", ""))) is True
+    )
+    confidence_policy_adjustment_reason_counts: Counter[str] = Counter()
+    for row in rows:
+        if bool_field(str(row.get("confidence_policy_adjusted", ""))) is not True:
+            continue
+        for reason in split_rubric(row.get("confidence_policy_adjustment_reasons", "")):
+            confidence_policy_adjustment_reason_counts[reason] += 1
     selected_family_confidences: list[float] = []
     for row in rows:
         raw_confidence = str(row.get("selected_family_confidence", "")).strip()
@@ -1080,6 +1093,10 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "answer_suppressed_due_to_evidence_gap_count": sum(
             1 for row in rows if bool_field(str(row.get("answer_suppressed_due_to_evidence_gap", ""))) is True
         ),
+        "confidence_policy_adjusted_count": confidence_policy_adjusted_count,
+        "confidence_policy_adjustment_reason_counts": dict(
+            sorted(confidence_policy_adjustment_reason_counts.items())
+        ),
         "right_document_wrong_article_or_span": canonical_metrics["right_document_wrong_article_or_span"],
         "canonical_missing_required_content_signal": canonical_metrics["missing_required_content_signal"],
         "canonical_partial_grounding_only": canonical_metrics["partial_grounding_only"],
@@ -1141,6 +1158,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         f"- support_insufficient_for_specific_claim_count: {summary['support_insufficient_for_specific_claim_count']}",
         f"- temporal_clause_missing_count: {summary['temporal_clause_missing_count']}",
         f"- answer_suppressed_due_to_evidence_gap_count: {summary['answer_suppressed_due_to_evidence_gap_count']}",
+        f"- confidence_policy_adjusted_count: {summary['confidence_policy_adjusted_count']}",
         f"- right_document_wrong_article_or_span: {summary['right_document_wrong_article_or_span']}",
         f"- canonical_missing_required_content_signal: {summary['canonical_missing_required_content_signal']}",
         f"- canonical_partial_grounding_only: {summary['canonical_partial_grounding_only']}",
@@ -1273,6 +1291,10 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Evidence Slot Reentry"])
     lines.append(f"- evidence_slot_reentry_count: {summary['evidence_slot_reentry_count']}")
+    lines.extend(["", "## Confidence Policy Adjustment"])
+    lines.append(f"- confidence_policy_adjusted_count: {summary['confidence_policy_adjusted_count']}")
+    for status, count in summary["confidence_policy_adjustment_reason_counts"].items():
+        lines.append(f"- {status}: {count}")
     lines.extend(["", "## Rubric Completeness Class"])
     for status, count in summary["rubric_completeness_class_counts"].items():
         lines.append(f"- {status}: {count}")

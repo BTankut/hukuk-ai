@@ -370,6 +370,57 @@ def test_repair_degrades_unsupported_confident_shape_to_not_grounded_band():
     assert result.validation["unsupported_confident_answer"] is False
 
 
+def test_repair_qualifies_fully_grounded_answer_when_runtime_slots_are_partial():
+    result = build_or_repair_answer_contract(
+        qid="PHASE15A-PARTIAL-SLOTS",
+        answer_text="Fesih bildirimi yazili yapilmalidir. [Kaynak: IK m.18]",
+        citations=["IK m.18"],
+        answer_contract={
+            "answer_text": "Fesih bildirimi yazili yapilmalidir. [Kaynak: IK m.18]",
+            "primary_source_id": "IK m.18",
+            "source_validity": "active",
+            "final_mode": "answer",
+            "required_fact_coverage_score": 0.82,
+            "candidate_completeness_score": 0.9,
+            "minimum_answer_facts_present": False,
+            "missing_fact_slots": ["procedure_or_consequence"],
+            "rubric_aligned_completeness_class": "structurally_full_but_legally_misaligned",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "target_date": "2026-04-21",
+            "retrieval": {
+                "article_span_selector": {
+                    "selector_evidence_sufficiency": "exact_enough",
+                    "support_span_count": 2,
+                }
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "IK m.18",
+                    "citation": "IK m.18",
+                    "source_title": "4857 sayili Is Kanunu",
+                    "belge_turu": "KANUN",
+                    "madde_no": "18",
+                    "mulga": False,
+                    "yururluk_bitis": "9999-12-31",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "partially_grounded"
+    assert contract["answer_mode"] == "qualified_answer"
+    assert contract["confidence_0_100"] < 70
+    assert contract["needs_manual_review"] is True
+    assert contract["confidence_policy_adjusted"] is True
+    assert "required_fact_coverage_below_0_95" in contract["confidence_policy_adjustment_reasons"]
+    assert "minimum_answer_facts_missing" in contract["confidence_policy_adjustment_reasons"]
+    assert result.validation["unsupported_confident_answer"] is False
+
+
 def test_repair_marks_cross_family_evidence_conflict_as_partial():
     result = build_or_repair_answer_contract(
         qid="CBKAR-TEST",

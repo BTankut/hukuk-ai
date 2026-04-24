@@ -989,6 +989,86 @@ def _int_value(value: Any) -> int | None:
         return None
 
 
+def _float_value(value: Any) -> float | None:
+    try:
+        text = str(value).strip()
+        return float(text) if text else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _list_value(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [_clean(item) for item in value if _clean(item)]
+    text = _clean(value)
+    if not text:
+        return []
+    return [part.strip() for part in re.split(r"\s*\|\s*|\s*,\s*", text) if part.strip()]
+
+
+def _confidence_pressure_reasons(
+    *,
+    contract: dict[str, Any],
+    article_selector: dict[str, Any],
+) -> list[str]:
+    """Return systemic reasons why a nominally grounded answer must be qualified."""
+
+    reasons: list[str] = []
+    candidate_score = _float_value(contract.get("candidate_completeness_score"))
+    fact_coverage_score = _float_value(contract.get("required_fact_coverage_score"))
+    support_span_count = _int_value(
+        contract.get("support_span_count")
+        or article_selector.get("support_span_count")
+        or article_selector.get("selector_support_span_count")
+    )
+    minimum_facts_present = (
+        _bool_flag(contract.get("minimum_answer_facts_present"))
+        if "minimum_answer_facts_present" in contract
+        else None
+    )
+    insufficient_canonical_span_evidence = _bool_flag(
+        contract.get("insufficient_canonical_span_evidence")
+        or article_selector.get("insufficient_canonical_span_evidence")
+    )
+    title_only_answer_degraded = _bool_flag(
+        contract.get("title_only_answer_degraded")
+        or article_selector.get("title_only_answer_degraded")
+    )
+    missing_slots = _list_value(contract.get("missing_fact_slots"))
+    rubric_class = _clean(contract.get("rubric_aligned_completeness_class"))
+    has_completeness_policy_signal = any(
+        key in contract
+        for key in (
+            "candidate_completeness_score",
+            "required_fact_coverage_score",
+            "minimum_answer_facts_present",
+            "missing_fact_slots",
+            "rubric_aligned_completeness_class",
+            "insufficient_canonical_span_evidence",
+            "title_only_answer_degraded",
+        )
+    )
+
+    if insufficient_canonical_span_evidence:
+        reasons.append("insufficient_canonical_span_evidence")
+    if title_only_answer_degraded:
+        reasons.append("title_only_answer_degraded")
+    if candidate_score is not None and candidate_score < 0.95:
+        reasons.append("candidate_completeness_below_0_95")
+    if fact_coverage_score is not None and fact_coverage_score < 0.95:
+        reasons.append("required_fact_coverage_below_0_95")
+    if minimum_facts_present is False:
+        reasons.append("minimum_answer_facts_missing")
+    if has_completeness_policy_signal and support_span_count is not None and support_span_count < 2:
+        reasons.append("support_span_count_below_2")
+    if missing_slots:
+        reasons.append("missing_answer_slots:" + ",".join(missing_slots))
+    if rubric_class and rubric_class != "rubric_sufficient":
+        reasons.append("runtime_rubric_class:" + rubric_class)
+
+    return list(dict.fromkeys(reasons))
+
+
 def _format_final_reason(
     *,
     source_family: str,
@@ -1324,6 +1404,7 @@ def build_or_repair_answer_contract(
     support_insufficient_for_specific_claim = False
     temporal_clause_missing = False
     answer_suppressed_due_to_evidence_gap = False
+    confidence_policy_adjustment_reasons: list[str] = []
     if isinstance(trace_payload, dict):
         retrieval = trace_payload.get("retrieval")
         if isinstance(retrieval, dict):
@@ -1401,6 +1482,19 @@ def build_or_repair_answer_contract(
         grounding_status = "partially_grounded"
         answer_mode = "qualified_answer"
 
+    if not native_dialog and grounding_status == "fully_grounded":
+        confidence_policy_adjustment_reasons = _confidence_pressure_reasons(
+            contract=contract,
+            article_selector=article_selector if isinstance(article_selector, dict) else {},
+        )
+        if confidence_policy_adjustment_reasons:
+            grounding_status = "partially_grounded"
+            answer_mode = "qualified_answer"
+            for reason in confidence_policy_adjustment_reasons:
+                finding = f"confidence_policy_pressure:{reason}"
+                if finding not in verification_findings:
+                    verification_findings.append(finding)
+
     needs_manual_review = bool(contract.get("needs_manual_review"))
     if not native_dialog:
         needs_manual_review = needs_manual_review or grounding_status != "fully_grounded"
@@ -1460,6 +1554,8 @@ def build_or_repair_answer_contract(
             "support_insufficient_for_specific_claim": bool(support_insufficient_for_specific_claim),
             "temporal_clause_missing": bool(temporal_clause_missing),
             "answer_suppressed_due_to_evidence_gap": bool(answer_suppressed_due_to_evidence_gap),
+            "confidence_policy_adjusted": bool(confidence_policy_adjustment_reasons),
+            "confidence_policy_adjustment_reasons": confidence_policy_adjustment_reasons,
             "unsupported_reason": (
                 contract.get("unsupported_reason")
                 or ("evidence_gap" if answer_suppressed_due_to_evidence_gap else None)
