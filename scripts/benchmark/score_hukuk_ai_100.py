@@ -173,7 +173,12 @@ SCORED_FIELDS = [
     "selected_document_has_body_span",
     "selected_document_has_non_title_span",
     "selected_document_has_document_level_body_span",
+    "selected_document_has_article_zero_body_span",
     "selected_document_has_materialized_body_span",
+    "article_zero_body_extracted",
+    "article_zero_materialization_reason",
+    "body_extraction_source",
+    "materialized_from_m0",
     "title_only_answer_degraded",
     "insufficient_canonical_span_evidence",
     "required_fact_coverage_score",
@@ -698,10 +703,18 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
             "selected_document_has_document_level_body_span",
             "",
         ),
+        "selected_document_has_article_zero_body_span": answer.get(
+            "selected_document_has_article_zero_body_span",
+            "",
+        ),
         "selected_document_has_materialized_body_span": answer.get(
             "selected_document_has_materialized_body_span",
             "",
         ),
+        "article_zero_body_extracted": answer.get("article_zero_body_extracted", ""),
+        "article_zero_materialization_reason": answer.get("article_zero_materialization_reason", ""),
+        "body_extraction_source": answer.get("body_extraction_source", ""),
+        "materialized_from_m0": answer.get("materialized_from_m0", ""),
         "title_only_answer_degraded": answer.get("title_only_answer_degraded", ""),
         "insufficient_canonical_span_evidence": answer.get("insufficient_canonical_span_evidence", ""),
         "required_fact_coverage_score": answer.get("required_fact_coverage_score", ""),
@@ -926,8 +939,20 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     selected_document_document_level_body_span_count = sum(
         1 for row in rows if bool_field(str(row.get("selected_document_has_document_level_body_span", ""))) is True
     )
+    selected_document_article_zero_body_span_count = sum(
+        1 for row in rows if bool_field(str(row.get("selected_document_has_article_zero_body_span", ""))) is True
+    )
     selected_document_materialized_body_span_count = sum(
         1 for row in rows if bool_field(str(row.get("selected_document_has_materialized_body_span", ""))) is True
+    )
+    article_zero_body_extracted_count = sum(
+        1 for row in rows if bool_field(str(row.get("article_zero_body_extracted", ""))) is True
+    )
+    materialized_from_m0_count = sum(
+        1 for row in rows if bool_field(str(row.get("materialized_from_m0", ""))) is True
+    )
+    article_zero_materialization_reason_counts = Counter(
+        row.get("article_zero_materialization_reason", "") or "none" for row in rows
     )
     source_key_collision_detected_count = sum(
         1 for row in rows if bool_field(str(row.get("source_key_collision_detected", ""))) is True
@@ -1121,7 +1146,13 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
             sorted(canonical_span_materialization_reason_counts.items())
         ),
         "selected_document_document_level_body_span_count": selected_document_document_level_body_span_count,
+        "selected_document_article_zero_body_span_count": selected_document_article_zero_body_span_count,
         "selected_document_materialized_body_span_count": selected_document_materialized_body_span_count,
+        "article_zero_body_extracted_count": article_zero_body_extracted_count,
+        "materialized_from_m0_count": materialized_from_m0_count,
+        "article_zero_materialization_reason_counts": dict(
+            sorted(article_zero_materialization_reason_counts.items())
+        ),
         "source_key_collision_detected_count": source_key_collision_detected_count,
         "source_key_collision_pair_counts": dict(sorted(source_key_collision_pair_counts.items())),
         "source_key_v2_collision_detected_count": source_key_v2_collision_detected_count,
@@ -1368,7 +1399,10 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
             f"- title_only_answer_degraded_count: {summary['title_only_answer_degraded_count']}",
             f"- insufficient_canonical_span_evidence_count: {summary['insufficient_canonical_span_evidence_count']}",
             f"- selected_document_document_level_body_span_count: {summary['selected_document_document_level_body_span_count']}",
+            f"- selected_document_article_zero_body_span_count: {summary['selected_document_article_zero_body_span_count']}",
             f"- selected_document_materialized_body_span_count: {summary['selected_document_materialized_body_span_count']}",
+            f"- article_zero_body_extracted_count: {summary['article_zero_body_extracted_count']}",
+            f"- materialized_from_m0_count: {summary['materialized_from_m0_count']}",
             f"- source_key_collision_detected_count: {summary['source_key_collision_detected_count']}",
             f"- source_key_v2_collision_detected_count: {summary['source_key_v2_collision_detected_count']}",
             f"- canonical_key_binding_applied_count: {summary['canonical_key_binding_applied_count']}",
@@ -1379,6 +1413,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     )
     for status, count in summary["canonical_span_materialization_reason_counts"].items():
         lines.append(f"- canonical_span_materialization_reason.{status}: {count}")
+    for status, count in summary["article_zero_materialization_reason_counts"].items():
+        lines.append(f"- article_zero_materialization_reason.{status}: {count}")
     for status, count in summary["source_key_collision_pair_counts"].items():
         lines.append(f"- source_key_collision_pair.{status}: {count}")
     for status, count in summary["source_key_v2_collision_pair_counts"].items():

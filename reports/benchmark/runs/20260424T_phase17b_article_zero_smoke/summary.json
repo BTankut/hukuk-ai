@@ -1,0 +1,20 @@
+{
+  "answered": 6,
+  "api_url": "http://127.0.0.1:8000/v1",
+  "candidate_answers": "reports/benchmark/runs/20260424T_phase17b_article_zero_smoke/candidate_answers.csv",
+  "contract_valid": 6,
+  "endpoint": "http://127.0.0.1:8000/v1/chat/completions",
+  "errors": 0,
+  "include_trace": true,
+  "missing_confidence_0_100": 0,
+  "missing_contract_fields": 0,
+  "missing_final_reason": 0,
+  "missing_trace": 0,
+  "model": "hukuk-ai-poc",
+  "questions": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/hukuk_ai_100_public_questions.csv",
+  "refused_or_empty": 0,
+  "run_dir": "reports/benchmark/runs/20260424T_phase17b_article_zero_smoke",
+  "total": 6,
+  "trace": "reports/benchmark/runs/20260424T_phase17b_article_zero_smoke/trace.jsonl",
+  "unsupported_confident_answer": 0
+}

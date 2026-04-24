@@ -890,6 +890,86 @@ class TestLawSignalParsing:
         assert selector["canonical_span_materialization_reason"] == "body_span_available_but_title_or_article_zero"
         assert selector["selected_document_has_document_level_body_span"] is False
 
+    def test_article_zero_body_extraction_materializes_regulation_m0_body(self):
+        selector = {
+            "selected_document_key": "24038",
+            "selected_document_source_key": "24038",
+            "selected_article": "0",
+            "selected_main_span_id": "24038 m.0/f.0",
+            "selected_supporting_span_ids": [],
+            "main_span_match_type": "same_heading_or_section",
+            "support_span_count": 1,
+            "query_article_tokens": [],
+        }
+        chunks = [
+            RetrievedChunk(
+                text=(
+                    "MADDE 1 - Bu Yönetmeliğin amacı kişisel verilerin silinmesi, yok edilmesi "
+                    "ve anonim hale getirilmesine ilişkin usul ve esasları düzenlemektir. "
+                    "Saklama ve imha politikası kapsamındaki yükümlülükler veri sorumlusu "
+                    "tarafından uygulanır. "
+                )
+                * 3,
+                citation="24038 m.0/f.0",
+                source="24038",
+                score=1.0,
+                metadata={
+                    "belge_turu": "yonetmelik",
+                    "belge_no": "24038",
+                    "source_title": "KİŞİSEL VERİLERİN SİLİNMESİ YÖNETMELİĞİ",
+                    "madde_no": "0",
+                },
+            )
+        ]
+
+        _annotate_canonical_span_materialization(chunks=chunks, article_span_selector=selector)
+
+        assert selector["canonical_span_materialized"] is True
+        assert selector["corpus_materialization_required"] is False
+        assert selector["canonical_span_materialization_reason"] == "article_zero_body_extracted_from_m0"
+        assert selector["selected_document_has_article_zero_body_span"] is True
+        assert selector["article_zero_body_extracted"] is True
+        assert selector["body_extraction_source"] == "m0_body_text"
+        assert selector["materialized_from_m0"] is True
+        assert selector["title_only_answer_degraded"] is False
+
+    def test_article_zero_body_extraction_does_not_override_explicit_article_request(self):
+        selector = {
+            "selected_document_key": "24038",
+            "selected_document_source_key": "24038",
+            "selected_article": "0",
+            "selected_main_span_id": "24038 m.0/f.0",
+            "selected_supporting_span_ids": [],
+            "main_span_match_type": "same_heading_or_section",
+            "support_span_count": 1,
+            "query_article_tokens": ["5"],
+        }
+        chunks = [
+            RetrievedChunk(
+                text=(
+                    "MADDE 1 - Saklama ve imha politikası kapsamındaki yükümlülükler "
+                    "veri sorumlusu tarafından uygulanır. "
+                )
+                * 4,
+                citation="24038 m.0/f.0",
+                source="24038",
+                score=1.0,
+                metadata={
+                    "belge_turu": "yonetmelik",
+                    "belge_no": "24038",
+                    "source_title": "KİŞİSEL VERİLERİN SİLİNMESİ YÖNETMELİĞİ",
+                    "madde_no": "0",
+                },
+            )
+        ]
+
+        _annotate_canonical_span_materialization(chunks=chunks, article_span_selector=selector)
+
+        assert selector["canonical_span_materialized"] is False
+        assert selector["corpus_materialization_required"] is True
+        assert selector["canonical_span_materialization_reason"] == "body_span_available_but_title_or_article_zero"
+        assert selector["selected_document_has_article_zero_body_span"] is False
+
     def test_source_family_prior_does_not_treat_tebligat_as_teblig(self):
         resolution = _resolve_source_family_prior(
             "Elektronik tebligat yönetmeliği kapsamında muhatabın bildirim yükümlülüğü nedir?"

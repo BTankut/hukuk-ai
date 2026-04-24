@@ -155,7 +155,12 @@ ANSWER_FIELDS = [
     "selected_document_has_body_span",
     "selected_document_has_non_title_span",
     "selected_document_has_document_level_body_span",
+    "selected_document_has_article_zero_body_span",
     "selected_document_has_materialized_body_span",
+    "article_zero_body_extracted",
+    "article_zero_materialization_reason",
+    "body_extraction_source",
+    "materialized_from_m0",
     "title_only_answer_degraded",
     "insufficient_canonical_span_evidence",
     "required_fact_coverage_score",
@@ -732,10 +737,18 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
             response,
             "selected_document_has_document_level_body_span",
         ),
+        "selected_document_has_article_zero_body_span": selector_value(
+            response,
+            "selected_document_has_article_zero_body_span",
+        ),
         "selected_document_has_materialized_body_span": selector_value(
             response,
             "selected_document_has_materialized_body_span",
         ),
+        "article_zero_body_extracted": selector_value(response, "article_zero_body_extracted"),
+        "article_zero_materialization_reason": selector_value(response, "article_zero_materialization_reason"),
+        "body_extraction_source": selector_value(response, "body_extraction_source"),
+        "materialized_from_m0": selector_value(response, "materialized_from_m0"),
         "title_only_answer_degraded": contract_value(response, "title_only_answer_degraded")
         or selector_value(response, "title_only_answer_degraded"),
         "insufficient_canonical_span_evidence": contract_value(response, "insufficient_canonical_span_evidence")

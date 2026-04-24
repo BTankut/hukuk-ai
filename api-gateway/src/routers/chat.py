@@ -3301,6 +3301,14 @@ def _chunk_has_non_title_body_span(chunk: RetrievedChunk) -> bool:
 
 
 _DOCUMENT_LEVEL_BODY_SPAN_FAMILIES = {"cb_genelge", "cb_karar", "teblig"}
+_ARTICLE_ZERO_BODY_EXTRACTION_FAMILIES = {
+    "khk",
+    "kky",
+    "tuzuk",
+    "uy",
+    "yonetmelik",
+    "cb_yonetmelik",
+}
 
 
 def _chunk_allows_document_level_body_span(
@@ -3319,6 +3327,46 @@ def _chunk_allows_document_level_body_span(
         raw_tokens = article_span_selector.get("query_article_tokens")
         query_article_tokens = raw_tokens if isinstance(raw_tokens, list) else []
     return not any(str(token or "").strip() not in {"", "0"} for token in query_article_tokens)
+
+
+def _article_zero_body_query_allows_extraction(article_span_selector: dict[str, Any] | None) -> bool:
+    query_article_tokens = []
+    if isinstance(article_span_selector, dict):
+        raw_tokens = article_span_selector.get("query_article_tokens")
+        query_article_tokens = raw_tokens if isinstance(raw_tokens, list) else []
+    return not any(str(token or "").strip() not in {"", "0"} for token in query_article_tokens)
+
+
+def _chunk_allows_article_zero_body_extraction(
+    chunk: RetrievedChunk,
+    article_span_selector: dict[str, Any] | None,
+) -> bool:
+    family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
+    if family not in _ARTICLE_ZERO_BODY_EXTRACTION_FAMILIES:
+        return False
+    if _chunk_article_token(chunk) not in {"", "0"}:
+        return False
+    if not _chunk_has_selectable_body_span(chunk):
+        return False
+    if not _article_zero_body_query_allows_extraction(article_span_selector):
+        return False
+    body = _chunk_body_text_for_quality(chunk)
+    normalized_body = _normalize_tr_text(body)
+    legal_body_markers = {
+        "madde",
+        "amac",
+        "kapsam",
+        "usul",
+        "esas",
+        "yururluk",
+        "gecici",
+        "hukum",
+        "uygulan",
+        "yukumlul",
+        "saklama",
+        "imha",
+    }
+    return bool(len(body.strip()) >= 180 or any(marker in normalized_body for marker in legal_body_markers))
 
 
 def _source_key_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any]:
@@ -3480,8 +3528,14 @@ def _annotate_canonical_span_materialization(
         _chunk_allows_document_level_body_span(chunk, article_span_selector)
         for chunk, _quality in quality_by_chunk
     )
+    selected_document_has_article_zero_body_span = any(
+        _chunk_allows_article_zero_body_extraction(chunk, article_span_selector)
+        for chunk, _quality in quality_by_chunk
+    )
     selected_document_has_materialized_body_span = bool(
-        selected_document_has_non_title_span or selected_document_has_document_level_body_span
+        selected_document_has_non_title_span
+        or selected_document_has_document_level_body_span
+        or selected_document_has_article_zero_body_span
     )
 
     policy_collision_keys = []
@@ -3528,6 +3582,7 @@ def _annotate_canonical_span_materialization(
             or not bool(main_quality.get("body_text_available"))
         )
         and not selected_document_has_document_level_body_span
+        and not selected_document_has_article_zero_body_span
     )
     try:
         support_span_count = int(article_span_selector.get("support_span_count") or 0)
@@ -3559,6 +3614,8 @@ def _annotate_canonical_span_materialization(
         materialization_reason = "non_title_body_span_available"
     elif selected_document_has_document_level_body_span:
         materialization_reason = "document_level_body_span_materialized"
+    elif selected_document_has_article_zero_body_span:
+        materialization_reason = "article_zero_body_extracted_from_m0"
     elif selected_document_has_body_span:
         materialization_reason = "body_span_available_but_title_or_article_zero"
     elif binding_collision_detected:
@@ -3607,7 +3664,26 @@ def _annotate_canonical_span_materialization(
             "selected_document_has_body_span": selected_document_has_body_span,
             "selected_document_has_non_title_span": selected_document_has_non_title_span,
             "selected_document_has_document_level_body_span": selected_document_has_document_level_body_span,
+            "selected_document_has_article_zero_body_span": selected_document_has_article_zero_body_span,
             "selected_document_has_materialized_body_span": selected_document_has_materialized_body_span,
+            "article_zero_body_extracted": selected_document_has_article_zero_body_span,
+            "article_zero_materialization_reason": (
+                "m0_contains_selectable_legal_body"
+                if selected_document_has_article_zero_body_span
+                else ""
+            ),
+            "body_extraction_source": (
+                "m0_body_text"
+                if selected_document_has_article_zero_body_span
+                else "document_level_body"
+                if selected_document_has_document_level_body_span
+                else "article_body"
+                if selected_document_has_non_title_span
+                else ""
+            ),
+            "materialized_from_m0": bool(
+                selected_document_has_article_zero_body_span or selected_document_has_document_level_body_span
+            ),
             "title_only_answer_degraded": bool(title_only_fallback_used and insufficient_canonical_span_evidence),
             "insufficient_canonical_span_evidence": insufficient_canonical_span_evidence,
             "selected_document_body_span_count": sum(
@@ -3620,6 +3696,11 @@ def _annotate_canonical_span_materialization(
                 1
                 for chunk, _quality in quality_by_chunk
                 if _chunk_allows_document_level_body_span(chunk, article_span_selector)
+            ),
+            "selected_document_article_zero_body_span_count": sum(
+                1
+                for chunk, _quality in quality_by_chunk
+                if _chunk_allows_article_zero_body_extraction(chunk, article_span_selector)
             ),
         }
     )
