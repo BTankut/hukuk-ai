@@ -73,7 +73,9 @@ from routers.chat import (
     _resolve_chunk_source_family,
     _resolve_chunk_source_family_profile,
     _resolve_chunk_routing_family,
+    _resolve_chunk_canonical_source_key_v2,
     _resolve_source_family_prior,
+    _source_key_v2_collision_profile,
     _resolve_public_answer_text,
     _sanitize_source_cluster_selector_payload,
     _sanitize_retrieval_plan_payload,
@@ -1129,6 +1131,68 @@ class TestLawSignalParsing:
         assert policy["source_key_collision_keys"] == ["9903"]
         assert "cb_karar" in policy["source_key_collision_pair"]
         assert "teblig" in policy["source_key_collision_pair"]
+
+    def test_canonical_source_key_v2_separates_numeric_cross_family_collision(self):
+        karar_chunk = RetrievedChunk(
+            text="Yatırımlarda devlet yardımları kararı metni.",
+            citation="9903 m.0/f.0",
+            source="9903",
+            score=1.0,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "9903",
+                "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                "madde_no": "0",
+            },
+        )
+        teblig_chunk = RetrievedChunk(
+            text="Garanti belgesi süreleri tebliğ metni.",
+            citation="9903 m.1/f.0",
+            source="9903",
+            score=0.9,
+            metadata={
+                "belge_turu": "teblig",
+                "belge_no": "9903",
+                "source_title": "GARANTİ BELGESİ SÜRELERİNİN UZATILMASINA İLİŞKİN TEBLİĞ",
+                "madde_no": "1",
+            },
+        )
+
+        karar_key = _resolve_chunk_canonical_source_key_v2(karar_chunk, include_span=False)
+        teblig_key = _resolve_chunk_canonical_source_key_v2(teblig_chunk, include_span=False)
+        v2_profile = _source_key_v2_collision_profile([karar_chunk, teblig_chunk])
+
+        assert "fam=cb_karar" in karar_key
+        assert "fam=teblig" in teblig_key
+        assert "id=9903" in karar_key
+        assert "id=9903" in teblig_key
+        assert karar_key != teblig_key
+        assert v2_profile["source_key_v2_collision_detected"] is False
+
+    def test_article_span_selector_writes_legacy_and_canonical_source_keys(self):
+        chunk = RetrievedChunk(
+            text="Yatırım teşvik başvurusu için karar kapsamındaki destek unsurları düzenlenir.",
+            citation="9903 m.1/f.0",
+            source="9903",
+            score=1.0,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "9903",
+                "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                "madde_no": "1",
+            },
+        )
+
+        _chunks, selector = _select_article_span_evidence(
+            query="9903 sayılı Cumhurbaşkanı Kararı yatırım teşvik başvurusu ne der?",
+            chunks=[chunk],
+            requested_source_families=["cb_karar"],
+        )
+
+        assert selector["legacy_source_key"] == "9903"
+        assert selector["selected_canonical_source_key_v2"].startswith("fam=cb_karar|id=9903")
+        assert selector["top_scores"][0]["legacy_source_key"] == "9903"
+        assert selector["top_scores"][0]["canonical_source_key_v2"].startswith("fam=cb_karar|id=9903")
 
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(

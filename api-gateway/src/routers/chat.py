@@ -2720,6 +2720,119 @@ def _resolve_chunk_document_key(chunk: RetrievedChunk) -> str:
     )
 
 
+def _canonical_source_key_v2_part(value: Any, *, fallback: str = "unknown") -> str:
+    normalized = re.sub(r"[^a-z0-9_]+", " ", _normalize_tr_text(str(value or ""))).strip()
+    if not normalized:
+        normalized = re.sub(r"[^a-z0-9_]+", " ", _normalize_tr_text(str(fallback or ""))).strip()
+    normalized = re.sub(r"\s+", "-", normalized).strip("-")
+    return normalized or "unknown"
+
+
+def _strip_article_suffix_from_identifier(value: str) -> str:
+    stripped = _normalize_whitespace(value)
+    if not stripped:
+        return ""
+    stripped = re.sub(
+        r"\s+(?:m|md|madde)\.?\s*(?:gecici\s+)?\d+[a-z]?(?:\s*/\s*f\.?\d+)?\s*$",
+        "",
+        stripped,
+        flags=re.IGNORECASE,
+    )
+    return _normalize_whitespace(stripped)
+
+
+def _resolve_chunk_canonical_identifier(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    for value in (
+        metadata.get("canonical_identifier"),
+        metadata.get("canonical_identifier_display"),
+        metadata.get("source_id"),
+        metadata.get("belge_no"),
+        metadata.get("kanun_no"),
+        metadata.get("law_no"),
+        metadata.get("decision_number"),
+        metadata.get("kararname_number"),
+        metadata.get("genelge_number"),
+        metadata.get("generalge_number"),
+        metadata.get("teblig_number"),
+        metadata.get("regulation_number"),
+        metadata.get("law_short_name"),
+        metadata.get("kanun_kisa_adi"),
+        chunk.source,
+    ):
+        text = _strip_article_suffix_from_identifier(str(value or ""))
+        if text and normalize_canonical_text(text) not in {"unknown", "none", "null"}:
+            return text
+    title = _resolve_chunk_source_title(chunk)
+    if title:
+        return f"title-{hashlib.sha1(normalize_canonical_text(title).encode('utf-8')).hexdigest()[:12]}"
+    return "unknown"
+
+
+def _resolve_chunk_effective_start(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    for key in (
+        "effective_start",
+        "effective_date",
+        "yururluk_tarihi",
+        "yururluk_baslangic",
+        "official_gazette_date",
+        "resmi_gazete_tarihi",
+        "published_date",
+        "date",
+    ):
+        value = _normalize_whitespace(str(metadata.get(key) or ""))
+        if value:
+            return value[:32]
+    return "unknown"
+
+
+def _resolve_chunk_doc_uuid(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    for key in ("doc_uuid", "document_uuid", "canonical_doc_uuid", "source_doc_uuid", "uuid"):
+        value = _normalize_whitespace(str(metadata.get(key) or ""))
+        if value:
+            return value
+    return ""
+
+
+def _resolve_chunk_canonical_source_key_v2(
+    chunk: RetrievedChunk,
+    *,
+    include_span: bool = True,
+) -> str:
+    family = (
+        _resolve_chunk_routing_family(chunk)
+        or _resolve_chunk_source_family(chunk)
+        or "unknown"
+    )
+    identifier = _resolve_chunk_canonical_identifier(chunk)
+    title_normalized = normalize_canonical_text(_resolve_chunk_source_title(chunk))
+    title_hash = hashlib.sha1(title_normalized.encode("utf-8")).hexdigest()[:12] if title_normalized else "no-title"
+    effective_start = _resolve_chunk_effective_start(chunk)
+    effective_state = str(resolve_effective_state(chunk.metadata or {}) or "unknown").strip().lower() or "unknown"
+    parts = [
+        f"fam={_canonical_source_key_v2_part(family)}",
+        f"id={_canonical_source_key_v2_part(identifier)}",
+        f"title={title_hash}",
+        f"start={_canonical_source_key_v2_part(effective_start)}",
+        f"state={_canonical_source_key_v2_part(effective_state)}",
+    ]
+    doc_uuid = _resolve_chunk_doc_uuid(chunk)
+    if doc_uuid:
+        parts.append(f"doc={_canonical_source_key_v2_part(doc_uuid)}")
+    if include_span:
+        article = _chunk_article_token(chunk) or "0"
+        clause = _chunk_clause_token(chunk) or "0"
+        parts.extend(
+            [
+                f"article={_canonical_source_key_v2_part(article)}",
+                f"clause={_canonical_source_key_v2_part(clause)}",
+            ]
+        )
+    return "|".join(parts)
+
+
 def _extract_query_clause_tokens(query: str) -> set[str]:
     normalized = _normalize_tr_text(query or "")
     tokens: set[str] = set()
@@ -3191,6 +3304,38 @@ def _source_key_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any
     }
 
 
+def _source_key_v2_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any]:
+    grouped: dict[str, dict[tuple[str, str], int]] = {}
+    for chunk in chunks:
+        document_key = _resolve_chunk_canonical_source_key_v2(chunk, include_span=False)
+        if not document_key:
+            continue
+        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown"
+        title = normalize_canonical_text(_resolve_chunk_source_title(chunk))
+        grouped.setdefault(document_key, {})
+        grouped[document_key][(family, title)] = grouped[document_key].get((family, title), 0) + 1
+
+    collision_keys: list[str] = []
+    collision_pairs: list[str] = []
+    for document_key, pair_counts in sorted(grouped.items()):
+        pairs = sorted(pair_counts)
+        families = dedupe_strings(family for family, _title in pairs)
+        if len(pairs) <= 1 and len(families) <= 1:
+            continue
+        collision_keys.append(document_key)
+        pair_labels = []
+        for family, title in pairs[:4]:
+            title_label = title[:80] if title else "untitled"
+            pair_labels.append(f"{family}:{title_label}")
+        collision_pairs.append(f"{document_key}=" + "|".join(pair_labels))
+
+    return {
+        "source_key_v2_collision_detected": bool(collision_keys),
+        "source_key_v2_collision_keys": collision_keys,
+        "source_key_v2_collision_pair": "; ".join(collision_pairs[:3]),
+    }
+
+
 def _annotate_canonical_span_materialization(
     *,
     chunks: list[RetrievedChunk],
@@ -3260,6 +3405,13 @@ def _annotate_canonical_span_materialization(
         policy_collision_detected
         and (not selected_document_key or not policy_collision_keys or selected_document_key in policy_collision_keys)
     )
+    v2_collision_profile = _source_key_v2_collision_profile(chunks)
+    selected_canonical_source_key_v2 = (
+        _resolve_chunk_canonical_source_key_v2(main_chunk, include_span=True) if main_chunk else ""
+    )
+    selected_canonical_document_key_v2 = (
+        _resolve_chunk_canonical_source_key_v2(main_chunk, include_span=False) if main_chunk else ""
+    )
 
     selected_article = str(article_span_selector.get("selected_article") or "").strip()
     main_match_type = str(article_span_selector.get("main_span_match_type") or "")
@@ -3313,9 +3465,21 @@ def _annotate_canonical_span_materialization(
             "body_text_printable_ratio": main_quality.get("body_printable_ratio"),
             "body_text_alpha_count": int(main_quality.get("body_alpha_count") or 0),
             "body_text_control_count": int(main_quality.get("body_control_count") or 0),
+            "legacy_source_key": article_span_selector.get("legacy_source_key")
+            or article_span_selector.get("selected_document_source_key")
+            or selected_document_key,
+            "canonical_source_key_v2": article_span_selector.get("canonical_source_key_v2")
+            or selected_canonical_source_key_v2,
+            "selected_canonical_source_key_v2": article_span_selector.get("selected_canonical_source_key_v2")
+            or selected_canonical_source_key_v2,
+            "selected_canonical_document_key_v2": article_span_selector.get(
+                "selected_canonical_document_key_v2"
+            )
+            or selected_canonical_document_key_v2,
             "source_key_collision_detected": source_key_collision_detected,
             "source_key_collision_keys": policy_collision_keys,
             "source_key_collision_pair": policy_collision_pair,
+            **v2_collision_profile,
             "corpus_materialization_required": corpus_materialization_required,
             "candidate_completeness_score": candidate_completeness_score,
             "selected_document_has_body_span": selected_document_has_body_span,
@@ -3403,6 +3567,8 @@ def _select_article_span_evidence(
         family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
         source_key = _resolve_chunk_source_key(chunk)
         document_key = _resolve_chunk_document_key(chunk)
+        canonical_source_key_v2 = _resolve_chunk_canonical_source_key_v2(chunk, include_span=True)
+        canonical_document_key_v2 = _resolve_chunk_canonical_source_key_v2(chunk, include_span=False)
         title = _resolve_chunk_source_title(chunk)
         heading = metadata.get("heading") or metadata.get("article_heading")
         article_token = _chunk_article_token(chunk)
@@ -3533,6 +3699,9 @@ def _select_article_span_evidence(
                     "source_id": _resolve_trace_source_id(chunk),
                     "citation": chunk.citation,
                     "source_key": source_key,
+                    "legacy_source_key": source_key,
+                    "canonical_source_key_v2": canonical_source_key_v2,
+                    "canonical_document_key_v2": canonical_document_key_v2,
                     "document_key": document_key,
                     "span_id": _resolve_chunk_span_id(chunk),
                     "source_title": title,
@@ -3768,6 +3937,16 @@ def _select_article_span_evidence(
                 internal_document_choice_reason = "locked_document_retained_after_internal_arbitration"
     primary_source_key = _resolve_chunk_source_key(document_lock_candidates[0][2]) if document_lock_candidates else ""
     primary_document_key = _resolve_chunk_document_key(document_lock_candidates[0][2]) if document_lock_candidates else ""
+    primary_canonical_source_key_v2 = (
+        _resolve_chunk_canonical_source_key_v2(document_lock_candidates[0][2], include_span=True)
+        if document_lock_candidates
+        else ""
+    )
+    primary_canonical_document_key_v2 = (
+        _resolve_chunk_canonical_source_key_v2(document_lock_candidates[0][2], include_span=False)
+        if document_lock_candidates
+        else ""
+    )
 
     def _same_locked_document(item: tuple[float, int, RetrievedChunk, dict[str, Any]]) -> bool:
         return bool(primary_document_key and _resolve_chunk_document_key(item[2]) == primary_document_key)
@@ -4028,8 +4207,12 @@ def _select_article_span_evidence(
         "selected_document_id": (
             _resolve_chunk_source_display_label(document_lock_candidates[0][2]) if document_lock_candidates else None
         ),
+        "legacy_source_key": primary_source_key or None,
         "selected_document_source_key": primary_source_key or None,
         "selected_document_key": primary_document_key or None,
+        "canonical_source_key_v2": (top_trace.get("canonical_source_key_v2") if top_trace else None),
+        "selected_canonical_source_key_v2": primary_canonical_source_key_v2 or None,
+        "selected_canonical_document_key_v2": primary_canonical_document_key_v2 or None,
         "selected_main_span_id": selected_main_span_id,
         "selected_main_article": selected_main_article,
         "selected_supporting_span_ids": selected_supporting_span_ids,
@@ -8260,6 +8443,7 @@ def _apply_pre_generation_family_pool(
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
     source_key_collision_profile = _source_key_collision_profile(chunks)
+    source_key_v2_collision_profile = _source_key_v2_collision_profile(chunks)
     pre_filter_family_set = dedupe_strings(
         (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
         for chunk in chunks
@@ -8287,6 +8471,7 @@ def _apply_pre_generation_family_pool(
         "family_gate_reason": family_gate_reason,
         "no_gate_reason": no_gate_reason,
         **source_key_collision_profile,
+        **source_key_v2_collision_profile,
     }
     if not chunks or not preferred_families:
         return chunks, policy

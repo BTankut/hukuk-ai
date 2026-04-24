@@ -152,9 +152,16 @@ SCORED_FIELDS = [
     "title_only_fallback_used",
     "body_text_available",
     "body_text_length",
+    "legacy_source_key",
+    "canonical_source_key_v2",
+    "selected_canonical_source_key_v2",
+    "selected_canonical_document_key_v2",
     "source_key_collision_detected",
     "source_key_collision_keys",
     "source_key_collision_pair",
+    "source_key_v2_collision_detected",
+    "source_key_v2_collision_keys",
+    "source_key_v2_collision_pair",
     "corpus_materialization_required",
     "candidate_completeness_score",
     "selected_document_has_body_span",
@@ -659,9 +666,16 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "title_only_fallback_used": answer.get("title_only_fallback_used", ""),
         "body_text_available": answer.get("body_text_available", ""),
         "body_text_length": answer.get("body_text_length", ""),
+        "legacy_source_key": answer.get("legacy_source_key", ""),
+        "canonical_source_key_v2": answer.get("canonical_source_key_v2", ""),
+        "selected_canonical_source_key_v2": answer.get("selected_canonical_source_key_v2", ""),
+        "selected_canonical_document_key_v2": answer.get("selected_canonical_document_key_v2", ""),
         "source_key_collision_detected": answer.get("source_key_collision_detected", ""),
         "source_key_collision_keys": answer.get("source_key_collision_keys", ""),
         "source_key_collision_pair": answer.get("source_key_collision_pair", ""),
+        "source_key_v2_collision_detected": answer.get("source_key_v2_collision_detected", ""),
+        "source_key_v2_collision_keys": answer.get("source_key_v2_collision_keys", ""),
+        "source_key_v2_collision_pair": answer.get("source_key_v2_collision_pair", ""),
         "corpus_materialization_required": answer.get("corpus_materialization_required", ""),
         "candidate_completeness_score": answer.get("candidate_completeness_score", ""),
         "selected_document_has_body_span": answer.get("selected_document_has_body_span", ""),
@@ -893,6 +907,12 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     source_key_collision_pair_counts = Counter(
         row.get("source_key_collision_pair", "") or "none" for row in rows
     )
+    source_key_v2_collision_detected_count = sum(
+        1 for row in rows if bool_field(str(row.get("source_key_v2_collision_detected", ""))) is True
+    )
+    source_key_v2_collision_pair_counts = Counter(
+        row.get("source_key_v2_collision_pair", "") or "none" for row in rows
+    )
     candidate_completeness_scores: list[float] = []
     for row in rows:
         raw_score = str(row.get("candidate_completeness_score", "")).strip()
@@ -1062,6 +1082,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         ),
         "source_key_collision_detected_count": source_key_collision_detected_count,
         "source_key_collision_pair_counts": dict(sorted(source_key_collision_pair_counts.items())),
+        "source_key_v2_collision_detected_count": source_key_v2_collision_detected_count,
+        "source_key_v2_collision_pair_counts": dict(sorted(source_key_v2_collision_pair_counts.items())),
         "avg_candidate_completeness_score": round(
             sum(candidate_completeness_scores) / len(candidate_completeness_scores),
             3,
@@ -1300,6 +1322,7 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
             f"- title_only_answer_degraded_count: {summary['title_only_answer_degraded_count']}",
             f"- insufficient_canonical_span_evidence_count: {summary['insufficient_canonical_span_evidence_count']}",
             f"- source_key_collision_detected_count: {summary['source_key_collision_detected_count']}",
+            f"- source_key_v2_collision_detected_count: {summary['source_key_v2_collision_detected_count']}",
             f"- avg_candidate_completeness_score: {summary['avg_candidate_completeness_score']}",
         ]
     )
@@ -1307,6 +1330,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- canonical_span_materialization_reason.{status}: {count}")
     for status, count in summary["source_key_collision_pair_counts"].items():
         lines.append(f"- source_key_collision_pair.{status}: {count}")
+    for status, count in summary["source_key_v2_collision_pair_counts"].items():
+        lines.append(f"- source_key_v2_collision_pair.{status}: {count}")
     lines.extend(["", "## Task Type Answer Template"])
     for status, count in summary["task_type_answer_template_counts"].items():
         lines.append(f"- {status}: {count}")

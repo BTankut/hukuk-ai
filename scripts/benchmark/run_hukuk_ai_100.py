@@ -134,9 +134,16 @@ ANSWER_FIELDS = [
     "title_only_fallback_used",
     "body_text_available",
     "body_text_length",
+    "legacy_source_key",
+    "canonical_source_key_v2",
+    "selected_canonical_source_key_v2",
+    "selected_canonical_document_key_v2",
     "source_key_collision_detected",
     "source_key_collision_keys",
     "source_key_collision_pair",
+    "source_key_v2_collision_detected",
+    "source_key_v2_collision_keys",
+    "source_key_v2_collision_pair",
     "corpus_materialization_required",
     "candidate_completeness_score",
     "selected_document_has_body_span",
@@ -684,12 +691,22 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "title_only_fallback_used": selector_value(response, "title_only_fallback_used"),
         "body_text_available": selector_value(response, "body_text_available"),
         "body_text_length": selector_value(response, "body_text_length"),
+        "legacy_source_key": selector_value(response, "legacy_source_key"),
+        "canonical_source_key_v2": selector_value(response, "canonical_source_key_v2"),
+        "selected_canonical_source_key_v2": selector_value(response, "selected_canonical_source_key_v2"),
+        "selected_canonical_document_key_v2": selector_value(response, "selected_canonical_document_key_v2"),
         "source_key_collision_detected": selector_value(response, "source_key_collision_detected")
         or retrieval_feature_value(response, "source_key_collision_detected"),
         "source_key_collision_keys": selector_value(response, "source_key_collision_keys")
         or retrieval_feature_value(response, "source_key_collision_keys"),
         "source_key_collision_pair": selector_value(response, "source_key_collision_pair")
         or retrieval_feature_value(response, "source_key_collision_pair"),
+        "source_key_v2_collision_detected": selector_value(response, "source_key_v2_collision_detected")
+        or retrieval_feature_value(response, "source_key_v2_collision_detected"),
+        "source_key_v2_collision_keys": selector_value(response, "source_key_v2_collision_keys")
+        or retrieval_feature_value(response, "source_key_v2_collision_keys"),
+        "source_key_v2_collision_pair": selector_value(response, "source_key_v2_collision_pair")
+        or retrieval_feature_value(response, "source_key_v2_collision_pair"),
         "corpus_materialization_required": selector_value(response, "corpus_materialization_required"),
         "candidate_completeness_score": contract_value(response, "candidate_completeness_score")
         or selector_value(response, "candidate_completeness_score"),
