@@ -171,6 +171,9 @@ SCORED_FIELDS = [
     "evidence_slot_reentry_applied",
     "evidence_slot_reentry_slots",
     "rubric_aligned_completeness_class",
+    "answer_slot_evidence_map",
+    "answer_slot_coverage_score",
+    "answer_slot_missing_reasons",
     "rubric_completeness_class",
     "right_document_wrong_article_or_span",
     "expected_family_prior",
@@ -675,6 +678,9 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "evidence_slot_reentry_applied": answer.get("evidence_slot_reentry_applied", ""),
         "evidence_slot_reentry_slots": answer.get("evidence_slot_reentry_slots", ""),
         "rubric_aligned_completeness_class": answer.get("rubric_aligned_completeness_class", ""),
+        "answer_slot_evidence_map": answer.get("answer_slot_evidence_map", ""),
+        "answer_slot_coverage_score": answer.get("answer_slot_coverage_score", ""),
+        "answer_slot_missing_reasons": answer.get("answer_slot_missing_reasons", ""),
         "rubric_completeness_class": canonical_rubric_completeness_class,
         "right_document_wrong_article_or_span": bool_text(canonical_right_doc_wrong_span),
         "expected_family_prior": answer.get("expected_family_prior", ""),
@@ -908,6 +914,17 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     evidence_slot_reentry_count = sum(
         1 for row in rows if bool_field(str(row.get("evidence_slot_reentry_applied", ""))) is True
     )
+    answer_slot_coverage_scores: list[float] = []
+    answer_slot_missing_reason_counts: Counter[str] = Counter()
+    for row in rows:
+        raw_score = str(row.get("answer_slot_coverage_score", "")).strip()
+        if raw_score:
+            try:
+                answer_slot_coverage_scores.append(float(raw_score))
+            except ValueError:
+                pass
+        for reason in split_rubric(row.get("answer_slot_missing_reasons", "")):
+            answer_slot_missing_reason_counts[reason] += 1
     required_fact_coverage_scores: list[float] = []
     for row in rows:
         raw_score = str(row.get("required_fact_coverage_score", "")).strip()
@@ -1055,6 +1072,13 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "rubric_aligned_completeness_class_counts": dict(sorted(rubric_aligned_completeness_counts.items())),
         "minimum_answer_facts_present_count": minimum_answer_facts_present_count,
         "evidence_slot_reentry_count": evidence_slot_reentry_count,
+        "avg_answer_slot_coverage_score": round(
+            sum(answer_slot_coverage_scores) / len(answer_slot_coverage_scores),
+            3,
+        )
+        if answer_slot_coverage_scores
+        else 0.0,
+        "answer_slot_missing_reason_counts": dict(sorted(answer_slot_missing_reason_counts.items())),
         "avg_required_fact_coverage_score": round(
             sum(required_fact_coverage_scores) / len(required_fact_coverage_scores),
             3,
@@ -1291,6 +1315,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- {status}: {count}")
     lines.extend(["", "## Evidence Slot Reentry"])
     lines.append(f"- evidence_slot_reentry_count: {summary['evidence_slot_reentry_count']}")
+    lines.append(f"- avg_answer_slot_coverage_score: {summary['avg_answer_slot_coverage_score']}")
+    for status, count in summary["answer_slot_missing_reason_counts"].items():
+        lines.append(f"- answer_slot_missing_reason.{status}: {count}")
     lines.extend(["", "## Confidence Policy Adjustment"])
     lines.append(f"- confidence_policy_adjusted_count: {summary['confidence_policy_adjusted_count']}")
     for status, count in summary["confidence_policy_adjustment_reason_counts"].items():

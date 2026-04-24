@@ -7835,6 +7835,119 @@ def _evidence_supported_completeness_slots(
     return dedupe_strings(supported)
 
 
+def _slot_keyword_hints(slot: str) -> tuple[str, ...]:
+    hints = {
+        "result_or_holding": ("uygulan", "sonuc", "hukum", "karar", "duzenlen"),
+        "governing_source": ("kanun", "yonetmelik", "teblig", "tuzuk", "karar", "kararname", "genelge"),
+        "exact_source_identity": ("madde", "m ", "sayili", "sayılı"),
+        "document_selection_reason": ("dayanak", "kapsam", "uygulan", "duzenlen", "ilgili", "esas"),
+        "article_or_span": ("madde", "gecici madde", "fikra", "bent"),
+        "temporal_validity": ("yururluk", "mulga", "tarih", "halen", "gecerli", "9999 12 31"),
+        "exception_or_limitation": ("istisna", "sakli", "haric", "muaf", "sinir", "uygulanmaz"),
+        "procedure_or_consequence": ("usul", "sure", "basvuru", "itiraz", "sonuc", "yaptirim", "bildirim", "islem"),
+        "scenario_applicability": ("sart", "kosul", "halinde", "kapsam", "uygulan", "aranir", "bakimindan"),
+        "hierarchy_or_conflict_rule": ("oncelik", "ust norm", "alt norm", "ozel duzenleme", "kanuna aykiri", "dayanak"),
+    }
+    return hints.get(slot, ())
+
+
+def _chunk_span_id(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    for key in ("span_id", "chunk_id", "source_id", "citation"):
+        value = metadata.get(key)
+        if value:
+            return str(value)
+    return chunk.citation or chunk.source or ""
+
+
+def _chunk_article(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    for key in ("article_or_section", "madde_no", "article", "madde"):
+        value = metadata.get(key)
+        if value not in {None, ""}:
+            return str(value)
+    match = re.search(r"\bm\.?\s*(\d+[a-z]?)\b", chunk.citation or "", re.IGNORECASE)
+    return match.group(1) if match else ""
+
+
+def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
+    surface = normalize_query_text(
+        " ".join(
+            part
+            for part in (
+                chunk.text,
+                chunk.citation,
+                chunk.source or "",
+                _resolve_chunk_source_title(chunk),
+                _resolve_chunk_source_identifier(chunk),
+            )
+            if part
+        )
+    )
+    hints = _slot_keyword_hints(slot)
+    if slot in {"governing_source", "exact_source_identity", "article_or_span"}:
+        return bool(chunk.citation or _resolve_chunk_source_identifier(chunk) or _chunk_article(chunk))
+    return any(hint in surface for hint in hints)
+
+
+def _build_answer_slot_evidence_map(
+    *,
+    required_slots: list[str],
+    satisfied_slots: list[str],
+    evidence_reentry_slots: list[str],
+    missing_slots: list[str],
+    article_span_selector: dict[str, Any] | None,
+    chunks: list[RetrievedChunk],
+) -> tuple[list[dict[str, Any]], float, list[str]]:
+    selector = article_span_selector if isinstance(article_span_selector, dict) else {}
+    selected_main_span_id = str(selector.get("selected_main_span_id") or "").strip()
+    selected_article = str(selector.get("selected_article") or "").strip()
+    satisfied = set(satisfied_slots)
+    reentry = set(evidence_reentry_slots)
+    missing = set(missing_slots)
+    rows: list[dict[str, Any]] = []
+    missing_reasons: list[str] = []
+    confidence_sum = 0.0
+
+    for slot in required_slots:
+        matched_chunk = next((chunk for chunk in chunks if _chunk_supports_slot(chunk, slot)), None)
+        span_id = _chunk_span_id(matched_chunk) if matched_chunk is not None else ""
+        article = _chunk_article(matched_chunk) if matched_chunk is not None else ""
+        if slot == "article_or_span" and selected_main_span_id:
+            span_id = selected_main_span_id
+            article = selected_article or article
+        if slot in missing:
+            confidence = 0.0
+            reason = "slot_not_satisfied_by_answer_or_evidence"
+            missing_reasons.append(f"{slot}:{reason}")
+        elif not span_id:
+            confidence = 0.45
+            reason = "answer_surface_only"
+            missing_reasons.append(f"{slot}:evidence_span_not_mapped")
+        elif slot in reentry:
+            confidence = 0.65
+            reason = "evidence_reentry_support"
+        elif slot in satisfied:
+            confidence = 0.85
+            reason = "answer_and_evidence_support"
+        else:
+            confidence = 0.0
+            reason = "slot_not_required_or_unknown"
+        confidence_sum += confidence
+        rows.append(
+            {
+                "answer_slot": slot,
+                "evidence_span_id": span_id,
+                "evidence_article": article,
+                "slot_confidence": round(confidence, 3),
+                "slot_missing_reason": reason,
+            }
+        )
+
+    coverage = round(confidence_sum / len(required_slots), 3) if required_slots else 1.0
+    return rows, coverage, dedupe_strings(missing_reasons)
+
+
 def _count_answer_fact_units(answer_text: str) -> int:
     stripped = re.sub(r"\[Kaynak:[^\]]+\]", " ", answer_text or "")
     pieces = re.split(r"(?:\n+|(?<=[.!?])\s+|(?:^|\s)(?:[-*]|\d+[.)])\s+)", stripped)
@@ -7902,6 +8015,16 @@ def _build_completeness_synthesis_features(
     if has_answer and evidence_reentry_slots:
         satisfied_slots = dedupe_strings([*satisfied_slots, *evidence_reentry_slots])
     missing_slots = [slot for slot in required_slots if slot not in set(satisfied_slots)]
+    answer_slot_evidence_map, answer_slot_coverage_score, answer_slot_missing_reasons = (
+        _build_answer_slot_evidence_map(
+            required_slots=required_slots,
+            satisfied_slots=satisfied_slots,
+            evidence_reentry_slots=evidence_reentry_slots,
+            missing_slots=missing_slots,
+            article_span_selector=article_span_selector,
+            chunks=chunks,
+        )
+    )
     slot_factor = len(satisfied_slots) / len(required_slots) if required_slots else 1.0
     answer_factor = min(1.0, answer_fact_units / minimum_required_facts) if has_answer else 0.0
     evidence_factor = (
@@ -7967,6 +8090,9 @@ def _build_completeness_synthesis_features(
         "evidence_slot_reentry_applied": bool(evidence_reentry_slots),
         "evidence_slot_reentry_slots": evidence_reentry_slots,
         "rubric_aligned_completeness_class": rubric_class,
+        "answer_slot_evidence_map": answer_slot_evidence_map,
+        "answer_slot_coverage_score": answer_slot_coverage_score,
+        "answer_slot_missing_reasons": answer_slot_missing_reasons,
         "candidate_completeness_score": candidate_completeness_score,
         "selected_document_has_body_span": selected_document_has_body_span,
         "selected_document_has_non_title_span": selected_document_has_non_title_span,
@@ -8211,6 +8337,9 @@ def _build_trace_payload(
             "evidence_slot_reentry_applied": answer_contract.get("evidence_slot_reentry_applied"),
             "evidence_slot_reentry_slots": answer_contract.get("evidence_slot_reentry_slots"),
             "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
+            "answer_slot_evidence_map": answer_contract.get("answer_slot_evidence_map"),
+            "answer_slot_coverage_score": answer_contract.get("answer_slot_coverage_score"),
+            "answer_slot_missing_reasons": answer_contract.get("answer_slot_missing_reasons"),
             "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
             "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
             "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
@@ -8316,6 +8445,9 @@ def _build_trace_payload(
                 "evidence_slot_reentry_applied": answer_contract.get("evidence_slot_reentry_applied"),
                 "evidence_slot_reentry_slots": answer_contract.get("evidence_slot_reentry_slots"),
                 "rubric_aligned_completeness_class": answer_contract.get("rubric_aligned_completeness_class"),
+                "answer_slot_evidence_map": answer_contract.get("answer_slot_evidence_map"),
+                "answer_slot_coverage_score": answer_contract.get("answer_slot_coverage_score"),
+                "answer_slot_missing_reasons": answer_contract.get("answer_slot_missing_reasons"),
                 "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
                 "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
                 "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),

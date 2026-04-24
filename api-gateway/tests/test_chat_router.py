@@ -613,6 +613,13 @@ class TestLawSignalParsing:
         assert features["required_fact_coverage_score"] == 1.0
         assert features["missing_fact_slots"] == []
         assert features["rubric_aligned_completeness_class"] == "rubric_sufficient"
+        slot_map = {
+            item["answer_slot"]: item
+            for item in features["answer_slot_evidence_map"]
+        }
+        assert slot_map["procedure_or_consequence"]["evidence_span_id"] == "X m.2"
+        assert slot_map["exception_or_limitation"]["evidence_span_id"] == "X m.3"
+        assert features["answer_slot_coverage_score"] > 0.70
 
     def test_completeness_synthesis_gates_missing_temporal_slot(self):
         features = _build_completeness_synthesis_features(
@@ -670,6 +677,12 @@ class TestLawSignalParsing:
         assert features["evidence_slot_reentry_applied"] is True
         assert features["evidence_slot_reentry_slots"] == ["procedure_or_consequence"]
         assert features["completeness_degrade_reason"] == "complete_enough"
+        slot_map = {
+            item["answer_slot"]: item
+            for item in features["answer_slot_evidence_map"]
+        }
+        assert slot_map["procedure_or_consequence"]["slot_confidence"] == 0.65
+        assert slot_map["procedure_or_consequence"]["slot_missing_reason"] == "evidence_reentry_support"
 
     def test_completeness_synthesis_does_not_reenter_slots_when_selector_identity_is_weak(self):
         features = _build_completeness_synthesis_features(
