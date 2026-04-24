@@ -606,6 +606,13 @@ def _should_force_legacy_repealed_state(
         return True
     if not _legacy_query_intent(trace_payload):
         return False
+    if effective_state in {"active", "amended"} and source_family in {
+        "CB_GENELGE",
+        "CB_KARAR",
+        "CB_KARARNAME",
+        "CB_YONETMELIK",
+    }:
+        return False
 
     selector = _trace_article_selector(trace_payload)
     if bool(selector.get("legacy_candidate_preferred")):
@@ -944,6 +951,13 @@ def _resolve_legacy_answer_mode(
 ) -> str | None:
     if effective_state != "repealed" and source_family != "MULGA" and not _legacy_query_intent(trace_payload):
         return None
+    if effective_state in {"active", "amended"} and source_family in {
+        "CB_GENELGE",
+        "CB_KARAR",
+        "CB_KARARNAME",
+        "CB_YONETMELIK",
+    }:
+        return None
     normalized = _lower_asciiish(f"{_trace_question_text(trace_payload)} {text}")
     if any(term in normalized for term in ("gecis", "gecici", "%25", "sinir", "siniri", "sureli")):
         return "repealed_transition_answer"
@@ -1138,17 +1152,17 @@ def controlled_fallback_answer(contract: dict[str, Any]) -> str:
     effective_state = _clean(contract.get("effective_state_claimed")) or "unknown"
     temporal_qualification = _clean(contract.get("temporal_qualification")) or "unknown"
     answer_mode = _clean(contract.get("answer_mode"))
-    if (
-        source_family == "MULGA"
-        or effective_state == "repealed"
-        or answer_mode
+    use_legacy_fallback = source_family == "MULGA" or effective_state == "repealed" or (
+        answer_mode
         in {
             "historical_repealed_answer",
             "repealed_transition_answer",
             "not_currently_applicable_answer",
             "repealed_or_uncertain",
         }
-    ):
+        and effective_state not in {"active", "amended"}
+    )
+    if use_legacy_fallback:
         transition_note = (
             "Geçiş veya süreli uygulama etkisi seçili kanıtta açıkça görünüyorsa yalnızca o sınırda dikkate alınmalıdır; "
             "aksi halde güncel/yürürlükteki düzenleme ayrıca doğrulanmalıdır."
@@ -1505,6 +1519,18 @@ def build_or_repair_answer_contract(
         natural_identifier_inference_supported = (
             not query_article_tokens and _selector_supports_natural_identifier_inference(article_selector)
         )
+        source_identity_reranker = _trace_source_identity_reranker(trace_payload)
+        official_source_supplement_selected = (
+            str(source_identity_reranker.get("identity_rerank_input_lane") or "") == "official_source_supplement"
+        )
+        document_level_body_supported = bool(
+            source_family in {"CB_GENELGE"}
+            and not query_article_tokens
+            and official_source_supplement_selected
+            and _bool_flag(article_selector.get("canonical_span_materialized"))
+            and _bool_flag(article_selector.get("selected_document_has_document_level_body_span"))
+            and str(article_selector.get("body_extraction_source") or "") == "document_level_body"
+        )
         if query_article_tokens and not selector_exact_article_hit:
             article_lock_failed = True
             verification_findings.append("article_lock_failed")
@@ -1513,6 +1539,7 @@ def build_or_repair_answer_contract(
             selector_sufficiency == "insufficient_support"
             or (
                 not natural_identifier_inference_supported
+                and not document_level_body_supported
                 and support_span_count is not None
                 and support_span_count < 2
                 and article_match_type not in {"exact", "explicit_exact"}

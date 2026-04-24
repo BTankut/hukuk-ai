@@ -950,6 +950,122 @@ def test_legacy_suppressed_answer_keeps_temporal_answer_mode():
     assert "Mevcut rejim" in fallback
 
 
+def test_active_cb_genelge_legacy_contrast_does_not_use_mulga_fallback():
+    result = build_or_repair_answer_contract(
+        qid="CBG-04",
+        answer_text="Güncel Cumhurbaşkanlığı Genelgesi esas alınmalıdır. [Kaynak: 3 m.0]",
+        citations=["3 m.0"],
+        answer_contract={
+            "answer_text": "Güncel Cumhurbaşkanlığı Genelgesi esas alınmalıdır. [Kaynak: 3 m.0]",
+            "primary_source_id": "3 m.0",
+            "source_family_claimed": "CB_GENELGE",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "Mobbing sorusunda hâlâ eski Başbakanlık Genelgesine mi dönmelisin, yoksa 2025/3 sayılı yeni Cumhurbaşkanlığı Genelgesi mi esas alınmalı?",
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "cb_genelge",
+                    "preferred_families": ["cb_genelge"],
+                    "historical_or_repealed_question": True,
+                    "historical_scope_detected": True,
+                },
+                "article_span_selector": {
+                    "legacy_intent_binding_active": True,
+                    "legacy_candidate_preferred": True,
+                    "selected_document_key": "3",
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "3:3:m0:f0:from2023-01-28:to9999-12-31",
+                    "citation": "3 m.0/f.0",
+                    "source_title": "İş Yerlerinde Psikolojik Tacizin (Mobbing) Önlenmesi ile İlgili",
+                    "source_family": "cb_genelge",
+                    "source_identifier": "3 m.0",
+                    "article_or_section": "0",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["source_family_claimed"] == "CB_GENELGE"
+    assert contract["effective_state_claimed"] == "active"
+    assert contract["answer_mode"] != "repealed_transition_answer"
+    fallback = controlled_fallback_answer({**contract, "answer_mode": "repealed_transition_answer"})
+    assert "mülga/tarihsel" not in fallback
+    assert "mevcut kaynaklarla tam destekli" in fallback
+
+
+def test_cb_genelge_document_level_body_support_is_not_suppressed_as_span_gap():
+    result = build_or_repair_answer_contract(
+        qid="CBG-03",
+        answer_text=(
+            "2025/3 sayılı Cumhurbaşkanlığı Genelgesi işveren ve yöneticilere "
+            "psikolojik taciz risklerini gözetme, önleyici ve koruyucu politikalar geliştirme "
+            "yükümlülüğü getirir. [Kaynak: 3 m.0/f.0]"
+        ),
+        citations=["3 m.0/f.0"],
+        answer_contract={
+            "answer_text": (
+                "2025/3 sayılı Cumhurbaşkanlığı Genelgesi işveren ve yöneticilere "
+                "psikolojik taciz risklerini gözetme, önleyici ve koruyucu politikalar geliştirme "
+                "yükümlülüğü getirir. [Kaynak: 3 m.0/f.0]"
+            ),
+            "primary_source_id": "3 m.0/f.0",
+            "source_family_claimed": "CB_GENELGE",
+            "source_validity": "active",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "2025/3 sayılı Mobbing Genelgesi uyarınca işverenin önleyici yükümlülükleri nelerdir?",
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "cb_genelge",
+                    "preferred_families": ["cb_genelge"],
+                },
+                "article_span_selector": {
+                    "selector_evidence_sufficiency": "partially_supported",
+                    "support_span_count": 1,
+                    "article_match_type": "source_local_support",
+                    "query_article_tokens": [],
+                    "canonical_span_materialized": True,
+                    "selected_document_has_document_level_body_span": True,
+                    "body_extraction_source": "document_level_body",
+                    "selected_document_key": "3",
+                },
+                "source_identity_reranker": {
+                    "identity_rerank_input_lane": "official_source_supplement",
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "3:3:m0:f0:from2025-03-06:to9999-12-31",
+                    "citation": "3 m.0/f.0",
+                    "source_title": "İş Yerlerinde Psikolojik Tacizin (Mobbing) Önlenmesi ile İlgili",
+                    "source_family": "cb_genelge",
+                    "source_identifier": "3 m.0",
+                    "article_or_section": "0",
+                    "effective_state": "active",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["effective_state_claimed"] == "active"
+    assert contract["answer_suppressed_due_to_evidence_gap"] is False
+    assert contract["support_insufficient_for_specific_claim"] is False
+    assert contract["answer_mode"] != "insufficient_grounding"
+
+
 def test_repair_preserves_explicit_legacy_khk_family_when_query_is_bound_to_khk():
     result = build_or_repair_answer_contract(
         qid="KHK-03",

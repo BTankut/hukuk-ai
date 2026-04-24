@@ -52,6 +52,8 @@ from routers.chat import (
     _build_retrieval_plan_expansion,
     _build_metadata_first_query_expansion,
     _build_source_cluster_candidates,
+    _build_cb_genelge_document_level_answer,
+    _build_source_supplement_chunks,
     _metadata_lookup_has_strong_query_anchor,
     _parse_metadata_lookup_query_signals,
     _annotate_recall_lane_chunks,
@@ -69,6 +71,7 @@ from routers.chat import (
     _extract_source_identifier_tokens,
     _focus_chunks_on_selected_sources,
     _infer_requested_source_families,
+    _metadata_first_focus_keys_for_source_lock,
     _prioritize_chunks_for_source_families,
     _rerank_chunks_by_source_identity,
     _resolve_chunk_source_family,
@@ -91,6 +94,7 @@ from routers.chat import (
 )
 from rag.orchestrator import OrchestratorResponse, RetrievedChunk
 from rag.source_catalog import load_canonical_source_catalog
+from rag.source_supplements import load_source_supplements_for_keys
 from rag.retriever import MetadataFilter, MockRetriever
 from session_store import RedisSessionBackend
 from source_family_resolver import SourceFamilyCandidate, SourceFamilyResolution
@@ -2380,6 +2384,23 @@ class TestLawSignalParsing:
         assert {"value": "2026", "kind": "year", "source": "year_pattern"} in signals["parsed_temporal_cues"]
         assert any(item["kind"] == "current" for item in signals["parsed_temporal_cues"])
 
+    def test_metadata_lookup_parser_preserves_slash_numbered_genelge_identifier(self):
+        signals = _parse_metadata_lookup_query_signals(
+            "2025/3 sayılı Mobbing Genelgesi uyarınca hangi önleyici yükümlülükler gerekir?"
+        )
+
+        assert _extract_source_identifier_tokens(
+            "2025/3 sayılı Mobbing Genelgesi uyarınca hangi önleyici yükümlülükler gerekir?"
+        ) == {"2025/3"}
+        assert "cb_genelge" in signals["parsed_family_candidates"]
+        assert any(
+            item["value"] == "2025/3"
+            and item["kind"] == "cb_genelge"
+            and item["source"] == "slash_numbered_source_pattern"
+            for item in signals["parsed_identifier_candidates"]
+        )
+        assert any("mobbing genelgesi" in item["value"] for item in signals["parsed_title_ngrams"])
+
     def test_metadata_lookup_parser_extracts_issuer_and_regulation_title_without_qid_rules(self):
         signals = _parse_metadata_lookup_query_signals(
             "Ticaret Bakanlığı ithalat rejimi tebliği kapsamındaki başvuru usulünü açıklar mısın?"
@@ -2743,6 +2764,207 @@ class TestLawSignalParsing:
         assert "identifier_exact" in selector["candidates"][0]["match_reasons"]
         noisy_candidate = next(item for item in selector["candidates"] if item["source_key"] == "10019")
         assert "identifier_conflict_penalty" in noisy_candidate["match_reasons"]
+
+    @patch("routers.chat.load_canonical_source_catalog")
+    def test_metadata_first_selector_uses_genelge_topic_anchor_over_generic_year_match(
+        self, mock_catalog
+    ):
+        mock_catalog.return_value = {
+            "3": {
+                "source_key": "3",
+                "canonical_title": "İş Yerlerinde Psikolojik Tacizin (Mobbing) Önlenmesi ile İlgili",
+                "canonical_title_normalized": "is yerlerinde psikolojik tacizin mobbing onlenmesi ile ilgili",
+                "canonical_identifier": "3",
+                "canonical_identifier_type": "genelge_no",
+                "source_family_canonical": "cb_genelge",
+                "source_family_mapped": "cb_genelge",
+                "source_family_raw": "cb_genelge",
+                "source_family_mapping_reason": "native_family",
+                "issuer": "Cumhurbaşkanlığı",
+                "issuer_normalized": "cumhurbaskanligi",
+                "year_signals": ["2023"],
+                "effective_state": "active",
+                "alias_titles": [],
+            },
+            "18": {
+                "source_key": "18",
+                "canonical_title": "Sanal Ortamda Yasa Dışı Bahis ve Kumarla Mücadele Eylem Planı (2025-2026) ile İlgili",
+                "canonical_title_normalized": "sanal ortamda yasa disi bahis ve kumarla mucadele eylem plani 2025 2026 ile ilgili",
+                "canonical_identifier": "18",
+                "canonical_identifier_type": "genelge_no",
+                "source_family_canonical": "cb_genelge",
+                "source_family_mapped": "cb_genelge",
+                "source_family_raw": "cb_genelge",
+                "source_family_mapping_reason": "native_family",
+                "issuer": "Cumhurbaşkanlığı",
+                "issuer_normalized": "cumhurbaskanligi",
+                "year_signals": ["2025", "2026"],
+                "effective_state": "active",
+                "alias_titles": [],
+            },
+        }
+        query = "2025/3 sayılı Mobbing Genelgesi uyarınca hangi önleyici yükümlülükler gerekir?"
+
+        selector = _select_metadata_first_source_candidates(
+            query=query,
+            requested_source_families=["cb_genelge"],
+            source_family_resolution=_resolve_source_family_prior(query),
+            query_metadata_signals=_parse_metadata_lookup_query_signals(query),
+        )
+
+        assert selector is not None
+        assert selector["candidates"][0]["source_key"] == "3"
+        assert any(
+            reason.startswith("cb_genelge_topic_match:")
+            for reason in selector["candidates"][0]["match_reasons"]
+        )
+        focus_keys = _metadata_first_focus_keys_for_source_lock(selector)
+        assert "3" in focus_keys
+        assert any("mobbing" in key for key in focus_keys)
+
+    def test_article_selector_uses_metadata_topic_lock_over_slash_year_fragment(self):
+        query = "2025/3 sayılı Mobbing Genelgesi uyarınca işverenin önleyici yükümlülükleri nelerdir?"
+        selected_source_keys = {"3", "iş yerlerinde psikolojik tacizin (mobbing) önlenmesi ile ilgili"}
+        gambling = RetrievedChunk(
+            text="18 m.0 GENELGE Konu: Sanal Ortamda Yasa Dışı Bahis ve Kumarla Mücadele Eylem Planı (2025-2026).",
+            citation="18 m.0/f.0",
+            source="18",
+            score=0.95,
+            metadata={
+                "source_family": "cb_genelge",
+                "source_family_canonical": "cb_genelge",
+                "source_family_mapped": "cb_genelge",
+                "source_title": "Sanal Ortamda Yasa Dışı Bahis, Şans Oyunları ve Kumarla Mücadele Eylem Planı (2025-2026) ile İlgili",
+                "full_title": "Sanal Ortamda Yasa Dışı Bahis, Şans Oyunları ve Kumarla Mücadele Eylem Planı (2025-2026) ile İlgili",
+                "source_id": "18:18:m0:f0:from2022-12-03:to9999-12-31",
+                "span_id": "18 m.0/f.0",
+                "law_no": "18",
+                "genelge_number": "18",
+                "madde_no": "0",
+                "effective_state": "active",
+                "effective_start": "2022-12-03",
+                "effective_end": "9999-12-31",
+            },
+        )
+        mobbing = RetrievedChunk(
+            text="3 m.0 GENELGE Konu: İş Yerlerinde Psikolojik Tacizin (Mobbing) Önlenmesi ile İlgili önleyici tedbirler.",
+            citation="3 m.0/f.0",
+            source="3",
+            score=0.20,
+            metadata={
+                "source_family": "cb_genelge",
+                "source_family_canonical": "cb_genelge",
+                "source_family_mapped": "cb_genelge",
+                "source_title": "İş Yerlerinde Psikolojik Tacizin (Mobbing) Önlenmesi ile İlgili",
+                "full_title": "İş Yerlerinde Psikolojik Tacizin (Mobbing) Önlenmesi ile İlgili",
+                "source_id": "3:3:m0:f0:from2023-01-28:to9999-12-31",
+                "span_id": "3 m.0/f.0",
+                "law_no": "3",
+                "genelge_number": "3",
+                "madde_no": "0",
+                "effective_state": "active",
+                "effective_start": "2023-01-28",
+                "effective_end": "9999-12-31",
+            },
+        )
+
+        _chunks, selector = _select_article_span_evidence(
+            query=query,
+            chunks=[gambling, mobbing],
+            requested_source_families=["cb_genelge"],
+            selected_source_keys=selected_source_keys,
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+
+        assert selector["selected_document_key"] == "3"
+        assert selector["selector_reason"] == "selected_source_lock"
+        assert selector["identifier_tokens"] == ["2025/3"]
+
+    def test_source_supplement_materializes_cb_genelge_document_body(self):
+        rows = load_source_supplements_for_keys({"3"}, source_families={"cb_genelge"})
+        assert rows
+        assert "önleyici ve koruyucu politikalar" in rows[0]["text"]
+
+        chunks = _build_source_supplement_chunks(rows)
+        query = "2025/3 sayılı Mobbing Genelgesi uyarınca işverenin önleyici yükümlülükleri nelerdir?"
+        ranked, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["cb_genelge"],
+            selected_source_keys={"3", "2025/3"},
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+        _annotate_canonical_span_materialization(
+            chunks=ranked,
+            article_span_selector=selector,
+            family_routing_policy=None,
+        )
+
+        assert selector["selected_document_key"] == "3"
+        assert selector["canonical_span_materialized"] is True
+        assert selector["body_text_available"] is True
+        assert selector["body_extraction_source"] == "document_level_body"
+        assert selector["corpus_materialization_required"] is False
+        assert selector["selector_reason"] == "selected_source_lock"
+
+    def test_cb_genelge_document_level_template_uses_only_selected_source_text(self):
+        chunks = _build_source_supplement_chunks(
+            load_source_supplements_for_keys({"3"}, source_families={"cb_genelge"})
+        )
+        query = "2025/3 sayılı Mobbing Genelgesi uyarınca işverenin önleyici yükümlülükleri nelerdir?"
+        ranked, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["cb_genelge"],
+            selected_source_keys={"3", "2025/3"},
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+        _annotate_canonical_span_materialization(
+            chunks=ranked,
+            article_span_selector=selector,
+            family_routing_policy=None,
+        )
+
+        answer = _build_cb_genelge_document_level_answer(
+            query=query,
+            chunks=ranked,
+            article_span_selector=selector,
+        )
+
+        assert answer is not None
+        assert "önleyici ve koruyucu politikalar" in answer
+        assert "İşyeri Hekimi" not in answer
+        assert "İş Güvenliği Uzmanı" not in answer
+        assert "[Kaynak: 3 m.0/f.0]" in answer
+
+    def test_cb_genelge_temporal_template_keeps_active_new_genelge_and_repealed_old_one_separate(self):
+        chunks = _build_source_supplement_chunks(
+            load_source_supplements_for_keys({"3"}, source_families={"cb_genelge"})
+        )
+        query = "Hâlâ eski genelgeye mi dönülmeli, yoksa 2025/3 sayılı yeni Cumhurbaşkanlığı Genelgesi mi esas alınmalı?"
+        ranked, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["cb_genelge"],
+            selected_source_keys={"3", "2025/3"},
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+        _annotate_canonical_span_materialization(
+            chunks=ranked,
+            article_span_selector=selector,
+            family_routing_policy=None,
+        )
+
+        answer = _build_cb_genelge_document_level_answer(
+            query=query,
+            chunks=ranked,
+            article_span_selector=selector,
+        )
+
+        assert answer is not None
+        assert "seçili kaynak durumu active" in answer
+        assert "2011/2 sayılı Genelge yürürlükten kaldırılmıştır" in answer
+        assert "mülga/tarihsel" not in answer
 
     def test_metadata_first_identifier_tokens_ignore_article_only_numbers(self, tmp_path, monkeypatch):
         article_rows = tmp_path / "article_rows.jsonl"

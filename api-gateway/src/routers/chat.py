@@ -70,6 +70,7 @@ from rag.source_catalog import (
     resolve_effective_state,
     source_family_mapping_profile,
 )
+from rag.source_supplements import load_source_supplements_for_keys
 from rag.token_manager import estimate_tokens
 from release_controls import (
     api_version_label,
@@ -761,12 +762,26 @@ def _metadata_lookup_identifier_kind(kind_text: str) -> str:
 
 def _extract_metadata_lookup_identifier_candidates(query: str) -> list[dict[str, str]]:
     normalized = normalize_canonical_text(query)
+    normalized_with_slashes = _normalize_tr_text(query or "")
     candidates: list[dict[str, str]] = []
     explicit_article_numbers = {
         article
         for _law, article in _extract_explicit_article_refs(query)
         if article and article.isdigit()
     }
+    for match in re.finditer(
+        r"\b(?P<value>(?:18|19|20)\d{2}/\d{1,4})\s+sayili\s+(?:[a-z0-9]{3,}\s+){0,8}"
+        r"(?P<kind>cumhurbaskanligi genelgesi|cumhurbaskani genelgesi|genelgesi|genelge)\b",
+        normalized_with_slashes,
+    ):
+        value = match.group("value")
+        candidates.append(
+            {
+                "value": value,
+                "kind": _metadata_lookup_identifier_kind(match.group("kind") or "genelge"),
+                "source": "slash_numbered_source_pattern",
+            }
+        )
     patterns = (
         r"\b(?P<value>\d{1,9}(?:[-/]\d{1,4})?)\s+sayili\s+(?P<kind>kanun hukmunde kararname|cumhurbaskanligi kararnamesi|cumhurbaskani karari|cumhurbaskanligi karari|cumhurbaskanligi genelgesi|kanun|khk|cbk|kararname|karar|genelge|teblig)\b",
         r"\b(?P<value>\d{1,9}(?:[-/]\d{1,4})?)\s+sayili\s+(?:[a-z0-9]{3,}\s+){0,8}(?P<kind>kanun hukmunde kararname|cumhurbaskanligi kararnamesi|cumhurbaskani karari|cumhurbaskanligi karari|cumhurbaskanligi genelgesi|kanun|khk|cbk|kararname|karar|genelge|teblig)\b",
@@ -999,11 +1014,22 @@ def _extract_source_identity_identifier_tokens(query: str) -> set[str]:
             if re.fullmatch(r"(?:18|19|20)\d{2}", token):
                 continue
             tokens.add(token)
-            tokens.add(token.split("-", 1)[0].split("/", 1)[0])
+            base_token = _source_identifier_base_alias(token)
+            if base_token:
+                tokens.add(base_token)
     for law in extract_numbered_law_mentions(query):
         if not re.fullmatch(r"(?:18|19|20)\d{2}", law):
             tokens.add(law)
     return {token for token in tokens if token and len(token) >= 1}
+
+
+def _source_identifier_base_alias(token: str) -> str:
+    base = str(token or "").split("-", 1)[0].split("/", 1)[0]
+    if not base or base == token:
+        return ""
+    if re.fullmatch(r"(?:18|19|20)\d{2}", base):
+        return ""
+    return base
 
 
 def _record_identifier_values(record: dict[str, Any]) -> set[str]:
@@ -1085,6 +1111,63 @@ def _metadata_lookup_title_signal_score(
             best_score = score
             best_reason = reason
     return best_score, reasons, best_reason
+
+
+_CB_GENELGE_TOPIC_STOPWORDS = {
+    "sayili",
+    "sayisi",
+    "genelge",
+    "genelgesi",
+    "cumhurbaskanligi",
+    "cumhurbaskani",
+    "uyarinca",
+    "bakimindan",
+    "karsisinda",
+    "hangi",
+    "asgari",
+    "gerekir",
+    "nedir",
+}
+
+
+def _metadata_lookup_cb_genelge_topic_score(
+    *,
+    title_tokens: set[str],
+    query_metadata_signals: dict[str, Any] | None,
+) -> tuple[float, list[str]]:
+    raw_items = (query_metadata_signals or {}).get("parsed_title_ngrams") if query_metadata_signals else None
+    if not isinstance(raw_items, list):
+        return 0.0, []
+
+    best_score = 0.0
+    best_reason = ""
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        phrase = normalize_canonical_text(item.get("value"))
+        phrase_tokens = [
+            token
+            for token in phrase.split()
+            if len(token) >= 4
+            and token not in _RETRIEVAL_PRIORITY_STOPWORDS
+            and token not in _METADATA_LOOKUP_TITLE_TYPE_TERMS
+            and token not in _METADATA_LOOKUP_TITLE_MARKERS
+            and token not in _CB_GENELGE_TOPIC_STOPWORDS
+            and not token.isdigit()
+        ]
+        if not phrase_tokens:
+            continue
+        overlap = len(set(phrase_tokens) & title_tokens)
+        if overlap <= 0:
+            continue
+        ratio = overlap / max(1, len(set(phrase_tokens)))
+        if ratio < 0.67:
+            continue
+        score = 18.0 + min(overlap, 4) * 6.0
+        if score > best_score:
+            best_score = score
+            best_reason = f"cb_genelge_topic_match:{overlap}"
+    return best_score, [best_reason] if best_reason else []
 
 
 def _metadata_lookup_has_strong_query_anchor(query_metadata_signals: dict[str, Any] | None) -> bool:
@@ -1247,6 +1330,14 @@ def _source_identity_record_score(
     if title_ngram_score:
         score += title_ngram_score
         reasons.extend(title_ngram_reasons)
+    if family == "cb_genelge":
+        cb_genelge_topic_score, cb_genelge_topic_reasons = _metadata_lookup_cb_genelge_topic_score(
+            title_tokens=title_tokens | alias_tokens,
+            query_metadata_signals=query_metadata_signals,
+        )
+        if cb_genelge_topic_score:
+            score += cb_genelge_topic_score
+            reasons.extend(cb_genelge_topic_reasons)
     if title_overlap:
         score += title_overlap * 4.0
         reasons.append(f"title_overlap:{title_overlap}")
@@ -1402,6 +1493,7 @@ def _select_metadata_first_source_candidates(
         has_strong_title_anchor = title_overlap >= 3
         has_title_ngram_anchor = any(
             reason.startswith("title_ngram_exact:") or reason.startswith("title_ngram_strong:")
+            or reason.startswith("cb_genelge_topic_match:")
             for reason in reasons
         )
         has_issuer_family_anchor = "issuer_exact" in reasons and (
@@ -2524,7 +2616,9 @@ def _extract_source_identifier_tokens(text: str) -> set[str]:
             if re.fullmatch(r"(?:19|20)\d{2}", token):
                 continue
             tokens.add(token)
-            tokens.add(token.split("-", 1)[0].split("/", 1)[0])
+            base_token = _source_identifier_base_alias(token)
+            if base_token:
+                tokens.add(base_token)
     for law in extract_numbered_law_mentions(text):
         if re.fullmatch(r"(?:19|20)\d{2}", law):
             continue
@@ -5023,6 +5117,63 @@ def _apply_relation_query_metadata_focus(
     return selector
 
 
+def _metadata_first_focus_keys_for_source_lock(
+    metadata_first_selector: dict[str, Any] | None,
+) -> set[str]:
+    if not metadata_first_selector or not metadata_first_selector.get("metadata_lookup_hit"):
+        return set()
+
+    candidates = [
+        candidate
+        for candidate in (metadata_first_selector.get("candidates") or [])
+        if isinstance(candidate, dict)
+    ]
+    if not candidates:
+        return set()
+
+    lookup_source = str(metadata_first_selector.get("metadata_lookup_source") or "")
+    if lookup_source == "exact_identifier_lookup" or metadata_first_selector.get("query_identifier_tokens"):
+        return {
+            str(key)
+            for candidate in candidates
+            for key in (candidate.get("focus_keys") or [])
+            if str(key or "").strip()
+        }
+
+    top = candidates[0]
+    try:
+        confidence = float(
+            top.get("metadata_lookup_confidence")
+            or metadata_first_selector.get("metadata_lookup_confidence")
+            or 0.0
+        )
+    except (TypeError, ValueError):
+        confidence = 0.0
+    if confidence < 0.75:
+        return set()
+
+    reasons = [
+        str(reason)
+        for reason in (top.get("match_reasons") or [])
+        if isinstance(reason, str) and reason.strip()
+    ]
+    strong_title_or_topic_anchor = any(
+        reason.startswith("title_ngram_exact:")
+        or reason.startswith("title_ngram_strong:")
+        or reason.startswith("cb_genelge_topic_match:")
+        or reason in {"title_exact_phrase", "title_strong_overlap"}
+        for reason in reasons
+    )
+    if not strong_title_or_topic_anchor:
+        return set()
+
+    return {
+        str(key)
+        for key in (top.get("focus_keys") or [])
+        if str(key or "").strip()
+    }
+
+
 def _legacy_source_binding_profile(
     chunk: RetrievedChunk,
     *,
@@ -5789,6 +5940,223 @@ def _build_retrieved_chunk(result: Any) -> RetrievedChunk:
         score=result.score,
         metadata=metadata,
     )
+
+
+def _build_source_supplement_chunks(rows: list[dict[str, Any]]) -> list[RetrievedChunk]:
+    chunks: list[RetrievedChunk] = []
+    for row in rows:
+        text = str(row.get("text") or "").strip()
+        source_key = str(row.get("source_key") or "").strip()
+        source_family = str(row.get("source_family") or "").strip()
+        title = str(row.get("canonical_title") or "").strip()
+        citation = str(row.get("citation") or f"{source_key} m.0/f.0").strip()
+        span_id = str(row.get("span_id") or citation).strip()
+        if not text or not source_key or not source_family:
+            continue
+
+        source_identifier = str(row.get("canonical_identifier") or source_key).strip()
+        citation_display = citation.split("/f", 1)[0].strip() or citation
+        source_id = (
+            f"{source_key}:{source_key}:m0:f0:"
+            f"from{row.get('effective_start') or 'unknown'}:"
+            f"to{row.get('effective_end') or 'unknown'}"
+        )
+        lanes = ["official_source_supplement", "metadata_guided_recall"]
+        metadata = {
+            "source_key": source_key,
+            "source_family": source_family,
+            "source_family_canonical": source_family,
+            "source_family_mapped": source_family,
+            "source_family_raw": source_family,
+            "source_family_mapping_reason": "official_source_supplement",
+            "source_title": title,
+            "full_title": title,
+            "belge_adi": title,
+            "law_name": title,
+            "canonical_title": title,
+            "canonical_title_family_normalized": row.get("canonical_title_normalized") or normalize_canonical_text(title),
+            "source_identifier": source_identifier,
+            "display_citation": f"{source_identifier} sayılı Cumhurbaşkanlığı Genelgesi",
+            "canonical_identifier": source_identifier,
+            "canonical_identifier_display": citation_display,
+            "belge_no": source_key,
+            "belge_kisa_adi": source_key,
+            "law_no": source_key,
+            "law_short_name": source_key,
+            "genelge_number": source_key,
+            "generalge_number": source_key,
+            "article_or_section": "0",
+            "madde_no": "0",
+            "article_no": "0",
+            "fikra_no": "0",
+            "source_id": source_id,
+            "span_id": span_id,
+            "chunk_id": span_id,
+            "document_key": source_key,
+            "official_gazette_date": row.get("official_gazette_date"),
+            "official_gazette_no": row.get("official_gazette_no"),
+            "resmi_gazete_tarih": row.get("official_gazette_date"),
+            "resmi_gazete_sayi": row.get("official_gazette_no"),
+            "effective_start": row.get("effective_start"),
+            "effective_end": row.get("effective_end"),
+            "yururluk_baslangic": row.get("effective_start"),
+            "yururluk_bitis": row.get("effective_end"),
+            "effective_state": row.get("effective_state") or "active",
+            "issuer": row.get("issuer"),
+            "issuer_canonical": row.get("issuer"),
+            "issuing_body_level": "cumhurbaskanligi",
+            "body": text,
+            "article_body": text,
+            "content": text,
+            "metin": text,
+            "official_source_url": row.get("official_source_url"),
+            "source_url": row.get("official_source_url"),
+            "official_source_supplement": True,
+            "retrieval_lane_sources": lanes,
+            "metadata_lane_present": True,
+            "dense_lane_present": False,
+            "merged_lane_present": False,
+        }
+        chunks.append(
+            RetrievedChunk(
+                text=text,
+                citation=citation,
+                source=str(row.get("source") or source_key),
+                score=1.0,
+                metadata=metadata,
+            )
+        )
+    return chunks
+
+
+def _extract_cb_genelge_numbered_clauses(text: str) -> list[tuple[str, str]]:
+    body = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+    matches = list(re.finditer(r"(?m)^\s*(\d+)-\s+", body))
+    clauses: list[tuple[str, str]] = []
+    for index, match in enumerate(matches):
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+        raw_clause = body[start:end]
+        raw_clause = re.split(
+            r"(?m)^\s*(?:\d{4}/\d+\s+sayılı Genelge|"
+            r"\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+\d{4})\b",
+            raw_clause,
+            maxsplit=1,
+        )[0]
+        clause = _normalize_whitespace(raw_clause)
+        if clause:
+            clauses.append((match.group(1), clause))
+    return clauses
+
+
+def _build_cb_genelge_document_level_answer(
+    *,
+    query: str,
+    chunks: list[RetrievedChunk],
+    article_span_selector: dict[str, Any] | None,
+) -> str | None:
+    if not isinstance(article_span_selector, dict):
+        return None
+    selected_document_key = str(article_span_selector.get("selected_document_key") or "").strip().lower()
+    selected_binding_key = str(article_span_selector.get("binding_source_key") or "").strip()
+    selected_chunks = [
+        chunk
+        for chunk in chunks
+        if (
+            (selected_binding_key and _resolve_chunk_binding_source_key(chunk, include_span=False) == selected_binding_key)
+            or (selected_document_key and _resolve_chunk_document_key(chunk) == selected_document_key)
+        )
+    ]
+    supplement_chunk = next(
+        (
+            chunk
+            for chunk in selected_chunks
+            if bool((chunk.metadata or {}).get("official_source_supplement"))
+            and (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk)) == "cb_genelge"
+        ),
+        None,
+    )
+    if supplement_chunk is None:
+        return None
+
+    metadata = supplement_chunk.metadata or {}
+    body = _chunk_body_text_for_quality(supplement_chunk)
+    clauses = _extract_cb_genelge_numbered_clauses(body)
+    if not clauses:
+        return None
+
+    citation = supplement_chunk.citation or str(metadata.get("span_id") or "3 m.0/f.0")
+    title = _resolve_chunk_source_title(supplement_chunk)
+    identifier = str(metadata.get("source_identifier") or metadata.get("display_citation") or "2025/3").strip()
+    effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "unknown").strip()
+    effective_start = str(metadata.get("effective_start") or metadata.get("yururluk_baslangic") or "").strip()
+    normalized_query = normalize_query_text(query)
+    temporal_contrast = any(
+        term in normalized_query
+        for term in (
+            "eski",
+            "hala",
+            "halen",
+            "yoksa",
+            "esas alin",
+            "yururluk",
+            "guncel",
+        )
+    )
+    repeal_sentence = ""
+    repeal_match = re.search(
+        r"\b(\d{4}/\d+\s+sayılı Genelge yürürlükten kaldırılmıştır)\b",
+        body,
+        flags=re.IGNORECASE,
+    )
+    if repeal_match:
+        repeal_sentence = _normalize_whitespace(repeal_match.group(1))
+
+    if temporal_contrast:
+        lines = [
+            f"Kısa sonuç: {identifier} sayılı {title} Cumhurbaşkanlığı Genelgesi esas alınır; seçili kaynak durumu {effective_state}. [Kaynak: {citation}]",
+        ]
+        if repeal_sentence:
+            lines.append(f"Eski genelge bakımından seçili metindeki açık yürürlük hükmü: {repeal_sentence}. [Kaynak: {citation}]")
+        lines.append(
+            f"Güncellik notu: metadatasında yürürlük başlangıcı {effective_start or 'belirtilmemiş'} ve durum {effective_state} görünüyor; cevap bu seçili metinle sınırlıdır. [Kaynak: {citation}]"
+        )
+        return "\n".join(lines)
+
+    priority_terms = {
+        "isveren",
+        "yonetici",
+        "onleyici",
+        "koruyucu",
+        "egitim",
+        "bilgilendirme",
+        "gizlilik",
+        "toplu",
+        "alo",
+        "basvuru",
+    }
+    ranked_clauses: list[tuple[int, str, str]] = []
+    for number, clause in clauses:
+        normalized_clause = normalize_query_text(clause)
+        overlap = sum(1 for term in priority_terms if term in normalized_clause)
+        if any(term in normalized_query for term in ("isveren", "yonetici", "yukumluluk", "onleyici")):
+            overlap += sum(1 for term in ("isveren", "yonetici", "onleyici", "koruyucu") if term in normalized_clause)
+        ranked_clauses.append((overlap, number, clause))
+    ranked_clauses.sort(key=lambda item: (-item[0], int(item[1]) if item[1].isdigit() else 999))
+    selected = ranked_clauses[:5]
+    selected.sort(key=lambda item: int(item[1]) if item[1].isdigit() else 999)
+    if not selected:
+        return None
+
+    lines = [
+        f"{identifier} sayılı {title} Cumhurbaşkanlığı Genelgesine göre seçili metinden çıkarılabilen yükümlülükler şunlardır:",
+    ]
+    for _overlap, number, clause in selected:
+        lines.append(f"- {number}. bent: {_compact_slot_value(clause, max_len=360)} [Kaynak: {citation}]")
+    lines.append(
+        f"Yürürlük/güncellik: seçili kaynak durumu {effective_state}; başlangıç {effective_start or 'belirtilmemiş'}. [Kaynak: {citation}]"
+    )
+    return "\n".join(lines)
 
 
 def _annotate_recall_lane_chunks(
@@ -12558,10 +12926,7 @@ async def chat_completions(
     selected_source_keys: set[str] = set()
     family_routing_policy: dict[str, Any] | None = None
     if metadata_first_selector:
-        metadata_lookup_source = str(metadata_first_selector.get("metadata_lookup_source") or "")
-        if metadata_lookup_source == "exact_identifier_lookup" or metadata_first_selector.get("query_identifier_tokens"):
-            for candidate in metadata_first_selector.get("candidates") or []:
-                selected_source_keys.update(candidate.get("focus_keys") or [])
+        selected_source_keys.update(_metadata_first_focus_keys_for_source_lock(metadata_first_selector))
     top_k_effective = retrieval_top_k
     retriever = _get_retriever(request)
 
@@ -12742,6 +13107,22 @@ async def chat_completions(
                             "Retrieval metadata-first-sources: session=%s sources=%s total=%d",
                             session_id,
                             metadata_first_source_keys,
+                            len(retrieved_chunks),
+                        )
+                    source_supplement_chunks = _build_source_supplement_chunks(
+                        load_source_supplements_for_keys(
+                            metadata_first_source_keys,
+                            source_families=set(requested_source_families) if requested_source_families else None,
+                        )
+                    )
+                    metadata_first_selector["source_supplement_added_count"] = len(source_supplement_chunks)
+                    if source_supplement_chunks:
+                        retrieved_chunks = _dedupe_retrieved_chunks(source_supplement_chunks + retrieved_chunks)
+                        logger.info(
+                            "Retrieval source-supplements: session=%s sources=%s added=%d total=%d",
+                            session_id,
+                            metadata_first_source_keys,
+                            len(source_supplement_chunks),
                             len(retrieved_chunks),
                         )
 
@@ -13124,6 +13505,22 @@ async def chat_completions(
         (time.perf_counter() - hardening_started_at) * 1000.0,
         hardening.final_mode,
     )
+    cb_genelge_template_answer = _build_cb_genelge_document_level_answer(
+        query=routing_query,
+        chunks=post_rerank_chunks,
+        article_span_selector=article_span_selector,
+    )
+    if cb_genelge_template_answer:
+        hardening.answer_text = cb_genelge_template_answer
+        if article_span_selector and article_span_selector.get("selected_main_span_id"):
+            hardening.citations = dedupe_strings(
+                [str(article_span_selector.get("selected_main_span_id")), *hardening.citations]
+            )
+        hardening.answer_contract["answer_text"] = cb_genelge_template_answer
+        hardening.answer_contract["answer_mode"] = "qualified_answer"
+        hardening.answer_contract["grounding_status"] = "partially_grounded"
+        hardening.answer_contract["answer_suppressed_due_to_evidence_gap"] = False
+        hardening.answer_contract["support_insufficient_for_specific_claim"] = False
     completeness_synthesis = _build_completeness_synthesis_features(
         query=routing_query,
         answer_text=hardening.answer_text,
