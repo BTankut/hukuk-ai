@@ -5596,6 +5596,39 @@ def _apply_source_family_answer_hint(
     return f"{query}{hint}"
 
 
+def _apply_answer_slot_synthesis_hint(
+    *,
+    query: str,
+    routing_query: str,
+    article_span_selector: dict[str, Any] | None,
+) -> str:
+    template = _answer_template_for_query(routing_query)
+    required_slots = _must_have_fact_slots_for_query(routing_query, template)
+    if not required_slots:
+        return query
+    selected_article = ""
+    support_span_count = 0
+    evidence_sufficiency = ""
+    if isinstance(article_span_selector, dict):
+        selected_article = str(article_span_selector.get("selected_article") or "").strip()
+        evidence_sufficiency = str(article_span_selector.get("selector_evidence_sufficiency") or "").strip()
+        try:
+            support_span_count = int(article_span_selector.get("support_span_count") or 0)
+        except (TypeError, ValueError):
+            support_span_count = 0
+    slot_text = ", ".join(required_slots)
+    article_text = f" Secili madde/span: {selected_article}." if selected_article else ""
+    hint = (
+        "\n\n[KANIT-CEVAP SLOT TALİMATI]\n"
+        f"Bu yanitta su bilgi slotlarini kaynaklardan karsila: {slot_text}."
+        f"{article_text} Destek span sayisi: {support_span_count}; selector durumu: {evidence_sufficiency or 'unknown'}. "
+        "Her slotu secili kaynaklardan tasinan kisa bir dayanakla cevapla. "
+        "Bir slot secili kaynaklarda yoksa kesin hukum kurma; o slot icin kaynak desteginin yetersiz oldugunu belirt. "
+        "Kaynakta olmayan unsur ekleme ve dayanak zincirini cevapta gorunur tut."
+    )
+    return f"{query}{hint}"
+
+
 def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
     cross_law_signals: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
         (
@@ -11493,6 +11526,11 @@ async def chat_completions(
         )
         _annotate_article_span_selector_priority(
             chunks=retrieved_chunks,
+            article_span_selector=article_span_selector,
+        )
+        answer_query = _apply_answer_slot_synthesis_hint(
+            query=answer_query,
+            routing_query=routing_query,
             article_span_selector=article_span_selector,
         )
         logger.info(

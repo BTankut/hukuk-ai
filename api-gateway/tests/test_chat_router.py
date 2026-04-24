@@ -36,6 +36,7 @@ from routers.chat import (
     ChatCompletionRequest,
     ConversationMessage,
     _apply_source_cluster_deterministic_overrides,
+    _apply_answer_slot_synthesis_hint,
     _apply_retrieval_plan_hints,
     _apply_metadata_lookup_family_prior,
     _apply_relation_query_metadata_focus,
@@ -620,6 +621,22 @@ class TestLawSignalParsing:
         assert slot_map["procedure_or_consequence"]["evidence_span_id"] == "X m.2"
         assert slot_map["exception_or_limitation"]["evidence_span_id"] == "X m.3"
         assert features["answer_slot_coverage_score"] > 0.70
+
+    def test_answer_slot_synthesis_hint_names_required_slots_and_selector_state(self):
+        hinted = _apply_answer_slot_synthesis_hint(
+            query="Başvuru usulü ve süresi nedir?",
+            routing_query="Başvuru usulü ve süresi nedir?",
+            article_span_selector={
+                "selected_article": "7",
+                "support_span_count": 2,
+                "selector_evidence_sufficiency": "partially_supported",
+            },
+        )
+
+        assert "[KANIT-CEVAP SLOT TALİMATI]" in hinted
+        assert "procedure_or_consequence" in hinted
+        assert "Secili madde/span: 7" in hinted
+        assert "Destek span sayisi: 2" in hinted
 
     def test_completeness_synthesis_gates_missing_temporal_slot(self):
         features = _build_completeness_synthesis_features(
