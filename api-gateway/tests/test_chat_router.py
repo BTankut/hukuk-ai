@@ -719,6 +719,28 @@ class TestLawSignalParsing:
         assert "temporal_validity" in features["missing_fact_slots"]
         assert features["completeness_degrade_reason"].startswith("missing_required_fact_slots:")
 
+    def test_reference_date_wrapper_does_not_force_historical_transition_slots(self):
+        features = _build_completeness_synthesis_features(
+            query=(
+                "Bu soruyu 2026 tarihindeki yururluk durumuna gore cevapla. "
+                "Başvuru usulü ve süresi nedir?"
+            ),
+            answer_text=(
+                "Başvuru usulü kaynakta gösterilen adımlarla yürütülür [Kaynak: X m.1]. "
+                "Süre ve bildirim koşulları ayrıca uygulanır [Kaynak: X m.2]. "
+                "Kaynak yürürlük değerlendirmesi seçili maddeyle sınırlıdır [Kaynak: X m.2]."
+            ),
+            article_span_selector={"support_span_count": 2},
+            chunks=[
+                RetrievedChunk(text="Başvuru usulü ve süre koşulları düzenlenir.", citation="X m.1", source="X", score=1.0, metadata={}),
+                RetrievedChunk(text="Bildirim ve işlem adımları kaynakta gösterilir.", citation="X m.2", source="X", score=1.0, metadata={}),
+            ],
+        )
+
+        assert "temporal_validity" in features["must_have_fact_slots"]
+        assert "historical_period" not in features["must_have_fact_slots"]
+        assert "transition_or_replacement_rule" not in features["must_have_fact_slots"]
+
     def test_completeness_synthesis_accepts_citation_backed_chunks_without_selector_spans(self):
         features = _build_completeness_synthesis_features(
             query="Bu düzenleme ne sonuç doğurur?",
@@ -766,6 +788,38 @@ class TestLawSignalParsing:
         }
         assert slot_map["procedure_or_consequence"]["slot_confidence"] == 0.65
         assert slot_map["procedure_or_consequence"]["slot_missing_reason"] == "evidence_reentry_support"
+
+    def test_completeness_synthesis_exports_evidence_required_slot_values(self):
+        features = _build_completeness_synthesis_features(
+            query="Başvuru usulü ve süresi nedir?",
+            answer_text=(
+                "Kaynak başvuru usulünü düzenler [Kaynak: X m.1]. "
+                "Süre şartı da aynı belge kapsamındadır [Kaynak: X m.1]. "
+                "Sonuç seçili kaynakla sınırlıdır [Kaynak: X m.1]."
+            ),
+            article_span_selector={
+                "selected_main_span_id": "X m.1/f.0",
+                "selected_article": "1",
+                "support_span_count": 2,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "partially_supported",
+            },
+            chunks=[
+                RetrievedChunk(
+                    text="Başvuru usulü ve süre koşulları bu maddede düzenlenir.",
+                    citation="X m.1",
+                    source="X",
+                    score=1.0,
+                    metadata={"madde_no": "1", "effective_state": "active"},
+                )
+            ],
+        )
+
+        values = {row["slot_name"]: row for row in features["evidence_required_slot_values"]}
+        assert "procedure_or_consequence" in values
+        assert values["procedure_or_consequence"]["slot_value"]
+        assert values["procedure_or_consequence"]["evidence_quote_hash"]
+        assert features["evidence_required_slot_value_count"] >= 3
 
     def test_completeness_synthesis_does_not_reenter_slots_when_selector_identity_is_weak(self):
         features = _build_completeness_synthesis_features(

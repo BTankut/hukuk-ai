@@ -8189,26 +8189,10 @@ def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
         ),
     ):
         slots.append("temporal_validity")
-    if _query_contains_any(
-        normalized,
-        (
-            "mulga",
-            "eski",
-            "1988",
-            "1994",
-            "2026",
-            "hala",
-            "halen",
-            "guncel",
-            "guncellik",
-            "dogrudan",
-            "guvenli midir",
-            "riskli",
-            "hatali",
-            "hata",
-        ),
-    ):
+    if _query_needs_historical_transition_slots(normalized):
         slots.extend(["historical_period", "current_applicability", "transition_or_replacement_rule"])
+    elif _query_needs_current_applicability_slot(normalized):
+        slots.append("current_applicability")
     if _query_contains_any(
         normalized,
         (
@@ -8223,6 +8207,60 @@ def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
     ):
         slots.append("hierarchy_or_conflict_rule")
     return dedupe_strings(slots)
+
+
+def _query_needs_historical_transition_slots(normalized_query: str) -> bool:
+    historical_or_repealed = _query_contains_any(
+        normalized_query,
+        (
+            "mulga",
+            "mülga",
+            "ilga",
+            "yururlukten kaldir",
+            "yururlukten kalk",
+            "eski metin",
+            "onceki duzenleme",
+            "tarihsel",
+            "o tarihte",
+            "gecis hukmu",
+            "gecici madde",
+            "yerine gecen",
+            "yerini alan",
+        ),
+    )
+    direct_risk = _query_contains_any(
+        normalized_query,
+        (
+            "dogrudan uygulan",
+            "dogrudan hukum",
+            "esas almak",
+            "guvenli midir",
+            "riskli",
+            "hatali",
+            "hata",
+            "guncellik hatasi",
+        ),
+    )
+    historical_year = bool(re.search(r"(?<!\d)(?:19\d{2}|200\d|201\d)(?!\d)", normalized_query))
+    return bool(historical_or_repealed or (historical_year and direct_risk))
+
+
+def _query_needs_current_applicability_slot(normalized_query: str) -> bool:
+    return _query_contains_any(
+        normalized_query,
+        (
+            "bugun",
+            "guncel",
+            "guncellik",
+            "halen",
+            "hala",
+            "yururlukte mi",
+            "gecerli mi",
+            "son durum",
+            "2026'da dogrudan",
+            "2026 da dogrudan",
+        ),
+    )
 
 
 def _answer_contains_any(normalized_answer: str, terms: tuple[str, ...]) -> bool:
@@ -8414,71 +8452,17 @@ def _evidence_supported_completeness_slots(
 ) -> list[str]:
     if not chunks or not _selector_allows_evidence_slot_reentry(article_span_selector):
         return []
-    evidence_surface = normalize_query_text(
-        " ".join(
-            part
-            for chunk in chunks[:5]
-            for part in (
-                chunk.text,
-                chunk.citation,
-                _resolve_chunk_source_title(chunk),
-                _resolve_chunk_source_identifier(chunk),
-                str((chunk.metadata or {}).get("effective_state") or ""),
-                str((chunk.metadata or {}).get("yururluk_baslangic") or ""),
-                str((chunk.metadata or {}).get("yururluk_bitis") or ""),
-            )
-            if part
-        )
+    slot_values = _build_evidence_required_slot_values(
+        required_slots=required_slots,
+        article_span_selector=article_span_selector,
+        chunks=chunks,
+        query="",
     )
-    supported: list[str] = []
-    for slot in required_slots:
-        if slot == "procedure_or_consequence" and _answer_contains_any(
-            evidence_surface,
-            (
-                "usul",
-                "sure",
-                "basvuru",
-                "itiraz",
-                "sonuc",
-                "yaptirim",
-                "zorunlu",
-                "yukumluluk",
-                "bildirim",
-                "islem",
-            ),
-        ):
-            supported.append(slot)
-        elif slot == "scenario_applicability" and _answer_contains_any(
-            evidence_surface,
-            ("sart", "kosul", "halinde", "hallerde", "durumda", "kapsam", "uygulanir", "aranir"),
-        ):
-            supported.append(slot)
-        elif slot == "exception_or_limitation" and _answer_contains_any(
-            evidence_surface,
-            ("istisna", "sakli", "haric", "muaf", "sinirli", "uygulanmaz"),
-        ):
-            supported.append(slot)
-        elif slot == "temporal_validity" and _answer_contains_any(
-            evidence_surface,
-            ("yururluk", "guncel", "mulga", "tarih", "halen", "gecerli", "9999 12 31"),
-        ):
-            supported.append(slot)
-        elif slot == "hierarchy_or_conflict_rule" and _answer_contains_any(
-            evidence_surface,
-            (
-                "oncelik",
-                "ust norm",
-                "alt norm",
-                "ozel duzenleme",
-                "genel duzenleme",
-                "ikincil duzenleme",
-                "normlar hiyerarsisi",
-                "kanuna aykiri",
-                "dayanak",
-            ),
-        ):
-            supported.append(slot)
-    return dedupe_strings(supported)
+    return dedupe_strings(
+        str(row.get("slot_name") or "")
+        for row in slot_values
+        if isinstance(row, dict) and float(row.get("slot_confidence") or 0.0) >= 0.65
+    )
 
 
 def _slot_keyword_hints(slot: str) -> tuple[str, ...]:
@@ -8489,6 +8473,9 @@ def _slot_keyword_hints(slot: str) -> tuple[str, ...]:
         "document_selection_reason": ("dayanak", "kapsam", "uygulan", "duzenlen", "ilgili", "esas"),
         "article_or_span": ("madde", "gecici madde", "fikra", "bent"),
         "temporal_validity": ("yururluk", "mulga", "tarih", "halen", "gecerli", "9999 12 31"),
+        "historical_period": ("mulga", "tarihsel", "eski", "yururlukten", "tarih", "donem", "onceki"),
+        "current_applicability": ("bugun", "guncel", "halen", "hala", "dogrudan", "uygulanmaz", "gecerli"),
+        "transition_or_replacement_rule": ("gecis", "gecici", "yerine gecen", "yerini alan", "kaldiril", "mevcut rejim"),
         "exception_or_limitation": ("istisna", "sakli", "haric", "muaf", "sinir", "uygulanmaz"),
         "procedure_or_consequence": ("usul", "sure", "basvuru", "itiraz", "sonuc", "yaptirim", "bildirim", "islem"),
         "scenario_applicability": ("sart", "kosul", "halinde", "kapsam", "uygulan", "aranir", "bakimindan"),
@@ -8517,6 +8504,7 @@ def _chunk_article(chunk: RetrievedChunk) -> str:
 
 
 def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
+    metadata = chunk.metadata or {}
     surface = normalize_query_text(
         " ".join(
             part
@@ -8526,14 +8514,291 @@ def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
                 chunk.source or "",
                 _resolve_chunk_source_title(chunk),
                 _resolve_chunk_source_identifier(chunk),
+                str(metadata.get("effective_state") or ""),
+                str(metadata.get("effective_start") or metadata.get("yururluk_baslangic") or ""),
+                str(metadata.get("effective_end") or metadata.get("yururluk_bitis") or ""),
+                str(metadata.get("official_gazette_date") or ""),
+                str(metadata.get("is_repealed") or metadata.get("mulga") or ""),
             )
             if part
         )
     )
     hints = _slot_keyword_hints(slot)
-    if slot in {"governing_source", "exact_source_identity", "article_or_span"}:
+    if slot == "result_or_holding":
+        return bool(_chunk_has_selectable_body_span(chunk) or len(surface) >= 80)
+    if slot in {"governing_source", "exact_source_identity", "article_or_span", "document_selection_reason"}:
         return bool(chunk.citation or _resolve_chunk_source_identifier(chunk) or _chunk_article(chunk))
+    if slot in {"temporal_validity", "historical_period", "current_applicability"} and any(
+        str(metadata.get(key) or "").strip()
+        for key in ("effective_state", "effective_start", "effective_end", "yururluk_baslangic", "yururluk_bitis")
+    ):
+        return True
+    if slot == "transition_or_replacement_rule" and (
+        _answer_contains_any(surface, hints)
+        or str(metadata.get("effective_state") or "").strip().lower() in {"repealed", "mulga"}
+        or _metadata_flag_is_true(metadata.get("is_repealed"))
+        or _metadata_flag_is_true(metadata.get("mulga"))
+    ):
+        return True
     return any(hint in surface for hint in hints)
+
+
+_REQUIRED_SLOT_SCHEMA: dict[str, dict[str, str]] = {
+    "result_or_holding": {
+        "description": "Kaynağın soruya bağlanan kısa hüküm/sonuç içeriği.",
+        "evidence_policy": "selected_span_excerpt",
+    },
+    "governing_source": {
+        "description": "Cevabın merkez aldığı kaynak ailesi ve belge.",
+        "evidence_policy": "source_metadata_or_citation",
+    },
+    "exact_source_identity": {
+        "description": "Belge adı/numarası ve kaynak kimliği.",
+        "evidence_policy": "source_identifier_metadata",
+    },
+    "article_or_span": {
+        "description": "Seçilen madde, fıkra veya span kimliği.",
+        "evidence_policy": "selector_span_or_citation",
+    },
+    "temporal_validity": {
+        "description": "Yürürlük/güncellik durumu ve tarihsel bağ.",
+        "evidence_policy": "effective_state_metadata_or_temporal_clause",
+    },
+    "historical_period": {
+        "description": "Mülga/tarihsel kaynaklarda uygulanabilir dönem.",
+        "evidence_policy": "effective_state_or_repeal_metadata",
+    },
+    "current_applicability": {
+        "description": "Kaynağın bugünkü/güncel doğrudan uygulanabilirliği.",
+        "evidence_policy": "effective_state_with_cautious_current_scope",
+    },
+    "transition_or_replacement_rule": {
+        "description": "Geçiş, yerine geçen düzenleme veya bu bilginin kanıtta açık olup olmadığı.",
+        "evidence_policy": "explicit_transition_clause_or_temporal_safety_limit",
+    },
+    "procedure_or_consequence": {
+        "description": "Usul, süre, yaptırım, bildirim veya sonuç.",
+        "evidence_policy": "selected_span_excerpt",
+    },
+    "scenario_applicability": {
+        "description": "Somut olaya uygulanma şartı veya kapsam.",
+        "evidence_policy": "selected_span_excerpt",
+    },
+    "exception_or_limitation": {
+        "description": "İstisna, sınırlama, muafiyet veya uygulanmama hali.",
+        "evidence_policy": "selected_span_excerpt",
+    },
+    "document_selection_reason": {
+        "description": "Neden bu belgenin seçildiği.",
+        "evidence_policy": "source_identity_and_query_family_alignment",
+    },
+    "hierarchy_or_conflict_rule": {
+        "description": "Normlar arası öncelik/çatışma veya dayanak ilişkisi.",
+        "evidence_policy": "selected_span_excerpt",
+    },
+}
+
+
+def _required_slot_schema(required_slots: list[str]) -> list[dict[str, str]]:
+    return [
+        {"slot_name": slot, **_REQUIRED_SLOT_SCHEMA.get(slot, {"description": "", "evidence_policy": ""})}
+        for slot in required_slots
+    ]
+
+
+def _compact_slot_value(value: str, *, max_len: int = 360) -> str:
+    text = _normalize_whitespace(value or "")
+    if len(text) <= max_len:
+        return text
+    truncated = text[: max_len - 1].rsplit(" ", 1)[0].strip()
+    return f"{truncated}…"
+
+
+def _slot_quote_hash(value: str) -> str:
+    if not value:
+        return ""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
+
+
+def _chunk_source_identity_label(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    title = _resolve_chunk_source_title(chunk)
+    identifier = (
+        _resolve_chunk_source_identifier(chunk)
+        or str(metadata.get("canonical_identifier_display") or "")
+        or str(metadata.get("canonical_identifier") or "")
+    )
+    family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
+    parts = [part for part in (title, identifier, family, chunk.citation) if part]
+    return _compact_slot_value(" | ".join(dedupe_strings(parts)), max_len=260)
+
+
+def _effective_state_label(chunk: RetrievedChunk) -> str:
+    metadata = chunk.metadata or {}
+    state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "unknown").strip()
+    start = str(metadata.get("effective_start") or metadata.get("yururluk_baslangic") or "").strip()
+    end = str(metadata.get("effective_end") or metadata.get("yururluk_bitis") or "").strip()
+    pieces = [f"durum={state or 'unknown'}"]
+    if start:
+        pieces.append(f"baslangic={start}")
+    if end:
+        pieces.append(f"bitis={end}")
+    return "; ".join(pieces)
+
+
+def _best_slot_excerpt(chunk: RetrievedChunk, slot: str, *, query: str = "") -> str:
+    hints = _slot_keyword_hints(slot)
+    text = _strip_chunk_citation_prefix(chunk.text or "", chunk)
+    sentences = [
+        _normalize_whitespace(sentence)
+        for sentence in re.split(r"(?<=[.!?])\s+|\n+", text)
+        if _normalize_whitespace(sentence)
+    ]
+    for sentence in sentences:
+        normalized = normalize_query_text(sentence)
+        if hints and any(hint in normalized for hint in hints):
+            return _compact_slot_value(sentence)
+    if query:
+        return _compact_slot_value(_build_chunk_evidence_span(chunk, query=query, max_len=360))
+    if sentences:
+        return _compact_slot_value(sentences[0])
+    return _compact_slot_value(text)
+
+
+def _slot_value_from_chunk(
+    *,
+    slot: str,
+    chunk: RetrievedChunk,
+    article_span_selector: dict[str, Any] | None,
+    query: str = "",
+) -> tuple[str, float, str]:
+    metadata = chunk.metadata or {}
+    citation = chunk.citation or _resolve_trace_source_id(chunk)
+    source_label = _chunk_source_identity_label(chunk)
+    state_label = _effective_state_label(chunk)
+    effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
+    is_repealed = bool(
+        effective_state in {"repealed", "mulga"}
+        or _metadata_flag_is_true(metadata.get("is_repealed"))
+        or _metadata_flag_is_true(metadata.get("mulga"))
+    )
+    is_active = bool(effective_state in {"active", "amended"} or str(metadata.get("effective_end") or "") in _ACTIVE_END_DATE_SENTINELS)
+
+    if slot == "governing_source":
+        return source_label or citation, 0.82, "source_identity_metadata"
+    if slot == "exact_source_identity":
+        return source_label or citation, 0.82, "source_identifier_metadata"
+    if slot == "document_selection_reason":
+        value = f"Seçilen belge kimliği sorudaki kaynak ailesi/kimliğiyle eşleşiyor: {source_label or citation}."
+        return value, 0.68, "source_identity_alignment"
+    if slot == "article_or_span":
+        selector = article_span_selector if isinstance(article_span_selector, dict) else {}
+        selected_span = str(selector.get("selected_main_span_id") or "").strip()
+        selected_article = str(selector.get("selected_article") or _chunk_article(chunk) or "").strip()
+        value = selected_span or citation
+        if selected_article:
+            value = f"{value}; madde/span={selected_article}"
+        return value, 0.82, "selector_span_identity"
+    if slot == "temporal_validity":
+        temporal_excerpt = _best_slot_excerpt(chunk, slot, query=query)
+        value = f"{state_label}. {temporal_excerpt}" if temporal_excerpt else state_label
+        return value, 0.72 if state_label else 0.55, "effective_state_or_temporal_clause"
+    if slot == "historical_period":
+        if is_repealed:
+            value = f"Kaynak mülga/tarihsel nitelikte değerlendirilmelidir; {state_label}."
+            return value, 0.70, "repealed_effective_state_metadata"
+        excerpt = _best_slot_excerpt(chunk, slot, query=query)
+        return excerpt or state_label, 0.62 if excerpt else 0.45, "historical_period_excerpt"
+    if slot == "current_applicability":
+        if is_repealed:
+            return (
+                f"Seçili kaynak mülga/tarihsel görünüyor; bugünkü doğrudan uygulama için güncel kaynak ayrıca doğrulanmalıdır ({state_label}).",
+                0.68,
+                "repealed_current_applicability_limit",
+            )
+        if is_active:
+            return (
+                f"Seçili kaynak aktif/güncel görünüyor; uygulama seçili madde ve kapsamla sınırlıdır ({state_label}).",
+                0.68,
+                "active_effective_state_metadata",
+            )
+        excerpt = _best_slot_excerpt(chunk, slot, query=query)
+        return excerpt or state_label, 0.55 if excerpt or state_label else 0.0, "current_applicability_not_explicit"
+    if slot == "transition_or_replacement_rule":
+        excerpt = _best_slot_excerpt(chunk, slot, query=query)
+        normalized_excerpt = normalize_query_text(excerpt)
+        if excerpt and _answer_contains_any(normalized_excerpt, _slot_keyword_hints(slot)):
+            return excerpt, 0.70, "explicit_transition_or_replacement_clause"
+        if is_repealed:
+            return (
+                "Seçili kanıtta yerine geçen/geçiş hükmü açık değil; sonuç mülga/tarihsel kaynakla sınırlı kurulmalıdır.",
+                0.56,
+                "transition_not_explicit_temporal_safety_limit",
+            )
+        return (
+            "Seçili kanıtta ayrıca bir geçiş veya yerine geçen düzenleme kuralı açıkça görünmüyor.",
+            0.50,
+            "transition_not_explicit_in_selected_evidence",
+        )
+
+    excerpt = _best_slot_excerpt(chunk, slot, query=query)
+    confidence = 0.70 if excerpt and _chunk_supports_slot(chunk, slot) else 0.52 if excerpt else 0.0
+    return excerpt, confidence, "selected_span_excerpt" if confidence >= 0.65 else "weak_or_generic_excerpt"
+
+
+def _build_evidence_required_slot_values(
+    *,
+    required_slots: list[str],
+    article_span_selector: dict[str, Any] | None,
+    chunks: list[RetrievedChunk],
+    query: str = "",
+) -> list[dict[str, Any]]:
+    if not required_slots:
+        return []
+    selector = article_span_selector if isinstance(article_span_selector, dict) else {}
+    selected_main_span_id = str(selector.get("selected_main_span_id") or "").strip()
+    selected_article = str(selector.get("selected_article") or "").strip()
+    rows: list[dict[str, Any]] = []
+    for slot in required_slots:
+        matched_chunk = next((chunk for chunk in chunks if _chunk_supports_slot(chunk, slot)), None)
+        if matched_chunk is None and slot in {"result_or_holding", "governing_source", "exact_source_identity"} and chunks:
+            matched_chunk = chunks[0]
+        span_id = _chunk_span_id(matched_chunk) if matched_chunk is not None else ""
+        article = _chunk_article(matched_chunk) if matched_chunk is not None else ""
+        if slot == "article_or_span" and selected_main_span_id:
+            span_id = selected_main_span_id
+            article = selected_article or article
+        if matched_chunk is None:
+            rows.append(
+                {
+                    "slot_name": slot,
+                    "slot_value": "",
+                    "evidence_span_id": span_id,
+                    "evidence_article": article,
+                    "evidence_quote_hash": "",
+                    "slot_confidence": 0.0,
+                    "slot_missing_reason": "no_matching_evidence_span",
+                }
+            )
+            continue
+        slot_value, confidence, reason = _slot_value_from_chunk(
+            slot=slot,
+            chunk=matched_chunk,
+            article_span_selector=article_span_selector,
+            query=query,
+        )
+        rows.append(
+            {
+                "slot_name": slot,
+                "slot_value": slot_value,
+                "evidence_span_id": span_id,
+                "evidence_article": article,
+                "evidence_quote_hash": _slot_quote_hash(slot_value),
+                "slot_confidence": round(confidence, 3),
+                "slot_missing_reason": reason if slot_value else "slot_value_empty",
+            }
+        )
+    return rows
 
 
 def _build_answer_slot_evidence_map(
@@ -8544,10 +8809,21 @@ def _build_answer_slot_evidence_map(
     missing_slots: list[str],
     article_span_selector: dict[str, Any] | None,
     chunks: list[RetrievedChunk],
+    query: str = "",
 ) -> tuple[list[dict[str, Any]], float, list[str]]:
     selector = article_span_selector if isinstance(article_span_selector, dict) else {}
     selected_main_span_id = str(selector.get("selected_main_span_id") or "").strip()
     selected_article = str(selector.get("selected_article") or "").strip()
+    evidence_slot_values = {
+        str(row.get("slot_name") or ""): row
+        for row in _build_evidence_required_slot_values(
+            required_slots=required_slots,
+            article_span_selector=article_span_selector,
+            chunks=chunks,
+            query=query,
+        )
+        if isinstance(row, dict)
+    }
     satisfied = set(satisfied_slots)
     reentry = set(evidence_reentry_slots)
     missing = set(missing_slots)
@@ -8562,6 +8838,11 @@ def _build_answer_slot_evidence_map(
         if slot == "article_or_span" and selected_main_span_id:
             span_id = selected_main_span_id
             article = selected_article or article
+        evidence_value = evidence_slot_values.get(slot) or {}
+        if not span_id:
+            span_id = str(evidence_value.get("evidence_span_id") or "")
+        if not article:
+            article = str(evidence_value.get("evidence_article") or "")
         if slot in missing:
             confidence = 0.0
             reason = "slot_not_satisfied_by_answer_or_evidence"
@@ -8585,6 +8866,8 @@ def _build_answer_slot_evidence_map(
                 "answer_slot": slot,
                 "evidence_span_id": span_id,
                 "evidence_article": article,
+                "slot_value": evidence_value.get("slot_value") or "",
+                "evidence_quote_hash": evidence_value.get("evidence_quote_hash") or "",
                 "slot_confidence": round(confidence, 3),
                 "slot_missing_reason": reason,
             }
@@ -8667,6 +8950,12 @@ def _build_completeness_synthesis_features(
     if has_answer and evidence_reentry_slots:
         satisfied_slots = dedupe_strings([*satisfied_slots, *evidence_reentry_slots])
     missing_slots = [slot for slot in required_slots if slot not in set(satisfied_slots)]
+    evidence_required_slot_values = _build_evidence_required_slot_values(
+        required_slots=required_slots,
+        article_span_selector=article_span_selector,
+        chunks=chunks,
+        query=query,
+    )
     answer_slot_evidence_map, answer_slot_coverage_score, answer_slot_missing_reasons = (
         _build_answer_slot_evidence_map(
             required_slots=required_slots,
@@ -8675,6 +8964,7 @@ def _build_completeness_synthesis_features(
             missing_slots=missing_slots,
             article_span_selector=article_span_selector,
             chunks=chunks,
+            query=query,
         )
     )
     slot_factor = len(satisfied_slots) / len(required_slots) if required_slots else 1.0
@@ -8745,6 +9035,11 @@ def _build_completeness_synthesis_features(
         "answer_slot_evidence_map": answer_slot_evidence_map,
         "answer_slot_coverage_score": answer_slot_coverage_score,
         "answer_slot_missing_reasons": answer_slot_missing_reasons,
+        "required_slot_schema": _required_slot_schema(required_slots),
+        "evidence_required_slot_values": evidence_required_slot_values,
+        "evidence_required_slot_value_count": sum(
+            1 for row in evidence_required_slot_values if float(row.get("slot_confidence") or 0.0) >= 0.65
+        ),
         "candidate_completeness_score": candidate_completeness_score,
         "selected_document_has_body_span": selected_document_has_body_span,
         "selected_document_has_non_title_span": selected_document_has_non_title_span,
@@ -8996,6 +9291,9 @@ def _build_trace_payload(
             "answer_slot_evidence_map": answer_contract.get("answer_slot_evidence_map"),
             "answer_slot_coverage_score": answer_contract.get("answer_slot_coverage_score"),
             "answer_slot_missing_reasons": answer_contract.get("answer_slot_missing_reasons"),
+            "required_slot_schema": answer_contract.get("required_slot_schema"),
+            "evidence_required_slot_values": answer_contract.get("evidence_required_slot_values"),
+            "evidence_required_slot_value_count": answer_contract.get("evidence_required_slot_value_count"),
             "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
             "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
             "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
@@ -9110,6 +9408,9 @@ def _build_trace_payload(
                 "answer_slot_evidence_map": answer_contract.get("answer_slot_evidence_map"),
                 "answer_slot_coverage_score": answer_contract.get("answer_slot_coverage_score"),
                 "answer_slot_missing_reasons": answer_contract.get("answer_slot_missing_reasons"),
+                "required_slot_schema": answer_contract.get("required_slot_schema"),
+                "evidence_required_slot_values": answer_contract.get("evidence_required_slot_values"),
+                "evidence_required_slot_value_count": answer_contract.get("evidence_required_slot_value_count"),
                 "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
                 "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
                 "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
