@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from answer_contract_v2 import build_or_repair_answer_contract
+from answer_contract_v2 import build_or_repair_answer_contract, controlled_fallback_answer
 
 
 def test_repair_selects_partial_identifier_evidence_before_first_fallback():
@@ -898,6 +898,56 @@ def test_repair_marks_legacy_khk_query_as_repealed_mulga_family():
     contract = result.contract
     assert contract["source_family_claimed"] == "MULGA"
     assert contract["effective_state_claimed"] == "repealed"
+    assert contract["answer_mode"] == "not_currently_applicable_answer"
+
+
+def test_legacy_suppressed_answer_keeps_temporal_answer_mode():
+    result = build_or_repair_answer_contract(
+        qid="MULGA-01",
+        answer_text="Mülga öğrenci disiplin yönetmeliğine 2026'da doğrudan dayanmak güvenli değildir. [Kaynak: 2547 m.65]",
+        citations=["2547 m.65"],
+        answer_contract={
+            "answer_text": "Mülga öğrenci disiplin yönetmeliğine 2026'da doğrudan dayanmak güvenli değildir. [Kaynak: 2547 m.65]",
+            "primary_source_id": "2547 m.65",
+            "source_validity": "repealed",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "Yükseköğretim öğrencisine disiplin cezası verilirken hâlâ mülga düzenlemeye dayanmak güvenli midir?",
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "mulga_kanun",
+                    "historical_or_repealed_question": True,
+                    "historical_scope_detected": True,
+                },
+                "article_span_selector": {
+                    "selector_evidence_sufficiency": "partially_supported",
+                    "support_span_count": 1,
+                    "support_insufficient_for_specific_claim": True,
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "2547:65",
+                    "citation": "2547 m.65",
+                    "source_family": "mulga_kanun",
+                    "source_identifier": "2547 m.65",
+                    "article_or_section": "65",
+                    "effective_state": "repealed",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "not_grounded"
+    assert contract["answer_mode"] == "not_currently_applicable_answer"
+    fallback = controlled_fallback_answer(contract)
+    assert "bugün doğrudan güncel hüküm dayanağı" in fallback
+    assert "mülga/tarihsel" in fallback
+    assert "Mevcut rejim" in fallback
 
 
 def test_repair_preserves_explicit_legacy_khk_family_when_query_is_bound_to_khk():

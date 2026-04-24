@@ -5933,6 +5933,7 @@ def _apply_answer_slot_synthesis_hint(
             "\n\n[MULGA/TARIHSEL CEVAP TALIMATI]\n"
             "Soru mulga, eski metin veya tarihsel yururluk kapsami tasiyorsa cevabi bugunku aktif hukuk gibi kurma. "
             "Once secili kaynagin yururluk durumunu belirt: active, repealed/mulga veya belirsiz. "
+            "Cevap modunu hukuki duruma gore kur: historical_repealed_answer, repealed_transition_answer veya not_currently_applicable_answer. "
             "Ardindan kaynak destekliyorsa tarihsel uygulanabilirlik tarihini/donemini, gecis hukmunu ve bugun dogrudan uygulanip uygulanamayacagini ayri cumlelerle yaz. "
             "Yururluk durumu veya gecis etkisi secili kaynaklarda yoksa bunu acikca 'kaynak destegi yetersiz' diye sinirla; aktif kaynak uydurma."
         )
@@ -7947,6 +7948,26 @@ def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
     if _query_contains_any(
         normalized,
         (
+            "mulga",
+            "eski",
+            "1988",
+            "1994",
+            "2026",
+            "hala",
+            "halen",
+            "guncel",
+            "guncellik",
+            "dogrudan",
+            "guvenli midir",
+            "riskli",
+            "hatali",
+            "hata",
+        ),
+    ):
+        slots.extend(["historical_period", "current_applicability", "transition_or_replacement_rule"])
+    if _query_contains_any(
+        normalized,
+        (
             "yeterli midir",
             "yoksa",
             "ust norm",
@@ -8041,6 +8062,21 @@ def _satisfied_completeness_slots(
                 normalized_answer,
                 ("yururluk", "guncel", "mulga", "tarih", "halen", "gecerli", "kaldiril"),
             )
+        ):
+            satisfied.append(slot)
+        elif slot == "historical_period" and _answer_contains_any(
+            normalized_answer,
+            ("tarihsel", "tarih", "donem", "eski", "mulga", "yururluk"),
+        ):
+            satisfied.append(slot)
+        elif slot == "current_applicability" and _answer_contains_any(
+            normalized_answer,
+            ("bugun", "guncel", "dogrudan", "otomatik", "uygulanmamal", "uygulanamaz", "guvenli degil"),
+        ):
+            satisfied.append(slot)
+        elif slot == "transition_or_replacement_rule" and _answer_contains_any(
+            normalized_answer,
+            ("gecis", "gecici", "mevcut rejim", "yerine gecen", "guncel duzenleme", "ayrica dogrulan"),
         ):
             satisfied.append(slot)
         elif slot == "exception_or_limitation" and (
@@ -9443,11 +9479,17 @@ def _finalize_boundary_proxy_response(
     )
     if not answer_text.strip():
         answer_text = controlled_fallback_answer(contract_repair.contract)
+        refreshed_contract = _refresh_contract_completeness_for_answer_text(
+            answer_contract=contract_repair.contract,
+            answer_text=answer_text,
+            query=user_message,
+            trace_payload=trace_payload,
+        )
         contract_repair = build_or_repair_answer_contract(
             qid=response_id,
             answer_text=answer_text,
             citations=citations,
-            answer_contract=contract_repair.contract,
+            answer_contract=refreshed_contract,
             final_mode=final_mode,
             final_reason=final_reason,
             trace_payload=trace_payload,
@@ -9672,6 +9714,70 @@ def _resolve_contract_suppressed_answer_text(
     if isinstance(answer_contract, dict) and answer_contract.get("answer_suppressed_due_to_evidence_gap") is True:
         return controlled_fallback_answer(answer_contract)
     return answer_text
+
+
+def _trace_chunks_for_completeness(trace_payload: dict[str, Any] | None) -> list[RetrievedChunk]:
+    if not isinstance(trace_payload, dict):
+        return []
+    evidence_items = trace_payload.get("assembled_evidence")
+    if not isinstance(evidence_items, list):
+        context = trace_payload.get("context_assembly")
+        evidence_items = context.get("assembled_evidence") if isinstance(context, dict) else []
+    chunks: list[RetrievedChunk] = []
+    for item in evidence_items if isinstance(evidence_items, list) else []:
+        if not isinstance(item, dict):
+            continue
+        text = str(
+            item.get("quoted_or_extracted_span")
+            or item.get("text")
+            or item.get("excerpt")
+            or item.get("source_title")
+            or item.get("citation")
+            or ""
+        )
+        citation = str(item.get("citation") or item.get("source_id") or "")
+        source = str(item.get("source_identifier") or item.get("source") or item.get("source_id") or "")
+        chunks.append(
+            RetrievedChunk(
+                text=text,
+                citation=citation,
+                source=source,
+                score=float(item.get("score") or 0.0),
+                metadata=dict(item),
+            )
+        )
+    return chunks
+
+
+def _trace_article_span_selector(trace_payload: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(trace_payload, dict):
+        return None
+    retrieval = trace_payload.get("retrieval")
+    if isinstance(retrieval, dict) and isinstance(retrieval.get("article_span_selector"), dict):
+        return retrieval.get("article_span_selector")
+    context = trace_payload.get("context_assembly")
+    if isinstance(context, dict) and isinstance(context.get("article_span_selector"), dict):
+        return context.get("article_span_selector")
+    return None
+
+
+def _refresh_contract_completeness_for_answer_text(
+    *,
+    answer_contract: dict[str, Any],
+    answer_text: str,
+    query: str,
+    trace_payload: dict[str, Any] | None,
+) -> dict[str, Any]:
+    refreshed = dict(answer_contract)
+    refreshed.update(
+        _build_completeness_synthesis_features(
+            query=query,
+            answer_text=answer_text,
+            article_span_selector=_trace_article_span_selector(trace_payload),
+            chunks=_trace_chunks_for_completeness(trace_payload),
+        )
+    )
+    return refreshed
 
 
 def _resolve_public_answer_text(
@@ -10505,6 +10611,12 @@ def _finalize_chat_response(
         answer_contract=answer_contract,
         final_mode=final_mode,
     )
+    answer_contract = _refresh_contract_completeness_for_answer_text(
+        answer_contract=answer_contract,
+        answer_text=answer_text,
+        query=user_message,
+        trace_payload=trace_payload,
+    )
     contract_repair = build_or_repair_answer_contract(
         qid=response_id,
         answer_text=answer_text,
@@ -10532,10 +10644,52 @@ def _finalize_chat_response(
             verification=verification,
         )
     answer_contract = contract_repair.contract
-    answer_text = _resolve_contract_suppressed_answer_text(
+    resolved_answer_text = _resolve_contract_suppressed_answer_text(
         answer_text=answer_text,
         answer_contract=answer_contract,
     )
+    if resolved_answer_text != answer_text:
+        answer_text = resolved_answer_text
+        answer_contract = _refresh_contract_completeness_for_answer_text(
+            answer_contract=answer_contract,
+            answer_text=answer_text,
+            query=user_message,
+            trace_payload=trace_payload,
+        )
+        contract_repair = build_or_repair_answer_contract(
+            qid=response_id,
+            answer_text=answer_text,
+            citations=citations,
+            answer_contract=answer_contract,
+            final_mode=final_mode,
+            final_reason=final_reason,
+            trace_payload=trace_payload,
+            blocked=blocked,
+            guardrails_reasons=guardrails_reasons,
+            verification=verification,
+        )
+        answer_contract = contract_repair.contract
+    else:
+        answer_text = resolved_answer_text
+    answer_contract = _refresh_contract_completeness_for_answer_text(
+        answer_contract=answer_contract,
+        answer_text=answer_text,
+        query=user_message,
+        trace_payload=trace_payload,
+    )
+    contract_repair = build_or_repair_answer_contract(
+        qid=response_id,
+        answer_text=answer_text,
+        citations=citations,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        trace_payload=trace_payload,
+        blocked=blocked,
+        guardrails_reasons=guardrails_reasons,
+        verification=verification,
+    )
+    answer_contract = contract_repair.contract
     trace_payload = dict(trace_payload)
     trace_payload["answer_contract"] = answer_contract
     trace_payload["answer_contract_validation"] = contract_repair.validation

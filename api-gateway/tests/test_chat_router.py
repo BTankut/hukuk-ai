@@ -671,6 +671,38 @@ class TestLawSignalParsing:
         assert "[MULGA/TARIHSEL CEVAP TALIMATI]" in hinted
         assert "temporal_validity" in hinted
 
+    def test_mulga_required_slots_include_current_applicability_and_transition(self):
+        features = _build_completeness_synthesis_features(
+            query="Eski mülga düzenlemeye 2026'da doğrudan dayanmak neden risklidir?",
+            answer_text=(
+                "Sonuç: bu mülga/tarihsel kaynak bugün doğrudan güncel hüküm dayanağı olarak otomatik uygulanmamalıdır. "
+                "Dayanak kaynak tarihsel dönemle sınırlıdır; mevcut rejim veya yerine geçen güncel düzenleme ayrıca doğrulanmalıdır. "
+                "Bu değerlendirme seçili kanıtın sınırları içinde manuel kontrol gerektirir. "
+                "[Kaynak: 2547 m.65]"
+            ),
+            article_span_selector={
+                "support_span_count": 1,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "partially_supported",
+                "support_contains_temporal_clause": True,
+            },
+            chunks=[
+                RetrievedChunk(
+                    text="Mülga kaynak tarihsel dönem bakımından dikkate alınır.",
+                    citation="2547 m.65",
+                    source="2547",
+                    score=1.0,
+                    metadata={"source_family_canonical": "mulga_kanun", "effective_state": "repealed"},
+                )
+            ],
+        )
+
+        assert "historical_period" in features["must_have_fact_slots"]
+        assert "current_applicability" in features["must_have_fact_slots"]
+        assert "transition_or_replacement_rule" in features["must_have_fact_slots"]
+        assert features["minimum_answer_facts_present"] is True
+        assert features["completeness_degrade_reason"] == "complete_enough"
+
     def test_completeness_synthesis_gates_missing_temporal_slot(self):
         features = _build_completeness_synthesis_features(
             query="Bu düzenleme halen yürürlükte mi, güncel durum nedir?",

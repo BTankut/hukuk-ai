@@ -12,6 +12,9 @@ ANSWER_MODES = {
     "insufficient_grounding",
     "conflict_detected",
     "repealed_or_uncertain",
+    "historical_repealed_answer",
+    "repealed_transition_answer",
+    "not_currently_applicable_answer",
 }
 GROUNDING_STATUSES = {"fully_grounded", "partially_grounded", "not_grounded"}
 EFFECTIVE_STATES = {"active", "amended", "repealed", "unknown"}
@@ -649,13 +652,15 @@ def _normalize_legacy_family_claim(
     effective_state: str,
     trace_payload: dict[str, Any] | None,
 ) -> str:
-    if effective_state != "repealed":
-        return source_family
     if not _legacy_query_intent(trace_payload):
         return source_family
     requested_families = _trace_requested_source_families(trace_payload)
     family_resolution = _trace_family_resolution(trace_payload)
     predicted_family = _canonical_trace_family(family_resolution.get("predicted_family"))
+    if source_family == UNKNOWN and predicted_family == "MULGA":
+        return "MULGA"
+    if effective_state != "repealed":
+        return source_family
     explicitly_bound_legacy_family = source_family in {"KANUN", "KHK", "TUZUK"} and (
         source_family in requested_families or predicted_family == source_family
     )
@@ -930,6 +935,37 @@ def _resolve_answer_mode(
     return "direct_answer"
 
 
+def _resolve_legacy_answer_mode(
+    *,
+    text: str,
+    effective_state: str,
+    source_family: str,
+    trace_payload: dict[str, Any] | None,
+) -> str | None:
+    if effective_state != "repealed" and source_family != "MULGA" and not _legacy_query_intent(trace_payload):
+        return None
+    normalized = _lower_asciiish(f"{_trace_question_text(trace_payload)} {text}")
+    if any(term in normalized for term in ("gecis", "gecici", "%25", "sinir", "siniri", "sureli")):
+        return "repealed_transition_answer"
+    if any(
+        term in normalized
+        for term in (
+            "bugun",
+            "hala",
+            "halen",
+            "2026",
+            "guncel",
+            "dogrudan",
+            "guvenli",
+            "risk",
+            "hatali",
+            "hata",
+        )
+    ):
+        return "not_currently_applicable_answer"
+    return "historical_repealed_answer"
+
+
 def _confidence_for_contract(
     *,
     grounding_status: str,
@@ -958,7 +994,13 @@ def _confidence_for_contract(
         confidence -= 7
     if effective_state == "unknown" and not native_dialog:
         confidence -= 5
-    if answer_mode in {"conflict_detected", "repealed_or_uncertain"}:
+    if answer_mode in {
+        "conflict_detected",
+        "repealed_or_uncertain",
+        "historical_repealed_answer",
+        "repealed_transition_answer",
+        "not_currently_applicable_answer",
+    }:
         confidence -= 8
 
     return max(low, min(high, confidence))
@@ -1095,6 +1137,32 @@ def controlled_fallback_answer(contract: dict[str, Any]) -> str:
     article_or_section = _clean(contract.get("article_or_section_claimed")) or "unknown"
     effective_state = _clean(contract.get("effective_state_claimed")) or "unknown"
     temporal_qualification = _clean(contract.get("temporal_qualification")) or "unknown"
+    answer_mode = _clean(contract.get("answer_mode"))
+    if (
+        source_family == "MULGA"
+        or effective_state == "repealed"
+        or answer_mode
+        in {
+            "historical_repealed_answer",
+            "repealed_transition_answer",
+            "not_currently_applicable_answer",
+            "repealed_or_uncertain",
+        }
+    ):
+        transition_note = (
+            "Geçiş veya süreli uygulama etkisi seçili kanıtta açıkça görünüyorsa yalnızca o sınırda dikkate alınmalıdır; "
+            "aksi halde güncel/yürürlükteki düzenleme ayrıca doğrulanmalıdır."
+            if answer_mode == "repealed_transition_answer"
+            else "Mevcut rejim veya yerine geçen düzenleme seçili kanıtta tam gösterilmiyorsa ayrıca doğrulanmalıdır."
+        )
+        return (
+            "Sonuç: seçili kaynak mülga/tarihsel nitelikte olduğundan bugün doğrudan güncel hüküm dayanağı "
+            "olarak otomatik uygulanmamalıdır. "
+            f"Dayanak: {source_family} / {source_identifier}; madde-bolum: {article_or_section} [Kaynak: {source_identifier}]. "
+            f"Yürürlük değerlendirmesi: {effective_state}; tarihsel referans tarihi: {temporal_qualification}. "
+            f"{transition_note} "
+            "Bu nedenle cevap, mülga kaynağın tarihsel etkisiyle sınırlı ve manuel inceleme gerektiren niteliktedir."
+        )
     return (
         "Bu soruya mevcut kaynaklarla tam destekli bir kesin cevap veremiyorum. "
         f"Kaynak iddiasi: {source_family} / {source_identifier}; "
@@ -1336,6 +1404,14 @@ def build_or_repair_answer_contract(
         grounding_status=grounding_status,
         effective_state=effective_state,
     )
+    legacy_answer_mode = _resolve_legacy_answer_mode(
+        text=combined_text,
+        effective_state=effective_state,
+        source_family=source_family,
+        trace_payload=trace_payload,
+    )
+    if legacy_answer_mode:
+        answer_mode = legacy_answer_mode
 
     claimed_source_parse_success = source_family != UNKNOWN and bool(source_identifier or source_title != UNKNOWN)
     if not claimed_source_parse_success and grounding_status == "fully_grounded":
@@ -1477,10 +1553,15 @@ def build_or_repair_answer_contract(
 
     if answer_suppressed_due_to_evidence_gap:
         grounding_status = "not_grounded"
-        answer_mode = "insufficient_grounding"
+        answer_mode = legacy_answer_mode or _resolve_legacy_answer_mode(
+            text=combined_text,
+            effective_state=effective_state,
+            source_family=source_family,
+            trace_payload=trace_payload,
+        ) or "insufficient_grounding"
     elif verification_findings and grounding_status == "fully_grounded":
         grounding_status = "partially_grounded"
-        answer_mode = "qualified_answer"
+        answer_mode = legacy_answer_mode or "qualified_answer"
 
     if not native_dialog and grounding_status == "fully_grounded":
         confidence_policy_adjustment_reasons = _confidence_pressure_reasons(
@@ -1489,7 +1570,7 @@ def build_or_repair_answer_contract(
         )
         if confidence_policy_adjustment_reasons:
             grounding_status = "partially_grounded"
-            answer_mode = "qualified_answer"
+            answer_mode = legacy_answer_mode or "qualified_answer"
             for reason in confidence_policy_adjustment_reasons:
                 finding = f"confidence_policy_pressure:{reason}"
                 if finding not in verification_findings:
