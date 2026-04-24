@@ -2833,6 +2833,37 @@ def _resolve_chunk_canonical_source_key_v2(
     return "|".join(parts)
 
 
+def _resolve_chunk_binding_source_key(
+    chunk: RetrievedChunk,
+    *,
+    include_span: bool = False,
+) -> str:
+    canonical_key = _resolve_chunk_canonical_source_key_v2(chunk, include_span=include_span)
+    if canonical_key:
+        return canonical_key
+    doc_uuid = _resolve_chunk_doc_uuid(chunk)
+    if doc_uuid:
+        return f"doc={_canonical_source_key_v2_part(doc_uuid)}"
+    family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown"
+    identifier = _resolve_chunk_canonical_identifier(chunk)
+    if family or identifier:
+        return (
+            f"fam={_canonical_source_key_v2_part(family)}|"
+            f"id={_canonical_source_key_v2_part(identifier)}"
+        )
+    return _resolve_chunk_document_key(chunk)
+
+
+def _chunk_uses_legacy_source_key_alias(chunk: RetrievedChunk) -> bool:
+    binding_key = _resolve_chunk_binding_source_key(chunk, include_span=False)
+    legacy_keys = {
+        str(_resolve_chunk_source_key(chunk) or "").strip().lower(),
+        str(_resolve_chunk_document_key(chunk) or "").strip().lower(),
+    }
+    legacy_keys.discard("")
+    return bool(binding_key and binding_key.strip().lower() not in legacy_keys and legacy_keys)
+
+
 def _extract_query_clause_tokens(query: str) -> set[str]:
     normalized = _normalize_tr_text(query or "")
     tokens: set[str] = set()
@@ -3367,6 +3398,19 @@ def _annotate_canonical_span_materialization(
         return
 
     selected_document_key = str(article_span_selector.get("selected_document_key") or "").strip().lower()
+    binding_source_key = str(
+        article_span_selector.get("binding_source_key")
+        or article_span_selector.get("selected_canonical_document_key_v2")
+        or ""
+    ).strip()
+    binding_source_key_normalized = binding_source_key.strip().lower()
+    binding_source_key_version = str(
+        article_span_selector.get("binding_source_key_version") or ""
+    ).strip()
+    canonical_key_binding_applied = bool(
+        binding_source_key_normalized
+        and binding_source_key_version == "canonical_source_key_v2"
+    )
     selected_span_ids = {
         str(value or "").strip()
         for value in [
@@ -3378,16 +3422,44 @@ def _annotate_canonical_span_materialization(
     selected_chunks = [
         chunk
         for chunk in chunks
-        if selected_document_key and _resolve_chunk_document_key(chunk) == selected_document_key
+        if binding_source_key_normalized
+        and _resolve_chunk_binding_source_key(chunk, include_span=False).strip().lower()
+        == binding_source_key_normalized
     ]
+    if not selected_chunks:
+        selected_chunks = [
+            chunk
+            for chunk in chunks
+            if selected_document_key and _resolve_chunk_document_key(chunk) == selected_document_key
+        ]
+    if not selected_chunks:
+        selected_chunks = [
+            chunk
+            for chunk in chunks
+            if selected_document_key
+            and _resolve_chunk_source_key(chunk).strip().lower() == selected_document_key
+        ]
     if not selected_chunks and selected_span_ids:
         selected_chunks = [
             chunk
             for chunk in chunks
             if _resolve_chunk_span_id(chunk) in selected_span_ids
         ]
-    if not selected_chunks and chunks and not selected_document_key:
+    if not selected_chunks and chunks and not (selected_document_key or binding_source_key_normalized):
         selected_chunks = chunks[:1]
+    selected_binding_key_resolved = (
+        _resolve_chunk_binding_source_key(selected_chunks[0], include_span=False)
+        if selected_chunks
+        else binding_source_key
+    )
+    if not binding_source_key_normalized and selected_binding_key_resolved:
+        binding_source_key = selected_binding_key_resolved
+        binding_source_key_normalized = selected_binding_key_resolved.strip().lower()
+        binding_source_key_version = "canonical_source_key_v2"
+        canonical_key_binding_applied = True
+    legacy_source_key_used_as_alias = bool(
+        selected_chunks and any(_chunk_uses_legacy_source_key_alias(chunk) for chunk in selected_chunks)
+    )
 
     main_span_id = str(article_span_selector.get("selected_main_span_id") or "").strip()
     main_chunk = next(
@@ -3434,6 +3506,12 @@ def _annotate_canonical_span_materialization(
         and (not selected_document_key or not policy_collision_keys or selected_document_key in policy_collision_keys)
     )
     v2_collision_profile = _source_key_v2_collision_profile(chunks)
+    source_key_v2_collision_detected = bool(v2_collision_profile.get("source_key_v2_collision_detected"))
+    binding_collision_detected = (
+        source_key_v2_collision_detected
+        if canonical_key_binding_applied
+        else source_key_collision_detected
+    )
     selected_canonical_source_key_v2 = (
         _resolve_chunk_canonical_source_key_v2(main_chunk, include_span=True) if main_chunk else ""
     )
@@ -3483,10 +3561,15 @@ def _annotate_canonical_span_materialization(
         materialization_reason = "document_level_body_span_materialized"
     elif selected_document_has_body_span:
         materialization_reason = "body_span_available_but_title_or_article_zero"
-    elif source_key_collision_detected:
+    elif binding_collision_detected:
         materialization_reason = "source_key_collision_without_family_body_span"
     else:
         materialization_reason = "title_only_or_unreadable_body"
+    canonical_key_binding_reason = (
+        "selected_document_bound_by_canonical_source_key_v2"
+        if canonical_key_binding_applied
+        else "legacy_source_key_binding_fallback"
+    )
 
     article_span_selector.update(
         {
@@ -3509,6 +3592,12 @@ def _annotate_canonical_span_materialization(
                 "selected_canonical_document_key_v2"
             )
             or selected_canonical_document_key_v2,
+            "binding_source_key": binding_source_key or selected_canonical_document_key_v2,
+            "binding_source_key_version": binding_source_key_version or "canonical_source_key_v2",
+            "legacy_source_key_used_as_alias": legacy_source_key_used_as_alias,
+            "canonical_key_binding_applied": canonical_key_binding_applied,
+            "canonical_key_binding_reason": canonical_key_binding_reason,
+            "binding_source_key_collision_detected": binding_collision_detected,
             "source_key_collision_detected": source_key_collision_detected,
             "source_key_collision_keys": policy_collision_keys,
             "source_key_collision_pair": policy_collision_pair,
@@ -3568,7 +3657,7 @@ def _select_article_span_evidence(
     }
     document_cluster_sizes: dict[str, int] = {}
     for chunk in chunks:
-        document_key = _resolve_chunk_document_key(chunk)
+        document_key = _resolve_chunk_binding_source_key(chunk, include_span=False)
         document_cluster_sizes[document_key] = document_cluster_sizes.get(document_key, 0) + 1
 
     has_selector_signal = bool(
@@ -3609,6 +3698,8 @@ def _select_article_span_evidence(
         document_key = _resolve_chunk_document_key(chunk)
         canonical_source_key_v2 = _resolve_chunk_canonical_source_key_v2(chunk, include_span=True)
         canonical_document_key_v2 = _resolve_chunk_canonical_source_key_v2(chunk, include_span=False)
+        binding_source_key = _resolve_chunk_binding_source_key(chunk, include_span=False)
+        binding_span_key = _resolve_chunk_binding_source_key(chunk, include_span=True)
         title = _resolve_chunk_source_title(chunk)
         heading = metadata.get("heading") or metadata.get("article_heading")
         article_token = _chunk_article_token(chunk)
@@ -3634,10 +3725,19 @@ def _select_article_span_evidence(
             and (
                 source_key in selected_source_key_set
                 or document_key in selected_source_key_set
+                or binding_source_key in selected_source_key_set
+                or canonical_source_key_v2 in selected_source_key_set
+                or canonical_document_key_v2 in selected_source_key_set
                 or _normalize_tr_text(source_key) in selected_source_key_set
                 or _normalize_tr_text(document_key) in selected_source_key_set
+                or _normalize_tr_text(binding_source_key) in selected_source_key_set
+                or _normalize_tr_text(canonical_source_key_v2) in selected_source_key_set
+                or _normalize_tr_text(canonical_document_key_v2) in selected_source_key_set
                 or normalize_canonical_text(source_key) in selected_source_key_set
                 or normalize_canonical_text(document_key) in selected_source_key_set
+                or normalize_canonical_text(binding_source_key) in selected_source_key_set
+                or normalize_canonical_text(canonical_source_key_v2) in selected_source_key_set
+                or normalize_canonical_text(canonical_document_key_v2) in selected_source_key_set
             )
         )
         law_match = bool(numbered_laws and numbered_laws & chunk_laws)
@@ -3645,7 +3745,7 @@ def _select_article_span_evidence(
         title_overlap = _count_term_overlap(title, query_terms)
         heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
         text_overlap = _count_term_overlap(chunk.text, query_terms)
-        cluster_size = document_cluster_sizes.get(document_key, 1)
+        cluster_size = document_cluster_sizes.get(binding_source_key, 1)
         effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
         temporally_inactive = _is_temporally_inactive_chunk(chunk) or effective_state == "repealed"
         chunk_years = _chunk_year_values(chunk)
@@ -3742,6 +3842,12 @@ def _select_article_span_evidence(
                     "legacy_source_key": source_key,
                     "canonical_source_key_v2": canonical_source_key_v2,
                     "canonical_document_key_v2": canonical_document_key_v2,
+                    "binding_source_key": binding_source_key,
+                    "binding_span_key": binding_span_key,
+                    "binding_source_key_version": "canonical_source_key_v2",
+                    "legacy_source_key_used_as_alias": _chunk_uses_legacy_source_key_alias(chunk),
+                    "canonical_key_binding_applied": True,
+                    "canonical_key_binding_reason": "ranked_candidate_bound_by_canonical_source_key_v2",
                     "document_key": document_key,
                     "span_id": _resolve_chunk_span_id(chunk),
                     "source_title": title,
@@ -3910,14 +4016,27 @@ def _select_article_span_evidence(
         seen_internal_keys: set[str] = set()
         for item in candidate_pool:
             trace = item[3]
-            document_key = str(trace.get("document_key") or trace.get("source_key") or "")
+            document_key = str(
+                trace.get("binding_source_key")
+                or trace.get("canonical_document_key_v2")
+                or trace.get("document_key")
+                or trace.get("source_key")
+                or ""
+            )
             if not document_key or document_key in seen_internal_keys:
                 continue
             seen_internal_keys.add(document_key)
             source_items = [
                 source_item
                 for source_item in candidate_pool
-                if str(source_item[3].get("document_key") or source_item[3].get("source_key") or "") == document_key
+                if str(
+                    source_item[3].get("binding_source_key")
+                    or source_item[3].get("canonical_document_key_v2")
+                    or source_item[3].get("document_key")
+                    or source_item[3].get("source_key")
+                    or ""
+                )
+                == document_key
             ]
             state_rank = min(
                 int(source_item[3].get("legacy_state_rank"))
@@ -3964,12 +4083,15 @@ def _select_article_span_evidence(
         if internal_records:
             chosen_document_key = str(internal_records[0].get("source_key") or "")
             internal_document_state_rank = int(internal_records[0].get("state_rank") or 0)
-            current_document_key = _resolve_chunk_document_key(document_lock_candidates[0][2])
+            current_document_key = _resolve_chunk_binding_source_key(
+                document_lock_candidates[0][2],
+                include_span=False,
+            )
             if chosen_document_key and chosen_document_key != current_document_key:
                 document_lock_candidates = [
                     item
                     for item in candidate_pool
-                    if _resolve_chunk_document_key(item[2]) == chosen_document_key
+                    if _resolve_chunk_binding_source_key(item[2], include_span=False) == chosen_document_key
                 ]
                 document_lock_reason = "internal_document_arbitration"
                 internal_document_choice_reason = "state_rank_then_identity_priority"
@@ -3987,8 +4109,21 @@ def _select_article_span_evidence(
         if document_lock_candidates
         else ""
     )
+    primary_binding_source_key = (
+        _resolve_chunk_binding_source_key(document_lock_candidates[0][2], include_span=False)
+        if document_lock_candidates
+        else ""
+    )
+    primary_binding_source_key_version = "canonical_source_key_v2" if primary_binding_source_key else ""
+    primary_legacy_source_key_used_as_alias = (
+        _chunk_uses_legacy_source_key_alias(document_lock_candidates[0][2])
+        if document_lock_candidates
+        else False
+    )
 
     def _same_locked_document(item: tuple[float, int, RetrievedChunk, dict[str, Any]]) -> bool:
+        if primary_binding_source_key:
+            return _resolve_chunk_binding_source_key(item[2], include_span=False) == primary_binding_source_key
         return bool(primary_document_key and _resolve_chunk_document_key(item[2]) == primary_document_key)
 
     def _selector_trace_match_type(trace: dict[str, Any]) -> str:
@@ -4253,6 +4388,15 @@ def _select_article_span_evidence(
         "canonical_source_key_v2": (top_trace.get("canonical_source_key_v2") if top_trace else None),
         "selected_canonical_source_key_v2": primary_canonical_source_key_v2 or None,
         "selected_canonical_document_key_v2": primary_canonical_document_key_v2 or None,
+        "binding_source_key": primary_binding_source_key or primary_canonical_document_key_v2 or None,
+        "binding_source_key_version": primary_binding_source_key_version or None,
+        "legacy_source_key_used_as_alias": primary_legacy_source_key_used_as_alias,
+        "canonical_key_binding_applied": bool(primary_binding_source_key),
+        "canonical_key_binding_reason": (
+            "primary_document_bound_by_canonical_source_key_v2"
+            if primary_binding_source_key
+            else "legacy_source_key_binding_fallback"
+        ),
         "selected_main_span_id": selected_main_span_id,
         "selected_main_article": selected_main_article,
         "selected_supporting_span_ids": selected_supporting_span_ids,
@@ -4334,7 +4478,12 @@ def _apply_selected_document_only_bundle(
         return chunks
 
     selected_document_key = str(article_span_selector.get("selected_document_key") or "").strip().lower()
-    if not selected_document_key:
+    binding_source_key = str(
+        article_span_selector.get("binding_source_key")
+        or article_span_selector.get("selected_canonical_document_key_v2")
+        or ""
+    ).strip().lower()
+    if not (selected_document_key or binding_source_key):
         article_span_selector["selected_document_only_bundle"] = False
         return chunks
     if article_span_selector.get("relation_query_detected"):
@@ -4382,7 +4531,16 @@ def _apply_selected_document_only_bundle(
     selected_document_chunks = [
         chunk
         for chunk in chunks
-        if _resolve_chunk_document_key(chunk) == selected_document_key
+        if (
+            binding_source_key
+            and _resolve_chunk_binding_source_key(chunk, include_span=False).strip().lower()
+            == binding_source_key
+        )
+        or (
+            not binding_source_key
+            and selected_document_key
+            and _resolve_chunk_document_key(chunk) == selected_document_key
+        )
     ]
     if not selected_document_chunks:
         article_span_selector["selected_document_only_bundle"] = False
@@ -5661,7 +5819,12 @@ def _chunk_matches_selected_source_key(
         )
         if value
     }
-    for candidate in (_resolve_chunk_source_key(chunk), _resolve_chunk_document_key(chunk)):
+    for candidate in (
+        _resolve_chunk_source_key(chunk),
+        _resolve_chunk_document_key(chunk),
+        _resolve_chunk_binding_source_key(chunk, include_span=False),
+        _resolve_chunk_binding_source_key(chunk, include_span=True),
+    ):
         for value in (
             str(candidate).strip().lower(),
             _normalize_tr_text(str(candidate)),
@@ -5689,7 +5852,7 @@ def _prioritize_chunks_for_source_families(
     current_validity_query = _asks_current_validity_query(query)
     source_cluster_sizes: dict[str, int] = {}
     for chunk in chunks:
-        source_key = _resolve_chunk_document_key(chunk)
+        source_key = _resolve_chunk_binding_source_key(chunk, include_span=False)
         source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
 
     if source_families and not any(
@@ -5709,7 +5872,7 @@ def _prioritize_chunks_for_source_families(
             or metadata.get("law_name")
         )
         heading = metadata.get("heading") or metadata.get("article_heading")
-        cluster_size = source_cluster_sizes.get(_resolve_chunk_document_key(chunk), 1)
+        cluster_size = source_cluster_sizes.get(_resolve_chunk_binding_source_key(chunk, include_span=False), 1)
         selected_source_rank = (
             0
             if not selected_source_keys or _chunk_matches_selected_source_key(chunk, selected_source_keys)

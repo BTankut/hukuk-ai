@@ -156,6 +156,12 @@ SCORED_FIELDS = [
     "canonical_source_key_v2",
     "selected_canonical_source_key_v2",
     "selected_canonical_document_key_v2",
+    "binding_source_key",
+    "binding_source_key_version",
+    "legacy_source_key_used_as_alias",
+    "canonical_key_binding_applied",
+    "canonical_key_binding_reason",
+    "binding_source_key_collision_detected",
     "source_key_collision_detected",
     "source_key_collision_keys",
     "source_key_collision_pair",
@@ -672,6 +678,12 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
         "canonical_source_key_v2": answer.get("canonical_source_key_v2", ""),
         "selected_canonical_source_key_v2": answer.get("selected_canonical_source_key_v2", ""),
         "selected_canonical_document_key_v2": answer.get("selected_canonical_document_key_v2", ""),
+        "binding_source_key": answer.get("binding_source_key", ""),
+        "binding_source_key_version": answer.get("binding_source_key_version", ""),
+        "legacy_source_key_used_as_alias": answer.get("legacy_source_key_used_as_alias", ""),
+        "canonical_key_binding_applied": answer.get("canonical_key_binding_applied", ""),
+        "canonical_key_binding_reason": answer.get("canonical_key_binding_reason", ""),
+        "binding_source_key_collision_detected": answer.get("binding_source_key_collision_detected", ""),
         "source_key_collision_detected": answer.get("source_key_collision_detected", ""),
         "source_key_collision_keys": answer.get("source_key_collision_keys", ""),
         "source_key_collision_pair": answer.get("source_key_collision_pair", ""),
@@ -929,6 +941,18 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
     source_key_v2_collision_pair_counts = Counter(
         row.get("source_key_v2_collision_pair", "") or "none" for row in rows
     )
+    binding_source_key_version_counts = Counter(
+        row.get("binding_source_key_version", "") or "unknown" for row in rows
+    )
+    canonical_key_binding_applied_count = sum(
+        1 for row in rows if bool_field(str(row.get("canonical_key_binding_applied", ""))) is True
+    )
+    legacy_source_key_used_as_alias_count = sum(
+        1 for row in rows if bool_field(str(row.get("legacy_source_key_used_as_alias", ""))) is True
+    )
+    binding_source_key_collision_detected_count = sum(
+        1 for row in rows if bool_field(str(row.get("binding_source_key_collision_detected", ""))) is True
+    )
     candidate_completeness_scores: list[float] = []
     for row in rows:
         raw_score = str(row.get("candidate_completeness_score", "")).strip()
@@ -1102,6 +1126,10 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         "source_key_collision_pair_counts": dict(sorted(source_key_collision_pair_counts.items())),
         "source_key_v2_collision_detected_count": source_key_v2_collision_detected_count,
         "source_key_v2_collision_pair_counts": dict(sorted(source_key_v2_collision_pair_counts.items())),
+        "binding_source_key_version_counts": dict(sorted(binding_source_key_version_counts.items())),
+        "canonical_key_binding_applied_count": canonical_key_binding_applied_count,
+        "legacy_source_key_used_as_alias_count": legacy_source_key_used_as_alias_count,
+        "binding_source_key_collision_detected_count": binding_source_key_collision_detected_count,
         "avg_candidate_completeness_score": round(
             sum(candidate_completeness_scores) / len(candidate_completeness_scores),
             3,
@@ -1343,6 +1371,9 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
             f"- selected_document_materialized_body_span_count: {summary['selected_document_materialized_body_span_count']}",
             f"- source_key_collision_detected_count: {summary['source_key_collision_detected_count']}",
             f"- source_key_v2_collision_detected_count: {summary['source_key_v2_collision_detected_count']}",
+            f"- canonical_key_binding_applied_count: {summary['canonical_key_binding_applied_count']}",
+            f"- legacy_source_key_used_as_alias_count: {summary['legacy_source_key_used_as_alias_count']}",
+            f"- binding_source_key_collision_detected_count: {summary['binding_source_key_collision_detected_count']}",
             f"- avg_candidate_completeness_score: {summary['avg_candidate_completeness_score']}",
         ]
     )
@@ -1352,6 +1383,8 @@ def write_summary(out_dir: Path, rows: list[dict[str, Any]]) -> None:
         lines.append(f"- source_key_collision_pair.{status}: {count}")
     for status, count in summary["source_key_v2_collision_pair_counts"].items():
         lines.append(f"- source_key_v2_collision_pair.{status}: {count}")
+    for status, count in summary["binding_source_key_version_counts"].items():
+        lines.append(f"- binding_source_key_version.{status}: {count}")
     lines.extend(["", "## Task Type Answer Template"])
     for status, count in summary["task_type_answer_template_counts"].items():
         lines.append(f"- {status}: {count}")
@@ -1397,7 +1430,7 @@ def main() -> int:
     scored = [score_row(answers[qid], answer_key[qid]) for qid in sorted(answers)]
     scored_path = args.out_dir / "scored.csv"
     with scored_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=SCORED_FIELDS, extrasaction="ignore")
+        writer = csv.DictWriter(f, fieldnames=SCORED_FIELDS, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(scored)
     write_summary(args.out_dir, scored)

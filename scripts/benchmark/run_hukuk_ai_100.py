@@ -138,6 +138,12 @@ ANSWER_FIELDS = [
     "canonical_source_key_v2",
     "selected_canonical_source_key_v2",
     "selected_canonical_document_key_v2",
+    "binding_source_key",
+    "binding_source_key_version",
+    "legacy_source_key_used_as_alias",
+    "canonical_key_binding_applied",
+    "canonical_key_binding_reason",
+    "binding_source_key_collision_detected",
     "source_key_collision_detected",
     "source_key_collision_keys",
     "source_key_collision_pair",
@@ -697,6 +703,12 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "canonical_source_key_v2": selector_value(response, "canonical_source_key_v2"),
         "selected_canonical_source_key_v2": selector_value(response, "selected_canonical_source_key_v2"),
         "selected_canonical_document_key_v2": selector_value(response, "selected_canonical_document_key_v2"),
+        "binding_source_key": selector_value(response, "binding_source_key"),
+        "binding_source_key_version": selector_value(response, "binding_source_key_version"),
+        "legacy_source_key_used_as_alias": selector_value(response, "legacy_source_key_used_as_alias"),
+        "canonical_key_binding_applied": selector_value(response, "canonical_key_binding_applied"),
+        "canonical_key_binding_reason": selector_value(response, "canonical_key_binding_reason"),
+        "binding_source_key_collision_detected": selector_value(response, "binding_source_key_collision_detected"),
         "source_key_collision_detected": selector_value(response, "source_key_collision_detected")
         or retrieval_feature_value(response, "source_key_collision_detected"),
         "source_key_collision_keys": selector_value(response, "source_key_collision_keys")
@@ -839,7 +851,7 @@ def main() -> int:
     with answers_path.open(answer_mode, newline="", encoding="utf-8") as answers_file, trace_path.open(
         trace_mode, encoding="utf-8"
     ) as trace_file:
-        writer = csv.DictWriter(answers_file, fieldnames=ANSWER_FIELDS, extrasaction="ignore")
+        writer = csv.DictWriter(answers_file, fieldnames=ANSWER_FIELDS, extrasaction="ignore", lineterminator="\n")
         if write_header:
             writer.writeheader()
 

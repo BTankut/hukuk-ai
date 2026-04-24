@@ -28,6 +28,11 @@ FIELDS = [
     "body_text_available",
     "body_text_length",
     "source_key_collision_detected",
+    "source_key_v2_collision_detected",
+    "binding_source_key",
+    "binding_source_key_version",
+    "canonical_key_binding_applied",
+    "binding_source_key_collision_detected",
     "corpus_materialization_required_reason",
     "official_source_available",
     "ingestion_required",
@@ -61,7 +66,7 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 def write_csv(path: Path, rows: list[dict[str, str]], fields: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -78,7 +83,14 @@ def classify_remediation(row: dict[str, str]) -> dict[str, str]:
     family = expected_family(row)
     reason = row.get("canonical_span_materialization_reason", "")
     body_available = is_true(row.get("body_text_available"))
-    collision = is_true(row.get("source_key_collision_detected"))
+    legacy_collision = is_true(row.get("source_key_collision_detected"))
+    v2_collision = is_true(row.get("source_key_v2_collision_detected"))
+    binding_collision = is_true(row.get("binding_source_key_collision_detected"))
+    canonical_binding_applied = is_true(row.get("canonical_key_binding_applied"))
+    collision = bool(
+        legacy_collision
+        and not (canonical_binding_applied and not v2_collision and not binding_collision)
+    )
 
     if collision:
         return {
@@ -142,6 +154,11 @@ def remediation_row(scored: dict[str, str], answer: dict[str, str]) -> dict[str,
         "body_text_available": answer.get("body_text_available", ""),
         "body_text_length": answer.get("body_text_length", ""),
         "source_key_collision_detected": answer.get("source_key_collision_detected", ""),
+        "source_key_v2_collision_detected": answer.get("source_key_v2_collision_detected", ""),
+        "binding_source_key": answer.get("binding_source_key", ""),
+        "binding_source_key_version": answer.get("binding_source_key_version", ""),
+        "canonical_key_binding_applied": answer.get("canonical_key_binding_applied", ""),
+        "binding_source_key_collision_detected": answer.get("binding_source_key_collision_detected", ""),
         "corpus_materialization_required_reason": answer.get("canonical_span_materialization_reason", ""),
         "selected_document_id": answer.get("selected_document_id", ""),
         "selected_article": answer.get("selected_article", ""),
@@ -155,7 +172,14 @@ def remediation_row(scored: dict[str, str], answer: dict[str, str]) -> dict[str,
 def cb_genelge_audit_row(row: dict[str, str]) -> dict[str, str]:
     reason = row["corpus_materialization_required_reason"]
     body_available = is_true(row["body_text_available"])
-    collision = is_true(row["source_key_collision_detected"])
+    legacy_collision = is_true(row["source_key_collision_detected"])
+    v2_collision = is_true(row.get("source_key_v2_collision_detected"))
+    binding_collision = is_true(row.get("binding_source_key_collision_detected"))
+    canonical_binding_applied = is_true(row.get("canonical_key_binding_applied"))
+    collision = bool(
+        legacy_collision
+        and not (canonical_binding_applied and not v2_collision and not binding_collision)
+    )
     article_zero = (row.get("selected_article") or "").strip() in {"", "0"}
     if collision:
         root_cause = "family_qualified_source_key_collision"
@@ -175,6 +199,8 @@ def cb_genelge_audit_row(row: dict[str, str]) -> dict[str, str]:
         "parser_gap": "True" if body_available and article_zero else "False",
         "source_acquisition_required": "False" if body_available else "True",
         "source_key_collision_detected": row["source_key_collision_detected"],
+        "source_key_v2_collision_detected": row.get("source_key_v2_collision_detected", ""),
+        "binding_source_key_collision_detected": row.get("binding_source_key_collision_detected", ""),
         "root_cause": root_cause,
         "remediation_status": row["status"],
         "reason": reason,
@@ -204,6 +230,8 @@ def main() -> int:
         "parser_gap",
         "source_acquisition_required",
         "source_key_collision_detected",
+        "source_key_v2_collision_detected",
+        "binding_source_key_collision_detected",
         "root_cause",
         "remediation_status",
         "reason",
@@ -218,6 +246,7 @@ def main() -> int:
     reason_counts = Counter(row["corpus_materialization_required_reason"] or "unknown" for row in rows)
     body_exists = sum(1 for row in rows if is_true(row["body_text_available"]))
     collision_count = sum(1 for row in rows if is_true(row["source_key_collision_detected"]))
+    binding_collision_count = sum(1 for row in rows if is_true(row.get("binding_source_key_collision_detected")))
     article_zero_count = sum(1 for row in rows if (row.get("selected_article") or "").strip() in {"", "0"})
 
     lines = [
@@ -227,7 +256,8 @@ def main() -> int:
         f"- corpus_materialization_required_rows: {len(rows)}",
         f"- body_text_available_rows: {body_exists}",
         f"- selected_article_zero_or_empty_rows: {article_zero_count}",
-        f"- source_key_collision_rows: {collision_count}",
+        f"- legacy_source_key_collision_rows: {collision_count}",
+        f"- binding_source_key_collision_rows: {binding_collision_count}",
         "",
         "## By Family",
     ]
@@ -250,17 +280,18 @@ def main() -> int:
             f"{row['qid']}: expected={row['expected_family']}, selected={row['selected_family']}, "
             f"reason={row['corpus_materialization_required_reason']}, "
             f"body={row['body_text_available']}:{row['body_text_length']}, "
-            f"collision={row['source_key_collision_detected']}, owner={row['owner']}, "
+            f"legacy_collision={row['source_key_collision_detected']}, "
+            f"binding_collision={row.get('binding_source_key_collision_detected', '')}, "
+            f"owner={row['owner']}, "
             f"status={row['status']}"
         )
     lines.extend(
         [
             "",
             "## Phase 16A Decision",
-            "- 13/13 corpus-required rows are explicitly classified.",
-            "- High-impact first fix should target document-level body-span materialization for CB_GENELGE/CB_KARAR/TEBLIGLER rows where body exists but selected article is m.0.",
-            "- Source-key v2 is required before collision rows can be trusted as materialized.",
-            "- KANUN-06 remains a text extraction/body readability repair, not a selector prompt issue.",
+            "- Corpus-required rows are explicitly classified.",
+            "- Legacy source-key collision is treated as a blocker only when canonical v2 binding is absent or binding collision remains true.",
+            "- Rows with clean v2 binding but unreadable/title-only body remain corpus/parser backlog, not source-key blockers.",
         ]
     )
     args.out_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -274,7 +305,8 @@ def main() -> int:
         f"- m0_or_title_only_rows: {sum(1 for row in cb_rows if is_true(row['comes_as_m0_or_title_only']))}",
         f"- body_text_available_rows: {sum(1 for row in cb_rows if is_true(row['body_text_available']))}",
         f"- parser_gap_rows: {sum(1 for row in cb_rows if is_true(row['parser_gap']))}",
-        f"- source_key_collision_rows: {sum(1 for row in cb_rows if is_true(row['source_key_collision_detected']))}",
+        f"- legacy_source_key_collision_rows: {sum(1 for row in cb_rows if is_true(row['source_key_collision_detected']))}",
+        f"- binding_source_key_collision_rows: {sum(1 for row in cb_rows if is_true(row.get('binding_source_key_collision_detected')))}",
         "",
         "## Root Cause Counts",
     ]
@@ -286,7 +318,8 @@ def main() -> int:
             "- "
             f"{row['qid']}: identifier={row['selected_identifier']}, "
             f"body={row['body_text_available']}:{row['body_text_length']}, "
-            f"parser_gap={row['parser_gap']}, collision={row['source_key_collision_detected']}, "
+            f"parser_gap={row['parser_gap']}, legacy_collision={row['source_key_collision_detected']}, "
+            f"binding_collision={row.get('binding_source_key_collision_detected', '')}, "
             f"root_cause={row['root_cause']}"
         )
     cb_lines.extend(
@@ -294,9 +327,8 @@ def main() -> int:
             "",
             "## Conclusion",
             "- CB_GENELGE is not a user-query formatting problem.",
-            "- 3/4 rows expose some body text, but the canonical selector sees only m.0/title spans.",
-            "- 2/4 rows also have numeric source-key collision, so family-qualified source keys are mandatory.",
-            "- The immediate systemic repair is document-level body-span materialization plus source-key v2, not question-specific routing.",
+            "- Legacy numeric source-key collisions must be interpreted through binding-source-key status.",
+            "- Clean v2 binding removes source-key collision as the blocker; remaining failures are corpus/body-span or answer-slot issues.",
         ]
     )
     args.cb_md.write_text("\n".join(cb_lines) + "\n", encoding="utf-8")

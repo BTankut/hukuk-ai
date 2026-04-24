@@ -74,6 +74,7 @@ from routers.chat import (
     _resolve_chunk_source_family_profile,
     _resolve_chunk_routing_family,
     _resolve_chunk_canonical_source_key_v2,
+    _resolve_chunk_binding_source_key,
     _resolve_source_family_prior,
     _source_key_v2_collision_profile,
     _resolve_public_answer_text,
@@ -1268,6 +1269,25 @@ class TestLawSignalParsing:
         assert karar_key != teblig_key
         assert v2_profile["source_key_v2_collision_detected"] is False
 
+    def test_binding_source_key_prefers_canonical_v2_over_legacy_numeric_alias(self):
+        karar_chunk = RetrievedChunk(
+            text="Yatırımlarda devlet yardımları kararı metni.",
+            citation="9903 m.0/f.0",
+            source="9903",
+            score=1.0,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "9903",
+                "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                "madde_no": "0",
+            },
+        )
+
+        binding_key = _resolve_chunk_binding_source_key(karar_chunk, include_span=False)
+
+        assert binding_key.startswith("fam=cb_karar|id=9903")
+        assert binding_key != "9903"
+
     def test_article_span_selector_writes_legacy_and_canonical_source_keys(self):
         chunk = RetrievedChunk(
             text="Yatırım teşvik başvurusu için karar kapsamındaki destek unsurları düzenlenir.",
@@ -1290,8 +1310,13 @@ class TestLawSignalParsing:
 
         assert selector["legacy_source_key"] == "9903"
         assert selector["selected_canonical_source_key_v2"].startswith("fam=cb_karar|id=9903")
+        assert selector["binding_source_key"].startswith("fam=cb_karar|id=9903")
+        assert selector["binding_source_key_version"] == "canonical_source_key_v2"
+        assert selector["canonical_key_binding_applied"] is True
+        assert selector["legacy_source_key_used_as_alias"] is True
         assert selector["top_scores"][0]["legacy_source_key"] == "9903"
         assert selector["top_scores"][0]["canonical_source_key_v2"].startswith("fam=cb_karar|id=9903")
+        assert selector["top_scores"][0]["binding_source_key"].startswith("fam=cb_karar|id=9903")
 
     def test_source_family_prior_keeps_multi_family_for_university_regulation(self):
         resolution = _resolve_source_family_prior(
@@ -3448,11 +3473,18 @@ class TestLawSignalParsing:
         )
 
         assert selector["canonical_span_materialized"] is False
-        assert selector["canonical_span_materialization_reason"] == "source_key_collision_without_family_body_span"
+        assert selector["canonical_span_materialization_reason"] == "title_only_or_unreadable_body"
         assert selector["title_only_fallback_used"] is True
         assert selector["body_text_available"] is False
         assert selector["corpus_materialization_required"] is True
         assert selector["source_key_collision_detected"] is True
+        assert selector["source_key_v2_collision_detected"] is False
+        assert selector["binding_source_key"].startswith("fam=cb_karar|id=9903")
+        assert selector["binding_source_key_version"] == "canonical_source_key_v2"
+        assert selector["legacy_source_key_used_as_alias"] is True
+        assert selector["canonical_key_binding_applied"] is True
+        assert selector["canonical_key_binding_reason"] == "selected_document_bound_by_canonical_source_key_v2"
+        assert selector["binding_source_key_collision_detected"] is False
         assert selector["selected_document_has_body_span"] is False
         assert selector["selected_document_has_non_title_span"] is False
         assert selector["title_only_answer_degraded"] is True
@@ -3499,6 +3531,52 @@ class TestLawSignalParsing:
         assert selector["candidate_completeness_score"] >= 0.75
         assert selector["selected_document_has_non_title_span"] is True
         assert selector["insufficient_canonical_span_evidence"] is False
+
+    def test_selected_document_bundle_uses_v2_binding_not_legacy_numeric_alias(self):
+        karar_chunk = RetrievedChunk(
+            text="9903 karar başlığı.",
+            citation="9903 m.0/f.0",
+            source="9903",
+            score=1.0,
+            metadata={
+                "belge_turu": "cb_karar",
+                "belge_no": "9903",
+                "source_title": "YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR",
+                "madde_no": "0",
+            },
+        )
+        teblig_chunk = RetrievedChunk(
+            text="Garanti belgesi tebliğ metni.",
+            citation="9903 m.1/f.0",
+            source="9903",
+            score=0.9,
+            metadata={
+                "belge_turu": "teblig",
+                "belge_no": "9903",
+                "source_title": "GARANTİ BELGESİ SÜRELERİNİN UZATILMASINA İLİŞKİN TEBLİĞ",
+                "madde_no": "1",
+            },
+        )
+        selector = {
+            "selected_document_key": "9903",
+            "binding_source_key": _resolve_chunk_binding_source_key(karar_chunk, include_span=False),
+            "binding_source_key_version": "canonical_source_key_v2",
+            "selected_main_span_id": "9903 m.0/f.0",
+            "selector_evidence_sufficiency": "partially_supported",
+            "metadata_identity_strength": "strong",
+            "selector_reason": "identifier_lock",
+            "identifier_tokens": ["9903"],
+            "query_article_tokens": [],
+        }
+
+        bundled = _apply_selected_document_only_bundle(
+            chunks=[karar_chunk, teblig_chunk],
+            article_span_selector=selector,
+        )
+
+        assert bundled == [karar_chunk]
+        assert selector["selected_document_only_bundle"] is True
+        assert selector["selected_document_bundle_suppressed_count"] == 1
 
     def test_canonical_span_materialization_accepts_readable_body_with_low_control_ratio(self):
         readable = (
