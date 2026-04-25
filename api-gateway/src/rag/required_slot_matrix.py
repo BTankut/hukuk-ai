@@ -218,16 +218,21 @@ def _family_matrix_slots(source_families: list[str] | tuple[str, ...] | set[str]
     return _dedupe(labels), _dedupe(slots)
 
 
-def _runtime_slots_for_matrix_slots(matrix_slots: list[str]) -> list[str]:
+def runtime_slots_for_matrix_slot(matrix_slot: str) -> list[str]:
     matrix = load_required_slot_matrix()
     runtime_map = matrix.get("runtime_slot_map") or {}
+    mapped = runtime_map.get(str(matrix_slot or ""))
+    if isinstance(mapped, list):
+        return _dedupe([str(item) for item in mapped])
+    if isinstance(mapped, str):
+        return [mapped]
+    return []
+
+
+def _runtime_slots_for_matrix_slots(matrix_slots: list[str]) -> list[str]:
     runtime_slots: list[str] = []
     for slot in matrix_slots:
-        mapped = runtime_map.get(slot)
-        if isinstance(mapped, list):
-            runtime_slots.extend(str(item) for item in mapped)
-        elif isinstance(mapped, str):
-            runtime_slots.append(mapped)
+        runtime_slots.extend(runtime_slots_for_matrix_slot(slot))
     return _dedupe(runtime_slots)
 
 

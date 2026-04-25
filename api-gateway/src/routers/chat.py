@@ -70,7 +70,11 @@ from rag.source_catalog import (
     resolve_effective_state,
     source_family_mapping_profile,
 )
-from rag.required_slot_matrix import RequiredSlotResolution, resolve_required_slot_matrix
+from rag.required_slot_matrix import (
+    RequiredSlotResolution,
+    resolve_required_slot_matrix,
+    runtime_slots_for_matrix_slot,
+)
 from rag.source_supplements import load_source_supplements_for_keys
 from rag.token_manager import estimate_tokens
 from release_controls import (
@@ -9470,6 +9474,133 @@ def _build_evidence_required_slot_values(
     return rows
 
 
+_ANSWER_SLOT_EXTRACTION_VERSION = "phase18b-2026-04-25"
+_DETERMINISTIC_MATRIX_SLOTS = {
+    "governing_source",
+    "exact_source_identity",
+    "article_or_span",
+    "selected_primary_source",
+    "source_family",
+    "identifier",
+    "issuer",
+    "circular_number_or_date",
+    "decision_number",
+    "teblig_identifier",
+    "effective_state",
+    "effective_period",
+    "effective_date",
+    "current_source",
+    "source_is_repealed_or_historical",
+    "applicable_period",
+}
+
+
+def _answer_slot_extraction_method(matrix_slot: str) -> str:
+    return "deterministic" if matrix_slot in _DETERMINISTIC_MATRIX_SLOTS else "hybrid"
+
+
+def _best_evidence_row_for_matrix_slot(
+    matrix_slot: str,
+    evidence_slot_values: list[dict[str, Any]],
+) -> tuple[dict[str, Any], list[str]]:
+    runtime_candidates = runtime_slots_for_matrix_slot(matrix_slot)
+    rows_by_slot = {
+        str(row.get("slot_name") or ""): row
+        for row in evidence_slot_values
+        if isinstance(row, dict)
+    }
+    best_row: dict[str, Any] = {}
+    best_confidence = -1.0
+    for runtime_slot in runtime_candidates:
+        row = rows_by_slot.get(runtime_slot)
+        if not row:
+            continue
+        try:
+            confidence = float(row.get("slot_confidence") or 0.0)
+        except (TypeError, ValueError):
+            confidence = 0.0
+        has_value = bool(str(row.get("slot_value") or "").strip())
+        score = confidence + (0.01 if has_value else 0.0)
+        if score > best_confidence:
+            best_confidence = score
+            best_row = row
+    return best_row, runtime_candidates
+
+
+def _build_verified_answer_slots(
+    *,
+    required_slot_resolution: RequiredSlotResolution,
+    evidence_slot_values: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    answer_slots: list[dict[str, Any]] = []
+    critical_runtime_slots = set(required_slot_resolution.critical_slots)
+    critical_missing: list[str] = []
+    methods: list[str] = []
+
+    for matrix_slot in required_slot_resolution.matrix_slots:
+        evidence_row, runtime_candidates = _best_evidence_row_for_matrix_slot(
+            matrix_slot,
+            evidence_slot_values,
+        )
+        value = str(evidence_row.get("slot_value") or "").strip()
+        span_id = str(evidence_row.get("evidence_span_id") or "").strip()
+        article_or_span = str(evidence_row.get("evidence_article") or span_id or "").strip()
+        reason = str(evidence_row.get("slot_missing_reason") or "").strip()
+        try:
+            confidence = float(evidence_row.get("slot_confidence") or 0.0)
+        except (TypeError, ValueError):
+            confidence = 0.0
+
+        if value and span_id and confidence >= 0.65:
+            fill_status = "filled"
+            verifier_status = "verified"
+            missing_reason = None
+        elif value and span_id:
+            fill_status = "unsupported"
+            verifier_status = "needs_review"
+            missing_reason = reason or "evidence_below_verification_threshold"
+        else:
+            fill_status = "missing"
+            verifier_status = "failed"
+            missing_reason = reason or "no_matching_evidence_span"
+
+        method = _answer_slot_extraction_method(matrix_slot)
+        methods.append(method)
+        if fill_status != "filled" and critical_runtime_slots & set(runtime_candidates):
+            critical_missing.append(matrix_slot)
+
+        answer_slots.append(
+            {
+                "slot_name": matrix_slot,
+                "required": True,
+                "value": value or None,
+                "evidence_span_keys": [span_id] if span_id and value else [],
+                "evidence_article_or_span": article_or_span or None,
+                "extraction_method": method,
+                "fill_status": fill_status,
+                "verifier_status": verifier_status,
+                "confidence_0_100": int(round(max(0.0, min(1.0, confidence)) * 100)),
+                "slot_missing_reason": missing_reason,
+                "runtime_slot_candidates": runtime_candidates,
+            }
+        )
+
+    filled_count = sum(1 for slot in answer_slots if slot.get("fill_status") == "filled")
+    verified_count = sum(1 for slot in answer_slots if slot.get("verifier_status") == "verified")
+    unsupported_count = sum(1 for slot in answer_slots if slot.get("fill_status") == "unsupported")
+    missing_count = sum(1 for slot in answer_slots if slot.get("fill_status") == "missing")
+    return answer_slots, {
+        "answer_slot_extraction_version": _ANSWER_SLOT_EXTRACTION_VERSION,
+        "answer_slot_required_count": len(answer_slots),
+        "answer_slot_filled_count": filled_count,
+        "answer_slot_verified_count": verified_count,
+        "answer_slot_missing_count": missing_count,
+        "answer_slot_unsupported_count": unsupported_count,
+        "answer_slot_extraction_methods": dedupe_strings(methods),
+        "critical_answer_slots_missing": dedupe_strings(critical_missing),
+    }
+
+
 def _build_answer_slot_evidence_map(
     *,
     required_slots: list[str],
@@ -9640,6 +9771,16 @@ def _build_completeness_synthesis_features(
         chunks=chunks,
         query=query,
     )
+    matrix_evidence_required_slot_values = _build_evidence_required_slot_values(
+        required_slots=required_slot_resolution.runtime_slots,
+        article_span_selector=article_span_selector,
+        chunks=chunks,
+        query=query,
+    )
+    answer_slots, answer_slot_summary = _build_verified_answer_slots(
+        required_slot_resolution=required_slot_resolution,
+        evidence_slot_values=matrix_evidence_required_slot_values,
+    )
     answer_slot_evidence_map, answer_slot_coverage_score, answer_slot_missing_reasons = (
         _build_answer_slot_evidence_map(
             required_slots=required_slots,
@@ -9725,6 +9866,8 @@ def _build_completeness_synthesis_features(
             1 for row in evidence_required_slot_values if float(row.get("slot_confidence") or 0.0) >= 0.65
         ),
         **required_slot_resolution.to_trace_dict(),
+        "answer_slots": answer_slots,
+        **answer_slot_summary,
         "candidate_completeness_score": candidate_completeness_score,
         "selected_document_has_body_span": selected_document_has_body_span,
         "selected_document_has_non_title_span": selected_document_has_non_title_span,
@@ -9994,6 +10137,15 @@ def _build_trace_payload(
             "required_slot_runtime_slots": answer_contract.get("required_slot_runtime_slots"),
             "required_slot_critical_slots": answer_contract.get("required_slot_critical_slots"),
             "required_slot_resolution_reason": answer_contract.get("required_slot_resolution_reason"),
+            "answer_slot_extraction_version": answer_contract.get("answer_slot_extraction_version"),
+            "answer_slots": answer_contract.get("answer_slots"),
+            "answer_slot_required_count": answer_contract.get("answer_slot_required_count"),
+            "answer_slot_filled_count": answer_contract.get("answer_slot_filled_count"),
+            "answer_slot_verified_count": answer_contract.get("answer_slot_verified_count"),
+            "answer_slot_missing_count": answer_contract.get("answer_slot_missing_count"),
+            "answer_slot_unsupported_count": answer_contract.get("answer_slot_unsupported_count"),
+            "answer_slot_extraction_methods": answer_contract.get("answer_slot_extraction_methods"),
+            "critical_answer_slots_missing": answer_contract.get("critical_answer_slots_missing"),
             "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
             "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
             "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
@@ -10126,6 +10278,15 @@ def _build_trace_payload(
                 "required_slot_runtime_slots": answer_contract.get("required_slot_runtime_slots"),
                 "required_slot_critical_slots": answer_contract.get("required_slot_critical_slots"),
                 "required_slot_resolution_reason": answer_contract.get("required_slot_resolution_reason"),
+                "answer_slot_extraction_version": answer_contract.get("answer_slot_extraction_version"),
+                "answer_slots": answer_contract.get("answer_slots"),
+                "answer_slot_required_count": answer_contract.get("answer_slot_required_count"),
+                "answer_slot_filled_count": answer_contract.get("answer_slot_filled_count"),
+                "answer_slot_verified_count": answer_contract.get("answer_slot_verified_count"),
+                "answer_slot_missing_count": answer_contract.get("answer_slot_missing_count"),
+                "answer_slot_unsupported_count": answer_contract.get("answer_slot_unsupported_count"),
+                "answer_slot_extraction_methods": answer_contract.get("answer_slot_extraction_methods"),
+                "critical_answer_slots_missing": answer_contract.get("critical_answer_slots_missing"),
                 "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
                 "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
                 "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),

@@ -722,6 +722,62 @@ class TestLawSignalParsing:
         assert "transition_or_replacement_rule" in features["required_slot_runtime_slots"]
         assert "historical_period" in features["must_have_fact_slots"]
 
+    def test_phase18_answer_slots_bind_matrix_slots_to_evidence_spans(self):
+        features = _build_completeness_synthesis_features(
+            query="2025/3 sayılı Mobbing Genelgesi kapsamında başvuru usulü nedir?",
+            answer_text=(
+                "Genelge başvuru usulünü ve işlem adımlarını düzenler [Kaynak: 2025/3 m.0]. "
+                "Sonuç seçili genelge kapsamıyla sınırlıdır [Kaynak: 2025/3 m.0]."
+            ),
+            article_span_selector={
+                "selected_main_span_id": "2025/3 m.0/f.0",
+                "selected_article": "0",
+                "support_span_count": 1,
+                "metadata_identity_strength": "strong",
+                "selector_evidence_sufficiency": "exact_enough",
+            },
+            chunks=[
+                RetrievedChunk(
+                    text="Mobbing Genelgesi başvuru usulü, işlem adımları ve kapsam bakımından uygulanır.",
+                    citation="2025/3 m.0",
+                    source="2025/3",
+                    score=1.0,
+                    metadata={
+                        "source_family_canonical": "cb_genelge",
+                        "source_title": "Mobbing Genelgesi",
+                        "belge_no": "2025/3",
+                        "madde_no": "0",
+                        "effective_state": "active",
+                    },
+                )
+            ],
+            requested_source_families=["cb_genelge"],
+        )
+
+        slots = {slot["slot_name"]: slot for slot in features["answer_slots"]}
+        assert features["answer_slot_extraction_version"].startswith("phase18b-")
+        assert features["answer_slot_required_count"] == len(features["required_slot_matrix_slots"])
+        assert features["answer_slot_verified_count"] >= 3
+        assert slots["issuer"]["required"] is True
+        assert slots["issuer"]["extraction_method"] == "deterministic"
+        assert slots["issuer"]["evidence_span_keys"]
+        assert slots["operative_instruction"]["fill_status"] == "filled"
+        assert slots["operative_instruction"]["verifier_status"] == "verified"
+
+    def test_phase18_answer_slots_mark_critical_missing_without_evidence(self):
+        features = _build_completeness_synthesis_features(
+            query="Mülga kanun bugün doğrudan uygulanabilir mi?",
+            answer_text="",
+            article_span_selector={"support_span_count": 0},
+            chunks=[],
+            requested_source_families=["mulga_kanun"],
+        )
+
+        slots = {slot["slot_name"]: slot for slot in features["answer_slots"]}
+        assert features["answer_slot_missing_count"] == features["answer_slot_required_count"]
+        assert slots["current_applicability"]["fill_status"] == "missing"
+        assert "current_applicability" in features["critical_answer_slots_missing"]
+
     def test_mulga_required_slots_include_current_applicability_and_transition(self):
         features = _build_completeness_synthesis_features(
             query="Eski mülga düzenlemeye 2026'da doğrudan dayanmak neden risklidir?",
