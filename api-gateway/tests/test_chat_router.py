@@ -1726,6 +1726,35 @@ class TestLawSignalParsing:
         assert resolution.predicted_family == "mulga_kanun"
         assert "legacy_source_risk_signal" in resolution.family_candidates[0].signals
 
+    def test_source_family_prior_prefers_mulga_for_named_regulation_still_reliance_risk(self):
+        resolution = _resolve_source_family_prior(
+            "Yükseköğretim öğrencisine disiplin cezası verilirken hâlâ "
+            "Yükseköğretim Kurumları Öğrenci Disiplin Yönetmeliğine dayanmak güvenli midir?"
+        )
+
+        assert resolution.historical_scope_detected is True
+        assert resolution.predicted_family == "mulga_kanun"
+        assert resolution.family_collision_pair.endswith("mulga_kanun")
+
+    def test_source_family_prior_prefers_mulga_for_old_dated_regulation_application_risk(self):
+        resolution = _resolve_source_family_prior(
+            "Kurum arşiv hizmetleri için 1988 tarihli Devlet Arşiv Hizmetleri Hakkında "
+            "Yönetmeliği esas almak neden hatalıdır?"
+        )
+
+        assert resolution.historical_scope_detected is True
+        assert resolution.predicted_family == "mulga_kanun"
+        assert "legacy_source_risk_signal" in resolution.family_candidates[0].signals
+
+    def test_source_family_prior_prefers_mulga_for_temporary_limit_auto_application_risk(self):
+        resolution = _resolve_source_family_prior(
+            "2026 kira artış sorusunda geçici %25 sınırını hâlâ otomatik uygulamak neden güncellik hatasıdır?"
+        )
+
+        assert resolution.historical_scope_detected is True
+        assert resolution.predicted_family == "mulga_kanun"
+        assert resolution.scenario_current_law_prior is False
+
     def test_source_family_prior_keeps_current_answer_over_temporary_limit_as_active_law(self):
         resolution = _resolve_source_family_prior(
             "Ağustos 2026'da yenilenen bir konut kira sözleşmesinde kira artış oranı belirlenirken "

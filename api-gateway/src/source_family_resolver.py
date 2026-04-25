@@ -415,15 +415,78 @@ def _looks_like_legacy_source_risk_question(normalized_query: str) -> bool:
     return False
 
 
+def _looks_like_direct_legacy_source_application(normalized_query: str) -> bool:
+    if contains_any(
+        normalized_query,
+        (
+            "guncel cevap",
+            "guncel cevabi",
+            "guncel rejim",
+            "hangi kanun hukmu",
+            "hangi hukum",
+        ),
+    ) and not contains_any(normalized_query, ("guncellik hatasi", "neden hatali", "hatali", "hata uretir")):
+        return False
+    risk_terms = (
+        "risklidir",
+        "riskli",
+        "hata",
+        "hatali",
+        "guncellik hatasi",
+        "guvenli",
+        "guvenli midir",
+        "guvenli degil",
+    )
+    application_terms = (
+        "dayan",
+        "esas al",
+        "esas almak",
+        "kullan",
+        "uygula",
+        "otomatik uygula",
+        "dogrudan hukum",
+        "dogrudan uygulan",
+        "dogrudan sonuc",
+    )
+    generic_family_scan = contains_any(
+        normalized_query,
+        ("sadece", "taray", "taramak"),
+    ) and contains_any(
+        normalized_query,
+        ("tuzukleri", "yonetmelikleri", "khklari", "duzenlemeleri"),
+    )
+    if generic_family_scan and not contains_any(normalized_query, application_terms):
+        return False
+
+    years = _extract_query_years(normalized_query)
+    current_year = datetime.now(timezone.utc).year
+    has_old_year = any(year <= current_year - 5 for year in years)
+    has_risk = contains_any(normalized_query, risk_terms)
+    has_application = contains_any(normalized_query, application_terms)
+
+    if contains_any(normalized_query, ("hala", "halen")) and has_application and has_risk:
+        return True
+    if has_old_year and contains_any(normalized_query, ("tarihli", "sayili")) and (has_application or has_risk):
+        return True
+    if contains_any(normalized_query, ("eski", "onceki duzenleme")) and has_application and has_risk:
+        return True
+    if contains_any(normalized_query, ("gecici", "%25", "25 siniri")) and contains_any(
+        normalized_query,
+        ("hala", "halen", "otomatik uygula", "guncellik hatasi", "neden hatali"),
+    ):
+        return True
+    return False
+
+
 def _looks_like_current_answer_over_legacy_context(normalized_query: str) -> bool:
+    if _looks_like_direct_legacy_source_application(normalized_query):
+        return False
     current_answer_terms = (
         "guncel cevap",
         "guncel cevabi",
         "guncel rejim",
         "hangi kanun hukmu",
         "hangi hukum",
-        "2026",
-        "bugun",
         "halen uygulanir mi",
         "hala uygulanir mi",
     )
@@ -539,6 +602,8 @@ def _looks_like_scenario_current_law_question(normalized_query: str) -> bool:
 
 
 def _names_legacy_non_law_document_type(normalized_query: str) -> bool:
+    if _looks_like_direct_legacy_source_application(normalized_query):
+        return False
     if contains_any(normalized_query, ("eski kanun", "mulga kanun", "yururlukten kaldirilmis kanun")):
         return False
     return contains_any(
@@ -588,6 +653,10 @@ def _domain_query_expansions(normalized_query: str, predicted_family: str | None
             )
         if contains_any(normalized_query, ("hiyerarsi", "celisir", "ust norm", "kurum ici")):
             expansions.append("normlar hiyerarşisi tüzük yönetmelik kurum içi alt düzenleme çelişki üst norm")
+    if predicted_family == "mulga_kanun":
+        expansions.append(
+            "mülga yürürlükten kaldırılan eski tarihli metin geçiş hükmü güncel uygulanmaz replacement current law"
+        )
     if predicted_family == "khk" and contains_any(normalized_query, ("sinai mulkiyet", "551", "554", "555", "556")):
         expansions.append(
             "551 554 555 556 sayılı KHK sınai mülkiyet 6769 Sınai Mülkiyet Kanunu yürürlükten kaldırılan KHK doğrudan uygulanmaz"
