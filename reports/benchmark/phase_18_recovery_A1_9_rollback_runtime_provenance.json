@@ -1,0 +1,511 @@
+{
+  "answer_key_hash_or_absent": "absent: public benchmark runner has no answer key input",
+  "api_url": "http://127.0.0.1:8000/v1",
+  "benchmark_question_file_hash": {
+    "bytes": 37758,
+    "exists": true,
+    "path": "configs/evaluation/hukuk_ai_100_public_questions.csv",
+    "sha256": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e"
+  },
+  "branch": "bt/hukuk-ai-100-benchmark-hardening",
+  "config_hashes": [
+    {
+      "bytes": 10573,
+      "exists": true,
+      "path": "api-gateway/src/rag/required_slot_matrix.py",
+      "sha256": "67b61ed710062b63e75c80c6fb21d2caf60a76fb9fc59d462bcb50a8d2d5d10e"
+    },
+    {
+      "bytes": 6140,
+      "exists": true,
+      "path": "api-gateway/src/rag/required_slot_matrix.json",
+      "sha256": "5619710ebd8c808e32a95c5762cccc2e5e523ba8b0b5b7498e8bcade004363ae"
+    },
+    {
+      "bytes": 37758,
+      "exists": true,
+      "path": "configs/evaluation/hukuk_ai_100_public_questions.csv",
+      "sha256": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e"
+    },
+    {
+      "bytes": 4985,
+      "exists": true,
+      "path": "evaluation/hukuk_ai_100_article_alignment.py",
+      "sha256": "b76ca74a993d3e32416739c8412fcf572b41e58cf584659733d9f38741b284e5"
+    },
+    {
+      "bytes": 9521,
+      "exists": true,
+      "path": "evaluation/hukuk_ai_100_source_schema.py",
+      "sha256": "31ea49c93f36ff4aa9c8d9faf545c396a9240302d75a85c49e7a39d044513eb6"
+    },
+    {
+      "bytes": 65449,
+      "exists": true,
+      "path": "scripts/benchmark/run_hukuk_ai_100.py",
+      "sha256": "aa5ef3fb7520b0b3bbe08e3af75f28c49c1bd86f3677dcb2e57384f1643d313e"
+    },
+    {
+      "bytes": 84399,
+      "exists": true,
+      "path": "scripts/benchmark/score_hukuk_ai_100.py",
+      "sha256": "89e468ed408c629184412e10d0cf6d9476cf26d49f37beba7b788fcbf524db35"
+    }
+  ],
+  "dgx_base_url": "http://192.168.12.243:30000/v1",
+  "dgx_model_env": "/models/merged_model_fabric_stage_20260321",
+  "dgx_models_response": {
+    "ok": true,
+    "payload": {
+      "data": [
+        {
+          "created": 1777157809,
+          "id": "/models/merged_model_fabric_stage_20260321",
+          "max_model_len": 32768,
+          "object": "model",
+          "owned_by": "vllm",
+          "parent": null,
+          "permission": [
+            {
+              "allow_create_engine": false,
+              "allow_fine_tuning": false,
+              "allow_logprobs": true,
+              "allow_sampling": true,
+              "allow_search_indices": false,
+              "allow_view": true,
+              "created": 1777157809,
+              "group": null,
+              "id": "modelperm-a38f1b6b35f47d90",
+              "is_blocking": false,
+              "object": "model_permission",
+              "organization": "*"
+            }
+          ],
+          "root": "/models/merged_model_fabric_stage_20260321"
+        }
+      ],
+      "object": "list"
+    },
+    "status": 200,
+    "url": "http://192.168.12.243:30000/v1/models"
+  },
+  "dirty_worktree": true,
+  "dirty_worktree_status": "D docs/LAWYER-REVIEW-KANONIK-TEMPLATE-reviewed.csv\n D docs/hukuk_ai_repo_hardening_plan.md\n M reports/benchmark/hukuk_ai_revised_phase17F_phase18_tasks_after_expert_and_phase17E.md\n D reports/benchmark/phase_17_final_summary.md\n?? coordination/faz19-current-authority-candidate-fingerprint-table-20260325.json\n?? coordination/faz19-current-authority-candidate-fingerprint-table-20260325.md\n?? coordination/faz19-current-authority-frontier-pack-20260325.json\n?? coordination/faz19-current-authority-frontier-pack-20260325.md\n?? coordination/faz19-current-authority-reconciliation-20260325.json\n?? coordination/faz19-current-authority-reconciliation-20260325.md\n?? coordination/faz19-current-authority-reference-contrast-20260325.json\n?? coordination/faz19-current-authority-reference-contrast-20260325.md\n?? coordination/faz19-current-authority-root-cause-table-20260325.json\n?? coordination/faz19-current-authority-root-cause-table-20260325.md\n?? coordination/faz19-next-official-work-20260325.json\n?? coordination/faz19-next-official-work-20260325.md\n?? coordination/faz19-steering-decision-table-20260325.md\n?? coordination/faz26_backups/\n?? coordination/faz26_restore/\n?? coordination/faz28_backups/\n?? coordination/faz28_restore/\n?? coordination/faz34_backups/\n?? coordination/faz34_restore/\n?? coordination/faz36_backups/faz36_rc_q_release_state_20260330T222547Z/files/\n?? docs/AVUKAT-ICIN-BASIT-DEGERLENDIRME-PROTOKOLU-2026-04-01.md\n?? docs/FAZ10-ROTASYON-RC-K-V3-170-PREPROJECTION-PARITY-LOCALIZATION-VE-RUNTIME-ISOLATION-TALIMATI-2026-03-24.md\n?? docs/FAZ11-ROTASYON-NON-REPRODUCIBLE-FRONTIER-RESOLUTION-VE-V3-170-FIRST-RUN-AUTHORITY-RECAPTURE-TALIMATI-2026-03-25.md\n?? docs/FAZ12-ROTASYON-RC-J-OUTPUT-PARITY-REOPEN-TALIMATI-2026-03-25.md\n?? docs/FAZ13-ROTASYON-RC-J-OUTPUT-PARITY-AUTHORITY-FORENSICS-RECAPTURE-TALIMATI-2026-03-25.md\n?? docs/FAZ14-ROTASYON-RC-L-AUTHORITATIVE-OUTPUT-PARITY-REPAIR-GATE-TALIMATI-2026-03-25.md\n?? docs/FAZ15-ROTASYON-RC-L-DISCARD-VE-REPAIR-SURFACE-BREACH-FORENSICS-TALIMATI-2026-03-25.md\n?? docs/FAZ16-ROTASYON-RC-M-REPLACEMENT-BUILD-SURFACE-ISOLATION-GATE-TALIMATI-2026-03-25.md\n?? docs/FAZ17-ROTASYON-RC-M-AUTHORITATIVE-OUTPUT-PARITY-REOPEN-TALIMATI-2026-03-25.md\n?? docs/FAZ18-ROTASYON-RC-M-DISCARD-VE-OUTPUT-PARITY-SURFACE-FORENSICS-TALIMATI-2026-03-25.md\n?? docs/FAZ19-RC-G-VS-RC-J-CURRENT-AUTHORITY-RECAPTURE-RAPORU-20260325.md\n?? docs/FAZ19-ROTASYON-RC-G-VS-RC-J-CURRENT-AUTHORITY-RECAPTURE-TALIMATI-2026-03-25.md\n?? docs/FAZ1_5-PLANLAMA-2026-03-22.md\n?? docs/FAZ20-ROTASYON-RC-G-VS-RC-J-CURRENT-AUTHORITY-DRIFT-FORENSICS-RECAPTURE-TALIMATI-2026-03-26.md\n?? docs/FAZ21-ROTASYON-RC-G-VS-RC-J-CURRENT-AUTHORITY-CANONICALIZATION-GATE-TALIMATI-2026-03-27.md\n?? docs/FAZ22-ROTASYON-RC-M-DISCARD-VE-OUTPUT-PARITY-SURFACE-FORENSICS-REOPEN-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-27.md\n?? docs/FAZ23-ROTASYON-RC-M-AUTHORITATIVE-SUMMARY-TRUTH-RECONCILIATION-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-27.md\n?? docs/FAZ24-ROTASYON-RC-M-DISCARD-ARCHIVAL-CLOSURE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-27.md\n?? docs/FAZ25-ROTASYON-POST-RC-M-STEERING-RE-ENTRY-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-27.md\n?? docs/FAZ26-ROTASYON-RC-N-RELEASE-CONTROLS-CLOSURE-REOPEN-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-28.md\n?? docs/FAZ27-ROTASYON-RC-N-RELEASE-CONTROLS-BOUNDARY-FORENSICS-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-28.md\n?? docs/FAZ28-ROTASYON-RC-O-RELEASE-CONTROLS-BOUNDARY-REPAIR-GATE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-28.md\n?? docs/FAZ29-ROTASYON-RC-O-RELEASE-CONTROLS-BOUNDARY-REPAIR-RECAPTURE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-29.md\n?? docs/FAZ2A-RETRIEVAL-COVERAGE-REQUALIFICATION-YOL-HARITASI-2026-03-22.md\n?? docs/FAZ2A-SONRASI-ZORUNLU-EK-SERTLESTIRME-TALIMATI-2026-03-23.md\n?? docs/FAZ2B-CUTOVER-READINESS-CLOSURE-VE-KALITE-KORUMALI-SERTLESTIRME-ENTEGRASYON-TALIMATI-2026-03-23.md\n?? docs/FAZ3-ROTASYON-GUARDRAIL-INTEGRATION-QUALITY-RECOVERY-VE-REQUALIFICATION-TALIMATI-2026-03-23.md\n?? docs/FAZ30-ROTASYON-RC-O-REPAIR-TRUTH-INSTABILITY-FORENSICS-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-29.md\n?? docs/FAZ31-ROTASYON-RC-O-REPAIR-TRUTH-RECONCILIATION-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-29.md\n?? docs/FAZ32-ROTASYON-RC-O-DISCARD-ARCHIVAL-CLOSURE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-30.md\n?? docs/FAZ33-ROTASYON-POST-RC-O-STEERING-RE-ENTRY-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-30.md\n?? docs/FAZ34-ROTASYON-RC-P-RELEASE-CONTROLS-PERIMETER-ISOLATION-GATE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-30.md\n?? docs/FAZ35-ROTASYON-RC-P-RELEASE-CONTROLS-PERIMETER-FORENSICS-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-30.md\n?? docs/FAZ36-ROTASYON-RC-Q-RELEASE-CONTROLS-PERIMETER-REPAIR-GATE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-30.md\n?? docs/FAZ37-ROTASYON-RC-Q-RELEASE-CONTROLS-PERIMETER-REPAIR-RECAPTURE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-31.md\n?? docs/FAZ38-ROTASYON-RC-Q-REPAIR-TRUTH-INSTABILITY-FORENSICS-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-31.md\n?? docs/FAZ39-ROTASYON-RC-Q-REPAIR-TRUTH-RECONCILIATION-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-31.md\n?? docs/FAZ4-ROTASYON-CITATION-FIDELITY-VE-SOURCE-ATTRIBUTION-RECOVERY-TALIMATI-2026-03-23.md\n?? docs/FAZ40-ROTASYON-RC-Q-DISCARD-ARCHIVAL-CLOSURE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-31.md\n?? docs/FAZ41-ROTASYON-POST-RC-Q-STEERING-RE-ENTRY-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-31.md\n?? docs/FAZ42-ROTASYON-RC-R-RELEASE-CONTROLS-PROCESS-ISOLATED-PERIMETER-ISOLATION-GATE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-03-31.md\n?? docs/FAZ43-ROTASYON-RC-R-CUTOVER-READINESS-CLOSURE-REOPEN-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-04-01.md\n?? docs/FAZ44-ROTASYON-RC-R-NARROW-INTERNAL-PILOT-STEERING-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-04-01.md\n?? docs/FAZ45-ROTASYON-RC-R-NARROW-INTERNAL-PILOT-GATE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-04-01.md\n?? docs/FAZ46-ROTASYON-RC-R-NARROW-INTERNAL-PILOT-EXECUTION-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-04-01.md\n?? docs/FAZ47-ROTASYON-POST-RC-R-NARROW-INTERNAL-PILOT-CLOSURE-VE-NEXT-TRACK-STEERING-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-04-01.md\n?? docs/FAZ48-ROTASYON-RC-S-COVERAGE-DATABASE-EXPANSION-READINESS-GATE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-04-01.md\n?? docs/FAZ49-ROTASYON-RC-R-KONTROLLU-GERCEK-DUNYA-DOGRULAMA-GATE-UNDER-CANONICAL-CURRENT-AUTHORITY-TALIMATI-2026-04-01.md\n?? docs/FAZ5-ROTASYON-CANONICAL-SOURCE-IDENTITY-VE-PRIMARY-SOURCE-ELECTION-RECOVERY-TALIMATI-2026-03-23.md\n?? docs/FAZ6-ROTASYON-ATTRIBUTION-LOSS-DECOMPOSITION-VE-REPAIR-GATE-TALIMATI-2026-03-23.md\n?? docs/FAZ7-ROTASYON-RC-G-RELEASE-CONTROLS-CLOSURE-VE-NARROW-PILOT-STEERING-TALIMATI-2026-03-24.md\n?? docs/FAZ8-ROTASYON-RC-I-RELEASE-CONTROLS-PARITY-RESTORATION-VE-CUTOVER-REOPEN-TALIMATI-2026-03-24.md\n?? docs/FAZ9-ROTASYON-RC-J-MODEL-VISIBLE-SURFACE-PARITY-FORENSICS-VE-CUTOVER-REOPEN-TALIMATI-2026-03-24.md\n?? docs/HUKUK-AI-MERGED-BASELINE-AYRIM-POSTMORTEM-VE-MEVZUAT-HATTI-RAPORU-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-AVUKAT-ODAKLI-DEGERLENDIRME-AKISI-VE-YON-DUZELTME-TALIMATI-2026-04-01.md\n?? docs/KOD-ASISTANI-ICIN-FINETUNING-SONUC-KILITLEME-VE-MERGED-BASELINE-FORENSIC-DOGRULAMA-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-FULL-CORPUS-INTEGRATED-REQUALIFICATION-REMEDIATION-VE-4-KATMANLI-EVAL-RIGOR-RESET-TALIMATI-2026-04-06.md\n?? docs/KOD-ASISTANI-ICIN-FULL-CORPUS-INTEGRATED-REQUALIFICATION-TALIMATI-2026-04-06.md\n?? docs/KOD-ASISTANI-ICIN-FULL-CORPUS-REBUILD-VE-CANONICAL-REINDEX-TALIMATI-2026-04-06.md\n?? docs/KOD-ASISTANI-ICIN-FULL-SOURCE-ACQUISITION-VE-CANONICAL-COMPLETENESS-REMEDIATION-TALIMATI-2026-04-06.md\n?? docs/KOD-ASISTANI-ICIN-HAT-B-CASE-LAW-CANONICAL-PARSE-VE-COMPLETENESS-GATE-TALIMATI-2026-04-07.md\n?? docs/KOD-ASISTANI-ICIN-HAT-B-CASE-LAW-CANONICAL-PARSE-VE-COMPLETENESS-REMEDIATION-TALIMATI-2026-04-07.md\n?? docs/KOD-ASISTANI-ICIN-HAT-B-CASE-LAW-CORPUS-ACQUISITION-VE-PROVENANCE-GATE-TALIMATI-2026-04-06.md\n?? docs/KOD-ASISTANI-ICIN-HAT-B-CASE-LAW-RUNTIME-TRACK-REANCHOR-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-HAT-B-FULL-DECISION-ROW-MATERIALIZATION-VE-COMPLETENESS-REMEDIATION-V2-TALIMATI-2026-04-07.md\n?? docs/KOD-ASISTANI-ICIN-HAT-B-FULL-DECISION-ROW-MATERIALIZATION-VE-COMPLETENESS-REMEDIATION-V3-TALIMATI-2026-04-07.md\n?? docs/KOD-ASISTANI-ICIN-HAT-B-SOURCE-WIDE-ACQUISITION-YONTEMI-VE-COMPLETENESS-FEASIBILITY-RESET-TALIMATI-2026-04-07.md\n?? docs/KOD-ASISTANI-ICIN-KAYNAK-TAMLIGI-VE-MADDE-KAPSAMI-DOGRULAMA-TALIMATI-2026-04-06.md\n?? docs/KOD-ASISTANI-ICIN-MERGED-RUNTIME-REANCHOR-EXECUTION-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-MERGED-RUNTIME-REANCHOR-VE-BASELINE-PARITY-PLAN-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-MERGED-VS-BASELINE-MATCHED-PARITY-EXECUTION-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-COLLECTION-BINDING-DIVERGENCE-REMEDIATION-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-EXECUTION-RERUN-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-EXECUTION-RERUN-V2-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-EXECUTION-RERUN-V3-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-EXECUTION-RERUN-V4-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-EXECUTION-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-GATE-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-POST-SWITCH-DIVERGENCE-REMEDIATION-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CONTROLLED-CUTOVER-REMEDIATION-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CUTOVER-STATE-BINDING-VE-LIVE-SERVING-CONTRACT-REMEDIATION-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-CUTOVER-SWITCH-PATH-TRACE-VE-ISOLATION-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-FAZ-1-ENTEGRASYON-TALIMATI-2026-04-16.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-FAZ-2-INTEGRATED-ACCEPTANCE-VE-LAWYER-REVIEW-HAZIRLIK-TALIMATI-2026-04-16.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-FAZ-2B-GERCEK-AVUKAT-REVIEW-VE-TARGETED-REMEDIATION-TALIMATI-2026-04-17.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-FAZ-2C-GERCEK-INSAN-REVIEW-ZORUNLULUGU-VE-SCOPE-DUZELTME-TALIMATI-2026-04-17.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-FAZ-2D-CATISMA-COZUMU-VE-HUMAN-ACCEPTANCE-CLOSURE-TALIMATI-2026-04-17.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-FAZ-3-AUTHORITATIVE-RUNTIME-CANDIDATE-VE-CONTROLLED-CUTOVER-READINESS-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-POST-CUTOVER-STABILIZATION-VE-RUNTIME-VERIFICATION-TALIMATI-2026-04-19.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-RETRIEVAL-ALIGNMENT-REMEDIATION-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-RETRIEVAL-RUNTIME-PARITY-REMEDIATION-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-MEVZUAT-VECTOR-DIMENSION-BLOCKER-REMEDIATION-VE-CUTOVER-RERUN-TALIMATI-2026-04-18.md\n?? docs/KOD-ASISTANI-ICIN-POST-RC-S-CMK-ACCEPTANCE-CLOSURE-VE-NEXT-SOURCE-STEERING-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-POST-RC-S-FULL-CORPUS-INTEGRATED-REQUALIFICATION-REMEDIATION-CLOSURE-VE-PRODUCTIZATION-STEERING-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-POST-RC-S-HMK-ACCEPTANCE-CLOSURE-VE-NEXT-SOURCE-STEERING-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-POST-RC-S-IK-ACCEPTANCE-CLOSURE-VE-FULL-PRIMARY-SOURCE-EXPANSION-COMPLETION-STEERING-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-POST-RC-S-TCK-ACCEPTANCE-CLOSURE-VE-NEXT-SOURCE-STEERING-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-POST-RC-S-TMK-ACCEPTANCE-CLOSURE-VE-NEXT-SOURCE-STEERING-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-POST-RC-S-TTK-ACCEPTANCE-CLOSURE-VE-NEXT-SOURCE-STEERING-TALIMATI-2026-04-04-v2.md\n?? docs/KOD-ASISTANI-ICIN-RC-R-FREEZE-VE-RC-S-READINESS-CLOSURE-TALIMATI-2026-04-01.md\n?? docs/KOD-ASISTANI-ICIN-RC-R-GERCEK-DUNYA-TESTI-ICRA-TALIMATI-2026-04-01.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-CMK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-EXECUTION-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-CMK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-GATE-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-CUSTOMER-SAFE-PILOT-GATE-TALIMATI-2026-04-05-v2.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-FULL-CORPUS-INTEGRATED-REQUALIFICATION-GATE-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-FULL-CORPUS-INTEGRATED-REQUALIFICATION-REMEDIATION-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-HMK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-EXECUTION-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-HMK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-GATE-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-IK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-EXECUTION-TALIMATI-2026-04-04.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-IK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-GATE-TALIMATI-2026-04-04.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-INTERNAL-PRODUCTIZATION-REHEARSAL-EXECUTION-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-INTERNAL-PRODUCTIZATION-REHEARSAL-GATE-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-EXECUTION-TALIMATI-2026-04-01-v2.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-GATE-TALIMATI-2026-04-01.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-PRODUCTIZATION-IMPLEMENTATION-GATE-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-PRODUCTIZATION-READINESS-GATE-TALIMATI-2026-04-05.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-TCK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-EXECUTION-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-TCK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-GATE-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-TTK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-EXECUTION-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-RC-S-TTK-NARROW-CONTROLLED-PRIMARY-SOURCE-EXPANSION-GATE-TALIMATI-2026-04-03.md\n?? docs/KOD-ASISTANI-ICIN-TAM-MEVZUAT-ANA-HAT-PRODUCTIZATION-REANCHOR-TALIMATI-2026-04-06-v2.md\n?? docs/KOD-ASISTANI-ICIN-TAM-MEVZUAT-ANA-HAT-REANCHOR-VE-FULL-SOURCE-ACQUISITION-COMPLETENESS-PROOF-GATE-TALIMATI-2026-04-06.md\n?? docs/KOD-ASISTANI-ICIN-TAM-MEVZUAT-RESET-VE-FULL-CORPUS-REBUILD-TALIMATI-2026-04-06.md\n?? docs/LAWYER-REVIEW-KANONIK.csv\n?? docs/MEVZUAT-ANA-ENTEGRASYON-PLANI-2026-04-16.md\n?? docs/MEVZUAT-CONTROLLED-CUTOVER-EXECUTION-CLOSURE-RAPORU-2026-04-19.md\n?? docs/MEVZUAT-CONTROLLED-CUTOVER-GATE-CLOSURE-RAPORU-2026-04-18.md\n?? docs/MEVZUAT-FAZ-2C-LAWYER-REVIEW-BATCH-001-reviewed-Hakan.csv\n?? docs/MEVZUAT-FAZ-2C-LAWYER-REVIEW-BATCH-002-reviewed-Murat.csv\n?? docs/MEVZUAT-POST-SWITCH-DIVERGENCE-CLOSURE-RAPORU-2026-04-18.md\n?? docs/MEVZUAT-PRIMARY-LAW-RUNTIME-AUTHORITATIVE-CLOSURE-RAPORU-2026-04-19.md\n?? docs/RC-R-FREEZE-VE-RC-S-COVERAGE-READINESS-KAPANIS-PLANI-2026-04-01.md\n?? docs/RC-S-TMK-LAWYER-ACCEPTANCE-GATE-CLOSURE-RAPORU-2026-04-03.md\n?? evaluation/reports/eval_baseline_faz1-50_matched_dgxnode2_base_20260322.json\n?? evaluation/reports/eval_baseline_faz1-50_matched_dgxnode2_base_thinkingoff_20260322.json\n?? evaluation/reports/eval_baseline_v2-95_matched_dgxnode2_base_20260322.json\n?? evaluation/reports/eval_baseline_v2-95_matched_dgxnode2_base_wave15_20260323.json\n?? evaluation/reports/eval_diagnostic_faz2a_tbk_critical_baseline_wave7_20260322_2004.json\n?? evaluation/reports/eval_diagnostic_faz2a_tbk_critical_candidate_wave7_20260322_2004.json\n?? evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_153842.json\n?? evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_155025.json\n?? evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_155910.json\n?? evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_161714.json\n?? evaluation/reports/eval_diagnostic_faz2a_tmk_cross_law_20260322_184148.json\n?? evaluation/reports/eval_faz14_rc_l_v3_170_targeted_first_run_20260325.json\n?? evaluation/reports/eval_faz22_rc_g_faz1_50_canonical_current_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_g_faz1_50_canonical_current_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_g_v2_95_canonical_current_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_g_v2_95_canonical_current_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_g_v3_170_canonical_current_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_g_v3_170_canonical_current_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_j_faz1_50_canonical_current_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_j_faz1_50_canonical_current_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_j_v2_95_canonical_current_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_j_v2_95_canonical_current_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_j_v3_170_canonical_current_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_j_v3_170_canonical_current_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_m_faz1_50_forensic_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_m_faz1_50_forensic_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_m_v2_95_forensic_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_m_v2_95_forensic_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_m_v3_170_forensic_error_subset_2026-03-27.json\n?? evaluation/reports/eval_faz22_rc_m_v3_170_forensic_first_run_2026-03-27.json\n?? evaluation/reports/eval_faz8_rc_g_faz1-50_20260324.json\n?? evaluation/reports/eval_faz8_rc_i_faz1-50_20260324.json\n?? evaluation/reports/eval_faz9_bind_l0_tbk005_20260324.json\n?? evaluation/reports/eval_faz9_bind_l1_tbk005_20260324.json\n?? evaluation/reports/eval_faz9_bind_l1_tbk005_v2_20260324.json\n?? evaluation/reports/eval_faz9_bind_l2_tbk005_20260324.json\n?? evaluation/reports/eval_faz9_bind_l3_tbk005_20260324.json\n?? evaluation/reports/eval_faz9_bind_l3_tbk005_v2_20260324.json\n?? evaluation/reports/eval_faz9_bind_l4_tbk005_20260324.json\n?? evaluation/reports/eval_faz9_bind_l4_tbk005_v2_20260324.json\n?? evaluation/reports/eval_faz9_bind_l5_tbk005_20260324.json\n?? evaluation/reports/eval_faz9_bind_l5_tbk005_v2_20260324.json\n?? evaluation/reports/eval_faz9_bind_l6_tbk005_20260324.json\n?? evaluation/reports/eval_faz9_bind_l6_tbk005_v2_20260324.json\n?? evaluation/reports/eval_faz9_rc_j_preprojection_v2_95_20260324.json\n?? evaluation/reports/eval_faz9_rc_j_tbk005_witness_20260324.json\n?? evaluation/reports/eval_post_train_v2-95_matched_dgx1_merged_wave15_20260323.json\n?? evaluation/reports/faz19-control-authority-capture-a-20260325.json\n?? evaluation/reports/faz19-control-authority-capture-a-20260325.md\n?? evaluation/reports/faz19-control-authority-capture-b-20260325.json\n?? evaluation/reports/faz19-control-authority-capture-b-20260325.md\n?? evaluation/reports/faz19-current-authority-frontier-replay-20260325.json\n?? evaluation/reports/faz19-current-authority-frontier-replay-20260325.md\n?? evaluation/reports/faz19-current-authority-summary-20260325.json\n?? evaluation/reports/faz19-current-authority-summary-20260325.md\n?? evaluation/reports/faz19/\n?? logs/\n?? reports/benchmark/hukuk_ai_external_expert_consultation_prompt.md\n?? reports/benchmark/hukuk_ai_phase10_metric_family_completeness_execution_brief_after_phase9.md\n?? reports/benchmark/hukuk_ai_phase11_visibility_family_identity_execution_brief_after_phase10.md\n?? reports/benchmark/hukuk_ai_phase13Y_continuation_brief_after_unblock_report.md\n?? reports/benchmark/hukuk_ai_phase13Z_targeted_continuation_brief_after_phase13Y.md\n?? reports/benchmark/hukuk_ai_phase13_full_rerun_and_phase14_entry_brief_after_phase13z.md\n?? reports/benchmark/hukuk_ai_phase13_mapping_recall_execution_brief_after_phase12.md\n?? reports/benchmark/hukuk_ai_phase13_unblock_brief_after_interim_report.md\n?? reports/benchmark/hukuk_ai_phase14B_span_precision_execution_brief_after_phase14A.md\n?? reports/benchmark/hukuk_ai_phase14C_canonical_span_materialization_brief_after_phase14B.md\n?? reports/benchmark/hukuk_ai_phase14_document_precision_execution_brief_after_phase13.md\n?? reports/benchmark/hukuk_ai_phase14_full_diagnostic_rerun_brief_after_phase14c.md\n?? reports/benchmark/hukuk_ai_phase15_grounding_corpus_completeness_brief_after_phase14diag.md\n?? reports/benchmark/hukuk_ai_phase16_corpus_sourcekey_grounding_brief_after_phase15.md\n?? reports/benchmark/hukuk_ai_phase2_answer_contract_execution_brief_after_phase1.md\n?? reports/benchmark/hukuk_ai_phase3_retrieval_routing_execution_brief_after_phase2.md\n?? reports/benchmark/hukuk_ai_phase4_verification_first_execution_brief_after_phase3.md\n?? reports/benchmark/hukuk_ai_phase5_corpus_identity_execution_brief_after_phase4.md\n?? reports/benchmark/hukuk_ai_phase6_selector_metadata_execution_brief_after_phase5.md\n?? reports/benchmark/hukuk_ai_phase7_execution_brief_after_phase6.md\n?? reports/benchmark/hukuk_ai_phase8_selector_semantics_execution_brief_after_phase7.md\n?? reports/benchmark/hukuk_ai_phase9_family_identity_completeness_execution_brief_after_phase8d.md\n?? reports/benchmark/hukuk_ai_repo_hardening_plan.md\n?? reports/benchmark/phase_13_interim_blocker_report.md\n?? reports/benchmark/phase_13x_unblock_report.md\n?? reports/benchmark/phase_13y_unblock_report.md\n?? reports/benchmark/phase_17f_final_report.md\n?? reports/benchmark/phase_18_recovery_A1_9_rollback_runtime_provenance.json\n?? reports/benchmark/phase_18_recovery_A1_9_rollback_runtime_provenance.md\n?? scripts/faz14/build_output_repair_frontier_pack.py\n?? scripts/faz14/build_output_repair_localization.py\n?? scripts/faz14/build_output_repair_mismatch_table.py\n?? scripts/faz14/run_authoritative_output_repair_pair.sh\n?? scripts/faz14/run_output_repair_lane.sh",
+  "embedding_backend": "remote",
+  "embedding_base_url": "http://127.0.0.1:8081/v1",
+  "embedding_model": "intfloat/multilingual-e5-large-instruct",
+  "embedding_model_or_endpoint_response": {
+    "ok": true,
+    "payload": {
+      "data": [
+        {
+          "created": 1677610602,
+          "id": "intfloat/multilingual-e5-large-instruct",
+          "object": "model",
+          "owned_by": "hukuk-ai"
+        }
+      ],
+      "object": "list"
+    },
+    "status": 200,
+    "url": "http://127.0.0.1:8081/v1/models"
+  },
+  "endpoint": "http://127.0.0.1:8000/v1/chat/completions",
+  "gateway_health_response": {
+    "ok": true,
+    "payload": {
+      "api_version": "2026-03-24-rc-h",
+      "guardrails": "disabled",
+      "lane": "current_serving_lane",
+      "retriever": "milvus",
+      "service": "hukuk-ai-api-gateway",
+      "status": "ok",
+      "verification": "disabled"
+    },
+    "status": 200,
+    "url": "http://127.0.0.1:8000/v1/health"
+  },
+  "gateway_model_name": "hukuk-ai-poc",
+  "gateway_models_response": {
+    "ok": true,
+    "payload": {
+      "api_version": "2026-03-24-rc-h",
+      "data": [
+        {
+          "api_version": "2026-03-24-rc-h",
+          "created": 1777157809,
+          "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+          "id": "hukuk-ai-poc",
+          "lane": "current_serving_lane",
+          "object": "model",
+          "owned_by": "hukuk-ai"
+        }
+      ],
+      "headers": {
+        "X-Hukuk-AI-API-Version": "2026-03-24-rc-h",
+        "X-Hukuk-AI-Lane": "current_serving_lane",
+        "X-Request-ID": "req-084fdb9545ac48c693cb"
+      },
+      "lane": "current_serving_lane",
+      "object": "list"
+    },
+    "status": 200,
+    "url": "http://127.0.0.1:8000/v1/models"
+  },
+  "gateway_process_probe": {
+    "env": {
+      "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+      "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+      "EMBEDDING_BACKEND": "remote",
+      "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+      "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+      "GUARDRAILS_ENABLED": "false",
+      "MILVUS_COLLECTION": "mevzuat_e5_shadow",
+      "MILVUS_ENABLED": "true",
+      "MILVUS_URI": "http://localhost:19530",
+      "PRESIDIO_ENABLED": "false"
+    },
+    "lsof": {
+      "ok": true,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "91870"
+    },
+    "pid": "91870",
+    "port": 8000,
+    "ps": {
+      "ok": true,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ".venv/bin/python -m uvicorn src.main:app --host 127.0.0.1 --port 8000 --log-level warning WARP_CLI_AGENT_PROTOCOL_VERSION=1 TERM_PROGRAM=WarpTerminal WARP_HONOR_PS1=0 TERM=xterm-256color SHELL=/bin/zsh TMPDIR=/var/folders/n0/f2d8dq3s0vj5vcpxptn7vnzw0000gn/T/ HOMEBREW_REPOSITORY=/opt/homebrew HF_HUB_ENABLE_HF_TRANSFER=1 TERM_PROGRAM_VERSION=v0.2026.04.15.08.45.stable_02 NO_COLOR=1 LC_ALL=C.UTF-8 USER=btmacstudio COMMAND_MODE=unix2003 SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.aUM0LTAmPn/Listeners __CF_USER_TEXT_ENCODING=0x1F5:0x23:0x18 WARP_IS_LOCAL_SHELL_SESSION=1 WARP_USE_SSH_WRAPPER=0 PAGER=cat PATH=/Users/btmacstudio/.codex/tmp/arg0/codex-arg0iYhjCy:/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/path:/Users/btmacstudio/.bun/bin:/Users/btmacstudio/google-cloud-sdk/bin:/Users/btmacstudio/.cargo/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/btmacstudio/.cargo/bin:/Users/btmacstudio/.local/bin:/Users/btmacstudio/.lmstudio/bin:/Applications/Warp.app/Contents/Resources/bin LaunchInstanceID=92BFE73A-FD2C-4EB5-A4E8-F5ED7A946FD1 __CFBundleIdentifier=dev.warp.Warp-Stable CODEX_THREAD_ID=019d0bcd-d7e7-72e0-ba96-241ca6b0e817 PWD=/Users/btmacstudio/Projects/hukuk-ai/api-gateway LANG=C.UTF-8 XPC_FLAGS=0x0 CODEX_MANAGED_BY_NPM=1 CODEX_CI=1 XPC_SERVICE_NAME=0 SHLVL=2 HOME=/Users/btmacstudio HOMEBREW_PREFIX=/opt/homebrew GH_PAGER=cat LOGNAME=btmacstudio LC_CTYPE=UTF-8 SSH_SOCKET_DIR=~/.ssh BUN_INSTALL=/Users/btmacstudio/.bun WARP_CLIENT_VERSION=v0.2026.04.15.08.45.stable_02 INFOPATH=/opt/homebrew/share/info:/opt/homebrew/share/info: HOMEBREW_CELLAR=/opt/homebrew/Cellar OSLogRateLimit=64 GIT_PAGER=cat CONDA_CHANGEPS1=false SECURITYSESSIONID=186a2 COLORTERM=truecolor _=/usr/bin/env OLDPWD=/Users/btmacstudio/Projects/hukuk-ai DGX_BASE_URL=http://192.168.12.243:30000/v1 DGX_MODEL=/models/merged_model_fabric_stage_20260321 MILVUS_ENABLED=true MILVUS_URI=http://localhost:19530 MILVUS_COLLECTION=mevzuat_e5_shadow EMBEDDING_BACKEND=remote EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1 EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct GUARDRAILS_ENABLED=false PRESIDIO_ENABLED=false"
+    }
+  },
+  "git_sha": "8c93a54b77094caf40bca6681069b35b1641c3e2",
+  "guardrails_enabled": "false",
+  "live_8000_probe": {
+    "api_url": "http://127.0.0.1:8000/v1",
+    "candidate_api_port": 8000,
+    "health_response": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-03-24-rc-h",
+        "guardrails": "disabled",
+        "lane": "current_serving_lane",
+        "retriever": "milvus",
+        "service": "hukuk-ai-api-gateway",
+        "status": "ok",
+        "verification": "disabled"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8000/v1/health"
+    },
+    "live_8000_untouched": false,
+    "milvus_collection": "mevzuat_e5_shadow",
+    "milvus_entity_count": 12923,
+    "models_response": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-03-24-rc-h",
+        "data": [
+          {
+            "api_version": "2026-03-24-rc-h",
+            "created": 1777157809,
+            "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+            "id": "hukuk-ai-poc",
+            "lane": "current_serving_lane",
+            "object": "model",
+            "owned_by": "hukuk-ai"
+          }
+        ],
+        "headers": {
+          "X-Hukuk-AI-API-Version": "2026-03-24-rc-h",
+          "X-Hukuk-AI-Lane": "current_serving_lane",
+          "X-Request-ID": "req-9ba3976e311e4977be7c"
+        },
+        "lane": "current_serving_lane",
+        "object": "list"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8000/v1/models"
+    },
+    "process_probe": {
+      "env": {
+        "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+        "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+        "EMBEDDING_BACKEND": "remote",
+        "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+        "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+        "GUARDRAILS_ENABLED": "false",
+        "MILVUS_COLLECTION": "mevzuat_e5_shadow",
+        "MILVUS_ENABLED": "true",
+        "MILVUS_URI": "http://localhost:19530",
+        "PRESIDIO_ENABLED": "false"
+      },
+      "lsof": {
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "91870"
+      },
+      "pid": "91870",
+      "port": 8000,
+      "ps": {
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": ".venv/bin/python -m uvicorn src.main:app --host 127.0.0.1 --port 8000 --log-level warning WARP_CLI_AGENT_PROTOCOL_VERSION=1 TERM_PROGRAM=WarpTerminal WARP_HONOR_PS1=0 TERM=xterm-256color SHELL=/bin/zsh TMPDIR=/var/folders/n0/f2d8dq3s0vj5vcpxptn7vnzw0000gn/T/ HOMEBREW_REPOSITORY=/opt/homebrew HF_HUB_ENABLE_HF_TRANSFER=1 TERM_PROGRAM_VERSION=v0.2026.04.15.08.45.stable_02 NO_COLOR=1 LC_ALL=C.UTF-8 USER=btmacstudio COMMAND_MODE=unix2003 SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.aUM0LTAmPn/Listeners __CF_USER_TEXT_ENCODING=0x1F5:0x23:0x18 WARP_IS_LOCAL_SHELL_SESSION=1 WARP_USE_SSH_WRAPPER=0 PAGER=cat PATH=/Users/btmacstudio/.codex/tmp/arg0/codex-arg0iYhjCy:/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/path:/Users/btmacstudio/.bun/bin:/Users/btmacstudio/google-cloud-sdk/bin:/Users/btmacstudio/.cargo/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/btmacstudio/.cargo/bin:/Users/btmacstudio/.local/bin:/Users/btmacstudio/.lmstudio/bin:/Applications/Warp.app/Contents/Resources/bin LaunchInstanceID=92BFE73A-FD2C-4EB5-A4E8-F5ED7A946FD1 __CFBundleIdentifier=dev.warp.Warp-Stable CODEX_THREAD_ID=019d0bcd-d7e7-72e0-ba96-241ca6b0e817 PWD=/Users/btmacstudio/Projects/hukuk-ai/api-gateway LANG=C.UTF-8 XPC_FLAGS=0x0 CODEX_MANAGED_BY_NPM=1 CODEX_CI=1 XPC_SERVICE_NAME=0 SHLVL=2 HOME=/Users/btmacstudio HOMEBREW_PREFIX=/opt/homebrew GH_PAGER=cat LOGNAME=btmacstudio LC_CTYPE=UTF-8 SSH_SOCKET_DIR=~/.ssh BUN_INSTALL=/Users/btmacstudio/.bun WARP_CLIENT_VERSION=v0.2026.04.15.08.45.stable_02 INFOPATH=/opt/homebrew/share/info:/opt/homebrew/share/info: HOMEBREW_CELLAR=/opt/homebrew/Cellar OSLogRateLimit=64 GIT_PAGER=cat CONDA_CHANGEPS1=false SECURITYSESSIONID=186a2 COLORTERM=truecolor _=/usr/bin/env OLDPWD=/Users/btmacstudio/Projects/hukuk-ai DGX_BASE_URL=http://192.168.12.243:30000/v1 DGX_MODEL=/models/merged_model_fabric_stage_20260321 MILVUS_ENABLED=true MILVUS_URI=http://localhost:19530 MILVUS_COLLECTION=mevzuat_e5_shadow EMBEDDING_BACKEND=remote EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1 EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct GUARDRAILS_ENABLED=false PRESIDIO_ENABLED=false"
+      }
+    }
+  },
+  "live_8000_untouched": false,
+  "milvus_collection": "mevzuat_e5_shadow",
+  "milvus_collection_probe": {
+    "collection": "mevzuat_e5_shadow",
+    "description": {
+      "aliases": [],
+      "auto_id": false,
+      "collection_id": 465384502173617898,
+      "collection_name": "mevzuat_e5_shadow",
+      "consistency_level": 2,
+      "created_timestamp": 465433824520568839,
+      "description": "",
+      "enable_dynamic_field": false,
+      "enable_namespace": false,
+      "fields": [
+        {
+          "description": "",
+          "field_id": 100,
+          "is_primary": true,
+          "name": "id",
+          "params": {
+            "max_length": 160
+          },
+          "type": 21
+        },
+        {
+          "description": "",
+          "field_id": 101,
+          "name": "text",
+          "params": {
+            "max_length": 8192
+          },
+          "type": 21
+        },
+        {
+          "description": "",
+          "field_id": 102,
+          "name": "embedding",
+          "params": {
+            "dim": 1024
+          },
+          "type": 101
+        },
+        {
+          "description": "",
+          "field_id": 103,
+          "name": "metadata",
+          "params": {},
+          "type": 23
+        }
+      ],
+      "functions": [],
+      "num_partitions": 1,
+      "num_shards": 1,
+      "properties": {},
+      "update_timestamp": 465433824520568839
+    },
+    "entity_count": 12923,
+    "indexes": [
+      "embedding"
+    ],
+    "ok": true,
+    "stats": {
+      "row_count": 12923
+    },
+    "uri": "http://localhost:19530"
+  },
+  "milvus_enabled": "true",
+  "milvus_entity_count": 12923,
+  "milvus_uri": "http://localhost:19530",
+  "presidio_enabled": "false",
+  "runtime_env": {
+    "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+    "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+    "EMBEDDING_BACKEND": "remote",
+    "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+    "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+    "GUARDRAILS_ENABLED": "false",
+    "MILVUS_COLLECTION": "mevzuat_e5_shadow",
+    "MILVUS_ENABLED": "true",
+    "MILVUS_URI": "http://localhost:19530",
+    "PRESIDIO_ENABLED": "false"
+  },
+  "source_catalog_hashes": [
+    {
+      "bytes": 38132,
+      "exists": true,
+      "path": "api-gateway/src/rag/source_catalog.py",
+      "sha256": "f04dc600f306f5724c8e795fcf462bf601083e62250505686c3da55fb2a9016e"
+    },
+    {
+      "bytes": 18918,
+      "exists": true,
+      "path": "api-gateway/src/rag/retriever.py",
+      "sha256": "d036bc2152af51a90689464af303009d822594076feb7a6a07ac93c7db74b20a"
+    },
+    {
+      "bytes": 53237,
+      "exists": true,
+      "path": "api-gateway/src/source_family_resolver.py",
+      "sha256": "953ae5c81a4a90380884ec940373ca78ff35f74d91198039180dbb8171d1d58f"
+    },
+    {
+      "bytes": 7390345,
+      "exists": true,
+      "path": "reports/benchmark/phase_05_canonical_source_catalog.csv",
+      "sha256": "3e1a906ca1c0daaffc839b8757c6bdac25228d8f4e60f5001c2534a00fa309b2"
+    },
+    {
+      "bytes": 907,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/cmk/source_manifest.json",
+      "sha256": "1929713475ab06e76691b98409463b147e576e281c0f4414ab301113e7ac6578"
+    },
+    {
+      "bytes": 908,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/hmk/source_manifest.json",
+      "sha256": "f5b2ad40df50e1415ecef157edb2e3394ca9f98ea5c4f150b12220e507844cae"
+    },
+    {
+      "bytes": 915,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ik/source_manifest.json",
+      "sha256": "fdefff21b1548fd7973d5321ac45bc4e6c5719d17b3abb4fb9b8ee7da1dae9a2"
+    },
+    {
+      "bytes": 900,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tck/source_manifest.json",
+      "sha256": "352e420ceb3e79ba7c52260c0ff85c6d0e5da7f933580a5726628e202ce73bf0"
+    },
+    {
+      "bytes": 928,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tmk_core_corpus/source_manifest.json",
+      "sha256": "a99d7b5eb1a9234bf0a3e842cb3b6d37df42007b2b8fcbe0a112f4b5d6a625b2"
+    },
+    {
+      "bytes": 906,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ttk/source_manifest.json",
+      "sha256": "700d7ac77b43111cced6033f3fccf183a63ff51ea60adc55451d01c5771b2519"
+    },
+    {
+      "bytes": 372814,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/cmk/normalized_source.txt",
+      "sha256": "ef03790c8c2ef82229a7eeceb0f79c50e696be4f7735b931cfc7e92a44567ad9"
+    },
+    {
+      "bytes": 298250,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/hmk/normalized_source.txt",
+      "sha256": "bf1a326eb121e0d73a33e74a7db43af0e1f0e25f2201b7117bc958399315fdf4"
+    },
+    {
+      "bytes": 453984,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ik/normalized_source.txt",
+      "sha256": "3577da9cfbdc706947641146948f93346a2f2c194d88c07a09b0690c508880f9"
+    },
+    {
+      "bytes": 307546,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tck/normalized_source.txt",
+      "sha256": "9cde7d1ac5290f2a4f1e2b4d19ffc2c67b888535850db23c90fe52d8e46ae872"
+    },
+    {
+      "bytes": 425015,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tmk_core_corpus/normalized_source.txt",
+      "sha256": "0de4c7b84a9111d353ad1e61f9dd6938d14c4a7339377a25ba646a758c0ed591"
+    },
+    {
+      "bytes": 1060631,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ttk/normalized_source.txt",
+      "sha256": "1325e46fb164cf0218fa15d20078cb97ccf907cfbc2e170020d47bc9bd753742"
+    }
+  ],
+  "source_supplement_hashes": [
+    {
+      "bytes": 19865,
+      "exists": true,
+      "path": "api-gateway/src/rag/source_supplements.py",
+      "sha256": "11d0c2f29d399957095958fd894c87f1d7cabc6fda1f1719a269a07cd30196ce"
+    },
+    {
+      "bytes": 7813,
+      "exists": true,
+      "path": "reports/benchmark/phase_16a_corpus_materialization_remediation.csv",
+      "sha256": "ebf51c4c156c37d25011368f80ca785fb599e4eeb1d0ba86cc341151a52563f8"
+    },
+    {
+      "bytes": 3703,
+      "exists": true,
+      "path": "reports/benchmark/phase_16e_corpus_materialization_remediation.csv",
+      "sha256": "40179b1b8a39bea7b10ad22ef6a4fb56ea140704e74b9cbf4b97cd1a3e454aad"
+    },
+    {
+      "bytes": 2329,
+      "exists": true,
+      "path": "reports/benchmark/phase_16b_source_key_v2_collision_report.csv",
+      "sha256": "9872acbb5ba08e2d899feede9a0ee0b0527ea3a32016df89909aca72e6d3c976"
+    },
+    {
+      "bytes": 1302,
+      "exists": true,
+      "path": "reports/benchmark/phase_16e_source_key_v2_collision_report.csv",
+      "sha256": "06a125e1f0b5f99e18e427f42d9166984fc9c18250ce9b31ceae7b146dcdf73b"
+    },
+    {
+      "bytes": 1212,
+      "exists": true,
+      "path": "reports/benchmark/phase_17_corpus_materialization_audit.csv",
+      "sha256": "dff7afd5785b5b564b7883dd260e111d573b1243fbf738ecd09dd2a190c87bdb"
+    },
+    {
+      "bytes": 2028,
+      "exists": true,
+      "path": "reports/benchmark/phase_17a_corpus_materialization_remediation.csv",
+      "sha256": "82728fbeb06791512ff27542650c25d5fa906e6362761a043526010ea8ea8d18"
+    },
+    {
+      "bytes": 2676,
+      "exists": true,
+      "path": "reports/benchmark/phase_17b_corpus_materialization_remediation.csv",
+      "sha256": "f7800ac8dcf0b0009b5901922b31d4cd866535850d64b968aef40db09df58a33"
+    },
+    {
+      "bytes": 1499,
+      "exists": true,
+      "path": "reports/benchmark/phase_17a_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+    },
+    {
+      "bytes": 1499,
+      "exists": true,
+      "path": "reports/benchmark/phase_17b_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+    },
+    {
+      "bytes": 3386,
+      "exists": true,
+      "path": "reports/benchmark/phase_18e_side_backlog_source_materialization_report.md",
+      "sha256": "9c472e41f8ec75495b634bb5bf1863849944bbd3a4477b0749cc1b3852f1411a"
+    }
+  ],
+  "timestamp_utc": "2026-04-25T22:56:49.665679+00:00",
+  "vector_dimension": 1024
+}
