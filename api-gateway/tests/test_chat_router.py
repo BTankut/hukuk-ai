@@ -40,6 +40,7 @@ from routers.chat import (
     _apply_evidence_slot_synthesis_to_answer_text,
     _apply_verified_answer_slot_plan_to_answer_text,
     _apply_retrieval_plan_hints,
+    _apply_domain_law_hints_to_retrieval_plan,
     _apply_metadata_lookup_family_prior,
     _apply_relation_query_metadata_focus,
     _apply_pre_generation_family_pool,
@@ -48,6 +49,7 @@ from routers.chat import (
     _build_assembled_evidence,
     _build_annual_investment_program_expansion,
     _build_numbered_law_reference_expansion,
+    _build_allowed_source_whitelist,
     _build_completeness_synthesis_features,
     _build_retrieval_verification_features,
     _build_retrieval_plan_expansion,
@@ -69,6 +71,8 @@ from routers.chat import (
     _extract_json_object,
     _extract_explicit_article_refs,
     _extract_law_mentions,
+    _infer_domain_law_hints,
+    _infer_domain_article_refs,
     _extract_source_identifier_tokens,
     _focus_chunks_on_selected_sources,
     _infer_requested_source_families,
@@ -468,6 +472,16 @@ class TestLawSignalParsing:
         )
         assert laws == ["TBK", "TMK"]
 
+    def test_extract_law_mentions_infers_ttk_for_commercial_company_share_transfer(self):
+        query = (
+            "Bir limited şirket pay devrinde yalnızca noterde düzenlenmiş yazılı sözleşme "
+            "yeterli midir? Şirket onayı ve tescil/ilan bakımından hangi çerçeve uygulanır?"
+        )
+
+        assert _infer_domain_law_hints(query) == ["TTK"]
+        assert _infer_domain_article_refs(query) == [("TTK", "595"), ("TTK", "598")]
+        assert _extract_law_mentions(query) == ["TTK"]
+
     def test_infer_requested_source_families_detects_tuzuk(self):
         families = _infer_requested_source_families(
             "Tapu kütüğü, yevmiye defteri ve resmi belgeler için hangi tüzük merkezde olmalıdır?"
@@ -696,6 +710,22 @@ class TestLawSignalParsing:
         assert "procedure_or_consequence" in resolution.runtime_slots
         assert "scenario_applicability" in resolution.runtime_slots
         assert "temporal_validity" in resolution.runtime_slots
+
+    def test_sufficiency_question_uses_procedure_slots_not_hierarchy_conflict(self):
+        resolution = resolve_required_slot_matrix(
+            query=(
+                "Limited şirket pay devrinde yalnızca noterde düzenlenmiş yazılı sözleşme "
+                "yeterli midir; tescil ve ilan bakımından ne gerekir?"
+            ),
+            answer_template="procedure",
+            source_families=["kanun"],
+        )
+
+        assert "procedure" in resolution.matrix_slots
+        assert "facts_applied" in resolution.matrix_slots
+        assert "conflict_rule" not in resolution.matrix_slots
+        assert "applicable_priority" not in resolution.matrix_slots
+        assert "procedure_or_consequence" in resolution.runtime_slots
 
     def test_completeness_synthesis_exports_phase18_slot_matrix_metadata(self):
         features = _build_completeness_synthesis_features(
@@ -966,6 +996,92 @@ class TestLawSignalParsing:
         assert values["procedure_or_consequence"]["evidence_span_id"] == "IK m.20"
         assert "arabulucu" in values["procedure_or_consequence"]["slot_value"]
 
+    def test_selector_exact_span_priority_drives_required_slot_extraction(self):
+        features = _build_completeness_synthesis_features(
+            query=(
+                "Limited şirket pay devrinde yalnızca noterde düzenlenmiş yazılı sözleşme "
+                "yeterli midir; tescil ve ilan bakımından ne gerekir?"
+            ),
+            answer_text="Seçili TTK hükümleri pay devri usulünü düzenler [Kaynak: TTK m.595].",
+            article_span_selector={
+                "selected_main_span_id": "TTK m.595/f.0",
+                "selected_article": "595",
+                "support_span_count": 2,
+                "metadata_identity_strength": "medium",
+                "selector_evidence_sufficiency": "exact_enough",
+            },
+            chunks=[
+                RetrievedChunk(
+                    text=(
+                        "Esas sermaye payının devri yazılı şekilde yapılır ve imzalar noterce onanır. "
+                        "Şirket sözleşmesinde aksi öngörülmemişse genel kurulun onayı şarttır."
+                    ),
+                    citation="TTK m.595/f.0",
+                    source="TTK",
+                    score=1.0,
+                    metadata={
+                        "madde_no": "595",
+                        "span_id": "TTK m.595/f.0",
+                        "_article_span_selector_rank": 0,
+                        "_article_span_selector_match_type": "exact_article",
+                    },
+                ),
+                RetrievedChunk(
+                    text="Esas sermaye paylarının geçişlerinin tescili için ticaret siciline başvurulur.",
+                    citation="TTK m.598/f.0",
+                    source="TTK",
+                    score=1.0,
+                    metadata={
+                        "madde_no": "598",
+                        "span_id": "TTK m.598/f.0",
+                        "_article_span_selector_rank": 1,
+                        "_article_span_selector_match_type": "exact_article",
+                    },
+                ),
+                RetrievedChunk(
+                    text=(
+                        "Pay bedellerinin ödenmesi ve bedeli tamamen ödenmemiş payların devri "
+                        "hususunda anonim şirket hükümleri kıyasen uygulanır."
+                    ),
+                    citation="TTK m.585",
+                    source="TTK",
+                    score=0.9,
+                    metadata={
+                        "madde_no": "585",
+                        "span_id": "TTK_m585_f1",
+                        "_article_span_selector_rank": 3,
+                        "_article_span_selector_match_type": "same_heading_or_section",
+                    },
+                ),
+            ],
+            requested_source_families=["kanun"],
+        )
+
+        values = {row["slot_name"]: row for row in features["evidence_required_slot_values"]}
+        assert values["result_or_holding"]["evidence_article"] == "595"
+        assert values["procedure_or_consequence"]["evidence_article"] == "598"
+
+    def test_allowed_source_whitelist_includes_source_identifier_aliases(self):
+        whitelist = _build_allowed_source_whitelist(
+            [
+                RetrievedChunk(
+                    text="TTK m.595 metni",
+                    citation="TTK m.595/f.0",
+                    source="TTK",
+                    score=1.0,
+                    metadata={
+                        "source_id": "6102:6102:m595:f0:from2012-07-01:to9999-12-31",
+                        "source_identifier": "TTK m.595",
+                        "canonical_identifier_display": "TTK m.595",
+                    },
+                )
+            ]
+        )
+
+        assert "6102:6102:m595:f0:from2012-07-01:to9999-12-31" in whitelist
+        assert "TTK m.595/f.0" in whitelist
+        assert "TTK m.595" in whitelist
+
     def test_evidence_slot_synthesis_appends_only_confident_missing_slots(self):
         answer, meta = _apply_evidence_slot_synthesis_to_answer_text(
             answer_text="Kısa sonuç kaynakla sınırlıdır [Kaynak: X m.1].",
@@ -1083,6 +1199,38 @@ class TestLawSignalParsing:
         assert "Kural/sonuç" in answer
         assert "Eksik doğrulanmış slotlar: current_applicability" in answer
         assert meta["verified_answer_plan_missing_slots"] == ["current_applicability"]
+
+    def test_verified_answer_slot_plan_can_replace_unsupported_generation(self):
+        answer, meta = _apply_verified_answer_slot_plan_to_answer_text(
+            answer_text="",
+            final_mode="refusal",
+            answer_contract={
+                "answer_slots": [
+                    {
+                        "slot_name": "governing_source",
+                        "required": True,
+                        "value": "Türk Ticaret Kanunu | TTK m.595",
+                        "evidence_span_keys": ["TTK m.595/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                    {
+                        "slot_name": "procedure",
+                        "required": True,
+                        "value": "Pay devri yazılı yapılır, imzalar noterce onanır ve genel kurul onayı şarttır.",
+                        "evidence_span_keys": ["TTK m.595/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                ],
+            },
+        )
+
+        assert meta["verified_answer_slot_synthesis_applied"] is True
+        assert meta["verified_answer_slot_synthesis_controlled_replacement"] is True
+        assert meta["verified_answer_slot_synthesis_reason"] == "verified_slots_replaced_unsupported_generation"
+        assert answer.startswith("Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:")
+        assert "Usul/sonuç" in answer
 
     def test_verified_answer_slot_plan_skips_canonical_gap(self):
         answer, meta = _apply_verified_answer_slot_plan_to_answer_text(
@@ -2221,6 +2369,24 @@ class TestLawSignalParsing:
         assert "işe iade" in retrieval_query
         assert "geçerli sebep" in retrieval_query
         assert retrieval_top_k == 20
+
+    def test_domain_law_hints_override_unanchored_planner_law_hints(self):
+        query = (
+            "Bir limited şirket pay devrinde yalnızca noterde düzenlenmiş yazılı sözleşme "
+            "yeterli midir? Şirket onayı ve tescil/ilan bakımından hangi çerçeve uygulanır?"
+        )
+        mentioned_laws = _extract_law_mentions(query)
+
+        plan = _apply_domain_law_hints_to_retrieval_plan(
+            {"law_hints": ["TMK"], "source_family_hints": [], "term_hints": ["noter tescil"]},
+            domain_law_hints=_infer_domain_law_hints(query),
+            mentioned_laws=mentioned_laws,
+        )
+
+        assert plan is not None
+        assert plan["law_hints"] == ["TTK"]
+        assert "kanun" in plan["source_family_hints"]
+        assert any("TTK m.595" in term and "TTK m.598" in term for term in plan["term_hints"])
 
     def test_build_source_cluster_candidates_groups_chunks_by_source_key(self):
         chunks = [

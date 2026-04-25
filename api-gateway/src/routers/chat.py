@@ -154,6 +154,9 @@ _LAW_NAME_NORMALIZATION = {
     "ticaret kanunu": "TTK",
     "icra ve iflas kanunu": "İİK",
 }
+_LAW_SOURCE_SUPPLEMENT_KEYS_BY_HINT = {
+    "TTK": ("6102",),
+}
 _INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
 _NATIVE_DIALOG_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("greeting", ("merhaba", "selam", "selamlar", "günaydın", "iyi akşamlar", "iyi geceler", "hey", "hello", "hi")),
@@ -6687,10 +6690,90 @@ def _looks_like_tbk_tmk_cross_law_query(user_query: str) -> bool:
     )
 
 
-def _infer_law_mentions_from_concepts(query: str) -> list[str]:
-    if _looks_like_tbk_tmk_cross_law_query(query):
-        return ["TBK", "TMK"]
+def _looks_like_commercial_company_law_query(user_query: str) -> bool:
+    company_terms = (
+        "limited şirket",
+        "limited sirket",
+        "anonim şirket",
+        "anonim sirket",
+        "ticaret şirketi",
+        "ticaret sirketi",
+        "şirket ortağı",
+        "sirket ortagi",
+        "esas sermaye pay",
+        "sermaye pay",
+    )
+    action_terms = (
+        "pay devri",
+        "payın devri",
+        "payin devri",
+        "pay geçişi",
+        "pay gecisi",
+        "şirket onayı",
+        "sirket onayi",
+        "genel kurul onayı",
+        "genel kurul onayi",
+        "ticaret sicili",
+        "tescil",
+        "ilan",
+    )
+    return _contains_any_query_term(user_query, company_terms) and _contains_any_query_term(user_query, action_terms)
+
+
+def _infer_domain_law_hints(query: str) -> list[str]:
+    laws: list[str] = []
+    if _looks_like_commercial_company_law_query(query):
+        laws.append("TTK")
+    return dedupe_strings(laws)
+
+
+def _infer_domain_article_refs(query: str) -> list[tuple[str, str]]:
+    if _looks_like_commercial_company_law_query(query):
+        return [("TTK", "595"), ("TTK", "598")]
     return []
+
+
+def _infer_law_mentions_from_concepts(query: str) -> list[str]:
+    laws: list[str] = []
+    if _looks_like_tbk_tmk_cross_law_query(query):
+        laws.extend(["TBK", "TMK"])
+    laws.extend(_infer_domain_law_hints(query))
+    return dedupe_strings(laws)
+
+
+def _apply_domain_law_hints_to_retrieval_plan(
+    retrieval_plan: dict[str, Any] | None,
+    *,
+    domain_law_hints: list[str],
+    mentioned_laws: list[str],
+) -> dict[str, Any] | None:
+    if not domain_law_hints:
+        return retrieval_plan
+
+    plan = dict(retrieval_plan or {})
+    raw_law_hints = [item for item in (plan.get("law_hints") or []) if isinstance(item, str)]
+    plan["law_hints"] = dedupe_strings(
+        [
+            *domain_law_hints,
+            *(item for item in raw_law_hints if item in mentioned_laws or item in domain_law_hints),
+        ]
+    )
+    if "TTK" in plan["law_hints"]:
+        plan["source_family_hints"] = dedupe_strings(["kanun", *(plan.get("source_family_hints") or [])])[:3]
+        plan["term_hints"] = dedupe_strings(
+            [
+                "TTK m.595 TTK m.598 limited şirket pay devri şirket onayı ticaret sicili tescil ilan",
+                *(plan.get("term_hints") or []),
+            ]
+        )[:6]
+    return plan
+
+
+def _source_supplement_keys_for_law_hints(law_hints: set[str] | list[str]) -> list[str]:
+    keys: list[str] = []
+    for law in law_hints:
+        keys.extend(_LAW_SOURCE_SUPPLEMENT_KEYS_BY_HINT.get(str(law).strip(), ()))
+    return dedupe_strings(keys)
 
 
 def _detect_scope_refusal_reason(user_query: str) -> str | None:
@@ -8370,11 +8453,20 @@ def _build_allowed_source_whitelist(chunks: list[RetrievedChunk]) -> list[str]:
     whitelist: list[str] = []
     seen: set[str] = set()
     for chunk in chunks:
-        source_id = _resolve_trace_source_id(chunk)
-        if source_id in seen:
-            continue
-        whitelist.append(source_id)
-        seen.add(source_id)
+        metadata = chunk.metadata or {}
+        for source_id in (
+            _resolve_trace_source_id(chunk),
+            chunk.citation,
+            chunk.source,
+            _resolve_chunk_source_identifier(chunk),
+            str(metadata.get("canonical_identifier_display") or ""),
+            str(metadata.get("display_citation") or ""),
+        ):
+            normalized = str(source_id or "").strip()
+            if not normalized or normalized in seen:
+                continue
+            whitelist.append(normalized)
+            seen.add(normalized)
     return whitelist
 
 
@@ -8596,7 +8688,23 @@ def _build_retrieval_verification_features(
 
 def _answer_template_for_query(query: str) -> str:
     normalized = normalize_query_text(query or "")
-    if any(term in normalized for term in ("usul", "basvuru", "itiraz", "sure", "dava sart", "on sart")):
+    if any(
+        term in normalized
+        for term in (
+            "usul",
+            "basvuru",
+            "itiraz",
+            "sure",
+            "dava sart",
+            "on sart",
+            "tescil",
+            "ilan",
+            "noter",
+            "noterce",
+            "yeterli midir",
+            "yeterli mi",
+        )
+    ):
         return "procedure"
     if any(term in normalized for term in ("istisna", "muaf", "haric", "sakli", "uygulanmaz")):
         return "exception"
@@ -8755,14 +8863,17 @@ def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
     if _query_contains_any(
         normalized,
         (
-            "yeterli midir",
-            "yoksa",
             "ust norm",
             "alt norm",
             "kanun mu",
             "yonetmelik mi",
             "hangisi uygulanir",
+            "normlar hiyerarsisi",
+            "kanuna aykiri",
         ),
+    ) or (
+        "yoksa" in normalized
+        and _query_contains_any(normalized, ("kanun", "yonetmelik", "teblig", "tuzuk", "genelge", "karar"))
     ):
         slots.append("hierarchy_or_conflict_rule")
     return dedupe_strings(slots)
@@ -9167,6 +9278,7 @@ def _select_chunk_for_slot(chunks: list[RetrievedChunk], slot: str, *, query: st
     for index, chunk in enumerate(chunks):
         if not _chunk_supports_slot(chunk, slot):
             continue
+        metadata = chunk.metadata or {}
         surface = normalize_query_text(
             " ".join(
                 part
@@ -9184,6 +9296,16 @@ def _select_chunk_for_slot(chunks: list[RetrievedChunk], slot: str, *, query: st
             score += 3
         if slot == "result_or_holding" and _chunk_has_selectable_body_span(chunk):
             score += 2
+        selector_rank = metadata.get("_article_span_selector_rank")
+        try:
+            selector_rank_int = int(selector_rank)
+        except (TypeError, ValueError):
+            selector_rank_int = None
+        selector_match_type = str(metadata.get("_article_span_selector_match_type") or "")
+        if selector_rank_int is not None and slot not in {"current_applicability", "historical_period"}:
+            score += max(1, 12 - min(selector_rank_int, 11))
+            if selector_match_type == "exact_article":
+                score += 4
         if slot in {"current_applicability", "transition_or_replacement_rule"} and _chunk_is_historical_current_counterpart(chunk):
             score += 6
             score += min(5, _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms)) * 2
@@ -9495,10 +9617,18 @@ def _build_evidence_required_slot_values(
     selected_article = str(selector.get("selected_article") or "").strip()
     rows: list[dict[str, Any]] = []
     primary_chunk = _selector_primary_chunk(chunks, article_span_selector)
+    primary_preferred_slots = {
+        "governing_source",
+        "exact_source_identity",
+        "document_selection_reason",
+        "result_or_holding",
+        "temporal_validity",
+        "current_applicability",
+    }
     for slot in required_slots:
         matched_chunk = (
             primary_chunk
-            if slot in {"governing_source", "exact_source_identity", "document_selection_reason"}
+            if slot in primary_preferred_slots
             and primary_chunk is not None
             else _select_chunk_for_slot(chunks, slot, query=query)
         )
@@ -9699,11 +9829,19 @@ def _build_answer_slot_evidence_map(
     missing_reasons: list[str] = []
     confidence_sum = 0.0
     primary_chunk = _selector_primary_chunk(chunks, article_span_selector)
+    primary_preferred_slots = {
+        "governing_source",
+        "exact_source_identity",
+        "document_selection_reason",
+        "result_or_holding",
+        "temporal_validity",
+        "current_applicability",
+    }
 
     for slot in required_slots:
         matched_chunk = (
             primary_chunk
-            if slot in {"governing_source", "exact_source_identity", "document_selection_reason"}
+            if slot in primary_preferred_slots
             and primary_chunk is not None
             else _select_chunk_for_slot(chunks, slot, query=query)
         )
@@ -11305,6 +11443,10 @@ def _build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, An
         verified_slots,
         ("facts_applied", "scenario_applicability", "scope_or_addressee", "scope"),
     )
+    procedure_name, procedure_value = _first_verified_plan_value(
+        verified_slots,
+        ("procedure", "consequence", "obligations", "procedure_or_formula", "procedure_or_consequence"),
+    )
     exception_name, exception_value = _first_verified_plan_value(
         verified_slots,
         ("exception_or_limitation", "exception_rule", "exception_conditions"),
@@ -11318,6 +11460,7 @@ def _build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, An
         "legal_basis_slots": legal_basis_slots,
         "temporal_validity_slot": {"slot_name": temporal_name, "value": temporal_value} if temporal_value else None,
         "scenario_application_slot": {"slot_name": scenario_name, "value": scenario_value} if scenario_value else None,
+        "procedure_or_consequence_slot": {"slot_name": procedure_name, "value": procedure_value} if procedure_value else None,
         "exception_or_limitation_slot": {"slot_name": exception_name, "value": exception_value} if exception_value else None,
         "transition_or_replacement_slot": {"slot_name": transition_name, "value": transition_value} if transition_value else None,
         "missing_slots": dedupe_strings(missing_slots),
@@ -11326,6 +11469,52 @@ def _build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, An
             "reasons": answer_contract.get("confidence_policy_ceiling_reasons") or [],
         },
     }
+
+
+def _verified_slot_controlled_replacement_allowed(
+    *,
+    answer_contract: dict[str, Any],
+    final_mode: str | None,
+) -> bool:
+    if final_mode not in {"refusal", "blocked"}:
+        return False
+    if (
+        answer_contract.get("answer_suppressed_due_to_evidence_gap") is True
+        or answer_contract.get("insufficient_canonical_span_evidence") is True
+    ):
+        return False
+
+    verified_slots = _verified_slots_by_name(answer_contract)
+    if len(verified_slots) < 2:
+        return False
+    has_basis = bool(
+        {
+            "governing_source",
+            "exact_source_identity",
+            "selected_primary_source",
+            "identifier",
+            "article_or_span",
+        }
+        & set(verified_slots)
+    )
+    has_rule = bool(
+        {
+            "direct_conclusion",
+            "direct_rule",
+            "rule",
+            "conclusion",
+            "operative_rule",
+            "operative_clause",
+            "procedure",
+            "consequence",
+            "obligations",
+            "procedure_or_formula",
+            "procedure_or_consequence",
+            "current_applicability",
+        }
+        & set(verified_slots)
+    )
+    return has_basis and has_rule
 
 
 def _apply_verified_answer_slot_plan_to_answer_text(
@@ -11342,7 +11531,11 @@ def _apply_verified_answer_slot_plan_to_answer_text(
             "verified_answer_plan": None,
             "verified_answer_plan_missing_slots": [],
         }
-    if final_mode not in {"answer", "partial"}:
+    controlled_replacement = _verified_slot_controlled_replacement_allowed(
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+    )
+    if final_mode not in {"answer", "partial"} and not controlled_replacement:
         return answer_text, {
             "verified_answer_slot_synthesis_applied": False,
             "verified_answer_slot_synthesis_slots": [],
@@ -11350,7 +11543,7 @@ def _apply_verified_answer_slot_plan_to_answer_text(
             "verified_answer_plan": None,
             "verified_answer_plan_missing_slots": [],
         }
-    if not (answer_text or "").strip():
+    if not (answer_text or "").strip() and not controlled_replacement:
         return answer_text, {
             "verified_answer_slot_synthesis_applied": False,
             "verified_answer_slot_synthesis_slots": [],
@@ -11390,6 +11583,7 @@ def _apply_verified_answer_slot_plan_to_answer_text(
         ("Kural/sonuç", "direct_answer_slot"),
         ("Yürürlük/güncellik", "temporal_validity_slot"),
         ("Uygulama/kapsam", "scenario_application_slot"),
+        ("Usul/sonuç", "procedure_or_consequence_slot"),
         ("İstisna/sınırlama", "exception_or_limitation_slot"),
         ("Geçiş/güncel ilişki", "transition_or_replacement_slot"),
     ):
@@ -11410,12 +11604,26 @@ def _apply_verified_answer_slot_plan_to_answer_text(
             "verified_answer_plan_missing_slots": missing_slots,
         }
 
+    if controlled_replacement:
+        return (
+            "Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:\n" + "\n".join(lines),
+            {
+                "verified_answer_slot_synthesis_applied": True,
+                "verified_answer_slot_synthesis_slots": dedupe_strings(synthesized_slots),
+                "verified_answer_slot_synthesis_reason": "verified_slots_replaced_unsupported_generation",
+                "verified_answer_slot_synthesis_controlled_replacement": True,
+                "verified_answer_plan": plan,
+                "verified_answer_plan_missing_slots": missing_slots,
+            },
+        )
+
     return (
         f"{answer_text.strip()}\n\n{_VERIFIED_ANSWER_PLAN_HEADER}\n" + "\n".join(lines),
         {
             "verified_answer_slot_synthesis_applied": True,
             "verified_answer_slot_synthesis_slots": dedupe_strings(synthesized_slots),
             "verified_answer_slot_synthesis_reason": "verified_slots_made_visible",
+            "verified_answer_slot_synthesis_controlled_replacement": False,
             "verified_answer_plan": plan,
             "verified_answer_plan_missing_slots": missing_slots,
         },
@@ -12484,6 +12692,15 @@ def _finalize_chat_response(
             trace_payload=trace_payload,
         )
         answer_contract.update(verified_answer_slot_synthesis)
+        if verified_answer_slot_synthesis.get("verified_answer_slot_synthesis_controlled_replacement") is True:
+            blocked = False
+            final_mode = "partial"
+            final_reason = None
+            citations = citations or _extract_inline_citation_ids(answer_text)
+            answer_contract["answer_mode"] = "qualified_answer"
+            answer_contract["grounding_status"] = "partially_grounded"
+            answer_contract["unsupported_reason"] = None
+            answer_contract["answer_suppressed_due_to_evidence_gap"] = False
     contract_repair = build_or_repair_answer_contract(
         qid=response_id,
         answer_text=answer_text,
@@ -12575,6 +12792,15 @@ def _finalize_chat_response(
                 trace_payload=trace_payload,
             )
             answer_contract.update(post_verified_slot_synthesis)
+            if post_verified_slot_synthesis.get("verified_answer_slot_synthesis_controlled_replacement") is True:
+                blocked = False
+                final_mode = "partial"
+                final_reason = None
+                citations = citations or _extract_inline_citation_ids(answer_text)
+                answer_contract["answer_mode"] = "qualified_answer"
+                answer_contract["grounding_status"] = "partially_grounded"
+                answer_contract["unsupported_reason"] = None
+                answer_contract["answer_suppressed_due_to_evidence_gap"] = False
     answer_contract = _refresh_contract_completeness_for_answer_text(
         answer_contract=answer_contract,
         answer_text=answer_text,
@@ -12595,12 +12821,17 @@ def _finalize_chat_response(
     )
     answer_contract = contract_repair.contract
     trace_payload = dict(trace_payload)
+    trace_payload["final_mode"] = final_mode
+    trace_payload["final_reason"] = final_reason
     trace_payload["answer_contract"] = answer_contract
     trace_payload["answer_contract_validation"] = contract_repair.validation
     trace_payload["confidence_0_100"] = contract_repair.confidence_0_100
     generation_outcome = trace_payload.get("generation_outcome")
     if isinstance(generation_outcome, dict):
         generation_outcome = dict(generation_outcome)
+        generation_outcome["blocked"] = blocked
+        generation_outcome["final_mode"] = final_mode
+        generation_outcome["final_reason"] = final_reason
         generation_outcome["answer_contract_validation"] = contract_repair.validation
         generation_outcome["confidence_0_100"] = contract_repair.confidence_0_100
         trace_payload["generation_outcome"] = generation_outcome
@@ -13141,7 +13372,7 @@ async def chat_completions(
     mentioned_laws = _extract_law_mentions(routing_query)
     explicit_article_refs = _extract_explicit_article_refs(routing_query)
     requested_source_families = _infer_requested_source_families(routing_query)
-    forced_article_refs: list[tuple[str, str]] = []
+    forced_article_refs: list[tuple[str, str]] = _infer_domain_article_refs(routing_query)
     applied_expansions: list[str] = []
     source_family_resolution = _resolve_source_family_prior(
         routing_query,
@@ -13164,6 +13395,14 @@ async def chat_completions(
         explicit_article_refs=explicit_article_refs,
         law_filter=request_body.law_filter,
     )
+    domain_law_hints = _infer_domain_law_hints(routing_query)
+    if domain_law_hints:
+        mentioned_laws = dedupe_strings([*mentioned_laws, *domain_law_hints])
+        retrieval_plan = _apply_domain_law_hints_to_retrieval_plan(
+            retrieval_plan,
+            domain_law_hints=domain_law_hints,
+            mentioned_laws=mentioned_laws,
+        )
     retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k = _apply_retrieval_plan_hints(
         retrieval_query=retrieval_query,
         mentioned_laws=mentioned_laws,
@@ -13624,6 +13863,25 @@ async def chat_completions(
                             sorted(planner_law_hints),
                             len(retrieved_chunks),
                         )
+                    planner_source_supplement_keys = _source_supplement_keys_for_law_hints(planner_law_hints)
+                    if planner_source_supplement_keys:
+                        planner_source_supplement_chunks = _build_source_supplement_chunks(
+                            load_source_supplements_for_keys(
+                                planner_source_supplement_keys,
+                                source_families=set(requested_source_families) if requested_source_families else None,
+                            )
+                        )
+                        if planner_source_supplement_chunks:
+                            retrieved_chunks = _dedupe_retrieved_chunks(
+                                planner_source_supplement_chunks + retrieved_chunks
+                            )
+                            logger.info(
+                                "Retrieval planner-law-source-supplements: session=%s sources=%s added=%d total=%d",
+                                session_id,
+                                planner_source_supplement_keys,
+                                len(planner_source_supplement_chunks),
+                                len(retrieved_chunks),
+                            )
 
                 if _asks_constitutional_transition_khk_query(routing_query) and not request_body.law_filter:
                     transition_khk_chunks = _retrieve_law_bucket_chunks(

@@ -36,16 +36,17 @@ _TR_ASCII_FOLD_MAP = str.maketrans(
         "û": "u",
     }
 )
+_SOURCE_LAW_TOKEN_PATTERN = r"(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9}(?:/\d{1,4})?)"
 _SOURCE_ID_RE = re.compile(
-    r"\b(?P<law>(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9}))\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
+    rf"(?<![A-ZÇĞİÖŞÜa-zçğıöşü0-9/])(?P<law>{_SOURCE_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
     re.IGNORECASE,
 )
 _SOURCE_ID_COLON_RE = re.compile(
-    r"^(?P<law>(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9})):(?:[^:]+):m(?P<madde>\d+[a-z]?)",
+    rf"^(?P<law>{_SOURCE_LAW_TOKEN_PATTERN}):(?:[^:]+):m(?P<madde>\d+[a-z]?)",
     re.IGNORECASE,
 )
 _SOURCE_ID_FALLBACK_RE = re.compile(
-    r"^(?P<law>(?:[a-zçğıöşü]{2,10}|\d{1,9}))[-_ ]m?(?P<madde>\d+[a-z]?)",
+    r"^(?P<law>(?:[a-zçğıöşü]{2,10}|\d{1,9}(?:/\d{1,4})?))[-_ ]m?(?P<madde>\d+[a-z]?)",
     re.IGNORECASE,
 )
 _INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
@@ -53,7 +54,7 @@ _FULL_DATE_PATTERNS = (
     re.compile(r"\b(?P<year>20\d{2})-(?P<month>\d{1,2})-(?P<day>\d{1,2})\b"),
     re.compile(r"\b(?P<day>\d{1,2})[./](?P<month>\d{1,2})[./](?P<year>20\d{2})\b"),
 )
-_YEAR_ONLY_RE = re.compile(r"\b(19|20)\d{2}\b")
+_YEAR_ONLY_RE = re.compile(r"\b(?:19|20)\d{2}\b(?!\s*/\s*\d{1,4})")
 _NUMBERED_LAW_MENTION_RE = re.compile(
     r"\b(?P<law>\d{1,9})\s+say[ıi]l[ıi]\s+"
     r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik)\b",
@@ -842,8 +843,8 @@ def apply_temporal_validity_policy(
         contract.source_validity = "unknown"
         return contract.unsupported_reason
 
-    start = _parse_optional_date(primary_evidence.get("yururluk_baslangic"))
-    end = _parse_optional_date(primary_evidence.get("yururluk_bitis"))
+    start = _parse_optional_date(primary_evidence.get("yururluk_baslangic") or primary_evidence.get("effective_start"))
+    end = _parse_optional_date(primary_evidence.get("yururluk_bitis") or primary_evidence.get("effective_end"))
     mulga = primary_evidence.get("mulga")
 
     if mulga is True:
@@ -983,8 +984,8 @@ def _passes_temporal_surface(
     evidence: dict[str, Any],
     target_date: date,
 ) -> bool:
-    start = _parse_optional_date(evidence.get("yururluk_baslangic"))
-    end = _parse_optional_date(evidence.get("yururluk_bitis"))
+    start = _parse_optional_date(evidence.get("yururluk_baslangic") or evidence.get("effective_start"))
+    end = _parse_optional_date(evidence.get("yururluk_bitis") or evidence.get("effective_end"))
     mulga = evidence.get("mulga")
 
     if mulga is True:

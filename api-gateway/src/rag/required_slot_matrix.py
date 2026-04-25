@@ -90,6 +90,8 @@ def _query_matrix_slots(query: str) -> list[str]:
         slots.append("exception_or_limitation")
     if _contains_any(normalized, ("kosul", "sart", "hangi hallerde", "aranir", "gerekir")):
         slots.append("facts_applied")
+    if _contains_any(normalized, ("yeterli midir", "yeterli mi", "tescil", "ilan", "noter", "noterce")):
+        slots.extend(["facts_applied", "procedure"])
     if _contains_any(
         normalized,
         (
@@ -127,14 +129,17 @@ def _query_matrix_slots(query: str) -> list[str]:
     if _contains_any(
         normalized,
         (
-            "yeterli midir",
-            "yoksa",
             "ust norm",
             "alt norm",
             "kanun mu",
             "yonetmelik mi",
             "hangisi uygulanir",
+            "normlar hiyerarsisi",
+            "kanuna aykiri",
         ),
+    ) or (
+        "yoksa" in normalized
+        and _contains_any(normalized, ("kanun", "yonetmelik", "teblig", "tuzuk", "genelge", "karar"))
     ):
         slots.extend(["conflict_rule", "applicable_priority"])
     return _dedupe(slots)

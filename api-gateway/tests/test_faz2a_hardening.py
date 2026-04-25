@@ -56,6 +56,16 @@ def test_resolve_target_date_uses_today_for_old_current_validity_contrast():
     assert explicit is False
 
 
+def test_resolve_target_date_ignores_slash_numbered_source_identifier():
+    target_date, explicit = resolve_target_date(
+        "2024/7 sayılı Tasarruf Tedbirleri Genelgesi yeni hizmet binası kiralama için ne der?",
+        today=date(2026, 4, 25),
+    )
+
+    assert target_date == date(2026, 4, 25)
+    assert explicit is False
+
+
 def test_build_law_scope_signal_extracts_numbered_khk_mentions():
     signal = build_law_scope_signal(
         mentioned_laws=["TTK"],
@@ -93,6 +103,49 @@ def test_harden_answer_keeps_supported_answer_in_answer_mode():
     assert result.answer_contract["primary_source_id"] == "TBK m.49"
     assert result.answer_contract["claim_units"][0]["source_id"] == "TBK m.49"
     assert result.answer_text == "Haksız fiil sorumluluğu vardır. [Kaynak: TBK m.49]"
+
+
+def test_harden_answer_uses_effective_start_alias_for_slash_numbered_sources():
+    evidence = [
+        {
+            "source_id": "2024/7:2024/7:m0:f0:from2024-05-17:to9999-12-31",
+            "citation": "2024/7 m.0/f.0",
+            "source": "2024/7",
+            "law_no": "2024/7",
+            "law_short_name": "2024/7",
+            "madde_no": "0",
+            "fikra_no": "0",
+            "effective_start": "2024-05-17",
+            "effective_end": "9999-12-31",
+            "effective_state": "active",
+            "yururluk_baslangic": None,
+            "yururluk_bitis": None,
+            "mulga": None,
+            "excerpt": "Kamu kurum ve kuruluşları tarafından 3 yıl süreyle yeni hizmet binası kiralanmayacaktır.",
+        }
+    ]
+
+    result = harden_answer(
+        answer_text=(
+            "Kamu kurum ve kuruluşları tarafından 3 yıl süreyle yeni hizmet binası "
+            "kiralanmayacaktır. [Kaynak: 2024/7 m.0/f.0]"
+        ),
+        citations=["2024/7 m.0/f.0"],
+        blocked=False,
+        verification={"verdict": "pass"},
+        question_raw="2024/7 sayılı Tasarruf Tedbirleri Genelgesi yeni hizmet binası kiralama için ne der?",
+        mentioned_laws=[],
+        explicit_article_refs=[],
+        law_filter=None,
+        assembled_evidence=evidence,
+        allowed_source_whitelist=["2024/7:2024/7:m0:f0:from2024-05-17:to9999-12-31"],
+        today=date(2026, 4, 25),
+    )
+
+    assert result.final_mode == "answer"
+    assert result.final_reason is None
+    assert result.answer_contract["source_validity"] == "active"
+    assert result.answer_contract["primary_source_id"] == "2024/7 m.0"
 
 
 def test_harden_answer_blocks_law_scope_mismatch():

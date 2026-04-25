@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from answer_contract_v2 import build_or_repair_answer_contract, controlled_fallback_answer
+from faz2a_hardening import canonicalize_source_id, extract_law_code_from_source_id
 
 
 def test_repair_selects_partial_identifier_evidence_before_first_fallback():
@@ -214,6 +215,59 @@ def test_repair_replacement_guard_blocks_identifier_rewrite_from_selected_eviden
 
     assert result.contract["identifier_integrity_status"] == "unverified_claim_suppressed"
     assert "claimed_identifier_replaced_by_selected_evidence" not in result.contract["verification_findings"]
+
+
+def test_repair_degrades_confidence_when_answer_slot_coverage_is_partial():
+    result = build_or_repair_answer_contract(
+        qid="SLOT-COVERAGE",
+        answer_text="Pay devri TTK m.595'e dayanır. [Kaynak: TTK m.595]",
+        citations=["TTK m.595"],
+        answer_contract={
+            "answer_text": "Pay devri TTK m.595'e dayanır. [Kaynak: TTK m.595]",
+            "primary_source_id": "TTK m.595",
+            "source_validity": "active",
+            "final_mode": "answer",
+            "answer_mode": "direct_answer",
+            "grounding_status": "fully_grounded",
+            "answer_slot_coverage_score": 0.85,
+            "answer_slots": [
+                {
+                    "slot_name": "governing_source",
+                    "required": True,
+                    "value": "TTK m.595",
+                    "evidence_span_keys": ["TTK m.595/f.0"],
+                    "fill_status": "filled",
+                    "verifier_status": "verified",
+                }
+            ],
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "TTK m.595",
+                    "citation": "TTK m.595/f.0",
+                    "source_title": "Türk Ticaret Kanunu",
+                    "source_family": "kanun",
+                    "source_identifier": "TTK m.595",
+                    "article_or_section": "595",
+                    "effective_state": "active",
+                }
+            ],
+            "retrieval": {
+                "article_span_selector": {
+                    "support_span_count": 2,
+                    "selector_evidence_sufficiency": "exact_enough",
+                    "metadata_identity_strength": "medium",
+                }
+            },
+        },
+    )
+
+    assert result.contract["grounding_status"] == "partially_grounded"
+    assert result.confidence_0_100 < 70
+    assert "answer_slot_coverage_below_0_90" in result.contract["confidence_policy_adjustment_reasons"]
 
 
 def test_repair_does_not_treat_article_number_as_source_identity():
@@ -1064,6 +1118,69 @@ def test_cb_genelge_document_level_body_support_is_not_suppressed_as_span_gap():
     assert contract["answer_suppressed_due_to_evidence_gap"] is False
     assert contract["support_insufficient_for_specific_claim"] is False
     assert contract["answer_mode"] != "insufficient_grounding"
+
+
+def test_repair_preserves_slash_numbered_cb_genelge_identifier():
+    assert canonicalize_source_id("2024/7 m.0/f.0") == "2024/7 m.0"
+    assert extract_law_code_from_source_id("2024/7 m.0/f.0") == "2024/7"
+
+    result = build_or_repair_answer_contract(
+        qid="CBG-01",
+        answer_text=(
+            "2024/7 sayılı Cumhurbaşkanlığı Genelgesine göre kamu kurumları 3 yıl süreyle "
+            "yeni hizmet binası kiralayamaz. [Kaynak: 2024/7 m.0/f.0]"
+        ),
+        citations=["2024/7 m.0/f.0"],
+        answer_contract={
+            "answer_text": (
+                "2024/7 sayılı Cumhurbaşkanlığı Genelgesine göre kamu kurumları 3 yıl süreyle "
+                "yeni hizmet binası kiralayamaz. [Kaynak: 2024/7 m.0/f.0]"
+            ),
+            "primary_source_id": "2024/7 m.0/f.0",
+            "source_family_claimed": "CB_GENELGE",
+            "effective_state_claimed": "unknown",
+            "source_validity": "unknown",
+            "unsupported_reason": "temporal_mismatch",
+            "final_mode": "answer",
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "question_raw": "2024/7 sayılı Tasarruf Tedbirleri Genelgesi yeni hizmet binası kiralama için ne der?",
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "cb_genelge",
+                    "preferred_families": ["cb_genelge"],
+                },
+                "article_span_selector": {
+                    "selector_evidence_sufficiency": "partially_supported",
+                    "support_span_count": 1,
+                    "canonical_span_materialized": True,
+                    "selected_document_key": "2024/7",
+                },
+            },
+            "assembled_evidence": [
+                {
+                    "source_id": "2024/7:2024/7:m0:f0:from2024-05-17:to9999-12-31",
+                    "citation": "2024/7 m.0/f.0",
+                    "source_title": "Tasarruf Tedbirleri ile İlgili",
+                    "source_family": "cb_genelge",
+                    "source_identifier": "2024/7 m.0",
+                    "article_or_section": "0",
+                    "effective_state": "active",
+                    "text": "Kamu kurum ve kuruluşları tarafından 3 yıl süreyle yeni hizmet binası kiralanmayacaktır.",
+                }
+            ],
+        },
+    )
+
+    contract = result.contract
+    assert contract["primary_source_id"].startswith("2024/7 m.0")
+    assert contract["source_identifier_claimed"].startswith("2024/7 m.0")
+    assert contract["unsupported_reason"] != "citation_out_of_whitelist"
+    assert contract["effective_state_claimed"] == "active"
+    assert contract["unsupported_reason"] != "temporal_mismatch"
+    assert contract["final_mode"] == "answer"
 
 
 def test_repair_preserves_explicit_legacy_khk_family_when_query_is_bound_to_khk():

@@ -26,6 +26,11 @@ _ARTICLE_RE = re.compile(
     re.IGNORECASE,
 )
 _SOURCE_ID_ARTICLE_RE = re.compile(r"\bm\.(?P<article>\d+[a-z]?)\b", re.IGNORECASE)
+_SOURCE_ARTICLE_IDENTIFIER_RE = re.compile(
+    r"(?<![A-ZÇĞİÖŞÜa-zçğıöşü0-9/])"
+    r"(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9}(?:/\d{1,4})?)\s*m\.\d+[a-z]?\b",
+    re.IGNORECASE,
+)
 _NUMBERED_SOURCE_RE = re.compile(
     r"\b(?P<number>\d{1,9})\s+say[ıi]l[ıi]\s+"
     r"(?P<kind>kanun hükmünde kararname|kanun hukmunde kararname|khk|kanun|tüzük|tuzuk|yönetmelik|yonetmelik|tebliğ|teblig|genelge|kararname|karar)\b",
@@ -834,7 +839,7 @@ def _detect_identifier(text: str, citations: list[str], evidence: dict[str, Any]
     match = _NUMBERED_SOURCE_RE.search(text)
     if match:
         return f"{match.group('number')} sayili {match.group('kind')}"
-    source_article = re.search(r"\b(?:[A-ZÇĞİÖŞÜ]{2,10}|\d{1,9})\s*m\.\d+[a-z]?\b", text, re.IGNORECASE)
+    source_article = _SOURCE_ARTICLE_IDENTIFIER_RE.search(text)
     return source_article.group(0) if source_article else ""
 
 
@@ -858,7 +863,7 @@ def _detect_article(text: str, evidence: dict[str, Any] | None, source_identifie
 
 def _detect_effective_state(text: str, evidence: dict[str, Any] | None, legacy_validity: Any) -> str:
     legacy = _lower_asciiish(legacy_validity)
-    if legacy in {"active", "repealed", "unknown"}:
+    if legacy in {"active", "repealed"}:
         return legacy
     if legacy == "historical":
         return "amended"
@@ -1072,6 +1077,7 @@ def _confidence_pressure_reasons(
     reasons: list[str] = []
     candidate_score = _float_value(contract.get("candidate_completeness_score"))
     fact_coverage_score = _float_value(contract.get("required_fact_coverage_score"))
+    answer_slot_coverage_score = _float_value(contract.get("answer_slot_coverage_score"))
     support_span_count = _int_value(
         contract.get("support_span_count")
         or article_selector.get("support_span_count")
@@ -1113,6 +1119,8 @@ def _confidence_pressure_reasons(
         reasons.append("candidate_completeness_below_0_95")
     if fact_coverage_score is not None and fact_coverage_score < 0.95:
         reasons.append("required_fact_coverage_below_0_95")
+    if answer_slot_coverage_score is not None and answer_slot_coverage_score < 0.90:
+        reasons.append("answer_slot_coverage_below_0_90")
     if minimum_facts_present is False:
         reasons.append("minimum_answer_facts_missing")
     if has_completeness_policy_signal and support_span_count is not None and support_span_count < 2:
@@ -1486,11 +1494,18 @@ def build_or_repair_answer_contract(
         contract.get("article_or_section_claimed"),
         _detect_article(combined_text, selected_evidence, source_identifier),
     )
-    effective_state = _valid_effective_state(contract.get("effective_state_claimed")) or _detect_effective_state(
+    contract_effective_state = _valid_effective_state(contract.get("effective_state_claimed"))
+    evidence_effective_state = _detect_effective_state(
         combined_text,
         selected_evidence,
         contract.get("source_validity"),
     )
+    if contract_effective_state and contract_effective_state != "unknown":
+        effective_state = contract_effective_state
+    elif evidence_effective_state and evidence_effective_state != "unknown":
+        effective_state = evidence_effective_state
+    else:
+        effective_state = contract_effective_state or evidence_effective_state or "unknown"
     if _should_force_legacy_repealed_state(
         source_family=source_family,
         effective_state=effective_state,
@@ -1770,6 +1785,13 @@ def build_or_repair_answer_contract(
     source_identifier_claim = source_identifier or "unknown"
     article_or_section_claim = article_or_section or "unknown"
     temporal_qualification_claim = temporal_qualification or "unknown"
+    resolved_unsupported_reason = contract.get("unsupported_reason")
+    if (
+        resolved_unsupported_reason in {"temporal_mismatch", "source_validity_unknown"}
+        and effective_state != "unknown"
+        and not temporal_clause_missing
+    ):
+        resolved_unsupported_reason = None
 
     contract.update(
         {
@@ -1799,7 +1821,7 @@ def build_or_repair_answer_contract(
             "confidence_policy_ceiling": confidence_policy_ceiling,
             "confidence_policy_ceiling_reasons": confidence_policy_ceiling_reasons,
             "unsupported_reason": (
-                contract.get("unsupported_reason")
+                resolved_unsupported_reason
                 or ("evidence_gap" if answer_suppressed_due_to_evidence_gap else None)
             ),
         }

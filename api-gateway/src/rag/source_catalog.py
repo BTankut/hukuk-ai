@@ -758,10 +758,17 @@ def load_source_metadata_catalog() -> dict[str, dict[str, Any]]:
         return {}
 
     catalog: dict[str, dict[str, Any]] = {}
+    record_by_source_key: dict[str, dict[str, Any]] = {}
     with path.open(encoding="utf-8") as handle:
         for line in handle:
             row = json.loads(line)
-            record = _metadata_record_from_row(row)
+            source_key = _source_key_from_row(row)
+            if source_key and source_key in record_by_source_key:
+                record = record_by_source_key[source_key]
+            else:
+                record = _metadata_record_from_row(row)
+                if source_key and record:
+                    record_by_source_key[source_key] = record
             if not record:
                 continue
 
@@ -775,6 +782,7 @@ def load_source_metadata_catalog() -> dict[str, dict[str, Any]]:
 def load_canonical_source_catalog() -> dict[str, dict[str, Any]]:
     path = _resolve_article_rows_path()
     catalog: dict[str, dict[str, Any]] = {}
+    processed_source_keys: set[str] = set()
     if path is not None:
         with path.open(encoding="utf-8") as handle:
             for line in handle:
@@ -782,6 +790,9 @@ def load_canonical_source_catalog() -> dict[str, dict[str, Any]]:
                 source_key = _source_key_from_row(row)
                 if not source_key:
                     continue
+                if source_key in processed_source_keys:
+                    continue
+                processed_source_keys.add(source_key)
                 record = canonical_source_record_from_metadata(row)
                 if not record:
                     continue
