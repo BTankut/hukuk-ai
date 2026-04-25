@@ -1660,6 +1660,12 @@ def _apply_metadata_lookup_family_prior(
         and metadata_relation_group != relation_primary_group
     ):
         return source_family_resolution
+    if (
+        source_family_resolution.collision_resolution_reason
+        == "central_higher_education_regulation_prefers_yonetmelik"
+        and metadata_family == "uy"
+    ):
+        return source_family_resolution
 
     metadata_lookup_source = str(
         top.get("metadata_lookup_source") or metadata_first_selector.get("metadata_lookup_source") or ""
@@ -2530,6 +2536,14 @@ def _resolve_chunk_source_family_profile(chunk: RetrievedChunk) -> dict[str, str
     )
     resolved_family = canonical_family or raw_family or title_family
     if resolved_family and title_family:
+        if title_family == "kanun" and resolved_family in {
+            "kky",
+            "uy",
+            "yonetmelik",
+            "cb_yonetmelik",
+            "teblig",
+        }:
+            resolved_family = "kanun"
         if resolved_family in {"teblig", "kanun", "mulga_kanun"} and title_family in {
             "yonetmelik",
             "teblig",

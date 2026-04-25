@@ -554,10 +554,15 @@ def _apply_family_collision_rules(
         normalized_query,
         (
             "hangi yonetmelik",
+            "hangi yonetmeligi",
             "yonetmelik duzeyinde",
             "yonetmelik bakimindan",
             "yonetmelige gore",
             "yonetmelik iliskisi",
+            "yonetmelik detayi",
+            "yonetmelik detayini",
+            "yonetmeligi de",
+            "ana yonetmelik",
             "cb/bk yonetmeligi",
             "cb yonetmeligi",
             "bk yonetmeligi",
@@ -609,6 +614,59 @@ def _apply_family_collision_rules(
             "mi, yoksa",
             "mi yoksa",
         ),
+    )
+    cb_karar_relation_terms = contains_any(
+        normalized_query,
+        (
+            "hangi karar",
+            "karar uzerinden",
+            "karar üzerinden",
+            "uygulama genelgesi",
+            "genelge de mi",
+            "genelge de mi aran",
+            "hangi uygulama genelgesine",
+        ),
+    )
+    khk_transition_terms = contains_any(
+        normalized_query,
+        (
+            "cumhurbaskanligi hukumet sistemi",
+            "gecis bakimindan",
+            "gecis rejimi",
+            "gecis baglantisi",
+            "gecis baglantisi kontrol",
+            "eski teskilat",
+            "bakanlar kurulu",
+            "teskilat isimleri",
+            "hangi khk ve hangi cbk",
+            "hangi khk ve hangi cbk baglantisi",
+            "hangi khk ve hangi cbk bağlantısı",
+        ),
+    )
+    central_higher_education_regulation = (
+        contains_any(
+            normalized_query,
+            (
+                "yok yonetmeligi",
+                "guncel yok yonetmeligi",
+                "hangi guncel yok yonetmeligi",
+                "yuksekogretim yonetmeligi",
+                "yuksekogretim kurulu yonetmeligi",
+            ),
+        )
+        or (
+            contains_any(normalized_query, ("yok", "yuksekogretim"))
+            and contains_any(
+                normalized_query,
+                (
+                    "yerel universite duzenlemesi",
+                    "yerel universite duzenlemesini",
+                    "universite duzenlemesi birlikte",
+                    "universite duzenlemesini birlikte",
+                    "birlikte kontrol",
+                ),
+            )
+        )
     )
 
     if repealed_scope_detected and (_has_signal(scores, "kanun") or _has_signal(scores, "mulga_kanun")):
@@ -684,6 +742,19 @@ def _apply_family_collision_rules(
         )
         return collision_detected, collision_pair, resolution_reason
 
+    if central_higher_education_regulation and _has_signal(scores, "uy"):
+        apply_collision(
+            pair="uy|yonetmelik",
+            preferred_family="yonetmelik",
+            preferred_boost=5.0,
+            fallback_families=("uy",),
+            fallback_boost=1.0,
+            demoted_families=("uy",),
+            demote_amount=3.5,
+            reason="central_higher_education_regulation_prefers_yonetmelik",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
     if kanun_yonetmelik_relation and (_has_signal(scores, "kanun") or _has_signal(scores, "yonetmelik")):
         apply_collision(
             pair="kanun|yonetmelik",
@@ -694,6 +765,32 @@ def _apply_family_collision_rules(
             demoted_families=("teblig",),
             demote_amount=3.0,
             reason="kanun_yonetmelik_relation_prefers_kanun",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if (comparison_query or cb_karar_relation_terms) and _has_signal(scores, "cb_genelge") and _has_signal(scores, "cb_karar"):
+        apply_collision(
+            pair="cb_genelge|cb_karar",
+            preferred_family="cb_karar",
+            preferred_boost=6.0,
+            fallback_families=("cb_genelge",),
+            fallback_boost=1.0,
+            demoted_families=("cb_genelge",),
+            demote_amount=3.5,
+            reason="cb_karar_relation_prefers_primary_decision",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if khk_transition_terms and _has_signal(scores, "khk") and _has_signal(scores, "cb_kararname"):
+        apply_collision(
+            pair="khk|cb_kararname",
+            preferred_family="khk",
+            preferred_boost=6.0,
+            fallback_families=("cb_kararname",),
+            fallback_boost=1.0,
+            demoted_families=("cb_kararname",),
+            demote_amount=3.5,
+            reason="khk_cbk_transition_prefers_khk",
         )
         return collision_detected, collision_pair, resolution_reason
 
@@ -984,9 +1081,10 @@ def resolve_source_family_prior(
         "yükseköğretim",
         "yuksekogretim",
         "senato",
-        "ön lisans",
-        "on lisans",
-        "lisans",
+        "eğitim-öğretim",
+        "egitim-ogretim",
+        "sınav",
+        "sinav",
         "yüksek lisans",
         "yuksek lisans",
         "lisansüstü",
@@ -1010,7 +1108,10 @@ def resolve_source_family_prior(
         "bakanlığı",
         "bakanligi",
         "kurumu",
-        "kurul",
+        "kurulu",
+        "kurulunun",
+        "kurul yönetmeliği",
+        "kurul yonetmeligi",
         "başkanlığı",
         "baskanligi",
         "sgk",
@@ -1034,9 +1135,14 @@ def resolve_source_family_prior(
         normalized_query,
         (
             "hangi yonetmelik",
+            "hangi yonetmeligi",
             "yonetmelik duzeyinde",
             "yonetmelik bakimindan",
             "yonetmelige gore",
+            "yonetmelik detayi",
+            "yonetmelik detayini",
+            "yonetmeligi de",
+            "ana yonetmelik",
             "hangi cb/bk yonetmeligi",
             "hangi cb yonetmeligi",
             "hangi bk yonetmeligi",

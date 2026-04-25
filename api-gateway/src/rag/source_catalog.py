@@ -166,6 +166,14 @@ def canonical_source_family(metadata: dict[str, Any] | None) -> str:
         metadata.get("title"),
     )
     title_family = _family_from_title(title)
+    if title_family == "kanun" and raw_source_family(metadata) in {
+        "kky",
+        "uy",
+        "yonetmelik",
+        "cb_yonetmelik",
+        "teblig",
+    }:
+        return "kanun"
     if title_family in {
         "cb_kararname",
         "cb_yonetmelik",
