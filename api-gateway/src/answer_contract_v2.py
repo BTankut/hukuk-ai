@@ -1125,6 +1125,115 @@ def _confidence_pressure_reasons(
     return list(dict.fromkeys(reasons))
 
 
+def _answer_slot_items(contract: dict[str, Any]) -> list[dict[str, Any]]:
+    value = contract.get("answer_slots")
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _slot_name_set(slots: list[dict[str, Any]]) -> set[str]:
+    return {_clean(slot.get("slot_name")) for slot in slots if _clean(slot.get("slot_name"))}
+
+
+def _slot_runtime_candidates(slot: dict[str, Any]) -> set[str]:
+    raw = slot.get("runtime_slot_candidates")
+    if isinstance(raw, list):
+        return {_clean(item) for item in raw if _clean(item)}
+    return set()
+
+
+def _answer_slot_confidence_policy(
+    *,
+    contract: dict[str, Any],
+    article_selector: dict[str, Any],
+    effective_state: str,
+) -> tuple[int | None, list[str]]:
+    slots = _answer_slot_items(contract)
+    required_slots = [slot for slot in slots if _bool_flag(slot.get("required"))]
+    if not required_slots:
+        return None, []
+
+    nonfilled_slots = [
+        slot
+        for slot in required_slots
+        if _clean(slot.get("fill_status")) in {"missing", "unsupported", "contradicted", ""}
+        or _clean(slot.get("verifier_status")) in {"failed", "needs_review", ""}
+    ]
+    unsupported_slots = [
+        slot for slot in required_slots if _clean(slot.get("fill_status")) in {"unsupported", "contradicted"}
+    ]
+    nonfilled_names = _slot_name_set(nonfilled_slots)
+    critical_missing_names = set(_list_value(contract.get("critical_answer_slots_missing")))
+    reasons: list[str] = []
+    ceiling = 90
+
+    if not nonfilled_slots:
+        return ceiling, []
+
+    if len(nonfilled_slots) == 1:
+        ceiling = min(ceiling, 75)
+        reasons.append("one_required_answer_slot_missing")
+    elif len(nonfilled_slots) > 1:
+        ceiling = min(ceiling, 65)
+        reasons.append("multiple_required_answer_slots_missing")
+
+    if unsupported_slots:
+        ceiling = min(ceiling, 65)
+        reasons.append("answer_slot_evidence_below_threshold")
+
+    if critical_missing_names:
+        ceiling = min(ceiling, 60)
+        reasons.append("critical_required_answer_slot_missing:" + ",".join(sorted(critical_missing_names)))
+
+    transition_runtime_slots = {"current_applicability", "transition_or_replacement_rule"}
+    transition_names = {
+        _clean(slot.get("slot_name"))
+        for slot in nonfilled_slots
+        if _slot_runtime_candidates(slot) & transition_runtime_slots
+        or _clean(slot.get("slot_name")) in {"current_applicability", "transition_rule", "transition_or_replacement_rule"}
+    }
+    if transition_names:
+        ceiling = min(ceiling, 55)
+        reasons.append("transition_or_current_relation_missing:" + ",".join(sorted(transition_names)))
+
+    identity_names = {
+        "governing_source",
+        "exact_source_identity",
+        "selected_primary_source",
+        "source_family",
+        "identifier",
+        "issuer",
+        "circular_number_or_date",
+        "decision_number",
+        "teblig_identifier",
+    }
+    identity_missing = nonfilled_names & identity_names
+    if identity_missing:
+        ceiling = min(ceiling, 40)
+        reasons.append("source_identity_slot_uncertain:" + ",".join(sorted(identity_missing)))
+
+    temporal_names = {"temporal_validity", "effective_state", "effective_period", "effective_date", "applicable_period"}
+    temporal_missing = nonfilled_names & temporal_names
+    if temporal_missing or (effective_state == "unknown" and any(_slot_runtime_candidates(slot) & {"temporal_validity"} for slot in required_slots)):
+        ceiling = min(ceiling, 40)
+        reasons.append("temporal_state_slot_uncertain")
+
+    insufficient_canonical_span_evidence = _bool_flag(
+        contract.get("insufficient_canonical_span_evidence")
+        or article_selector.get("insufficient_canonical_span_evidence")
+    )
+    title_only_answer_degraded = _bool_flag(
+        contract.get("title_only_answer_degraded")
+        or article_selector.get("title_only_answer_degraded")
+    )
+    if insufficient_canonical_span_evidence or title_only_answer_degraded:
+        ceiling = min(ceiling, 45)
+        reasons.append("title_only_or_insufficient_canonical_evidence")
+
+    return ceiling, list(dict.fromkeys(reasons))
+
+
 def _format_final_reason(
     *,
     source_family: str,
@@ -1495,6 +1604,8 @@ def build_or_repair_answer_contract(
     temporal_clause_missing = False
     answer_suppressed_due_to_evidence_gap = False
     confidence_policy_adjustment_reasons: list[str] = []
+    confidence_policy_ceiling: int | None = None
+    confidence_policy_ceiling_reasons: list[str] = []
     if isinstance(trace_payload, dict):
         retrieval = trace_payload.get("retrieval")
         if isinstance(retrieval, dict):
@@ -1603,6 +1714,24 @@ def build_or_repair_answer_contract(
                 if finding not in verification_findings:
                     verification_findings.append(finding)
 
+    if not native_dialog:
+        confidence_policy_ceiling, confidence_policy_ceiling_reasons = _answer_slot_confidence_policy(
+            contract=contract,
+            article_selector=article_selector if isinstance(article_selector, dict) else {},
+            effective_state=effective_state,
+        )
+        if confidence_policy_ceiling_reasons:
+            confidence_policy_adjustment_reasons = list(
+                dict.fromkeys([*confidence_policy_adjustment_reasons, *confidence_policy_ceiling_reasons])
+            )
+            if confidence_policy_ceiling is not None and confidence_policy_ceiling < 70 and grounding_status == "fully_grounded":
+                grounding_status = "partially_grounded"
+                answer_mode = legacy_answer_mode or "qualified_answer"
+            for reason in confidence_policy_ceiling_reasons:
+                finding = f"confidence_policy_pressure:{reason}"
+                if finding not in verification_findings:
+                    verification_findings.append(finding)
+
     needs_manual_review = bool(contract.get("needs_manual_review"))
     if not native_dialog:
         needs_manual_review = needs_manual_review or grounding_status != "fully_grounded"
@@ -1620,6 +1749,8 @@ def build_or_repair_answer_contract(
         answer_mode=answer_mode,
         native_dialog=native_dialog,
     )
+    if confidence_policy_ceiling is not None:
+        confidence = min(confidence, confidence_policy_ceiling)
     confidence_policy_ok = _confidence_policy_ok(grounding_status, confidence)
     controlled_final_reason = _format_final_reason(
         source_family=source_family,
@@ -1664,6 +1795,9 @@ def build_or_repair_answer_contract(
             "answer_suppressed_due_to_evidence_gap": bool(answer_suppressed_due_to_evidence_gap),
             "confidence_policy_adjusted": bool(confidence_policy_adjustment_reasons),
             "confidence_policy_adjustment_reasons": confidence_policy_adjustment_reasons,
+            "claim_level_confidence_policy_version": "phase18c-2026-04-25",
+            "confidence_policy_ceiling": confidence_policy_ceiling,
+            "confidence_policy_ceiling_reasons": confidence_policy_ceiling_reasons,
             "unsupported_reason": (
                 contract.get("unsupported_reason")
                 or ("evidence_gap" if answer_suppressed_due_to_evidence_gap else None)

@@ -1206,3 +1206,148 @@ def test_repair_suppresses_title_only_canonical_span_gap():
     assert contract["answer_suppressed_due_to_evidence_gap"] is True
     assert "insufficient_canonical_span_evidence" in contract["verification_findings"]
     assert result.validation["unsupported_confident_answer"] is False
+
+
+def test_phase18c_critical_answer_slot_missing_caps_confidence():
+    result = build_or_repair_answer_contract(
+        qid="PHASE18C-CRITICAL",
+        answer_text="İşe iade şartı 4857 sayılı İş Kanunu m.18'e dayanır. [Kaynak: IK m.18]",
+        citations=["IK m.18"],
+        answer_contract={
+            "answer_text": "İşe iade şartı 4857 sayılı İş Kanunu m.18'e dayanır. [Kaynak: IK m.18]",
+            "primary_source_id": "IK m.18",
+            "source_validity": "active",
+            "final_mode": "answer",
+            "answer_slots": [
+                {
+                    "slot_name": "governing_source",
+                    "required": True,
+                    "value": "İş Kanunu",
+                    "evidence_span_keys": ["IK m.18"],
+                    "fill_status": "filled",
+                    "verifier_status": "verified",
+                    "confidence_0_100": 82,
+                    "runtime_slot_candidates": ["governing_source"],
+                },
+                {
+                    "slot_name": "article_or_span",
+                    "required": True,
+                    "value": "m.18",
+                    "evidence_span_keys": ["IK m.18"],
+                    "fill_status": "filled",
+                    "verifier_status": "verified",
+                    "confidence_0_100": 82,
+                    "runtime_slot_candidates": ["article_or_span"],
+                },
+                {
+                    "slot_name": "current_applicability",
+                    "required": True,
+                    "value": None,
+                    "evidence_span_keys": [],
+                    "fill_status": "missing",
+                    "verifier_status": "failed",
+                    "confidence_0_100": 0,
+                    "runtime_slot_candidates": ["current_applicability"],
+                },
+            ],
+            "critical_answer_slots_missing": ["current_applicability"],
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "IK:4857:m18:f0",
+                    "citation": "IK m.18",
+                    "source_title": "İŞ KANUNU",
+                    "source_family": "kanun",
+                    "source_identifier": "IK m.18",
+                    "article_or_section": "18",
+                    "effective_state": "active",
+                }
+            ],
+            "retrieval": {
+                "article_span_selector": {
+                    "selector_evidence_sufficiency": "exact_enough",
+                    "support_span_count": 2,
+                }
+            },
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "partially_grounded"
+    assert contract["answer_mode"] == "qualified_answer"
+    assert contract["confidence_0_100"] <= 55
+    assert contract["confidence_policy_adjusted"] is True
+    assert "critical_required_answer_slot_missing:current_applicability" in contract["confidence_policy_adjustment_reasons"]
+    assert any(
+        reason.startswith("transition_or_current_relation_missing:")
+        for reason in contract["confidence_policy_adjustment_reasons"]
+    )
+    assert result.validation["unsupported_confident_answer"] is False
+    assert result.validation["confidence_policy_ok"] is True
+
+
+def test_phase18c_verified_answer_slots_do_not_force_degrade():
+    result = build_or_repair_answer_contract(
+        qid="PHASE18C-VERIFIED",
+        answer_text="İşe iade şartı 4857 sayılı İş Kanunu m.18'e dayanır. [Kaynak: IK m.18]",
+        citations=["IK m.18"],
+        answer_contract={
+            "answer_text": "İşe iade şartı 4857 sayılı İş Kanunu m.18'e dayanır. [Kaynak: IK m.18]",
+            "primary_source_id": "IK m.18",
+            "source_validity": "active",
+            "final_mode": "answer",
+            "answer_slots": [
+                {
+                    "slot_name": "governing_source",
+                    "required": True,
+                    "value": "İş Kanunu",
+                    "evidence_span_keys": ["IK m.18"],
+                    "fill_status": "filled",
+                    "verifier_status": "verified",
+                    "confidence_0_100": 82,
+                    "runtime_slot_candidates": ["governing_source"],
+                },
+                {
+                    "slot_name": "article_or_span",
+                    "required": True,
+                    "value": "m.18",
+                    "evidence_span_keys": ["IK m.18"],
+                    "fill_status": "filled",
+                    "verifier_status": "verified",
+                    "confidence_0_100": 82,
+                    "runtime_slot_candidates": ["article_or_span"],
+                },
+            ],
+            "critical_answer_slots_missing": [],
+        },
+        final_mode="answer",
+        final_reason=None,
+        trace_payload={
+            "assembled_evidence": [
+                {
+                    "source_id": "IK:4857:m18:f0",
+                    "citation": "IK m.18",
+                    "source_title": "İŞ KANUNU",
+                    "source_family": "kanun",
+                    "source_identifier": "IK m.18",
+                    "article_or_section": "18",
+                    "effective_state": "active",
+                }
+            ],
+            "retrieval": {
+                "article_span_selector": {
+                    "selector_evidence_sufficiency": "exact_enough",
+                    "support_span_count": 2,
+                }
+            },
+        },
+    )
+
+    contract = result.contract
+    assert contract["grounding_status"] == "fully_grounded"
+    assert contract["confidence_0_100"] >= 70
+    assert contract["confidence_policy_adjusted"] is False
+    assert contract["confidence_policy_ceiling"] == 90
