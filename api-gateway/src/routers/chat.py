@@ -104,7 +104,7 @@ logger = logging.getLogger(__name__)
 _GENERATION_START_ORDINAL = count(1)
 
 router = APIRouter(tags=["chat"])
-_LAW_TOKEN_PATTERN = r"TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK"
+_LAW_TOKEN_PATTERN = r"TBK|TMK|TCK|HMK|TTK|İİK|IİK|IIK|İK|IK|KVKK|HUAK|CMK|AY|IYUK|İYUK"
 _NUMERIC_LAW_TOKEN_PATTERN = r"\d{2,8}"
 _ARTICLE_REF_RE = re.compile(
     rf"\b(?P<law>{_LAW_TOKEN_PATTERN})\s*(?:m|md|madde)\.?\s*(?P<madde>\d+[a-z]?)\b",
@@ -130,10 +130,16 @@ _ACTIVE_END_DATE_SENTINELS = {
 _TRUTHY_METADATA_FLAGS = {"1", "true", "yes", "y", "evet"}
 _FALSEY_METADATA_FLAGS = {"0", "false", "no", "n", "hayir", "hayır"}
 _LAW_MENTION_RE = re.compile(
-    rf"\b(?P<law>{_LAW_TOKEN_PATTERN}|Türk Borçlar Kanunu|Borçlar Kanunu|Türk Medeni Kanunu|Medeni Kanun|Türk Ceza Kanunu|Ceza Kanunu|Türk Ticaret Kanunu|Ticaret Kanunu|İcra ve İflas Kanunu)\b",
+    rf"\b(?P<law>{_LAW_TOKEN_PATTERN}|Türk Borçlar Kanunu|Borçlar Kanunu|İş Kanunu|Is Kanunu|Kişisel Verilerin Korunması Kanunu|Kisisel Verilerin Korunmasi Kanunu|Hukuk Uyuşmazlıklarında Arabuluculuk Kanunu|Hukuk Uyusmazliklarinda Arabuluculuk Kanunu|Tebligat Kanunu|Türk Medeni Kanunu|Medeni Kanun|Türk Ceza Kanunu|Ceza Kanunu|Türk Ticaret Kanunu|Ticaret Kanunu|İcra ve İflas Kanunu)\b",
     re.IGNORECASE,
 )
 _LAW_CODE_NORMALIZATION = {
+    "AY": "AY",
+    "CMK": "CMK",
+    "IK": "IK",
+    "İK": "IK",
+    "KVKK": "KVKK",
+    "HUAK": "HUAK",
     "TBK": "TBK",
     "TMK": "TMK",
     "TCK": "TCK",
@@ -142,10 +148,19 @@ _LAW_CODE_NORMALIZATION = {
     "İİK": "İİK",
     "IİK": "İİK",
     "IIK": "İİK",
+    "IYUK": "IYUK",
+    "İYUK": "IYUK",
 }
 _LAW_NAME_NORMALIZATION = {
     "türk borçlar kanunu": "TBK",
     "borçlar kanunu": "TBK",
+    "iş kanunu": "IK",
+    "is kanunu": "IK",
+    "kişisel verilerin korunması kanunu": "KVKK",
+    "kisisel verilerin korunmasi kanunu": "KVKK",
+    "hukuk uyuşmazlıklarında arabuluculuk kanunu": "HUAK",
+    "hukuk uyusmazliklarinda arabuluculuk kanunu": "HUAK",
+    "tebligat kanunu": "7201",
     "türk medeni kanunu": "TMK",
     "medeni kanun": "TMK",
     "türk ceza kanunu": "TCK",
@@ -155,7 +170,14 @@ _LAW_NAME_NORMALIZATION = {
     "icra ve iflas kanunu": "İİK",
 }
 _LAW_SOURCE_SUPPLEMENT_KEYS_BY_HINT = {
+    "4857": ("4857",),
+    "6098": ("6098",),
     "TTK": ("6102",),
+    "IK": ("4857",),
+    "KVKK": ("6698",),
+    "HUAK": ("6325", "7445"),
+    "6325": ("6325", "7445"),
+    "7201": ("7201",),
 }
 _INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
 _NATIVE_DIALOG_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -1673,6 +1695,79 @@ def _select_metadata_first_source_candidates(
     }
 
 
+def _query_explicitly_requests_source_family(query: str, family: str) -> bool:
+    family_group = _source_family_relation_group(family)
+    if family_group == "yonetmelik":
+        return _contains_any_query_term(
+            query,
+            (
+                "yönetmelik",
+                "yonetmelik",
+                "yönetmeliği",
+                "yonetmeligi",
+                "ikincil düzenleme",
+                "ikincil duzenleme",
+            ),
+        )
+    if family == "teblig":
+        normalized = normalize_query_text(query)
+        return bool(
+            re.search(
+                r"(?<![a-z0-9])(?:genel\s+)?teblig(?!at)(?:\s*\(|\s+no|\s+numarasi|\s+sayili|\s+sira|\s+seri|\s+ile)",
+                normalized,
+            )
+        )
+    if family == "cb_genelge":
+        return _contains_any_query_term(query, ("genelge", "cumhurbaşkanlığı genelgesi", "cumhurbaskanligi genelgesi"))
+    if family == "cb_karar":
+        return _contains_any_query_term(query, ("karar sayısı", "karar sayisi", "cumhurbaşkanı kararı", "cumhurbaskani karari"))
+    return False
+
+
+def _suppress_domain_law_metadata_conflict(
+    metadata_first_selector: dict[str, Any] | None,
+    *,
+    query: str,
+    domain_law_hints: list[str],
+) -> dict[str, Any] | None:
+    if not metadata_first_selector or not metadata_first_selector.get("metadata_lookup_hit"):
+        return metadata_first_selector
+    if not domain_law_hints:
+        return metadata_first_selector
+    candidates = metadata_first_selector.get("candidates") or []
+    if not candidates:
+        return metadata_first_selector
+
+    top = candidates[0]
+    metadata_family = str(top.get("source_family") or "").strip()
+    if not metadata_family or _source_family_relation_group(metadata_family) == "kanun":
+        return metadata_first_selector
+    if _query_explicitly_requests_source_family(query, metadata_family):
+        return metadata_first_selector
+
+    lookup_source = str(
+        top.get("metadata_lookup_source")
+        or metadata_first_selector.get("metadata_lookup_source")
+        or ""
+    )
+    weak_lookup = lookup_source in {"normalized_title_lookup", "title_ngram_family_lookup"}
+    match_reasons = {str(reason) for reason in (top.get("match_reasons") or [])}
+    exact_identity = bool(match_reasons & {"identifier_exact", "year_match", "issuer_exact"})
+    if not weak_lookup or exact_identity:
+        return metadata_first_selector
+
+    suppressed = dict(metadata_first_selector)
+    suppressed["metadata_lookup_hit"] = False
+    suppressed["metadata_lookup_suppressed"] = True
+    suppressed["metadata_lookup_suppression_reason"] = "domain_law_primary_source_conflict"
+    suppressed["suppressed_metadata_family"] = metadata_family
+    suppressed["suppressed_domain_law_hints"] = list(domain_law_hints)
+    suppressed["selected_source_keys"] = []
+    suppressed["selected_families"] = []
+    suppressed["candidates"] = []
+    return suppressed
+
+
 def _apply_metadata_lookup_family_prior(
     source_family_resolution: SourceFamilyResolution,
     metadata_first_selector: dict[str, Any] | None,
@@ -2578,6 +2673,33 @@ def _canonical_source_family_value(value: Any) -> str | None:
     return aliases.get(raw, raw if raw in _RETRIEVAL_PLANNER_ALLOWED_FAMILIES else None)
 
 
+def _metadata_has_active_source_span(metadata: dict[str, Any]) -> bool:
+    end = str(
+        metadata.get("effective_end")
+        or metadata.get("yururluk_bitis")
+        or metadata.get("yürürlük_bitiş")
+        or ""
+    ).strip()
+    if end in _ACTIVE_END_DATE_SENTINELS:
+        return True
+    source_id = str(metadata.get("source_id") or metadata.get("span_id") or metadata.get("chunk_id") or "")
+    return ":to9999-12-31" in source_id or ":tounknown" in source_id
+
+
+def _metadata_active_raw_law_overrides_legacy_family(metadata: dict[str, Any]) -> bool:
+    raw_family = _canonical_source_family_value(
+        metadata.get("source_family_raw")
+        or metadata.get("belge_turu")
+        or metadata.get("source_type")
+    )
+    canonical_family = _canonical_source_family_value(
+        metadata.get("source_family_canonical")
+        or metadata.get("source_family")
+        or metadata.get("canonical_source_family")
+    )
+    return bool(raw_family == "kanun" and canonical_family == "mulga_kanun" and _metadata_has_active_source_span(metadata))
+
+
 def _resolve_chunk_source_family_profile(chunk: RetrievedChunk) -> dict[str, str | None]:
     metadata = chunk.metadata or {}
     title_family = _canonical_source_family_value(
@@ -2598,6 +2720,11 @@ def _resolve_chunk_source_family_profile(chunk: RetrievedChunk) -> dict[str, str
         or metadata.get("source_family")
         or metadata.get("canonical_source_family")
     )
+    effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
+    if canonical_family == "mulga_kanun" and raw_family == "kanun" and (
+        effective_state in {"active", "amended"} or _metadata_active_raw_law_overrides_legacy_family(metadata)
+    ):
+        canonical_family = "kanun"
     resolved_family = canonical_family or raw_family or title_family
     if resolved_family and title_family:
         if title_family == "kanun" and resolved_family in {
@@ -2774,7 +2901,7 @@ def _chunk_matches_identifier_tokens(chunk: RetrievedChunk, identifier_tokens: s
 
 def _resolve_chunk_source_title(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
-    return _normalize_whitespace(
+    title = _normalize_whitespace(
         str(
             metadata.get("full_title")
             or metadata.get("source_title")
@@ -2787,6 +2914,24 @@ def _resolve_chunk_source_title(chunk: RetrievedChunk) -> str:
             or ""
         )
     )
+    canonical_family = _canonical_source_family_value(
+        metadata.get("source_family_canonical")
+        or metadata.get("source_family")
+        or metadata.get("canonical_source_family")
+    )
+    raw_family = _canonical_source_family_value(
+        metadata.get("source_family_raw")
+        or metadata.get("belge_turu")
+        or metadata.get("source_type")
+    )
+    effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
+    if canonical_family == "mulga_kanun" and raw_family == "kanun" and (
+        effective_state in {"active", "amended"} or _metadata_active_raw_law_overrides_legacy_family(metadata)
+    ):
+        match = re.match(r"^(?P<base>.+?)\s+KANUNUNUN\s+YÜRÜRLÜKTEN\s+KALDIRILMIŞ\s+HÜKÜMLERİ\b", title, re.IGNORECASE)
+        if match:
+            return _normalize_whitespace(f"{match.group('base')} KANUNU")
+    return title
 
 
 def _resolve_chunk_source_identifier(chunk: RetrievedChunk) -> str:
@@ -4015,6 +4160,8 @@ def _select_article_span_evidence(
         text_overlap = _count_term_overlap(chunk.text, query_terms)
         cluster_size = document_cluster_sizes.get(binding_source_key, 1)
         effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
+        if _metadata_active_raw_law_overrides_legacy_family(metadata):
+            effective_state = "active"
         temporally_inactive = _is_temporally_inactive_chunk(chunk) or effective_state == "repealed"
         chunk_years = _chunk_year_values(chunk)
         year_match = bool(query_year_tokens and chunk_years & query_year_tokens)
@@ -4166,6 +4313,7 @@ def _select_article_span_evidence(
                     "contains_temporal_clause": _contains_temporal_clause_signal(chunk.text),
                     "contains_exception_signal": _contains_exception_signal(chunk.text),
                     "temporal_state_resolved": _chunk_effective_state_resolved(chunk),
+                    "domain_law_supporting_source": bool(metadata.get("domain_law_supporting_source")),
                 },
             )
         )
@@ -4307,9 +4455,10 @@ def _select_article_span_evidence(
                 == document_key
             ]
             state_rank = min(
-                int(source_item[3].get("legacy_state_rank"))
-                if source_item[3].get("legacy_state_rank") is not None
-                else 2
+                _selector_document_state_rank(
+                    source_item[3],
+                    legacy_intent_binding_active=legacy_intent_binding_active,
+                )
                 for source_item in source_items
             )
             best_score = max(float(source_item[3].get("score") or 0.0) for source_item in source_items)
@@ -4536,18 +4685,34 @@ def _select_article_span_evidence(
             for item in ranked
             if primary_document_key and _same_locked_document(item) and id(item[2]) not in seen_window_ids
         ]
-        non_document_items = [
+        domain_support_items = [
             item
             for item in ranked
             if not primary_document_key or not _same_locked_document(item)
+            if bool((item[2].metadata or {}).get("domain_law_supporting_source"))
         ]
-        reordered_items = [*window_items, *selected_document_items, *non_document_items]
+        domain_support_ids = {id(item[2]) for item in domain_support_items}
+        non_document_items = [
+            item
+            for item in ranked
+            if (not primary_document_key or not _same_locked_document(item))
+            and id(item[2]) not in domain_support_ids
+        ]
+        selected_document_front = selected_document_items[:4]
+        selected_document_tail = selected_document_items[4:]
+        reordered_items = [
+            *window_items,
+            *selected_document_front,
+            *domain_support_items[:4],
+            *selected_document_tail,
+            *non_document_items,
+        ]
         reordered = [chunk for _score, _index, chunk, _trace in reordered_items]
         trace_by_chunk_id = {id(chunk): trace for _score, _index, chunk, trace in ranked}
-        top_traces = [trace_by_chunk_id[id(chunk)] for chunk in reordered[:10] if id(chunk) in trace_by_chunk_id]
+        top_traces = [trace_by_chunk_id[id(chunk)] for chunk in reordered[:15] if id(chunk) in trace_by_chunk_id]
     else:
         reordered = [chunk for _score, _index, chunk, _trace in ranked]
-        top_traces = [trace for _score, _index, _chunk, trace in ranked[:10]]
+        top_traces = [trace for _score, _index, _chunk, trace in ranked[:15]]
     primary_source_candidate = ""
     supporting_source_candidate = ""
     if relation_query_detected:
@@ -4584,11 +4749,28 @@ def _select_article_span_evidence(
     selected_article = top_trace.get("article_or_section") if top_trace else None
     selected_paragraph_or_clause = top_trace.get("paragraph_or_clause") if top_trace else None
     article_match_type = top_trace.get("article_match_type") if top_trace else "none"
-    supporting_span_traces = [
+    supporting_trace_candidates = top_traces[1:15]
+    domain_supporting_span_traces = [
         trace
-        for trace in top_traces[1:8]
+        for trace in supporting_trace_candidates
+        if bool(trace.get("domain_law_supporting_source"))
+    ]
+    same_document_supporting_span_traces = [
+        trace
+        for trace in supporting_trace_candidates
         if not primary_document_key or str(trace.get("document_key") or "") == primary_document_key
-    ][:5]
+    ]
+    supporting_span_traces: list[dict[str, Any]] = []
+    seen_supporting_span_keys: set[str] = set()
+    for trace in [*domain_supporting_span_traces[:3], *same_document_supporting_span_traces]:
+        span_key = str(trace.get("span_id") or trace.get("canonical_source_key_v2") or "")
+        if span_key and span_key in seen_supporting_span_keys:
+            continue
+        if span_key:
+            seen_supporting_span_keys.add(span_key)
+        supporting_span_traces.append(trace)
+        if len(supporting_span_traces) >= 5:
+            break
     selected_main_span_id = str(top_trace.get("span_id") or "") if top_trace else ""
     selected_main_article = str(selected_article or "")
     selected_supporting_span_ids = [
@@ -5420,6 +5602,23 @@ def _selector_trace_supports_temporal_guard(trace: dict[str, Any]) -> bool:
     )
 
 
+def _selector_document_state_rank(trace: dict[str, Any], *, legacy_intent_binding_active: bool) -> int:
+    if legacy_intent_binding_active:
+        if trace.get("legacy_state_rank") is not None:
+            try:
+                return int(trace.get("legacy_state_rank") or 0)
+            except (TypeError, ValueError):
+                return 2
+        return 2
+    if trace.get("temporally_inactive"):
+        return 2
+    effective_state = str(trace.get("effective_state") or "").strip().lower()
+    temporal_state_bucket = str(trace.get("temporal_state_bucket") or "").strip().lower()
+    if effective_state in {"active", "amended"} or temporal_state_bucket == "active":
+        return 0
+    return 1
+
+
 def _metadata_flag_is_true(value: Any) -> bool:
     if value is True:
         return True
@@ -5438,6 +5637,8 @@ def _metadata_flag_is_false(value: Any) -> bool:
 
 def _is_temporally_inactive_chunk(chunk: RetrievedChunk) -> bool:
     metadata = chunk.metadata or {}
+    if _metadata_active_raw_law_overrides_legacy_family(metadata):
+        return False
     if _metadata_flag_is_true(metadata.get("mulga")):
         return True
     source_family = _resolve_chunk_source_family(chunk)
@@ -6825,17 +7026,329 @@ def _looks_like_commercial_company_law_query(user_query: str) -> bool:
     return _contains_any_query_term(user_query, company_terms) and _contains_any_query_term(user_query, action_terms)
 
 
+def _looks_like_labor_law_query(user_query: str) -> bool:
+    labor_context_terms = (
+        "işçi",
+        "isci",
+        "işveren",
+        "isveren",
+        "çalışan",
+        "calisan",
+        "işyeri",
+        "isyeri",
+        "üretim işletmesi",
+        "uretim isletmesi",
+        "ana üretim",
+        "ana uretim",
+    )
+    labor_issue_terms = (
+        "fazla çalışma",
+        "fazla calisma",
+        "fazla sürelerle çalışma",
+        "fazla surelerle calisma",
+        "270 saat",
+        "yazılı onay",
+        "yazili onay",
+        "işe giriş evrakı",
+        "ise giris evraki",
+        "genel form",
+        "yıllık ücretli izin",
+        "yillik ucretli izin",
+        "ücretli izin",
+        "ucretli izin",
+        "kesintisiz kullandır",
+        "kesintisiz kullandir",
+        "parçalara böl",
+        "parcalara bol",
+        "alt işveren",
+        "alt isveren",
+        "asıl iş",
+        "asil is",
+        "yardımcı iş",
+        "yardimci is",
+        "muvazaa",
+        "muvazaalı",
+        "muvazaali",
+        "aynı işçiler",
+        "ayni isciler",
+    )
+    return _contains_any_query_term(user_query, labor_issue_terms) or (
+        _contains_any_query_term(user_query, labor_context_terms)
+        and _contains_any_query_term(
+            user_query,
+            (
+                "ücret",
+                "ucret",
+                "izin",
+                "fesih",
+                "çalışma",
+                "calisma",
+                "onay",
+                "iş güvencesi",
+                "is guvencesi",
+            ),
+        )
+    )
+
+
+def _looks_like_data_protection_law_query(user_query: str) -> bool:
+    data_terms = (
+        "kişisel veri",
+        "kisisel veri",
+        "kvkk",
+        "parmak izi",
+        "biyometrik",
+        "özel nitelikli veri",
+        "ozel nitelikli veri",
+        "aydınlatma",
+        "aydinlatma",
+        "veri minimizasyonu",
+        "ölçülülük",
+        "olcululuk",
+        "saklama",
+        "imha",
+        "silinmesi",
+        "yok edilmesi",
+        "anonim hale",
+        "teknik tedbir",
+        "idari tedbir",
+    )
+    processing_context_terms = (
+        "giriş-çıkış",
+        "giris-cikis",
+        "yemekhane",
+        "işyeri güvenliği",
+        "isyeri guvenligi",
+        "fabrika",
+        "kontrol sistemi",
+        "veri işleme",
+        "veri isleme",
+    )
+    return _contains_any_query_term(user_query, data_terms) or (
+        _contains_any_query_term(user_query, processing_context_terms)
+        and _contains_any_query_term(user_query, ("parmak", "biyometrik", "veri", "güvenlik", "guvenlik"))
+    )
+
+
+def _looks_like_rent_increase_tbk_query(user_query: str) -> bool:
+    rent_increase_terms = (
+        "kira artış",
+        "kira artis",
+        "artış oranı",
+        "artis orani",
+        "kira artırım",
+        "kira artirim",
+        "tüfe",
+        "tufe",
+        "%25",
+        "25 sınırı",
+        "25 siniri",
+        "yüzde 25",
+        "yuzde 25",
+    )
+    return _contains_any_query_term(user_query, rent_increase_terms) and _contains_any_query_term(
+        user_query,
+        (
+            "kira bedeli",
+            "konut kira",
+            "yenilenen kira",
+            "yenilenen bir konut kira",
+            "kira sözleşmesi",
+            "kira sozlesmesi",
+        ),
+    )
+
+
+def _looks_like_electronic_notification_law_query(user_query: str) -> bool:
+    return _contains_any_query_term(
+        user_query,
+        (
+            "elektronik tebligat",
+            "e-tebligat",
+            "e tebligat",
+            "elektronik adres",
+            "tebliğ edilmiş sayılır",
+            "teblig edilmis sayilir",
+            "beşinci gün",
+            "besinci gun",
+            "muhatabın elektronik adresi",
+            "muhatabin elektronik adresi",
+        ),
+    )
+
+
+def _looks_like_civil_mediation_law_query(user_query: str) -> bool:
+    mediation_terms = (
+        "dava şartı arabuluculuk",
+        "dava sarti arabuluculuk",
+        "zorunlu arabuluculuk",
+        "arabulucuya başvuru dava şartı",
+        "arabulucuya basvuru dava sarti",
+        "arabuluculuk gerekip gerekmedi",
+        "arabuluculuk şartı",
+        "arabuluculuk sarti",
+        "huak",
+        "hukuk uyuşmazlıklarında arabuluculuk kanunu",
+        "hukuk uyusmazliklarinda arabuluculuk kanunu",
+    )
+    civil_context_terms = (
+        "kira bedeli",
+        "kiraya veren",
+        "kiracı",
+        "kiraci",
+        "tahliye",
+        "alacak",
+        "ticari uyuşmazlık",
+        "ticari uyusmazlik",
+        "tüketici uyuşmazlığı",
+        "tuketici uyusmazligi",
+        "iş uyuşmazlığı",
+        "is uyusmazligi",
+        "hukuk uyuşmazlığı",
+        "hukuk uyusmazligi",
+    )
+    collective_labor_terms = (
+        "toplu iş sözleşmesi",
+        "toplu is sozlesmesi",
+        "grev",
+        "lokavt",
+        "görevli makam",
+        "gorevli makam",
+        "uyuşmazlık yazısı",
+        "uyusmazlik yazisi",
+    )
+    return (
+        _contains_any_query_term(user_query, mediation_terms)
+        and _contains_any_query_term(user_query, civil_context_terms)
+        and not _contains_any_query_term(user_query, collective_labor_terms)
+    )
+
+
 def _infer_domain_law_hints(query: str) -> list[str]:
     laws: list[str] = []
     if _looks_like_commercial_company_law_query(query):
         laws.append("TTK")
+    if _looks_like_labor_law_query(query):
+        laws.extend(["IK", "4857"])
+    if _looks_like_data_protection_law_query(query):
+        laws.extend(["KVKK", "6698"])
+    if _looks_like_rent_increase_tbk_query(query):
+        laws.extend(["TBK", "6098"])
+    if _looks_like_electronic_notification_law_query(query):
+        laws.append("7201")
+    if _looks_like_civil_mediation_law_query(query):
+        laws.extend(["HUAK", "6325"])
     return dedupe_strings(laws)
 
 
 def _infer_domain_article_refs(query: str) -> list[tuple[str, str]]:
+    refs: list[tuple[str, str]] = []
     if _looks_like_commercial_company_law_query(query):
-        return [("TTK", "595"), ("TTK", "598")]
-    return []
+        refs.extend([("TTK", "595"), ("TTK", "598")])
+    if _contains_any_query_term(
+        query,
+        (
+            "fazla çalışma",
+            "fazla calisma",
+            "fazla çalıştır",
+            "fazla calistir",
+            "fazla sürelerle çalışma",
+            "fazla surelerle calisma",
+            "yazılı onay",
+            "yazili onay",
+            "270 saat",
+            "290 saat",
+        ),
+    ):
+        refs.extend([("IK", "41"), ("4857", "41")])
+    if _contains_any_query_term(
+        query,
+        ("alt işveren", "alt isveren", "asıl iş", "asil is", "muvazaa", "muvazaalı", "muvazaali"),
+    ):
+        refs.extend([("IK", "2"), ("4857", "2")])
+    if _contains_any_query_term(
+        query,
+        ("yıllık ücretli izin", "yillik ucretli izin", "ücretli izin", "ucretli izin", "kesintisiz"),
+    ):
+        refs.extend([("IK", "56"), ("4857", "56")])
+    if _looks_like_data_protection_law_query(query):
+        refs.extend([("KVKK", "6"), ("KVKK", "10"), ("KVKK", "12"), ("6698", "6"), ("6698", "10"), ("6698", "12")])
+    if _looks_like_rent_increase_tbk_query(query):
+        refs.extend([("TBK", "344"), ("6098", "344")])
+    if _looks_like_civil_mediation_law_query(query):
+        refs.extend([("HUAK", "18"), ("6325", "18")])
+    return _dedupe_article_refs(refs)
+
+
+def _domain_law_source_family_hints(domain_law_hints: list[str]) -> list[str]:
+    hints = set(domain_law_hints)
+    families = ["kanun"]
+    if hints & {"IK", "4857", "KVKK", "6698", "7201", "HUAK", "6325"}:
+        families.append("yonetmelik")
+    if hints & {"KVKK", "6698"}:
+        families.append("cb_genelge")
+    return dedupe_strings(families)
+
+
+def _domain_law_supporting_source_family_hints(query: str, domain_law_hints: list[str]) -> list[str]:
+    hints = set(domain_law_hints)
+    families: list[str] = []
+    if hints & {"IK", "4857"} and (
+        _contains_any_query_term(
+            query,
+            (
+                "fazla çalışma",
+                "fazla calisma",
+                "fazla çalıştır",
+                "fazla calistir",
+                "yazılı onay",
+                "yazili onay",
+                "alt işveren",
+                "alt isveren",
+                "muvazaa",
+                "mevzuat zinciri",
+                "kritik hukuki sorun",
+            ),
+        )
+    ):
+        families.extend(["yonetmelik", "kky"])
+    if hints & {"KVKK", "6698", "7201", "HUAK", "6325"}:
+        families.append("yonetmelik")
+    return dedupe_strings(_expand_source_family_aliases(families))
+
+
+def _domain_law_term_hints(query: str, domain_law_hints: list[str]) -> list[str]:
+    hints = set(domain_law_hints)
+    terms: list[str] = []
+    if hints & {"IK", "4857"}:
+        if _contains_any_query_term(
+            query,
+            ("fazla çalışma", "fazla calisma", "fazla çalıştır", "fazla calistir", "yazılı onay", "yazili onay", "270 saat", "290 saat"),
+        ):
+            terms.append(
+                "4857 İş Kanunu m.41 fazla çalışma yıllık 270 saat işçi onayı fazla çalışma ücreti serbest zaman İş Kanununa İlişkin Fazla Çalışma ve Fazla Sürelerle Çalışma Yönetmeliği"
+            )
+        if _contains_any_query_term(query, ("alt işveren", "alt isveren", "muvazaa", "muvazaalı", "muvazaali")):
+            terms.append(
+                "4857 İş Kanunu m.2 alt işveren asıl iş yardımcı iş teknolojik nedenlerle uzmanlık muvazaa Alt İşverenlik Yönetmeliği"
+            )
+        if _contains_any_query_term(query, ("yıllık ücretli izin", "yillik ucretli izin", "ücretli izin", "ucretli izin")):
+            terms.append("4857 İş Kanunu m.56 yıllık ücretli izin bölünebilir en az on gün kesintisiz")
+    if hints & {"KVKK", "6698"}:
+        terms.append(
+            "6698 KVKK m.6 özel nitelikli kişisel veri biyometrik veri m.10 aydınlatma m.12 veri güvenliği saklama imha yönetmeliği"
+        )
+    if hints & {"TBK", "6098"} and _looks_like_rent_increase_tbk_query(query):
+        terms.append("6098 TBK m.344 kira artış oranı geçici yüzde 25 sınırı sona erdi güncel genel rejim")
+    if "7201" in hints:
+        terms.append("7201 Tebligat Kanunu elektronik tebligat elektronik adres beşinci gün Elektronik Tebligat Yönetmeliği")
+    if hints & {"HUAK", "6325"}:
+        terms.append(
+            "6325 Hukuk Uyuşmazlıklarında Arabuluculuk Kanunu m.18 dava şartı olarak arabuluculuk kira bedeli alacağı tahliye 7445 kanun değişikliği"
+        )
+    if "TTK" in hints:
+        terms.append("TTK m.595 TTK m.598 limited şirket pay devri şirket onayı ticaret sicili tescil ilan")
+    return dedupe_strings(terms)
 
 
 def _infer_law_mentions_from_concepts(query: str) -> list[str]:
@@ -6851,6 +7364,7 @@ def _apply_domain_law_hints_to_retrieval_plan(
     *,
     domain_law_hints: list[str],
     mentioned_laws: list[str],
+    query: str = "",
 ) -> dict[str, Any] | None:
     if not domain_law_hints:
         return retrieval_plan
@@ -6863,11 +7377,19 @@ def _apply_domain_law_hints_to_retrieval_plan(
             *(item for item in raw_law_hints if item in mentioned_laws or item in domain_law_hints),
         ]
     )
-    if "TTK" in plan["law_hints"]:
-        plan["source_family_hints"] = dedupe_strings(["kanun", *(plan.get("source_family_hints") or [])])[:3]
+    family_hints = _domain_law_source_family_hints(plan["law_hints"])
+    if family_hints:
+        raw_family_hints = [
+            item
+            for item in (plan.get("source_family_hints") or [])
+            if item in family_hints
+        ]
+        plan["source_family_hints"] = dedupe_strings([*family_hints, *raw_family_hints])[:4]
+    term_hints = _domain_law_term_hints(query, plan["law_hints"])
+    if term_hints:
         plan["term_hints"] = dedupe_strings(
             [
-                "TTK m.595 TTK m.598 limited şirket pay devri şirket onayı ticaret sicili tescil ilan",
+                *term_hints,
                 *(plan.get("term_hints") or []),
             ]
         )[:6]
@@ -6879,6 +7401,33 @@ def _source_supplement_keys_for_law_hints(law_hints: set[str] | list[str]) -> li
     for law in law_hints:
         keys.extend(_LAW_SOURCE_SUPPLEMENT_KEYS_BY_HINT.get(str(law).strip(), ()))
     return dedupe_strings(keys)
+
+
+def _select_domain_law_supporting_source_candidates(
+    *,
+    query: str,
+    domain_law_hints: list[str],
+    limit: int = 4,
+) -> dict[str, Any] | None:
+    supporting_families = _domain_law_supporting_source_family_hints(query, domain_law_hints)
+    if not supporting_families:
+        return None
+    term_hints = _domain_law_term_hints(query, domain_law_hints)
+    if not term_hints:
+        return None
+    support_query = _normalize_whitespace(" ".join(term_hints))
+    selector = _select_metadata_first_source_candidates(
+        query=support_query,
+        requested_source_families=supporting_families,
+        source_family_resolution=None,
+        query_metadata_signals=_parse_metadata_lookup_query_signals(support_query),
+        limit=limit,
+    )
+    if not selector or not selector.get("candidates"):
+        return None
+    selector["supporting_source_families"] = supporting_families
+    selector["supporting_source_query"] = support_query
+    return selector
 
 
 def _detect_scope_refusal_reason(user_query: str) -> str | None:
@@ -9430,6 +9979,51 @@ def _selector_primary_chunk(
 ) -> RetrievedChunk | None:
     if not isinstance(article_span_selector, dict):
         return None
+    strict_selector_values = {
+        str(value).strip()
+        for value in (
+            article_span_selector.get("binding_source_key"),
+            article_span_selector.get("selected_canonical_source_key_v2"),
+            article_span_selector.get("selected_canonical_document_key_v2"),
+        )
+        if str(value or "").strip()
+    }
+    if strict_selector_values:
+        normalized_strict_selector_values = {
+            candidate
+            for value in strict_selector_values
+            for candidate in (
+                value,
+                value.lower(),
+                normalize_canonical_text(value),
+                _normalize_tr_text(value),
+            )
+            if candidate
+        }
+        for chunk in chunks:
+            strict_chunk_values = {
+                str(value).strip()
+                for value in (
+                    _resolve_chunk_binding_source_key(chunk, include_span=False),
+                    _resolve_chunk_binding_source_key(chunk, include_span=True),
+                    _resolve_chunk_canonical_source_key_v2(chunk, include_span=False),
+                    _resolve_chunk_canonical_source_key_v2(chunk, include_span=True),
+                )
+                if str(value or "").strip()
+            }
+            normalized_strict_chunk_values = {
+                candidate
+                for value in strict_chunk_values
+                for candidate in (
+                    value,
+                    value.lower(),
+                    normalize_canonical_text(value),
+                    _normalize_tr_text(value),
+                )
+                if candidate
+            }
+            if normalized_strict_selector_values & normalized_strict_chunk_values:
+                return chunk
     selector_values = {
         str(value).strip()
         for value in (
@@ -9622,16 +10216,58 @@ def _slot_value_from_chunk(
     query: str = "",
 ) -> tuple[str, float, str]:
     metadata = chunk.metadata or {}
+    selector = article_span_selector if isinstance(article_span_selector, dict) else {}
     citation = chunk.citation or _resolve_trace_source_id(chunk)
     source_label = _chunk_source_identity_label(chunk)
     state_label = _effective_state_label(chunk)
     effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
-    is_repealed = bool(
+    selector_binding_key = str(
+        selector.get("binding_source_key")
+        or selector.get("selected_canonical_document_key_v2")
+        or ""
+    ).strip()
+    selector_active_binding = bool(
+        selector_binding_key
+        and re.search(r"(?:^|\|)state=active(?:\||$)", selector_binding_key)
+    )
+    selector_span_alias_match = bool(
+        selector_active_binding
+        and str(selector.get("selected_main_span_id") or "").strip()
+        and str(selector.get("selected_main_span_id") or "").strip()
+        in {
+            _resolve_chunk_span_id(chunk),
+            _chunk_span_id(chunk),
+            citation,
+        }
+    )
+    selector_binding_match = bool(
+        selector_active_binding
+        and selector_binding_key
+        in {
+            _resolve_chunk_binding_source_key(chunk, include_span=False),
+            _resolve_chunk_canonical_source_key_v2(chunk, include_span=False),
+        }
+    )
+    selector_active_override = False
+    if selector_active_binding and (selector_binding_match or selector_span_alias_match):
+        selected_document_id = str(selector.get("selected_document_id") or "").strip()
+        selected_source_key = str(selector.get("selected_document_source_key") or citation or "").strip()
+        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "kanun"
+        source_label = _compact_slot_value(
+            " | ".join(dedupe_strings([selected_document_id, selected_source_key, family, citation])),
+            max_len=260,
+        )
+        state_label = "durum=active"
+        effective_state = "active"
+        selector_active_override = True
+    is_repealed = False if selector_active_override else bool(
         effective_state in {"repealed", "mulga"}
         or _metadata_flag_is_true(metadata.get("is_repealed"))
         or _metadata_flag_is_true(metadata.get("mulga"))
     )
-    is_active = bool(effective_state in {"active", "amended"} or str(metadata.get("effective_end") or "") in _ACTIVE_END_DATE_SENTINELS)
+    is_active = True if selector_active_override else bool(
+        effective_state in {"active", "amended"} or str(metadata.get("effective_end") or "") in _ACTIVE_END_DATE_SENTINELS
+    )
     is_current_counterpart = _chunk_is_historical_current_counterpart(chunk)
 
     if slot == "governing_source":
@@ -10203,6 +10839,7 @@ def _apply_pre_generation_family_pool(
     source_family_resolution: SourceFamilyResolution,
     top_k_effective: int,
     query: str = "",
+    supporting_source_families: list[str] | None = None,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
     source_key_collision_profile = _source_key_collision_profile(chunks)
@@ -10244,6 +10881,22 @@ def _apply_pre_generation_family_pool(
         chunk for chunk in chunks
         if (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown") in preferred_family_set
     ]
+    supporting_family_set = set(_expand_source_family_aliases(supporting_source_families or [])) - preferred_family_set
+    supporting_bridge_chunks: list[RetrievedChunk] = []
+    if preferred_chunks and supporting_family_set and query:
+        query_terms = _extract_retrieval_priority_terms(query)
+        supporting_bridge_chunks = [
+            chunk
+            for chunk in chunks
+            if chunk not in preferred_chunks
+            and (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+            in supporting_family_set
+            and (
+                _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms) >= 2
+                or _count_term_overlap(chunk.text, query_terms) >= 2
+                or bool((chunk.metadata or {}).get("domain_law_supporting_source"))
+            )
+        ][: max(2, min(6, top_k_effective // 3))]
     historical_title_bridge_chunks: list[RetrievedChunk] = []
     if (
         source_family_resolution.expected_family_prior == "mulga_kanun"
@@ -10284,6 +10937,16 @@ def _apply_pre_generation_family_pool(
         policy["reranked_family_set"] = reranked_family_set
         policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
         policy["family_gate_status"] = "locked_preferred_family"
+        if supporting_bridge_chunks:
+            policy["family_override_reason"] = "preferred_family_with_supporting_family_bridge"
+            policy["supporting_family_bridge_count"] = len(supporting_bridge_chunks)
+            policy["supporting_family_bridge_families"] = dedupe_strings(
+                (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+                for chunk in supporting_bridge_chunks
+            )
+            return _dedupe_retrieved_chunks(
+                [*preferred_chunks, *supporting_bridge_chunks]
+            )[:top_k_effective], policy
         if historical_title_bridge_chunks:
             policy["family_override_reason"] = "historical_title_bridge_with_preferred_family"
             policy["historical_title_bridge_count"] = len(historical_title_bridge_chunks)
@@ -13550,12 +14213,23 @@ async def chat_completions(
         law_filter=request_body.law_filter,
     )
     domain_law_hints = _infer_domain_law_hints(routing_query)
+    domain_supporting_source_selector: dict[str, Any] | None = None
+    domain_supporting_source_families: list[str] = []
     if domain_law_hints:
         mentioned_laws = dedupe_strings([*mentioned_laws, *domain_law_hints])
         retrieval_plan = _apply_domain_law_hints_to_retrieval_plan(
             retrieval_plan,
             domain_law_hints=domain_law_hints,
             mentioned_laws=mentioned_laws,
+            query=routing_query,
+        )
+        domain_supporting_source_families = _domain_law_supporting_source_family_hints(
+            routing_query,
+            domain_law_hints,
+        )
+        domain_supporting_source_selector = _select_domain_law_supporting_source_candidates(
+            query=routing_query,
+            domain_law_hints=domain_law_hints,
         )
     retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k = _apply_retrieval_plan_hints(
         retrieval_query=retrieval_query,
@@ -13606,6 +14280,11 @@ async def chat_completions(
         requested_source_families=requested_source_families,
         source_family_resolution=source_family_resolution,
         query_metadata_signals=metadata_lookup_query_signals,
+    )
+    metadata_first_selector = _suppress_domain_law_metadata_conflict(
+        metadata_first_selector,
+        query=routing_query,
+        domain_law_hints=domain_law_hints,
     )
     if metadata_first_selector:
         source_family_resolution = _apply_metadata_lookup_family_prior(
@@ -13837,8 +14516,38 @@ async def chat_completions(
             True,
         ),
         (
-            ("yıllık ücretli izin", "yillik ucretli izin", "ücretli izin", "ucretli izin", "hafta tatili"),
-            "TBK m.421 TBK m.422 hizmet sözleşmesi hafta tatili ücretli izin",
+            ("fazla çalışma", "fazla calisma", "270 saat", "yazılı onay", "yazili onay"),
+            "4857 İş Kanunu m.41 fazla çalışma yıllık 270 saat işçi onayı fazla çalışma ücreti serbest zaman Fazla Çalışma Yönetmeliği",
+            True,
+        ),
+        (
+            ("alt işveren", "alt isveren", "asıl iş", "asil is", "muvazaa", "muvazaalı", "muvazaali"),
+            "4857 İş Kanunu m.2 alt işveren asıl iş yardımcı iş teknolojik nedenlerle uzmanlık muvazaa Alt İşverenlik Yönetmeliği",
+            True,
+        ),
+        (
+            ("yıllık ücretli izin", "yillik ucretli izin", "ücretli izin", "ucretli izin"),
+            "4857 İş Kanunu m.56 yıllık ücretli izin bölünebilir en az on gün kesintisiz kullandırılır",
+            True,
+        ),
+        (
+            ("hafta tatili",),
+            "4857 İş Kanunu m.46 hafta tatili çalışılmayan hafta tatili günü ücreti",
+            True,
+        ),
+        (
+            ("parmak izi", "biyometrik", "kişisel veri", "kisisel veri", "özel nitelikli veri", "ozel nitelikli veri"),
+            "6698 KVKK m.6 özel nitelikli kişisel veri biyometrik veri m.10 aydınlatma m.12 veri güvenliği saklama imha yönetmeliği",
+            True,
+        ),
+        (
+            ("kira artış", "kira artis", "%25", "25 sınırı", "25 siniri"),
+            "6098 TBK m.344 kira artış oranı geçici yüzde 25 sınırı sona erdi güncel genel rejim",
+            True,
+        ),
+        (
+            ("elektronik tebligat", "e-tebligat", "elektronik adres", "beşinci gün", "besinci gun"),
+            "7201 Tebligat Kanunu elektronik tebligat elektronik adres beşinci gün Elektronik Tebligat Yönetmeliği",
             True,
         ),
     ]
@@ -14243,12 +14952,78 @@ async def chat_completions(
                     )
                 elif len(retrieved_chunks) > top_k_effective:
                     retrieved_chunks = retrieved_chunks[:top_k_effective]
+                if domain_supporting_source_selector:
+                    support_candidates = [
+                        candidate
+                        for candidate in (domain_supporting_source_selector.get("candidates") or [])
+                        if isinstance(candidate, dict)
+                    ]
+                    support_source_keys = dedupe_strings(
+                        [
+                            str(candidate.get("source_key") or "").strip()
+                            for candidate in support_candidates
+                            if str(candidate.get("source_key") or "").strip()
+                        ]
+                    )[:4]
+                    support_source_family_by_key = {
+                        str(candidate.get("source_key") or "").strip(): str(
+                            candidate.get("source_family_raw")
+                            or candidate.get("source_family")
+                            or ""
+                        ).strip()
+                        for candidate in support_candidates
+                        if str(candidate.get("source_key") or "").strip()
+                    }
+                    support_query = str(
+                        domain_supporting_source_selector.get("supporting_source_query") or retrieval_query
+                    )
+                    support_chunks = _retrieve_source_key_chunks(
+                        retriever=retriever,
+                        query=support_query,
+                        source_keys=support_source_keys,
+                        source_family_by_key=support_source_family_by_key,
+                        top_k=max(4, min(8, top_k_effective)),
+                    )
+                    if support_chunks:
+                        marked_support_chunks: list[RetrievedChunk] = []
+                        for chunk in support_chunks:
+                            metadata = dict(chunk.metadata or {})
+                            lanes = [
+                                str(value)
+                                for value in (metadata.get("retrieval_lane_sources") or [])
+                                if isinstance(value, str) and value.strip()
+                            ]
+                            metadata["domain_law_supporting_source"] = True
+                            metadata["retrieval_lane_sources"] = dedupe_strings(
+                                [*lanes, "domain_law_supporting_source"]
+                            )
+                            marked_support_chunks.append(
+                                RetrievedChunk(
+                                    text=chunk.text,
+                                    citation=chunk.citation,
+                                    source=chunk.source,
+                                    score=chunk.score,
+                                    metadata=metadata,
+                                )
+                            )
+                        retrieved_chunks = _dedupe_retrieved_chunks(
+                            marked_support_chunks + retrieved_chunks
+                        )
+                        logger.info(
+                            "Retrieval domain-law-supporting-sources: session=%s sources=%s families=%s added=%d total=%d",
+                            session_id,
+                            support_source_keys,
+                            domain_supporting_source_families,
+                            len(marked_support_chunks),
+                            len(retrieved_chunks),
+                        )
                 before_family_pool_count = len(retrieved_chunks)
                 retrieved_chunks, family_routing_policy = _apply_pre_generation_family_pool(
                     chunks=retrieved_chunks,
                     source_family_resolution=source_family_resolution,
                     top_k_effective=top_k_effective,
                     query=routing_query,
+                    supporting_source_families=domain_supporting_source_families,
                 )
                 if before_family_pool_count != len(retrieved_chunks) or (
                     family_routing_policy.get("cross_family_fallback_used") if family_routing_policy else False

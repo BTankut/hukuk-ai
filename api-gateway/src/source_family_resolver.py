@@ -412,6 +412,41 @@ def _looks_like_legacy_source_risk_question(normalized_query: str) -> bool:
     return False
 
 
+def _looks_like_current_answer_over_legacy_context(normalized_query: str) -> bool:
+    current_answer_terms = (
+        "guncel cevap",
+        "guncel cevabi",
+        "guncel rejim",
+        "hangi kanun hukmu",
+        "hangi hukum",
+        "2026",
+        "bugun",
+        "halen uygulanir mi",
+        "hala uygulanir mi",
+    )
+    legacy_context_terms = (
+        "gecici",
+        "%25",
+        "25 siniri",
+        "eski sinir",
+        "onceki sinir",
+        "hala",
+        "halen",
+    )
+    explicit_legacy_source_terms = (
+        "mulga",
+        "yururlukten kaldirilmis",
+        "eski kanun",
+        "eski metin",
+        "tarihsel metin",
+    )
+    return (
+        contains_any(normalized_query, current_answer_terms)
+        and contains_any(normalized_query, legacy_context_terms)
+        and not contains_any(normalized_query, explicit_legacy_source_terms)
+    )
+
+
 def _looks_like_scenario_current_law_question(normalized_query: str) -> bool:
     current_law_terms = (
         "halen",
@@ -892,7 +927,11 @@ def resolve_source_family_prior(
     normalized_query = normalize_tr(query or "")
     scores: dict[str, dict[str, object]] = {}
     repealed_scope_detected = _looks_like_repealed_scope_question(normalized_query)
-    legacy_source_risk_detected = _looks_like_legacy_source_risk_question(normalized_query)
+    current_answer_over_legacy_context = _looks_like_current_answer_over_legacy_context(normalized_query)
+    legacy_source_risk_detected = (
+        _looks_like_legacy_source_risk_question(normalized_query)
+        and not current_answer_over_legacy_context
+    )
     historical_scope_detected = (
         repealed_scope_detected
         or _looks_like_historical_scope_question(normalized_query)
