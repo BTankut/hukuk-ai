@@ -11153,6 +11153,205 @@ _EVIDENCE_SLOT_SYNTHESIS_LABELS = {
     "document_selection_reason": "Belge seçimi",
     "hierarchy_or_conflict_rule": "Norm ilişkisi",
 }
+_VERIFIED_ANSWER_PLAN_HEADER = "Doğrulanmış cevap planı:"
+
+
+def _verified_answer_plan_slot_value(slot: dict[str, Any]) -> str:
+    value = _compact_slot_value(str(slot.get("value") or ""), max_len=260)
+    evidence_keys = [
+        str(item).strip()
+        for item in slot.get("evidence_span_keys") or []
+        if str(item or "").strip()
+    ]
+    if evidence_keys:
+        return f"{value} [Kaynak: {evidence_keys[0]}]"
+    return value
+
+
+def _verified_slots_by_name(answer_contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    slots = answer_contract.get("answer_slots")
+    if not isinstance(slots, list):
+        return {}
+    verified: dict[str, dict[str, Any]] = {}
+    for slot in slots:
+        if not isinstance(slot, dict):
+            continue
+        slot_name = str(slot.get("slot_name") or "").strip()
+        if not slot_name:
+            continue
+        if (
+            str(slot.get("fill_status") or "") == "filled"
+            and str(slot.get("verifier_status") or "") == "verified"
+            and str(slot.get("value") or "").strip()
+        ):
+            verified[slot_name] = slot
+    return verified
+
+
+def _first_verified_plan_value(
+    verified_slots: dict[str, dict[str, Any]],
+    slot_names: tuple[str, ...],
+) -> tuple[str, str]:
+    for slot_name in slot_names:
+        slot = verified_slots.get(slot_name)
+        if slot:
+            return slot_name, _verified_answer_plan_slot_value(slot)
+    return "", ""
+
+
+def _build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, Any]:
+    verified_slots = _verified_slots_by_name(answer_contract)
+    slot_items = answer_contract.get("answer_slots") if isinstance(answer_contract.get("answer_slots"), list) else []
+    missing_slots = [
+        str(slot.get("slot_name") or "")
+        for slot in slot_items
+        if isinstance(slot, dict)
+        and str(slot.get("slot_name") or "").strip()
+        and str(slot.get("fill_status") or "") != "filled"
+    ]
+    direct_name, direct_value = _first_verified_plan_value(
+        verified_slots,
+        ("direct_conclusion", "direct_rule", "rule", "conclusion", "operative_rule", "operative_clause"),
+    )
+    basis_names = (
+        "governing_source",
+        "exact_source_identity",
+        "selected_primary_source",
+        "identifier",
+        "article_or_span",
+        "issuer",
+        "circular_number_or_date",
+        "decision_number",
+        "teblig_identifier",
+    )
+    legal_basis_slots = [
+        {"slot_name": name, "value": _verified_answer_plan_slot_value(verified_slots[name])}
+        for name in basis_names
+        if name in verified_slots
+    ][:4]
+    temporal_name, temporal_value = _first_verified_plan_value(
+        verified_slots,
+        ("temporal_validity", "effective_state", "effective_period", "effective_date", "current_applicability"),
+    )
+    scenario_name, scenario_value = _first_verified_plan_value(
+        verified_slots,
+        ("facts_applied", "scenario_applicability", "scope_or_addressee", "scope"),
+    )
+    exception_name, exception_value = _first_verified_plan_value(
+        verified_slots,
+        ("exception_or_limitation", "exception_rule", "exception_conditions"),
+    )
+    transition_name, transition_value = _first_verified_plan_value(
+        verified_slots,
+        ("transition_rule", "transition_or_replacement_rule", "replacement_or_current_law_relation"),
+    )
+    return {
+        "direct_answer_slot": {"slot_name": direct_name, "value": direct_value} if direct_value else None,
+        "legal_basis_slots": legal_basis_slots,
+        "temporal_validity_slot": {"slot_name": temporal_name, "value": temporal_value} if temporal_value else None,
+        "scenario_application_slot": {"slot_name": scenario_name, "value": scenario_value} if scenario_value else None,
+        "exception_or_limitation_slot": {"slot_name": exception_name, "value": exception_value} if exception_value else None,
+        "transition_or_replacement_slot": {"slot_name": transition_name, "value": transition_value} if transition_value else None,
+        "missing_slots": dedupe_strings(missing_slots),
+        "confidence_policy": {
+            "ceiling": answer_contract.get("confidence_policy_ceiling"),
+            "reasons": answer_contract.get("confidence_policy_ceiling_reasons") or [],
+        },
+    }
+
+
+def _apply_verified_answer_slot_plan_to_answer_text(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any] | None,
+    final_mode: str | None,
+) -> tuple[str, dict[str, Any]]:
+    if not isinstance(answer_contract, dict):
+        return answer_text, {
+            "verified_answer_slot_synthesis_applied": False,
+            "verified_answer_slot_synthesis_slots": [],
+            "verified_answer_slot_synthesis_reason": "no_contract",
+            "verified_answer_plan": None,
+            "verified_answer_plan_missing_slots": [],
+        }
+    if final_mode not in {"answer", "partial"}:
+        return answer_text, {
+            "verified_answer_slot_synthesis_applied": False,
+            "verified_answer_slot_synthesis_slots": [],
+            "verified_answer_slot_synthesis_reason": "final_mode_not_answer_or_partial",
+            "verified_answer_plan": None,
+            "verified_answer_plan_missing_slots": [],
+        }
+    if not (answer_text or "").strip():
+        return answer_text, {
+            "verified_answer_slot_synthesis_applied": False,
+            "verified_answer_slot_synthesis_slots": [],
+            "verified_answer_slot_synthesis_reason": "empty_answer",
+            "verified_answer_plan": None,
+            "verified_answer_plan_missing_slots": [],
+        }
+    if _VERIFIED_ANSWER_PLAN_HEADER in answer_text:
+        return answer_text, {
+            "verified_answer_slot_synthesis_applied": False,
+            "verified_answer_slot_synthesis_slots": [],
+            "verified_answer_slot_synthesis_reason": "already_applied",
+            "verified_answer_plan": answer_contract.get("verified_answer_plan"),
+            "verified_answer_plan_missing_slots": answer_contract.get("verified_answer_plan_missing_slots") or [],
+        }
+    if (
+        answer_contract.get("answer_suppressed_due_to_evidence_gap") is True
+        or answer_contract.get("insufficient_canonical_span_evidence") is True
+    ):
+        return answer_text, {
+            "verified_answer_slot_synthesis_applied": False,
+            "verified_answer_slot_synthesis_slots": [],
+            "verified_answer_slot_synthesis_reason": "canonical_evidence_gap",
+            "verified_answer_plan": None,
+            "verified_answer_plan_missing_slots": [],
+        }
+
+    plan = _build_verified_answer_plan(answer_contract)
+    lines: list[str] = []
+    synthesized_slots: list[str] = []
+    if plan.get("legal_basis_slots"):
+        basis_text = "; ".join(str(item.get("value") or "") for item in plan["legal_basis_slots"] if item.get("value"))
+        if basis_text:
+            lines.append(f"- Dayanak: {basis_text}")
+            synthesized_slots.extend(str(item.get("slot_name") or "") for item in plan["legal_basis_slots"])
+    for label, key in (
+        ("Kural/sonuç", "direct_answer_slot"),
+        ("Yürürlük/güncellik", "temporal_validity_slot"),
+        ("Uygulama/kapsam", "scenario_application_slot"),
+        ("İstisna/sınırlama", "exception_or_limitation_slot"),
+        ("Geçiş/güncel ilişki", "transition_or_replacement_slot"),
+    ):
+        slot = plan.get(key)
+        if isinstance(slot, dict) and slot.get("value"):
+            lines.append(f"- {label}: {slot['value']}")
+            synthesized_slots.append(str(slot.get("slot_name") or ""))
+    missing_slots = [slot for slot in plan.get("missing_slots") or [] if slot]
+    if missing_slots:
+        lines.append("- Eksik doğrulanmış slotlar: " + ", ".join(missing_slots[:8]))
+
+    if not lines:
+        return answer_text, {
+            "verified_answer_slot_synthesis_applied": False,
+            "verified_answer_slot_synthesis_slots": [],
+            "verified_answer_slot_synthesis_reason": "no_verified_slots",
+            "verified_answer_plan": plan,
+            "verified_answer_plan_missing_slots": missing_slots,
+        }
+
+    return (
+        f"{answer_text.strip()}\n\n{_VERIFIED_ANSWER_PLAN_HEADER}\n" + "\n".join(lines),
+        {
+            "verified_answer_slot_synthesis_applied": True,
+            "verified_answer_slot_synthesis_slots": dedupe_strings(synthesized_slots),
+            "verified_answer_slot_synthesis_reason": "verified_slots_made_visible",
+            "verified_answer_plan": plan,
+            "verified_answer_plan_missing_slots": missing_slots,
+        },
+    )
 
 
 def _apply_evidence_slot_synthesis_to_answer_text(
@@ -12202,6 +12401,21 @@ def _finalize_chat_response(
             trace_payload=trace_payload,
         )
         answer_contract.update(evidence_slot_synthesis)
+    answer_text, verified_answer_slot_synthesis = _apply_verified_answer_slot_plan_to_answer_text(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+    )
+    answer_contract.update(verified_answer_slot_synthesis)
+    if verified_answer_slot_synthesis.get("verified_answer_slot_synthesis_applied") is True:
+        answer_contract["answer_text"] = answer_text
+        answer_contract = _refresh_contract_completeness_for_answer_text(
+            answer_contract=answer_contract,
+            answer_text=answer_text,
+            query=user_message,
+            trace_payload=trace_payload,
+        )
+        answer_contract.update(verified_answer_slot_synthesis)
     contract_repair = build_or_repair_answer_contract(
         qid=response_id,
         answer_text=answer_text,
@@ -12274,6 +12488,25 @@ def _finalize_chat_response(
                 trace_payload=trace_payload,
             )
             answer_contract.update(post_fallback_synthesis)
+    answer_text, post_verified_slot_synthesis = _apply_verified_answer_slot_plan_to_answer_text(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+    )
+    if (
+        post_verified_slot_synthesis.get("verified_answer_slot_synthesis_applied") is True
+        or answer_contract.get("verified_answer_slot_synthesis_reason") in {"empty_answer", "no_contract"}
+    ):
+        answer_contract.update(post_verified_slot_synthesis)
+        if post_verified_slot_synthesis.get("verified_answer_slot_synthesis_applied") is True:
+            answer_contract["answer_text"] = answer_text
+            answer_contract = _refresh_contract_completeness_for_answer_text(
+                answer_contract=answer_contract,
+                answer_text=answer_text,
+                query=user_message,
+                trace_payload=trace_payload,
+            )
+            answer_contract.update(post_verified_slot_synthesis)
     answer_contract = _refresh_contract_completeness_for_answer_text(
         answer_contract=answer_contract,
         answer_text=answer_text,

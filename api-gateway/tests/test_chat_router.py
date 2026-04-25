@@ -38,6 +38,7 @@ from routers.chat import (
     _apply_source_cluster_deterministic_overrides,
     _apply_answer_slot_synthesis_hint,
     _apply_evidence_slot_synthesis_to_answer_text,
+    _apply_verified_answer_slot_plan_to_answer_text,
     _apply_retrieval_plan_hints,
     _apply_metadata_lookup_family_prior,
     _apply_relation_query_metadata_focus,
@@ -1039,6 +1040,72 @@ class TestLawSignalParsing:
         assert meta["evidence_slot_synthesis_applied"] is True
         assert meta["evidence_slot_synthesis_slots"] == ["transition_or_replacement_rule"]
         assert "6769 sayılı Kanundur" in answer
+
+    def test_verified_answer_slot_plan_appends_verified_slots_and_missing_slots(self):
+        answer, meta = _apply_verified_answer_slot_plan_to_answer_text(
+            answer_text="Kısa cevap [Kaynak: X m.1].",
+            final_mode="answer",
+            answer_contract={
+                "answer_slots": [
+                    {
+                        "slot_name": "governing_source",
+                        "required": True,
+                        "value": "X Yönetmeliği",
+                        "evidence_span_keys": ["X m.1/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                    {
+                        "slot_name": "rule",
+                        "required": True,
+                        "value": "Başvuru usulü kaynakta gösterilen adımlara tabidir.",
+                        "evidence_span_keys": ["X m.1/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                    {
+                        "slot_name": "current_applicability",
+                        "required": True,
+                        "value": None,
+                        "evidence_span_keys": [],
+                        "fill_status": "missing",
+                        "verifier_status": "failed",
+                    },
+                ],
+                "confidence_policy_ceiling": 55,
+                "confidence_policy_ceiling_reasons": ["transition_or_current_relation_missing:current_applicability"],
+            },
+        )
+
+        assert meta["verified_answer_slot_synthesis_applied"] is True
+        assert "Doğrulanmış cevap planı:" in answer
+        assert "Dayanak: X Yönetmeliği" in answer
+        assert "Kural/sonuç" in answer
+        assert "Eksik doğrulanmış slotlar: current_applicability" in answer
+        assert meta["verified_answer_plan_missing_slots"] == ["current_applicability"]
+
+    def test_verified_answer_slot_plan_skips_canonical_gap(self):
+        answer, meta = _apply_verified_answer_slot_plan_to_answer_text(
+            answer_text="Kısa cevap [Kaynak: X m.1].",
+            final_mode="answer",
+            answer_contract={
+                "insufficient_canonical_span_evidence": True,
+                "answer_slots": [
+                    {
+                        "slot_name": "governing_source",
+                        "required": True,
+                        "value": "X",
+                        "evidence_span_keys": ["X m.1"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    }
+                ],
+            },
+        )
+
+        assert answer == "Kısa cevap [Kaynak: X m.1]."
+        assert meta["verified_answer_slot_synthesis_applied"] is False
+        assert meta["verified_answer_slot_synthesis_reason"] == "canonical_evidence_gap"
 
     def test_mulga_current_counterpart_fills_transition_slots(self):
         features = _build_completeness_synthesis_features(
