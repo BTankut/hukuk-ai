@@ -600,6 +600,59 @@ def _legacy_query_intent(trace_payload: dict[str, Any] | None) -> bool:
     )
 
 
+def _evidence_text_blob(evidence: dict[str, Any] | None) -> str:
+    if not isinstance(evidence, dict):
+        return ""
+    return " ".join(
+        _clean(evidence.get(key))
+        for key in (
+            "excerpt",
+            "quoted_or_extracted_span",
+            "text",
+            "body_text",
+            "source_title",
+            "full_title",
+            "belge_adi",
+            "citation",
+            "source_identifier",
+            "effective_state",
+            "yururluk_baslangic",
+            "yururluk_bitis",
+        )
+    )
+
+
+def _legacy_repeal_clause_supported(
+    *,
+    evidence: dict[str, Any] | None,
+    trace_payload: dict[str, Any] | None,
+) -> bool:
+    if not _legacy_query_intent(trace_payload):
+        return False
+    family_resolution = _trace_family_resolution(trace_payload)
+    predicted_family = _canonical_trace_family(family_resolution.get("predicted_family"))
+    if predicted_family != "MULGA":
+        return False
+
+    normalized_evidence = _lower_asciiish(_evidence_text_blob(evidence))
+    if not re.search(r"\b(?:mulga|yururlukten kaldir\w*|yururlukten kalk\w*)\b", normalized_evidence):
+        return False
+
+    query_years = {str(year) for year in _trace_query_years(trace_payload)}
+    if query_years and any(year in normalized_evidence for year in query_years):
+        return True
+
+    normalized_question = _lower_asciiish(_trace_question_text(trace_payload))
+    title_terms = {
+        token
+        for token in re.findall(r"[a-z0-9]{4,}", normalized_question)
+        if token not in {"hangi", "neden", "hatalidir", "tarihli", "esas", "almak", "guncel", "halen"}
+    }
+    if len(title_terms & set(normalized_evidence.split())) >= 3:
+        return True
+    return False
+
+
 def _should_force_legacy_repealed_state(
     *,
     source_family: str,
@@ -618,6 +671,8 @@ def _should_force_legacy_repealed_state(
         "CB_YONETMELIK",
     }:
         return False
+    if _legacy_repeal_clause_supported(evidence=evidence, trace_payload=trace_payload):
+        return True
 
     selector = _trace_article_selector(trace_payload)
     if bool(selector.get("legacy_candidate_preferred")):
@@ -678,7 +733,17 @@ def _normalize_legacy_family_claim(
     )
     if explicitly_bound_legacy_family:
         return source_family
-    if source_family in {"KANUN", "KHK", "TUZUK", "MULGA"}:
+    if source_family in {
+        "KANUN",
+        "KHK",
+        "TUZUK",
+        "MULGA",
+        "YONETMELIK",
+        "KKY",
+        "UY",
+        "CB_YONETMELIK",
+        "TEBLIGLER",
+    }:
         return "MULGA"
     return source_family
 

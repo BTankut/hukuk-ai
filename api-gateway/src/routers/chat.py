@@ -883,6 +883,39 @@ def _extract_metadata_lookup_title_ngrams(query: str) -> list[dict[str, Any]]:
         phrase = _metadata_lookup_compact_phrase(phrase_text, max_tokens=12)
         if len(phrase.split()) >= 2:
             phrases.append({"value": phrase, "source": "title_marker_pattern", "token_count": len(phrase.split())})
+        prefix_tokens = [
+            token
+            for token in (match.group("prefix") or "").split()
+            if token
+            and token not in _RETRIEVAL_PRIORITY_STOPWORDS
+            and not re.fullmatch(r"(?:18|19|20)\d{2}", token)
+        ]
+        suffix_tokens = [
+            token
+            for token in (match.group("suffix") or "").split()
+            if token
+        ]
+        # Preserve legal title markers for exact document identity. Dropping
+        # "hakkinda/iliskin/dair" makes institution-prefixed titles look more
+        # specific than the actually requested regulation title.
+        for tail_width in (6, 5, 4, 3):
+            if len(prefix_tokens) < tail_width:
+                continue
+            marker_phrase_tokens = [
+                *prefix_tokens[-tail_width:],
+                match.group("marker"),
+                *suffix_tokens,
+            ]
+            marker_phrase = " ".join(token for token in marker_phrase_tokens if token)
+            marker_phrase = re.sub(r"\s+", " ", marker_phrase).strip()
+            if len(marker_phrase.split()) >= 3:
+                phrases.append(
+                    {
+                        "value": marker_phrase,
+                        "source": "title_marker_preserved_tail",
+                        "token_count": len(marker_phrase.split()),
+                    }
+                )
 
     for match in re.finditer(
         rf"\b(?P<title>(?:[a-z0-9]{{3,}}\s+){{1,8}}(?P<type>{type_regex}))\b",
@@ -1106,9 +1139,15 @@ def _metadata_lookup_title_signal_score(
         if phrase and phrase in title_normalized:
             score = 22.0 + min(len(phrase_tokens), 6) * 2.0
             reason = f"title_ngram_exact:{len(phrase_tokens)}"
+            if item.get("source") == "title_marker_preserved_tail":
+                score += 10.0
+                reason = f"title_marker_exact:{len(phrase_tokens)}"
         elif overlap >= 3 and ratio >= 0.60:
             score = 15.0 + min(overlap, 6) * 1.5
             reason = f"title_ngram_strong:{overlap}"
+            if item.get("source") == "title_marker_preserved_tail":
+                score += 4.0
+                reason = f"title_marker_strong:{overlap}"
         elif overlap >= 2 and ratio >= 0.67:
             score = 8.0
             reason = f"title_ngram_medium:{overlap}"
@@ -1281,6 +1320,25 @@ def _source_identity_record_score(
     )
     parsed_issuer_values = _metadata_lookup_signal_values(query_metadata_signals, "parsed_issuer_candidates")
     academic_regulation_intent = _query_has_academic_regulation_intent(query)
+    historical_non_law_title_bridge = bool(
+        source_family_resolution
+        and source_family_resolution.historical_or_repealed_question
+        and any(
+            token in " ".join(
+                normalize_canonical_text(item.get("value"))
+                for item in ((query_metadata_signals or {}).get("parsed_title_ngrams") or [])
+                if isinstance(item, dict)
+            )
+            for token in (
+                "yonetmelik",
+                "yonetmeligi",
+                "tuzuk",
+                "tuzugu",
+                "khk",
+                "kanun hukmunde kararname",
+            )
+        )
+    )
     score = 0.0
     reasons: list[str] = []
 
@@ -1415,7 +1473,7 @@ def _source_identity_record_score(
     if relation_primary_group:
         dominant_family_intent = {relation_primary_group}
     if dominant_family_intent:
-        strict_kanun_intent = dominant_family_intent <= {"kanun", "mulga_kanun"}
+        strict_kanun_intent = dominant_family_intent <= {"kanun", "mulga_kanun"} and not historical_non_law_title_bridge
         strict_khk_intent = dominant_family_intent <= {"khk"}
         strict_cb_karar_intent = dominant_family_intent <= {"cb_karar"}
         strict_cb_genelge_intent = dominant_family_intent <= {"cb_genelge"}
@@ -1643,6 +1701,12 @@ def _apply_metadata_lookup_family_prior(
     top_effective_state = str(top.get("effective_state") or "").strip().lower()
     if scenario_current_law_guard and (
         raw_metadata_family == "mulga_kanun" or top_effective_state == "repealed"
+    ):
+        return source_family_resolution
+    if (
+        source_family_resolution.predicted_family == "mulga_kanun"
+        and source_family_resolution.historical_or_repealed_question
+        and metadata_family != "mulga_kanun"
     ):
         return source_family_resolution
     relation_profile = _relation_query_family_profile(
@@ -5562,6 +5626,29 @@ def _rerank_chunks_by_source_identity(
     relation_supporting_group = str(relation_profile.get("supporting_group") or "")
     academic_regulation_intent = _query_has_academic_regulation_intent(query)
     legacy_query_years = set(_extract_year_tokens(query))
+    historical_non_law_title_bridge = bool(
+        source_family_resolution
+        and _source_family_resolution_trace_bool(source_family_resolution, "historical_or_repealed_question")
+        and any(
+            token in " ".join(
+                normalize_canonical_text(item.get("value"))
+                for item in (
+                    (metadata_first_selector or {})
+                    .get("query_metadata_signals", {})
+                    .get("parsed_title_ngrams", [])
+                )
+                if isinstance(item, dict)
+            )
+            for token in (
+                "yonetmelik",
+                "yonetmeligi",
+                "tuzuk",
+                "tuzugu",
+                "khk",
+                "kanun hukmunde kararname",
+            )
+        )
+    )
     metadata_candidates = (metadata_first_selector or {}).get("candidates") or []
     dominant_family_intent = set(requested_family_set)
     if not dominant_family_intent and source_family_resolution is not None:
@@ -5643,7 +5730,11 @@ def _rerank_chunks_by_source_identity(
         title_bias_applied = 0.0
         issuer_bias_applied = 0.0
         year_bias_applied = 0.0
-        strict_kanun_intent = bool(dominant_family_intent and dominant_family_intent <= {"kanun", "mulga_kanun"})
+        strict_kanun_intent = bool(
+            dominant_family_intent
+            and dominant_family_intent <= {"kanun", "mulga_kanun"}
+            and not historical_non_law_title_bridge
+        )
         strict_khk_intent = bool(dominant_family_intent and dominant_family_intent <= {"khk"})
         strict_cb_karar_intent = bool(dominant_family_intent and dominant_family_intent <= {"cb_karar"})
         if metadata_first_match:
@@ -10111,6 +10202,7 @@ def _apply_pre_generation_family_pool(
     chunks: list[RetrievedChunk],
     source_family_resolution: SourceFamilyResolution,
     top_k_effective: int,
+    query: str = "",
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
     source_key_collision_profile = _source_key_collision_profile(chunks)
@@ -10152,6 +10244,34 @@ def _apply_pre_generation_family_pool(
         chunk for chunk in chunks
         if (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown") in preferred_family_set
     ]
+    historical_title_bridge_chunks: list[RetrievedChunk] = []
+    if (
+        source_family_resolution.expected_family_prior == "mulga_kanun"
+        and source_family_resolution.historical_or_repealed_question
+        and query
+    ):
+        query_terms = _extract_retrieval_priority_terms(query)
+        fallback_family_set = set(fallback_families)
+        title_bridge_family_set = {
+            *fallback_family_set,
+            "yonetmelik",
+            "kky",
+            "uy",
+            "cb_yonetmelik",
+            "tuzuk",
+            "khk",
+        }
+        historical_title_bridge_chunks = [
+            chunk
+            for chunk in chunks
+            if chunk not in preferred_chunks
+            and (
+                not title_bridge_family_set
+                or (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+                in title_bridge_family_set
+            )
+            and _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms) >= 3
+        ][: max(2, min(6, top_k_effective // 3))]
     policy["preferred_family_pool_size"] = len(preferred_chunks)
     if preferred_chunks:
         policy["family_override_reason"] = "strong_preferred_family_pool"
@@ -10164,10 +10284,30 @@ def _apply_pre_generation_family_pool(
         policy["reranked_family_set"] = reranked_family_set
         policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
         policy["family_gate_status"] = "locked_preferred_family"
+        if historical_title_bridge_chunks:
+            policy["family_override_reason"] = "historical_title_bridge_with_preferred_family"
+            policy["historical_title_bridge_count"] = len(historical_title_bridge_chunks)
+            return _dedupe_retrieved_chunks(
+                [*preferred_chunks, *historical_title_bridge_chunks]
+            )[:top_k_effective], policy
         return preferred_chunks[:top_k_effective], policy
 
     fallback_family_set = set(fallback_families)
     if expected_family_prior in _HARD_PRE_GENERATION_FAMILY_GATES:
+        if historical_title_bridge_chunks:
+            policy["family_override_reason"] = "historical_title_bridge_no_preferred_family"
+            policy["family_gate_reason"] = "historical_title_bridge_no_preferred_family"
+            policy["historical_title_bridge_count"] = len(historical_title_bridge_chunks)
+            policy["no_gate_reason"] = ""
+            reranked_family_set = dedupe_strings(
+                (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
+                for chunk in historical_title_bridge_chunks
+            )
+            policy["reranked_family_set"] = reranked_family_set
+            policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
+            policy["family_gate_status"] = "historical_title_bridge"
+            policy["cross_family_fallback_used"] = True
+            return historical_title_bridge_chunks[:top_k_effective], policy
         policy["family_override_reason"] = "hard_family_gate_no_preferred_candidates"
         policy["family_gate_reason"] = "hard_family_gate_no_preferred_candidates"
         policy["no_gate_reason"] = ""
@@ -14108,6 +14248,7 @@ async def chat_completions(
                     chunks=retrieved_chunks,
                     source_family_resolution=source_family_resolution,
                     top_k_effective=top_k_effective,
+                    query=routing_query,
                 )
                 if before_family_pool_count != len(retrieved_chunks) or (
                     family_routing_policy.get("cross_family_fallback_used") if family_routing_policy else False
