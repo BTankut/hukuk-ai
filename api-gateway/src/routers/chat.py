@@ -70,6 +70,7 @@ from rag.source_catalog import (
     resolve_effective_state,
     source_family_mapping_profile,
 )
+from rag.required_slot_matrix import RequiredSlotResolution, resolve_required_slot_matrix
 from rag.source_supplements import load_source_supplements_for_keys
 from rag.token_manager import estimate_tokens
 from release_controls import (
@@ -8552,6 +8553,74 @@ def _query_contains_any(normalized_query: str, terms: tuple[str, ...]) -> bool:
     return any(term in normalized_query for term in terms)
 
 
+def _source_family_resolution_slot_values(
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
+    key: str,
+) -> list[str]:
+    if isinstance(source_family_resolution, dict):
+        raw_value = source_family_resolution.get(key)
+    elif source_family_resolution is not None:
+        raw_value = getattr(source_family_resolution, key, None)
+    else:
+        raw_value = None
+
+    if raw_value is None:
+        return []
+    if isinstance(raw_value, str):
+        return [raw_value]
+    if isinstance(raw_value, (list, tuple, set)):
+        values: list[str] = []
+        for item in raw_value:
+            if isinstance(item, dict):
+                values.append(str(item.get("family") or ""))
+            else:
+                values.append(str(getattr(item, "family", item) or ""))
+        return values
+    return [str(raw_value)]
+
+
+def _source_families_for_required_slot_matrix(
+    *,
+    requested_source_families: list[str] | None = None,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+    chunks: list[RetrievedChunk] | None = None,
+) -> list[str]:
+    families: list[str] = []
+    families.extend(requested_source_families or [])
+    for key in (
+        "predicted_family",
+        "expected_family_prior",
+        "preferred_families",
+        "routing_families",
+        "fallback_families",
+        "family_candidates",
+    ):
+        families.extend(_source_family_resolution_slot_values(source_family_resolution, key))
+    for chunk in (chunks or [])[:8]:
+        families.append(_resolve_chunk_routing_family(chunk) or "")
+        families.append(_resolve_chunk_source_family(chunk) or "")
+    return dedupe_strings([family for family in families if str(family or "").strip()])
+
+
+def _resolve_required_slot_matrix_for_query(
+    *,
+    query: str,
+    template: str,
+    requested_source_families: list[str] | None = None,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+    chunks: list[RetrievedChunk] | None = None,
+) -> RequiredSlotResolution:
+    return resolve_required_slot_matrix(
+        query=query,
+        answer_template=template,
+        source_families=_source_families_for_required_slot_matrix(
+            requested_source_families=requested_source_families,
+            source_family_resolution=source_family_resolution,
+            chunks=chunks,
+        ),
+    )
+
+
 def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
     normalized = normalize_query_text(query or "")
     slots = ["result_or_holding", "governing_source"]
@@ -9501,8 +9570,17 @@ def _build_completeness_synthesis_features(
     answer_text: str,
     article_span_selector: dict[str, Any] | None,
     chunks: list[RetrievedChunk],
+    requested_source_families: list[str] | None = None,
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     template = _answer_template_for_query(query)
+    required_slot_resolution = _resolve_required_slot_matrix_for_query(
+        query=query,
+        template=template,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        chunks=chunks,
+    )
     required_slots = _must_have_fact_slots_for_query(query, template)
     minimum_required_facts = max(2 if template == "direct" else 3, min(len(required_slots), 3))
     answer_fact_units = _count_answer_fact_units(answer_text)
@@ -9646,6 +9724,7 @@ def _build_completeness_synthesis_features(
         "evidence_required_slot_value_count": sum(
             1 for row in evidence_required_slot_values if float(row.get("slot_confidence") or 0.0) >= 0.65
         ),
+        **required_slot_resolution.to_trace_dict(),
         "candidate_completeness_score": candidate_completeness_score,
         "selected_document_has_body_span": selected_document_has_body_span,
         "selected_document_has_non_title_span": selected_document_has_non_title_span,
@@ -9903,6 +9982,18 @@ def _build_trace_payload(
             "evidence_slot_synthesis_applied": answer_contract.get("evidence_slot_synthesis_applied"),
             "evidence_slot_synthesis_slots": answer_contract.get("evidence_slot_synthesis_slots"),
             "evidence_slot_synthesis_reason": answer_contract.get("evidence_slot_synthesis_reason"),
+            "required_slot_matrix_version": answer_contract.get("required_slot_matrix_version"),
+            "required_slot_task_type": answer_contract.get("required_slot_task_type"),
+            "required_slot_answer_template": answer_contract.get("required_slot_answer_template"),
+            "required_slot_source_families": answer_contract.get("required_slot_source_families"),
+            "required_slot_family_labels": answer_contract.get("required_slot_family_labels"),
+            "required_slot_task_slots": answer_contract.get("required_slot_task_slots"),
+            "required_slot_family_additions": answer_contract.get("required_slot_family_additions"),
+            "required_slot_query_additions": answer_contract.get("required_slot_query_additions"),
+            "required_slot_matrix_slots": answer_contract.get("required_slot_matrix_slots"),
+            "required_slot_runtime_slots": answer_contract.get("required_slot_runtime_slots"),
+            "required_slot_critical_slots": answer_contract.get("required_slot_critical_slots"),
+            "required_slot_resolution_reason": answer_contract.get("required_slot_resolution_reason"),
             "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
             "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
             "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
@@ -10023,6 +10114,18 @@ def _build_trace_payload(
                 "evidence_slot_synthesis_applied": answer_contract.get("evidence_slot_synthesis_applied"),
                 "evidence_slot_synthesis_slots": answer_contract.get("evidence_slot_synthesis_slots"),
                 "evidence_slot_synthesis_reason": answer_contract.get("evidence_slot_synthesis_reason"),
+                "required_slot_matrix_version": answer_contract.get("required_slot_matrix_version"),
+                "required_slot_task_type": answer_contract.get("required_slot_task_type"),
+                "required_slot_answer_template": answer_contract.get("required_slot_answer_template"),
+                "required_slot_source_families": answer_contract.get("required_slot_source_families"),
+                "required_slot_family_labels": answer_contract.get("required_slot_family_labels"),
+                "required_slot_task_slots": answer_contract.get("required_slot_task_slots"),
+                "required_slot_family_additions": answer_contract.get("required_slot_family_additions"),
+                "required_slot_query_additions": answer_contract.get("required_slot_query_additions"),
+                "required_slot_matrix_slots": answer_contract.get("required_slot_matrix_slots"),
+                "required_slot_runtime_slots": answer_contract.get("required_slot_runtime_slots"),
+                "required_slot_critical_slots": answer_contract.get("required_slot_critical_slots"),
+                "required_slot_resolution_reason": answer_contract.get("required_slot_resolution_reason"),
                 "candidate_completeness_score": answer_contract.get("candidate_completeness_score"),
                 "selected_document_has_body_span": answer_contract.get("selected_document_has_body_span"),
                 "selected_document_has_non_title_span": answer_contract.get("selected_document_has_non_title_span"),
@@ -13526,6 +13629,8 @@ async def chat_completions(
         answer_text=hardening.answer_text,
         article_span_selector=article_span_selector,
         chunks=post_rerank_chunks,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
     )
     hardening.answer_contract.update(completeness_synthesis)
     if completeness_synthesis.get("insufficient_canonical_span_evidence"):

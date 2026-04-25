@@ -1,0 +1,189 @@
+{
+  "version": "phase18a-2026-04-25",
+  "task_types": {
+    "precise_retrieval": {
+      "required_slots": [
+        "governing_source",
+        "exact_source_identity",
+        "article_or_span",
+        "direct_rule",
+        "temporal_validity"
+      ]
+    },
+    "temporal_validity": {
+      "required_slots": [
+        "governing_source",
+        "effective_state",
+        "effective_period",
+        "current_applicability",
+        "transition_or_replacement_rule",
+        "direct_conclusion"
+      ]
+    },
+    "scenario_applicability": {
+      "required_slots": [
+        "governing_source",
+        "article_or_span",
+        "rule",
+        "facts_applied",
+        "exception_or_limitation",
+        "direct_conclusion"
+      ]
+    },
+    "document_selection": {
+      "required_slots": [
+        "selected_primary_source",
+        "source_family",
+        "identifier",
+        "why_this_source",
+        "why_not_neighbor_source",
+        "temporal_validity"
+      ]
+    },
+    "hierarchy_conflict": {
+      "required_slots": [
+        "upper_norm",
+        "lower_norm",
+        "conflict_rule",
+        "applicable_priority",
+        "direct_conclusion"
+      ]
+    },
+    "compliance_checklist": {
+      "required_slots": [
+        "governing_source",
+        "obligations",
+        "procedure",
+        "consequence",
+        "exception_or_limitation"
+      ]
+    },
+    "exception_analysis": {
+      "required_slots": [
+        "governing_source",
+        "general_rule",
+        "exception_rule",
+        "exception_conditions",
+        "conclusion"
+      ]
+    },
+    "current_update": {
+      "required_slots": [
+        "current_source",
+        "previous_source_if_relevant",
+        "change_or_update",
+        "effective_date",
+        "current_conclusion"
+      ]
+    }
+  },
+  "family_specific": {
+    "MULGA": {
+      "families": ["mulga", "mulga_kanun"],
+      "required_slots": [
+        "source_is_repealed_or_historical",
+        "applicable_period",
+        "current_applicability",
+        "replacement_or_current_law_relation",
+        "transition_rule",
+        "no_active_law_overclaim"
+      ]
+    },
+    "CB_GENELGE": {
+      "families": ["cb_genelge"],
+      "required_slots": [
+        "issuer",
+        "circular_number_or_date",
+        "subject",
+        "scope_or_addressee",
+        "operative_instruction",
+        "temporal_validity",
+        "administrative_effect"
+      ]
+    },
+    "CB_KARAR": {
+      "families": ["cb_karar"],
+      "required_slots": [
+        "decision_number",
+        "operative_clause",
+        "annex_or_attachment_if_relevant",
+        "effective_date",
+        "related_regulation_or_teblig_if_supporting"
+      ]
+    },
+    "TEBLIGLER": {
+      "families": ["teblig", "tebligler"],
+      "required_slots": [
+        "teblig_identifier",
+        "issuer",
+        "scope",
+        "operative_rule",
+        "procedure_or_formula",
+        "temporal_validity"
+      ]
+    }
+  },
+  "runtime_slot_map": {
+    "administrative_effect": ["procedure_or_consequence"],
+    "annex_or_attachment_if_relevant": ["article_or_span"],
+    "applicable_period": ["historical_period"],
+    "applicable_priority": ["hierarchy_or_conflict_rule"],
+    "article_or_span": ["article_or_span"],
+    "change_or_update": ["transition_or_replacement_rule"],
+    "circular_number_or_date": ["exact_source_identity"],
+    "conclusion": ["result_or_holding"],
+    "consequence": ["procedure_or_consequence"],
+    "conflict_rule": ["hierarchy_or_conflict_rule"],
+    "current_applicability": ["current_applicability"],
+    "current_conclusion": ["result_or_holding", "current_applicability"],
+    "current_source": ["governing_source", "exact_source_identity"],
+    "decision_number": ["exact_source_identity"],
+    "direct_conclusion": ["result_or_holding"],
+    "direct_rule": ["result_or_holding"],
+    "effective_date": ["temporal_validity"],
+    "effective_period": ["historical_period", "temporal_validity"],
+    "effective_state": ["temporal_validity"],
+    "exact_source_identity": ["exact_source_identity"],
+    "exception_conditions": ["exception_or_limitation", "scenario_applicability"],
+    "exception_or_limitation": ["exception_or_limitation"],
+    "exception_rule": ["exception_or_limitation"],
+    "facts_applied": ["scenario_applicability"],
+    "general_rule": ["result_or_holding"],
+    "governing_source": ["governing_source"],
+    "identifier": ["exact_source_identity"],
+    "issuer": ["governing_source"],
+    "lower_norm": ["hierarchy_or_conflict_rule"],
+    "no_active_law_overclaim": ["current_applicability"],
+    "obligations": ["procedure_or_consequence"],
+    "operative_clause": ["result_or_holding"],
+    "operative_instruction": ["procedure_or_consequence"],
+    "operative_rule": ["result_or_holding"],
+    "previous_source_if_relevant": ["transition_or_replacement_rule"],
+    "procedure": ["procedure_or_consequence"],
+    "procedure_or_formula": ["procedure_or_consequence"],
+    "related_regulation_or_teblig_if_supporting": ["hierarchy_or_conflict_rule", "document_selection_reason"],
+    "replacement_or_current_law_relation": ["transition_or_replacement_rule"],
+    "rule": ["result_or_holding"],
+    "scope": ["scenario_applicability"],
+    "scope_or_addressee": ["scenario_applicability"],
+    "selected_primary_source": ["governing_source", "exact_source_identity"],
+    "source_family": ["governing_source"],
+    "source_is_repealed_or_historical": ["temporal_validity", "historical_period"],
+    "subject": ["document_selection_reason"],
+    "teblig_identifier": ["exact_source_identity"],
+    "temporal_validity": ["temporal_validity"],
+    "transition_or_replacement_rule": ["transition_or_replacement_rule"],
+    "transition_rule": ["transition_or_replacement_rule"],
+    "upper_norm": ["hierarchy_or_conflict_rule"],
+    "why_not_neighbor_source": ["document_selection_reason"],
+    "why_this_source": ["document_selection_reason"]
+  },
+  "critical_runtime_slots": [
+    "governing_source",
+    "exact_source_identity",
+    "temporal_validity",
+    "current_applicability",
+    "transition_or_replacement_rule",
+    "article_or_span"
+  ]
+}

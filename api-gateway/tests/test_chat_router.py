@@ -93,6 +93,7 @@ from routers.chat import (
     router as chat_router,
 )
 from rag.orchestrator import OrchestratorResponse, RetrievedChunk
+from rag.required_slot_matrix import resolve_required_slot_matrix
 from rag.source_catalog import load_canonical_source_catalog
 from rag.source_supplements import load_source_supplements_for_keys
 from rag.retriever import MetadataFilter, MockRetriever
@@ -676,6 +677,50 @@ class TestLawSignalParsing:
 
         assert "[MULGA/TARIHSEL CEVAP TALIMATI]" in hinted
         assert "temporal_validity" in hinted
+
+    def test_phase18_required_slot_matrix_resolves_task_family_and_query_slots(self):
+        resolution = resolve_required_slot_matrix(
+            query="2025/3 sayılı Mobbing Genelgesi hangi işyerleri bakımından uygulanır?",
+            answer_template="condition",
+            source_families=["cb_genelge"],
+        )
+
+        assert resolution.matrix_version.startswith("phase18a-")
+        assert resolution.task_type == "scenario_applicability"
+        assert "CB_GENELGE" in resolution.family_labels
+        assert "issuer" in resolution.family_slots
+        assert "circular_number_or_date" in resolution.family_slots
+        assert "facts_applied" in resolution.matrix_slots
+        assert "operative_instruction" in resolution.matrix_slots
+        assert "procedure_or_consequence" in resolution.runtime_slots
+        assert "scenario_applicability" in resolution.runtime_slots
+        assert "temporal_validity" in resolution.runtime_slots
+
+    def test_completeness_synthesis_exports_phase18_slot_matrix_metadata(self):
+        features = _build_completeness_synthesis_features(
+            query="Mülga kanun bugün doğrudan uygulanabilir mi?",
+            answer_text=(
+                "Sonuç: mülga kaynak bugün doğrudan aktif hukuk gibi uygulanmamalıdır. "
+                "Güncel uygulama için yerine geçen düzenleme ayrıca doğrulanmalıdır [Kaynak: X m.1]."
+            ),
+            article_span_selector={"support_span_count": 1, "support_contains_temporal_clause": True},
+            chunks=[
+                RetrievedChunk(
+                    text="Mülga kaynak tarihsel dönem bakımından dikkate alınır.",
+                    citation="X m.1",
+                    source="X",
+                    score=1.0,
+                    metadata={"source_family_canonical": "mulga_kanun", "effective_state": "repealed"},
+                )
+            ],
+            requested_source_families=["mulga_kanun"],
+        )
+
+        assert features["required_slot_matrix_version"].startswith("phase18a-")
+        assert "MULGA" in features["required_slot_family_labels"]
+        assert "transition_rule" in features["required_slot_matrix_slots"]
+        assert "transition_or_replacement_rule" in features["required_slot_runtime_slots"]
+        assert "historical_period" in features["must_have_fact_slots"]
 
     def test_mulga_required_slots_include_current_applicability_and_transition(self):
         features = _build_completeness_synthesis_features(
