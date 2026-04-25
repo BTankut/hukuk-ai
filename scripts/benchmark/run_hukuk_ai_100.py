@@ -5,11 +5,15 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
+import shlex
+import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,6 +31,45 @@ from evaluation.hukuk_ai_100_article_alignment import (
 
 DEFAULT_QUESTIONS = REPO_ROOT / "configs/evaluation/hukuk_ai_100_public_questions.csv"
 DEFAULT_RUNS_DIR = REPO_ROOT / "reports/benchmark/runs"
+PROVENANCE_ENV_KEYS = [
+    "DGX_BASE_URL",
+    "DGX_MODEL",
+    "MILVUS_ENABLED",
+    "MILVUS_URI",
+    "MILVUS_HOST",
+    "MILVUS_PORT",
+    "MILVUS_COLLECTION",
+    "EMBEDDING_BACKEND",
+    "EMBEDDING_BASE_URL",
+    "EMBEDDING_MODEL",
+    "GUARDRAILS_ENABLED",
+    "PRESIDIO_ENABLED",
+]
+SOURCE_CATALOG_HASH_GLOBS = [
+    "api-gateway/src/rag/source_catalog.py",
+    "api-gateway/src/rag/retriever.py",
+    "api-gateway/src/source_family_resolver.py",
+    "reports/benchmark/phase_05_canonical_source_catalog.csv",
+    "data/primary_sources/full_acquisition/*/source_manifest.json",
+    "data/primary_sources/full_acquisition/*/normalized_source.txt",
+]
+SOURCE_SUPPLEMENT_HASH_GLOBS = [
+    "api-gateway/src/rag/source_supplements.py",
+    "reports/benchmark/phase_16*_corpus_materialization*.csv",
+    "reports/benchmark/phase_16*_source_key_v2_collision_report.csv",
+    "reports/benchmark/phase_17*_corpus_materialization*.csv",
+    "reports/benchmark/phase_17*_sourcekey_binding_audit.csv",
+    "reports/benchmark/phase_18e_side_backlog_source_materialization_report.md",
+]
+CONFIG_HASH_GLOBS = [
+    "api-gateway/src/rag/required_slot_matrix.py",
+    "api-gateway/src/rag/required_slot_matrix.json",
+    "configs/evaluation/hukuk_ai_100_public_questions.csv",
+    "evaluation/hukuk_ai_100_article_alignment.py",
+    "evaluation/hukuk_ai_100_source_schema.py",
+    "scripts/benchmark/run_hukuk_ai_100.py",
+    "scripts/benchmark/score_hukuk_ai_100.py",
+]
 
 ANSWER_FIELDS = [
     "qid",
@@ -282,6 +325,301 @@ def endpoint_from_api_url(api_url: str) -> str:
     if url.endswith("/chat/completions"):
         return url
     return f"{url}/chat/completions"
+
+
+def api_root_from_api_url(api_url: str) -> str:
+    url = api_url.rstrip("/")
+    suffix = "/chat/completions"
+    if url.endswith(suffix):
+        return url[: -len(suffix)]
+    return url
+
+
+def run_command(command: list[str], timeout: int = 10) -> dict[str, Any]:
+    try:
+        result = subprocess.run(
+            command,
+            cwd=REPO_ROOT,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=timeout,
+        )
+    except Exception as exc:  # pragma: no cover - platform/environment dependent
+        return {"ok": False, "error_type": exc.__class__.__name__, "error": str(exc)}
+    return {
+        "ok": result.returncode == 0,
+        "returncode": result.returncode,
+        "stdout": result.stdout.strip(),
+        "stderr": result.stderr.strip(),
+    }
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def file_hash_record(path: Path) -> dict[str, Any]:
+    rel_path = path.relative_to(REPO_ROOT).as_posix() if path.is_absolute() else path.as_posix()
+    abs_path = path if path.is_absolute() else REPO_ROOT / path
+    if not abs_path.exists():
+        return {"path": rel_path, "exists": False}
+    try:
+        stat = abs_path.stat()
+        return {
+            "path": rel_path,
+            "exists": True,
+            "sha256": file_sha256(abs_path),
+            "bytes": stat.st_size,
+        }
+    except Exception as exc:  # pragma: no cover - filesystem race guard
+        return {"path": rel_path, "exists": False, "error_type": exc.__class__.__name__, "error": str(exc)}
+
+
+def hash_globs(patterns: list[str]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for pattern in patterns:
+        matches = sorted(REPO_ROOT.glob(pattern))
+        if not matches:
+            synthetic = pattern
+            if synthetic not in seen:
+                records.append({"path": synthetic, "exists": False})
+                seen.add(synthetic)
+            continue
+        for path in matches:
+            if not path.is_file():
+                continue
+            rel_path = path.relative_to(REPO_ROOT).as_posix()
+            if rel_path in seen:
+                continue
+            records.append(file_hash_record(path))
+            seen.add(rel_path)
+    return records
+
+
+def get_json(url: str, timeout: int = 10) -> dict[str, Any]:
+    request = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read().decode("utf-8", errors="replace")
+            try:
+                payload: Any = json.loads(raw)
+            except json.JSONDecodeError:
+                payload = {"text_preview": raw[:1000]}
+            return {
+                "ok": True,
+                "url": url,
+                "status": getattr(response, "status", None),
+                "payload": payload,
+            }
+    except Exception as exc:
+        return {"ok": False, "url": url, "error_type": exc.__class__.__name__, "error": str(exc)}
+
+
+def parse_port_from_url(api_url: str) -> int | None:
+    try:
+        parsed = urllib.parse.urlparse(api_url)
+    except Exception:
+        return None
+    if parsed.port:
+        return parsed.port
+    if parsed.scheme == "https":
+        return 443
+    if parsed.scheme == "http":
+        return 80
+    return None
+
+
+def parse_env_assignments(text: str) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    try:
+        tokens = shlex.split(text)
+    except ValueError:
+        tokens = text.split()
+    wanted = set(PROVENANCE_ENV_KEYS)
+    for token in tokens:
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        if key in wanted:
+            parsed[key] = value
+    return parsed
+
+
+def gateway_process_env_for_api_url(api_url: str) -> dict[str, Any]:
+    port = parse_port_from_url(api_url)
+    if port is None:
+        return {"port": None, "pid": None, "env": {}, "probe_error": "api url has no parseable port"}
+    lsof = run_command(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"], timeout=5)
+    pids = [line.strip() for line in str(lsof.get("stdout", "")).splitlines() if line.strip()]
+    if not pids:
+        return {"port": port, "pid": None, "env": {}, "lsof": lsof}
+    pid = pids[0]
+    env: dict[str, str] = {}
+    proc_environ = Path(f"/proc/{pid}/environ")
+    if proc_environ.exists():
+        try:
+            raw = proc_environ.read_bytes().decode("utf-8", errors="replace")
+            for item in raw.split("\x00"):
+                if "=" in item:
+                    key, value = item.split("=", 1)
+                    if key in PROVENANCE_ENV_KEYS:
+                        env[key] = value
+        except Exception:
+            env = {}
+    ps = run_command(["ps", "eww", "-p", pid, "-o", "command="], timeout=5)
+    if ps.get("stdout"):
+        env.update(parse_env_assignments(str(ps["stdout"])))
+    return {"port": port, "pid": pid, "env": env, "lsof": lsof, "ps": ps}
+
+
+def effective_runtime_env(api_url: str) -> tuple[dict[str, str], dict[str, Any]]:
+    process_probe = gateway_process_env_for_api_url(api_url)
+    env = {key: os.getenv(key, "") for key in PROVENANCE_ENV_KEYS if os.getenv(key) is not None}
+    for key, value in process_probe.get("env", {}).items():
+        if value:
+            env[key] = value
+    return env, process_probe
+
+
+def default_milvus_uri(env: dict[str, str]) -> str:
+    if env.get("MILVUS_URI"):
+        return env["MILVUS_URI"]
+    host = env.get("MILVUS_HOST") or "127.0.0.1"
+    port = env.get("MILVUS_PORT") or "19530"
+    if host.startswith("http://") or host.startswith("https://"):
+        return f"{host.rstrip('/')}:{port}" if ":" not in host.rsplit("/", 1)[-1] else host
+    return f"http://{host}:{port}"
+
+
+def milvus_collection_probe(env: dict[str, str]) -> dict[str, Any]:
+    collection = env.get("MILVUS_COLLECTION", "")
+    if not collection:
+        return {"ok": False, "error": "MILVUS_COLLECTION not set"}
+    uri = default_milvus_uri(env)
+    try:
+        from pymilvus import MilvusClient  # type: ignore
+    except Exception as exc:
+        return {
+            "ok": False,
+            "uri": uri,
+            "collection": collection,
+            "error_type": exc.__class__.__name__,
+            "error": str(exc),
+        }
+    try:
+        client = MilvusClient(uri=uri)
+        stats = client.get_collection_stats(collection)
+        description = client.describe_collection(collection)
+        indexes = client.list_indexes(collection)
+        entity_count = stats.get("row_count") if isinstance(stats, dict) else None
+        return {
+            "ok": True,
+            "uri": uri,
+            "collection": collection,
+            "entity_count": entity_count,
+            "stats": stats,
+            "description": description,
+            "indexes": indexes,
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "uri": uri,
+            "collection": collection,
+            "error_type": exc.__class__.__name__,
+            "error": str(exc),
+        }
+
+
+def embedding_probe(env: dict[str, str]) -> dict[str, Any]:
+    base_url = env.get("EMBEDDING_BASE_URL", "").rstrip("/")
+    if not base_url:
+        return {"ok": False, "error": "EMBEDDING_BASE_URL not set"}
+    models = get_json(f"{base_url}/models")
+    if models.get("ok"):
+        return models
+    health = get_json(f"{base_url}/health")
+    if health.get("ok"):
+        return health
+    return {"ok": False, "models": models, "health": health}
+
+
+def write_runtime_provenance(
+    run_dir: Path,
+    args: argparse.Namespace,
+    endpoint: str,
+    questions_path: Path,
+) -> dict[str, Any]:
+    api_root = api_root_from_api_url(args.api_url)
+    runtime_env, process_probe = effective_runtime_env(args.api_url)
+    git_sha = run_command(["git", "rev-parse", "HEAD"])
+    branch = run_command(["git", "branch", "--show-current"])
+    status = run_command(["git", "status", "--short"])
+    dgx_base_url = runtime_env.get("DGX_BASE_URL", "").rstrip("/")
+    provenance = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "git_sha": git_sha.get("stdout", ""),
+        "branch": branch.get("stdout", ""),
+        "dirty_worktree": bool(str(status.get("stdout", "")).strip()),
+        "dirty_worktree_status": status.get("stdout", ""),
+        "api_url": args.api_url,
+        "endpoint": endpoint,
+        "gateway_model_name": args.model,
+        "gateway_health_response": get_json(f"{api_root}/health"),
+        "gateway_models_response": get_json(f"{api_root}/models"),
+        "gateway_process_probe": process_probe,
+        "dgx_base_url": dgx_base_url,
+        "dgx_model_env": runtime_env.get("DGX_MODEL", ""),
+        "dgx_models_response": get_json(f"{dgx_base_url}/models") if dgx_base_url else {"ok": False, "error": "DGX_BASE_URL not set"},
+        "milvus_enabled": runtime_env.get("MILVUS_ENABLED", ""),
+        "milvus_uri": default_milvus_uri(runtime_env),
+        "milvus_collection": runtime_env.get("MILVUS_COLLECTION", ""),
+        "milvus_collection_probe": milvus_collection_probe(runtime_env),
+        "embedding_backend": runtime_env.get("EMBEDDING_BACKEND", ""),
+        "embedding_base_url": runtime_env.get("EMBEDDING_BASE_URL", ""),
+        "embedding_model": runtime_env.get("EMBEDDING_MODEL", ""),
+        "embedding_model_or_endpoint_response": embedding_probe(runtime_env),
+        "guardrails_enabled": runtime_env.get("GUARDRAILS_ENABLED", ""),
+        "presidio_enabled": runtime_env.get("PRESIDIO_ENABLED", ""),
+        "runtime_env": runtime_env,
+        "source_catalog_hashes": hash_globs(SOURCE_CATALOG_HASH_GLOBS),
+        "source_supplement_hashes": hash_globs(SOURCE_SUPPLEMENT_HASH_GLOBS),
+        "config_hashes": hash_globs(CONFIG_HASH_GLOBS),
+        "benchmark_question_file_hash": file_hash_record(questions_path),
+        "answer_key_hash_or_absent": "absent: public benchmark runner has no answer key input",
+    }
+    milvus_probe = provenance["milvus_collection_probe"]
+    provenance["milvus_entity_count"] = (
+        milvus_probe.get("entity_count") if isinstance(milvus_probe, dict) else None
+    )
+    json_path = run_dir / "runtime_provenance.json"
+    json_path.write_text(json.dumps(provenance, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    md_lines = [
+        "# Runtime Provenance",
+        "",
+        f"- timestamp_utc: `{provenance['timestamp_utc']}`",
+        f"- git_sha: `{provenance['git_sha']}`",
+        f"- branch: `{provenance['branch']}`",
+        f"- dirty_worktree: `{provenance['dirty_worktree']}`",
+        f"- api_url: `{args.api_url}`",
+        f"- gateway_model_name: `{args.model}`",
+        f"- dgx_base_url: `{dgx_base_url}`",
+        f"- dgx_model_env: `{provenance['dgx_model_env']}`",
+        f"- milvus_collection: `{provenance['milvus_collection']}`",
+        f"- milvus_entity_count: `{provenance['milvus_entity_count']}`",
+        f"- embedding_backend: `{provenance['embedding_backend']}`",
+        f"- embedding_base_url: `{provenance['embedding_base_url']}`",
+        f"- guardrails_enabled: `{provenance['guardrails_enabled']}`",
+        f"- presidio_enabled: `{provenance['presidio_enabled']}`",
+    ]
+    (run_dir / "runtime_provenance.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    return provenance
 
 
 def normalize_requested_qids(raw_qids: list[str] | None) -> list[str]:
@@ -898,6 +1236,11 @@ def write_summary(run_dir: Path, summary: dict[str, Any]) -> None:
         f"- missing_contract_fields: {summary['missing_contract_fields']}",
         f"- contract_valid: {summary['contract_valid']}",
         f"- unsupported_confident_answer: {summary['unsupported_confident_answer']}",
+        f"- runtime_provenance: `{summary.get('runtime_provenance', '')}`",
+        f"- runtime_provenance_git_sha: `{summary.get('runtime_provenance_git_sha', '')}`",
+        f"- runtime_provenance_dgx_model_env: `{summary.get('runtime_provenance_dgx_model_env', '')}`",
+        f"- runtime_provenance_milvus_collection: `{summary.get('runtime_provenance_milvus_collection', '')}`",
+        f"- runtime_provenance_milvus_entity_count: {summary.get('runtime_provenance_milvus_entity_count')}",
     ]
     (run_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -910,6 +1253,7 @@ def main() -> int:
     run_dir.mkdir(parents=True, exist_ok=True)
     endpoint = endpoint_from_api_url(args.api_url)
     questions = load_questions(args.questions, args.limit, normalize_requested_qids(args.qids))
+    provenance = write_runtime_provenance(run_dir, args, endpoint, args.questions)
 
     answers_path = run_dir / "candidate_answers.csv"
     trace_path = run_dir / "trace.jsonl"
@@ -1005,6 +1349,11 @@ def main() -> int:
         "unsupported_confident_answer": sum(1 for r in rows if r["unsupported_confident_answer"] == "True"),
         "candidate_answers": str(answers_path),
         "trace": str(trace_path),
+        "runtime_provenance": str(run_dir / "runtime_provenance.json"),
+        "runtime_provenance_git_sha": provenance.get("git_sha", ""),
+        "runtime_provenance_dgx_model_env": provenance.get("dgx_model_env", ""),
+        "runtime_provenance_milvus_collection": provenance.get("milvus_collection", ""),
+        "runtime_provenance_milvus_entity_count": provenance.get("milvus_entity_count"),
     }
     write_summary(run_dir, summary)
     print(f"Summary: {run_dir / 'summary.md'}")

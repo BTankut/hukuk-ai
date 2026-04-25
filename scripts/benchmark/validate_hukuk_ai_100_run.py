@@ -48,6 +48,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--md-out", type=Path)
     parser.add_argument("--strict-contract", action="store_true")
+    parser.add_argument(
+        "--require-provenance",
+        action="store_true",
+        help="Fail the validation when runtime_provenance.json is absent.",
+    )
     return parser.parse_args()
 
 
@@ -90,6 +95,8 @@ def write_md(path: Path, summary: dict[str, object]) -> None:
         f"- missing_final_reason: {summary['missing_final_reason']}",
         f"- missing_phase2_contract_fields: {summary['missing_phase2_contract_fields']}",
         f"- invalid_contract_rows: {summary['invalid_contract_rows']}",
+        f"- runtime_provenance_present: {summary['runtime_provenance_present']}",
+        f"- require_provenance: {summary['require_provenance']}",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -98,6 +105,7 @@ def main() -> int:
     args = parse_args()
     answers_path = args.run_dir / "candidate_answers.csv"
     trace_path = args.run_dir / "trace.jsonl"
+    provenance_path = args.run_dir / "runtime_provenance.json"
     question_columns, questions = read_csv(args.questions)
     answer_columns, answers = read_csv(answers_path)
     trace_qids = read_trace_qids(trace_path)
@@ -143,6 +151,9 @@ def main() -> int:
         "missing_phase2_contract_fields": missing_phase2_contract_fields,
         "invalid_contract_rows": invalid_contract_rows,
         "strict_contract": args.strict_contract,
+        "runtime_provenance_path": str(provenance_path),
+        "runtime_provenance_present": provenance_path.exists(),
+        "require_provenance": args.require_provenance,
     }
     hard_fail = (
         len(answers) != len(questions)
@@ -164,7 +175,8 @@ def main() -> int:
         or missing_phase2_contract_fields > 0
         or invalid_contract_rows > 0
     )
-    summary["status"] = "fail" if hard_fail or contract_fail else "pass"
+    provenance_fail = args.require_provenance and not provenance_path.exists()
+    summary["status"] = "fail" if hard_fail or contract_fail or provenance_fail else "pass"
 
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
