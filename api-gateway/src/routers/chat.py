@@ -219,7 +219,7 @@ _SOURCE_FAMILY_HINT_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] =
         ("cb_genelge",),
     ),
     (("tebliğ", "teblig"), ("teblig",)),
-    (("tüzük", "tuzuk"), ("tuzuk",)),
+    (("tüzük", "tuzuk", "tüzükleri", "tuzukleri", "tüzük hükmü", "tuzuk hukmu"), ("tuzuk",)),
     (
         (
             "üniversite yönetmeliği",
@@ -235,6 +235,11 @@ _SOURCE_FAMILY_HINT_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] =
             "yuksek lisans",
             "hazırlık sınıfı",
             "hazirlik sinifi",
+            "mazeret sınavı",
+            "mazeret sinavi",
+            "tek ders",
+            "bütünleme",
+            "butunleme",
         ),
         ("uy", "yonetmelik"),
     ),
@@ -248,6 +253,19 @@ _SOURCE_FAMILY_HINT_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] =
             "btk",
             "rtük",
             "rtuk",
+            "bankacılık",
+            "bankacilik",
+            "elektronik bankacılık",
+            "elektronik bankacilik",
+            "bilgi sistemleri",
+            "dış hizmet",
+            "dis hizmet",
+            "mobil operatör",
+            "mobil operator",
+            "abonelik",
+            "cayma bedeli",
+            "tarife değişikliği",
+            "tarife degisikligi",
         ),
         ("kky", "yonetmelik"),
     ),
@@ -3451,6 +3469,48 @@ def _chunk_scope_or_applicability_match(chunk: RetrievedChunk) -> bool:
     )
 
 
+def _asks_hierarchy_or_conflict_article_query(query: str) -> bool:
+    normalized = _normalize_tr_text(query or "")
+    return any(
+        signal in normalized
+        for signal in (
+            "celiski",
+            "celisirse",
+            "hangisi esas",
+            "hangisi uygulan",
+            "ust norm",
+            "alt duzenleme",
+            "hiyerarsi",
+            "hukum bulunmayan",
+            "yerel duzenleme",
+            "merkezi duzenleme",
+            "yok degisikligi",
+        )
+    )
+
+
+def _chunk_hierarchy_or_conflict_match(chunk: RetrievedChunk) -> bool:
+    metadata = chunk.metadata or {}
+    heading = _normalize_tr_text(str(metadata.get("heading") or metadata.get("article_heading") or ""))
+    text = _normalize_tr_text(chunk.text or "")
+    haystack = f"{heading} {text[:700]}"
+    return any(
+        signal in haystack
+        for signal in (
+            "hukum bulunmayan",
+            "saklidir",
+            "oncelikle uygulan",
+            "ust norm",
+            "alt norm",
+            "aykiri olamaz",
+            "hiyerarsi",
+            "dayanak",
+            "ilgili yonetmelik",
+            "esaslarina iliskin yonetmelik",
+        )
+    )
+
+
 def _contains_temporal_clause_signal(text: str) -> bool:
     normalized = _normalize_tr_text(text or "")
     return any(
@@ -4100,6 +4160,7 @@ def _select_article_span_evidence(
     relation_primary_group = str(relation_profile.get("primary_group") or "")
     relation_supporting_group = str(relation_profile.get("supporting_group") or "")
     scope_or_applicability_query = _asks_scope_or_applicability_query(query)
+    hierarchy_or_conflict_query = _asks_hierarchy_or_conflict_article_query(query)
     query_year_tokens = set(_extract_year_tokens(query))
     legacy_intent_binding_active = historical_or_repealed_question
     temporal_guard_enabled = scenario_current_law_question and not historical_or_repealed_question
@@ -4155,6 +4216,9 @@ def _select_article_span_evidence(
         )
         law_match = bool(numbered_laws and numbered_laws & chunk_laws)
         scope_match = bool(scope_or_applicability_query and _chunk_scope_or_applicability_match(chunk))
+        hierarchy_conflict_match = bool(
+            hierarchy_or_conflict_query and _chunk_hierarchy_or_conflict_match(chunk)
+        )
         title_overlap = _count_term_overlap(title, query_terms)
         heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
         text_overlap = _count_term_overlap(chunk.text, query_terms)
@@ -4216,6 +4280,10 @@ def _select_article_span_evidence(
             score += 30
         if scope_match:
             score += 36
+        if hierarchy_conflict_match:
+            score += 58
+        elif hierarchy_or_conflict_query and scope_match:
+            score -= 20
         score += min(title_overlap, 8) * 7
         score += min(heading_overlap, 8) * 6
         score += min(text_overlap, 10) * 2
@@ -4283,6 +4351,8 @@ def _select_article_span_evidence(
                         if article_match
                         else "adjacent"
                         if adjacent_article_match
+                        else "hierarchy_or_conflict"
+                        if hierarchy_conflict_match
                         else "scope_or_applicability"
                         if scope_match
                         else "source_local_support"
@@ -4295,6 +4365,7 @@ def _select_article_span_evidence(
                     "selected_source_match": selected_source_match,
                     "law_match": law_match,
                     "scope_match": scope_match,
+                    "hierarchy_conflict_match": hierarchy_conflict_match,
                     "year_match": year_match,
                     "title_overlap": title_overlap,
                     "heading_overlap": heading_overlap,
@@ -4551,6 +4622,8 @@ def _select_article_span_evidence(
             return "exact_article"
         if trace.get("clause_match"):
             return "exact_clause"
+        if trace.get("hierarchy_conflict_match"):
+            return "hierarchy_or_conflict"
         if trace.get("scope_match"):
             return "scope_or_applicability"
         if trace.get("heading_overlap", 0) >= 1 or trace.get("text_overlap", 0) >= 2:
@@ -4592,11 +4665,20 @@ def _select_article_span_evidence(
             and (item[3].get("explicit_ref_match") or item[3].get("article_match") or item[3].get("clause_match"))
         ]
         exact_ids = {id(item[2]) for item in exact_items}
+        hierarchy_items = [
+            item
+            for item in ranked
+            if _same_locked_document(item)
+            and id(item[2]) not in exact_ids
+            and item[3].get("hierarchy_conflict_match")
+        ]
+        hierarchy_ids = {id(item[2]) for item in hierarchy_items}
         scope_items = [
             item
             for item in ranked
             if _same_locked_document(item)
             and id(item[2]) not in exact_ids
+            and id(item[2]) not in hierarchy_ids
             and item[3].get("scope_match")
         ]
         scope_ids = {id(item[2]) for item in scope_items}
@@ -4651,6 +4733,7 @@ def _select_article_span_evidence(
             window_items = _dedupe_window_items(
                 [
                     exact_items[:3],
+                    hierarchy_items[:2],
                     scope_items[:2],
                     heading_items[:2],
                     adjacent_items[:2],

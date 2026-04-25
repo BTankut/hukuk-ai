@@ -1765,6 +1765,47 @@ class TestLawSignalParsing:
         assert "HUAK" not in _infer_domain_law_hints(query)
         assert ("6325", "18") not in _infer_domain_article_refs(query)
 
+    def test_source_family_prior_locks_university_exam_rights_to_uy(self):
+        resolution = _resolve_source_family_prior(
+            "Mazeret sınavı, tek ders sınavı ve bütünleme hakkı bakımından bir öğrencinin "
+            "somut başvuru imkânını hangi belge zinciriyle analiz edersin?"
+        )
+
+        assert resolution.predicted_family == "uy"
+        assert resolution.preferred_families == ["uy"]
+        assert "uy" in resolution.routing_families
+        assert any("mazeret sınavı" in expansion for expansion in resolution.query_expansions)
+
+    def test_source_family_prior_locks_banking_supervision_question_to_kky(self):
+        resolution = _resolve_source_family_prior(
+            "Bir banka çekirdek bankacılık altyapısını dış hizmet sağlayıcıya taşıyacak. "
+            "Bilgi sistemleri yönetişimi ve elektronik bankacılık riskleri bakımından merkez yönetmelik hangisidir?"
+        )
+
+        assert resolution.predicted_family == "kky"
+        assert resolution.preferred_families == ["kky"]
+        assert "kky" in resolution.routing_families
+        assert any("Bankaların Bilgi Sistemleri" in expansion for expansion in resolution.query_expansions)
+
+    def test_source_family_prior_locks_telecom_subscription_question_to_kky(self):
+        resolution = _resolve_source_family_prior(
+            "Bir mobil operatör taahhütlü abonelikte tek taraflı tarife değişikliği yapıyor "
+            "ve aboneden cayma bedeli istiyor. Hangi BTK kurum yönetmeliği ana uygulama metnidir?"
+        )
+
+        assert resolution.predicted_family == "kky"
+        assert resolution.preferred_families == ["kky"]
+        assert any("Abonelik Sözleşmeleri Yönetmeliği" in expansion for expansion in resolution.query_expansions)
+
+    def test_source_family_prior_preserves_tuzuk_family_for_old_tuzuk_risk_question(self):
+        resolution = _resolve_source_family_prior(
+            "İş sağlığı ve güvenliği alanında sadece eski tüzükleri tarayıp 2026 uyum cevabı vermek neden risklidir?"
+        )
+
+        assert resolution.predicted_family == "tuzuk"
+        assert resolution.preferred_families == ["tuzuk"]
+        assert "mulga_kanun" not in resolution.preferred_families
+
     def test_source_family_prior_prefers_kanun_when_teblig_is_passive_verb_and_query_names_kanun_yonetmelik(self):
         resolution = _resolve_source_family_prior(
             "Elektronik tebligat muhatabın elektronik adresine ulaştığı anda mı, yoksa daha sonraki bir tarihte mi tebliğ edilmiş sayılır? Kanun ve yönetmelik ilişkisini de göster."

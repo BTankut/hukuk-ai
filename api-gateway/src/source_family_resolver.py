@@ -46,6 +46,9 @@ HARD_POLICY_FAMILIES = {
     "cb_genelge",
     "cb_yonetmelik",
     "yonetmelik",
+    "kky",
+    "tuzuk",
+    "khk",
     "uy",
     "mulga_kanun",
     "teblig",
@@ -535,6 +538,63 @@ def _looks_like_scenario_current_law_question(normalized_query: str) -> bool:
     return has_current_law_signal or has_scenario_signal or has_present_day_applicability_signal
 
 
+def _names_legacy_non_law_document_type(normalized_query: str) -> bool:
+    if contains_any(normalized_query, ("eski kanun", "mulga kanun", "yururlukten kaldirilmis kanun")):
+        return False
+    return contains_any(
+        normalized_query,
+        (
+            "tuzuk",
+            "tuzugu",
+            "tuzukleri",
+            "khk",
+            "kanun hukmunde kararname",
+            "yonetmelik",
+            "yonetmeligi",
+        ),
+    )
+
+
+def _domain_query_expansions(normalized_query: str, predicted_family: str | None) -> list[str]:
+    expansions: list[str] = []
+    if predicted_family == "uy":
+        if contains_any(normalized_query, ("mazeret sinavi", "tek ders", "butunleme", "sinav hakki")):
+            expansions.append(
+                "üniversite eğitim öğretim sınav yönetmeliği mazeret sınavı tek ders sınavı bütünleme öğrenci başvuru"
+            )
+        if contains_any(normalized_query, ("cift anadal", "yandal", "yan dal", "yok", "yuksekogretim")):
+            expansions.append(
+                "çift anadal yandal yerel üniversite düzenlemesi YÖK yükseköğretim kurumlarında çift anadal yan dal hüküm bulunmayan haller"
+            )
+    if predicted_family == "kky":
+        if contains_any(normalized_query, ("bankacilik", "elektronik bankacilik", "bilgi sistemleri", "dis hizmet")):
+            expansions.append(
+                "Bankaların Bilgi Sistemleri ve Elektronik Bankacılık Hizmetleri Hakkında Yönetmelik dış hizmet alımı çekirdek bankacılık bilgi sistemleri BDDK"
+            )
+        if contains_any(normalized_query, ("sgk", "isyeri", "isyerini", "isveren")) and contains_any(
+            normalized_query, ("bildir", "tescil", "usul ve esas")
+        ):
+            expansions.append(
+                "Sosyal Sigorta İşlemleri Yönetmeliği SGK işyeri bildirgesi işyerinin tescili işveren bildirimi"
+            )
+        if contains_any(normalized_query, ("btk", "mobil operator", "abonelik", "cayma bedeli", "tarife degisikligi")):
+            expansions.append(
+                "Abonelik Sözleşmeleri Yönetmeliği BTK elektronik haberleşme abonelik taahhüt cayma bedeli tarife değişikliği"
+            )
+    if predicted_family == "tuzuk":
+        if contains_any(normalized_query, ("is sagligi", "is guvenligi", "eski tuzuk", "tuzukleri")):
+            expansions.append(
+                "iş sağlığı ve güvenliği tüzüğü işçi sağlığı iş güvenliği eski tüzük 6331 güncel kanun yönetmelik"
+            )
+        if contains_any(normalized_query, ("hiyerarsi", "celisir", "ust norm", "kurum ici")):
+            expansions.append("normlar hiyerarşisi tüzük yönetmelik kurum içi alt düzenleme çelişki üst norm")
+    if predicted_family == "khk" and contains_any(normalized_query, ("sinai mulkiyet", "551", "554", "555", "556")):
+        expansions.append(
+            "551 554 555 556 sayılı KHK sınai mülkiyet 6769 Sınai Mülkiyet Kanunu yürürlükten kaldırılan KHK doğrudan uygulanmaz"
+        )
+    return dedupe(expansions)
+
+
 def _score_value(scores: dict[str, dict[str, object]], family: str) -> float:
     bucket = scores.get(family) or {}
     try:
@@ -928,9 +988,11 @@ def resolve_source_family_prior(
     scores: dict[str, dict[str, object]] = {}
     repealed_scope_detected = _looks_like_repealed_scope_question(normalized_query)
     current_answer_over_legacy_context = _looks_like_current_answer_over_legacy_context(normalized_query)
+    legacy_non_law_document_type_named = _names_legacy_non_law_document_type(normalized_query)
     legacy_source_risk_detected = (
         _looks_like_legacy_source_risk_question(normalized_query)
         and not current_answer_over_legacy_context
+        and not legacy_non_law_document_type_named
     )
     historical_scope_detected = (
         repealed_scope_detected
@@ -1135,13 +1197,27 @@ def resolve_source_family_prior(
         "yatay gecis",
         "çift anadal",
         "cift anadal",
+        "yandal",
+        "yan dal",
         "hazırlık sınıfı",
         "hazirlik sinifi",
+        "mazeret sınavı",
+        "mazeret sinavi",
+        "tek ders",
+        "bütünleme",
+        "butunleme",
     )
     if contains_any(normalized_query, university_terms):
         _add(scores, "uy", 3.0, "university_namespace_signal")
         if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
             _add(scores, "uy", 3.0, "university_regulation_signal")
+        if contains_any(normalized_query, ("mazeret sinavi", "tek ders", "butunleme", "sinav hakki")):
+            _add(scores, "uy", 5.0, "university_exam_rights_signal")
+        if contains_any(normalized_query, ("cift anadal", "yandal", "yan dal")) and contains_any(
+            normalized_query,
+            ("universite", "universitesi", "yok", "yuksekogretim", "yerel duzenleme"),
+        ):
+            _add(scores, "uy", 5.0, "university_local_program_rule_signal")
 
     agency_terms = (
         "bakanlığı",
@@ -1162,11 +1238,34 @@ def resolve_source_family_prior(
         "kvkk",
         "sayıştay",
         "sayistay",
+        "banka",
+        "bankacılık",
+        "bankacilik",
+        "elektronik bankacılık",
+        "elektronik bankacilik",
+        "bilgi sistemleri",
+        "dış hizmet",
+        "dis hizmet",
+        "mobil operatör",
+        "mobil operator",
+        "abonelik",
+        "cayma bedeli",
+        "tarife değişikliği",
+        "tarife degisikligi",
     )
     if contains_any(normalized_query, agency_terms):
         _add(scores, "kky", 2.5, "agency_or_board_namespace_signal")
         if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
             _add(scores, "kky", 2.5, "agency_regulation_signal")
+        if contains_any(normalized_query, ("bankacilik", "elektronik bankacilik", "bilgi sistemleri", "dis hizmet")):
+            _add(scores, "kky", 5.0, "banking_supervision_regulation_signal")
+        if contains_any(normalized_query, ("sgk", "isyeri", "isyerini", "isveren")) and contains_any(
+            normalized_query,
+            ("bildir", "tescil", "usul ve esas"),
+        ):
+            _add(scores, "kky", 5.0, "social_security_workplace_registration_signal")
+        if contains_any(normalized_query, ("btk", "mobil operator", "abonelik", "cayma bedeli", "tarife degisikligi")):
+            _add(scores, "kky", 5.0, "telecom_subscription_regulation_signal")
 
     if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
         _add(scores, "yonetmelik", 3.0, "generic_regulation_signal")
@@ -1280,9 +1379,14 @@ def resolve_source_family_prior(
     else:
         routing_families = _route_families_for_candidates(candidates, top_confidence)
     query_expansions = dedupe(
-        QUERY_EXPANSIONS[family]
-        for family in routing_families
-        if family in QUERY_EXPANSIONS and (top_confidence >= 0.50 or family == candidates[0].family)
+        [
+            *_domain_query_expansions(normalized_query, candidates[0].family if candidates else None),
+            *(
+                QUERY_EXPANSIONS[family]
+                for family in routing_families
+                if family in QUERY_EXPANSIONS and (top_confidence >= 0.50 or family == candidates[0].family)
+            ),
+        ]
     )
     predicted_family = candidates[0].family if candidates else None
     expected_family_prior, preferred_families, fallback_families, family_override_reason = _family_policy_for_resolution(
