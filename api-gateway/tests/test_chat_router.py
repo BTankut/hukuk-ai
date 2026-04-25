@@ -3075,6 +3075,47 @@ class TestLawSignalParsing:
         assert selector["corpus_materialization_required"] is False
         assert selector["selector_reason"] == "selected_source_lock"
 
+    def test_source_supplements_are_visible_to_metadata_first_selector(self, tmp_path, monkeypatch):
+        article_rows = tmp_path / "article_rows.jsonl"
+        article_rows.write_text("", encoding="utf-8")
+        monkeypatch.setenv("MEVZUAT_ARTICLE_ROWS_PATH", str(article_rows))
+        load_canonical_source_catalog.cache_clear()
+
+        query = (
+            "Bir kamu kurumu 2026'da yeni hizmet binası kiralamak istiyor. "
+            "2024/7 sayılı Tasarruf Tedbirleri Genelgesi karşısında bunun genel kuralı nedir?"
+        )
+        selector = _select_metadata_first_source_candidates(
+            query=query,
+            requested_source_families=["cb_genelge"],
+            source_family_resolution=_resolve_source_family_prior(query),
+            query_metadata_signals=_parse_metadata_lookup_query_signals(query),
+        )
+
+        assert selector is not None
+        assert selector["selected_source_keys"] == ["2024/7"]
+        assert selector["selected_families"] == ["cb_genelge"]
+        assert selector["metadata_lookup_source"] == "exact_identifier_lookup"
+        assert "identifier_exact" in selector["candidates"][0]["match_reasons"]
+        load_canonical_source_catalog.cache_clear()
+
+    def test_source_supplement_chunks_use_family_specific_metadata(self):
+        karar_chunks = _build_source_supplement_chunks(
+            load_source_supplements_for_keys({"9903"}, source_families={"cb_karar"})
+        )
+        kanun_chunks = _build_source_supplement_chunks(
+            load_source_supplements_for_keys({"6102"}, source_families={"kanun"})
+        )
+
+        assert karar_chunks
+        assert karar_chunks[0].metadata["display_citation"] == "9903 sayılı Cumhurbaşkanı Kararı"
+        assert karar_chunks[0].metadata["source_family"] == "cb_karar"
+        assert karar_chunks[0].metadata["article_no"] == "geçici 1"
+        assert "Cumhurbaşkanlığı Genelgesi" not in karar_chunks[0].metadata["display_citation"]
+
+        assert {chunk.metadata["article_no"] for chunk in kanun_chunks} == {"595", "598"}
+        assert all(chunk.metadata["display_citation"] == "6102 sayılı Kanun" for chunk in kanun_chunks)
+
     def test_cb_genelge_document_level_template_uses_only_selected_source_text(self):
         chunks = _build_source_supplement_chunks(
             load_source_supplements_for_keys({"3"}, source_families={"cb_genelge"})
@@ -3104,6 +3145,38 @@ class TestLawSignalParsing:
         assert "İşyeri Hekimi" not in answer
         assert "İş Güvenliği Uzmanı" not in answer
         assert "[Kaynak: 3 m.0/f.0]" in answer
+
+    def test_cb_genelge_document_level_template_selects_terms_from_query_not_fixed_topic(self):
+        chunks = _build_source_supplement_chunks(
+            load_source_supplements_for_keys({"2024/7"}, source_families={"cb_genelge"})
+        )
+        query = (
+            "Bir kamu kurumu 2026'da yeni hizmet binası kiralamak istiyor. "
+            "2024/7 sayılı Tasarruf Tedbirleri Genelgesi karşısında bunun genel kuralı ve istisnası nedir?"
+        )
+        ranked, selector = _select_article_span_evidence(
+            query=query,
+            chunks=chunks,
+            requested_source_families=["cb_genelge"],
+            selected_source_keys={"2024/7"},
+            source_family_resolution=_resolve_source_family_prior(query),
+        )
+        _annotate_canonical_span_materialization(
+            chunks=ranked,
+            article_span_selector=selector,
+            family_routing_policy=None,
+        )
+
+        answer = _build_cb_genelge_document_level_answer(
+            query=query,
+            chunks=ranked,
+            article_span_selector=selector,
+        )
+
+        assert answer is not None
+        assert "yeni hizmet binası alınmayacak" in answer
+        assert "deprem riski" in answer
+        assert "[Kaynak: 2024/7 m.0/f.0]" in answer
 
     def test_cb_genelge_temporal_template_keeps_active_new_genelge_and_repealed_old_one_separate(self):
         chunks = _build_source_supplement_chunks(

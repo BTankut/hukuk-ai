@@ -1584,6 +1584,13 @@ def _select_metadata_first_source_candidates(
             repealed_candidate_demoted = True
     for rank, item in enumerate(ranked, start=1):
         item["metadata_lookup_rank"] = rank
+    selected_ranked = ranked
+    if any("identifier_exact" in (item.get("match_reasons") or []) for item in ranked):
+        selected_ranked = [
+            item
+            for item in ranked
+            if "identifier_exact" in (item.get("match_reasons") or [])
+        ]
     return {
         "applied": True,
         "reason": "metadata_first_source_identity",
@@ -1592,8 +1599,8 @@ def _select_metadata_first_source_candidates(
         "metadata_lookup_rank": ranked[0].get("metadata_lookup_rank"),
         "metadata_lookup_confidence": ranked[0].get("metadata_lookup_confidence"),
         "candidate_count": len(scored),
-        "selected_source_keys": dedupe_strings([str(item.get("source_key") or "") for item in ranked if item.get("source_key")]),
-        "selected_families": dedupe_strings([str(item.get("source_family") or "") for item in ranked if item.get("source_family")]),
+        "selected_source_keys": dedupe_strings([str(item.get("source_key") or "") for item in selected_ranked if item.get("source_key")]),
+        "selected_families": dedupe_strings([str(item.get("source_family") or "") for item in selected_ranked if item.get("source_family")]),
         "query_identifier_tokens": sorted(_extract_source_identity_identifier_tokens(query)),
         "query_year_tokens": _extract_year_tokens(query),
         "scenario_current_law_question": scenario_current_law_guard,
@@ -5961,11 +5968,26 @@ def _build_source_supplement_chunks(rows: list[dict[str, Any]]) -> list[Retrieve
 
         source_identifier = str(row.get("canonical_identifier") or source_key).strip()
         citation_display = citation.split("/f", 1)[0].strip() or citation
-        source_id = (
-            f"{source_key}:{source_key}:m0:f0:"
-            f"from{row.get('effective_start') or 'unknown'}:"
-            f"to{row.get('effective_end') or 'unknown'}"
+        article_no = str(row.get("article_no") or row.get("madde_no") or "0").strip() or "0"
+        source_id_article = re.sub(r"[^A-Za-z0-9_/-]+", "_", article_no).strip("_") or "0"
+        source_id = str(
+            row.get("source_id")
+            or (
+                f"{source_key}:{source_key}:m{source_id_article}:f0:"
+                f"from{row.get('effective_start') or 'unknown'}:"
+                f"to{row.get('effective_end') or 'unknown'}"
+            )
         )
+        display_citation = str(row.get("display_citation") or "").strip()
+        if not display_citation:
+            if source_family == "cb_genelge":
+                display_citation = f"{source_identifier} sayılı Cumhurbaşkanlığı Genelgesi"
+            elif source_family == "cb_karar":
+                display_citation = f"{source_identifier} sayılı Cumhurbaşkanı Kararı"
+            elif source_family == "kanun":
+                display_citation = f"{source_identifier} sayılı Kanun"
+            else:
+                display_citation = source_identifier
         lanes = ["official_source_supplement", "metadata_guided_recall"]
         metadata = {
             "source_key": source_key,
@@ -5974,6 +5996,8 @@ def _build_source_supplement_chunks(rows: list[dict[str, Any]]) -> list[Retrieve
             "source_family_mapped": source_family,
             "source_family_raw": source_family,
             "source_family_mapping_reason": "official_source_supplement",
+            "belge_turu": source_family,
+            "source_type": source_family,
             "source_title": title,
             "full_title": title,
             "belge_adi": title,
@@ -5981,18 +6005,20 @@ def _build_source_supplement_chunks(rows: list[dict[str, Any]]) -> list[Retrieve
             "canonical_title": title,
             "canonical_title_family_normalized": row.get("canonical_title_normalized") or normalize_canonical_text(title),
             "source_identifier": source_identifier,
-            "display_citation": f"{source_identifier} sayılı Cumhurbaşkanlığı Genelgesi",
+            "display_citation": display_citation,
             "canonical_identifier": source_identifier,
             "canonical_identifier_display": citation_display,
             "belge_no": source_key,
             "belge_kisa_adi": source_key,
             "law_no": source_key,
             "law_short_name": source_key,
-            "genelge_number": source_key,
-            "generalge_number": source_key,
-            "article_or_section": "0",
-            "madde_no": "0",
-            "article_no": "0",
+            "kanun_no": source_identifier if source_family == "kanun" else "",
+            "decision_number": source_identifier if source_family == "cb_karar" else "",
+            "genelge_number": source_identifier if source_family == "cb_genelge" else source_key,
+            "generalge_number": source_identifier if source_family == "cb_genelge" else source_key,
+            "article_or_section": article_no,
+            "madde_no": article_no,
+            "article_no": article_no,
             "fikra_no": "0",
             "source_id": source_id,
             "span_id": span_id,
@@ -6052,6 +6078,57 @@ def _extract_cb_genelge_numbered_clauses(text: str) -> list[tuple[str, str]]:
         if clause:
             clauses.append((match.group(1), clause))
     return clauses
+
+
+_CB_GENELGE_CLAUSE_STOPWORDS = {
+    "acaba",
+    "alinir",
+    "bakimindan",
+    "belirt",
+    "belirtil",
+    "bunun",
+    "cumhurbaskanligi",
+    "cumhurbaskani",
+    "genelge",
+    "genelgesi",
+    "hangi",
+    "hakkinda",
+    "istiyor",
+    "kamu",
+    "karsi",
+    "karsisinda",
+    "kurum",
+    "kurulus",
+    "kuruluslari",
+    "midir",
+    "nedir",
+    "nelerdir",
+    "olur",
+    "olarak",
+    "sayili",
+    "soru",
+    "uzerinden",
+    "uyarinca",
+}
+
+
+def _cb_genelge_clause_terms(text: str) -> list[str]:
+    terms: list[str] = []
+    for term in re.findall(r"[a-z0-9]+", normalize_query_text(text)):
+        if len(term) < 4 or term in _CB_GENELGE_CLAUSE_STOPWORDS:
+            continue
+        if term.isdigit():
+            continue
+        terms.append(term)
+    return terms
+
+
+def _cb_genelge_clause_ngrams(terms: list[str]) -> set[str]:
+    ngrams: set[str] = set()
+    for size in (2, 3):
+        for index in range(0, max(0, len(terms) - size + 1)):
+            ngrams.add(" ".join(terms[index : index + size]))
+    return ngrams
 
 
 def _build_cb_genelge_document_level_answer(
@@ -6128,24 +6205,15 @@ def _build_cb_genelge_document_level_answer(
         )
         return "\n".join(lines)
 
-    priority_terms = {
-        "isveren",
-        "yonetici",
-        "onleyici",
-        "koruyucu",
-        "egitim",
-        "bilgilendirme",
-        "gizlilik",
-        "toplu",
-        "alo",
-        "basvuru",
-    }
+    query_terms = _cb_genelge_clause_terms(normalized_query)
+    query_term_set = set(query_terms)
+    query_ngrams = _cb_genelge_clause_ngrams(query_terms)
     ranked_clauses: list[tuple[int, str, str]] = []
     for number, clause in clauses:
         normalized_clause = normalize_query_text(clause)
-        overlap = sum(1 for term in priority_terms if term in normalized_clause)
-        if any(term in normalized_query for term in ("isveren", "yonetici", "yukumluluk", "onleyici")):
-            overlap += sum(1 for term in ("isveren", "yonetici", "onleyici", "koruyucu") if term in normalized_clause)
+        clause_terms = set(_cb_genelge_clause_terms(normalized_clause))
+        overlap = len(query_term_set & clause_terms)
+        overlap += 2 * sum(1 for ngram in query_ngrams if ngram in normalized_clause)
         ranked_clauses.append((overlap, number, clause))
     ranked_clauses.sort(key=lambda item: (-item[0], int(item[1]) if item[1].isdigit() else 999))
     selected = ranked_clauses[:5]

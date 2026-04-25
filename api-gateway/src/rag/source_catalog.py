@@ -86,6 +86,7 @@ def _source_prefix(value: Any) -> str:
 
 def _source_key_from_row(row: dict[str, Any]) -> str:
     return _first_present(
+        row.get("source_key"),
         _source_prefix(row.get("source_id")),
         row.get("belge_no"),
         row.get("kanun_no"),
@@ -713,6 +714,43 @@ def _catalog_keys_for_row(row: dict[str, Any]) -> list[str]:
     return [key for key in keys if key]
 
 
+def _source_supplement_catalog_metadata(row: dict[str, Any]) -> dict[str, Any]:
+    source_key = _clean(row.get("source_key"))
+    source_family = _clean(row.get("source_family"))
+    title = _first_present(row.get("canonical_title"), row.get("source_title"), row.get("belge_adi"))
+    article_no = _first_present(row.get("article_no"), row.get("madde_no"), "0")
+    source_id_article = re.sub(r"[^A-Za-z0-9_/-]+", "_", article_no).strip("_") or "0"
+    metadata = {
+        **row,
+        "source_id": _first_present(
+            row.get("source_id"),
+            (
+                f"{source_key}:{source_key}:m{source_id_article}:f0:"
+                f"from{row.get('effective_start') or 'unknown'}:"
+                f"to{row.get('effective_end') or 'unknown'}"
+            ),
+        ),
+        "belge_turu": source_family,
+        "source_type": source_family,
+        "belge_no": source_key,
+        "belge_kisa_adi": source_key,
+        "source_title": title,
+        "full_title": title,
+        "belge_adi": title,
+        "law_name": title,
+        "resmi_gazete_tarih": row.get("official_gazette_date"),
+        "resmi_gazete_sayi": row.get("official_gazette_no"),
+        "yururluk_baslangic": row.get("effective_start"),
+        "yururluk_bitis": row.get("effective_end"),
+        "madde_no": article_no,
+        "display_citation": row.get("canonical_identifier_display") or row.get("citation"),
+    }
+    if source_family == "kanun":
+        metadata["kanun_no"] = row.get("canonical_identifier") or source_key
+        metadata["law_no"] = row.get("canonical_identifier") or source_key
+    return metadata
+
+
 @lru_cache(maxsize=1)
 def load_source_metadata_catalog() -> dict[str, dict[str, Any]]:
     path = _resolve_article_rows_path()
@@ -736,20 +774,30 @@ def load_source_metadata_catalog() -> dict[str, dict[str, Any]]:
 @lru_cache(maxsize=1)
 def load_canonical_source_catalog() -> dict[str, dict[str, Any]]:
     path = _resolve_article_rows_path()
-    if path is None:
-        return {}
-
     catalog: dict[str, dict[str, Any]] = {}
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            row = json.loads(line)
-            source_key = _source_key_from_row(row)
-            if not source_key:
-                continue
-            record = canonical_source_record_from_metadata(row)
-            if not record:
-                continue
-            catalog[source_key] = _merge_canonical_records(catalog.get(source_key), record)
+    if path is not None:
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                row = json.loads(line)
+                source_key = _source_key_from_row(row)
+                if not source_key:
+                    continue
+                record = canonical_source_record_from_metadata(row)
+                if not record:
+                    continue
+                catalog[source_key] = _merge_canonical_records(catalog.get(source_key), record)
+
+    from rag.source_supplements import load_source_supplements
+
+    for supplement in load_source_supplements():
+        row = _source_supplement_catalog_metadata(supplement)
+        source_key = _source_key_from_row(row)
+        if not source_key:
+            continue
+        record = canonical_source_record_from_metadata(row)
+        if not record:
+            continue
+        catalog[source_key] = _merge_canonical_records(catalog.get(source_key), record)
     return catalog
 
 
