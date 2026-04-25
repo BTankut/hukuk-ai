@@ -537,6 +537,23 @@ def milvus_collection_probe(env: dict[str, str]) -> dict[str, Any]:
         }
 
 
+def vector_dimension_from_probe(probe: dict[str, Any]) -> int | None:
+    description = probe.get("description")
+    fields = description.get("fields") if isinstance(description, dict) else None
+    if not isinstance(fields, list):
+        return None
+    for field in fields:
+        if not isinstance(field, dict):
+            continue
+        params = field.get("params")
+        if isinstance(params, dict) and params.get("dim") is not None:
+            try:
+                return int(params["dim"])
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
 def embedding_probe(env: dict[str, str]) -> dict[str, Any]:
     base_url = env.get("EMBEDDING_BASE_URL", "").rstrip("/")
     if not base_url:
@@ -548,6 +565,23 @@ def embedding_probe(env: dict[str, str]) -> dict[str, Any]:
     if health.get("ok"):
         return health
     return {"ok": False, "models": models, "health": health}
+
+
+def live_8000_binding_probe(candidate_api_url: str) -> dict[str, Any]:
+    live_api_url = "http://127.0.0.1:8000/v1"
+    live_env, live_process_probe = effective_runtime_env(live_api_url)
+    candidate_port = parse_port_from_url(candidate_api_url)
+    live_collection = live_env.get("MILVUS_COLLECTION", "")
+    return {
+        "api_url": live_api_url,
+        "health_response": get_json(f"{api_root_from_api_url(live_api_url)}/health"),
+        "models_response": get_json(f"{api_root_from_api_url(live_api_url)}/models"),
+        "process_probe": live_process_probe,
+        "milvus_collection": live_collection,
+        "milvus_entity_count": milvus_collection_probe(live_env).get("entity_count") if live_collection else None,
+        "candidate_api_port": candidate_port,
+        "live_8000_untouched": candidate_port != 8000 and bool(live_collection),
+    }
 
 
 def write_runtime_provenance(
@@ -562,6 +596,8 @@ def write_runtime_provenance(
     branch = run_command(["git", "branch", "--show-current"])
     status = run_command(["git", "status", "--short"])
     dgx_base_url = runtime_env.get("DGX_BASE_URL", "").rstrip("/")
+    milvus_probe = milvus_collection_probe(runtime_env)
+    live_8000_probe = live_8000_binding_probe(args.api_url)
     provenance = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "git_sha": git_sha.get("stdout", ""),
@@ -580,7 +616,7 @@ def write_runtime_provenance(
         "milvus_enabled": runtime_env.get("MILVUS_ENABLED", ""),
         "milvus_uri": default_milvus_uri(runtime_env),
         "milvus_collection": runtime_env.get("MILVUS_COLLECTION", ""),
-        "milvus_collection_probe": milvus_collection_probe(runtime_env),
+        "milvus_collection_probe": milvus_probe,
         "embedding_backend": runtime_env.get("EMBEDDING_BACKEND", ""),
         "embedding_base_url": runtime_env.get("EMBEDDING_BASE_URL", ""),
         "embedding_model": runtime_env.get("EMBEDDING_MODEL", ""),
@@ -593,11 +629,13 @@ def write_runtime_provenance(
         "config_hashes": hash_globs(CONFIG_HASH_GLOBS),
         "benchmark_question_file_hash": file_hash_record(questions_path),
         "answer_key_hash_or_absent": "absent: public benchmark runner has no answer key input",
+        "live_8000_probe": live_8000_probe,
+        "live_8000_untouched": live_8000_probe.get("live_8000_untouched"),
     }
-    milvus_probe = provenance["milvus_collection_probe"]
     provenance["milvus_entity_count"] = (
         milvus_probe.get("entity_count") if isinstance(milvus_probe, dict) else None
     )
+    provenance["vector_dimension"] = vector_dimension_from_probe(milvus_probe) if isinstance(milvus_probe, dict) else None
     json_path = run_dir / "runtime_provenance.json"
     json_path.write_text(json.dumps(provenance, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     md_lines = [
@@ -613,10 +651,13 @@ def write_runtime_provenance(
         f"- dgx_model_env: `{provenance['dgx_model_env']}`",
         f"- milvus_collection: `{provenance['milvus_collection']}`",
         f"- milvus_entity_count: `{provenance['milvus_entity_count']}`",
+        f"- vector_dimension: `{provenance['vector_dimension']}`",
         f"- embedding_backend: `{provenance['embedding_backend']}`",
         f"- embedding_base_url: `{provenance['embedding_base_url']}`",
         f"- guardrails_enabled: `{provenance['guardrails_enabled']}`",
         f"- presidio_enabled: `{provenance['presidio_enabled']}`",
+        f"- live_8000_untouched: `{provenance['live_8000_untouched']}`",
+        f"- live_8000_collection: `{live_8000_probe.get('milvus_collection', '')}`",
     ]
     (run_dir / "runtime_provenance.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
     return provenance
@@ -1241,6 +1282,8 @@ def write_summary(run_dir: Path, summary: dict[str, Any]) -> None:
         f"- runtime_provenance_dgx_model_env: `{summary.get('runtime_provenance_dgx_model_env', '')}`",
         f"- runtime_provenance_milvus_collection: `{summary.get('runtime_provenance_milvus_collection', '')}`",
         f"- runtime_provenance_milvus_entity_count: {summary.get('runtime_provenance_milvus_entity_count')}",
+        f"- runtime_provenance_vector_dimension: {summary.get('runtime_provenance_vector_dimension')}",
+        f"- runtime_provenance_live_8000_untouched: {summary.get('runtime_provenance_live_8000_untouched')}",
     ]
     (run_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -1354,6 +1397,8 @@ def main() -> int:
         "runtime_provenance_dgx_model_env": provenance.get("dgx_model_env", ""),
         "runtime_provenance_milvus_collection": provenance.get("milvus_collection", ""),
         "runtime_provenance_milvus_entity_count": provenance.get("milvus_entity_count"),
+        "runtime_provenance_vector_dimension": provenance.get("vector_dimension"),
+        "runtime_provenance_live_8000_untouched": provenance.get("live_8000_untouched"),
     }
     write_summary(run_dir, summary)
     print(f"Summary: {run_dir / 'summary.md'}")

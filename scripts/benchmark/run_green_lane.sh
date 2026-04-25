@@ -69,6 +69,7 @@ RUN_VALIDATION_STATUS="skipped"
 if [[ -n "$RUN_DIR" ]]; then
   "$PYTHON_BIN" "$ROOT_DIR/scripts/benchmark/validate_hukuk_ai_100_run.py" \
     --run-dir "$RUN_DIR" \
+    --require-provenance \
     --json-out "$OUT_DIR/run_validation.json" \
     --md-out "$OUT_DIR/run_validation.md"
   RUN_VALIDATION_STATUS="pass"

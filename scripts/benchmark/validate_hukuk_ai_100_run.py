@@ -39,6 +39,23 @@ PHASE2_CONTRACT_COLUMNS = [
     "uncertainty_disclosed",
     "manual_review_flag",
 ]
+REQUIRED_PROVENANCE_FIELDS = [
+    "timestamp_utc",
+    "git_sha",
+    "api_url",
+    "gateway_model_name",
+    "milvus_collection",
+    "milvus_entity_count",
+    "vector_dimension",
+    "embedding_backend",
+    "embedding_base_url",
+    "guardrails_enabled",
+    "presidio_enabled",
+]
+WARNING_PROVENANCE_FIELDS = [
+    "dgx_base_url",
+    "dgx_model_env",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -74,6 +91,16 @@ def read_trace_qids(path: Path) -> list[str]:
     return qids
 
 
+def read_json(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {"_json_error": "invalid_json"}
+    return payload if isinstance(payload, dict) else {"_json_error": "not_object"}
+
+
 def write_md(path: Path, summary: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
@@ -97,6 +124,8 @@ def write_md(path: Path, summary: dict[str, object]) -> None:
         f"- invalid_contract_rows: {summary['invalid_contract_rows']}",
         f"- runtime_provenance_present: {summary['runtime_provenance_present']}",
         f"- require_provenance: {summary['require_provenance']}",
+        f"- provenance_missing_fields: {summary['provenance_missing_fields']}",
+        f"- provenance_warning_fields: {summary['provenance_warning_fields']}",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -106,6 +135,7 @@ def main() -> int:
     answers_path = args.run_dir / "candidate_answers.csv"
     trace_path = args.run_dir / "trace.jsonl"
     provenance_path = args.run_dir / "runtime_provenance.json"
+    provenance = read_json(provenance_path)
     question_columns, questions = read_csv(args.questions)
     answer_columns, answers = read_csv(answers_path)
     trace_qids = read_trace_qids(trace_path)
@@ -129,6 +159,16 @@ def main() -> int:
         if any(not row.get(column, "").strip() for column in PHASE2_CONTRACT_COLUMNS)
     )
     invalid_contract_rows = sum(1 for row in answers if row.get("contract_valid", "").strip() == "False")
+    provenance_missing_fields = [
+        field
+        for field in REQUIRED_PROVENANCE_FIELDS
+        if not provenance.get(field) and provenance.get(field) != 0 and provenance.get(field) is not False
+    ]
+    provenance_warning_fields = [
+        field
+        for field in WARNING_PROVENANCE_FIELDS
+        if not provenance.get(field) and provenance.get(field) != 0 and provenance.get(field) is not False
+    ]
 
     summary = {
         "run_dir": str(args.run_dir),
@@ -154,6 +194,8 @@ def main() -> int:
         "runtime_provenance_path": str(provenance_path),
         "runtime_provenance_present": provenance_path.exists(),
         "require_provenance": args.require_provenance,
+        "provenance_missing_fields": provenance_missing_fields,
+        "provenance_warning_fields": provenance_warning_fields,
     }
     hard_fail = (
         len(answers) != len(questions)
@@ -175,7 +217,11 @@ def main() -> int:
         or missing_phase2_contract_fields > 0
         or invalid_contract_rows > 0
     )
-    provenance_fail = args.require_provenance and not provenance_path.exists()
+    provenance_fail = args.require_provenance and (
+        not provenance_path.exists()
+        or bool(provenance_missing_fields)
+        or bool(provenance.get("_json_error"))
+    )
     summary["status"] = "fail" if hard_fail or contract_fail or provenance_fail else "pass"
 
     if args.json_out:
