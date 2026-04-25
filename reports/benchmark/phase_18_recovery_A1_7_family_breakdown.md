@@ -1,0 +1,56 @@
+# Phase 18 Recovery A1.7 Family Breakdown
+
+| Family | Count | Pass | Fail | Avg Score | Phase17F Pass | Delta Pass | Watch |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `CB_GENELGE` | `4` | `4` | `0` | `8.8` | `2` | `2` | `` |
+| `CB_KARAR` | `8` | `6` | `2` | `7.98` | `7` | `-1` | `` |
+| `CB_KARARNAME` | `6` | `6` | `0` | `9.16` | `6` | `0` | `` |
+| `CB_YONETMELIK` | `6` | `4` | `2` | `5.86` | `4` | `0` | `` |
+| `KANUN` | `21` | `15` | `6` | `7.13` | `15` | `0` | `` |
+| `KHK` | `6` | `5` | `1` | `8.78` | `5` | `0` | `yes` |
+| `KKY` | `11` | `8` | `3` | `7.92` | `9` | `-1` | `yes` |
+| `MULGA` | `5` | `2` | `3` | `4.17` | `3` | `-1` | `yes` |
+| `TEBLIGLER` | `8` | `7` | `1` | `7.92` | `7` | `0` | `` |
+| `TUZUK` | `5` | `3` | `2` | `6.3` | `3` | `0` | `yes` |
+| `UY` | `10` | `8` | `2` | `8.15` | `9` | `-1` | `yes` |
+| `YONETMELIK` | `10` | `3` | `7` | `5.33` | `7` | `-4` | `yes` |
+
+## Special Watch
+
+- MULGA pass: `2/5`
+- YONETMELIK pass: `3/10`
+- repealed_source_used_as_active: `0`
+
+## Failed Rows
+
+| QID | Family | Score | Claimed Family | Claimed Identifier | Selected Document |
+|---|---|---:|---|---|---|
+| `CBKAR-03` | `CB_KARAR` | `6.80` | `CB_KARAR` | `1504` | `İSTANBUL İLİNDE YAPILACAK OLAN İNSANSIZ HAVA ARAÇLARI VE AKILLI SİSTEMLER ÜRETİM TESİSİ YATIRIMINA PROJE BAZLI DEVLET YARDIMI VERİLMESİNE İLİŞKİN KARAR (KARAR SAYISI: 1504)` |
+| `CBKAR-08` | `CB_KARAR` | `6.80` | `CB_KARAR` | `9903` | `Yatırımlarda Devlet Yardımları Hakkında Karar (Karar Sayısı: 9903)` |
+| `CBY-01` | `CB_YONETMELIK` | `1.45` | `YONETMELIK` | `7224` | `ELEKTRONİK İMZA KANUNUNUN UYGULANMASINA İLİŞKİN USUL VE ESASLAR HAKKINDA YÖNETMELİK` |
+| `CBY-03` | `CB_YONETMELIK` | `2.50` | `CB_YONETMELIK` | `` | `MADEN VE PETROL İŞLERİ GENEL MÜDÜRLÜĞÜ TEFTİŞ KURULU YÖNETMELİĞİ` |
+| `KANUN-02` | `KANUN` | `3.59` | `KANUN` | `TBK m.398` | `TÜRK BORÇLAR KANUNU` |
+| `KANUN-03` | `KANUN` | `6.09` | `YONETMELIK` | `12459 m.3` | `ALT İŞVERENLİK YÖNETMELİĞİ` |
+| `KANUN-04` | `KANUN` | `1.45` | `TEBLIGLER` | `15677 m.1` | `DIŞ TİCARETTE RİSK ESASLI KONTROL SİSTEMİ TEBLİĞİ (ÜRÜN GÜVENLİĞİ VE DENETİMİ: 2011/53)` |
+| `KANUN-09` | `KANUN` | `0.70` | `MULGA` | `6570 m.16` | `GAYRİMENKUL KİRALARI HAKKINDA KANUNUN YÜRÜRLÜKTEN KALDIRILAN HÜKÜMLERİ` |
+| `KANUN-18` | `KANUN` | `3.25` | `KANUN` | `TBK m.424` | `TÜRK BORÇLAR KANUNU` |
+| `KANUN-19` | `KANUN` | `6.05` | `KANUN` | `5549` | `TEBLİGAT KANUNUNUN YÜRÜRLÜKTEN KALDIRILMIŞ HÜKÜMLERİ` |
+| `KHK-06` | `KHK` | `6.80` | `KHK` | `551` | `PATENT HAKLARININ KORUNMASI HAKKINDA KANUN HÜKMÜNDE KARARNAME` |
+| `KKY-01` | `KKY` | `6.65` | `YONETMELIK` | `34360` | `BANKALARIN BİLGİ SİSTEMLERİ VE ELEKTRONİK BANKACILIK HİZMETLERİ HAKKINDA YÖNETMELİK` |
+| `KKY-04` | `KKY` | `3.25` | `KKY` | `5141` | `TARIM İŞLETMELERİ GENEL MÜDÜRLÜĞÜ ANA STATÜSÜ HAKKINDA KARAR (KARAR SAYISI: 5141)` |
+| `KKY-10` | `KKY` | `6.09` | `TEBLIGLER` | `` | `SABİT TELEFON ŞEBEKESİNE ERİŞİM VEYA SABİT ŞEBEKE ÜZERİNDEN ARAMA HİZMETLERİNE YÖNELİK İLGİLİ PİYASALARDA ETKİN PİYASA GÜCÜNE SAHİP İŞLETMECİLERİN BAZI HİZMETLERİNE İLİŞKİN TARİFELERİN TAVAN FİYAT YÖNTEMİ İLE ONAYLANMASINA YÖNELİK USUL VE ESASLARA İLİŞKİN TEBLİĞ` |
+| `MULGA-01` | `MULGA` | `0.00` | `MULGA` | `3797` | `MİLLİ EĞİTİM BAKANLIĞININ TEŞKİLAT VE GÖREVLERİ HAKKINDA KANUN` |
+| `MULGA-02` | `MULGA` | `3.25` | `MULGA` | `4848` | `KÜLTÜR VE TURİZM BAKANLIĞI TEŞKİLAT VE GÖREVLERİ HAKKINDA KANUN` |
+| `MULGA-05` | `MULGA` | `2.50` | `MULGA` | `6570 m.16` | `GAYRİMENKUL KİRALARI HAKKINDA KANUNUN YÜRÜRLÜKTEN KALDIRILAN HÜKÜMLERİ` |
+| `TEB-06` | `TEBLIGLER` | `3.59` | `TEBLIGLER` | `16558` | `TİCARET ŞİRKETLERİNDE ANONİM ŞİRKET GENEL KURULLARI DIŞINDA ELEKTRONİK ORTAMDA YAPILACAK KURULLAR HAKKINDA TEBLİĞ` |
+| `TUZUK-04` | `TUZUK` | `0.70` | `MULGA` | `6763 m.19` | `TÜRK TİCARET KANUNUNUN MER'İYET VE TATBİK ŞEKLİ HAKKINDA KANUNUN YÜRÜRLÜKTEN KALDIRILAN HÜKÜMLERİ` |
+| `TUZUK-05` | `TUZUK` | `3.25` | `TUZUK` | `65100` | `TÜRK MEDENİ KANUNUNUN VELAYET, VESAYET VE MİRAS HÜKÜMLERİNİN UYGULANMASINA DAİR TÜZÜK` |
+| `UY-07` | `UY` | `1.45` | `KANUN` | `TBK m.426` | `TÜRK BORÇLAR KANUNU` |
+| `UY-08` | `UY` | `6.80` | `UY` | `15894 m.2` | `YENİ YÜZYIL ÜNİVERSİTESİ ÇİFT ANADAL VE YANDAL YÖNETMELİĞİ` |
+| `YON-01` | `YONETMELIK` | `5.75` | `KKY` | `6356 m.2` | `SENDİKALAR VE TOPLU İŞ SÖZLEŞMESİ KANUNU` |
+| `YON-02` | `YONETMELIK` | `6.85` | `KKY` | `` | `MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ` |
+| `YON-03` | `YONETMELIK` | `1.45` | `CB_YONETMELIK` | `1401` | `6713 SAYILI KOLLUK GÖZETİM KOMİSYONU KURULMASI HAKKINDA KANUNUN UYGULANMASINA DAİR YÖNETMELİK` |
+| `YON-05` | `YONETMELIK` | `5.75` | `KANUN` | `3194 m.18` | `İMAR KANUNU` |
+| `YON-06` | `YONETMELIK` | `3.25` | `YONETMELIK` | `836622` | `CEZA İNFAZ KURUMLARI VE TUTUKEVLERİ PERSONELİ EĞİTİM MERKEZLERİ KURULUŞ, GÖREV VE ÇALIŞMA YÖNETMELİĞİ` |
+| `YON-08` | `YONETMELIK` | `5.45` | `UY` | `31299 m.1` | `IŞIK ÜNİVERSİTESİ YATAY GEÇİŞ, ÇİFT ANADAL, YAN DAL VE KREDİ TRANSFERİ YÖNETMELİĞİ` |
+| `YON-10` | `YONETMELIK` | `1.45` | `KKY` | `6356 m.3` | `SENDİKALAR VE TOPLU İŞ SÖZLEŞMESİ KANUNU` |
