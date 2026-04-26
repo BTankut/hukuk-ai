@@ -445,6 +445,35 @@ Decision:
 - The env-parity 20-QID smoke exactly preserves the R3A/R3B/R3C/R3D proxy score and contract/provenance posture.
 - Full R3 is still not complete; identity rerank body, family gate helpers, source lock, and selected-source retention remain in `routers/chat.py`.
 
+## R3F Prep - Identity Rerank Fixture
+
+Status: fixture complete; extraction not started.
+
+Report:
+
+- `reports/benchmark/phase_19_R3F_identity_rerank_fixture.md`
+
+Fixture source runs:
+
+- `reports/benchmark/runs/20260426T_phase19_R3E_source_key_v2_smoke20_envparity`
+- `reports/benchmark/runs/20260426T_phase19_R3F_fixture_UY07_envparity`
+
+Fixture QIDs:
+
+- `CBG-01`
+- `CBKAR-01`
+- `CBKAR-08`
+- `MULGA-02`
+- `YON-01`
+- `TEB-01`
+- `KANUN-01`
+- `UY-07`
+
+Decision:
+
+- R3F code extraction must compare after-extraction output against this fixture before any smoke is accepted.
+- R3F body extraction has not started in this boundary.
+
 ## Remaining Sequence
 
 - R3F+: Continue extracting source identity helpers: identity rerank body, family gate helpers, source lock / selected source retention.
