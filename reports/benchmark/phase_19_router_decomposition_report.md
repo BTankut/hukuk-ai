@@ -271,9 +271,87 @@ Decision:
 - The R3C smoke preserves the R3A/R3B/R1 20-QID proxy score and contract/provenance posture.
 - Full R3 is still not complete; metadata-first catalog lookup, source-key v2 binding, source identity rerank body, family gate helpers, and selected-source retention remain in `routers/chat.py`.
 
+## R3D - Metadata-First Catalog Lookup Extraction
+
+Status: complete.
+
+Scope:
+
+- Moved metadata-first catalog lookup candidate construction, metadata query signal parsing, identifier/title/issuer/year signal helpers, source catalog record scoring, metadata-first selector construction, and metadata-first query expansion into `api-gateway/src/rag/source_identity.py`.
+- Moved relation-query family grouping helpers required by metadata source scoring into `api-gateway/src/rag/source_identity.py`.
+- Kept two compatibility wrappers in `api-gateway/src/routers/chat.py`: `_parse_metadata_lookup_query_signals(...)` still injects local explicit-article refs, and `_select_metadata_first_source_candidates(...)` still injects `load_canonical_source_catalog` so existing tests can patch the router-level catalog loader.
+- Kept identity rerank body, source-key v2 binding final application, selected-source retention, source-lock arbitration, prompt construction, answer synthesis, and confidence policy in `routers/chat.py`.
+- No metadata lookup ordering, candidate filtering threshold, family rule, retrieval weight, QID-specific rule, prompt behavior, or answer synthesis change was introduced.
+
+Validation:
+
+- `api-gateway/.venv/bin/python -m py_compile api-gateway/src/routers/chat.py api-gateway/src/rag/source_identity.py`: PASS
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "metadata_first_selector or source_supplement or slash_numbered or source_catalog" -q`: PASS, `7 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "(source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate) and not keeps_investment_program" -q`: PASS, `43 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate" -q`: FAIL only on known T1 stale expectation `test_source_family_prior_keeps_investment_program_decision_as_cb_karar_candidate` (`family_confidence` expected `<0.75`, actual `0.88`)
+
+R3D 20-QID smoke:
+
+- accepted run: `reports/benchmark/runs/20260426T_phase19_R3D_metadata_lookup_smoke20`
+- qids: `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`, `MULGA-01`, `MULGA-02`, `MULGA-03`, `MULGA-04`, `MULGA-05`, `CBKAR-01`, `CBKAR-02`, `CBKAR-08`, `YON-01`, `YON-02`, `YON-03`, `KANUN-01`, `KANUN-06`, `KANUN-15`, `TEB-01`, `TEB-02`
+- answered: `20/20`
+- errors: `0`
+- missing_trace: `0`
+- contract_valid: `20/20`
+- unsupported_confident_answer: `0`
+- raw_score_proxy: `140.23 / 200`
+- pass_proxy: `15/20`
+- avg_family_match_score: `1.0`
+- avg_document_match_score: `0.758`
+- avg_article_match_score: `0.9`
+- hallucinated_source_count: `1`
+- wrong_family failure-class count: `0`
+- wrong_document failure-class count: `1`
+- source_key_v2_collision_detected_count: `0`
+- binding_source_key_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `20`
+- runtime collection: `mevzuat_faz1_shadow_20260418_compat1024`
+- runtime entity count: `349191`
+- runtime vector dimension: `1024`
+- runtime DGX model: `/models/merged_model_fabric_stage_20260321`
+
+CB_GENELGE preservation:
+
+- source run: `reports/benchmark/runs/20260426T_phase19_R3D_metadata_lookup_smoke20`
+- `CBG-01`: family/document/article `1.00/1.00/1.00`, PASS
+- `CBG-02`: family/document/article `1.00/1.00/1.00`, PASS
+- `CBG-03`: family/document/article `1.00/1.00/1.00`, PASS
+- `CBG-04`: family/document/article `1.00/1.00/1.00`, PASS
+
+Metadata-heavy mini smoke:
+
+- run: `reports/benchmark/runs/20260426T_phase19_R3D_metadata_lookup_mini6`
+- qids: `CBG-01`, `CBG-02`, `CBKAR-01`, `CBKAR-08`, `TEB-01`, `TEB-03`
+- answered: `6/6`
+- errors: `0`
+- missing_trace: `0`
+- contract_valid: `6/6`
+- unsupported_confident_answer: `0`
+- raw_score_proxy: `38.03 / 60`
+- pass_proxy: `3/6`
+- metadata_lookup_hit_count: `6`
+- selector_same_document_hit_rate: `1.0`
+- selector_preferred_family_hit_rate: `1.0`
+- source_key_v2_collision_detected_count: `0`
+- binding_source_key_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `6`
+- note: `TEB-03` remains a quality issue in the metadata-heavy mini smoke (`family_match_score=0.00`, `document_match_score=1.00`, `article_match_score=1.00`), but it does not trip an R3D stop rule and should not be repaired inside an extraction-only step.
+
+Decision:
+
+- R3D is accepted as a behavior-preserving extraction of metadata-first catalog lookup helpers.
+- The 20-QID smoke exactly preserves the R3A/R3B/R3C proxy score and contract/provenance posture.
+- Full R3 is still not complete; source-key v2 binding, identity rerank body, family gate helpers, and selected-source retention remain in `routers/chat.py`.
+- R3E should not start until this R3D boundary is committed and pushed.
+
 ## Remaining Sequence
 
-- R3D+: Continue extracting source identity helpers: metadata lookup, source-key v2 binding, identity rerank body, family gate helpers, source lock / selected source retention.
+- R3E+: Continue extracting source identity helpers: source-key v2 binding, identity rerank body, family gate helpers, source lock / selected source retention.
 - R4: Extract article/span selection helpers.
 - R5: Extract answer slot helpers.
 - R6: Extract answer synthesis helpers.
