@@ -67,13 +67,18 @@ from rag.source_catalog import (
     load_canonical_source_catalog,
     normalize_canonical_text,
     resolve_effective_state,
-    source_family_mapping_profile,
 )
 from rag.source_identity import (
     _SOURCE_FAMILY_DISPLAY_LABELS,
     _apply_source_family_resolution_hints,
+    _canonical_source_family_value,
     _expand_source_family_aliases,
+    _infer_family_from_source_title,
     _infer_requested_source_families,
+    _metadata_active_raw_law_overrides_legacy_family,
+    _metadata_has_active_source_span,
+    _resolve_chunk_source_family,
+    _resolve_chunk_source_family_profile,
     _resolve_source_family_prior,
 )
 from rag.required_slot_matrix import (
@@ -2472,171 +2477,6 @@ def _build_native_dialog_answer_contract(*, answer_text: str) -> dict[str, Any]:
         "claim_units": [],
         "native_dialog": True,
     }
-
-
-def _infer_family_from_source_title(title: Any) -> str | None:
-    normalized = _normalize_tr_text(str(title or ""))
-    if not normalized:
-        return None
-    if "tuzugu" in normalized or "tuzuk" in normalized:
-        return "tuzuk"
-    if "kanun hukmunde kararname" in normalized or re.search(r"\bkhk\b", normalized):
-        return "khk"
-    if "karar sayisi" in normalized or "cumhurbaskani karari" in normalized:
-        return "cb_karar"
-    if "cumhurbaskanligi yonetmeligi" in normalized:
-        return "cb_yonetmelik"
-    if "yonetmelik" in normalized or "yonetmeligi" in normalized:
-        return "yonetmelik"
-    if re.search(r"(?<![a-z0-9])teblig(?!at)[a-z0-9]*(?![a-z0-9])", normalized):
-        return "teblig"
-    if "genelge" in normalized:
-        return "cb_genelge"
-    if "kararname" in normalized:
-        return "cb_kararname"
-    return None
-
-
-def _canonical_source_family_value(value: Any) -> str | None:
-    raw = str(value or "").strip().lower().replace(" ", "_")
-    if not raw:
-        return None
-    aliases = {
-        "cb_genelge": "cb_genelge",
-        "cumhurbaskanligi_genelgesi": "cb_genelge",
-        "cb_karar": "cb_karar",
-        "cumhurbaskani_karari": "cb_karar",
-        "cb_kararname": "cb_kararname",
-        "cumhurbaskanligi_kararnamesi": "cb_kararname",
-        "cb_yonetmelik": "cb_yonetmelik",
-        "cumhurbaskanligi_yonetmeligi": "cb_yonetmelik",
-        "kanun": "kanun",
-        "mulga": "mulga_kanun",
-        "mulga_kanun": "mulga_kanun",
-        "khk": "khk",
-        "kanun_hukmunde_kararname": "khk",
-        "kky": "kky",
-        "kurum_kurulus_yonetmeligi": "kky",
-        "teblig": "teblig",
-        "tebligler": "teblig",
-        "tuzuk": "tuzuk",
-        "uy": "uy",
-        "universite_yonetmeligi": "uy",
-        "yonetmelik": "yonetmelik",
-    }
-    return aliases.get(raw, raw if raw in _RETRIEVAL_PLANNER_ALLOWED_FAMILIES else None)
-
-
-def _metadata_has_active_source_span(metadata: dict[str, Any]) -> bool:
-    end = str(
-        metadata.get("effective_end")
-        or metadata.get("yururluk_bitis")
-        or metadata.get("yürürlük_bitiş")
-        or ""
-    ).strip()
-    if end in _ACTIVE_END_DATE_SENTINELS:
-        return True
-    source_id = str(metadata.get("source_id") or metadata.get("span_id") or metadata.get("chunk_id") or "")
-    return ":to9999-12-31" in source_id or ":tounknown" in source_id
-
-
-def _metadata_active_raw_law_overrides_legacy_family(metadata: dict[str, Any]) -> bool:
-    raw_family = _canonical_source_family_value(
-        metadata.get("source_family_raw")
-        or metadata.get("belge_turu")
-        or metadata.get("source_type")
-    )
-    canonical_family = _canonical_source_family_value(
-        metadata.get("source_family_canonical")
-        or metadata.get("source_family")
-        or metadata.get("canonical_source_family")
-    )
-    return bool(raw_family == "kanun" and canonical_family == "mulga_kanun" and _metadata_has_active_source_span(metadata))
-
-
-def _resolve_chunk_source_family_profile(chunk: RetrievedChunk) -> dict[str, str | None]:
-    metadata = chunk.metadata or {}
-    title_family = _canonical_source_family_value(
-        metadata.get("source_family_title_inferred")
-    ) or _infer_family_from_source_title(
-        metadata.get("source_title")
-        or metadata.get("belge_adi")
-        or metadata.get("kanun_adi")
-        or metadata.get("law_name")
-    )
-    raw_family = _canonical_source_family_value(
-        metadata.get("source_family_raw")
-        or metadata.get("belge_turu")
-        or metadata.get("source_type")
-    )
-    canonical_family = _canonical_source_family_value(
-        metadata.get("source_family_canonical")
-        or metadata.get("source_family")
-        or metadata.get("canonical_source_family")
-    )
-    effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
-    if canonical_family == "mulga_kanun" and raw_family == "kanun" and (
-        effective_state in {"active", "amended"} or _metadata_active_raw_law_overrides_legacy_family(metadata)
-    ):
-        canonical_family = "kanun"
-    resolved_family = canonical_family or raw_family or title_family
-    if resolved_family and title_family:
-        if title_family == "kanun" and resolved_family in {
-            "kky",
-            "uy",
-            "yonetmelik",
-            "cb_yonetmelik",
-            "teblig",
-        }:
-            resolved_family = "kanun"
-        if resolved_family in {"teblig", "kanun", "mulga_kanun"} and title_family in {
-            "yonetmelik",
-            "teblig",
-            "tuzuk",
-            "khk",
-            "cb_genelge",
-            "cb_karar",
-            "cb_kararname",
-            "cb_yonetmelik",
-        }:
-            resolved_family = title_family
-    if title_family in {
-        "khk",
-        "tuzuk",
-        "teblig",
-        "cb_genelge",
-        "cb_yonetmelik",
-        "cb_kararname",
-        "cb_karar",
-    }:
-        resolved_family = title_family
-    mapped_family = _canonical_source_family_value(metadata.get("source_family_mapped"))
-    mapping_reason = str(metadata.get("source_family_mapping_reason") or "")
-    if not mapped_family and metadata:
-        profile = source_family_mapping_profile(metadata)
-        mapped_family = _canonical_source_family_value(profile.get("source_family_mapped"))
-        mapping_reason = mapping_reason or str(profile.get("source_family_mapping_reason") or "")
-        raw_family = raw_family or _canonical_source_family_value(profile.get("source_family_raw"))
-        canonical_family = canonical_family or _canonical_source_family_value(
-            profile.get("source_family_canonical")
-        )
-        title_family = title_family or _canonical_source_family_value(
-            profile.get("source_family_title_inferred")
-        )
-    if not mapped_family:
-        mapped_family = resolved_family
-    return {
-        "raw_family": raw_family,
-        "canonical_family": canonical_family or resolved_family,
-        "title_inferred_family": title_family,
-        "resolved_family": resolved_family,
-        "mapped_family": mapped_family,
-        "mapping_reason": mapping_reason or "canonical_family",
-    }
-
-
-def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
-    return str(_resolve_chunk_source_family_profile(chunk).get("resolved_family") or "") or None
 
 
 def _resolve_chunk_routing_family(chunk: RetrievedChunk) -> str | None:

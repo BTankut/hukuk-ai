@@ -182,9 +182,54 @@ Decision:
 - The known stale T1 source-family-prior confidence expectation remains unresolved by design; it should be handled in the later test split/update track, not by weakening runtime behavior.
 - Full R3 is not complete yet; metadata lookup, source-key v2 binding, identity rerank, and family gate helpers remain in `routers/chat.py`.
 
+## R3B - Chunk Source-Family Profile Extraction
+
+Status: complete.
+
+Scope:
+
+- Moved source-title family inference, source-family canonical value normalization, active source-span detection, active raw-law legacy override detection, chunk source-family profile resolution, and resolved chunk source-family helper into `api-gateway/src/rag/source_identity.py`.
+- Kept `routers.chat._resolve_chunk_routing_family(...)` in place because it depends on local temporal inactivity helpers; it now consumes the extracted profile helper.
+- Left metadata-first catalog lookup, source-key v2 binding, source identity rerank, source lock, selected-source retention, retrieval ordering, prompt construction, and answer synthesis in `routers/chat.py` for later R3 substeps.
+- No source-family mapping aliases, temporal state policy, source selection heuristic, retrieval weighting, QID-specific logic, prompt behavior, or answer synthesis change was introduced.
+
+Validation:
+
+- `api-gateway/.venv/bin/python -m py_compile api-gateway/src/routers/chat.py api-gateway/src/rag/source_identity.py`: PASS
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "(source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate) and not keeps_investment_program" -q`: PASS, `43 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate" -q`: FAIL only on known T1 stale expectation `test_source_family_prior_keeps_investment_program_decision_as_cb_karar_candidate` (`family_confidence` expected `<0.75`, actual `0.88`)
+
+R3B smoke:
+
+- accepted run: `reports/benchmark/runs/20260426T_phase19_R3B_source_family_profile_smoke20`
+- qids: `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`, `MULGA-01`, `MULGA-02`, `MULGA-03`, `MULGA-04`, `MULGA-05`, `CBKAR-01`, `CBKAR-02`, `CBKAR-08`, `YON-01`, `YON-02`, `YON-03`, `KANUN-01`, `KANUN-06`, `KANUN-15`, `TEB-01`, `TEB-02`
+- answered: `20/20`
+- errors: `0`
+- missing_trace: `0`
+- contract_valid: `20/20`
+- unsupported_confident_answer: `0`
+- raw_score_proxy: `140.23 / 200`
+- pass_proxy: `15/20`
+- avg_family_match_score: `1.0`
+- avg_document_match_score: `0.758`
+- avg_article_match_score: `0.9`
+- hallucinated_source_count: `1`
+- source_key_v2_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `20`
+- runtime collection: `mevzuat_faz1_shadow_20260418_compat1024`
+- runtime entity count: `349191`
+- runtime vector dimension: `1024`
+- runtime DGX model: `/models/merged_model_fabric_stage_20260321`
+
+Decision:
+
+- R3B is accepted as a behavior-preserving extraction of chunk source-family profile primitives.
+- The R3B smoke exactly preserves the R3A/R1 20-QID proxy score and contract/provenance posture.
+- Full R3 is still not complete; metadata-first catalog lookup, source-key v2 binding, source identity rerank, family gate helpers, and selected-source retention remain in `routers/chat.py`.
+
 ## Remaining Sequence
 
-- R3B+: Continue extracting source identity helpers: metadata lookup, source-key v2 binding, identity rerank, family gate helpers, source lock / selected source retention.
+- R3C+: Continue extracting source identity helpers: metadata lookup, source-key v2 binding, identity rerank, family gate helpers, source lock / selected source retention.
 - R4: Extract article/span selection helpers.
 - R5: Extract answer slot helpers.
 - R6: Extract answer synthesis helpers.
