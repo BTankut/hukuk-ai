@@ -70,24 +70,31 @@ from rag.source_catalog import (
 )
 from rag.source_identity import (
     _SOURCE_FAMILY_DISPLAY_LABELS,
+    _apply_pre_generation_family_pool as _apply_pre_generation_family_pool_impl,
+    _apply_relation_query_metadata_focus as _apply_relation_query_metadata_focus_impl,
     _apply_source_family_resolution_hints,
     _build_metadata_first_query_expansion,
     _canonical_source_family_value,
     _chunk_article_token,
     _chunk_clause_token,
+    _chunk_matches_selected_source_key as _chunk_matches_selected_source_key_impl,
     _chunk_matches_metadata_first_candidate,
     _chunk_source_identity_values,
     _chunk_uses_legacy_source_key_alias as _chunk_uses_legacy_source_key_alias_impl,
+    _clamp_families_to_strong_resolution as _clamp_families_to_strong_resolution_impl,
     _expand_source_family_aliases,
     _extract_source_identity_identifier_tokens,
     _extract_year_tokens,
+    _focus_chunks_on_selected_sources as _focus_chunks_on_selected_sources_impl,
     _infer_family_from_source_title,
     _infer_requested_source_families,
+    _metadata_first_focus_keys_for_source_lock as _metadata_first_focus_keys_for_source_lock_impl,
     _metadata_lookup_has_strong_query_anchor,
     _metadata_active_raw_law_overrides_legacy_family,
     _metadata_has_active_source_span,
     _normalize_article_token,
     _parse_metadata_lookup_query_signals as _parse_metadata_lookup_query_signals_impl,
+    _prioritize_chunks_for_source_families as _prioritize_chunks_for_source_families_impl,
     _query_has_academic_regulation_intent,
     _relation_query_family_profile,
     _resolve_chunk_binding_source_key as _resolve_chunk_binding_source_key_impl,
@@ -105,6 +112,7 @@ from rag.source_identity import (
     _source_identity_reranker_enabled,
     _source_key_collision_profile as _source_key_collision_profile_impl,
     _source_key_v2_collision_profile as _source_key_v2_collision_profile_impl,
+    _strong_source_family_gate as _strong_source_family_gate_impl,
 )
 from rag.required_slot_matrix import (
     RequiredSlotResolution,
@@ -1346,20 +1354,10 @@ def _clamp_families_to_strong_resolution(
     families: list[str],
     source_family_resolution: SourceFamilyResolution,
 ) -> list[str]:
-    strong_families = (
-        list(source_family_resolution.routing_families or source_family_resolution.preferred_families)
-        if source_family_resolution.preferred_families
-        else []
+    return _clamp_families_to_strong_resolution_impl(
+        families,
+        source_family_resolution,
     )
-    if not strong_families and source_family_resolution.family_confidence >= 0.75:
-        strong_families = list(source_family_resolution.routing_families)
-    if not strong_families:
-        return families
-    allowed = set(_expand_source_family_aliases(strong_families))
-    clamped = [family for family in families if family in allowed]
-    if not clamped:
-        clamped = list(allowed)
-    return dedupe_strings(clamped)
 
 
 async def _run_source_cluster_selector(
@@ -1674,16 +1672,6 @@ def _resolve_trace_source_display_label(trace: dict[str, Any]) -> str:
         or trace.get("source_identifier")
         or trace.get("source_key")
         or trace.get("source_id")
-        or ""
-    )
-
-
-def _resolve_candidate_source_display_label(candidate: dict[str, Any]) -> str:
-    return str(
-        candidate.get("canonical_title")
-        or candidate.get("display_title")
-        or candidate.get("source_key")
-        or candidate.get("canonical_identifier")
         or ""
     )
 
@@ -3697,136 +3685,17 @@ def _apply_relation_query_metadata_focus(
     query: str,
     source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
-    if not metadata_first_selector or not metadata_first_selector.get("candidates"):
-        return metadata_first_selector
-
-    relation_profile = _relation_query_family_profile(
-        query,
+    return _apply_relation_query_metadata_focus_impl(
+        metadata_first_selector,
+        query=query,
         source_family_resolution=source_family_resolution,
     )
-    selector = dict(metadata_first_selector)
-    selector["relation_query_detected"] = relation_profile.get("relation_query_detected") or False
-    selector.setdefault("primary_source_candidate", "")
-    selector.setdefault("supporting_source_candidate", "")
-    selector.setdefault("final_primary_source_reason", "")
-    if not relation_profile.get("relation_query_detected"):
-        return selector
-
-    primary_group = str(relation_profile.get("primary_group") or "")
-    supporting_group = str(relation_profile.get("supporting_group") or "")
-    candidates = [item for item in (selector.get("candidates") or []) if isinstance(item, dict)]
-    if not primary_group:
-        selector["final_primary_source_reason"] = str(
-            relation_profile.get("reason") or "relation_query_detected"
-        )
-        return selector
-
-    primary_candidates = [
-        candidate
-        for candidate in candidates
-        if _source_family_relation_group(candidate.get("source_family")) == primary_group
-    ]
-    supporting_candidates = [
-        candidate
-        for candidate in candidates
-        if _source_family_relation_group(candidate.get("source_family")) == supporting_group
-    ]
-    selector["primary_source_candidate"] = str(
-        (
-            (_resolve_candidate_source_display_label(primary_candidates[0]) if primary_candidates else None)
-            or (primary_candidates[0].get("canonical_identifier") if primary_candidates else None)
-            or ""
-        )
-    )
-    selector["supporting_source_candidate"] = str(
-        (
-            (_resolve_candidate_source_display_label(supporting_candidates[0]) if supporting_candidates else None)
-            or (supporting_candidates[0].get("canonical_identifier") if supporting_candidates else None)
-            or ""
-        )
-    )
-    if not primary_candidates:
-        selector["final_primary_source_reason"] = "relation_query_no_primary_metadata_candidate"
-        return selector
-
-    selector["candidates"] = primary_candidates + [
-        candidate for candidate in candidates if candidate not in primary_candidates
-    ]
-    selector["selected_source_keys"] = dedupe_strings(
-        [
-            str(candidate.get("source_key") or "")
-            for candidate in primary_candidates
-            if candidate.get("source_key")
-        ]
-    )
-    selector["selected_families"] = dedupe_strings(
-        [
-            str(candidate.get("source_family") or "")
-            for candidate in primary_candidates
-            if candidate.get("source_family")
-        ]
-    )
-    selector["final_primary_source_reason"] = str(
-        relation_profile.get("reason") or "relation_query_primary_metadata_focus"
-    )
-    return selector
 
 
 def _metadata_first_focus_keys_for_source_lock(
     metadata_first_selector: dict[str, Any] | None,
 ) -> set[str]:
-    if not metadata_first_selector or not metadata_first_selector.get("metadata_lookup_hit"):
-        return set()
-
-    candidates = [
-        candidate
-        for candidate in (metadata_first_selector.get("candidates") or [])
-        if isinstance(candidate, dict)
-    ]
-    if not candidates:
-        return set()
-
-    lookup_source = str(metadata_first_selector.get("metadata_lookup_source") or "")
-    if lookup_source == "exact_identifier_lookup" or metadata_first_selector.get("query_identifier_tokens"):
-        return {
-            str(key)
-            for candidate in candidates
-            for key in (candidate.get("focus_keys") or [])
-            if str(key or "").strip()
-        }
-
-    top = candidates[0]
-    try:
-        confidence = float(
-            top.get("metadata_lookup_confidence")
-            or metadata_first_selector.get("metadata_lookup_confidence")
-            or 0.0
-        )
-    except (TypeError, ValueError):
-        confidence = 0.0
-    if confidence < 0.75:
-        return set()
-
-    reasons = [
-        str(reason)
-        for reason in (top.get("match_reasons") or [])
-        if isinstance(reason, str) and reason.strip()
-    ]
-    strong_title_or_topic_anchor = any(
-        reason.startswith("title_ngram_exact:")
-        or reason.startswith("title_ngram_strong:")
-        or reason.startswith("cb_genelge_topic_match:")
-        or reason in {"title_exact_phrase", "title_strong_overlap"}
-        for reason in reasons
-    )
-    if not strong_title_or_topic_anchor:
-        return set()
-
-    return {
-        str(key)
-        for key in (top.get("focus_keys") or [])
-        if str(key or "").strip()
-    }
+    return _metadata_first_focus_keys_for_source_lock_impl(metadata_first_selector)
 
 
 def _legacy_source_binding_profile(
@@ -4344,32 +4213,14 @@ def _chunk_matches_selected_source_key(
     chunk: RetrievedChunk,
     selected_source_keys: set[str] | None,
 ) -> bool:
-    if not selected_source_keys:
-        return False
-    selected_key_set = {
-        value
-        for key in selected_source_keys
-        for value in (
-            str(key).strip().lower(),
-            _normalize_tr_text(str(key)),
-            normalize_canonical_text(str(key)),
-        )
-        if value
-    }
-    for candidate in (
-        _resolve_chunk_source_key(chunk),
-        _resolve_chunk_document_key(chunk),
-        _resolve_chunk_binding_source_key(chunk, include_span=False),
-        _resolve_chunk_binding_source_key(chunk, include_span=True),
-    ):
-        for value in (
-            str(candidate).strip().lower(),
-            _normalize_tr_text(str(candidate)),
-            normalize_canonical_text(str(candidate)),
-        ):
-            if value and value in selected_key_set:
-                return True
-    return False
+    return _chunk_matches_selected_source_key_impl(
+        chunk,
+        selected_source_keys,
+        binding_source_key_resolver=lambda current, include_span: _resolve_chunk_binding_source_key(
+            current,
+            include_span=include_span,
+        ),
+    )
 
 
 def _prioritize_chunks_for_source_families(
@@ -4379,96 +4230,23 @@ def _prioritize_chunks_for_source_families(
     source_families: list[str],
     selected_source_keys: set[str] | None = None,
 ) -> list[RetrievedChunk]:
-    if not chunks:
-        return chunks
-
-    family_order = {family: index for index, family in enumerate(source_families)}
-    query_terms = _extract_retrieval_priority_terms(query)
-    numbered_laws = set(extract_numbered_law_mentions(query))
-    identifier_tokens = _extract_source_identifier_tokens(query)
-    current_validity_query = _asks_current_validity_query(query)
-    source_cluster_sizes: dict[str, int] = {}
-    for chunk in chunks:
-        source_key = _resolve_chunk_binding_source_key(chunk, include_span=False)
-        source_cluster_sizes[source_key] = source_cluster_sizes.get(source_key, 0) + 1
-
-    if source_families and not any(
-        (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk)) in family_order
-        for chunk in chunks
-    ):
-        return chunks
-
-    def _rank_tuple(item: tuple[int, RetrievedChunk]) -> tuple[Any, ...]:
-        original_index, chunk = item
-        metadata = chunk.metadata or {}
-        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
-        source_title = (
-            metadata.get("source_title")
-            or metadata.get("belge_adi")
-            or metadata.get("kanun_adi")
-            or metadata.get("law_name")
-        )
-        heading = metadata.get("heading") or metadata.get("article_heading")
-        cluster_size = source_cluster_sizes.get(_resolve_chunk_binding_source_key(chunk, include_span=False), 1)
-        selected_source_rank = (
-            0
-            if not selected_source_keys or _chunk_matches_selected_source_key(chunk, selected_source_keys)
-            else 1
-        )
-        lane_rank = _chunk_recall_lane_rank(chunk)
-        family_match = 0 if not source_families else (0 if family in family_order else 1)
-        family_rank = family_order.get(family, len(family_order))
-        title_overlap = _count_term_overlap(str(source_title or ""), query_terms)
-        heading_overlap = _count_term_overlap(str(heading or ""), query_terms)
-        text_overlap = _count_term_overlap(chunk.text, query_terms)
-        generic_heading_only_penalty = 0
-        if heading_overlap > 0 and title_overlap == 0 and text_overlap <= heading_overlap:
-            generic_heading_only_penalty = 1
-        dense_score = chunk.score or 0.0
-        law_match_rank = 0
-        if numbered_laws:
-            law_match_rank = 0 if numbered_laws & _chunk_law_candidates(chunk) else 1
-        identifier_match_rank = 0
-        if identifier_tokens:
-            identifier_match_rank = 0 if _chunk_matches_identifier_tokens(chunk, identifier_tokens) else 1
-        active_rank = _chunk_active_rank(chunk) if current_validity_query else 0
-        if source_families:
-            return (
-                active_rank,
-                lane_rank,
-                selected_source_rank,
-                family_match,
-                family_rank,
-                identifier_match_rank,
-                law_match_rank,
-                generic_heading_only_penalty,
-                -title_overlap,
-                -heading_overlap,
-                -cluster_size,
-                -text_overlap,
-                -dense_score,
-                original_index,
-            )
-        return (
-            lane_rank,
-            identifier_match_rank,
-            law_match_rank,
-            active_rank,
-            selected_source_rank,
-            generic_heading_only_penalty,
-            -title_overlap,
-            -heading_overlap,
-            -cluster_size,
-            -text_overlap,
-            -dense_score,
-            original_index,
-        )
-
-    ranked = sorted(
-        enumerate(chunks),
-        key=_rank_tuple,
+    return _prioritize_chunks_for_source_families_impl(
+        query=query,
+        chunks=chunks,
+        source_families=source_families,
+        selected_source_keys=selected_source_keys,
+        extract_source_identifier_tokens=_extract_source_identifier_tokens,
+        asks_current_validity_query=_asks_current_validity_query,
+        resolve_chunk_routing_family=_resolve_chunk_routing_family,
+        chunk_law_candidates=_chunk_law_candidates,
+        chunk_matches_identifier_tokens=_chunk_matches_identifier_tokens,
+        chunk_active_rank=_chunk_active_rank,
+        chunk_recall_lane_rank=_chunk_recall_lane_rank,
+        binding_source_key_resolver=lambda current, include_span: _resolve_chunk_binding_source_key(
+            current,
+            include_span=include_span,
+        ),
     )
-    return [chunk for _index, chunk in ranked]
 
 
 def _focus_chunks_on_selected_sources(
@@ -4476,23 +4254,14 @@ def _focus_chunks_on_selected_sources(
     chunks: list[RetrievedChunk],
     selected_source_keys: set[str],
 ) -> list[RetrievedChunk]:
-    if not chunks or not selected_source_keys:
-        return chunks
-
-    selected_chunks = [
-        chunk for chunk in chunks
-        if _chunk_matches_selected_source_key(chunk, selected_source_keys)
-    ]
-    if not selected_chunks:
-        return chunks
-
-    other_chunks = [
-        chunk for chunk in chunks
-        if not _chunk_matches_selected_source_key(chunk, selected_source_keys)
-    ]
-    max_selected = max(4, min(8, len(selected_chunks)))
-    max_other = 2 if len(selected_chunks) >= 4 else 3
-    return selected_chunks[:max_selected] + other_chunks[:max_other]
+    return _focus_chunks_on_selected_sources_impl(
+        chunks=chunks,
+        selected_source_keys=selected_source_keys,
+        binding_source_key_resolver=lambda current, include_span: _resolve_chunk_binding_source_key(
+            current,
+            include_span=include_span,
+        ),
+    )
 
 
 def _apply_source_family_answer_hint(
@@ -8525,11 +8294,7 @@ def _build_completeness_synthesis_features(
 
 
 def _strong_source_family_gate(source_family_resolution: SourceFamilyResolution) -> set[str]:
-    if source_family_resolution.preferred_families:
-        return set(_expand_source_family_aliases(source_family_resolution.preferred_families))
-    if source_family_resolution.family_confidence < 0.75:
-        return set()
-    return set(_expand_source_family_aliases(source_family_resolution.routing_families))
+    return _strong_source_family_gate_impl(source_family_resolution)
 
 
 def _apply_pre_generation_family_pool(
@@ -8540,176 +8305,16 @@ def _apply_pre_generation_family_pool(
     query: str = "",
     supporting_source_families: list[str] | None = None,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
-    expected_family_prior = source_family_resolution.expected_family_prior or source_family_resolution.predicted_family
-    source_key_collision_profile = _source_key_collision_profile(chunks)
-    source_key_v2_collision_profile = _source_key_v2_collision_profile(chunks)
-    pre_filter_family_set = dedupe_strings(
-        (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-        for chunk in chunks
+    return _apply_pre_generation_family_pool_impl(
+        chunks=chunks,
+        source_family_resolution=source_family_resolution,
+        top_k_effective=top_k_effective,
+        query=query,
+        supporting_source_families=supporting_source_families,
+        resolve_chunk_routing_family=_resolve_chunk_routing_family,
+        dedupe_retrieved_chunks=_dedupe_retrieved_chunks,
+        hard_pre_generation_family_gates=_HARD_PRE_GENERATION_FAMILY_GATES,
     )
-    preferred_families = dedupe_strings(_expand_source_family_aliases(source_family_resolution.preferred_families))
-    fallback_families = list(source_family_resolution.fallback_families)
-    family_gate_reason = source_family_resolution.family_override_reason
-    no_gate_reason = ""
-    if not chunks:
-        no_gate_reason = "no_candidates"
-    elif not preferred_families:
-        no_gate_reason = "no_preferred_family_prior"
-    policy: dict[str, Any] = {
-        "expected_family_prior": expected_family_prior,
-        "preferred_families": preferred_families,
-        "fallback_families": fallback_families,
-        "preferred_family_pool_size": 0,
-        "cross_family_fallback_used": False,
-        "selected_family_confidence": round(source_family_resolution.selected_family_confidence, 3),
-        "family_override_reason": source_family_resolution.family_override_reason,
-        "pre_filter_family_set": pre_filter_family_set,
-        "reranked_family_set": pre_filter_family_set,
-        "selected_family_source": pre_filter_family_set[0] if pre_filter_family_set else None,
-        "family_gate_status": "no_gate",
-        "family_gate_reason": family_gate_reason,
-        "no_gate_reason": no_gate_reason,
-        **source_key_collision_profile,
-        **source_key_v2_collision_profile,
-    }
-    if not chunks or not preferred_families:
-        return chunks, policy
-
-    preferred_family_set = set(preferred_families)
-    preferred_chunks = [
-        chunk for chunk in chunks
-        if (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown") in preferred_family_set
-    ]
-    supporting_family_set = set(_expand_source_family_aliases(supporting_source_families or [])) - preferred_family_set
-    supporting_bridge_chunks: list[RetrievedChunk] = []
-    if preferred_chunks and supporting_family_set and query:
-        query_terms = _extract_retrieval_priority_terms(query)
-        supporting_bridge_chunks = [
-            chunk
-            for chunk in chunks
-            if chunk not in preferred_chunks
-            and (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-            in supporting_family_set
-            and (
-                _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms) >= 2
-                or _count_term_overlap(chunk.text, query_terms) >= 2
-                or bool((chunk.metadata or {}).get("domain_law_supporting_source"))
-            )
-        ][: max(2, min(6, top_k_effective // 3))]
-    historical_title_bridge_chunks: list[RetrievedChunk] = []
-    if (
-        source_family_resolution.expected_family_prior == "mulga_kanun"
-        and source_family_resolution.historical_or_repealed_question
-        and query
-    ):
-        query_terms = _extract_retrieval_priority_terms(query)
-        fallback_family_set = set(fallback_families)
-        title_bridge_family_set = {
-            *fallback_family_set,
-            "yonetmelik",
-            "kky",
-            "uy",
-            "cb_yonetmelik",
-            "tuzuk",
-            "khk",
-        }
-        historical_title_bridge_chunks = [
-            chunk
-            for chunk in chunks
-            if chunk not in preferred_chunks
-            and (
-                not title_bridge_family_set
-                or (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-                in title_bridge_family_set
-            )
-            and _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms) >= 3
-        ][: max(2, min(6, top_k_effective // 3))]
-    policy["preferred_family_pool_size"] = len(preferred_chunks)
-    if preferred_chunks:
-        policy["family_override_reason"] = "strong_preferred_family_pool"
-        policy["family_gate_reason"] = "preferred_family_pool_available"
-        policy["no_gate_reason"] = ""
-        reranked_family_set = dedupe_strings(
-            (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-            for chunk in preferred_chunks
-        )
-        policy["reranked_family_set"] = reranked_family_set
-        policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
-        policy["family_gate_status"] = "locked_preferred_family"
-        if supporting_bridge_chunks:
-            policy["family_override_reason"] = "preferred_family_with_supporting_family_bridge"
-            policy["supporting_family_bridge_count"] = len(supporting_bridge_chunks)
-            policy["supporting_family_bridge_families"] = dedupe_strings(
-                (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-                for chunk in supporting_bridge_chunks
-            )
-            return _dedupe_retrieved_chunks(
-                [*preferred_chunks, *supporting_bridge_chunks]
-            )[:top_k_effective], policy
-        if historical_title_bridge_chunks:
-            policy["family_override_reason"] = "historical_title_bridge_with_preferred_family"
-            policy["historical_title_bridge_count"] = len(historical_title_bridge_chunks)
-            return _dedupe_retrieved_chunks(
-                [*preferred_chunks, *historical_title_bridge_chunks]
-            )[:top_k_effective], policy
-        return preferred_chunks[:top_k_effective], policy
-
-    fallback_family_set = set(fallback_families)
-    if expected_family_prior in _HARD_PRE_GENERATION_FAMILY_GATES:
-        if historical_title_bridge_chunks:
-            policy["family_override_reason"] = "historical_title_bridge_no_preferred_family"
-            policy["family_gate_reason"] = "historical_title_bridge_no_preferred_family"
-            policy["historical_title_bridge_count"] = len(historical_title_bridge_chunks)
-            policy["no_gate_reason"] = ""
-            reranked_family_set = dedupe_strings(
-                (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-                for chunk in historical_title_bridge_chunks
-            )
-            policy["reranked_family_set"] = reranked_family_set
-            policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
-            policy["family_gate_status"] = "historical_title_bridge"
-            policy["cross_family_fallback_used"] = True
-            return historical_title_bridge_chunks[:top_k_effective], policy
-        policy["family_override_reason"] = "hard_family_gate_no_preferred_candidates"
-        policy["family_gate_reason"] = "hard_family_gate_no_preferred_candidates"
-        policy["no_gate_reason"] = ""
-        policy["family_gate_status"] = "hard_gate_no_preferred_candidates"
-        policy["reranked_family_set"] = []
-        policy["selected_family_source"] = None
-        return [], policy
-
-    fallback_chunks = [
-        chunk for chunk in chunks
-        if fallback_family_set
-        and (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-        in fallback_family_set
-    ]
-    policy["cross_family_fallback_used"] = True
-    if fallback_chunks:
-        policy["family_override_reason"] = "preferred_family_pool_empty_controlled_alias_fallback"
-        policy["family_gate_reason"] = "controlled_alias_fallback"
-        policy["no_gate_reason"] = ""
-        reranked_family_set = dedupe_strings(
-            (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-            for chunk in fallback_chunks
-        )
-        policy["reranked_family_set"] = reranked_family_set
-        policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
-        policy["family_gate_status"] = "controlled_alias_fallback"
-        return fallback_chunks[:top_k_effective], policy
-
-    policy["family_override_reason"] = "preferred_family_pool_empty_global_fallback"
-    policy["family_gate_reason"] = "global_fallback"
-    policy["no_gate_reason"] = ""
-    filtered = chunks[:top_k_effective]
-    reranked_family_set = dedupe_strings(
-        (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown")
-        for chunk in filtered
-    )
-    policy["reranked_family_set"] = reranked_family_set
-    policy["selected_family_source"] = reranked_family_set[0] if reranked_family_set else None
-    policy["family_gate_status"] = "global_fallback"
-    return filtered, policy
 
 
 def _build_trace_payload(

@@ -514,9 +514,85 @@ Decision:
 - R3F is accepted as a behavior-preserving extraction of identity rerank body/scoring logic.
 - R3G is unblocked by R3F: fixture diff and smoke gates show no new wrong-family, source-key v2 collision, binding collision, contract invalid, unsupported-confident, or selected-source drift.
 
+## R3G - Family Gate / Source Lock / Selected-Source Retention Extraction
+
+Status: complete.
+
+Scope:
+
+- Moved family clamp, relation-query metadata focus, metadata-first source-lock key selection, selected-source key matching, family-priority chunk ordering, selected-source retention, strong family gate calculation, and pre-generation family pool logic into `api-gateway/src/rag/source_identity.py`.
+- Kept compatibility wrappers in `api-gateway/src/routers/chat.py` and injected router-local callbacks for temporal activity, routing-family resolution, law candidate extraction, identifier matching, recall-lane ranking, canonical binding-key resolution, and retrieved-chunk dedupe.
+- Kept answer synthesis, prompt construction, answer contract repair, confidence policy, final response rendering, and request/response wiring in `routers/chat.py`.
+- No rerank weight, family threshold, hard gate set, selected-source retention cap, candidate ordering, source-selection rule, retrieval query, prompt, answer synthesis, or QID-specific behavior was changed.
+
+Validation:
+
+- `api-gateway/.venv/bin/python -m py_compile api-gateway/src/routers/chat.py api-gateway/src/rag/source_identity.py`: PASS
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "family_gate or preferred_family or selected_source_retention or source_lock or primary_source" -q`: PASS, `4 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "(family_gate or preferred_family or selected_source_retention or source_lock or primary_source or metadata_selected_source or source_identity_reranker or source_cluster or pre_generation_family_pool or prioritize_chunks or focus_chunks or apply_relation_query_metadata_focus) and not keeps_investment_program" -q`: PASS, `27 passed`
+
+Runtime provenance:
+
+- gateway restarted on `127.0.0.1:8000`
+- `DGX_BASE_URL=http://192.168.12.243:30000/v1`
+- `DGX_MODEL=/models/merged_model_fabric_stage_20260321`
+- `MILVUS_COLLECTION=mevzuat_faz1_shadow_20260418_compat1024`
+- `MILVUS_ENTITY_COUNT=349191`
+- `EMBEDDING_BACKEND=remote`
+- `EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1`
+- `EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct`
+- `GUARDRAILS_ENABLED=false`
+- `PRESIDIO_ENABLED=false`
+- `VERIFICATION_ENABLED=false`
+
+R3G 20-QID smoke:
+
+- accepted run: `reports/benchmark/runs/20260427T_phase19_R3G_family_gate_source_lock_smoke20_envparity`
+- qids: `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`, `MULGA-01`, `MULGA-02`, `MULGA-03`, `MULGA-04`, `MULGA-05`, `CBKAR-01`, `CBKAR-02`, `CBKAR-08`, `YON-01`, `YON-02`, `YON-03`, `KANUN-01`, `KANUN-06`, `KANUN-15`, `TEB-01`, `TEB-02`
+- answered: `20/20`
+- errors: `0`
+- contract_valid: `20/20`
+- unsupported_confident_answer: `0`
+- answer_contract_invalid_count: `0`
+- raw_score_proxy: `140.23 / 200`
+- pass_proxy: `15/20`
+- avg_family_match_score: `1.0`
+- avg_document_match_score: `0.758`
+- avg_article_match_score: `0.9`
+- hallucinated_source_count: `1`
+- wrong_family failure-class count: `0`
+- wrong_document failure-class count: `1`
+- source_key_v2_collision_detected_count: `0`
+- binding_source_key_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `20`
+- binding_source_key_version: `canonical_source_key_v2` for all `20`
+
+Focused family/source-lock smoke:
+
+- accepted run: `reports/benchmark/runs/20260427T_phase19_R3G_focused_family_gate_source_lock_envparity`
+- qids: `KANUN-03`, `KANUN-04`, `KANUN-09`, `KANUN-19`, `YON-01`, `YON-02`, `YON-03`, `YON-05`, `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`
+- raw_score_proxy: `96.79 / 120`
+- pass_proxy: `11/12`
+- KANUN primary/supporting group: `34.32 / 40`, `4/4`
+- YON boundary group: `27.27 / 40`, `3/4`, fail `YON-05`
+- CB_GENELGE group: `35.20 / 40`, `4/4`
+- unsupported_confident_answer_count: `0`
+- answer_contract_invalid_count: `0`
+- source_key_v2_collision_detected_count: `0`
+- binding_source_key_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `12`
+- wrong_family failure-class count: `0`
+- wrong_document failure-class count: `1`
+
+Decision:
+
+- R3G is accepted as behavior-preserving for family gate, source lock, and selected-source retention helper extraction.
+- The R3G 20-QID smoke exactly preserves the R3F/R3E proxy score and collision/contract posture.
+- The only focused-set failure is `YON-05`, a pre-existing document-quality/backlog issue also visible before R3G; it is not a new extraction regression.
+- R3 source-identity extraction is complete enough to start R4 article/span selection extraction.
+
 ## Remaining Sequence
 
-- R3F+: Continue extracting source identity helpers: identity rerank body, family gate helpers, source lock / selected source retention.
 - R4: Extract article/span selection helpers.
 - R5: Extract answer slot helpers.
 - R6: Extract answer synthesis helpers.
