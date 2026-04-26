@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import os
 import re
 from typing import Any
 
 from faz2a_hardening import dedupe_strings
 from rag.orchestrator import RetrievedChunk
-from rag.source_catalog import resolve_effective_state, source_family_mapping_profile
+from rag.source_catalog import normalize_canonical_text, resolve_effective_state, source_family_mapping_profile
 from source_family_resolver import SourceFamilyResolution
 from source_family_resolver import resolve_source_family_prior as _resolve_source_family_prior_impl
 
@@ -424,3 +425,65 @@ def _resolve_chunk_source_family_profile(chunk: RetrievedChunk) -> dict[str, str
 
 def _resolve_chunk_source_family(chunk: RetrievedChunk) -> str | None:
     return str(_resolve_chunk_source_family_profile(chunk).get("resolved_family") or "") or None
+
+
+def _source_identity_reranker_enabled() -> bool:
+    return os.getenv("SOURCE_IDENTITY_RERANKER_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+
+
+def _chunk_source_identity_values(chunk: RetrievedChunk) -> set[str]:
+    metadata = chunk.metadata or {}
+    values: set[str] = set()
+    for value in (
+        metadata.get("source_id"),
+        metadata.get("belge_no"),
+        metadata.get("kanun_no"),
+        metadata.get("law_no"),
+        metadata.get("belge_kisa_adi"),
+        metadata.get("kanun_kisa_adi"),
+        metadata.get("law_short_name"),
+        metadata.get("canonical_identifier"),
+        metadata.get("canonical_identifier_display"),
+        metadata.get("decision_number"),
+        metadata.get("kararname_number"),
+        metadata.get("genelge_number"),
+        metadata.get("generalge_number"),
+        metadata.get("teblig_number"),
+        metadata.get("sira_no"),
+        metadata.get("seri_no"),
+        metadata.get("regulation_number"),
+        metadata.get("university_name_canonical"),
+        metadata.get("canonical_title_family_normalized"),
+        metadata.get("source_title"),
+        metadata.get("belge_adi"),
+        metadata.get("kanun_adi"),
+        metadata.get("full_title"),
+        chunk.source,
+        chunk.citation,
+    ):
+        raw = str(value or "").strip()
+        if not raw:
+            continue
+        values.add(raw.lower())
+        normalized = normalize_canonical_text(raw)
+        if normalized:
+            values.add(normalized)
+        source_prefix = raw.split(":", 1)[0]
+        if source_prefix:
+            values.add(source_prefix.lower())
+    return values
+
+
+def _chunk_matches_metadata_first_candidate(chunk: RetrievedChunk, candidate: dict[str, Any]) -> bool:
+    values = _chunk_source_identity_values(chunk)
+    for value in (
+        candidate.get("source_key"),
+        candidate.get("canonical_identifier"),
+        candidate.get("canonical_title"),
+    ):
+        raw = str(value or "").strip()
+        if not raw:
+            continue
+        if raw.lower() in values or normalize_canonical_text(raw) in values:
+            return True
+    return False

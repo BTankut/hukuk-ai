@@ -227,9 +227,53 @@ Decision:
 - The R3B smoke exactly preserves the R3A/R1 20-QID proxy score and contract/provenance posture.
 - Full R3 is still not complete; metadata-first catalog lookup, source-key v2 binding, source identity rerank, family gate helpers, and selected-source retention remain in `routers/chat.py`.
 
+## R3C - Source Identity Match Primitive Extraction
+
+Status: complete.
+
+Scope:
+
+- Moved source identity reranker enablement flag, chunk source identity value extraction, and metadata-first candidate match primitive into `api-gateway/src/rag/source_identity.py`.
+- Kept `_rerank_chunks_by_source_identity(...)`, rerank scoring weights, title/issuer/year match classifications, source-key v2 binding, selected-source retention, retrieval ordering, prompt construction, and answer synthesis in `routers/chat.py`.
+- No reranker weight, candidate ordering, source selection heuristic, retrieval weighting, QID-specific logic, prompt behavior, or answer synthesis change was introduced.
+
+Validation:
+
+- `api-gateway/.venv/bin/python -m py_compile api-gateway/src/routers/chat.py api-gateway/src/rag/source_identity.py`: PASS
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "(source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate) and not keeps_investment_program" -q`: PASS, `43 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate" -q`: FAIL only on known T1 stale expectation `test_source_family_prior_keeps_investment_program_decision_as_cb_karar_candidate` (`family_confidence` expected `<0.75`, actual `0.88`)
+
+R3C smoke:
+
+- accepted run: `reports/benchmark/runs/20260426T_phase19_R3C_identity_match_primitives_smoke20`
+- qids: `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`, `MULGA-01`, `MULGA-02`, `MULGA-03`, `MULGA-04`, `MULGA-05`, `CBKAR-01`, `CBKAR-02`, `CBKAR-08`, `YON-01`, `YON-02`, `YON-03`, `KANUN-01`, `KANUN-06`, `KANUN-15`, `TEB-01`, `TEB-02`
+- answered: `20/20`
+- errors: `0`
+- missing_trace: `0`
+- contract_valid: `20/20`
+- unsupported_confident_answer: `0`
+- raw_score_proxy: `140.23 / 200`
+- pass_proxy: `15/20`
+- avg_family_match_score: `1.0`
+- avg_document_match_score: `0.758`
+- avg_article_match_score: `0.9`
+- hallucinated_source_count: `1`
+- source_key_v2_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `20`
+- runtime collection: `mevzuat_faz1_shadow_20260418_compat1024`
+- runtime entity count: `349191`
+- runtime vector dimension: `1024`
+- runtime DGX model: `/models/merged_model_fabric_stage_20260321`
+
+Decision:
+
+- R3C is accepted as a behavior-preserving extraction of source identity match primitives.
+- The R3C smoke preserves the R3A/R3B/R1 20-QID proxy score and contract/provenance posture.
+- Full R3 is still not complete; metadata-first catalog lookup, source-key v2 binding, source identity rerank body, family gate helpers, and selected-source retention remain in `routers/chat.py`.
+
 ## Remaining Sequence
 
-- R3C+: Continue extracting source identity helpers: metadata lookup, source-key v2 binding, identity rerank, family gate helpers, source lock / selected source retention.
+- R3D+: Continue extracting source identity helpers: metadata lookup, source-key v2 binding, identity rerank body, family gate helpers, source lock / selected source retention.
 - R4: Extract article/span selection helpers.
 - R5: Extract answer slot helpers.
 - R6: Extract answer synthesis helpers.

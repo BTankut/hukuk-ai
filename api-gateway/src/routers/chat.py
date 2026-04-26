@@ -72,6 +72,8 @@ from rag.source_identity import (
     _SOURCE_FAMILY_DISPLAY_LABELS,
     _apply_source_family_resolution_hints,
     _canonical_source_family_value,
+    _chunk_matches_metadata_first_candidate,
+    _chunk_source_identity_values,
     _expand_source_family_aliases,
     _infer_family_from_source_title,
     _infer_requested_source_families,
@@ -80,6 +82,7 @@ from rag.source_identity import (
     _resolve_chunk_source_family,
     _resolve_chunk_source_family_profile,
     _resolve_source_family_prior,
+    _source_identity_reranker_enabled,
 )
 from rag.required_slot_matrix import (
     RequiredSlotResolution,
@@ -5415,68 +5418,6 @@ def _chunk_active_rank(chunk: RetrievedChunk) -> int:
     end = str(metadata.get("yururluk_bitis") or "").strip()
     start = str(metadata.get("yururluk_baslangic") or "")
     return 0 if start or _metadata_flag_is_false(mulga) or end in _ACTIVE_END_DATE_SENTINELS else 1
-
-
-def _source_identity_reranker_enabled() -> bool:
-    return os.getenv("SOURCE_IDENTITY_RERANKER_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
-
-
-def _chunk_source_identity_values(chunk: RetrievedChunk) -> set[str]:
-    metadata = chunk.metadata or {}
-    values: set[str] = set()
-    for value in (
-        metadata.get("source_id"),
-        metadata.get("belge_no"),
-        metadata.get("kanun_no"),
-        metadata.get("law_no"),
-        metadata.get("belge_kisa_adi"),
-        metadata.get("kanun_kisa_adi"),
-        metadata.get("law_short_name"),
-        metadata.get("canonical_identifier"),
-        metadata.get("canonical_identifier_display"),
-        metadata.get("decision_number"),
-        metadata.get("kararname_number"),
-        metadata.get("genelge_number"),
-        metadata.get("generalge_number"),
-        metadata.get("teblig_number"),
-        metadata.get("sira_no"),
-        metadata.get("seri_no"),
-        metadata.get("regulation_number"),
-        metadata.get("university_name_canonical"),
-        metadata.get("canonical_title_family_normalized"),
-        metadata.get("source_title"),
-        metadata.get("belge_adi"),
-        metadata.get("kanun_adi"),
-        metadata.get("full_title"),
-        chunk.source,
-        chunk.citation,
-    ):
-        raw = str(value or "").strip()
-        if not raw:
-            continue
-        values.add(raw.lower())
-        normalized = normalize_canonical_text(raw)
-        if normalized:
-            values.add(normalized)
-        source_prefix = raw.split(":", 1)[0]
-        if source_prefix:
-            values.add(source_prefix.lower())
-    return values
-
-
-def _chunk_matches_metadata_first_candidate(chunk: RetrievedChunk, candidate: dict[str, Any]) -> bool:
-    values = _chunk_source_identity_values(chunk)
-    for value in (
-        candidate.get("source_key"),
-        candidate.get("canonical_identifier"),
-        candidate.get("canonical_title"),
-    ):
-        raw = str(value or "").strip()
-        if not raw:
-            continue
-        if raw.lower() in values or normalize_canonical_text(raw) in values:
-            return True
-    return False
 
 
 def _chunk_year_values(chunk: RetrievedChunk) -> set[str]:
