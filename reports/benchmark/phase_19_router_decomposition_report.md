@@ -347,11 +347,107 @@ Decision:
 - R3D is accepted as a behavior-preserving extraction of metadata-first catalog lookup helpers.
 - The 20-QID smoke exactly preserves the R3A/R3B/R3C proxy score and contract/provenance posture.
 - Full R3 is still not complete; source-key v2 binding, identity rerank body, family gate helpers, and selected-source retention remain in `routers/chat.py`.
-- R3E should not start until this R3D boundary is committed and pushed.
+
+## R3E - Source-Key v2 Binding Extraction
+
+Status: complete.
+
+Scope:
+
+- Moved source-title/source-key/document-key resolution, canonical source-key v2 part normalization, canonical identifier resolution, effective-start/doc-uuid resolution, source-key v2 construction, binding source-key construction, legacy alias detection, and v1/v2 source-key collision profile builders into `api-gateway/src/rag/source_identity.py`.
+- Moved article/clause token helpers only as dependencies of span-aware canonical source-key v2 construction.
+- Kept compatibility wrappers in `api-gateway/src/routers/chat.py` for `_resolve_chunk_canonical_source_key_v2(...)`, `_resolve_chunk_binding_source_key(...)`, `_chunk_uses_legacy_source_key_alias(...)`, `_source_key_collision_profile(...)`, and `_source_key_v2_collision_profile(...)`; wrappers preserve local `_resolve_chunk_routing_family(...)` behavior.
+- Kept selected-source retention, source-lock arbitration, identity rerank body, family gate final behavior, prompt construction, answer synthesis, answer contract repair, and confidence policy in `routers/chat.py`.
+- No v2 key schema, binding priority, legacy alias policy, collision policy, selected source logic, retrieval weighting, prompt behavior, or answer synthesis change was introduced.
+
+Validation:
+
+- `api-gateway/.venv/bin/python -m py_compile api-gateway/src/routers/chat.py api-gateway/src/rag/source_identity.py`: PASS
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "source_key_v2 or canonical_key_binding or source_key_collision or legacy_and_canonical_source_keys" -q`: PASS, `3 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "(source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate) and not keeps_investment_program" -q`: PASS, `43 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate" -q`: FAIL only on known T1 stale expectation `test_source_family_prior_keeps_investment_program_decision_as_cb_karar_candidate` (`family_confidence` expected `<0.75`, actual `0.88`)
+
+Runtime parity note:
+
+- Invalid run: `reports/benchmark/runs/20260426T_phase19_R3E_source_key_v2_smoke20`
+- Reason: gateway was restarted without `EMBEDDING_BACKEND=remote` and `EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1`, causing `embedding_backend=hashing`, empty selected evidence, and invalid low scores.
+- Action: discarded as environment-parity failure, restarted 8000 with the R3D runtime env:
+  - `DGX_BASE_URL=http://192.168.12.243:30000/v1`
+  - `DGX_MODEL=/models/merged_model_fabric_stage_20260321`
+  - `MILVUS_ENABLED=true`
+  - `MILVUS_URI=http://localhost:19530`
+  - `MILVUS_COLLECTION=mevzuat_faz1_shadow_20260418_compat1024`
+  - `EMBEDDING_BACKEND=remote`
+  - `EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1`
+  - `EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct`
+  - `GUARDRAILS_ENABLED=false`
+  - `PRESIDIO_ENABLED=false`
+
+R3E sanity smoke:
+
+- run: `reports/benchmark/runs/20260426T_phase19_R3E_envparity_sanity_CBG01`
+- qids: `CBG-01`
+- raw_score_proxy: `8.65 / 10`
+- pass_proxy: `1/1`
+- family/document/article: `1.00/1.00/1.00`
+- source_key_v2_collision_detected_count: `0`
+- binding_source_key_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `1`
+
+R3E 20-QID smoke:
+
+- accepted run: `reports/benchmark/runs/20260426T_phase19_R3E_source_key_v2_smoke20_envparity`
+- qids: `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`, `MULGA-01`, `MULGA-02`, `MULGA-03`, `MULGA-04`, `MULGA-05`, `CBKAR-01`, `CBKAR-02`, `CBKAR-08`, `YON-01`, `YON-02`, `YON-03`, `KANUN-01`, `KANUN-06`, `KANUN-15`, `TEB-01`, `TEB-02`
+- answered: `20/20`
+- errors: `0`
+- missing_trace: `0`
+- contract_valid: `20/20`
+- unsupported_confident_answer: `0`
+- raw_score_proxy: `140.23 / 200`
+- pass_proxy: `15/20`
+- avg_family_match_score: `1.0`
+- avg_document_match_score: `0.758`
+- avg_article_match_score: `0.9`
+- hallucinated_source_count: `1`
+- wrong_family failure-class count: `0`
+- wrong_document failure-class count: `1`
+- source_key_collision_detected_count: `3`
+- source_key_v2_collision_detected_count: `0`
+- binding_source_key_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `20`
+- legacy_source_key_used_as_alias_count: `20`
+- binding_source_key_version: `canonical_source_key_v2` for all `20`
+- runtime collection: `mevzuat_faz1_shadow_20260418_compat1024`
+- runtime entity count: `349191`
+- runtime vector dimension: `1024`
+- runtime DGX model: `/models/merged_model_fabric_stage_20260321`
+
+Source-key collision watch:
+
+- run: `reports/benchmark/runs/20260426T_phase19_R3E_source_key_collision_watch4_envparity`
+- qids: `CBKAR-08`, `CBG-04`, `TEB-03`, `KANUN-19`
+- answered: `4/4`
+- errors: `0`
+- contract_valid: `4/4`
+- unsupported_confident_answer: `0`
+- raw_score_proxy: `29.15 / 40`
+- pass_proxy: `2/4`
+- source_key_collision_detected_count: `3`
+- source_key_v2_collision_detected_count: `0`
+- binding_source_key_collision_detected_count: `0`
+- canonical_key_binding_applied_count: `4`
+- binding_source_key_version: `canonical_source_key_v2` for all `4`
+- watched rows: `CBG-04`, `CBKAR-08`, and `KANUN-19` show legacy source-key collisions but no v2/binding collision; `TEB-03` remains the known family-quality issue (`family_match_score=0.00`, document/article `1.00/1.00`), not a source-key binding regression.
+
+Decision:
+
+- R3E is accepted as a behavior-preserving extraction of source-key v2 binding helpers.
+- The env-parity 20-QID smoke exactly preserves the R3A/R3B/R3C/R3D proxy score and contract/provenance posture.
+- Full R3 is still not complete; identity rerank body, family gate helpers, source lock, and selected-source retention remain in `routers/chat.py`.
 
 ## Remaining Sequence
 
-- R3E+: Continue extracting source identity helpers: source-key v2 binding, identity rerank body, family gate helpers, source lock / selected source retention.
+- R3F+: Continue extracting source identity helpers: identity rerank body, family gate helpers, source lock / selected source retention.
 - R4: Extract article/span selection helpers.
 - R5: Extract answer slot helpers.
 - R6: Extract answer synthesis helpers.

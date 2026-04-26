@@ -73,8 +73,11 @@ from rag.source_identity import (
     _apply_source_family_resolution_hints,
     _build_metadata_first_query_expansion,
     _canonical_source_family_value,
+    _chunk_article_token,
+    _chunk_clause_token,
     _chunk_matches_metadata_first_candidate,
     _chunk_source_identity_values,
+    _chunk_uses_legacy_source_key_alias as _chunk_uses_legacy_source_key_alias_impl,
     _expand_source_family_aliases,
     _extract_source_identity_identifier_tokens,
     _extract_year_tokens,
@@ -83,16 +86,24 @@ from rag.source_identity import (
     _metadata_lookup_has_strong_query_anchor,
     _metadata_active_raw_law_overrides_legacy_family,
     _metadata_has_active_source_span,
+    _normalize_article_token,
     _parse_metadata_lookup_query_signals as _parse_metadata_lookup_query_signals_impl,
     _query_has_academic_regulation_intent,
     _relation_query_family_profile,
+    _resolve_chunk_binding_source_key as _resolve_chunk_binding_source_key_impl,
+    _resolve_chunk_canonical_source_key_v2 as _resolve_chunk_canonical_source_key_v2_impl,
+    _resolve_chunk_document_key,
+    _resolve_chunk_source_key,
     _resolve_chunk_source_family,
     _resolve_chunk_source_family_profile,
+    _resolve_chunk_source_title,
     _resolve_source_family_prior,
     _select_metadata_first_source_candidates as _select_metadata_first_source_candidates_impl,
     _source_family_relation_group,
     _source_identifier_base_alias,
     _source_identity_reranker_enabled,
+    _source_key_collision_profile as _source_key_collision_profile_impl,
+    _source_key_v2_collision_profile as _source_key_v2_collision_profile_impl,
 )
 from rag.required_slot_matrix import (
     RequiredSlotResolution,
@@ -1633,41 +1644,6 @@ def _chunk_matches_identifier_tokens(chunk: RetrievedChunk, identifier_tokens: s
     return False
 
 
-def _resolve_chunk_source_title(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    title = _normalize_whitespace(
-        str(
-            metadata.get("full_title")
-            or metadata.get("source_title")
-            or metadata.get("belge_adi")
-            or metadata.get("kanun_adi")
-            or metadata.get("law_name")
-            or metadata.get("title")
-            or chunk.source
-            or chunk.citation
-            or ""
-        )
-    )
-    canonical_family = _canonical_source_family_value(
-        metadata.get("source_family_canonical")
-        or metadata.get("source_family")
-        or metadata.get("canonical_source_family")
-    )
-    raw_family = _canonical_source_family_value(
-        metadata.get("source_family_raw")
-        or metadata.get("belge_turu")
-        or metadata.get("source_type")
-    )
-    effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip().lower()
-    if canonical_family == "mulga_kanun" and raw_family == "kanun" and (
-        effective_state in {"active", "amended"} or _metadata_active_raw_law_overrides_legacy_family(metadata)
-    ):
-        match = re.match(r"^(?P<base>.+?)\s+KANUNUNUN\s+YÜRÜRLÜKTEN\s+KALDIRILMIŞ\s+HÜKÜMLERİ\b", title, re.IGNORECASE)
-        if match:
-            return _normalize_whitespace(f"{match.group('base')} KANUNU")
-    return title
-
-
 def _resolve_chunk_source_identifier(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
     identifier = _normalize_whitespace(
@@ -1711,39 +1687,6 @@ def _resolve_candidate_source_display_label(candidate: dict[str, Any]) -> str:
     )
 
 
-def _normalize_article_token(value: Any) -> str:
-    raw = _normalize_whitespace(str(value or "")).lower()
-    if not raw:
-        return ""
-    normalized = _normalize_tr_text(raw)
-    gecici = "gecici" in normalized
-    match = re.search(r"\b(?:gecici\s+)?(?:madde|m|md)\.?\s*(\d+[a-z]?)\b", normalized)
-    if not match:
-        match = re.search(r"\bm\.(\d+[a-z]?)\b", normalized)
-    if not match:
-        match = re.search(r"\b(\d+[a-z]?)\b", normalized)
-    if not match:
-        return normalized
-    article = match.group(1).lower()
-    return f"gecici-{article}" if gecici else article
-
-
-def _chunk_article_token(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    for value in (
-        metadata.get("article_or_section"),
-        metadata.get("madde_no"),
-        metadata.get("article_no"),
-        metadata.get("article"),
-        metadata.get("source_id"),
-        chunk.citation,
-    ):
-        token = _normalize_article_token(value)
-        if token:
-            return token
-    return ""
-
-
 def _resolve_chunk_span_id(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
     chunk_id = metadata.get("chunk_id")
@@ -1759,144 +1702,16 @@ def _resolve_chunk_span_id(chunk: RetrievedChunk) -> str:
     return ":".join(parts)
 
 
-def _resolve_chunk_document_key(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    return (
-        str(
-            metadata.get("belge_no")
-            or metadata.get("kanun_no")
-            or metadata.get("law_no")
-            or metadata.get("decision_number")
-            or metadata.get("kararname_number")
-            or metadata.get("genelge_number")
-            or metadata.get("generalge_number")
-            or metadata.get("teblig_number")
-            or metadata.get("regulation_number")
-            or metadata.get("law_short_name")
-            or metadata.get("kanun_kisa_adi")
-            or chunk.source
-            or metadata.get("source_title")
-            or metadata.get("belge_adi")
-            or metadata.get("kanun_adi")
-            or metadata.get("law_name")
-            or chunk.citation
-        )
-        .strip()
-        .lower()
-    )
-
-
-def _canonical_source_key_v2_part(value: Any, *, fallback: str = "unknown") -> str:
-    normalized = re.sub(r"[^a-z0-9_]+", " ", _normalize_tr_text(str(value or ""))).strip()
-    if not normalized:
-        normalized = re.sub(r"[^a-z0-9_]+", " ", _normalize_tr_text(str(fallback or ""))).strip()
-    normalized = re.sub(r"\s+", "-", normalized).strip("-")
-    return normalized or "unknown"
-
-
-def _strip_article_suffix_from_identifier(value: str) -> str:
-    stripped = _normalize_whitespace(value)
-    if not stripped:
-        return ""
-    stripped = re.sub(
-        r"\s+(?:m|md|madde)\.?\s*(?:gecici\s+)?\d+[a-z]?(?:\s*/\s*f\.?\d+)?\s*$",
-        "",
-        stripped,
-        flags=re.IGNORECASE,
-    )
-    return _normalize_whitespace(stripped)
-
-
-def _resolve_chunk_canonical_identifier(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    for value in (
-        metadata.get("canonical_identifier"),
-        metadata.get("canonical_identifier_display"),
-        metadata.get("source_id"),
-        metadata.get("belge_no"),
-        metadata.get("kanun_no"),
-        metadata.get("law_no"),
-        metadata.get("decision_number"),
-        metadata.get("kararname_number"),
-        metadata.get("genelge_number"),
-        metadata.get("generalge_number"),
-        metadata.get("teblig_number"),
-        metadata.get("regulation_number"),
-        metadata.get("law_short_name"),
-        metadata.get("kanun_kisa_adi"),
-        chunk.source,
-    ):
-        text = _strip_article_suffix_from_identifier(str(value or ""))
-        if text and normalize_canonical_text(text) not in {"unknown", "none", "null"}:
-            return text
-    title = _resolve_chunk_source_title(chunk)
-    if title:
-        return f"title-{hashlib.sha1(normalize_canonical_text(title).encode('utf-8')).hexdigest()[:12]}"
-    return "unknown"
-
-
-def _resolve_chunk_effective_start(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    for key in (
-        "effective_start",
-        "effective_date",
-        "yururluk_tarihi",
-        "yururluk_baslangic",
-        "official_gazette_date",
-        "resmi_gazete_tarihi",
-        "published_date",
-        "date",
-    ):
-        value = _normalize_whitespace(str(metadata.get(key) or ""))
-        if value:
-            return value[:32]
-    return "unknown"
-
-
-def _resolve_chunk_doc_uuid(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    for key in ("doc_uuid", "document_uuid", "canonical_doc_uuid", "source_doc_uuid", "uuid"):
-        value = _normalize_whitespace(str(metadata.get(key) or ""))
-        if value:
-            return value
-    return ""
-
-
 def _resolve_chunk_canonical_source_key_v2(
     chunk: RetrievedChunk,
     *,
     include_span: bool = True,
 ) -> str:
-    family = (
-        _resolve_chunk_routing_family(chunk)
-        or _resolve_chunk_source_family(chunk)
-        or "unknown"
+    return _resolve_chunk_canonical_source_key_v2_impl(
+        chunk,
+        include_span=include_span,
+        routing_family_resolver=_resolve_chunk_routing_family,
     )
-    identifier = _resolve_chunk_canonical_identifier(chunk)
-    title_normalized = normalize_canonical_text(_resolve_chunk_source_title(chunk))
-    title_hash = hashlib.sha1(title_normalized.encode("utf-8")).hexdigest()[:12] if title_normalized else "no-title"
-    effective_start = _resolve_chunk_effective_start(chunk)
-    effective_state = str(resolve_effective_state(chunk.metadata or {}) or "unknown").strip().lower() or "unknown"
-    parts = [
-        f"fam={_canonical_source_key_v2_part(family)}",
-        f"id={_canonical_source_key_v2_part(identifier)}",
-        f"title={title_hash}",
-        f"start={_canonical_source_key_v2_part(effective_start)}",
-        f"state={_canonical_source_key_v2_part(effective_state)}",
-    ]
-    doc_uuid = _resolve_chunk_doc_uuid(chunk)
-    if doc_uuid:
-        parts.append(f"doc={_canonical_source_key_v2_part(doc_uuid)}")
-    if include_span:
-        article = _chunk_article_token(chunk) or "0"
-        clause = _chunk_clause_token(chunk) or "0"
-        parts.extend(
-            [
-                f"article={_canonical_source_key_v2_part(article)}",
-                f"clause={_canonical_source_key_v2_part(clause)}",
-            ]
-        )
-    return "|".join(parts)
 
 
 def _resolve_chunk_binding_source_key(
@@ -1904,30 +1719,21 @@ def _resolve_chunk_binding_source_key(
     *,
     include_span: bool = False,
 ) -> str:
-    canonical_key = _resolve_chunk_canonical_source_key_v2(chunk, include_span=include_span)
-    if canonical_key:
-        return canonical_key
-    doc_uuid = _resolve_chunk_doc_uuid(chunk)
-    if doc_uuid:
-        return f"doc={_canonical_source_key_v2_part(doc_uuid)}"
-    family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown"
-    identifier = _resolve_chunk_canonical_identifier(chunk)
-    if family or identifier:
-        return (
-            f"fam={_canonical_source_key_v2_part(family)}|"
-            f"id={_canonical_source_key_v2_part(identifier)}"
-        )
-    return _resolve_chunk_document_key(chunk)
+    return _resolve_chunk_binding_source_key_impl(
+        chunk,
+        include_span=include_span,
+        routing_family_resolver=_resolve_chunk_routing_family,
+    )
 
 
 def _chunk_uses_legacy_source_key_alias(chunk: RetrievedChunk) -> bool:
-    binding_key = _resolve_chunk_binding_source_key(chunk, include_span=False)
-    legacy_keys = {
-        str(_resolve_chunk_source_key(chunk) or "").strip().lower(),
-        str(_resolve_chunk_document_key(chunk) or "").strip().lower(),
-    }
-    legacy_keys.discard("")
-    return bool(binding_key and binding_key.strip().lower() not in legacy_keys and legacy_keys)
+    return _chunk_uses_legacy_source_key_alias_impl(
+        chunk,
+        binding_source_key_resolver=lambda current: _resolve_chunk_binding_source_key(
+            current,
+            include_span=False,
+        ),
+    )
 
 
 def _extract_query_clause_tokens(query: str) -> set[str]:
@@ -1942,17 +1748,6 @@ def _extract_query_clause_tokens(query: str) -> set[str]:
     for match in re.finditer(r"\bbent\s*[:.]?\s*([a-z])\b", normalized):
         tokens.add(f"b{match.group(1)}")
     return tokens
-
-
-def _chunk_clause_token(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    fikra = _normalize_whitespace(str(metadata.get("fikra_no") or metadata.get("paragraph_no") or ""))
-    if fikra and fikra != "0":
-        return f"f{fikra.lower()}"
-    bent = _normalize_whitespace(str(metadata.get("bent_no") or metadata.get("clause_no") or ""))
-    if bent:
-        return f"b{bent.lower()}"
-    return ""
 
 
 def _extract_query_article_tokens(
@@ -2478,70 +2273,17 @@ def _chunk_allows_article_zero_body_extraction(
 
 
 def _source_key_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any]:
-    grouped: dict[str, dict[tuple[str, str], int]] = {}
-    for chunk in chunks:
-        document_key = _resolve_chunk_document_key(chunk)
-        if not document_key:
-            continue
-        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown"
-        title = normalize_canonical_text(_resolve_chunk_source_title(chunk))
-        grouped.setdefault(document_key, {})
-        grouped[document_key][(family, title)] = grouped[document_key].get((family, title), 0) + 1
-
-    collision_keys: list[str] = []
-    collision_families_by_key: dict[str, list[str]] = {}
-    collision_pairs: list[str] = []
-    for document_key, pair_counts in sorted(grouped.items()):
-        pairs = sorted(pair_counts)
-        families = dedupe_strings(family for family, _title in pairs)
-        if len(pairs) <= 1 and len(families) <= 1:
-            continue
-        collision_keys.append(document_key)
-        collision_families_by_key[document_key] = families
-        pair_labels = []
-        for family, title in pairs[:4]:
-            title_label = title[:80] if title else "untitled"
-            pair_labels.append(f"{family}:{title_label}")
-        collision_pairs.append(f"{document_key}=" + "|".join(pair_labels))
-
-    return {
-        "source_key_collision_detected": bool(collision_keys),
-        "source_key_collision_keys": collision_keys,
-        "source_key_collision_pair": "; ".join(collision_pairs[:3]),
-        "source_key_collision_families_by_key": collision_families_by_key,
-    }
+    return _source_key_collision_profile_impl(
+        chunks,
+        routing_family_resolver=_resolve_chunk_routing_family,
+    )
 
 
 def _source_key_v2_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any]:
-    grouped: dict[str, dict[tuple[str, str], int]] = {}
-    for chunk in chunks:
-        document_key = _resolve_chunk_canonical_source_key_v2(chunk, include_span=False)
-        if not document_key:
-            continue
-        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "unknown"
-        title = normalize_canonical_text(_resolve_chunk_source_title(chunk))
-        grouped.setdefault(document_key, {})
-        grouped[document_key][(family, title)] = grouped[document_key].get((family, title), 0) + 1
-
-    collision_keys: list[str] = []
-    collision_pairs: list[str] = []
-    for document_key, pair_counts in sorted(grouped.items()):
-        pairs = sorted(pair_counts)
-        families = dedupe_strings(family for family, _title in pairs)
-        if len(pairs) <= 1 and len(families) <= 1:
-            continue
-        collision_keys.append(document_key)
-        pair_labels = []
-        for family, title in pairs[:4]:
-            title_label = title[:80] if title else "untitled"
-            pair_labels.append(f"{family}:{title_label}")
-        collision_pairs.append(f"{document_key}=" + "|".join(pair_labels))
-
-    return {
-        "source_key_v2_collision_detected": bool(collision_keys),
-        "source_key_v2_collision_keys": collision_keys,
-        "source_key_v2_collision_pair": "; ".join(collision_pairs[:3]),
-    }
+    return _source_key_v2_collision_profile_impl(
+        chunks,
+        routing_family_resolver=_resolve_chunk_routing_family,
+    )
 
 
 def _annotate_canonical_span_materialization(
@@ -5072,35 +4814,6 @@ def _count_term_overlap(text: str | None, terms: set[str]) -> int:
         return 0
     tokens = _extract_retrieval_priority_terms(text)
     return len(tokens & terms)
-
-
-def _resolve_chunk_source_key(chunk: RetrievedChunk) -> str:
-    metadata = chunk.metadata or {}
-    return (
-        str(
-            metadata.get("canonical_identifier_display")
-            or metadata.get("canonical_identifier")
-            or metadata.get("belge_no")
-            or metadata.get("kanun_no")
-            or metadata.get("law_no")
-            or metadata.get("decision_number")
-            or metadata.get("kararname_number")
-            or metadata.get("genelge_number")
-            or metadata.get("generalge_number")
-            or metadata.get("teblig_number")
-            or metadata.get("regulation_number")
-            or metadata.get("law_short_name")
-            or metadata.get("kanun_kisa_adi")
-            or metadata.get("source_title")
-            or metadata.get("belge_adi")
-            or metadata.get("kanun_adi")
-            or metadata.get("law_name")
-            or chunk.source
-            or chunk.citation
-        )
-        .strip()
-        .lower()
-    )
 
 
 def _chunk_matches_selected_source_key(
