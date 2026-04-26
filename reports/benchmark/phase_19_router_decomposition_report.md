@@ -71,9 +71,56 @@ Decision:
 - R1 is accepted as behavior-preserving relative to the A1.10 smoke baseline.
 - No productization, fine-tuning, retrieval redesign, or slot-completion redesign was opened.
 
+## R2 - Source Supplement Extraction
+
+Status: complete.
+
+Files:
+
+- `api-gateway/src/rag/source_supplements.py`
+- `api-gateway/src/routers/chat.py`
+
+Change summary:
+
+- Moved supplement law-hint key mapping into `rag/source_supplements.py`.
+- Moved official supplement row-to-`RetrievedChunk` materialization into `rag/source_supplements.py`.
+- Kept `routers.chat` imported helper names available for existing tests/importers.
+- Left CB_GENELGE answer template, source selector, retrieval ordering, and answer finalization unchanged.
+
+Validation:
+
+- `api-gateway/.venv/bin/python -m py_compile api-gateway/src/routers/chat.py api-gateway/src/rag/source_supplements.py`: PASS
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_faz8_parity_trace.py -q`: PASS, `5 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py::TestLawSignalParsing::test_source_supplement_materializes_cb_genelge_document_body api-gateway/tests/test_chat_router.py::TestLawSignalParsing::test_source_supplements_are_visible_to_metadata_first_selector api-gateway/tests/test_chat_router.py::TestLawSignalParsing::test_source_supplement_chunks_use_family_specific_metadata api-gateway/tests/test_chat_router.py::TestLawSignalParsing::test_cb_genelge_document_level_template_uses_only_selected_source_text api-gateway/tests/test_chat_router.py::TestLawSignalParsing::test_cb_genelge_document_level_template_selects_terms_from_query_not_fixed_topic api-gateway/tests/test_chat_router.py::TestLawSignalParsing::test_cb_genelge_temporal_template_keeps_active_new_genelge_and_repealed_old_one_separate -q`: PASS, `6 passed`
+
+R2 smoke:
+
+- accepted run: `reports/benchmark/runs/20260426T_phase19_R2_source_supplements_CBG4`
+- qids: `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`
+- answered: `4/4`
+- errors: `0`
+- missing_trace: `0`
+- contract_valid: `4/4`
+- unsupported_confident_answer: `0`
+- raw_score_proxy: `35.2 / 40`
+- pass_proxy: `4/4`
+- family match: `4/4`
+- document match: `4/4`
+- article match: `4/4`
+- source supplement hash provenance includes `api-gateway/src/rag/source_supplements.py`
+- runtime collection: `mevzuat_faz1_shadow_20260418_compat1024`
+- runtime entity count: `349191`
+- runtime vector dimension: `1024`
+- runtime DGX model: `/models/merged_model_fabric_stage_20260321`
+
+Decision:
+
+- R2 is accepted as behavior-preserving for the official source supplement path.
+- CB_GENELGE supplement path remains green on the focused smoke.
+- No productization, fine-tuning, retrieval redesign, or slot-completion redesign was opened.
+
 ## Remaining Sequence
 
-- R2: Extract source supplement materialization.
 - R3: Extract source identity helpers.
 - R4: Extract article/span selection helpers.
 - R5: Extract answer slot helpers.

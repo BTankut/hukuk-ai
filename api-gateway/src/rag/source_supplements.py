@@ -5,6 +5,9 @@ import unicodedata
 from functools import lru_cache
 from typing import Any
 
+from rag.orchestrator import RetrievedChunk
+from rag.source_catalog import normalize_canonical_text
+
 
 _TR_ASCII_TRANS = str.maketrans(
     {
@@ -19,6 +22,16 @@ _TR_ASCII_TRANS = str.maketrans(
         "û": "u",
     }
 )
+_LAW_SOURCE_SUPPLEMENT_KEYS_BY_HINT = {
+    "4857": ("4857",),
+    "6098": ("6098",),
+    "TTK": ("6102",),
+    "IK": ("4857",),
+    "KVKK": ("6698",),
+    "HUAK": ("6325", "7445"),
+    "6325": ("6325", "7445"),
+    "7201": ("7201",),
+}
 
 
 def _clean(value: Any) -> str:
@@ -319,3 +332,127 @@ def load_source_supplements_for_keys(
         if requested_keys & {_normalize(value) for value in _focus_key_values(row)}:
             matches.append(dict(row))
     return matches
+
+
+def _source_supplement_keys_for_law_hints(law_hints: set[str] | list[str]) -> list[str]:
+    keys: list[str] = []
+    for law in law_hints:
+        keys.extend(_LAW_SOURCE_SUPPLEMENT_KEYS_BY_HINT.get(str(law).strip(), ()))
+    return _dedupe_strings(keys)
+
+
+def _build_source_supplement_chunks(rows: list[dict[str, Any]]) -> list[RetrievedChunk]:
+    chunks: list[RetrievedChunk] = []
+    for row in rows:
+        text = str(row.get("text") or "").strip()
+        source_key = str(row.get("source_key") or "").strip()
+        source_family = str(row.get("source_family") or "").strip()
+        title = str(row.get("canonical_title") or "").strip()
+        citation = str(row.get("citation") or f"{source_key} m.0/f.0").strip()
+        span_id = str(row.get("span_id") or citation).strip()
+        if not text or not source_key or not source_family:
+            continue
+
+        source_identifier = str(row.get("canonical_identifier") or source_key).strip()
+        citation_display = citation.split("/f", 1)[0].strip() or citation
+        article_no = str(row.get("article_no") or row.get("madde_no") or "0").strip() or "0"
+        source_id_article = re.sub(r"[^A-Za-z0-9_/-]+", "_", article_no).strip("_") or "0"
+        source_id = str(
+            row.get("source_id")
+            or (
+                f"{source_key}:{source_key}:m{source_id_article}:f0:"
+                f"from{row.get('effective_start') or 'unknown'}:"
+                f"to{row.get('effective_end') or 'unknown'}"
+            )
+        )
+        display_citation = str(row.get("display_citation") or "").strip()
+        if not display_citation:
+            if source_family == "cb_genelge":
+                display_citation = f"{source_identifier} sayılı Cumhurbaşkanlığı Genelgesi"
+            elif source_family == "cb_karar":
+                display_citation = f"{source_identifier} sayılı Cumhurbaşkanı Kararı"
+            elif source_family == "kanun":
+                display_citation = f"{source_identifier} sayılı Kanun"
+            else:
+                display_citation = source_identifier
+        lanes = ["official_source_supplement", "metadata_guided_recall"]
+        metadata = {
+            "source_key": source_key,
+            "source_family": source_family,
+            "source_family_canonical": source_family,
+            "source_family_mapped": source_family,
+            "source_family_raw": source_family,
+            "source_family_mapping_reason": "official_source_supplement",
+            "belge_turu": source_family,
+            "source_type": source_family,
+            "source_title": title,
+            "full_title": title,
+            "belge_adi": title,
+            "law_name": title,
+            "canonical_title": title,
+            "canonical_title_family_normalized": row.get("canonical_title_normalized") or normalize_canonical_text(title),
+            "source_identifier": source_identifier,
+            "display_citation": display_citation,
+            "canonical_identifier": source_identifier,
+            "canonical_identifier_display": citation_display,
+            "belge_no": source_key,
+            "belge_kisa_adi": source_key,
+            "law_no": source_key,
+            "law_short_name": source_key,
+            "kanun_no": source_identifier if source_family == "kanun" else "",
+            "decision_number": source_identifier if source_family == "cb_karar" else "",
+            "genelge_number": source_identifier if source_family == "cb_genelge" else source_key,
+            "generalge_number": source_identifier if source_family == "cb_genelge" else source_key,
+            "article_or_section": article_no,
+            "madde_no": article_no,
+            "article_no": article_no,
+            "fikra_no": "0",
+            "source_id": source_id,
+            "span_id": span_id,
+            "chunk_id": span_id,
+            "document_key": source_key,
+            "official_gazette_date": row.get("official_gazette_date"),
+            "official_gazette_no": row.get("official_gazette_no"),
+            "resmi_gazete_tarih": row.get("official_gazette_date"),
+            "resmi_gazete_sayi": row.get("official_gazette_no"),
+            "effective_start": row.get("effective_start"),
+            "effective_end": row.get("effective_end"),
+            "yururluk_baslangic": row.get("effective_start"),
+            "yururluk_bitis": row.get("effective_end"),
+            "effective_state": row.get("effective_state") or "active",
+            "issuer": row.get("issuer"),
+            "issuer_canonical": row.get("issuer"),
+            "issuing_body_level": "cumhurbaskanligi",
+            "body": text,
+            "article_body": text,
+            "content": text,
+            "metin": text,
+            "official_source_url": row.get("official_source_url"),
+            "source_url": row.get("official_source_url"),
+            "official_source_supplement": True,
+            "retrieval_lane_sources": lanes,
+            "metadata_lane_present": True,
+            "dense_lane_present": False,
+            "merged_lane_present": False,
+        }
+        chunks.append(
+            RetrievedChunk(
+                text=text,
+                citation=citation,
+                source=str(row.get("source") or source_key),
+                score=1.0,
+                metadata=metadata,
+            )
+        )
+    return chunks
+
+
+def _dedupe_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        deduped.append(value)
+    return deduped
