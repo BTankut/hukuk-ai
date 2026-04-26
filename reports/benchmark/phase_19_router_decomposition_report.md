@@ -447,11 +447,13 @@ Decision:
 
 ## R3F Prep - Identity Rerank Fixture
 
-Status: fixture complete; extraction not started.
+Status: R3F extraction complete and accepted.
 
-Report:
+Reports:
 
 - `reports/benchmark/phase_19_R3F_identity_rerank_fixture.md`
+- `reports/benchmark/phase_19_R3F_identity_rerank_after_extraction_fixture_diff.md`
+- `reports/benchmark/phase_19_R3F_identity_rerank_after_extraction_fixture_diff.csv`
 
 Fixture source runs:
 
@@ -469,10 +471,48 @@ Fixture QIDs:
 - `KANUN-01`
 - `UY-07`
 
+Extraction:
+
+- `_rerank_chunks_by_source_identity(...)` scoring body and local match helpers were moved from `api-gateway/src/routers/chat.py` to `api-gateway/src/rag/source_identity.py`.
+- `routers/chat.py` keeps the public compatibility wrapper and injects router-local temporal/article/trace callbacks.
+- Final family gate arbitration, source lock finalization, selected-source retention, prompt/synthesis, answer contract repair, and confidence policy remain in `routers/chat.py`.
+
+Validation:
+
+- `api-gateway/.venv/bin/python -m py_compile api-gateway/src/routers/chat.py api-gateway/src/rag/source_identity.py`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "source_identity_reranker or selected_source_cluster or metadata_selected_source or title_match or identifier_match" -q` -> `11 passed`
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -k "(source_identity_reranker or metadata_first_selector or source_key_v2 or source_family_prior or family_gate) and not keeps_investment_program" -q` -> `43 passed`
+- after-extraction fixture run: `reports/benchmark/runs/20260426T_phase19_R3F_after_extraction_fixture_envparity`
+- fixture diff: `8/8 PASS`, `drift_count=0`
+- 20-QID smoke run: `reports/benchmark/runs/20260426T_phase19_R3F_identity_rerank_smoke20_envparity`
+  - raw_score_proxy: `140.23 / 200`
+  - pass_proxy: `15/20`
+  - avg_family_match_score: `1.0`
+  - avg_document_match_score: `0.758`
+  - avg_article_match_score: `0.9`
+  - answer_contract_invalid_count: `0`
+  - unsupported_confident_answer_count: `0`
+  - source_key_v2_collision_detected_count: `0`
+  - binding_source_key_collision_detected_count: `0`
+  - canonical_key_binding_applied_count: `20`
+  - wrong_family failure-class count: `0`
+  - wrong_document failure-class count: `1`
+- focused family smoke run: `reports/benchmark/runs/20260426T_phase19_R3F_focused_family_smokes_envparity`
+  - qids: `CBG-01`, `CBG-02`, `CBG-03`, `CBG-04`, `MULGA-01`, `MULGA-02`, `MULGA-03`, `MULGA-04`, `MULGA-05`, `YON-01`, `YON-02`, `YON-03`, `YON-05`, `UY-07`, `UY-08`, `KKY-10`
+  - raw_score_proxy: `112.72 / 160`
+  - pass_proxy: `13/16`
+  - answer_contract_invalid_count: `0`
+  - unsupported_confident_answer_count: `0`
+  - source_key_v2_collision_detected_count: `0`
+  - binding_source_key_collision_detected_count: `0`
+  - canonical_key_binding_applied_count: `16`
+  - wrong_family failure-class count: `0`
+  - wrong_document failure-class count: `2`
+
 Decision:
 
-- R3F code extraction must compare after-extraction output against this fixture before any smoke is accepted.
-- R3F body extraction has not started in this boundary.
+- R3F is accepted as a behavior-preserving extraction of identity rerank body/scoring logic.
+- R3G is unblocked by R3F: fixture diff and smoke gates show no new wrong-family, source-key v2 collision, binding collision, contract invalid, unsupported-confident, or selected-source drift.
 
 ## Remaining Sequence
 
