@@ -119,6 +119,26 @@ Decision:
 - CB_GENELGE supplement path remains green on the focused smoke.
 - No productization, fine-tuning, retrieval redesign, or slot-completion redesign was opened.
 
+## T1 - Test Expectation Triage
+
+Status: complete.
+
+Report:
+
+- `reports/benchmark/phase_19_test_expectation_triage.md`
+
+Validation:
+
+- `PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_chat_router.py -q`: FAIL with the same 7 broad-router expectation failures reported after R1.
+
+Decision:
+
+- real R1/R2 extraction regression count: `0`
+- all 7 failures are stale expectations, broad-router coupling, or refactor-external product behavior risk.
+- no runtime behavior change was made in T1.
+- R3 may proceed using focused tests and smoke gates.
+- full `test_chat_router.py` should not be treated as the all-green refactor gate until it is split or expectations are updated.
+
 ## Remaining Sequence
 
 - R3: Extract source identity helpers.
