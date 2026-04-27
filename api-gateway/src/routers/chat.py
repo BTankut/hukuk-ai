@@ -61,12 +61,20 @@ from observability import get_metrics_registry, looks_like_refusal
 from pydantic import BaseModel, Field
 
 from rag.answer_slots import (
+    answer_template_for_query as _answer_template_for_query_impl,
     answer_slot_extraction_method as _answer_slot_extraction_method_impl,
     best_evidence_row_for_matrix_slot as _best_evidence_row_for_matrix_slot_impl,
     build_verified_answer_slots as _build_verified_answer_slots_impl,
     compact_slot_value as _compact_slot_value_impl,
+    must_have_fact_slots_for_query as _must_have_fact_slots_for_query_impl,
+    query_contains_any as _query_contains_any_impl,
+    query_needs_current_applicability_slot as _query_needs_current_applicability_slot_impl,
+    query_needs_historical_transition_slots as _query_needs_historical_transition_slots_impl,
     required_slot_schema as _required_slot_schema_impl,
+    resolve_required_slot_matrix_for_query as _resolve_required_slot_matrix_for_query_impl,
     slot_quote_hash as _slot_quote_hash_impl,
+    source_families_for_required_slot_matrix as _source_families_for_required_slot_matrix_impl,
+    source_family_resolution_slot_values as _source_family_resolution_slot_values_impl,
 )
 from rag.article_span_selection import (
     _annotate_canonical_span_materialization as _annotate_canonical_span_materialization_impl,
@@ -148,7 +156,6 @@ from rag.source_identity import (
 )
 from rag.required_slot_matrix import (
     RequiredSlotResolution,
-    resolve_required_slot_matrix,
 )
 from rag.runtime_trace import (
     _attach_parity_trace,
@@ -5392,76 +5399,18 @@ def _build_retrieval_verification_features(
 
 
 def _answer_template_for_query(query: str) -> str:
-    normalized = normalize_query_text(query or "")
-    if any(
-        term in normalized
-        for term in (
-            "usul",
-            "basvuru",
-            "itiraz",
-            "sure",
-            "dava sart",
-            "on sart",
-            "tescil",
-            "ilan",
-            "noter",
-            "noterce",
-            "yeterli midir",
-            "yeterli mi",
-        )
-    ):
-        return "procedure"
-    if any(term in normalized for term in ("istisna", "muaf", "haric", "sakli", "uygulanmaz")):
-        return "exception"
-    if any(term in normalized for term in ("kosul", "sart", "hangi hallerde", "aranir", "gerekir")):
-        return "condition"
-    if any(
-        term in normalized
-        for term in (
-            "fark",
-            "karsilastir",
-            "yoksa",
-            "eski",
-            "guncel",
-            "guncellik",
-            "hala",
-            "tarih",
-            "gecici",
-            "hangisi",
-        )
-    ):
-        return "comparison_or_temporal"
-    return "direct"
+    return _answer_template_for_query_impl(query)
 
 
 def _query_contains_any(normalized_query: str, terms: tuple[str, ...]) -> bool:
-    return any(term in normalized_query for term in terms)
+    return _query_contains_any_impl(normalized_query, terms)
 
 
 def _source_family_resolution_slot_values(
     source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
     key: str,
 ) -> list[str]:
-    if isinstance(source_family_resolution, dict):
-        raw_value = source_family_resolution.get(key)
-    elif source_family_resolution is not None:
-        raw_value = getattr(source_family_resolution, key, None)
-    else:
-        raw_value = None
-
-    if raw_value is None:
-        return []
-    if isinstance(raw_value, str):
-        return [raw_value]
-    if isinstance(raw_value, (list, tuple, set)):
-        values: list[str] = []
-        for item in raw_value:
-            if isinstance(item, dict):
-                values.append(str(item.get("family") or ""))
-            else:
-                values.append(str(getattr(item, "family", item) or ""))
-        return values
-    return [str(raw_value)]
+    return _source_family_resolution_slot_values_impl(source_family_resolution, key)
 
 
 def _source_families_for_required_slot_matrix(
@@ -5470,21 +5419,13 @@ def _source_families_for_required_slot_matrix(
     source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
     chunks: list[RetrievedChunk] | None = None,
 ) -> list[str]:
-    families: list[str] = []
-    families.extend(requested_source_families or [])
-    for key in (
-        "predicted_family",
-        "expected_family_prior",
-        "preferred_families",
-        "routing_families",
-        "fallback_families",
-        "family_candidates",
-    ):
-        families.extend(_source_family_resolution_slot_values(source_family_resolution, key))
-    for chunk in (chunks or [])[:8]:
-        families.append(_resolve_chunk_routing_family(chunk) or "")
-        families.append(_resolve_chunk_source_family(chunk) or "")
-    return dedupe_strings([family for family in families if str(family or "").strip()])
+    return _source_families_for_required_slot_matrix_impl(
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        chunks=chunks,
+        resolve_chunk_routing_family=_resolve_chunk_routing_family,
+        resolve_chunk_source_family=_resolve_chunk_source_family,
+    )
 
 
 def _resolve_required_slot_matrix_for_query(
@@ -5495,156 +5436,27 @@ def _resolve_required_slot_matrix_for_query(
     source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
     chunks: list[RetrievedChunk] | None = None,
 ) -> RequiredSlotResolution:
-    return resolve_required_slot_matrix(
+    return _resolve_required_slot_matrix_for_query_impl(
         query=query,
-        answer_template=template,
-        source_families=_source_families_for_required_slot_matrix(
-            requested_source_families=requested_source_families,
-            source_family_resolution=source_family_resolution,
-            chunks=chunks,
-        ),
+        template=template,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        chunks=chunks,
+        resolve_chunk_routing_family=_resolve_chunk_routing_family,
+        resolve_chunk_source_family=_resolve_chunk_source_family,
     )
 
 
 def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
-    normalized = normalize_query_text(query or "")
-    slots = ["result_or_holding", "governing_source"]
-    if _query_contains_any(
-        normalized,
-        (
-            "hangi mevzuat",
-            "hangi duzenleme",
-            "hangi belge",
-            "hangi kaynak",
-            "tuzuk",
-            "yonetmelik",
-            "teblig",
-            "karar",
-            "genelge",
-            "kararname",
-        ),
-    ):
-        slots.extend(["exact_source_identity", "document_selection_reason"])
-    if _query_contains_any(normalized, ("madde", "fikra", "bent", "paragraf", "hukum")):
-        slots.append("article_or_span")
-    if template == "procedure":
-        slots.append("procedure_or_consequence")
-    if template == "exception":
-        slots.extend(["exception_or_limitation", "scenario_applicability"])
-    if template == "condition":
-        slots.append("scenario_applicability")
-    if _query_contains_any(normalized, ("istisna", "muaf", "haric", "sakli", "uygulanmaz")):
-        slots.append("exception_or_limitation")
-    if _query_contains_any(normalized, ("kosul", "sart", "hangi hallerde", "aranir", "gerekir")):
-        slots.append("scenario_applicability")
-    if template == "comparison_or_temporal":
-        slots.append("temporal_validity")
-    if _query_contains_any(
-        normalized,
-        (
-            "guncel",
-            "guncellik",
-            "hala",
-            "halen yururlukte",
-            "yururlukte mi",
-            "yururluk",
-            "mulga",
-            "eski",
-            "gecici",
-            "son durum",
-            "ne zaman yururluge",
-            "dogrudan uygulan",
-            "dogrudan hukum",
-            "guvenli midir",
-            "riskli",
-            "hatali",
-        ),
-    ):
-        slots.append("temporal_validity")
-    if _query_needs_historical_transition_slots(normalized):
-        slots.extend(["historical_period", "current_applicability", "transition_or_replacement_rule"])
-    elif _query_needs_current_applicability_slot(normalized):
-        slots.append("current_applicability")
-    if _query_contains_any(
-        normalized,
-        (
-            "ust norm",
-            "alt norm",
-            "kanun mu",
-            "yonetmelik mi",
-            "hangisi uygulanir",
-            "normlar hiyerarsisi",
-            "kanuna aykiri",
-        ),
-    ) or (
-        "yoksa" in normalized
-        and _query_contains_any(normalized, ("kanun", "yonetmelik", "teblig", "tuzuk", "genelge", "karar"))
-    ):
-        slots.append("hierarchy_or_conflict_rule")
-    return dedupe_strings(slots)
+    return _must_have_fact_slots_for_query_impl(query, template)
 
 
 def _query_needs_historical_transition_slots(normalized_query: str) -> bool:
-    historical_or_repealed = _query_contains_any(
-        normalized_query,
-        (
-            "mulga",
-            "mülga",
-            "ilga",
-            "yururlukten kaldir",
-            "yururlukten kalk",
-            "eski metin",
-            "eski khk",
-            "eski tuzuk",
-            "eski tüzük",
-            "eski yonetmelik",
-            "eski yönetmelik",
-            "eski yonetmeligi",
-            "eski yönetmeliği",
-            "eski duzenleme",
-            "eski düzenleme",
-            "onceki duzenleme",
-            "tarihsel",
-            "o tarihte",
-            "gecis hukmu",
-            "gecici madde",
-            "yerine gecen",
-            "yerini alan",
-        ),
-    )
-    direct_risk = _query_contains_any(
-        normalized_query,
-        (
-            "dogrudan uygulan",
-            "dogrudan hukum",
-            "esas almak",
-            "guvenli midir",
-            "riskli",
-            "hatali",
-            "hata",
-            "guncellik hatasi",
-        ),
-    )
-    historical_year = bool(re.search(r"(?<!\d)(?:19\d{2}|200\d|201\d)(?!\d)", normalized_query))
-    return bool(historical_or_repealed or (historical_year and direct_risk))
+    return _query_needs_historical_transition_slots_impl(normalized_query)
 
 
 def _query_needs_current_applicability_slot(normalized_query: str) -> bool:
-    return _query_contains_any(
-        normalized_query,
-        (
-            "bugun",
-            "guncel",
-            "guncellik",
-            "halen",
-            "hala",
-            "yururlukte mi",
-            "gecerli mi",
-            "son durum",
-            "2026'da dogrudan",
-            "2026 da dogrudan",
-        ),
-    )
+    return _query_needs_current_applicability_slot_impl(normalized_query)
 
 
 def _answer_contains_any(normalized_answer: str, terms: tuple[str, ...]) -> bool:
