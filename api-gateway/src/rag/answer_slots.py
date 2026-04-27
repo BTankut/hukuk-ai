@@ -478,3 +478,209 @@ def build_verified_answer_slots(
         "answer_slot_extraction_methods": dedupe_strings(methods),
         "critical_answer_slots_missing": dedupe_strings(critical_missing),
     }
+
+
+_INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
+
+
+def count_answer_fact_units(answer_text: str) -> int:
+    stripped = re.sub(r"\[Kaynak:[^\]]+\]", " ", answer_text or "")
+    pieces = re.split(r"(?:\n+|(?<=[.!?])\s+|(?:^|\s)(?:[-*]|\d+[.)])\s+)", stripped)
+    long_pieces = [
+        piece.strip()
+        for piece in pieces
+        if len(piece.strip()) >= 28 and any(char.isalpha() for char in piece)
+    ]
+    citation_count = len(_INLINE_CITATION_RE.findall(answer_text or ""))
+    return max(len(long_pieces), citation_count)
+
+
+def build_completeness_synthesis_features(
+    *,
+    query: str,
+    answer_text: str,
+    article_span_selector: dict[str, Any] | None,
+    chunks: list[Any],
+    requested_source_families: list[str] | None = None,
+    source_family_resolution: Any = None,
+    resolve_chunk_routing_family: Any = None,
+    resolve_chunk_source_family: Any = None,
+    satisfied_completeness_slots: Any = None,
+    evidence_supported_completeness_slots: Any = None,
+    build_evidence_required_slot_values: Any = None,
+    build_answer_slot_evidence_map: Any = None,
+) -> dict[str, Any]:
+    template = answer_template_for_query(query)
+    required_slot_resolution = resolve_required_slot_matrix_for_query(
+        query=query,
+        template=template,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        chunks=chunks,
+        resolve_chunk_routing_family=resolve_chunk_routing_family,
+        resolve_chunk_source_family=resolve_chunk_source_family,
+    )
+    required_slots = must_have_fact_slots_for_query(query, template)
+    minimum_required_facts = max(2 if template == "direct" else 3, min(len(required_slots), 3))
+    answer_fact_units = count_answer_fact_units(answer_text)
+    citation_count = len(_INLINE_CITATION_RE.findall(answer_text or ""))
+    support_span_count = 0
+    selector = article_span_selector if isinstance(article_span_selector, dict) else {}
+    candidate_completeness_score = selector.get("candidate_completeness_score")
+    selected_document_has_body_span = bool(selector.get("selected_document_has_body_span"))
+    selected_document_has_non_title_span = bool(selector.get("selected_document_has_non_title_span"))
+    selected_document_has_document_level_body_span = bool(
+        selector.get("selected_document_has_document_level_body_span")
+    )
+    selected_document_has_materialized_body_span = bool(
+        selector.get("selected_document_has_materialized_body_span")
+    )
+    title_only_answer_degraded = bool(selector.get("title_only_answer_degraded"))
+    insufficient_canonical_span_evidence = bool(selector.get("insufficient_canonical_span_evidence"))
+    if isinstance(article_span_selector, dict):
+        try:
+            support_span_count = int(article_span_selector.get("support_span_count") or 0)
+        except (TypeError, ValueError):
+            support_span_count = 0
+    effective_support_count = support_span_count
+    if effective_support_count == 0 and citation_count and chunks:
+        effective_support_count = min(citation_count, len(chunks))
+
+    has_answer = bool((answer_text or "").strip()) and not str(answer_text).startswith("REFUSED_OR_EMPTY:")
+    satisfied_slots = (
+        satisfied_completeness_slots(
+            required_slots=required_slots,
+            query=query,
+            answer_text=answer_text,
+            article_span_selector=article_span_selector,
+            chunks=chunks,
+            answer_fact_units=answer_fact_units,
+            citation_count=citation_count,
+            support_span_count=effective_support_count,
+        )
+        if has_answer
+        else []
+    )
+    evidence_reentry_slots = [
+        slot
+        for slot in evidence_supported_completeness_slots(
+            required_slots=required_slots,
+            article_span_selector=article_span_selector,
+            chunks=chunks,
+        )
+        if slot not in set(satisfied_slots)
+    ]
+    if has_answer and evidence_reentry_slots:
+        satisfied_slots = dedupe_strings([*satisfied_slots, *evidence_reentry_slots])
+    missing_slots = [slot for slot in required_slots if slot not in set(satisfied_slots)]
+    evidence_required_slot_values = build_evidence_required_slot_values(
+        required_slots=required_slots,
+        article_span_selector=article_span_selector,
+        chunks=chunks,
+        query=query,
+    )
+    matrix_evidence_required_slot_values = build_evidence_required_slot_values(
+        required_slots=required_slot_resolution.runtime_slots,
+        article_span_selector=article_span_selector,
+        chunks=chunks,
+        query=query,
+    )
+    answer_slots, answer_slot_summary = build_verified_answer_slots(
+        required_slot_resolution=required_slot_resolution,
+        evidence_slot_values=matrix_evidence_required_slot_values,
+    )
+    answer_slot_evidence_map, answer_slot_coverage_score, answer_slot_missing_reasons = (
+        build_answer_slot_evidence_map(
+            required_slots=required_slots,
+            satisfied_slots=satisfied_slots,
+            evidence_reentry_slots=evidence_reentry_slots,
+            missing_slots=missing_slots,
+            article_span_selector=article_span_selector,
+            chunks=chunks,
+            query=query,
+        )
+    )
+    slot_factor = len(satisfied_slots) / len(required_slots) if required_slots else 1.0
+    answer_factor = min(1.0, answer_fact_units / minimum_required_facts) if has_answer else 0.0
+    evidence_factor = (
+        min(1.0, effective_support_count / max(1, minimum_required_facts))
+        if effective_support_count
+        else (0.5 if chunks else 0.0)
+    )
+    coverage_score = round((0.55 * slot_factor) + (0.25 * answer_factor) + (0.20 * evidence_factor), 3)
+    minimum_answer_facts_present = bool(
+        has_answer
+        and answer_fact_units >= minimum_required_facts
+        and citation_count >= 1
+        and effective_support_count >= 1
+        and not missing_slots
+        and not insufficient_canonical_span_evidence
+    )
+    structurally_full = bool(
+        has_answer
+        and answer_fact_units >= minimum_required_facts
+        and citation_count >= 1
+        and effective_support_count >= 1
+    )
+    if insufficient_canonical_span_evidence:
+        degrade_reason = "insufficient_canonical_span_evidence"
+        rubric_class = "legally_aligned_but_partial" if has_answer else "insufficient_both"
+        minimum_answer_facts_present = False
+        if "article_or_span" in required_slots and "article_or_span" not in missing_slots:
+            missing_slots = [*missing_slots, "article_or_span"]
+        satisfied_slots = [slot for slot in satisfied_slots if slot != "article_or_span"]
+    elif not has_answer:
+        degrade_reason = "no_answer"
+        rubric_class = "insufficient_both"
+    elif missing_slots:
+        degrade_reason = "missing_required_fact_slots:" + ",".join(missing_slots)
+        rubric_class = "structurally_full_but_legally_misaligned" if structurally_full else "insufficient_both"
+    elif answer_fact_units < minimum_required_facts:
+        degrade_reason = "answer_too_short_for_template"
+        rubric_class = "insufficient_both"
+    elif citation_count == 0:
+        degrade_reason = "missing_source_citations"
+        rubric_class = "insufficient_both"
+    elif not chunks:
+        degrade_reason = "no_retrieved_evidence"
+        rubric_class = "insufficient_both"
+    elif effective_support_count == 0:
+        degrade_reason = "no_selector_support_spans"
+        rubric_class = "legally_aligned_but_partial"
+    elif not minimum_answer_facts_present:
+        degrade_reason = "partial_evidence_only"
+        rubric_class = "legally_aligned_but_partial"
+    else:
+        degrade_reason = "complete_enough"
+        rubric_class = "rubric_sufficient"
+
+    return {
+        "required_fact_coverage_score": coverage_score,
+        "minimum_answer_facts_present": minimum_answer_facts_present,
+        "completeness_degrade_reason": degrade_reason,
+        "task_type_answer_template_used": template,
+        "must_have_fact_slots": required_slots,
+        "satisfied_fact_slots": satisfied_slots,
+        "missing_fact_slots": missing_slots,
+        "evidence_slot_reentry_applied": bool(evidence_reentry_slots),
+        "evidence_slot_reentry_slots": evidence_reentry_slots,
+        "rubric_aligned_completeness_class": rubric_class,
+        "answer_slot_evidence_map": answer_slot_evidence_map,
+        "answer_slot_coverage_score": answer_slot_coverage_score,
+        "answer_slot_missing_reasons": answer_slot_missing_reasons,
+        "required_slot_schema": required_slot_schema(required_slots),
+        "evidence_required_slot_values": evidence_required_slot_values,
+        "evidence_required_slot_value_count": sum(
+            1 for row in evidence_required_slot_values if float(row.get("slot_confidence") or 0.0) >= 0.65
+        ),
+        **required_slot_resolution.to_trace_dict(),
+        "answer_slots": answer_slots,
+        **answer_slot_summary,
+        "candidate_completeness_score": candidate_completeness_score,
+        "selected_document_has_body_span": selected_document_has_body_span,
+        "selected_document_has_non_title_span": selected_document_has_non_title_span,
+        "selected_document_has_document_level_body_span": selected_document_has_document_level_body_span,
+        "selected_document_has_materialized_body_span": selected_document_has_materialized_body_span,
+        "title_only_answer_degraded": title_only_answer_degraded,
+        "insufficient_canonical_span_evidence": insufficient_canonical_span_evidence,
+    }
