@@ -78,6 +78,14 @@ from rag.answer_slots import (
     source_families_for_required_slot_matrix as _source_families_for_required_slot_matrix_impl,
     source_family_resolution_slot_values as _source_family_resolution_slot_values_impl,
 )
+from rag.answer_synthesis import (
+    build_native_dialog_fallback_answer as _build_native_dialog_fallback_answer_impl,
+    build_persisted_raw_answer_snapshot as _build_persisted_raw_answer_snapshot_impl,
+    build_persisted_response_envelope_snapshot as _build_persisted_response_envelope_snapshot_impl,
+    sanitize_public_answer_contract as _sanitize_public_answer_contract_impl,
+    sanitize_public_final_mode as _sanitize_public_final_mode_impl,
+    verified_answer_plan_slot_value as _verified_answer_plan_slot_value_impl,
+)
 from rag.article_span_selection import (
     _annotate_canonical_span_materialization as _annotate_canonical_span_materialization_impl,
     _article_zero_body_query_allows_extraction as _article_zero_body_query_allows_extraction_impl,
@@ -441,14 +449,7 @@ def _detect_native_dialog_intent(user_query: str) -> str | None:
 
 
 def _build_native_dialog_fallback_answer(intent: str) -> str:
-    if intent == "gratitude":
-        return "Rica ederim. İstersen mevzuat sorunu doğrudan kanun ve madde numarasıyla sor."
-    if intent == "capability":
-        return (
-            "Merhaba. Mevzuat sorularında yardımcı olabilirim; özellikle kanun ve madde bazlı "
-            "sorularda daha isabetli çalışırım. İstersen sorunu doğrudan yaz."
-        )
-    return "Merhaba. Mevzuat sorularında yardımcı olabilirim; istersen sorunu doğrudan yaz."
+    return _build_native_dialog_fallback_answer_impl(intent)
 
 
 def _retrieval_planner_enabled() -> bool:
@@ -7140,13 +7141,13 @@ def _build_persisted_raw_answer_snapshot(
     final_mode: str | None,
     final_reason: str | None,
 ) -> dict[str, Any]:
-    return {
-        "answer_text": answer_text,
-        "ordered_citation_list": list(citations),
-        "ordered_source_id_list": list(source_ids),
-        "final_mode": final_mode,
-        "final_reason": final_reason,
-    }
+    return _build_persisted_raw_answer_snapshot_impl(
+        answer_text=answer_text,
+        citations=citations,
+        source_ids=source_ids,
+        final_mode=final_mode,
+        final_reason=final_reason,
+    )
 
 
 def _build_persisted_response_envelope_snapshot(
@@ -7158,14 +7159,14 @@ def _build_persisted_response_envelope_snapshot(
     citations: list[str],
     source_ids: list[str],
 ) -> dict[str, Any]:
-    return {
-        "response_id": response_id,
-        "blocked": blocked,
-        "final_mode": final_mode,
-        "final_reason": final_reason,
-        "ordered_citation_list": list(citations),
-        "ordered_source_id_list": list(source_ids),
-    }
+    return _build_persisted_response_envelope_snapshot_impl(
+        response_id=response_id,
+        blocked=blocked,
+        final_mode=final_mode,
+        final_reason=final_reason,
+        citations=citations,
+        source_ids=source_ids,
+    )
 
 
 def _post_canonical_answer_path_request(
@@ -7502,17 +7503,11 @@ def _build_client_trace(
 
 
 def _sanitize_public_final_mode(final_mode: str | None) -> str | None:
-    if final_mode == "blocked":
-        return "refusal"
-    return final_mode
+    return _sanitize_public_final_mode_impl(final_mode)
 
 
 def _sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> dict[str, Any] | None:
-    if answer_contract is None:
-        return None
-    sanitized = dict(answer_contract)
-    sanitized["final_mode"] = _sanitize_public_final_mode(answer_contract.get("final_mode"))
-    return sanitized
+    return _sanitize_public_answer_contract_impl(answer_contract)
 
 
 def _resolve_contract_suppressed_answer_text(
@@ -7545,15 +7540,7 @@ _VERIFIED_ANSWER_PLAN_HEADER = "Doğrulanmış cevap planı:"
 
 
 def _verified_answer_plan_slot_value(slot: dict[str, Any]) -> str:
-    value = _compact_slot_value(str(slot.get("value") or ""), max_len=260)
-    evidence_keys = [
-        str(item).strip()
-        for item in slot.get("evidence_span_keys") or []
-        if str(item or "").strip()
-    ]
-    if evidence_keys:
-        return f"{value} [Kaynak: {evidence_keys[0]}]"
-    return value
+    return _verified_answer_plan_slot_value_impl(slot)
 
 
 def _verified_slots_by_name(answer_contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
