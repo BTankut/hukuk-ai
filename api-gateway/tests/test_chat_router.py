@@ -91,7 +91,6 @@ from routers.chat import (
     _resolve_chunk_canonical_source_key_v2,
     _resolve_chunk_binding_source_key,
     _resolve_source_family_prior,
-    _source_key_v2_collision_profile,
     _resolve_public_answer_text,
     _sanitize_source_cluster_selector_payload,
     _sanitize_retrieval_plan_payload,
@@ -106,6 +105,7 @@ from routers.chat import (
 from rag.orchestrator import OrchestratorResponse, RetrievedChunk
 from rag.required_slot_matrix import resolve_required_slot_matrix
 from rag.source_catalog import load_canonical_source_catalog
+from rag.source_identity import _source_key_v2_collision_profile
 from rag.source_supplements import load_source_supplements_for_keys
 from rag.retriever import MetadataFilter, MockRetriever
 from session_store import RedisSessionBackend

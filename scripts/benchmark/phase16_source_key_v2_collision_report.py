@@ -16,11 +16,11 @@ if str(API_SRC) not in sys.path:
     sys.path.insert(0, str(API_SRC))
 
 from rag.orchestrator import RetrievedChunk  # noqa: E402
-from routers.chat import (  # noqa: E402
-    _resolve_chunk_canonical_source_key_v2,
+from rag.source_identity import (  # noqa: E402
     _source_key_collision_profile,
     _source_key_v2_collision_profile,
 )
+from routers.chat import _resolve_chunk_canonical_source_key_v2  # noqa: E402
 
 
 DEFAULT_REMEDIATION_CSV = REPO_ROOT / "reports/benchmark/phase_16a_corpus_materialization_remediation.csv"
