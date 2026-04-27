@@ -7873,46 +7873,22 @@ def _finalize_chat_response(
     )
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
+def _request_history_from_messages(messages: list[ConversationMessage]) -> list[dict[str, str]]:
+    return [
+        {"role": msg.role, "content": msg.content}
+        for msg in messages
+        if msg.role in {"user", "assistant", "system"}
+    ]
 
 
-@router.post(
-    "/v1/chat/completions",
-    summary="OpenAI-uyumlu Chat Completions (RAG + SSE)",
-    response_model=ChatCompletionResponse,
-    response_model_exclude_none=True,
-)
-async def chat_completions(
+def _prepare_chat_request_context(
+    *,
     request_body: ChatCompletionRequest,
-    request: Request,
-    store: ConversationStore = Depends(get_conversation_store),
-    _auth_subject: str = Depends(require_api_auth),
-) -> Any:
-    """OpenAI-uyumlu chat completions endpoint.
-
-    RAG pipeline, SSE streaming ve multi-turn konuşma desteği.
-
-    **Akış:**
-    1. Son kullanıcı mesajı çıkarılır
-    2. Konuşma geçmişi sorguya enjekte edilir (multi-turn bağlamı)
-    3. Retriever ile ilgili mevzuat chunk'ları alınır
-    4. RAGOrchestrator → LLM → Guardrails → Verification
-    5. Yanıt SSE (stream=True) veya JSON (stream=False) olarak döndürülür
-
-    **Session Yönetimi:**
-    - `session_id` verilmezse yeni oturum oluşturulur
-    - Yanıt sonrası bu tur session store'a kaydedilir
-
-    **Law Filter:**
-    - `law_filter: "TBK"` → sadece TBK maddelerinde arama yapılır
-    """
-    # ── Doğrulama ────────────────────────────────────────────────────────────
+    store: ConversationStore,
+) -> tuple[str, str, str, list[dict[str, str]]]:
     if not request_body.messages:
         raise HTTPException(status_code=400, detail="messages listesi boş olamaz")
 
-    # Son kullanıcı mesajını çıkar
     last_user_msg: str | None = None
     for msg in reversed(request_body.messages):
         if msg.role == "user":
@@ -7928,21 +7904,28 @@ async def chat_completions(
     if not last_user_msg.strip():
         raise HTTPException(status_code=400, detail="Kullanıcı mesajı boş olamaz")
 
-    # ── Session & Multi-turn ─────────────────────────────────────────────────
     session_id = request_body.session_id or f"sess-{uuid.uuid4().hex[:16]}"
     response_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
-    request_history: list[dict[str, str]] = [
-        {"role": msg.role, "content": msg.content}
-        for msg in request_body.messages[:-1]
-        if msg.role in {"user", "assistant", "system"}
-    ]
+    request_history = _request_history_from_messages(request_body.messages[:-1])
     conversation_history = request_history
     if not conversation_history and not (
         _release_controls_boundary_proxy_enabled()
         and _release_controls_perimeter_session_isolation_enabled()
     ):
         conversation_history = store.get_history(session_id)
+    return session_id, response_id, last_user_msg, conversation_history
 
+
+async def _try_shortcut_chat_response(
+    *,
+    request: Request,
+    request_body: ChatCompletionRequest,
+    store: ConversationStore,
+    session_id: str,
+    response_id: str,
+    last_user_msg: str,
+    conversation_history: list[dict[str, str]],
+) -> Any | None:
     native_dialog_intent = _detect_native_dialog_intent(last_user_msg)
     if native_dialog_intent is not None:
         answer_text, native_usage, native_llm_trace = await _run_native_dialog_passthrough(
@@ -8026,7 +8009,6 @@ async def chat_completions(
             llm_trace=native_llm_trace,
         )
 
-    # Dar kapsamlı, yüksek isabetli deterministic çapraz-kanun / TBK yanıtları
     precise_lane = "precise_cross_law_shortcut"
     precise_answer = _build_precise_tmk_tbk_cross_law_answer(last_user_msg)
     if not precise_answer:
@@ -8036,11 +8018,7 @@ async def chat_completions(
         answer_text, precise_citations = precise_answer
         mentioned_laws = _extract_law_mentions(last_user_msg)
         explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
-        request_history = [
-            {"role": msg.role, "content": msg.content}
-            for msg in request_body.messages[:-1]
-            if msg.role in {"user", "assistant", "system"}
-        ]
+        request_history = _request_history_from_messages(request_body.messages[:-1])
         synthetic_evidence = _build_fallback_assembled_evidence(
             [citation for citation in precise_citations if canonicalize_source_id(citation)],
             fallback_excerpt=answer_text,
@@ -8130,7 +8108,6 @@ async def chat_completions(
             llm_trace=None,
         )
 
-    # Deterministic kapsam-dışı refusal (low-risk hardening)
     scope_refusal_reason = _detect_scope_refusal_reason(last_user_msg)
     if scope_refusal_reason:
         answer_text = (
@@ -8140,11 +8117,7 @@ async def chat_completions(
         )
         mentioned_laws = _extract_law_mentions(last_user_msg)
         explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
-        request_history = [
-            {"role": msg.role, "content": msg.content}
-            for msg in request_body.messages[:-1]
-            if msg.role in {"user", "assistant", "system"}
-        ]
+        request_history = _request_history_from_messages(request_body.messages[:-1])
         hardening = harden_answer(
             answer_text=answer_text,
             citations=[],
@@ -8224,6 +8197,61 @@ async def chat_completions(
             upstream_usage=None,
             llm_trace=None,
         )
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/v1/chat/completions",
+    summary="OpenAI-uyumlu Chat Completions (RAG + SSE)",
+    response_model=ChatCompletionResponse,
+    response_model_exclude_none=True,
+)
+async def chat_completions(
+    request_body: ChatCompletionRequest,
+    request: Request,
+    store: ConversationStore = Depends(get_conversation_store),
+    _auth_subject: str = Depends(require_api_auth),
+) -> Any:
+    """OpenAI-uyumlu chat completions endpoint.
+
+    RAG pipeline, SSE streaming ve multi-turn konuşma desteği.
+
+    **Akış:**
+    1. Son kullanıcı mesajı çıkarılır
+    2. Konuşma geçmişi sorguya enjekte edilir (multi-turn bağlamı)
+    3. Retriever ile ilgili mevzuat chunk'ları alınır
+    4. RAGOrchestrator → LLM → Guardrails → Verification
+    5. Yanıt SSE (stream=True) veya JSON (stream=False) olarak döndürülür
+
+    **Session Yönetimi:**
+    - `session_id` verilmezse yeni oturum oluşturulur
+    - Yanıt sonrası bu tur session store'a kaydedilir
+
+    **Law Filter:**
+    - `law_filter: "TBK"` → sadece TBK maddelerinde arama yapılır
+    """
+    session_id, response_id, last_user_msg, conversation_history = _prepare_chat_request_context(
+        request_body=request_body,
+        store=store,
+    )
+
+    shortcut_response = await _try_shortcut_chat_response(
+        request=request,
+        request_body=request_body,
+        store=store,
+        session_id=session_id,
+        response_id=response_id,
+        last_user_msg=last_user_msg,
+        conversation_history=conversation_history,
+    )
+    if shortcut_response is not None:
+        return shortcut_response
 
     if _release_controls_boundary_proxy_enabled():
         canonical_snapshot, proxy_response = await _proxy_canonical_answer_path(
