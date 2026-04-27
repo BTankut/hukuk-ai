@@ -62,27 +62,16 @@ from pydantic import BaseModel, Field
 
 from rag.answer_slots import (
     answer_template_for_query as _answer_template_for_query_impl,
-    answer_slot_extraction_method as _answer_slot_extraction_method_impl,
-    best_evidence_row_for_matrix_slot as _best_evidence_row_for_matrix_slot_impl,
     build_completeness_synthesis_features as _build_completeness_synthesis_features_impl,
-    build_verified_answer_slots as _build_verified_answer_slots_impl,
     compact_slot_value as _compact_slot_value_impl,
-    count_answer_fact_units as _count_answer_fact_units_impl,
     must_have_fact_slots_for_query as _must_have_fact_slots_for_query_impl,
-    query_contains_any as _query_contains_any_impl,
     query_needs_current_applicability_slot as _query_needs_current_applicability_slot_impl,
     query_needs_historical_transition_slots as _query_needs_historical_transition_slots_impl,
-    required_slot_schema as _required_slot_schema_impl,
-    resolve_required_slot_matrix_for_query as _resolve_required_slot_matrix_for_query_impl,
     slot_quote_hash as _slot_quote_hash_impl,
-    source_families_for_required_slot_matrix as _source_families_for_required_slot_matrix_impl,
-    source_family_resolution_slot_values as _source_family_resolution_slot_values_impl,
 )
 from rag.answer_synthesis import (
     apply_evidence_slot_synthesis_to_answer_text as _apply_evidence_slot_synthesis_to_answer_text_impl,
     apply_verified_answer_slot_plan_to_answer_text as _apply_verified_answer_slot_plan_to_answer_text_impl,
-    build_verified_answer_plan as _build_verified_answer_plan_impl,
-    first_verified_plan_value as _first_verified_plan_value_impl,
     build_native_dialog_fallback_answer as _build_native_dialog_fallback_answer_impl,
     build_persisted_raw_answer_snapshot as _build_persisted_raw_answer_snapshot_impl,
     build_persisted_response_envelope_snapshot as _build_persisted_response_envelope_snapshot_impl,
@@ -90,34 +79,19 @@ from rag.answer_synthesis import (
     resolve_public_answer_text as _resolve_public_answer_text_impl,
     sanitize_public_answer_contract as _sanitize_public_answer_contract_impl,
     sanitize_public_final_mode as _sanitize_public_final_mode_impl,
-    verified_slot_controlled_replacement_allowed as _verified_slot_controlled_replacement_allowed_impl,
-    verified_answer_plan_slot_value as _verified_answer_plan_slot_value_impl,
-    verified_slots_by_name as _verified_slots_by_name_impl,
 )
 from rag.article_span_selection import (
     _annotate_canonical_span_materialization as _annotate_canonical_span_materialization_impl,
-    _article_zero_body_query_allows_extraction as _article_zero_body_query_allows_extraction_impl,
-    _chunk_allows_article_zero_body_extraction as _chunk_allows_article_zero_body_extraction_impl,
-    _chunk_allows_document_level_body_span as _chunk_allows_document_level_body_span_impl,
     _annotate_article_span_selector_priority as _annotate_article_span_selector_priority_impl,
     _apply_selected_document_only_bundle as _apply_selected_document_only_bundle_impl,
     _select_article_span_evidence as _select_article_span_evidence_impl,
-    _article_numeric_value as _article_numeric_value_impl,
-    _article_window_distance as _article_window_distance_impl,
-    _chunk_article_matches as _chunk_article_matches_impl,
     _chunk_body_text_for_quality as _chunk_body_text_for_quality_impl,
     _chunk_body_text_quality as _chunk_body_text_quality_impl,
-    _chunk_has_non_title_body_span as _chunk_has_non_title_body_span_impl,
     _chunk_has_selectable_body_span as _chunk_has_selectable_body_span_impl,
-    _contains_exception_signal as _contains_exception_signal_impl,
-    _contains_temporal_clause_signal as _contains_temporal_clause_signal_impl,
     _extract_query_article_tokens as _extract_query_article_tokens_impl,
-    _extract_query_clause_tokens as _extract_query_clause_tokens_impl,
     _query_article_alignment as _query_article_alignment_impl,
     _resolve_chunk_span_id as _resolve_chunk_span_id_impl,
     _strip_chunk_citation_prefix as _strip_chunk_citation_prefix_impl,
-    _support_contains_exception_signal as _support_contains_exception_signal_impl,
-    _support_contains_temporal_clause as _support_contains_temporal_clause_impl,
 )
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from rag.source_catalog import (
@@ -135,7 +109,6 @@ from rag.source_identity import (
     _canonical_source_family_value,
     _chunk_article_token,
     _chunk_clause_token,
-    _chunk_matches_selected_source_key as _chunk_matches_selected_source_key_impl,
     _chunk_matches_metadata_first_candidate,
     _chunk_source_identity_values,
     _chunk_uses_legacy_source_key_alias as _chunk_uses_legacy_source_key_alias_impl,
@@ -1763,10 +1736,6 @@ def _chunk_uses_legacy_source_key_alias(chunk: RetrievedChunk) -> bool:
     )
 
 
-def _extract_query_clause_tokens(query: str) -> set[str]:
-    return _extract_query_clause_tokens_impl(query)
-
-
 def _extract_query_article_tokens(
     query: str,
     explicit_article_refs: list[tuple[str, str]] | None = None,
@@ -1775,18 +1744,6 @@ def _extract_query_article_tokens(
         query,
         explicit_article_refs=explicit_article_refs,
     )
-
-
-def _chunk_article_matches(chunk: RetrievedChunk, article_tokens: set[str]) -> bool:
-    return _chunk_article_matches_impl(chunk, article_tokens)
-
-
-def _article_numeric_value(token: str) -> tuple[str, int] | None:
-    return _article_numeric_value_impl(token)
-
-
-def _article_window_distance(chunk_token: str, article_tokens: set[str]) -> int | None:
-    return _article_window_distance_impl(chunk_token, article_tokens)
 
 
 def _query_article_alignment(
@@ -1872,14 +1829,6 @@ def _selector_manual_review_reason(
     if len(top_sources) >= 3 and len(top_families) >= 2:
         return "source_identity_collision"
     return ""
-
-
-def _support_contains_temporal_clause(traces: list[dict[str, Any]]) -> bool:
-    return _support_contains_temporal_clause_impl(traces)
-
-
-def _support_contains_exception_signal(query: str, traces: list[dict[str, Any]]) -> bool:
-    return _support_contains_exception_signal_impl(query, traces)
 
 
 def _asks_scope_or_applicability_query(query: str) -> bool:
@@ -1979,14 +1928,6 @@ def _chunk_hierarchy_or_conflict_match(chunk: RetrievedChunk) -> bool:
     )
 
 
-def _contains_temporal_clause_signal(text: str) -> bool:
-    return _contains_temporal_clause_signal_impl(text)
-
-
-def _contains_exception_signal(text: str) -> bool:
-    return _contains_exception_signal_impl(text)
-
-
 def _selector_preferred_source_families(query: str, requested_source_families: list[str]) -> set[str]:
     normalized = _normalize_tr_text(query or "")
     preferred: list[str] = []
@@ -2084,36 +2025,6 @@ def _chunk_body_text_quality(chunk: RetrievedChunk) -> dict[str, Any]:
 
 def _chunk_has_selectable_body_span(chunk: RetrievedChunk) -> bool:
     return _chunk_has_selectable_body_span_impl(chunk)
-
-
-def _chunk_has_non_title_body_span(chunk: RetrievedChunk) -> bool:
-    return _chunk_has_non_title_body_span_impl(chunk)
-
-
-def _chunk_allows_document_level_body_span(
-    chunk: RetrievedChunk,
-    article_span_selector: dict[str, Any] | None,
-) -> bool:
-    return _chunk_allows_document_level_body_span_impl(
-        chunk,
-        article_span_selector,
-        runtime_namespace=globals(),
-    )
-
-
-def _article_zero_body_query_allows_extraction(article_span_selector: dict[str, Any] | None) -> bool:
-    return _article_zero_body_query_allows_extraction_impl(article_span_selector)
-
-
-def _chunk_allows_article_zero_body_extraction(
-    chunk: RetrievedChunk,
-    article_span_selector: dict[str, Any] | None,
-) -> bool:
-    return _chunk_allows_article_zero_body_extraction_impl(
-        chunk,
-        article_span_selector,
-        runtime_namespace=globals(),
-    )
 
 
 def _source_key_collision_profile(chunks: list[RetrievedChunk]) -> dict[str, Any]:
@@ -2808,20 +2719,6 @@ def _count_term_overlap(text: str | None, terms: set[str]) -> int:
         return 0
     tokens = _extract_retrieval_priority_terms(text)
     return len(tokens & terms)
-
-
-def _chunk_matches_selected_source_key(
-    chunk: RetrievedChunk,
-    selected_source_keys: set[str] | None,
-) -> bool:
-    return _chunk_matches_selected_source_key_impl(
-        chunk,
-        selected_source_keys,
-        binding_source_key_resolver=lambda current, include_span: _resolve_chunk_binding_source_key(
-            current,
-            include_span=include_span,
-        ),
-    )
 
 
 def _prioritize_chunks_for_source_families(
@@ -5413,51 +5310,6 @@ def _answer_template_for_query(query: str) -> str:
     return _answer_template_for_query_impl(query)
 
 
-def _query_contains_any(normalized_query: str, terms: tuple[str, ...]) -> bool:
-    return _query_contains_any_impl(normalized_query, terms)
-
-
-def _source_family_resolution_slot_values(
-    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
-    key: str,
-) -> list[str]:
-    return _source_family_resolution_slot_values_impl(source_family_resolution, key)
-
-
-def _source_families_for_required_slot_matrix(
-    *,
-    requested_source_families: list[str] | None = None,
-    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
-    chunks: list[RetrievedChunk] | None = None,
-) -> list[str]:
-    return _source_families_for_required_slot_matrix_impl(
-        requested_source_families=requested_source_families,
-        source_family_resolution=source_family_resolution,
-        chunks=chunks,
-        resolve_chunk_routing_family=_resolve_chunk_routing_family,
-        resolve_chunk_source_family=_resolve_chunk_source_family,
-    )
-
-
-def _resolve_required_slot_matrix_for_query(
-    *,
-    query: str,
-    template: str,
-    requested_source_families: list[str] | None = None,
-    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
-    chunks: list[RetrievedChunk] | None = None,
-) -> RequiredSlotResolution:
-    return _resolve_required_slot_matrix_for_query_impl(
-        query=query,
-        template=template,
-        requested_source_families=requested_source_families,
-        source_family_resolution=source_family_resolution,
-        chunks=chunks,
-        resolve_chunk_routing_family=_resolve_chunk_routing_family,
-        resolve_chunk_source_family=_resolve_chunk_source_family,
-    )
-
-
 def _must_have_fact_slots_for_query(query: str, template: str) -> list[str]:
     return _must_have_fact_slots_for_query_impl(query, template)
 
@@ -5954,10 +5806,6 @@ def _selector_primary_chunk(
     return None
 
 
-def _required_slot_schema(required_slots: list[str]) -> list[dict[str, str]]:
-    return _required_slot_schema_impl(required_slots)
-
-
 def _compact_slot_value(value: str, *, max_len: int = 360) -> str:
     return _compact_slot_value_impl(value, max_len=max_len)
 
@@ -6222,28 +6070,6 @@ def _build_evidence_required_slot_values(
     return rows
 
 
-def _answer_slot_extraction_method(matrix_slot: str) -> str:
-    return _answer_slot_extraction_method_impl(matrix_slot)
-
-
-def _best_evidence_row_for_matrix_slot(
-    matrix_slot: str,
-    evidence_slot_values: list[dict[str, Any]],
-) -> tuple[dict[str, Any], list[str]]:
-    return _best_evidence_row_for_matrix_slot_impl(matrix_slot, evidence_slot_values)
-
-
-def _build_verified_answer_slots(
-    *,
-    required_slot_resolution: RequiredSlotResolution,
-    evidence_slot_values: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    return _build_verified_answer_slots_impl(
-        required_slot_resolution=required_slot_resolution,
-        evidence_slot_values=evidence_slot_values,
-    )
-
-
 def _build_answer_slot_evidence_map(
     *,
     required_slots: list[str],
@@ -6332,10 +6158,6 @@ def _build_answer_slot_evidence_map(
 
     coverage = round(confidence_sum / len(required_slots), 3) if required_slots else 1.0
     return rows, coverage, dedupe_strings(missing_reasons)
-
-
-def _count_answer_fact_units(answer_text: str) -> int:
-    return _count_answer_fact_units_impl(answer_text)
 
 
 def _build_completeness_synthesis_features(
@@ -7546,36 +7368,6 @@ _EVIDENCE_SLOT_SYNTHESIS_LABELS = {
     "hierarchy_or_conflict_rule": "Norm ilişkisi",
 }
 _VERIFIED_ANSWER_PLAN_HEADER = "Doğrulanmış cevap planı:"
-
-
-def _verified_answer_plan_slot_value(slot: dict[str, Any]) -> str:
-    return _verified_answer_plan_slot_value_impl(slot)
-
-
-def _verified_slots_by_name(answer_contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    return _verified_slots_by_name_impl(answer_contract)
-
-
-def _first_verified_plan_value(
-    verified_slots: dict[str, dict[str, Any]],
-    slot_names: tuple[str, ...],
-) -> tuple[str, str]:
-    return _first_verified_plan_value_impl(verified_slots, slot_names)
-
-
-def _build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, Any]:
-    return _build_verified_answer_plan_impl(answer_contract)
-
-
-def _verified_slot_controlled_replacement_allowed(
-    *,
-    answer_contract: dict[str, Any],
-    final_mode: str | None,
-) -> bool:
-    return _verified_slot_controlled_replacement_allowed_impl(
-        answer_contract=answer_contract,
-        final_mode=final_mode,
-    )
 
 
 def _apply_verified_answer_slot_plan_to_answer_text(
