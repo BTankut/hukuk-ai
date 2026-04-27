@@ -285,6 +285,8 @@ _RUNTIME_DEPENDENCY_NAMES = {
     "_selector_trace_supports_temporal_guard",
     "_source_family_relation_group",
     "_source_family_resolution_trace_bool",
+    "_source_key_v2_collision_profile",
+    "_source_key_collision_profile",
     "_temporal_guard_family_compatible",
     "dedupe_strings",
     "extract_numbered_law_mentions",
@@ -1347,3 +1349,346 @@ def _annotate_article_span_selector_priority(
         metadata["_article_span_selector_match_type"] = span_match_types.get(span_id) or "document_support"
         metadata["_article_span_selector_selected"] = True
         chunk.metadata = metadata
+
+_DOCUMENT_LEVEL_BODY_SPAN_FAMILIES = {"cb_genelge", "cb_karar", "teblig"}
+_ARTICLE_ZERO_BODY_EXTRACTION_FAMILIES = {
+    "khk",
+    "kky",
+    "tuzuk",
+    "uy",
+    "yonetmelik",
+    "cb_yonetmelik",
+}
+
+
+def _chunk_allows_document_level_body_span(
+    chunk: RetrievedChunk,
+    article_span_selector: dict[str, Any] | None,
+    runtime_namespace: dict[str, Any] | None = None,
+) -> bool:
+    _bind_runtime_namespace(runtime_namespace)
+    family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
+    if family not in _DOCUMENT_LEVEL_BODY_SPAN_FAMILIES:
+        return False
+    if _chunk_article_token(chunk) not in {"", "0"}:
+        return False
+    if not _chunk_has_selectable_body_span(chunk):
+        return False
+    query_article_tokens = []
+    if isinstance(article_span_selector, dict):
+        raw_tokens = article_span_selector.get("query_article_tokens")
+        query_article_tokens = raw_tokens if isinstance(raw_tokens, list) else []
+    return not any(str(token or "").strip() not in {"", "0"} for token in query_article_tokens)
+
+
+def _article_zero_body_query_allows_extraction(article_span_selector: dict[str, Any] | None) -> bool:
+    query_article_tokens = []
+    if isinstance(article_span_selector, dict):
+        raw_tokens = article_span_selector.get("query_article_tokens")
+        query_article_tokens = raw_tokens if isinstance(raw_tokens, list) else []
+    return not any(str(token or "").strip() not in {"", "0"} for token in query_article_tokens)
+
+
+def _chunk_allows_article_zero_body_extraction(
+    chunk: RetrievedChunk,
+    article_span_selector: dict[str, Any] | None,
+    runtime_namespace: dict[str, Any] | None = None,
+) -> bool:
+    _bind_runtime_namespace(runtime_namespace)
+    family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
+    if family not in _ARTICLE_ZERO_BODY_EXTRACTION_FAMILIES:
+        return False
+    if _chunk_article_token(chunk) not in {"", "0"}:
+        return False
+    if not _chunk_has_selectable_body_span(chunk):
+        return False
+    if not _article_zero_body_query_allows_extraction(article_span_selector):
+        return False
+    body = _chunk_body_text_for_quality(chunk)
+    normalized_body = _normalize_tr_text(body)
+    legal_body_markers = {
+        "madde",
+        "amac",
+        "kapsam",
+        "usul",
+        "esas",
+        "yururluk",
+        "gecici",
+        "hukum",
+        "uygulan",
+        "yukumlul",
+        "saklama",
+        "imha",
+    }
+    return bool(len(body.strip()) >= 180 or any(marker in normalized_body for marker in legal_body_markers))
+
+def _annotate_canonical_span_materialization(
+    *,
+    chunks: list[RetrievedChunk],
+    article_span_selector: dict[str, Any] | None,
+    family_routing_policy: dict[str, Any] | None = None,
+    runtime_namespace: dict[str, Any] | None = None,
+) -> None:
+    _bind_runtime_namespace(runtime_namespace)
+    if not isinstance(article_span_selector, dict):
+        return
+
+    selected_document_key = str(article_span_selector.get("selected_document_key") or "").strip().lower()
+    binding_source_key = str(
+        article_span_selector.get("binding_source_key")
+        or article_span_selector.get("selected_canonical_document_key_v2")
+        or ""
+    ).strip()
+    binding_source_key_normalized = binding_source_key.strip().lower()
+    binding_source_key_version = str(
+        article_span_selector.get("binding_source_key_version") or ""
+    ).strip()
+    canonical_key_binding_applied = bool(
+        binding_source_key_normalized
+        and binding_source_key_version == "canonical_source_key_v2"
+    )
+    selected_span_ids = {
+        str(value or "").strip()
+        for value in [
+            article_span_selector.get("selected_main_span_id"),
+            *(article_span_selector.get("selected_supporting_span_ids") or []),
+        ]
+        if str(value or "").strip()
+    }
+    selected_chunks = [
+        chunk
+        for chunk in chunks
+        if binding_source_key_normalized
+        and _resolve_chunk_binding_source_key(chunk, include_span=False).strip().lower()
+        == binding_source_key_normalized
+    ]
+    if not selected_chunks:
+        selected_chunks = [
+            chunk
+            for chunk in chunks
+            if selected_document_key and _resolve_chunk_document_key(chunk) == selected_document_key
+        ]
+    if not selected_chunks:
+        selected_chunks = [
+            chunk
+            for chunk in chunks
+            if selected_document_key
+            and _resolve_chunk_source_key(chunk).strip().lower() == selected_document_key
+        ]
+    if not selected_chunks and selected_span_ids:
+        selected_chunks = [
+            chunk
+            for chunk in chunks
+            if _resolve_chunk_span_id(chunk) in selected_span_ids
+        ]
+    if not selected_chunks and chunks and not (selected_document_key or binding_source_key_normalized):
+        selected_chunks = chunks[:1]
+    selected_binding_key_resolved = (
+        _resolve_chunk_binding_source_key(selected_chunks[0], include_span=False)
+        if selected_chunks
+        else binding_source_key
+    )
+    if not binding_source_key_normalized and selected_binding_key_resolved:
+        binding_source_key = selected_binding_key_resolved
+        binding_source_key_normalized = selected_binding_key_resolved.strip().lower()
+        binding_source_key_version = "canonical_source_key_v2"
+        canonical_key_binding_applied = True
+    legacy_source_key_used_as_alias = bool(
+        selected_chunks and any(_chunk_uses_legacy_source_key_alias(chunk) for chunk in selected_chunks)
+    )
+
+    main_span_id = str(article_span_selector.get("selected_main_span_id") or "").strip()
+    main_chunk = next(
+        (chunk for chunk in selected_chunks if main_span_id and _resolve_chunk_span_id(chunk) == main_span_id),
+        selected_chunks[0] if selected_chunks else None,
+    )
+    main_quality = _chunk_body_text_quality(main_chunk) if main_chunk else {
+        "body_text_length": 0,
+        "body_printable_ratio": 0.0,
+        "body_alpha_count": 0,
+        "body_control_count": 0,
+        "body_text_available": False,
+    }
+    quality_by_chunk = [(chunk, _chunk_body_text_quality(chunk)) for chunk in selected_chunks]
+    selected_document_has_body_span = any(bool(quality.get("body_text_available")) for _chunk, quality in quality_by_chunk)
+    selected_document_has_non_title_span = any(_chunk_has_non_title_body_span(chunk) for chunk, _quality in quality_by_chunk)
+    selected_document_has_document_level_body_span = any(
+        _chunk_allows_document_level_body_span(chunk, article_span_selector)
+        for chunk, _quality in quality_by_chunk
+    )
+    selected_document_has_article_zero_body_span = any(
+        _chunk_allows_article_zero_body_extraction(chunk, article_span_selector)
+        for chunk, _quality in quality_by_chunk
+    )
+    selected_document_has_materialized_body_span = bool(
+        selected_document_has_non_title_span
+        or selected_document_has_document_level_body_span
+        or selected_document_has_article_zero_body_span
+    )
+
+    policy_collision_keys = []
+    policy_collision_detected = False
+    policy_collision_pair = ""
+    if isinstance(family_routing_policy, dict):
+        raw_keys = family_routing_policy.get("source_key_collision_keys")
+        if isinstance(raw_keys, list):
+            policy_collision_keys = [str(key).strip().lower() for key in raw_keys if str(key or "").strip()]
+        policy_collision_detected = bool(family_routing_policy.get("source_key_collision_detected"))
+        policy_collision_pair = str(family_routing_policy.get("source_key_collision_pair") or "")
+    if not policy_collision_detected:
+        collision_profile = _source_key_collision_profile(chunks)
+        policy_collision_detected = bool(collision_profile.get("source_key_collision_detected"))
+        policy_collision_keys = [
+            str(key).strip().lower()
+            for key in collision_profile.get("source_key_collision_keys") or []
+        ]
+        policy_collision_pair = str(collision_profile.get("source_key_collision_pair") or "")
+    source_key_collision_detected = bool(
+        policy_collision_detected
+        and (not selected_document_key or not policy_collision_keys or selected_document_key in policy_collision_keys)
+    )
+    v2_collision_profile = _source_key_v2_collision_profile(chunks)
+    source_key_v2_collision_detected = bool(v2_collision_profile.get("source_key_v2_collision_detected"))
+    binding_collision_detected = (
+        source_key_v2_collision_detected
+        if canonical_key_binding_applied
+        else source_key_collision_detected
+    )
+    selected_canonical_source_key_v2 = (
+        _resolve_chunk_canonical_source_key_v2(main_chunk, include_span=True) if main_chunk else ""
+    )
+    selected_canonical_document_key_v2 = (
+        _resolve_chunk_canonical_source_key_v2(main_chunk, include_span=False) if main_chunk else ""
+    )
+
+    selected_article = str(article_span_selector.get("selected_article") or "").strip()
+    main_match_type = str(article_span_selector.get("main_span_match_type") or "")
+    title_only_fallback_used = bool(
+        (
+            selected_article in {"", "0"}
+            or main_match_type == "title_only"
+            or not bool(main_quality.get("body_text_available"))
+        )
+        and not selected_document_has_document_level_body_span
+        and not selected_document_has_article_zero_body_span
+    )
+    try:
+        support_span_count = int(article_span_selector.get("support_span_count") or 0)
+    except (TypeError, ValueError):
+        support_span_count = 0
+    candidate_completeness_score = 0.0
+    if selected_chunks:
+        candidate_completeness_score += 0.20
+    if selected_document_has_body_span:
+        candidate_completeness_score += 0.35
+    if selected_document_has_materialized_body_span:
+        candidate_completeness_score += 0.25
+    if support_span_count >= 2:
+        candidate_completeness_score += 0.10
+    if article_span_selector.get("support_contains_temporal_clause") or article_span_selector.get(
+        "support_contains_exception_signal"
+    ):
+        candidate_completeness_score += 0.10
+    candidate_completeness_score = round(min(candidate_completeness_score, 1.0), 3)
+
+    canonical_span_materialized = bool(selected_document_has_materialized_body_span)
+    corpus_materialization_required = bool(selected_chunks and not selected_document_has_materialized_body_span)
+    insufficient_canonical_span_evidence = bool(corpus_materialization_required)
+    if not selected_document_key:
+        materialization_reason = "selected_document_missing"
+    elif not selected_chunks:
+        materialization_reason = "selected_document_chunks_missing"
+    elif selected_document_has_non_title_span:
+        materialization_reason = "non_title_body_span_available"
+    elif selected_document_has_document_level_body_span:
+        materialization_reason = "document_level_body_span_materialized"
+    elif selected_document_has_article_zero_body_span:
+        materialization_reason = "article_zero_body_extracted_from_m0"
+    elif selected_document_has_body_span:
+        materialization_reason = "body_span_available_but_title_or_article_zero"
+    elif binding_collision_detected:
+        materialization_reason = "source_key_collision_without_family_body_span"
+    else:
+        materialization_reason = "title_only_or_unreadable_body"
+    canonical_key_binding_reason = (
+        "selected_document_bound_by_canonical_source_key_v2"
+        if canonical_key_binding_applied
+        else "legacy_source_key_binding_fallback"
+    )
+
+    article_span_selector.update(
+        {
+            "canonical_span_materialized": canonical_span_materialized,
+            "canonical_span_materialization_reason": materialization_reason,
+            "title_only_fallback_used": title_only_fallback_used,
+            "body_text_available": bool(main_quality.get("body_text_available")),
+            "body_text_length": int(main_quality.get("body_text_length") or 0),
+            "body_text_printable_ratio": main_quality.get("body_printable_ratio"),
+            "body_text_alpha_count": int(main_quality.get("body_alpha_count") or 0),
+            "body_text_control_count": int(main_quality.get("body_control_count") or 0),
+            "legacy_source_key": article_span_selector.get("legacy_source_key")
+            or article_span_selector.get("selected_document_source_key")
+            or selected_document_key,
+            "canonical_source_key_v2": article_span_selector.get("canonical_source_key_v2")
+            or selected_canonical_source_key_v2,
+            "selected_canonical_source_key_v2": article_span_selector.get("selected_canonical_source_key_v2")
+            or selected_canonical_source_key_v2,
+            "selected_canonical_document_key_v2": article_span_selector.get(
+                "selected_canonical_document_key_v2"
+            )
+            or selected_canonical_document_key_v2,
+            "binding_source_key": binding_source_key or selected_canonical_document_key_v2,
+            "binding_source_key_version": binding_source_key_version or "canonical_source_key_v2",
+            "legacy_source_key_used_as_alias": legacy_source_key_used_as_alias,
+            "canonical_key_binding_applied": canonical_key_binding_applied,
+            "canonical_key_binding_reason": canonical_key_binding_reason,
+            "binding_source_key_collision_detected": binding_collision_detected,
+            "source_key_collision_detected": source_key_collision_detected,
+            "source_key_collision_keys": policy_collision_keys,
+            "source_key_collision_pair": policy_collision_pair,
+            **v2_collision_profile,
+            "corpus_materialization_required": corpus_materialization_required,
+            "candidate_completeness_score": candidate_completeness_score,
+            "selected_document_has_body_span": selected_document_has_body_span,
+            "selected_document_has_non_title_span": selected_document_has_non_title_span,
+            "selected_document_has_document_level_body_span": selected_document_has_document_level_body_span,
+            "selected_document_has_article_zero_body_span": selected_document_has_article_zero_body_span,
+            "selected_document_has_materialized_body_span": selected_document_has_materialized_body_span,
+            "article_zero_body_extracted": selected_document_has_article_zero_body_span,
+            "article_zero_materialization_reason": (
+                "m0_contains_selectable_legal_body"
+                if selected_document_has_article_zero_body_span
+                else ""
+            ),
+            "body_extraction_source": (
+                "m0_body_text"
+                if selected_document_has_article_zero_body_span
+                else "document_level_body"
+                if selected_document_has_document_level_body_span
+                else "article_body"
+                if selected_document_has_non_title_span
+                else ""
+            ),
+            "materialized_from_m0": bool(
+                selected_document_has_article_zero_body_span or selected_document_has_document_level_body_span
+            ),
+            "title_only_answer_degraded": bool(title_only_fallback_used and insufficient_canonical_span_evidence),
+            "insufficient_canonical_span_evidence": insufficient_canonical_span_evidence,
+            "selected_document_body_span_count": sum(
+                1 for _chunk, quality in quality_by_chunk if quality.get("body_text_available")
+            ),
+            "selected_document_non_title_span_count": sum(
+                1 for chunk, _quality in quality_by_chunk if _chunk_has_non_title_body_span(chunk)
+            ),
+            "selected_document_document_level_body_span_count": sum(
+                1
+                for chunk, _quality in quality_by_chunk
+                if _chunk_allows_document_level_body_span(chunk, article_span_selector)
+            ),
+            "selected_document_article_zero_body_span_count": sum(
+                1
+                for chunk, _quality in quality_by_chunk
+                if _chunk_allows_article_zero_body_extraction(chunk, article_span_selector)
+            ),
+        }
+    )
