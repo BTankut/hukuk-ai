@@ -79,12 +79,15 @@ from rag.answer_slots import (
     source_family_resolution_slot_values as _source_family_resolution_slot_values_impl,
 )
 from rag.answer_synthesis import (
+    apply_evidence_slot_synthesis_to_answer_text as _apply_evidence_slot_synthesis_to_answer_text_impl,
     apply_verified_answer_slot_plan_to_answer_text as _apply_verified_answer_slot_plan_to_answer_text_impl,
     build_verified_answer_plan as _build_verified_answer_plan_impl,
     first_verified_plan_value as _first_verified_plan_value_impl,
     build_native_dialog_fallback_answer as _build_native_dialog_fallback_answer_impl,
     build_persisted_raw_answer_snapshot as _build_persisted_raw_answer_snapshot_impl,
     build_persisted_response_envelope_snapshot as _build_persisted_response_envelope_snapshot_impl,
+    resolve_contract_suppressed_answer_text as _resolve_contract_suppressed_answer_text_impl,
+    resolve_public_answer_text as _resolve_public_answer_text_impl,
     sanitize_public_answer_contract as _sanitize_public_answer_contract_impl,
     sanitize_public_final_mode as _sanitize_public_final_mode_impl,
     verified_slot_controlled_replacement_allowed as _verified_slot_controlled_replacement_allowed_impl,
@@ -7520,9 +7523,10 @@ def _resolve_contract_suppressed_answer_text(
     answer_text: str,
     answer_contract: dict[str, Any] | None,
 ) -> str:
-    if isinstance(answer_contract, dict) and answer_contract.get("answer_suppressed_due_to_evidence_gap") is True:
-        return controlled_fallback_answer(answer_contract)
-    return answer_text
+    return _resolve_contract_suppressed_answer_text_impl(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+    )
 
 
 _EVIDENCE_SLOT_SYNTHESIS_HEADER = "Kaynaklardan çıkarılan zorunlu noktalar:"
@@ -7593,130 +7597,11 @@ def _apply_evidence_slot_synthesis_to_answer_text(
     answer_contract: dict[str, Any] | None,
     final_mode: str | None,
 ) -> tuple[str, dict[str, Any]]:
-    if not isinstance(answer_contract, dict):
-        return answer_text, {
-            "evidence_slot_synthesis_applied": False,
-            "evidence_slot_synthesis_slots": [],
-            "evidence_slot_synthesis_reason": "final_mode_not_answer_or_no_contract",
-        }
-    required_slots = [
-        str(slot)
-        for slot in answer_contract.get("must_have_fact_slots") or []
-        if isinstance(slot, str) and slot.strip()
-    ]
-    answer_mode = str(answer_contract.get("answer_mode") or "")
-    mulga_controlled_mode = answer_mode in {
-        "historical_repealed_answer",
-        "repealed_transition_answer",
-        "not_currently_applicable_answer",
-    } or bool({"historical_period", "current_applicability", "transition_or_replacement_rule"} & set(required_slots))
-    if final_mode not in {"answer", "partial"} and not mulga_controlled_mode:
-        return answer_text, {
-            "evidence_slot_synthesis_applied": False,
-            "evidence_slot_synthesis_slots": [],
-            "evidence_slot_synthesis_reason": "final_mode_not_answer_or_no_contract",
-        }
-    if not (answer_text or "").strip():
-        return answer_text, {
-            "evidence_slot_synthesis_applied": False,
-            "evidence_slot_synthesis_slots": [],
-            "evidence_slot_synthesis_reason": "empty_answer",
-        }
-    if _EVIDENCE_SLOT_SYNTHESIS_HEADER in answer_text:
-        return answer_text, {
-            "evidence_slot_synthesis_applied": False,
-            "evidence_slot_synthesis_slots": [],
-            "evidence_slot_synthesis_reason": "already_applied",
-        }
-    if (
-        answer_contract.get("answer_suppressed_due_to_evidence_gap") is True
-        or answer_contract.get("insufficient_canonical_span_evidence") is True
-    ):
-        return answer_text, {
-            "evidence_slot_synthesis_applied": False,
-            "evidence_slot_synthesis_slots": [],
-            "evidence_slot_synthesis_reason": "canonical_evidence_gap",
-        }
-    missing_slots = [
-        str(slot)
-        for slot in answer_contract.get("missing_fact_slots") or []
-        if isinstance(slot, str) and slot.strip()
-    ]
-    candidate_slots = missing_slots
-    synthesis_success_reason = "missing_slots_filled_from_selected_evidence"
-    if not candidate_slots:
-        try:
-            slot_coverage = float(answer_contract.get("answer_slot_coverage_score") or 0.0)
-        except (TypeError, ValueError):
-            slot_coverage = 0.0
-        controlled_evidence_surface = answer_text.strip().startswith(
-            "Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:"
-        )
-        if not required_slots or (slot_coverage >= 0.98 and not controlled_evidence_surface):
-            return answer_text, {
-                "evidence_slot_synthesis_applied": False,
-                "evidence_slot_synthesis_slots": [],
-                "evidence_slot_synthesis_reason": "no_missing_slots",
-            }
-        candidate_slots = required_slots
-        synthesis_success_reason = "slot_values_made_visible_from_selected_evidence"
-    slot_values = answer_contract.get("evidence_required_slot_values")
-    if not isinstance(slot_values, list):
-        return answer_text, {
-            "evidence_slot_synthesis_applied": False,
-            "evidence_slot_synthesis_slots": [],
-            "evidence_slot_synthesis_reason": "no_evidence_slot_values",
-        }
-
-    normalized_answer = normalize_query_text(answer_text)
-    rows_by_slot = {
-        str(row.get("slot_name") or ""): row
-        for row in slot_values
-        if isinstance(row, dict)
-    }
-    synthesis_lines: list[str] = []
-    synthesized_slots: list[str] = []
-    for slot in candidate_slots:
-        row = rows_by_slot.get(slot)
-        if not isinstance(row, dict):
-            continue
-        try:
-            confidence = float(row.get("slot_confidence") or 0.0)
-        except (TypeError, ValueError):
-            confidence = 0.0
-        slot_value = _compact_slot_value(str(row.get("slot_value") or ""), max_len=300)
-        evidence_span_id = str(row.get("evidence_span_id") or "").strip()
-        if confidence < 0.65 or not slot_value or not evidence_span_id:
-            continue
-        value_terms = [
-            token
-            for token in normalize_query_text(slot_value).split()
-            if len(token) >= 5
-        ][:8]
-        if value_terms and sum(1 for token in value_terms if token in normalized_answer) >= min(3, len(value_terms)):
-            continue
-        label = _EVIDENCE_SLOT_SYNTHESIS_LABELS.get(slot, slot)
-        synthesis_lines.append(f"- {label}: {slot_value} [Kaynak: {evidence_span_id}]")
-        synthesized_slots.append(slot)
-        if len(synthesis_lines) >= 5:
-            break
-
-    if not synthesis_lines:
-        return answer_text, {
-            "evidence_slot_synthesis_applied": False,
-            "evidence_slot_synthesis_slots": [],
-            "evidence_slot_synthesis_reason": "no_confident_missing_slot_values",
-        }
-    synthesized_answer = (
-        f"{answer_text.strip()}\n\n"
-        f"{_EVIDENCE_SLOT_SYNTHESIS_HEADER}\n"
-        + "\n".join(synthesis_lines)
+    return _apply_evidence_slot_synthesis_to_answer_text_impl(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
     )
-    return synthesized_answer, {
-        "evidence_slot_synthesis_applied": True,
-        "evidence_slot_synthesis_slots": synthesized_slots,
-        "evidence_slot_synthesis_reason": synthesis_success_reason,
-    }
 
 
 def _trace_chunks_for_completeness(trace_payload: dict[str, Any] | None) -> list[RetrievedChunk]:
@@ -7789,17 +7674,11 @@ def _resolve_public_answer_text(
     answer_contract: dict[str, Any] | None,
     final_mode: str | None,
 ) -> str:
-    if final_mode not in {"answer", "partial"}:
-        return answer_text
-    if not isinstance(answer_contract, dict):
-        return answer_text
-    contract_answer_text = answer_contract.get("answer_text")
-    if not isinstance(contract_answer_text, str):
-        return answer_text
-    normalized_contract = contract_answer_text.strip()
-    if not normalized_contract:
-        return answer_text
-    return normalized_contract
+    return _resolve_public_answer_text_impl(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        final_mode=final_mode,
+    )
 
 
 def _verification_has_hallucination_fail(verification: dict[str, Any] | None) -> bool:
