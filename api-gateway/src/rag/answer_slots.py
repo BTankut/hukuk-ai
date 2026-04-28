@@ -122,7 +122,7 @@ def resolve_required_slot_matrix_for_query(
     resolve_chunk_routing_family: Any = None,
     resolve_chunk_source_family: Any = None,
 ) -> RequiredSlotResolution:
-    return resolve_required_slot_matrix(
+    resolution = resolve_required_slot_matrix(
         query=query,
         answer_template=template,
         source_families=source_families_for_required_slot_matrix(
@@ -131,6 +131,141 @@ def resolve_required_slot_matrix_for_query(
             chunks=chunks,
             resolve_chunk_routing_family=resolve_chunk_routing_family,
             resolve_chunk_source_family=resolve_chunk_source_family,
+        ),
+    )
+    return phase20_calibrated_required_slot_resolution(
+        resolution=resolution,
+        query=query,
+        template=template,
+    )
+
+
+_PHASE20_REQUIRED_SLOT_CALIBRATION_SUFFIX = "+phase20b"
+_PHASE20_RUNTIME_SLOT_OVERRIDES: dict[str, list[str]] = {
+    "direct_legal_conclusion": ["result_or_holding"],
+    "document_selection_rationale": ["document_selection_reason"],
+    "governing_regulation": ["governing_source", "exact_source_identity"],
+    "procedure_or_condition": ["procedure_or_consequence", "scenario_applicability"],
+    "relation_to_law_if_question_asks": ["hierarchy_or_conflict_rule", "document_selection_reason"],
+    "scenario_application": ["scenario_applicability"],
+    "supporting_regulation_or_teblig_relation": [
+        "hierarchy_or_conflict_rule",
+        "document_selection_reason",
+    ],
+}
+_PHASE20_CRITICAL_RUNTIME_SLOTS = {
+    "governing_source",
+    "exact_source_identity",
+    "temporal_validity",
+    "current_applicability",
+    "transition_or_replacement_rule",
+    "article_or_span",
+}
+
+
+def runtime_slots_for_matrix_slot_calibrated(matrix_slot: str) -> list[str]:
+    override = _PHASE20_RUNTIME_SLOT_OVERRIDES.get(str(matrix_slot or ""))
+    if override is not None:
+        return override
+    return runtime_slots_for_matrix_slot(matrix_slot)
+
+
+def _phase20_relation_requested(normalized_query: str) -> bool:
+    return query_contains_any(
+        normalized_query,
+        (
+            "dayanak",
+            "ilisk",
+            "iliski",
+            "baglant",
+            "kanun mu",
+            "yonetmelik mi",
+            "teblig mi",
+            "hangisi uygulanir",
+            "normlar hiyerarsisi",
+            "kanuna aykiri",
+            "ust norm",
+            "alt norm",
+            "yoksa",
+        ),
+    )
+
+
+def _phase20_family_slot_additions(
+    *,
+    source_families: list[str],
+    normalized_query: str,
+) -> tuple[list[str], list[str]]:
+    families = set(source_families)
+    labels: list[str] = []
+    slots: list[str] = []
+    if families & {"mulga", "mulga_kanun"}:
+        labels.append("MULGA")
+        slots.append("direct_conclusion")
+    if "teblig" in families or "tebligler" in families:
+        labels.append("TEBLIGLER")
+        slots.append("exception_or_limitation")
+    if "yonetmelik" in families:
+        labels.append("YONETMELIK")
+        slots.extend(
+            [
+                "governing_regulation",
+                "article_or_span",
+                "scope",
+                "procedure_or_condition",
+                "exception_or_limitation",
+                "direct_conclusion",
+            ]
+        )
+        if _phase20_relation_requested(normalized_query):
+            slots.append("relation_to_law_if_question_asks")
+    if "cb_karar" in families and _phase20_relation_requested(normalized_query):
+        labels.append("CB_KARAR")
+        slots.append("supporting_regulation_or_teblig_relation")
+    return dedupe_strings(labels), dedupe_strings(slots)
+
+
+def phase20_calibrated_required_slot_resolution(
+    *,
+    resolution: RequiredSlotResolution,
+    query: str,
+    template: str,
+) -> RequiredSlotResolution:
+    normalized_query = normalize_query_text(query or "")
+    family_labels, family_slots = _phase20_family_slot_additions(
+        source_families=resolution.source_families,
+        normalized_query=normalized_query,
+    )
+    if not family_slots:
+        return resolution
+
+    matrix_slots = dedupe_strings([*resolution.matrix_slots, *family_slots])
+    runtime_slots: list[str] = []
+    for slot in matrix_slots:
+        runtime_slots.extend(runtime_slots_for_matrix_slot_calibrated(slot))
+    runtime_slots = dedupe_strings(["result_or_holding", "governing_source", *runtime_slots])
+    critical_slots = [
+        slot
+        for slot in runtime_slots
+        if slot in (set(resolution.critical_slots) | _PHASE20_CRITICAL_RUNTIME_SLOTS)
+    ]
+    version = resolution.matrix_version
+    if not version.endswith(_PHASE20_REQUIRED_SLOT_CALIBRATION_SUFFIX):
+        version = f"{version}{_PHASE20_REQUIRED_SLOT_CALIBRATION_SUFFIX}"
+    return RequiredSlotResolution(
+        matrix_version=version,
+        task_type=resolution.task_type,
+        answer_template=template or resolution.answer_template,
+        source_families=resolution.source_families,
+        family_labels=dedupe_strings([*resolution.family_labels, *family_labels]),
+        task_slots=resolution.task_slots,
+        family_slots=dedupe_strings([*resolution.family_slots, *family_slots]),
+        query_slots=resolution.query_slots,
+        matrix_slots=matrix_slots,
+        runtime_slots=runtime_slots,
+        critical_slots=critical_slots,
+        resolution_reason=dedupe_strings(
+            [*resolution.resolution_reason, "phase20b_required_slot_calibration"]
         ),
     )
 
@@ -382,7 +517,7 @@ def best_evidence_row_for_matrix_slot(
     matrix_slot: str,
     evidence_slot_values: list[dict[str, Any]],
 ) -> tuple[dict[str, Any], list[str]]:
-    runtime_candidates = runtime_slots_for_matrix_slot(matrix_slot)
+    runtime_candidates = runtime_slots_for_matrix_slot_calibrated(matrix_slot)
     rows_by_slot = {
         str(row.get("slot_name") or ""): row
         for row in evidence_slot_values
