@@ -94,6 +94,7 @@ from rag.article_span_selection import (
     _strip_chunk_citation_prefix as _strip_chunk_citation_prefix_impl,
 )
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
+from rag.retrieval_planning import request_history_from_messages
 from rag.source_catalog import (
     enrich_metadata_with_source_title,
     load_canonical_source_catalog,
@@ -7873,14 +7874,6 @@ def _finalize_chat_response(
     )
 
 
-def _request_history_from_messages(messages: list[ConversationMessage]) -> list[dict[str, str]]:
-    return [
-        {"role": msg.role, "content": msg.content}
-        for msg in messages
-        if msg.role in {"user", "assistant", "system"}
-    ]
-
-
 def _prepare_chat_request_context(
     *,
     request_body: ChatCompletionRequest,
@@ -7906,7 +7899,7 @@ def _prepare_chat_request_context(
 
     session_id = request_body.session_id or f"sess-{uuid.uuid4().hex[:16]}"
     response_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
-    request_history = _request_history_from_messages(request_body.messages[:-1])
+    request_history = request_history_from_messages(request_body.messages[:-1])
     conversation_history = request_history
     if not conversation_history and not (
         _release_controls_boundary_proxy_enabled()
@@ -8018,7 +8011,7 @@ async def _try_shortcut_chat_response(
         answer_text, precise_citations = precise_answer
         mentioned_laws = _extract_law_mentions(last_user_msg)
         explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
-        request_history = _request_history_from_messages(request_body.messages[:-1])
+        request_history = request_history_from_messages(request_body.messages[:-1])
         synthetic_evidence = _build_fallback_assembled_evidence(
             [citation for citation in precise_citations if canonicalize_source_id(citation)],
             fallback_excerpt=answer_text,
@@ -8117,7 +8110,7 @@ async def _try_shortcut_chat_response(
         )
         mentioned_laws = _extract_law_mentions(last_user_msg)
         explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
-        request_history = _request_history_from_messages(request_body.messages[:-1])
+        request_history = request_history_from_messages(request_body.messages[:-1])
         hardening = harden_answer(
             answer_text=answer_text,
             citations=[],
