@@ -94,6 +94,15 @@ from rag.article_span_selection import (
     _strip_chunk_citation_prefix as _strip_chunk_citation_prefix_impl,
 )
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
+from rag.retrieval_orchestration import (
+    _annotate_recall_lane_chunks,
+    _build_retrieved_chunk,
+    _retrieve_active_chunks,
+    _retrieve_explicit_article_chunks,
+    _retrieve_law_bucket_chunks,
+    _retrieve_source_family_chunks,
+    _retrieve_source_key_chunks,
+)
 from rag.retrieval_planning import request_history_from_messages
 from rag.source_catalog import (
     enrich_metadata_with_source_title,
@@ -2473,19 +2482,6 @@ def _rerank_chunks_by_source_identity(
         resolve_trace_source_display_label=_resolve_trace_source_display_label,
     )
 
-
-
-def _build_retrieved_chunk(result: Any) -> RetrievedChunk:
-    metadata = enrich_metadata_with_source_title(getattr(result, "metadata", None) or {})
-    return RetrievedChunk(
-        text=result.text,
-        citation=result.citation,
-        source=result.law_short_name,
-        score=result.score,
-        metadata=metadata,
-    )
-
-
 def _extract_cb_genelge_numbered_clauses(text: str) -> list[tuple[str, str]]:
     body = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
     matches = list(re.finditer(r"(?m)^\s*(\d+)-\s+", body))
@@ -2656,33 +2652,6 @@ def _build_cb_genelge_document_level_answer(
         f"Yürürlük/güncellik: seçili kaynak durumu {effective_state}; başlangıç {effective_start or 'belirtilmemiş'}. [Kaynak: {citation}]"
     )
     return "\n".join(lines)
-
-
-def _annotate_recall_lane_chunks(
-    chunks: list[RetrievedChunk],
-    *,
-    lane: str,
-) -> list[RetrievedChunk]:
-    for chunk in chunks:
-        metadata = dict(chunk.metadata or {})
-        existing = metadata.get("retrieval_lane_sources")
-        lanes = [
-            value
-            for value in (existing if isinstance(existing, list) else [])
-            if isinstance(value, str) and value.strip()
-        ]
-        if lane not in lanes:
-            lanes.append(lane)
-        metadata["retrieval_lane_sources"] = lanes
-        metadata["metadata_lane_present"] = "metadata_guided_recall" in lanes
-        metadata["dense_lane_present"] = "semantic_dense_recall" in lanes
-        metadata["merged_lane_present"] = (
-            metadata["metadata_lane_present"] and metadata["dense_lane_present"]
-        )
-        chunk.metadata = metadata
-    return chunks
-
-
 def _chunk_recall_lane_sources(chunk: RetrievedChunk) -> list[str]:
     metadata = chunk.metadata or {}
     lanes = metadata.get("retrieval_lane_sources")
@@ -4729,132 +4698,6 @@ def _append_unique_expansion(
         return retrieval_query
     applied_expansions.append(expansion)
     return f"{retrieval_query} {expansion}"
-
-
-def _retrieve_explicit_article_chunks(
-    *,
-    retriever: Any,
-    query: str,
-    article_refs: list[tuple[str, str]],
-) -> list[RetrievedChunk]:
-    from rag.retriever import MetadataFilter
-
-    exact_chunks: list[RetrievedChunk] = []
-
-    for law, madde in article_refs:
-        metadata_filter = (
-            MetadataFilter(law_no=law, madde_no=madde)
-            if law.isdigit()
-            else MetadataFilter(law_short_name=law, madde_no=madde)
-        )
-        try:
-            results, _stats = retriever.retrieve(
-                query=query,
-                top_k=2,
-                metadata_filter=metadata_filter,
-            )
-        except Exception as exc:
-            logger.warning(
-                "Exact article retrieval bypass (law=%s madde=%s): %s",
-                law,
-                madde,
-                exc,
-            )
-            continue
-
-        exact_chunks.extend(_build_retrieved_chunk(result) for result in results)
-
-    return _annotate_recall_lane_chunks(exact_chunks, lane="metadata_guided_recall")
-
-
-def _retrieve_law_bucket_chunks(
-    *,
-    retriever: Any,
-    query: str,
-    laws: list[str],
-    top_k: int,
-) -> list[RetrievedChunk]:
-    from rag.retriever import MetadataFilter
-
-    bucket_chunks: list[RetrievedChunk] = []
-    for law in laws:
-        metadata_filter = (
-            MetadataFilter(law_no=law)
-            if law.isdigit()
-            else MetadataFilter(law_short_name=law)
-        )
-        try:
-            results, _stats = retriever.retrieve(
-                query=query,
-                top_k=top_k,
-                metadata_filter=metadata_filter,
-            )
-        except Exception as exc:
-            logger.warning("Law-bucket retrieval bypass (law=%s): %s", law, exc)
-            continue
-
-        bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
-
-    return _annotate_recall_lane_chunks(bucket_chunks, lane="metadata_guided_recall")
-
-
-def _retrieve_source_key_chunks(
-    *,
-    retriever: Any,
-    query: str,
-    source_keys: list[str],
-    source_family_by_key: dict[str, str] | None = None,
-    top_k: int,
-) -> list[RetrievedChunk]:
-    from rag.retriever import MetadataFilter
-
-    bucket_chunks: list[RetrievedChunk] = []
-    for source_key in source_keys:
-        source_family = str((source_family_by_key or {}).get(source_key) or "").strip().lower()
-        if source_family == "mulga_kanun":
-            source_family = "mulga"
-        try:
-            results, _stats = retriever.retrieve(
-                query=query,
-                top_k=top_k,
-                metadata_filter=MetadataFilter(
-                    law_no=source_key,
-                    belge_turu=source_family or None,
-                ),
-            )
-        except Exception as exc:
-            logger.warning("Source-key retrieval bypass (source_key=%s): %s", source_key, exc)
-            continue
-
-        bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
-
-    return _annotate_recall_lane_chunks(bucket_chunks, lane="metadata_guided_recall")
-
-
-def _retrieve_active_chunks(
-    *,
-    retriever: Any,
-    query: str,
-    top_k: int,
-) -> list[RetrievedChunk]:
-    from rag.retriever import MetadataFilter
-
-    try:
-        results, _stats = retriever.retrieve(
-            query=query,
-            top_k=top_k,
-            metadata_filter=MetadataFilter(mulga=False),
-        )
-    except Exception as exc:
-        logger.warning("Active-source retrieval bypass: %s", exc)
-        return []
-
-    return _annotate_recall_lane_chunks(
-        [_build_retrieved_chunk(result) for result in results],
-        lane="metadata_guided_recall",
-    )
-
-
 def _should_retrieve_historical_current_counterpart(
     *,
     query: str,
@@ -4902,35 +4745,6 @@ def _mark_historical_current_counterpart_chunks(chunks: list[RetrievedChunk]) ->
             )
         )
     return marked
-
-
-def _retrieve_source_family_chunks(
-    *,
-    retriever: Any,
-    query: str,
-    source_families: list[str],
-    top_k: int,
-) -> list[RetrievedChunk]:
-    from rag.retriever import MetadataFilter
-
-    bucket_chunks: list[RetrievedChunk] = []
-    for family in source_families:
-        metadata_filter = MetadataFilter(belge_turu=family)
-        try:
-            results, _stats = retriever.retrieve(
-                query=query,
-                top_k=top_k,
-                metadata_filter=metadata_filter,
-            )
-        except Exception as exc:
-            logger.warning("Source-family retrieval bypass (family=%s): %s", family, exc)
-            continue
-
-        bucket_chunks.extend(_build_retrieved_chunk(result) for result in results)
-
-    return _annotate_recall_lane_chunks(bucket_chunks, lane="metadata_guided_recall")
-
-
 def _resolve_trace_source_id(chunk: RetrievedChunk) -> str:
     metadata = chunk.metadata or {}
     if metadata.get("source_id") is not None:
