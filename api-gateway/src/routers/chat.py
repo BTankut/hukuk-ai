@@ -29,6 +29,7 @@ Multi-turn Yönetimi:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import asyncio
 import json
 import logging
@@ -7832,74 +7833,38 @@ async def _try_shortcut_chat_response(
     return None
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
+@dataclass(slots=True)
+class ChatRetrievalRuntimeContext:
+    enriched_query: str
+    routing_query: str
+    retrieval_query: str
+    retrieval_top_k: int
+    mentioned_laws: list[str]
+    explicit_article_refs: list[tuple[str, str]]
+    requested_source_families: list[str]
+    forced_article_refs: list[tuple[str, str]]
+    applied_expansions: list[str]
+    source_family_resolution: SourceFamilyResolution
+    retrieval_plan: dict[str, Any] | None
+    domain_supporting_source_selector: dict[str, Any] | None
+    domain_supporting_source_families: list[str]
+    metadata_lookup_query_signals: dict[str, Any]
+    metadata_first_selector: dict[str, Any] | None
+    cross_law_mode: bool
+    numbered_law_mentions: list[str]
+    numbered_law_reference_expansion: str
+    all_exact_article_refs: list[tuple[str, str]]
+    source_lock_target_citations: int | None
+    answer_query: str
 
 
-@router.post(
-    "/v1/chat/completions",
-    summary="OpenAI-uyumlu Chat Completions (RAG + SSE)",
-    response_model=ChatCompletionResponse,
-    response_model_exclude_none=True,
-)
-async def chat_completions(
-    request_body: ChatCompletionRequest,
+async def _prepare_retrieval_runtime_context(
+    *,
     request: Request,
-    store: ConversationStore = Depends(get_conversation_store),
-    _auth_subject: str = Depends(require_api_auth),
-) -> Any:
-    """OpenAI-uyumlu chat completions endpoint.
-
-    RAG pipeline, SSE streaming ve multi-turn konuşma desteği.
-
-    **Akış:**
-    1. Son kullanıcı mesajı çıkarılır
-    2. Konuşma geçmişi sorguya enjekte edilir (multi-turn bağlamı)
-    3. Retriever ile ilgili mevzuat chunk'ları alınır
-    4. RAGOrchestrator → LLM → Guardrails → Verification
-    5. Yanıt SSE (stream=True) veya JSON (stream=False) olarak döndürülür
-
-    **Session Yönetimi:**
-    - `session_id` verilmezse yeni oturum oluşturulur
-    - Yanıt sonrası bu tur session store'a kaydedilir
-
-    **Law Filter:**
-    - `law_filter: "TBK"` → sadece TBK maddelerinde arama yapılır
-    """
-    session_id, response_id, last_user_msg, conversation_history = _prepare_chat_request_context(
-        request_body=request_body,
-        store=store,
-    )
-
-    shortcut_response = await _try_shortcut_chat_response(
-        request=request,
-        request_body=request_body,
-        store=store,
-        session_id=session_id,
-        response_id=response_id,
-        last_user_msg=last_user_msg,
-        conversation_history=conversation_history,
-    )
-    if shortcut_response is not None:
-        return shortcut_response
-
-    if _release_controls_boundary_proxy_enabled():
-        canonical_snapshot, proxy_response = await _proxy_canonical_answer_path(
-            request_body=request_body,
-            conversation_history=conversation_history,
-            last_user_message=last_user_msg,
-        )
-        return _finalize_boundary_proxy_response(
-            request=request,
-            request_body=request_body,
-            store=store,
-            session_id=session_id,
-            user_message=last_user_msg,
-            canonical_snapshot=canonical_snapshot,
-            proxy_response=proxy_response,
-        )
-
+    request_body: ChatCompletionRequest,
+    last_user_msg: str,
+    conversation_history: list[dict[str, str]],
+) -> ChatRetrievalRuntimeContext:
     # Multi-turn sorgu oluştur
     enriched_query = _build_multiturn_query(
         last_user_message=last_user_msg,
@@ -8307,6 +8272,128 @@ async def chat_completions(
         query=enriched_query,
         source_families=requested_source_families,
     )
+
+
+    return ChatRetrievalRuntimeContext(
+        enriched_query=enriched_query,
+        routing_query=routing_query,
+        retrieval_query=retrieval_query,
+        retrieval_top_k=retrieval_top_k,
+        mentioned_laws=mentioned_laws,
+        explicit_article_refs=explicit_article_refs,
+        requested_source_families=requested_source_families,
+        forced_article_refs=forced_article_refs,
+        applied_expansions=applied_expansions,
+        source_family_resolution=source_family_resolution,
+        retrieval_plan=retrieval_plan,
+        domain_supporting_source_selector=domain_supporting_source_selector,
+        domain_supporting_source_families=domain_supporting_source_families,
+        metadata_lookup_query_signals=metadata_lookup_query_signals,
+        metadata_first_selector=metadata_first_selector,
+        cross_law_mode=cross_law_mode,
+        numbered_law_mentions=numbered_law_mentions,
+        numbered_law_reference_expansion=numbered_law_reference_expansion,
+        all_exact_article_refs=all_exact_article_refs,
+        source_lock_target_citations=source_lock_target_citations,
+        answer_query=answer_query,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/v1/chat/completions",
+    summary="OpenAI-uyumlu Chat Completions (RAG + SSE)",
+    response_model=ChatCompletionResponse,
+    response_model_exclude_none=True,
+)
+async def chat_completions(
+    request_body: ChatCompletionRequest,
+    request: Request,
+    store: ConversationStore = Depends(get_conversation_store),
+    _auth_subject: str = Depends(require_api_auth),
+) -> Any:
+    """OpenAI-uyumlu chat completions endpoint.
+
+    RAG pipeline, SSE streaming ve multi-turn konuşma desteği.
+
+    **Akış:**
+    1. Son kullanıcı mesajı çıkarılır
+    2. Konuşma geçmişi sorguya enjekte edilir (multi-turn bağlamı)
+    3. Retriever ile ilgili mevzuat chunk'ları alınır
+    4. RAGOrchestrator → LLM → Guardrails → Verification
+    5. Yanıt SSE (stream=True) veya JSON (stream=False) olarak döndürülür
+
+    **Session Yönetimi:**
+    - `session_id` verilmezse yeni oturum oluşturulur
+    - Yanıt sonrası bu tur session store'a kaydedilir
+
+    **Law Filter:**
+    - `law_filter: "TBK"` → sadece TBK maddelerinde arama yapılır
+    """
+    session_id, response_id, last_user_msg, conversation_history = _prepare_chat_request_context(
+        request_body=request_body,
+        store=store,
+    )
+
+    shortcut_response = await _try_shortcut_chat_response(
+        request=request,
+        request_body=request_body,
+        store=store,
+        session_id=session_id,
+        response_id=response_id,
+        last_user_msg=last_user_msg,
+        conversation_history=conversation_history,
+    )
+    if shortcut_response is not None:
+        return shortcut_response
+
+    if _release_controls_boundary_proxy_enabled():
+        canonical_snapshot, proxy_response = await _proxy_canonical_answer_path(
+            request_body=request_body,
+            conversation_history=conversation_history,
+            last_user_message=last_user_msg,
+        )
+        return _finalize_boundary_proxy_response(
+            request=request,
+            request_body=request_body,
+            store=store,
+            session_id=session_id,
+            user_message=last_user_msg,
+            canonical_snapshot=canonical_snapshot,
+            proxy_response=proxy_response,
+        )
+
+    runtime_context = await _prepare_retrieval_runtime_context(
+        request=request,
+        request_body=request_body,
+        last_user_msg=last_user_msg,
+        conversation_history=conversation_history,
+    )
+    enriched_query = runtime_context.enriched_query
+    routing_query = runtime_context.routing_query
+    retrieval_query = runtime_context.retrieval_query
+    retrieval_top_k = runtime_context.retrieval_top_k
+    mentioned_laws = runtime_context.mentioned_laws
+    explicit_article_refs = runtime_context.explicit_article_refs
+    requested_source_families = runtime_context.requested_source_families
+    forced_article_refs = runtime_context.forced_article_refs
+    applied_expansions = runtime_context.applied_expansions
+    source_family_resolution = runtime_context.source_family_resolution
+    retrieval_plan = runtime_context.retrieval_plan
+    domain_supporting_source_selector = runtime_context.domain_supporting_source_selector
+    domain_supporting_source_families = runtime_context.domain_supporting_source_families
+    metadata_lookup_query_signals = runtime_context.metadata_lookup_query_signals
+    metadata_first_selector = runtime_context.metadata_first_selector
+    cross_law_mode = runtime_context.cross_law_mode
+    numbered_law_mentions = runtime_context.numbered_law_mentions
+    numbered_law_reference_expansion = runtime_context.numbered_law_reference_expansion
+    all_exact_article_refs = runtime_context.all_exact_article_refs
+    source_lock_target_citations = runtime_context.source_lock_target_citations
+    answer_query = runtime_context.answer_query
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     retrieved_chunks: list[RetrievedChunk] = []
