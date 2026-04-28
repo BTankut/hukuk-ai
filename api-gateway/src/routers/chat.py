@@ -7964,9 +7964,14 @@ async def _prepare_retrieval_runtime_context(
             annual_investment_program_expansion,
         )
         retrieval_top_k = max(retrieval_top_k, 20)
-    metadata_lookup_query_signals = _parse_metadata_lookup_query_signals(routing_query)
+    metadata_lookup_query = " ".join(
+        part
+        for part in [routing_query, *source_family_resolution.query_expansions]
+        if str(part or "").strip()
+    )
+    metadata_lookup_query_signals = _parse_metadata_lookup_query_signals(metadata_lookup_query)
     metadata_first_selector = _select_metadata_first_source_candidates(
-        query=routing_query,
+        query=metadata_lookup_query,
         requested_source_families=requested_source_families,
         source_family_resolution=source_family_resolution,
         query_metadata_signals=metadata_lookup_query_signals,

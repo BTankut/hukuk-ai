@@ -170,6 +170,21 @@ def contains_legal_teblig_term(normalized_query: str, term: str) -> bool:
             )
             is not None
             or re.search(r"(?<![a-z0-9])genel\s+teblig[a-z0-9]*(?![a-z0-9])", normalized_query) is not None
+            or re.search(
+                r"(?<![a-z0-9])hangi\s+(?:[a-z0-9]+\s+){0,5}teblig[a-z0-9]*(?![a-z0-9])",
+                normalized_query,
+            )
+            is not None
+            or re.search(
+                r"(?<![a-z0-9])(?:ana|uygulama|ilk|bakilacak|merkezde|merkez)\s+(?:[a-z0-9]+\s+){0,4}teblig[a-z0-9]*(?![a-z0-9])",
+                normalized_query,
+            )
+            is not None
+            or re.search(
+                r"(?<![a-z0-9])teblig[a-z0-9]*(?![a-z0-9])\s+(?:ilk|bakilacak|merkezde|merkez)",
+                normalized_query,
+            )
+            is not None
         )
     if normalized_term == "teblig no":
         return (
@@ -622,6 +637,20 @@ def _names_legacy_non_law_document_type(normalized_query: str) -> bool:
 
 def _domain_query_expansions(normalized_query: str, predicted_family: str | None) -> list[str]:
     expansions: list[str] = []
+    if predicted_family == "teblig":
+        if contains_any(normalized_query, ("e-fatura", "efatura", "e-arsiv", "e-irsaliye", "earsiv", "e irsaliye")):
+            expansions.append(
+                "Vergi Usul Kanunu Genel Tebliği Sıra No 509 e-Fatura e-Arşiv Fatura e-İrsaliye elektronik belge GİB"
+            )
+        if contains_any(normalized_query, ("sirket kurulusu", "unvan tescili", "mersis", "ticaret sicili")):
+            expansions.append(
+                "Şirket Kuruluş Sözleşmesinin Ticaret Sicili Müdürlüklerinde İmzalanması Hakkında Tebliğ "
+                "Merkezi Tüzel Kişilik Bilgi Sistemi MERSİS ticaret sicili müdürlüğü unvan tescili şirket kuruluşu başvuru belgeleri"
+            )
+        if contains_any(normalized_query, ("e-defter", "edefter", "elektronik defter", "berat")):
+            expansions.append(
+                "Elektronik Defter Genel Tebliği Sıra No 1 e-Defter berat format saklama Gelir İdaresi Başkanlığı"
+            )
     if predicted_family == "uy":
         if contains_any(normalized_query, ("mazeret sinavi", "tek ders", "butunleme", "sinav hakki")):
             expansions.append(

@@ -207,6 +207,22 @@ _RETRIEVAL_PRIORITY_STOPWORDS = {
     "dair",
     "hakkinda",
     "hakkında",
+    "ana",
+    "ilk",
+    "bakilacak",
+    "hangisidir",
+    "kaynagi",
+    "kaynagidir",
+    "kaynak",
+    "merkezde",
+    "olmalidir",
+    "sorusunda",
+    "teblig",
+    "tebligi",
+    "tebligler",
+    "uygulama",
+    "uygulanacak",
+    "uygulanan",
 }
 _RETRIEVAL_PRIORITY_TOKEN_RE = re.compile(r"[a-z0-9]+")
 
@@ -1047,7 +1063,7 @@ def _metadata_lookup_priority_tokens(text: str) -> list[str]:
     return [
         token
         for token in normalize_canonical_text(text).split()
-        if len(token) >= 3 and token not in stopwords
+        if len(token) >= 3 and token not in stopwords and not re.fullmatch(r"(?:18|19|20)\d{2}", token)
     ]
 
 
@@ -1077,6 +1093,19 @@ def _extract_metadata_lookup_identifier_candidates(
         for _law, article in (explicit_article_refs or [])
         if article and article.isdigit()
     }
+    for match in re.finditer(
+        r"\b(?P<kind>sira|seri)\s+no\s*:?\s*(?P<value>\d{1,6}(?:[-/]\d{1,4})?)\b",
+        normalized,
+    ):
+        value = match.group("value")
+        candidates.append(
+            {
+                "value": value,
+                "base_value": value.split("-", 1)[0].split("/", 1)[0],
+                "kind": "teblig",
+                "source": f"teblig_{match.group('kind')}_no_pattern",
+            }
+        )
     for match in re.finditer(
         r"\b(?P<value>(?:18|19|20)\d{2}/\d{1,4})\s+sayili\s+(?:[a-z0-9]{3,}\s+){0,8}"
         r"(?P<kind>cumhurbaskanligi genelgesi|cumhurbaskani genelgesi|genelgesi|genelge)\b",
@@ -1343,6 +1372,8 @@ def _record_identifier_values(record: dict[str, Any]) -> set[str]:
         record.get("source_key"),
         record.get("canonical_identifier"),
         record.get("canonical_identifier_display"),
+        record.get("sira_no"),
+        record.get("seri_no"),
         *(record.get("cross_refs") or []),
     ):
         normalized = normalize_canonical_text(value)
@@ -2055,11 +2086,18 @@ def _select_metadata_first_source_candidates(
         item["metadata_lookup_rank"] = rank
     selected_ranked = ranked
     if any("identifier_exact" in (item.get("match_reasons") or []) for item in ranked):
-        selected_ranked = [
+        exact_identifier_ranked = [
             item
             for item in ranked
             if "identifier_exact" in (item.get("match_reasons") or [])
         ]
+        if exact_identifier_ranked:
+            top_exact_score = float(exact_identifier_ranked[0].get("score") or 0.0)
+            selected_ranked = [
+                item
+                for item in exact_identifier_ranked
+                if float(item.get("score") or 0.0) >= top_exact_score - 5.0
+            ]
     return {
         "applied": True,
         "reason": "metadata_first_source_identity",
@@ -2086,7 +2124,9 @@ def _extract_retrieval_priority_terms(text: str) -> set[str]:
     return {
         token
         for token in _RETRIEVAL_PRIORITY_TOKEN_RE.findall(normalized)
-        if len(token) >= 3 and token not in _RETRIEVAL_PRIORITY_STOPWORDS
+        if len(token) >= 3
+        and token not in _RETRIEVAL_PRIORITY_STOPWORDS
+        and not re.fullmatch(r"(?:18|19|20)\d{2}", token)
     }
 
 
