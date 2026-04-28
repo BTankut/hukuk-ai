@@ -161,6 +161,95 @@ _PHASE20_CRITICAL_RUNTIME_SLOTS = {
     "transition_or_replacement_rule",
     "article_or_span",
 }
+_PHASE20_SLOT_FALLBACK_CANDIDATES: dict[str, list[str]] = {
+    "exception_or_limitation": [
+        "result_or_holding",
+        "procedure_or_consequence",
+        "scenario_applicability",
+    ],
+    "hierarchy_or_conflict_rule": [
+        "document_selection_reason",
+        "temporal_validity",
+        "result_or_holding",
+        "procedure_or_consequence",
+    ],
+    "procedure_or_consequence": [
+        "result_or_holding",
+        "scenario_applicability",
+    ],
+    "scenario_applicability": [
+        "result_or_holding",
+        "procedure_or_consequence",
+        "exception_or_limitation",
+    ],
+    "transition_or_replacement_rule": [
+        "temporal_validity",
+        "current_applicability",
+        "result_or_holding",
+    ],
+}
+_PHASE20_SLOT_SUPPORT_TERMS: dict[str, tuple[str, ...]] = {
+    "exception_or_limitation": (
+        "istisna",
+        "sakli",
+        "haric",
+        "muaf",
+        "uygulanmaz",
+        "sinir",
+        "dahil degil",
+    ),
+    "hierarchy_or_conflict_rule": (
+        "dayanak",
+        "uyarinca",
+        "kanun",
+        "yonetmelik",
+        "teblig",
+        "karar",
+        "kaldirilan mevzuat",
+        "yururlukten kaldir",
+        "oncelik",
+        "ust norm",
+        "alt norm",
+    ),
+    "procedure_or_consequence": (
+        "usul",
+        "sure",
+        "basvuru",
+        "bildirim",
+        "tescil",
+        "ilan",
+        "sonuc",
+        "yukumluluk",
+        "zorundadir",
+        "gerekir",
+        "teslim",
+        "olustur",
+    ),
+    "scenario_applicability": (
+        "kapsam",
+        "uygulan",
+        "bakimindan",
+        "halinde",
+        "sart",
+        "kosul",
+        "kurum",
+        "kurulus",
+        "isyer",
+        "sozlesme",
+        "adres",
+    ),
+    "transition_or_replacement_rule": (
+        "gecis",
+        "gecici",
+        "yerine gec",
+        "yerini alan",
+        "kaldirilan",
+        "yururlukten kaldir",
+        "mevcut rejim",
+        "onceki",
+        "yeni",
+    ),
+}
 
 
 def runtime_slots_for_matrix_slot_calibrated(matrix_slot: str) -> list[str]:
@@ -170,11 +259,50 @@ def runtime_slots_for_matrix_slot_calibrated(matrix_slot: str) -> list[str]:
     return runtime_slots_for_matrix_slot(matrix_slot)
 
 
+def _phase20_slot_text_supports(runtime_slot: str, value: str) -> bool:
+    terms = _PHASE20_SLOT_SUPPORT_TERMS.get(runtime_slot)
+    if not terms:
+        return False
+    normalized = normalize_query_text(value or "")
+    return query_contains_any(normalized, terms)
+
+
+def _phase20_fallback_evidence_row(
+    *,
+    runtime_candidates: list[str],
+    evidence_slot_values: list[dict[str, Any]],
+) -> dict[str, Any]:
+    rows_by_slot = {
+        str(row.get("slot_name") or ""): row
+        for row in evidence_slot_values
+        if isinstance(row, dict)
+    }
+    for runtime_slot in runtime_candidates:
+        fallback_slots = _PHASE20_SLOT_FALLBACK_CANDIDATES.get(runtime_slot, [])
+        for fallback_slot in fallback_slots:
+            row = rows_by_slot.get(fallback_slot)
+            if not row:
+                continue
+            value = str(row.get("slot_value") or "").strip()
+            span_id = str(row.get("evidence_span_id") or "").strip()
+            try:
+                confidence = float(row.get("slot_confidence") or 0.0)
+            except (TypeError, ValueError):
+                confidence = 0.0
+            if value and span_id and confidence >= 0.65 and _phase20_slot_text_supports(runtime_slot, value):
+                cloned = dict(row)
+                cloned["slot_confidence"] = min(confidence, 0.66)
+                cloned["slot_missing_reason"] = f"phase20c_evidence_fallback:{fallback_slot}"
+                return cloned
+    return {}
+
+
 def _phase20_relation_requested(normalized_query: str) -> bool:
     return query_contains_any(
         normalized_query,
         (
             "dayanak",
+            "dayan",
             "ilisk",
             "iliski",
             "baglant",
@@ -538,6 +666,15 @@ def best_evidence_row_for_matrix_slot(
         if score > best_confidence:
             best_confidence = score
             best_row = row
+    best_value = str(best_row.get("slot_value") or "").strip()
+    best_span_id = str(best_row.get("evidence_span_id") or "").strip()
+    if not best_value or not best_span_id or best_confidence < 0.65:
+        fallback_row = _phase20_fallback_evidence_row(
+            runtime_candidates=runtime_candidates,
+            evidence_slot_values=evidence_slot_values,
+        )
+        if fallback_row:
+            return fallback_row, runtime_candidates
     return best_row, runtime_candidates
 
 
@@ -613,6 +750,51 @@ def build_verified_answer_slots(
         "answer_slot_extraction_methods": dedupe_strings(methods),
         "critical_answer_slots_missing": dedupe_strings(critical_missing),
     }
+
+
+def _phase20_materialize_answer_slot_evidence_values(
+    *,
+    evidence_required_slot_values: list[dict[str, Any]],
+    answer_slots: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    materialized = list(evidence_required_slot_values)
+    existing_slot_names = {
+        str(row.get("slot_name") or "")
+        for row in materialized
+        if isinstance(row, dict) and str(row.get("slot_name") or "").strip()
+    }
+    for slot in answer_slots:
+        if not isinstance(slot, dict):
+            continue
+        slot_name = str(slot.get("slot_name") or "").strip()
+        if not slot_name or slot_name in existing_slot_names:
+            continue
+        if str(slot.get("fill_status") or "") != "filled" or str(slot.get("verifier_status") or "") != "verified":
+            continue
+        value = str(slot.get("value") or "").strip()
+        evidence_keys = [
+            str(item).strip()
+            for item in slot.get("evidence_span_keys") or []
+            if str(item or "").strip()
+        ]
+        if not value or not evidence_keys:
+            continue
+        try:
+            confidence = float(slot.get("confidence_0_100") or 0.0) / 100.0
+        except (TypeError, ValueError):
+            confidence = 0.0
+        materialized.append(
+            {
+                "slot_name": slot_name,
+                "slot_value": value,
+                "evidence_span_id": evidence_keys[0],
+                "evidence_article": str(slot.get("evidence_article_or_span") or evidence_keys[0]),
+                "slot_confidence": round(max(0.0, min(1.0, confidence)), 3),
+                "slot_missing_reason": "phase20c_verified_answer_slot_materialized",
+            }
+        )
+        existing_slot_names.add(slot_name)
+    return materialized
 
 
 _INLINE_CITATION_RE = re.compile(r"\[Kaynak:\s*([^\]]+)\]")
@@ -735,6 +917,24 @@ def build_completeness_synthesis_features(
             query=query,
         )
     )
+    verified_matrix_slot_count = int(answer_slot_summary.get("answer_slot_verified_count") or 0)
+    required_matrix_slot_count = int(answer_slot_summary.get("answer_slot_required_count") or 0)
+    matrix_answer_slot_coverage_score = round(
+        verified_matrix_slot_count / required_matrix_slot_count,
+        3,
+    ) if required_matrix_slot_count else 1.0
+    if matrix_answer_slot_coverage_score > float(answer_slot_coverage_score or 0.0):
+        # Phase 20C can improve evidence-backed slot coverage, but it must not
+        # remove the confidence cap before Phase 20D makes those slots visible in
+        # the final answer text.
+        answer_slot_coverage_score = round(min(matrix_answer_slot_coverage_score, 0.89), 3)
+    evidence_required_slot_values = _phase20_materialize_answer_slot_evidence_values(
+        evidence_required_slot_values=evidence_required_slot_values,
+        answer_slots=answer_slots,
+    )
+    evidence_required_slot_value_count = sum(
+        1 for row in evidence_required_slot_values if float(row.get("slot_confidence") or 0.0) >= 0.65
+    )
     slot_factor = len(satisfied_slots) / len(required_slots) if required_slots else 1.0
     answer_factor = min(1.0, answer_fact_units / minimum_required_facts) if has_answer else 0.0
     evidence_factor = (
@@ -805,9 +1005,8 @@ def build_completeness_synthesis_features(
         "answer_slot_missing_reasons": answer_slot_missing_reasons,
         "required_slot_schema": required_slot_schema(required_slots),
         "evidence_required_slot_values": evidence_required_slot_values,
-        "evidence_required_slot_value_count": sum(
-            1 for row in evidence_required_slot_values if float(row.get("slot_confidence") or 0.0) >= 0.65
-        ),
+        "evidence_required_slot_value_count": evidence_required_slot_value_count,
+        "matrix_answer_slot_coverage_score": matrix_answer_slot_coverage_score,
         **required_slot_resolution.to_trace_dict(),
         "answer_slots": answer_slots,
         **answer_slot_summary,
