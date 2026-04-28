@@ -1291,6 +1291,90 @@ class TestLawSignalParsing:
         assert answer.startswith("Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:")
         assert "Usul/sonuç" in answer
 
+    def test_phase20d_verified_answer_slot_plan_uses_matrix_slot_names_and_dedupes_basis(self):
+        answer, meta = _apply_verified_answer_slot_plan_to_answer_text(
+            answer_text="Kısa cevap [Kaynak: Y m.1].",
+            final_mode="answer",
+            answer_contract={
+                "answer_slots": [
+                    {
+                        "slot_name": "governing_source",
+                        "required": True,
+                        "value": "Y Yönetmeliği | 123 m.1",
+                        "evidence_span_keys": ["Y m.1/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                    {
+                        "slot_name": "exact_source_identity",
+                        "required": True,
+                        "value": "Y Yönetmeliği | 123 m.1",
+                        "evidence_span_keys": ["Y m.1/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                    {
+                        "slot_name": "result_or_holding",
+                        "required": True,
+                        "value": "Yönetmelik başvuru usulünü ve uygulanacak sonucu düzenler.",
+                        "evidence_span_keys": ["Y m.1/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                    {
+                        "slot_name": "hierarchy_or_conflict_rule",
+                        "required": True,
+                        "value": "Bu yönetmelik ilgili kanuna dayanılarak uygulanır.",
+                        "evidence_span_keys": ["Y m.1/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                    {
+                        "slot_name": "administrative_effect",
+                        "required": True,
+                        "value": "İdare bakımından uygulanacak işlem sonucunu doğurur.",
+                        "evidence_span_keys": ["Y m.2/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    },
+                ],
+            },
+        )
+
+        assert meta["verified_answer_slot_synthesis_applied"] is True
+        assert answer.count("Y Yönetmeliği | 123 m.1") == 1
+        assert "Kural/sonuç" in answer
+        assert "Yönetmelik başvuru usulünü" in answer
+        assert "Bu yönetmelik ilgili kanuna dayanılarak uygulanır" in answer
+        assert "Usul/sonuç" in answer
+        assert "administrative_effect" in meta["verified_answer_slot_synthesis_slots"]
+
+    def test_phase20d_verified_answer_slot_plan_does_not_duplicate_controlled_surface(self):
+        answer, meta = _apply_verified_answer_slot_plan_to_answer_text(
+            answer_text=(
+                "Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:\n"
+                "- Dayanak: X Kanunu [Kaynak: X m.1/f.0]"
+            ),
+            final_mode="partial",
+            answer_contract={
+                "answer_slots": [
+                    {
+                        "slot_name": "governing_source",
+                        "required": True,
+                        "value": "X Kanunu",
+                        "evidence_span_keys": ["X m.1/f.0"],
+                        "fill_status": "filled",
+                        "verifier_status": "verified",
+                    }
+                ],
+            },
+        )
+
+        assert meta["verified_answer_slot_synthesis_applied"] is False
+        assert meta["verified_answer_slot_synthesis_reason"] == "controlled_verified_surface_already_present"
+        assert meta["verified_answer_slot_synthesis_slots"] == ["governing_source"]
+        assert answer.count("Doğrulanmış cevap planı:") == 0
+
     def test_verified_answer_slot_plan_skips_canonical_gap(self):
         answer, meta = _apply_verified_answer_slot_plan_to_answer_text(
             answer_text="Kısa cevap [Kaynak: X m.1].",

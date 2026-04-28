@@ -87,6 +87,7 @@ def verified_answer_plan_slot_value(slot: dict[str, Any]) -> str:
 
 
 VERIFIED_ANSWER_PLAN_HEADER = "Doğrulanmış cevap planı:"
+CONTROLLED_VERIFIED_SLOT_PREFIX = "Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:"
 
 
 def verified_slots_by_name(answer_contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -120,6 +121,26 @@ def first_verified_plan_value(
     return "", ""
 
 
+def _plan_value_dedupe_key(value: str) -> str:
+    normalized = normalize_query_text(value or "")
+    normalized = normalized.replace("[kaynak:", " kaynak ")
+    return " ".join(normalized.split())
+
+
+def _append_unique_plan_slot(
+    plan_slots: list[dict[str, str]],
+    *,
+    slot_name: str,
+    value: str,
+    seen_values: set[str],
+) -> None:
+    key = _plan_value_dedupe_key(value)
+    if not key or key in seen_values:
+        return
+    plan_slots.append({"slot_name": slot_name, "value": value})
+    seen_values.add(key)
+
+
 def build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, Any]:
     verified_slots = verified_slots_by_name(answer_contract)
     slot_items = answer_contract.get("answer_slots") if isinstance(answer_contract.get("answer_slots"), list) else []
@@ -132,7 +153,18 @@ def build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, Any
     ]
     direct_name, direct_value = first_verified_plan_value(
         verified_slots,
-        ("direct_conclusion", "direct_rule", "rule", "conclusion", "operative_rule", "operative_clause"),
+        (
+            "direct_conclusion",
+            "direct_legal_conclusion",
+            "result_or_holding",
+            "direct_rule",
+            "rule",
+            "conclusion",
+            "operative_rule",
+            "operative_clause",
+            "operative_instruction",
+            "administrative_effect",
+        ),
     )
     basis_names = (
         "governing_source",
@@ -144,23 +176,50 @@ def build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, Any
         "circular_number_or_date",
         "decision_number",
         "teblig_identifier",
+        "hierarchy_or_conflict_rule",
     )
-    legal_basis_slots = [
-        {"slot_name": name, "value": verified_answer_plan_slot_value(verified_slots[name])}
-        for name in basis_names
-        if name in verified_slots
-    ][:4]
+    legal_basis_slots: list[dict[str, str]] = []
+    seen_basis_values: set[str] = set()
+    for name in basis_names:
+        if name not in verified_slots:
+            continue
+        _append_unique_plan_slot(
+            legal_basis_slots,
+            slot_name=name,
+            value=verified_answer_plan_slot_value(verified_slots[name]),
+            seen_values=seen_basis_values,
+        )
+        if len(legal_basis_slots) >= 4:
+            break
     temporal_name, temporal_value = first_verified_plan_value(
         verified_slots,
-        ("temporal_validity", "effective_state", "effective_period", "effective_date", "current_applicability"),
+        (
+            "temporal_validity",
+            "effective_state",
+            "effective_period",
+            "effective_date",
+            "current_applicability",
+            "source_is_repealed_or_historical",
+            "applicable_period",
+            "no_active_law_overclaim",
+        ),
     )
     scenario_name, scenario_value = first_verified_plan_value(
         verified_slots,
-        ("facts_applied", "scenario_applicability", "scope_or_addressee", "scope"),
+        ("facts_applied", "scenario_applicability", "scenario_application", "scope_or_addressee", "scope"),
     )
     procedure_name, procedure_value = first_verified_plan_value(
         verified_slots,
-        ("procedure", "consequence", "obligations", "procedure_or_formula", "procedure_or_consequence"),
+        (
+            "procedure",
+            "consequence",
+            "obligations",
+            "procedure_or_formula",
+            "procedure_or_consequence",
+            "operative_instruction",
+            "operative_clause",
+            "administrative_effect",
+        ),
     )
     exception_name, exception_value = first_verified_plan_value(
         verified_slots,
@@ -184,6 +243,25 @@ def build_verified_answer_plan(answer_contract: dict[str, Any]) -> dict[str, Any
             "reasons": answer_contract.get("confidence_policy_ceiling_reasons") or [],
         },
     }
+
+
+def verified_answer_plan_visible_slot_names(plan: dict[str, Any]) -> list[str]:
+    names: list[str] = []
+    for item in plan.get("legal_basis_slots") or []:
+        if isinstance(item, dict):
+            names.append(str(item.get("slot_name") or ""))
+    for key in (
+        "direct_answer_slot",
+        "temporal_validity_slot",
+        "scenario_application_slot",
+        "procedure_or_consequence_slot",
+        "exception_or_limitation_slot",
+        "transition_or_replacement_slot",
+    ):
+        slot = plan.get(key)
+        if isinstance(slot, dict):
+            names.append(str(slot.get("slot_name") or ""))
+    return dedupe_strings([name for name in names if name])
 
 
 def verified_slot_controlled_replacement_allowed(
@@ -266,6 +344,15 @@ def apply_verified_answer_slot_plan_to_answer_text(
             "verified_answer_plan": None,
             "verified_answer_plan_missing_slots": [],
         }
+    if answer_text.strip().startswith(CONTROLLED_VERIFIED_SLOT_PREFIX):
+        plan = build_verified_answer_plan(answer_contract)
+        return answer_text, {
+            "verified_answer_slot_synthesis_applied": False,
+            "verified_answer_slot_synthesis_slots": verified_answer_plan_visible_slot_names(plan),
+            "verified_answer_slot_synthesis_reason": "controlled_verified_surface_already_present",
+            "verified_answer_plan": plan,
+            "verified_answer_plan_missing_slots": plan.get("missing_slots") or [],
+        }
     if VERIFIED_ANSWER_PLAN_HEADER in answer_text:
         return answer_text, {
             "verified_answer_slot_synthesis_applied": False,
@@ -321,7 +408,7 @@ def apply_verified_answer_slot_plan_to_answer_text(
 
     if controlled_replacement:
         return (
-            "Mevcut doğrulanmış kaynak parçalarına göre sınırlı cevap:\n" + "\n".join(lines),
+            f"{CONTROLLED_VERIFIED_SLOT_PREFIX}\n" + "\n".join(lines),
             {
                 "verified_answer_slot_synthesis_applied": True,
                 "verified_answer_slot_synthesis_slots": dedupe_strings(synthesized_slots),
