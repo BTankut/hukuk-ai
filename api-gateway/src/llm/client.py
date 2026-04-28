@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Sequence
 
 from config import Settings
+from rag.generation_inputs import build_generation_contract, build_request_payload
 
 logger = logging.getLogger(__name__)
 
@@ -146,18 +147,11 @@ class LLMClient:
         temperature: float,
         max_tokens: int,
     ) -> dict[str, Any]:
-        return {
-            "temperature": temperature,
-            "top_p": self.settings.dgx_top_p,
-            "top_k": self.settings.dgx_top_k,
-            "max_tokens": max_tokens,
-            "stop": None,
-            "seed": self.settings.dgx_seed,
-            "retry_count": self.settings.dgx_retry_count,
-            "timeout_seconds": self.settings.dgx_request_timeout_seconds,
-            "streaming": False,
-            "enable_thinking": self.settings.dgx_enable_thinking,
-        }
+        return build_generation_contract(
+            self.settings,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
 
     def _build_request_payload(
         self,
@@ -166,20 +160,12 @@ class LLMClient:
         temperature: float,
         max_tokens: int,
     ) -> dict[str, Any]:
-        payload: dict[str, Any] = {
-            "model": self.settings.dgx_model,
-            "messages": [{"role": m.role, "content": m.content} for m in messages],
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "extra_body": {"chat_template_kwargs": {"enable_thinking": self.settings.dgx_enable_thinking}},
-        }
-        if self.settings.dgx_top_p is not None:
-            payload["top_p"] = self.settings.dgx_top_p
-        if self.settings.dgx_seed is not None:
-            payload["seed"] = self.settings.dgx_seed
-        if self.settings.dgx_top_k is not None:
-            payload["extra_body"]["top_k"] = self.settings.dgx_top_k
-        return payload
+        return build_request_payload(
+            self.settings,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
 
     async def chat(
         self,
