@@ -637,6 +637,39 @@ def _names_legacy_non_law_document_type(normalized_query: str) -> bool:
 
 def _domain_query_expansions(normalized_query: str, predicted_family: str | None) -> list[str]:
     expansions: list[str] = []
+    if predicted_family == "yonetmelik":
+        if contains_any(normalized_query, ("kisisel veri", "kisisel veriler")) and contains_any(
+            normalized_query,
+            ("periyodik imha", "saklama-imha", "saklama imha", "imha politikasi", "anonim hale"),
+        ):
+            expansions.append(
+                "Kişisel Verilerin Silinmesi, Yok Edilmesi veya Anonim Hale Getirilmesi Hakkında Yönetmelik "
+                "kişisel veri periyodik imha saklama imha politikası kayıt yükümlülüğü KVKK"
+            )
+        if contains_any(normalized_query, ("imar", "plan notu", "otopark", "ortak alan", "bagimsiz bolum")) and contains_any(
+            normalized_query,
+            ("plan notu", "otopark", "ortak alan", "bagimsiz bolum", "3194"),
+        ):
+            expansions.append(
+                "Planlı Alanlar İmar Yönetmeliği plan notu otopark hesabı ortak alan bağımsız bölüm 3194 İmar Kanunu"
+            )
+        if contains_any(normalized_query, ("konkordato", "komiser")) and contains_any(
+            normalized_query,
+            ("egitim", "liste", "bagimsizlik", "gorevlendirme", "sart"),
+        ):
+            expansions.append(
+                "Konkordato Komiserliği ve Alacaklılar Kuruluna Dair Yönetmelik konkordato komiseri eğitim liste "
+                "bağımsızlık görevlendirme şartları İcra ve İflas Kanunu"
+            )
+        if contains_any(normalized_query, ("yok", "yuksekogretim")) and contains_any(
+            normalized_query,
+            ("yatay gecis", "cift anadal", "yan dal", "kredi transferi", "yerel universite"),
+        ):
+            expansions.append(
+                "Yükseköğretim Kurumlarında Önlisans ve Lisans Düzeyindeki Programlar Arasında Geçiş, "
+                "Çift Anadal, Yan Dal ile Kurumlar Arası Kredi Transferi Yapılması Esaslarına İlişkin Yönetmelik "
+                "YÖK yatay geçiş çift anadal yan dal kredi transferi yerel üniversite düzenlemesi"
+            )
     if predicted_family == "teblig":
         if contains_any(normalized_query, ("e-fatura", "efatura", "e-arsiv", "e-irsaliye", "earsiv", "e irsaliye")):
             expansions.append(
@@ -939,11 +972,11 @@ def _apply_family_collision_rules(
         apply_collision(
             pair="uy|yonetmelik",
             preferred_family="yonetmelik",
-            preferred_boost=5.0,
+            preferred_boost=7.0,
             fallback_families=("uy",),
             fallback_boost=1.0,
             demoted_families=("uy",),
-            demote_amount=3.5,
+            demote_amount=5.0,
             reason="central_higher_education_regulation_prefers_yonetmelik",
         )
         return collision_detected, collision_pair, resolution_reason

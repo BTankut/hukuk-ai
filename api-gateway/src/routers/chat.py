@@ -198,6 +198,7 @@ from token_accounting import (
     token_accounting_fallback_allowed,
 )
 from source_family_resolver import (
+    QUERY_EXPANSIONS as _SOURCE_FAMILY_GENERIC_QUERY_EXPANSIONS,
     SourceFamilyCandidate,
     SourceFamilyResolution,
 )
@@ -7964,9 +7965,19 @@ async def _prepare_retrieval_runtime_context(
             annual_investment_program_expansion,
         )
         retrieval_top_k = max(retrieval_top_k, 20)
+    generic_metadata_lookup_expansions = {
+        str(value or "").strip()
+        for value in _SOURCE_FAMILY_GENERIC_QUERY_EXPANSIONS.values()
+        if str(value or "").strip()
+    }
+    metadata_lookup_query_expansions = [
+        part
+        for part in source_family_resolution.query_expansions
+        if str(part or "").strip() and str(part or "").strip() not in generic_metadata_lookup_expansions
+    ]
     metadata_lookup_query = " ".join(
         part
-        for part in [routing_query, *source_family_resolution.query_expansions]
+        for part in [routing_query, *metadata_lookup_query_expansions]
         if str(part or "").strip()
     )
     metadata_lookup_query_signals = _parse_metadata_lookup_query_signals(metadata_lookup_query)
