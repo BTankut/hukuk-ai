@@ -3071,6 +3071,44 @@ def _strong_source_family_gate(source_family_resolution: SourceFamilyResolution)
     return set(_expand_source_family_aliases(source_family_resolution.routing_families))
 
 
+def _needs_historical_current_law_support_bridge(
+    *,
+    query: str,
+    source_family_resolution: SourceFamilyResolution,
+) -> bool:
+    if source_family_resolution.expected_family_prior != "mulga_kanun":
+        return False
+    if not source_family_resolution.historical_or_repealed_question:
+        return False
+    if not source_family_resolution.current_law_prior_blocked_by_historical_scope:
+        return False
+    return _contains_any_query_term(
+        query,
+        (
+            "güncel",
+            "guncel",
+            "güncellik",
+            "guncellik",
+            "hâlâ",
+            "hala",
+            "sona er",
+            "yerine geçen",
+            "yerine gecen",
+            "current law",
+            "replacement",
+            "2026",
+        ),
+    )
+
+
+def _extract_query_article_reference_tokens(query: str) -> set[str]:
+    normalized = _normalize_tr_text(query or "")
+    tokens: set[str] = set()
+    for match in re.finditer(r"\b(?:madde|m|md)\.?\s*((?:gecici\s+)?\d+[a-z]?)\b", normalized):
+        tokens.add(_normalize_article_token(match.group(1)))
+    return {token for token in tokens if token}
+
+
 def _apply_pre_generation_family_pool(
     *,
     chunks: list[RetrievedChunk],
@@ -3137,11 +3175,20 @@ def _apply_pre_generation_family_pool(
         chunk for chunk in chunks
         if _chunk_family(chunk) in preferred_family_set
     ]
-    supporting_family_set = set(_expand_source_family_aliases(supporting_source_families or [])) - preferred_family_set
+    supporting_source_family_hints = list(supporting_source_families or [])
+    historical_current_support_bridge = _needs_historical_current_law_support_bridge(
+        query=query,
+        source_family_resolution=source_family_resolution,
+    )
+    if historical_current_support_bridge:
+        supporting_source_family_hints.append("kanun")
+        policy["current_law_supporting_family_bridge"] = True
+    supporting_family_set = set(_expand_source_family_aliases(supporting_source_family_hints)) - preferred_family_set
     supporting_bridge_chunks: list[RetrievedChunk] = []
     if preferred_chunks and supporting_family_set and query:
         query_terms = _extract_retrieval_priority_terms(query)
-        supporting_bridge_chunks = [
+        query_article_reference_tokens = _extract_query_article_reference_tokens(query)
+        supporting_bridge_candidates = [
             chunk
             for chunk in chunks
             if chunk not in preferred_chunks
@@ -3150,8 +3197,25 @@ def _apply_pre_generation_family_pool(
                 _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms) >= 2
                 or _count_term_overlap(chunk.text, query_terms) >= 2
                 or bool((chunk.metadata or {}).get("domain_law_supporting_source"))
+                or (
+                    query_article_reference_tokens
+                    and _chunk_article_token(chunk) in query_article_reference_tokens
+                )
             )
-        ][: max(2, min(6, top_k_effective // 3))]
+        ]
+        supporting_bridge_candidates = sorted(
+            supporting_bridge_candidates,
+            key=lambda chunk: (
+                0 if _chunk_article_token(chunk) in query_article_reference_tokens else 1,
+                0 if bool((chunk.metadata or {}).get("domain_law_supporting_source")) else 1,
+                -max(
+                    _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms),
+                    _count_term_overlap(chunk.text, query_terms),
+                ),
+                -(chunk.score or 0.0),
+            ),
+        )
+        supporting_bridge_chunks = supporting_bridge_candidates[: max(2, min(6, top_k_effective // 3))]
     historical_title_bridge_chunks: list[RetrievedChunk] = []
     if (
         source_family_resolution.expected_family_prior == "mulga_kanun"

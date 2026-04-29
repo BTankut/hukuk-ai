@@ -147,6 +147,34 @@ def _support_contains_exception_signal(query: str, traces: list[dict[str, Any]])
     return False
 
 
+def _query_prefers_temporary_or_transitional_clause(query: str) -> bool:
+    normalized = _normalize_tr_text(query or "")
+    if not normalized:
+        return False
+    if any(signal in normalized for signal in ("sona er", "sona eren", "sureli", "guncellik hatasi")):
+        return True
+    if "%25" in normalized and any(signal in normalized for signal in ("kira", "artis", "sinir")):
+        return True
+    if "gecici madde" in normalized:
+        return True
+    if "gecici" in normalized and any(
+        signal in normalized
+        for signal in ("sinir", "rejim", "duzenleme", "uygula", "otomatik", "artis", "madde")
+    ):
+        return True
+    return False
+
+
+def _article_token_is_temporary_or_additional(token: str | None) -> bool:
+    normalized = _normalize_article_token(token or "")
+    return bool(
+        normalized.startswith("gec")
+        or normalized.startswith("gecici-")
+        or normalized.startswith("ek")
+        or normalized.startswith("additional")
+    )
+
+
 def _contains_temporal_clause_signal(text: str) -> bool:
     normalized = _normalize_tr_text(text or "")
     return any(
@@ -368,6 +396,7 @@ def _select_article_span_evidence(
     relation_supporting_group = str(relation_profile.get("supporting_group") or "")
     scope_or_applicability_query = _asks_scope_or_applicability_query(query)
     hierarchy_or_conflict_query = _asks_hierarchy_or_conflict_article_query(query)
+    temporary_or_transitional_clause_query = _query_prefers_temporary_or_transitional_clause(query)
     query_year_tokens = set(_extract_year_tokens(query))
     legacy_intent_binding_active = historical_or_repealed_question
     temporal_guard_enabled = scenario_current_law_question and not historical_or_repealed_question
@@ -395,6 +424,9 @@ def _select_article_span_evidence(
                 break
 
         article_match = bool(article_tokens and article_token in article_tokens)
+        temporary_clause_match = bool(
+            temporary_or_transitional_clause_query and _article_token_is_temporary_or_additional(article_token)
+        )
         article_distance = _article_window_distance(article_token, article_tokens)
         adjacent_article_match = article_distance == 1
         clause_match = bool(clause_tokens and clause_token and clause_token in clause_tokens)
@@ -491,6 +523,8 @@ def _select_article_span_evidence(
             score += 58
         elif hierarchy_or_conflict_query and scope_match:
             score -= 20
+        if temporary_clause_match:
+            score += 42
         score += min(title_overlap, 8) * 7
         score += min(heading_overlap, 8) * 6
         score += min(text_overlap, 10) * 2
@@ -548,6 +582,7 @@ def _select_article_span_evidence(
                     "paragraph_or_clause": clause_token or None,
                     "explicit_ref_match": explicit_ref_match,
                     "article_match": article_match,
+                    "temporary_clause_match": temporary_clause_match,
                     "adjacent_article_match": adjacent_article_match,
                     "article_window_distance": article_distance,
                     "clause_match": clause_match,
@@ -833,6 +868,8 @@ def _select_article_span_evidence(
             return "hierarchy_or_conflict"
         if trace.get("scope_match"):
             return "scope_or_applicability"
+        if trace.get("temporary_clause_match"):
+            return "temporary_clause"
         if trace.get("heading_overlap", 0) >= 1 or trace.get("text_overlap", 0) >= 2:
             return "same_heading_or_section"
         if trace.get("adjacent_article_match"):
@@ -889,12 +926,24 @@ def _select_article_span_evidence(
             and item[3].get("scope_match")
         ]
         scope_ids = {id(item[2]) for item in scope_items}
+        temporary_clause_items = [
+            item
+            for item in ranked
+            if _same_locked_document(item)
+            and id(item[2]) not in exact_ids
+            and id(item[2]) not in hierarchy_ids
+            and id(item[2]) not in scope_ids
+            and item[3].get("temporary_clause_match")
+        ]
+        temporary_clause_ids = {id(item[2]) for item in temporary_clause_items}
         heading_items = [
             item
             for item in ranked
             if _same_locked_document(item)
             and id(item[2]) not in exact_ids
+            and id(item[2]) not in hierarchy_ids
             and id(item[2]) not in scope_ids
+            and id(item[2]) not in temporary_clause_ids
             and str(item[3].get("article_or_section") or "") != "0"
             and (item[3].get("heading_overlap", 0) >= 1 or item[3].get("text_overlap", 0) >= 2)
         ]
@@ -936,12 +985,22 @@ def _select_article_span_evidence(
                 or item[3].get("identifier_match")
             )
         ]
-        if exact_items or scope_items or heading_items or adjacent_items or temporal_exception_items or fallback_items:
+        if (
+            exact_items
+            or hierarchy_items
+            or scope_items
+            or temporary_clause_items
+            or heading_items
+            or adjacent_items
+            or temporal_exception_items
+            or fallback_items
+        ):
             window_items = _dedupe_window_items(
                 [
                     exact_items[:3],
                     hierarchy_items[:2],
                     scope_items[:2],
+                    temporary_clause_items[:2],
                     heading_items[:2],
                     adjacent_items[:2],
                     temporal_exception_items[:2],
@@ -1045,6 +1104,19 @@ def _select_article_span_evidence(
         for trace in supporting_trace_candidates
         if bool(trace.get("domain_law_supporting_source"))
     ]
+    exact_supporting_span_traces = [
+        trace
+        for trace in supporting_trace_candidates
+        if (
+            not primary_document_key
+            or str(trace.get("document_key") or "") != primary_document_key
+        )
+        and (
+            trace.get("explicit_ref_match")
+            or trace.get("article_match")
+            or trace.get("clause_match")
+        )
+    ]
     same_document_supporting_span_traces = [
         trace
         for trace in supporting_trace_candidates
@@ -1052,7 +1124,11 @@ def _select_article_span_evidence(
     ]
     supporting_span_traces: list[dict[str, Any]] = []
     seen_supporting_span_keys: set[str] = set()
-    for trace in [*domain_supporting_span_traces[:3], *same_document_supporting_span_traces]:
+    for trace in [
+        *domain_supporting_span_traces[:3],
+        *exact_supporting_span_traces[:3],
+        *same_document_supporting_span_traces,
+    ]:
         span_key = str(trace.get("span_id") or trace.get("canonical_source_key_v2") or "")
         if span_key and span_key in seen_supporting_span_keys:
             continue
@@ -1164,6 +1240,8 @@ def _select_article_span_evidence(
         "selector_reason": document_lock_reason,
         "document_lock_reason": document_lock_reason,
         "relation_query_detected": relation_query_detected,
+        "temporary_clause_query_detected": temporary_or_transitional_clause_query,
+        "temporary_clause_match_selected": bool(top_trace and top_trace.get("temporary_clause_match")),
         "primary_source_candidate": primary_source_candidate,
         "supporting_source_candidate": supporting_source_candidate,
         "final_primary_source_reason": (
@@ -1256,9 +1334,18 @@ def _apply_selected_document_only_bundle(
     identifier_tokens = article_span_selector.get("identifier_tokens")
     if not isinstance(identifier_tokens, list):
         identifier_tokens = []
+    selected_article_token = _normalize_article_token(str(article_span_selector.get("selected_main_article") or ""))
+    query_article_token_set = {
+        _normalize_article_token(str(token or ""))
+        for token in query_article_tokens
+        if str(token or "").strip()
+    }
+    query_article_matches_selected = bool(
+        selected_article_token and selected_article_token in query_article_token_set
+    )
     has_precise_span_lock = bool(
         identifier_tokens
-        or query_article_tokens
+        or query_article_matches_selected
         or article_span_selector.get("selector_article_lock_type") == "explicit_exact"
     )
     if not has_precise_span_lock:

@@ -777,11 +777,6 @@ def _suppress_domain_law_metadata_conflict(
 
     top = candidates[0]
     metadata_family = str(top.get("source_family") or "").strip()
-    if not metadata_family or _source_family_relation_group(metadata_family) == "kanun":
-        return metadata_first_selector
-    if _query_explicitly_requests_source_family(query, metadata_family):
-        return metadata_first_selector
-
     lookup_source = str(
         top.get("metadata_lookup_source")
         or metadata_first_selector.get("metadata_lookup_source")
@@ -790,6 +785,42 @@ def _suppress_domain_law_metadata_conflict(
     weak_lookup = lookup_source in {"normalized_title_lookup", "title_ngram_family_lookup"}
     match_reasons = {str(reason) for reason in (top.get("match_reasons") or [])}
     exact_identity = bool(match_reasons & {"identifier_exact", "year_match", "issuer_exact"})
+    if not metadata_family:
+        return metadata_first_selector
+    if _source_family_relation_group(metadata_family) == "kanun":
+        domain_hint_set = set(domain_law_hints)
+        domain_hint_aliases = set(domain_hint_set)
+        if domain_hint_set & {"TBK", "6098"}:
+            domain_hint_aliases.update({"TBK", "6098", "türk borçlar", "turk borclar"})
+        candidate_identity = normalize_query_text(
+            " ".join(
+                str(value or "")
+                for value in (
+                    top.get("canonical_identifier"),
+                    top.get("source_key"),
+                    top.get("canonical_title"),
+                )
+            )
+        )
+        domain_identity_match = any(
+            normalize_query_text(alias) in candidate_identity
+            for alias in domain_hint_aliases
+            if str(alias or "").strip()
+        )
+        if weak_lookup and not exact_identity and not domain_identity_match:
+            suppressed = dict(metadata_first_selector)
+            suppressed["metadata_lookup_hit"] = False
+            suppressed["metadata_lookup_suppressed"] = True
+            suppressed["metadata_lookup_suppression_reason"] = "domain_law_same_family_metadata_conflict"
+            suppressed["suppressed_metadata_family"] = metadata_family
+            suppressed["suppressed_domain_law_hints"] = list(domain_law_hints)
+            suppressed["selected_source_keys"] = []
+            suppressed["selected_families"] = []
+            suppressed["candidates"] = []
+            return suppressed
+        return metadata_first_selector
+    if _query_explicitly_requests_source_family(query, metadata_family):
+        return metadata_first_selector
     if not weak_lookup or exact_identity:
         return metadata_first_selector
 
@@ -3075,16 +3106,45 @@ def _looks_like_rent_increase_tbk_query(user_query: str) -> bool:
         "yüzde 25",
         "yuzde 25",
     )
-    return _contains_any_query_term(user_query, rent_increase_terms) and _contains_any_query_term(
-        user_query,
-        (
+    rent_subject_terms = (
+        "kira",
+        "kiracı",
+        "kiraci",
+        "kiraya veren",
+        "konut",
+        "çatılı işyeri",
+        "catili isyeri",
+        "işyeri kirası",
+        "isyeri kirasi",
+    )
+    legacy_contract_context_terms = (
             "kira bedeli",
             "konut kira",
             "yenilenen kira",
             "yenilenen bir konut kira",
             "kira sözleşmesi",
             "kira sozlesmesi",
-        ),
+    )
+    currentness_or_temporary_terms = (
+        "geçici",
+        "gecici",
+        "sona er",
+        "sona eren",
+        "hâlâ",
+        "hala",
+        "güncellik",
+        "guncellik",
+        "otomatik",
+        "sınır",
+        "sinir",
+        "tavan",
+        "2026",
+    )
+    if not _contains_any_query_term(user_query, rent_increase_terms):
+        return False
+    return _contains_any_query_term(user_query, legacy_contract_context_terms) or (
+        _contains_any_query_term(user_query, rent_subject_terms)
+        and _contains_any_query_term(user_query, currentness_or_temporary_terms)
     )
 
 
@@ -3222,6 +3282,8 @@ def _domain_law_source_family_hints(domain_law_hints: list[str]) -> list[str]:
 def _domain_law_supporting_source_family_hints(query: str, domain_law_hints: list[str]) -> list[str]:
     hints = set(domain_law_hints)
     families: list[str] = []
+    if hints & {"TBK", "6098"} and _looks_like_rent_increase_tbk_query(query):
+        families.append("kanun")
     if hints & {"IK", "4857"} and (
         _contains_any_query_term(
             query,
@@ -8846,11 +8908,25 @@ async def chat_completions(
                             len(retrieved_chunks),
                         )
                 before_family_pool_count = len(retrieved_chunks)
+                family_pool_query = routing_query
+                if all_exact_article_refs:
+                    family_pool_query = _normalize_whitespace(
+                        " ".join(
+                            [
+                                routing_query,
+                                *[
+                                    f"{law} m.{article}"
+                                    for law, article in all_exact_article_refs
+                                    if str(law or "").strip() and str(article or "").strip()
+                                ],
+                            ]
+                        )
+                    )
                 retrieved_chunks, family_routing_policy = _apply_pre_generation_family_pool(
                     chunks=retrieved_chunks,
                     source_family_resolution=source_family_resolution,
                     top_k_effective=top_k_effective,
-                    query=routing_query,
+                    query=family_pool_query,
                     supporting_source_families=domain_supporting_source_families,
                 )
                 if before_family_pool_count != len(retrieved_chunks) or (
