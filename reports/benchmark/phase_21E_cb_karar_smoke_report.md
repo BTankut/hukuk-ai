@@ -3,7 +3,7 @@
 ## Commit SHAs
 
 - Audit commit: `d7200d5a92a5230f46819984f21e823c316217b6`
-- Remediation commit: pending at report generation; to be committed as `Remediate CB_KARAR span exception support`
+- Remediation commit: `fa6035c72ef42667041059f0cd3515335cc25e8b`
 
 ## Audit Summary
 
