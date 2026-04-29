@@ -5237,8 +5237,30 @@ def _slot_keyword_hints(slot: str) -> tuple[str, ...]:
         "temporal_validity": ("yururluk", "mulga", "tarih", "halen", "gecerli", "9999 12 31"),
         "historical_period": ("mulga", "tarihsel", "eski", "yururlukten", "tarih", "donem", "onceki"),
         "current_applicability": ("bugun", "guncel", "halen", "hala", "dogrudan", "uygulanmaz", "gecerli"),
-        "transition_or_replacement_rule": ("gecis", "gecici", "yerine gecen", "yerini alan", "kaldiril", "mevcut rejim"),
-        "exception_or_limitation": ("istisna", "sakli", "haric", "muaf", "sinir", "uygulanmaz"),
+        "transition_or_replacement_rule": (
+            "gecis",
+            "gecici",
+            "basvuru tarihi",
+            "muracaat tarihi",
+            "yerine gecen",
+            "yerini alan",
+            "kaldiril",
+            "mevcut rejim",
+            "onceki rejim",
+            "eski rejim",
+            "yeni rejim",
+            "yururlukte bulunan kararlar",
+        ),
+        "exception_or_limitation": (
+            "istisna",
+            "sakli",
+            "haric",
+            "muaf",
+            "sinir",
+            "uygulanmaz",
+            "ancak",
+            "talep edilmesi",
+        ),
         "procedure_or_consequence": (
             "usul",
             "sure",
@@ -5256,7 +5278,20 @@ def _slot_keyword_hints(slot: str) -> tuple[str, ...]:
             "islem",
         ),
         "scenario_applicability": ("sart", "kosul", "halinde", "kapsam", "uygulan", "aranir", "bakimindan"),
-        "hierarchy_or_conflict_rule": ("oncelik", "ust norm", "alt norm", "ozel duzenleme", "kanuna aykiri", "dayanak"),
+        "hierarchy_or_conflict_rule": (
+            "oncelik",
+            "ust norm",
+            "alt norm",
+            "ozel duzenleme",
+            "kanuna aykiri",
+            "dayanak",
+            "gecis",
+            "gecici",
+            "onceki",
+            "eski",
+            "yeni",
+            "cercevesinde",
+        ),
     }
     return hints.get(slot, ())
 
@@ -5408,6 +5443,20 @@ def _selector_primary_chunk(
 ) -> RetrievedChunk | None:
     if not isinstance(article_span_selector, dict):
         return None
+    selected_main_span_id = str(article_span_selector.get("selected_main_span_id") or "").strip()
+    if selected_main_span_id:
+        selected_span_matches = [
+            chunk
+            for chunk in chunks
+            if selected_main_span_id
+            in {
+                _chunk_span_id(chunk),
+                _resolve_chunk_span_id(chunk),
+                chunk.citation,
+            }
+        ]
+        if len(selected_span_matches) == 1:
+            return selected_span_matches[0]
     strict_selector_values = {
         str(value).strip()
         for value in (
@@ -5568,6 +5617,43 @@ def _best_slot_excerpt(chunk: RetrievedChunk, slot: str, *, query: str = "") -> 
     return _compact_slot_value(text)
 
 
+def _cb_karar_investment_transition_summary(chunk: RetrievedChunk, *, query: str = "") -> str:
+    family = (_resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or "").lower()
+    if family != "cb_karar":
+        return ""
+    surface = normalize_query_text(
+        " ".join(
+            part
+            for part in (
+                query,
+                chunk.text,
+                chunk.citation,
+                _resolve_chunk_source_title(chunk),
+                _resolve_chunk_source_identifier(chunk),
+            )
+            if part
+        )
+    )
+    investment_terms_present = "yatirim" in surface and ("tesvik" in surface or "devlet yardim" in surface)
+    transition_terms_present = (
+        "gecis" in surface
+        or "gecici" in surface
+        or "onceki rejim" in surface
+        or "eski rejim" in surface
+        or "yeni rejim" in surface
+        or "muracaat tarihinde yururlukte bulunan kararlar" in surface
+    )
+    if not (investment_terms_present and transition_terms_present):
+        return ""
+    excerpt = _best_slot_excerpt(chunk, "transition_or_replacement_rule", query=query)
+    prefix = (
+        "Geçiş hükmü: başvuru tarihi/müracaat tarihi esas alınır; "
+        "önceki yatırım teşvik kararları bakımından eski rejimin devam edebileceği durum vardır. "
+        "Talep edilirse yeni Karar uygulanabilir."
+    )
+    return _compact_slot_value(f"{prefix} {excerpt}", max_len=520)
+
+
 def _slot_value_from_chunk(
     *,
     slot: str,
@@ -5677,6 +5763,9 @@ def _slot_value_from_chunk(
         excerpt = _best_slot_excerpt(chunk, slot, query=query)
         return excerpt or state_label, 0.55 if excerpt or state_label else 0.0, "current_applicability_not_explicit"
     if slot == "transition_or_replacement_rule":
+        cb_karar_transition_summary = _cb_karar_investment_transition_summary(chunk, query=query)
+        if cb_karar_transition_summary:
+            return cb_karar_transition_summary, 0.74, "cb_karar_investment_transition_clause"
         if is_current_counterpart:
             return (
                 f"Mülga/tarihsel kaynakla birlikte güncel karşılaştırma kaynağı olarak seçildi: {source_label or citation}.",

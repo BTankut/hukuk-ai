@@ -854,6 +854,85 @@ class TestLawSignalParsing:
         assert slots["operative_instruction"]["fill_status"] == "filled"
         assert slots["operative_instruction"]["verifier_status"] == "verified"
 
+    def test_cb_karar_transition_exception_slots_use_selected_temporary_span(self):
+        selected_transition = RetrievedChunk(
+            text=(
+                "9903 geçici m.1 YATIRIMLARDA DEVLET YARDIMLARI HAKKINDA KARAR "
+                "Sonuçlandırılmamış müracaatlar GEÇİCİ MADDE 1- (1) Bu Kararın yürürlüğe "
+                "girdiği tarih itibarıyla sonuçlandırılmamış müracaatlar, müracaat tarihinde "
+                "yürürlükte bulunan kararlar çerçevesinde sonuçlandırılır. Ancak, yeni teşvik "
+                "belgesi düzenlenmesine ilişkin müracaatlar, talep edilmesi halinde bu Karara "
+                "istinaden değerlendirilir."
+            ),
+            citation="9903 geçici m.1/f.0",
+            source="9903",
+            score=1.0,
+            metadata={
+                "source_family_canonical": "cb_karar",
+                "source_title": "Yatırımlarda Devlet Yardımları Hakkında Karar (Karar Sayısı: 9903)",
+                "source_identifier": "9903 geçici m.1",
+                "span_id": "9903 geçici m.1/f.0",
+                "madde_no": "geçici 1",
+                "article_or_section": "gecici-1",
+                "effective_state": "active",
+                "effective_start": "2025-05-30",
+                "effective_end": "9999-12-31",
+            },
+        )
+        document_level_noise = RetrievedChunk(
+            text="9903 m.0 \x19 \x19#\x08 \x15 \x11 \x11",
+            citation="9903 m.0/f.0",
+            source="9903",
+            score=0.8,
+            metadata={
+                "source_family_canonical": "cb_karar",
+                "source_title": "Yatırımlarda Devlet Yardımları Hakkında Karar (Karar Sayısı: 9903)",
+                "source_identifier": "9903 m.0",
+                "span_id": "9903 m.0/f.0",
+                "madde_no": "0",
+                "article_or_section": "0",
+                "effective_state": "active",
+                "effective_start": "2025-05-30",
+                "effective_end": "9999-12-31",
+            },
+        )
+        selector = {
+            "selected_main_span_id": "9903 geçici m.1/f.0",
+            "selected_article": "gecici-1",
+            "selected_document_id": "Yatırımlarda Devlet Yardımları Hakkında Karar (Karar Sayısı: 9903)",
+            "support_span_count": 1,
+            "metadata_identity_strength": "strong",
+            "selector_evidence_sufficiency": "exact_enough",
+        }
+
+        features = _build_completeness_synthesis_features(
+            query=(
+                "20.05.2025'te yapılan başvuru için 2026'da yeni 9903 sayılı karar mı "
+                "uygulanır, yoksa geçiş nedeniyle eski rejim de devrede kalabilir mi?"
+            ),
+            answer_text=(
+                "Sonuçlandırılmamış müracaatlar müracaat tarihinde yürürlükte olan kararlar "
+                "çerçevesinde sonuçlandırılır; ancak talep edilirse yeni karar uygulanabilir "
+                "[Kaynak: 9903 geçici m.1/f.0]."
+            ),
+            article_span_selector=selector,
+            chunks=[selected_transition, document_level_noise],
+            requested_source_families=["cb_karar"],
+        )
+
+        slots = {slot["slot_name"]: slot for slot in features["answer_slots"]}
+        assert slots["exception_or_limitation"]["fill_status"] == "filled"
+        assert slots["exception_or_limitation"]["evidence_span_keys"] == ["9903 geçici m.1/f.0"]
+        assert slots["conflict_rule"]["fill_status"] == "filled"
+        assert slots["conflict_rule"]["evidence_span_keys"] == ["9903 geçici m.1/f.0"]
+        assert slots["transition_rule"]["fill_status"] == "filled"
+        assert "başvuru tarihi" in slots["transition_rule"]["value"]
+        assert "geçiş hükmü" in slots["transition_rule"]["value"].lower()
+        assert "eski rejimin devam edebileceği durum" in slots["transition_rule"]["value"].lower()
+        assert "önceki yatırım teşvik kararları" in slots["transition_rule"]["value"].lower()
+        assert slots["effective_date"]["evidence_span_keys"] == ["9903 geçici m.1/f.0"]
+        assert features["answer_slot_missing_count"] == 0
+
     def test_phase18_answer_slots_mark_critical_missing_without_evidence(self):
         features = _build_completeness_synthesis_features(
             query="Mülga kanun bugün doğrudan uygulanabilir mi?",
