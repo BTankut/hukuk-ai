@@ -75,8 +75,8 @@ def test_historical_chain_synthesis_uses_three_roles() -> None:
     assert patch["temporal_claim_alignment_applied"] is True
     assert patch["temporal_claim_primary_role"] == "current_law_basis"
     assert "Tarihsel kaynak" in answer
-    assert "Yürürlük/güncellik" in answer
-    assert "Güncel dayanak" in answer
+    assert "Yürürlük sınırı" in answer
+    assert "Kanun bağlantısı" in answer
 
 
 def test_repeal_instrument_not_primary_substantive_rule() -> None:

@@ -668,8 +668,6 @@ def _temporal_item_role(item: dict[str, Any]) -> str:
         return "repeal_instrument"
     if role in {"current", "current_basis"}:
         return "current_law_basis"
-    if state in _TEMPORAL_ACTIVE_STATES and _temporal_has_repeal_text(text):
-        return "repeal_instrument"
     if state in _TEMPORAL_REPEALED_STATES or "mulga" in family:
         return "historical_rule"
     return ""
@@ -803,23 +801,23 @@ def _temporal_build_role_answer(
         _temporal_line(
             "Tarihsel kaynak",
             historical,
-            "Bu kaynak doğrudan güncel hukuk dayanağı gibi değil, geçerli olduğu dönemle sınırlı okunmalıdır.",
+            "Bu kaynak yalnız tarihsel dönem bağlamında okunmalıdır.",
         )
     )
     if repeal is not None:
         lines.append(
             _temporal_line(
-                "Yürürlük/güncellik",
+                "Yürürlük sınırı",
                 repeal,
-                "Bu kanıt tarihsel kaynağın yürürlükten kaldırılması veya güncellik sınırını gösterir.",
+                "Bu kanıt tarihsel kaynağın yürürlükten kaldırılması sınırını gösterir.",
             )
         )
     if current is not None:
         lines.append(
             _temporal_line(
-                "Güncel dayanak",
+                "Kanun bağlantısı",
                 current,
-                "Bugünkü uygulama için ayrı güncel dayanak budur; tarihsel kaynağın yerine karıştırılmamalıdır.",
+                "İlişki zincirinde yer alan ek kanun bağlantısıdır; tarihsel kaynak metniyle karıştırılmamalıdır.",
             )
         )
     if not relation_chain_present or missing_reason != "none":
