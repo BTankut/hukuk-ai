@@ -1,1158 +1,864 @@
 
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="content-language" content="tr">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            font-size: 12pt !important;
+            line-height: 127% !important;
+        }
 
-    
-        <script type="text/javascript">
+        @media print {
+            a {
+                visibility: hidden;
+            }
 
-            //var _gaq = _gaq || [];
-            //_gaq.push(['_setAccount', 'UA-21405575-5']);
-            //_gaq.push(['_trackPageview']);
-            //
-            //(function () {
-            //    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            //    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            //    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-            //})();
-        </script>
-    
+            #section-to-print, #section-to-print * {
+                visibility: visible;
+            }
 
+            #section-to-print {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+        /*aşağıda js kodu var table width değiştirmek için*/
+        table {
+            width: 100% !important;
+            page-break-inside: initial !important;
+            white-space: initial !important;
+            padding: 0 !important;
+            text-indent: 0 !important;
+        }
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K30R4B6KS2"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
+        @media screen and (max-width: 768px) {
 
-        gtag('config', 'G-K30R4B6KS2');
-    </script>
+            tr, p, table {
+                width: initial !important;
+                page-break-inside: initial !important;
+                white-space: initial !important;
+                padding: 0 !important;
+                text-indent: 0 !important;
+            }
 
-
-    <title aria-hidden="true">Mevzuat Bilgi Sistemi</title>
-    <meta name="keywords" content="mevzuat bilgi sistemi, mevzuat, tc mevzuat bilgi sistemi, mevzuatlar" />
-    <meta name="description" content="Resmî Gazete’de yayımlanan kanunlar, Cumhurbaşkanlığı kararnameleri, yönetmelikler, tebliğler ve diğer düzenleyici idari işlemler tek metin haline getirilir ve güncel olarak yayımlanır" />
-    <link rel="shortcut icon" href="favicon.ico" />
-
-    
-    
-        <link rel="stylesheet" href="/css/bundle.min.css?v=9zUQ_ZWOpiEW88ANaJ2fF5029bJHG4VDTpHiqWwcWVM" />
-    
-    <link href="/lib/owlcarousel/owl.carousel.min.css" rel="stylesheet" />
-    <link href="/lib/owlcarousel/owl.theme.default.min.css" rel="stylesheet" />
+            table {
+                width: 100% !important;
+            }
 
 
-    
+            td {
+                /*white-space: nowrap !important;*/
+            }
 
-    <style id="antiClickjack">
-        body {
-            display: none !important;
+            img {
+                max-width: 100%;
+            }
         }
     </style>
-    <script type="text/javascript">
-        if (self === top) {
-            var antiClickjack = document.getElementById("antiClickjack");
-            antiClickjack.parentNode.removeChild(antiClickjack);
-        } else {
-            top.location = self.location;
-        }
 
-        window.showLoader = function () {
-            $("#loaderContainer").css("display", "block");
-        };
+    <link href="/lib/tooltip/tooltip.css" rel="stylesheet" />
+<html>
 
-        window.hideLoader = function () {
-            $("#loaderContainer").css("display", "none");
-        };
-    </script>
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=unicode">
+<meta name=Generator content="Microsoft Word 15 (filtered)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:10.0pt;
+	margin-left:0cm;
+	line-height:115%;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;}
+p.msochpdefault, li.msochpdefault, div.msochpdefault
+	{mso-style-name:msochpdefault;
+	margin-right:0cm;
+	margin-left:0cm;
+	font-size:12.0pt;
+	font-family:"Calibri",sans-serif;}
+p.msopapdefault, li.msopapdefault, div.msopapdefault
+	{mso-style-name:msopapdefault;
+	margin-right:0cm;
+	margin-bottom:10.0pt;
+	margin-left:0cm;
+	line-height:115%;
+	font-size:12.0pt;
+	font-family:"Times New Roman",serif;}
+.MsoChpDefault
+	{font-size:10.0pt;}
+.MsoPapDefault
+	{margin-bottom:10.0pt;
+	line-height:115%;}
+@page WordSection1
+	{size:595.3pt 841.9pt;
+	margin:70.85pt 70.85pt 70.85pt 70.85pt;}
+div.WordSection1
+	{page:WordSection1;}
+-->
+</style>
 
+<script type="text/javascript">window.av = { database:'2' , rnApp:'False' }</script><script src="https://www.mevzuat.gov.tr/lib/jquery/dist/jquery.js"></script><script src="https://www.mevzuat.gov.tr/js/iframescript.min.js?v=1.05"></script><style><!--* {font-family:inherit!important;}--></style></head>
 
-</head>
-<body>
-    <div class="container pr-0 mt-2 mb-1" id="navContainer">
-        <nav class="navbar navbar-expand-lg navbar-light position-absolute" style="margin-top:-14px" id="navLogoRow">
-            <a id="text-logo" class="navbar-brand" href="/" style="z-index:10;" title="Cumhurbaşkanlığı Forsu">
-                <div class="media">
-                    <img src="/img/arma.png" id="logo-img" alt="Türkiye Cumhuriyeti Cumhurbaşkanlığı Mevzuat Bilgi Sistemi">
-                    <div class="media-body align-self-stretch d-flex align-items-start flex-column" id="text-logo-container" title="Türkiye Cumhuriyeti Cumhurbaşkanlığı Mevzuat Bilgi Sistemi">
-                        <div id="text-logo-01" class="mt-auto mb-0"><span aria-hidden="true">T.C.</span> <span aria-hidden="true" class="text-logo-cumhurbaskanligi">CUMHURBAŞKANLIĞI</span></div>
-                        <div id="text-logo-02" class="mb-auto mt-0" aria-hidden="true">MEVZUAT BİLGİ SİSTEMİ</div>
-                    </div>
-                </div>
-            </a>
-        </nav>
-        <nav class="navbar navbar-expand-xl navbar-light">
+<body lang=TR>
 
-            <div class="ml-auto">
-            </div>
+<div class=WordSection1>
 
-            <button class="navbar-toggler" id="navButtonMobile" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+<div align=center>
 
-            <div class="w-100 mb-2" id="mobilMenuNav">
-
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav small ml-auto">
-                        <li class="nav-item dropdown" id="dropdown-menu-Regulation">
-                            <a class="nav-link pl-0 pr-0 dropdown-toggle" href="#" style="cursor:pointer;" id="navbarDropdownRegulation" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Mevzuat Türü
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="dropdown-menu-Regulation-Down">
-                                <a class="dropdown-item" data-toggle=pill href="#kanunlar" onclick="clickNavigation(name)" name="kanunlar">Kanunlar</a>
-                                <a class="dropdown-item" data-toggle=pill href="#kanunHukmundeKararnameler" onclick="clickNavigation(name)" name="kanunHukmundeKararnameler">Kanun Hükmünde Kararnameler</a>
-                                <a class="dropdown-item" data-toggle=pill href="#cumhurbaskanligiKararnameleri" onclick="clickNavigation(name)" name="cumhurbaskanligiKararnameleri">Cumhurbaşkanlığı Kararnameleri</a>
-                                <a class="dropdown-item" data-toggle=pill href="#tuzukler" onclick="clickNavigation(name)" name="tuzukler">Tüzükler</a>
-                                <a class="dropdown-item" data-toggle=pill href="#cumhurbaskaniKararlari" onclick="clickNavigation(name)" name="cumhurbaskaniKararlari">Cumhurbaşkanı Kararları</a>
-                                <a class="dropdown-item" data-toggle=pill href="#cumhurbaskaniGenelgeleri" onclick="clickNavigation(name)" name="cumhurbaskaniGenelgeleri">Cumhurbaşkanlığı Genelgeleri</a>
-                                <a class="dropdown-item" data-toggle=pill href="#yonetmelikler" onclick="clickNavigation(name)" name="yonetmelikler">Yönetmelikler</a>
-                                <a class="dropdown-item" data-toggle=pill href="#tebligler" onclick="clickNavigation(name)" name="tebligler">Tebliğler</a>
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link pl-0 pr-0" title="TÜRKİYE CUMHURİYETİ ANAYASASI" href="#" onclick="clickNavigation(name)" name="anayasa" data-toggle=pill><div aria-hidden="true">T.C. Anayasası</div></a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link pl-0 pr-0" href="#mulga" onclick="clickNavigation(name)" name="mulga" data-toggle=pill>Mülga Mevzuat</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link pl-0 pr-0" href="#mevzuatFihristleri" onclick="clickNavigation(name)" name="mevzuatFihristleri" data-toggle=pill>Kanunlar Fihristi</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link pl-0 pr-0" href="#cumhurbaskanligiKararnameleriFihristi" onclick="clickNavigation(name)" name="cumhurbaskanligiKararnameleriFihristi" data-toggle=pill>Cumhurbaşkanlığı Kararnameleri Fihristi</a>
-                        </li>
-                        <li class="nav-item dropdown" id="dropdown-menu-Publications">
-                            <a class="nav-link pl-0 pr-0 dropdown-toggle" href="#" style="cursor:pointer;" id="navbarDropdownPublications" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Yayınlar
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="dropdown-menu-Publications-Down">
-                                    <a class="dropdown-item" href=" /Publications?fp=Q1VNSFVSQkHFnktBTkxJxJ5JIEtBUkFSTkFNRUxFUsSwIEvDnExMxLBZQVRJ">CUMHURBA&#x15E;KANLI&#x11E;I KARARNAMELER&#x130; K&#xDC;LL&#x130;YATI</a>
-                                    <a class="dropdown-item" href=" /Publications?fp=MjA1IEtBTlVO">205 KANUN</a>
-                                    <a class="dropdown-item" href=" /Publications?fp=VEFIS8SwTSBLxLBUQUJJ">TAHK&#x130;M K&#x130;TABI</a>
-                                    <a class="dropdown-item" href=" /Publications?fp=VEFIS8SwTURFIEdVzIhOQ0VMIFNPUlVOTEFSIFYtVkk%3D">TAHK&#x130;MDE GU&#x308;NCEL SORUNLAR V-VI</a>
-                                    <a class="dropdown-item" href=" /Publications?fp=VEFIS8SwTURFIEfDnE5DRUwgR0VMxLDFnk1FTEVSIFNFTcSwTkVSIEvEsFRBQkk%3D">TAHK&#x130;MDE G&#xDC;NCEL GEL&#x130;&#x15E;MELER SEM&#x130;NER K&#x130;TABI</a>
-                                    <a class="dropdown-item" href=" /Publications?fp=VC5DLiBSRVNNw44gR0FaRVRFIMSwTEsgMTAwIFNBWUkgQ8SwTFQtSQ%3D%3D">T.C. RESM&#xCE; GAZETE &#x130;LK 100 SAYI C&#x130;LT-I</a>
-                                    <a class="dropdown-item" href=" /Publications?fp=VC5DLiBSRVNNw44gR0FaRVRFIMSwTEsgMTAwIFNBWUkgQ8SwTFQtSUk%3D">T.C. RESM&#xCE; GAZETE &#x130;LK 100 SAYI C&#x130;LT-II</a>
-                                    <a class="dropdown-item" href=" /Publications?fp=VEFIS8SwTSBTRU1QT1pZVU0gS8SwVEFCSQ%3D%3D">TAHK&#x130;M SEMPOZYUM K&#x130;TABI</a>
-                            </div>
-                        </li>
-                        <li class="nav-item font-weight-bold">
-                            <a data-toggle="modal" data-target="#UserLoginFormModal" id="userNameSessionDiv" class="nav-link" style="display:none;outline:0px" href="#"><i class="fa fa-user "></i> Oturum Aç</a>
-                        </li>
-                        <li>
-                            <div class="ml-auto  d-lg-block nav-link pl-0 pr-0">
-                                <div class="dropdown" style="display:none" id="userNameLoginDiv">
-                                    <a class="text-muted" style="text-decoration:none;cursor:pointer" href="javascript:void(0);">
-                                        <i class="fa fa-user-circle mr-2 float-left" style="margin-top:2px;"></i>&nbsp;&nbsp;<h6 id="userNameLogin" class="float-left"> </h6>
-                                    </a>
-                                    <div class="dropdown-menu" aria-labelledby="navbarDropdown" id="userNameLoginDivDown">
-                                        <a class="dropdown-item" href="/Favorites" id="myFavorites">Favorilerim</a>
-                                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#MyInformationsFormModal" id="myInformations" data-toggle=pill>Üye Bilgileri</a>
-                                        <a style="display:none" class="dropdown-item" data-toggle=pill>Üye Bilgileri</a>
-                                        <a class="dropdown-item" href="#" data-toggle=pill id="signOut">Çıkış</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-        </nav>
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0 style='border-collapse:collapse'>
+ <tr>
+  <td width=607 valign=top style='width:455.2pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <div align=center>
+  <table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0 width=0 style='width:439.45pt;border-collapse:collapse'>
+   <tr style='height:24.0pt'>
+    <td width=586 style='width:439.45pt;padding:0cm 5.4pt 0cm 5.4pt;height:
+    24.0pt'>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>ŞİRKET
+    KURULUŞ SÖZLEŞMESİNİN TİCARET SİCİLİ MÜDÜRLÜKLERİNDE</b></p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>İMZALANMASI
+    HAKKINDA TEBLİĞ</b></p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>&nbsp;</b></p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>BİRİNCİ
+    BÖLÜM</b></p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>Amaç,
+    Kapsam, Dayanak ve Tanımlar</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Amaç ve kapsam</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 1 – </b>(1)
+    <b>(Değişik:RG-13/3/2018-30359)</b> Bu Tebliğin amacı; kuruluş aşamasında kurucuların
+    şirket sözleşmesine atacakları imzaların ticaret sicili müdürlüğünde
+    onaylanmasına ve imza beyannamesinin ticaret sicili <b>(Değişik ibare:RG-20/2/2021-31401)</b>
+    <u>müdürlüklerine</u> verilmesine ilişkin usul ve esasları belirlemektir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Dayanak</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 2 – </b>(1)
+    Bu Tebliğ; 13/1/2011 tarihli ve 6102 sayılı Türk Ticaret Kanununun <b>(Ek
+    ibare:RG-13/3/2018-30359)</b> <u>40 ıncı maddesinin ikinci fıkrasına ve</u>
+    210 uncu maddesine dayanılarak hazırlanmıştır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Tanımlar</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 3 – </b>(1)
+    Bu Tebliğin uygulanmasında;</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>a) Ayırt etme
+    gücü: Yaş küçüklüğü, akıl hastalığı,&nbsp; akıl zayıflığı,&nbsp; sarhoşluk
+    ya da benzer sebepler nedeniyle akla uygun davranma yeteneğinden yoksun
+    bulunmama halini,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>b) Bakanlık:<b> (Mülga
+    ibare:RG-20/2/2021-31401)</b> Ticaret Bakanlığını,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>c) Kanun:
+    13/1/2011 tarihli ve 6102 sayılı Türk Ticaret Kanununu,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>ç) Kayyım: Belirli
+    işleri görmek veya malvarlığını yönetmek için atanan kişiyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>d) Kısıtlı:
+    22/11/2001 tarihli ve 4721 sayılı Türk Medeni Kanununda tanımlanan
+    kısıtlılık hâlleri kapsamındaki kişileri,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>e) <b>(Değişik:RG-20/2/2021-31401)
+    </b>Kimlik kartı: Türkiye Cumhuriyeti vatandaşlarının kimliğini ispata
+    yarayan Türkiye Cumhuriyeti kimlik kartını,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>f) Kişi: Gerçek
+    veya tüzel kişiyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>g) Kurucu: Şirket
+    kurmaya teşebbüs eden kişi veya kişileri,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>ğ) Mavi kart:
+    Doğumla Türk vatandaşı olup da çıkma izni almak suretiyle Türk
+    vatandaşlığını kaybedenler ve bunların 5901 sayılı Türk Vatandaşlığı
+    Kanununun 28 inci maddesinde belirtilen altsoylarına verilen ve söz konusu
+    maddede belirtilen haklardan faydalanabileceklerini gösteren resmi belgeyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>h) Merkezi Sicil Kayıt
+    Sistemi (MERSİS): Ticaret sicili işlemlerinin elektronik ortamda
+    yürütüldüğü, ticaret sicili kayıtları ile tescil ve ilan edilmesi gereken
+    içeriklerin düzenli olarak depolandığı ve elektronik ortamda sunulduğu, <b>(Mülga
+    ibare:RG-20/2/2021-31401) </b>Ticaret Bakanlığı ile TOBB nezdinde
+    oluşturulan ve işletilen merkezi ortak veri tabanını da içeren bilgi
+    sistemini,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>ı) MERNİS:
+    İçişleri Bakanlığı tarafından yürütülen Merkezi Nüfus İdaresi Sistemini,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>i) Müdür: Ticaret
+    sicili müdürünü,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>j) Müdürlük:
+    Ticaret sicili müdürlüğünü,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>k) Müdür Yardımcısı:
+    Ticaret sicili müdür yardımcısını,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>l) Sözleşme:
+    Kollektif, komandit, sermayesi paylara bölünmüş komandit ve limited
+    şirkette şirket sözleşmesini, anonim şirkette esas sözleşmeyi <b>(Ek
+    ibare:RG-13/3/2018-30359)</b> <u>ve kooperatifte ana sözleşmeyi</u>,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>m) Sürücü belgesi:
+    2918 sayılı Karayolları Trafik Kanununda belirtilen motorlu araçların
+    sürülmesine yetki veren belgeyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>n) Şirket:
+    Kollektif, komandit, anonim, limited <b>(Değişik ibare:RG-13/3/2018-30359)</b>
+    <u>sermayesi paylara bölünmüş komandit şirketi ve kooperatifi</u>,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>o) Temsilci:
+    Kurucu adına imza yetkisine sahip vekil, veli, vasi, kayyım ile tüzel
+    kişilerde <b>(Değişik ibare:RG-20/2/2021-31401) </b><u>temsile</u> yetkili
+    kişiyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>ö) Ticari
+    işletme:&nbsp; Esnaf işletmesi için öngörülen sınırı aşan düzeyde gelir
+    sağlamayı hedef tutan faaliyetlerin, devamlı ve bağımsız şekilde
+    yürütüldüğü işletmeyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>p) TOBB: Türkiye
+    Odalar ve Borsalar Birliğini,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>r) Vasi: Vesayet
+    altındaki küçüğün veya kısıtlının kişiliği ve malvarlığı ile ilgili bütün
+    menfaatlerini korumak ve hukuki işlemlerde onu temsil etmekle yükümlü kişiyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>s) Vekil: Vekâlet
+    verenin işini görmeyi veya işlemini yapmayı üstlenen kişiyi,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>ş) Veli: Velayet
+    altındaki küçüğü temsil eden velayet sahibi kişi veya kişileri, </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>t) <b>(Ek:RG-13/3/2018-30359)</b>
+    Yetkilendirilmiş personel: Bu Tebliğde yer alan hükümler çerçevesinde
+    kuruluş aşamasında kurucuların şirket sözleşmesine atacakları imzaların
+    onaylanması ve imza beyannamesinin düzenlenmesi işlemlerini yerine getirmek
+    üzere ticaret sicili müdürü tarafından görevlendirilen ticaret sicili
+    müdürlüğü personelini,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>ifade eder. </p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>İKİNCİ
+    BÖLÜM</b></p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>Sözleşmenin
+    İmzalanması</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Sözleşmenin
+    hazırlanması </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 4 – </b>(1)
+    Şirket sözleşmesi MERSİS’te hazırlanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Müdürlüğe
+    başvuru</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 5 – </b>(1)&nbsp;
+    Kurucular, sözleşmenin imzalanması için şirketin kurulacağı yer
+    müdürlüğünde hazır bulunur.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>&nbsp;(2) Kurucusu
+    gerçek kişi veya tüzel kişi olan şirketlerin sözleşmesi müdürlükte bizzat
+    kendileri veya temsilcileri tarafından imzalanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>&nbsp;(3) <b>(Mülga:RG-17/4/2018-30394)</b>
+    </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(4) On sekiz
+    yaşından küçük kişilerin şirkette kurucu ortak olabilmesi için şirket
+    sözleşmesinin velileri tarafından imzalanması gerekir. Velinin tek kişi
+    olması halinde, nüfus kayıt örneğinin ibraz edilmesi zorunludur.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(5) On sekiz
+    yaşından küçük kişinin velisiyle birlikte şirket kurucusu olması halinde,
+    vasi veya kayyım kararı müdürlüğe ibraz edilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(6) Kurucu Türk
+    vatandaşı ise geçerli kimlik kartı, pasaport veya sürücü belgesi ibraz
+    edilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(7) Kurucunun
+    doğumla Türk vatandaşı olup da çıkma izni almak suretiyle Türk
+    vatandaşlığını kaybeden kişi olması durumunda mavi kart ibraz
+    edilir.&nbsp;&nbsp; </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(8) Kurucu yabancı
+    uyruklu ise başvuruda geçerli pasaport ibraz edilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(9) Kurucu adına
+    imza atacak temsilciler, sıfat ve yetkileri ile işlemi yapmaya izinli
+    olduklarını gösterir belge ibraz etmekle yükümlüdür. Ayrıca bu kişiler,
+    geçerli kimlik belgelerini ibraz eder. </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(10) Kurucu adına
+    imza atacak kişinin vekil olması halinde vekâletname düzenlemeye yetkili
+    makam veya noterlerce onanmış vekâletnamenin aslı ibraz edilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(11) Kurucu adına
+    imza atacak kişinin vasi veya kayyım olması halinde konuya ilişkin mahkeme kararının
+    aslı veya onaylı sureti ibraz edilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(12) İbraz edilen
+    belgelerin birer örneği tarih kaşesi ile mühürlenerek dosyasında saklanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Belgelerin
+    doğrulanması</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 6 –
+    (Değişik:RG-13/3/2018-30359) </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(1)
+    Yetkilendirilmiş personel şirket kuruluş işlemi için başvuruda bulunan
+    kişinin kimliğini kanıtlayan resmi belgeyi inceler, belgedeki fotoğraf ile
+    gelen kişiyi karşılaştırır, kişi bilgileri ile varsa soğuk mühür izini
+    kontrol eder.&nbsp; İbraz edilen belgeden şüpheye düşülmesi halinde ispata
+    yarar ikinci bir belge istenir. Başvuruda bulunan kişinin, gerçekten ibraz
+    edilen kimliğin sahibi olup olmadığı hususunda Sistem üzerinden gerekli
+    kontrollerde bulunulacaktır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) İbraz edilen
+    belgenin yırtık veya yıpranmış olması, belgedeki resmin eski olması veya
+    benzeri durumlar nedeniyle kimlik doğrulanmasında tereddüt yaşanması
+    durumunda, belgenin değiştirilmesi veya yenilenmesi istenir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Diğer doğrulama
+    işlemleri</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 7 –
+    (Değişik:RG-13/3/2018-30359) </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(1) Sözleşmenin
+    imzalanmasından önce kurucu veya temsilciler, iradesini serbestçe ve kendi
+    isteğine uygun olarak beyan eder.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) Müdür veya
+    müdür yardımcısı yahut yetkilendirilmiş personel, kurucunun yaşlılık,
+    hastalık gibi nedenlerle ayırt etme gücünün bulunmadığına ilişkin şüpheye
+    düşerse, şüphe edilen hususun açıklığa kavuşturulması amacıyla, şahsın
+    ayırt etme gücünü haiz olduğuna ilişkin yetkili makamlardan alınacak bir
+    belgenin ibraz edilmesini isteyebilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(3) Kurucunun,
+    okur-yazar olmaması durumunda sözleşme, mühür veya bir alet ya da parmak
+    izi kullanmak suretiyle imzalanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(4) Kurucunun
+    Türkçe bilmemesi durumunda yeminli bir tercüman bulundurulması zorunludur.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(5) <b>(Değişik:RG-17/4/2018-30394)</b>
+    Kurucunun işitme, konuşma veya görme engelli olması durumunda sözleşme
+    engellinin isteğine bağlı olmak üzere iki tanık huzurunda imzalanır.
+    İlgilinin işitme veya konuşma engelli olması ve yazı ile anlaşma imkânının
+    da bulunmaması halinde, iki tanık ve yeminli tercüman bulundurulur.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(6) İmzanın
+    yeminli tercüman veya tanık huzurunda atılması halinde bu husus bir
+    tutanağa bağlanır. Ayrıca tutanakta yeminli tercüman veya tanıkların kimlik
+    bilgileri ile imzalarına yer verilir. Söz konusu tutanak sicil dosyasında
+    saklanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Sözleşmenin
+    imzalanması </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 8 – </b>(1)
+    Bu Tebliğin 6 ncı ve 7 nci maddelerinde yer alan doğrulama işlemlerinin
+    ardından, sözleşmenin müdürlük tarafından MERSİS’ten alınacak nüshası
+    kurucular veya temsilciler tarafından <b>(Değişik ibare:RG-13/3/2018-30359)</b>
+    <u>müdür veya müdür yardımcısı yahut yetkilendirilmiş personel</u>
+    huzurunda imzalanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) Birinci fıkra
+    çerçevesinde imzalanan sözleşme nüshalarının her sayfası, <b>(Değişik
+    ibare:RG-13/3/2018-30359)</b> <u>müdür veya müdür yardımcısı yahut
+    yetkilendirilmiş personel</u> tarafından imzalanarak mühürlenir. Ayrıca
+    nüshaların son sayfasına işlem tarihi de yazılır veya tarih kaşesi basılır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(3) İmza onay
+    belgesi hazırlanarak <b>(Değişik ibare:RG-13/3/2018-30359)</b> <u>müdür
+    veya müdür yardımcısı yahut yetkilendirilmiş personel</u> tarafından
+    imzalanır. Söz konusu belge mühürlenir ve sözleşmenin arkasına eklenir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(4) <b>(Değişik
+    ibare:RG-13/3/2018-30359)</b> <u>Müdür veya müdür yardımcısı yahut
+    yetkilendirilmiş personel</u> tarafından yapılan bu onay, imzaların
+    kuruculara veya temsilcilere ait olduğunun tasdikidir ve Kanunun 32 nci
+    maddesinde yer alan inceleme görevinin yerine getirilmesi sonucunu
+    doğurmaz.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Düzeltme beyanı</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 9 – </b>(1)
+    Sözleşmenin imzalanması ve mühürlenmesinden sonra sözleşmede herhangi bir
+    değişiklik olması halinde, ilgililerden sözleşme nüshası adedince düzeltme
+    beyanı alınır. Düzeltme beyanı oluşturulurken bu Tebliğin 6 ncı, 7 nci ve 8
+    inci maddesi hükümleri uygulanır. Bu şekilde oluşturulan düzeltme beyanı,
+    sözleşme nüshalarının arkasına eklenir. </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Sözleşmenin
+    saklanması ve teslimi </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 10 – </b>(1)
+    İmzalanan ve mühürlenen sözleşmenin bir nüshası müdürlükçe alınır ve şirketin
+    tescil başvurusu ile birleştirilerek dosyasında saklanır. </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) Kalan sözleşme
+    nüshaları ilgililere teslim edilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Sözleşmenin
+    süresi</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 11 – </b>(1)
+    Müdürlükte imzalanan sözleşmenin bu Tebliğin 8 inci maddesi çerçevesinde
+    gerçekleştirilen onay tarihinden itibaren üç ay içinde tescili için
+    başvuruda bulunulmaması halinde, sözleşmede imzası bulunanların şirket
+    kurma iradelerinin devam ettiğine dair beyanda bulunmaları gerekir. İrade
+    beyanı oluşturulurken, bu Tebliğin 6 ncı, 7 nci ve 8 inci maddesi hükümleri
+    uygulanır. Kurucuların bu beyanı, sözleşme nüshalarının arkasına eklenir.</p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>ÜÇÜNCÜ
+    BÖLÜM</b></p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>İmza (Değişik
+    ibare:RG-20/2/2021-31401) <u>Beyanı ve Beyannamesi</u></b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Genel olarak</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 12 – (Değişik:RG-20/2/2021-31401)
+    </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(1) Gerçek kişi
+    tacir ile tüzel kişi tacir adına imzaya yetkili olanların imzaları,
+    bunların ticaret siciline tescili sırasında kamu kurum ve kuruluşlarının
+    veri tabanlarında tutulan imza verilerinden elektronik ortamda temin
+    edilerek MERSİS’e kaydedilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) Kamu kurum ve
+    kuruluşlarınca veri tabanlarında tutulan imza verilerinin elektronik
+    ortamda temini Bakanlık ile ilgili kurum veya kuruluş arasında yapılacak
+    protokolle sağlanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(3) İlgili veri
+    tabanında imza kaydının bulunmaması veya kaydın temin edilememesi halinde,
+    ilgililerin imzaları, fiziki olarak notere onaylattırılmak veya herhangi
+    bir müdürlükte yetkilendirilmiş personel huzurunda yazılı beyanda bulunmak
+    suretiyle müdürlüğe verilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(4) Yabancı ülkede
+    bulunan imzaya yetkili kimselerin imza beyanı, bunların imzalarının o
+    ülkedeki Türk konsolosluğu ya da o ülke mevzuatı uyarınca yetkili
+    makamlarca onaylanması suretiyle düzenlenebilir. Yabancı ülke makamlarınca
+    düzenlenen imza beyanlarının, Türk konsolosluğundan veya Yabancı Resmi
+    Belgelerin Tasdiki Mecburiyetinin Kaldırılması Sözleşmesi hükümlerine göre
+    onaylatılması ve noter onaylı Türkçe çevirisi ile birlikte müdürlüğe
+    verilmesi zorunludur.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(5) Limited
+    şirketlerin kuruluşunun tescilinde imza kaydının elektronik ortamda temin
+    edilemediği hallerde, fiziki imza beyannamesi yalnızca müdürlükte
+    düzenlenir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Müdürlükte imza
+    beyannamesi düzenlenmesi</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 13 –</b>&nbsp;<b>(Başlığı
+    ile Birlikte Değişik:RG-20/2/2021-31401) </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(1) 12 nci
+    maddenin üçüncü ve dördüncü fıkraları uyarınca fiziki imza beyannamesi
+    düzenlenmesi amacıyla ilgililerce herhangi bir müdürlüğe başvurulabilir.
+    Müdürlükte fiziki olarak imza beyannamesi düzenlenebilmesi için tescil
+    başvurusu MERSİS üzerinden onaya gönderilerek talep numarası alınır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2)
+    Yetkilendirilmiş personel, imzasını beyan edecek şahsın kimlik bilgilerini
+    6 ncı ve 7 nci maddeler çerçevesinde doğrular ve oluşturduğu imza beyan
+    formunu ilgiliye imzalatır. Form, mühür basılmak ve imzalanmak suretiyle
+    yetkilendirilmiş personel tarafından onaylanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(3) Başvurunun
+    tescil işleminin yapılacağı müdürlük dışında bir müdürlüğe yapılması
+    halinde beyanname iki nüsha olarak düzenlenir. Beyannameyi düzenleyen
+    müdürlük, beyannamenin bir nüshasını fiziki ve bir örneğini de elektronik
+    ortamda ilgili müdürlüğe gönderir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(4) Başka bir
+    müdürlükte düzenlenen imza beyannamesinin elektronik ortamda tescili
+    yapacak müdürlüğe iletilmesi üzerine fiziki nüshanın müdürlüğe ulaşması
+    beklenmeksizin şirketin kuruluş veya işletmenin açılışı ile imzaya yetkili
+    olanların tescili yapılır. Beyannamenin fiziki sureti de tescili yapan
+    müdürlüğe ulaşmasının ardından sicil dosyasına konulur.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(5) 5 inci
+    maddenin ilgili hükümleri imza beyannamesinin düzenlenmesinde de kıyasen
+    uygulanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>İmza
+    beyannamesi verilmesine gerek olmayan durumlar</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 13/A –</b>
+    <b>(Ek:RG-13/3/2018-30359)</b> <b>(Değişik:RG-20/2/2021-31401) </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(1) Gerçek kişi
+    tacir, ticari temsilci ile tüzel kişi tacir adına imzaya yetkili olanların
+    aynı ticari işletme veya şirketin sicil dosyasında daha önce temin edilen
+    imza verisinin veya imza beyannamesinin bulunması halinde ayrıca imza
+    beyannamesi verilmez.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) Kurucunun,
+    şirket sözleşmesini müdür veya müdür yardımcısı yahut yetkilendirilmiş
+    personel huzurunda asaleten imzalaması ve aynı zamanda şirketi temsile
+    yetkili olması durumunda ayrıca imza beyannamesi verilmez.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(3) Şirket
+    sözleşmesinin müdür veya müdür yardımcısı yahut yetkilendirilmiş personel
+    huzurunda vekâleten imzalanması ve kurucunun aynı zamanda şirketi temsile
+    yetkili olması durumunda, kurucunun ıslak imzasını ihtiva eden
+    vekâletnamenin müdürlüğe verilerek sicil dosyasına konulması koşuluyla
+    ayrıca imza beyannamesi verilmez. Vekâletnamenin yabancı bir ülkede
+    düzenlenmesi halinde, Türk konsolosluğundan veya Yabancı Resmi Belgelerin
+    Tasdiki Mecburiyetinin Kaldırılması Sözleşmesi hükümlerine göre tasdik
+    ettirilmesi ve noter onaylı Türkçe çevirisi ile birlikte müdürlüğe
+    verilmesi durumunda aynı hüküm uygulanır.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(4) Bir kişinin
+    bir ticaret şirketiyle birlikte şubesine yahut aynı ticaret şirketinin
+    birden fazla şubesine imzaya yetkili olarak atanması durumunda; ticaret
+    şirketi veya şubeleri aynı sicil çevresi içerisinde olmak kaydıyla ayrıca
+    imza beyannamesi verilmez. Bu durumda daha önce verilen imza beyannamesinin
+    bir örneği müdürlükçe şahsın sonradan yetkili olarak atandığı şubenin
+    dosyasına konulur.</p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>DÖRDÜNCÜ
+    BÖLÜM</b></p>
+    <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+    .0001pt;text-align:center;text-indent:1.0cm;line-height:normal'><b>Çeşitli
+    ve Son Hükümler</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Görevlendirme </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 14 – </b>(1)
+    <b>(Değişik:RG-13/3/2018-30359)</b> Sicil müdürü, bu Tebliğde düzenlenen
+    işlemlerin yerine getirilmesi için yeterli sayıda personel görevlendirir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) Müdür,
+    sözleşmelerin imzalanması ve imza beyannamelerinin oluşturulması
+    işlemlerinin müdürlükte hızlı, eksiksiz ve doğru bir biçimde yerine
+    getirilmesi için gerekli tedbirleri alır. Bu Tebliğ kapsamındaki işlemlerin
+    yerine getirilmesi için gerekli fiziki koşullar ile donanım, müdürlüğün
+    kurulu bulunduğu Oda tarafından temin edilir. Gerekli görülmesi halinde
+    müdür tarafından, bu Tebliğ kapsamındaki işlerin yürütülmesi için müdürlük
+    içinde ayrı bir yer oluşturulur.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Belgelerin
+    saklanması</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 15 –
+    (Başlığı ile Birlikte Değişik:RG-17/4/2018-30394) </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(1) <b>(Değişik:RG-20/2/2021-31401)</b>
+    Elektronik ortamda temin edilen imza verisinin fiziki sureti ile fiziki
+    ortamda düzenlenen imza beyannameleri şirketin ya da işletmenin ticaret
+    sicili dosyasında saklanır. </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(2) İmza
+    beyannamesinin kuruluş başvurusunun yapıldığı Müdürlükten başka bir <b>(Değişik
+    ibare:RG-20/2/2021-31401) </b><u>müdürlükte düzenlenmesi</u> durumunda,
+    ilgili Müdürlükçe beyannamenin bir nüshası bu amaçla oluşturulmuş dosyada
+    muhafaza edilir<b>.</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Ticaret sicili
+    hizmet bedeli</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 16 – </b>(1)
+    Bu Tebliğin, </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>a) 8 inci maddesi
+    ile düzenlenen sözleşmenin imzalanması,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>b) 9 uncu maddesi
+    ile düzenlenen düzeltme beyanı,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>c) 11 inci maddesi
+    ile düzenlenen irade beyanı,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>ç) 13 üncü maddesi
+    ile düzenlenen imza beyannamesi, </p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>d) Sözleşmenin
+    tescili,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>e) <b>(Ek:RG-13/3/2018-30359)</b>
+    Defter tasdiki,</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>işlemlerinden
+    alınacak hizmet bedeli asgari ücretin <b>(Değişik ibare:RG-13/3/2018-30359)</b>
+    <u>yüzde onbeşinden</u> fazla olamaz. Bu maddenin (a), (b), (c), <b>(Değişik
+    ibare:RG-13/3/2018-30359)</b> <u>(ç), (d) ve (e)</u> bentlerinde yer alan
+    işlemlerin birlikte veya ayrı ayrı yapılmasına bakılmaksızın bu hizmetler
+    için tek hizmet bedeli tahsil edilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Geçiş hükmü</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>GEÇİCİ MADDE 1
+    –</b>&nbsp;<b>(Ek:RG-20/2/2021-31401) </b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'>(1) 12 nci
+    maddenin üçüncü fıkrası uyarınca kamu kurum ve kuruluşlarınca veri
+    tabalarında tutulan imza verilerinin Bakanlıkça elektronik ortamda temini
+    sağlanıncaya kadar müdürlüğe bu Tebliğin hükümleri çerçevesinde fiziki imza
+    beyannamesi verilir.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Yürürlük</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 17 – </b>(1)
+    Bu Tebliğ yayımı tarihinde yürürlüğe girer.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>Yürütme</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>MADDE 18 – </b>(1)
+    Bu Tebliğ hükümlerini<b> (Mülga ibare:RG-20/2/2021-31401)</b> Ticaret
+    Bakanı yürütür.</p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>&nbsp;</b></p>
+    <div align=center>
+    <table class=MsoNormalTable border=1 cellspacing=0 cellpadding=0 style='border-collapse:collapse;border:none'>
+     <tr>
+      <td width=43 rowspan=5 valign=top style='width:23.4pt;border:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+      line-height:normal'>&nbsp;</p>
+      </td>
+      <td width=480 colspan=2 style='width:360.0pt;border:solid windowtext 1.0pt;
+      border-left:none;padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'><b>Tebliğin Yayımlandığı
+      Resmî Gazete’nin</b></p>
+      </td>
+     </tr>
+     <tr>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'><b>Tarihi</b></p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'><b>Sayısı</b></p>
+      </td>
+     </tr>
+     <tr>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>6/12/2016</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>29910</p>
+      </td>
+     </tr>
+     <tr>
+      <td width=480 colspan=2 style='width:360.0pt;border-top:none;border-left:
+      none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'><b>Tebliğde Değişiklik Yapan
+      Tebliğlerin Yayımlandığı Resmî Gazetelerin</b></p>
+      </td>
+     </tr>
+     <tr>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'><b>Tarihi</b></p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'><b>Sayısı</b></p>
+      </td>
+     </tr>
+     <tr>
+      <td width=43 valign=top style='width:23.4pt;border:solid windowtext 1.0pt;
+      border-top:none;padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:
+      0cm;margin-left:19.85pt;margin-bottom:.0001pt;text-indent:-17.0pt;
+      line-height:normal'>1.<span style='font-size:7.0pt;font-family:"Times New Roman",serif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </span>&nbsp;</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>13/3/2018</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>30359</p>
+      </td>
+     </tr>
+     <tr>
+      <td width=43 valign=top style='width:23.4pt;border:solid windowtext 1.0pt;
+      border-top:none;padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:
+      0cm;margin-left:19.85pt;margin-bottom:.0001pt;text-indent:-17.0pt;
+      line-height:normal'>2.<span style='font-size:7.0pt;font-family:"Times New Roman",serif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </span>&nbsp;</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>17/4/2018</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>30394</p>
+      </td>
+     </tr>
+     <tr>
+      <td width=43 valign=top style='width:23.4pt;border:solid windowtext 1.0pt;
+      border-top:none;padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:
+      0cm;margin-left:19.85pt;margin-bottom:.0001pt;text-indent:-17.0pt;
+      line-height:normal'>3.<span style='font-size:7.0pt;font-family:"Times New Roman",serif'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </span>&nbsp;</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>22/7/2020</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>31193</p>
+      </td>
+     </tr>
+     <tr>
+      <td width=43 valign=top style='width:23.4pt;border:solid windowtext 1.0pt;
+      border-top:none;padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:
+      0cm;margin-left:19.85pt;margin-bottom:.0001pt;text-indent:-17.0pt;
+      line-height:normal'>4.</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>20/2/2021</p>
+      </td>
+      <td width=240 style='width:180.0pt;border-top:none;border-left:none;
+      border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+      padding:0cm 5.4pt 0cm 5.4pt'>
+      <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:
+      .0001pt;text-align:center;line-height:normal'>31401</p>
+      </td>
+     </tr>
+    </table>
     </div>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>&nbsp;</b></p>
+    <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;
+    text-align:justify;text-indent:1.0cm;line-height:normal'><b>&nbsp;</b></p>
+    </td>
+   </tr>
+  </table>
+  </div>
+  </td>
+ </tr>
+</table>
 
-    
-
-
-<div class="container-fluid ortaalan">
-    <div class="container h-100">
-        <div class="row align-items-center h-100">
-            <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 mx-auto">
-                <div class="text-center text-white mt-3">
-                    <div>
-                        <img src="/img/mevzuat_mobil_logo.png" style="height:45px; opacity:.8" />
-                    </div>
-                    <a href="/" class="ortaLink">
-                        <div class="row">
-                            <div class="col-12 mt-3">
-                                <h3 class="pb-2">MEVZUAT BİLGİ SİSTEMİ</h3>
-                            </div>
-                        </div>
-                    </a>
-                    <form id="aramaForm" class="form-inline justify-content-center mt-2 mb-3" method="post" action="/aramasonuc">
-                        <input style="font-weight:400" type="search" id="aramaButonu" autocomplete="off" class="form-control-sm pl-4 " name="AranacakMetin" placeholder="Aranacak ifade/sayıyı yazınız..." value="">
-                        <span title="Arama butonu" id="aramaButonuIkon" class="fa fa-search form-control-feedback aramaButonuIkon" tabindex="0"></span>
-                    <input name="antiforgerytoken" type="hidden" value="CfDJ8ASRPoFJ9zdNuHK-TimMUjqEaxCi-CU2UH74Qhg8Q8toaS2fTlslucQ8wE1_tHhDTSkDXoaUiUuObFCQe3i5JE75NXXbODMJJ7l7T8qxiET3iQ1wgBlaob9Jg0d9JtAO9WpIZggWFupoHx-DrOfJ2R0" /></form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-    
-
-<div class="modal fade" asp-formhelper="true" id="ChangePasswordFormModal" role="dialog" aria-labelledby="ChangePasswordFormModalTitle" aria-hidden="true">
-    <form id="ChangePasswordForm">
-        <div class="modal-dialog" role="document" style="max-width:400px;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span class="modal-title text-center font-weight-bold">Şifre Değiştirme</span>
-                    <button type="button" title="Formu Kapat" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="form-group col mb-4">
-                            <input autocomplete="off" id="oldPassword" type="password" name="OldPassword" class="form-control form-control-sm" placeholder="Eski şifre" data-val="true" data-val-length="&#x15E;ifreniz en az 6 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="6" data-val-required="The Eski &#x15E;ifre field is required." maxlength="60">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="OldPassword" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group col mb-4">
-                            <input autocomplete="off" id="password" type="password" class="form-control form-control-sm" placeholder="Yeni şifre" data-val="true" data-val-length="&#x15E;ifreniz en az 6 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="6" data-val-required="The Yeni &#x15E;ifre field is required." maxlength="60" name="Password">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col mb-4">
-                            <input autocomplete="off" id="newPassword" type="password" class="form-control form-control-sm" placeholder="Yeni şifre tekrar" data-val="true" data-val-length="&#x15E;ifreniz en az 6 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="6" data-val-required="The Yeni &#x15E;ifre Tekrar field is required." maxlength="60" name="NewPassword">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="NewPassword" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer " style="position:relative;margin:auto">
-                    <button type="button" onclick="sendDataPassword()" class="btn btn-primary center-block">Güncelle</button>
-                </div>
-            </div>
-        </div>
-    </form>
 </div>
 
-<render-script></render-script>
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;text-align:
+justify;text-indent:1.0cm;line-height:normal'>&nbsp;</p>
 
+<p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;text-align:
+justify;text-indent:1.0cm;line-height:normal'>&nbsp;</p>
 
-    <div id="myInformationsTable" style="display:block">
-        
-<div class="modal" asp-formhelper="true" id="MyInformationsFormModal" role="dialog" aria-labelledby="MyInformationsFormModalTitle">
-    <form id="MyInformationsForm">
-        <div class="modal-dialog" role="document" style="max-width:400px;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span class="modal-title font-weight-bold">Üyelik Bilgileri</span>
-                    <button type="button" title="Formu Kapat" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="form-group col mb-4">
-                            <label class="col-form-label col-form-label-sm" for="Name">Ad&#x131;n&#x131;z</label>
-                            <input id="name" type="text" class="form-control form-control-sm" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="3" maxlength="60" name="Name" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group col mb-4">
-                            <label class="col-form-label col-form-label-sm" for="Surname">Soyad&#x131;n&#x131;z</label>
-                            <input id="surname" type="text" class="form-control form-control-sm" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="3" maxlength="60" name="Surname" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Surname" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col mb-4">
-                            <label class="col-form-label col-form-label-sm" for="Job">Mesle&#x11F;iniz</label>
-                            <input id="job" type="text" class="form-control form-control-sm" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="3" maxlength="60" name="Job" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Job" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer " style="position:relative;margin:auto">
-                    <button type="button" onclick="sendData()" class="btn btn-primary center-block">Güncelle</button>
-                </div>
-            </div>
-        </div>
-    </form>
 </div>
-
-<render-script></render-script>
-
-
-
-    </div>
-
-    
-<div class="container-fluid icerik">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="tab-content" id="tabContent">
-
-                                <div class="tab-pane fade show active" id="mevzuatDetay">
-                                    
-<div>
-    <div>
-        <div class="card mt-4 border-0">
-            <div class="card-body pl-0 pr-0">
-                <div class="ml-3 mr-3">
-                    <div class="row">
-                        <div class="col-10">
-                            <a onclick="printDocuments('mevzuatDetayIframe')" title="Word dökümanını yazdır" class="pb-2 cursorPointer" target="_blank" id="printDoc"> <img aria-hidden="true" src="/img/yazdir.png" height="30" /></a>
-                                <a style="outline:0px" href="https://www.mevzuat.gov.tr/MevzuatMetin/yonetmelik/9.5.23093.doc" target="_blank"> <img title="Word Dosyasını İndir" src="/img/iconWord.png" height="30" /></a>
-                                <a style="outline:0px" href="https://www.mevzuat.gov.tr/File/GeneratePdf?mevzuatNo=23093&amp;mevzuatTur=Teblig&amp;mevzuatTertip=5" target="_blank"> <img title="PDF Dosyasını Görüntüle" src="/img/iconPdf.png" height="30" /></a>
-
-                            <a id="fontSizeReduction">
-                                <img aria-hidden="true" src="/img/minus.png" height="20" />
-                            </a>
-                            <a id="fontSizeIncrease">
-                                <img aria-hidden="true" src="/img/plus.png" height="25" />
-                            </a>
-                        </div>
-                        <div class="col-2 d-flex justify-content-end align-items-center">
-                            <a href="/Anasayfa" class="closeSearchForm btn btn-info" aria-label="Anasayfaya Geri Dön">Anasayfa</a>
-                        </div>
-                    </div>
-
-                    <hr class="hrCustom" />
-                </div>
-                <div>
-                    <div>
-                        <div class="font-italic small ml-3 mr-3">
-                            Resmî Gazete Tarihi: 06.12.2016 Resmî Gazete Sayısı: 29910
-                        </div>
-                        <div class="ml-3 mr-3" id="temp">
-                                    <iframe onload="resizeIframe(this)" title="Mevzuat Detayı" src="/anasayfa/MevzuatFihristDetayIframe?MevzuatTur=9&amp;MevzuatNo=23093&amp;MevzuatTertip=5" name="mevzuatFrame" id="mevzuatDetayIframe" scrolling="no" style="width:100%;" frameborder="0" data-tur="2"></iframe>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<render-script></render-script>
-                                </div>
-
-                        </div>
-                    </div>
-
-                    <div class="col-2 d-none" id="kanunlarFihristiAciklamaDiv"></div>
-                    <div class="col-8 d-none" id="kanunlarFihristiAciklama">
-                        <div class="small text-justify ">
-                            * <i>Kanunlar Fihristinde</i> yapılan aramada çıkan Kanunun Resmî Gazete tarihi veya sayısına tıklandığında yayımlandığı günün Resmî Gazetesine gider.  Kanunun tüm değişikliklerinin işlendiği güncel metne ulaşılmak istenirse, <i>Mevzuat Türü</i> bölümünün altındaki <i>Kanunlar</i> butonundan arama yapılması gerekmektedir.
-                        </div>
-                    </div>
-                    <div class="col-2 d-none" id="kanunlarFihristiAciklamaDiv2"></div>
-                    <div class="col-12" >
-                        <div class="card bg-light mt-4 border-0">
-                            <div id="searchTable" class="card-body d-none searchTable" >
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-2 d-none" id="kanunlarFihristiAciklamaDiv"></div>
-                    <div class="col-8 d-none" id="kanunlarFihristiAciklama">
-                        <div class="small text-justify">
-                            * <i>Kanunlar Fihristinde</i> yapılan aramada çıkan Kanunun Resmî Gazete tarihi veya sayısına tıklandığında yayımlandığı günün Resmî Gazetesine gider.  Kanunun tüm değişikliklerinin işlendiği güncel metne ulaşılmak istenirse, <i>Mevzuat Türü</i> bölümünün altındaki <i>Kanunlar</i> butonundan arama yapılması gerekmektedir.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<render-script></render-script>
-
-
-
-    <div class="modal fade" asp-formhelper="true" id="mevzuatDipnotModal" role="dialog" aria-labelledby="mevzuatDipnotModalTitle">
-        <div class="modal-dialog" role="document" style="padding-left:17px;" id="mevzuatDipnotModalWrapper">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span class="modal-title font-weight-bold"></span>
-                    <button type="button" title="Formu Kapat" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="form-group col" id="mevzuatDipnotContainer" style="text-align:justify;">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer" style="position:relative;margin:auto">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">Kapat</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <footer class="container-fluid">
-        <div class="container py-4">
-            <div class="row">
-                <div class="col-12">
-                    <div class="row">
-                        <div class="col-12 col-sm-4 col-xl-4 text-center text-xl-left">
-                            <ul class="list-group list-group-transparent text-center text-md-left">
-                                <li class="list-group-item p-1">
-                                    <a href="/hakkimizda" target="_blank" title="Hakkımızda Sayfası">
-                                        Hakkımızda
-                                    </a>
-                                </li>
-                                <li class="list-group-item p-1">
-                                    <a href="/Yardim" target="_blank" title="Yardım Sayfası">
-                                        <i class="far fa-question-circle mr-1"></i>Yardım
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-12 col-sm-4 col-xl-4 text-center">
-                            <div>
-                                <div class="d-inline-block">
-                                    <a href="https://apps.apple.com/tr/app/t-c-mevzuat-bilgi-sistemi/id1462051828" target="_blank" title="Mevzuat Mobil uygulamasını Apple App Store'dan indirin."><i class="fab fa-apple fa-3x"></i></a>
-                                </div><div class="d-inline-block ml-3">
-                                    <a href="https://play.google.com/store/apps/details?id=tr.gov.tccb.mevzuat" target="_blank" title="Mevzuat Mobil uygulamasını Google Play'den indirin."><i class="fab fa-android fa-3x"></i></a>
-                                </div>
-
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-4 col-xl-4 text-center text-xl-right">
-                            <ul class="list-group list-group-transparent text-center text-md-right">
-                                <li class="list-group-item p-1">
-                                    <a href="http://www.resmigazete.gov.tr/" target="_blank">Resmî Gazete</a>
-                                </li>
-                                <li class="list-group-item p-1">
-                                    <a href="/faydalilinkler">
-                                        Faydalı Linkler
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12"><hr></div>
-                <div class="col-12">
-                    <div class="row">
-                        <div class="col-12 col-xl-5 text-center text-xl-left">
-                            T.C. Cumhurbaşkanlığı Külliyesi<br>Hukuk ve Mevzuat Genel Müdürlüğü 06560 Beştepe / Ankara
-                        </div>
-                        <div class="col-12 col-xl-7 text-center text-xl-right">
-                            <ul class="list-inline mb-0 mt-3 mt-xl-0">
-                                <li class="list-inline-item"><a id="contactButton" href="#" data-toggle="modal" data-target="#ContactFormModal"><i class="fas fa-envelope ml-2"></i> Bize Ulaşın</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12"><hr></div>
-                <div class="col-12">
-                    <div class="row small">
-                        <div class="col-sm-12 col-md-12 col-lg-5">
-                            <img id="imgFooter" src="/img/logoFooter.png" alt="Türkiye Cumhuriyeti Cumhurbaşkanlığı">
-                            <a href="https://www.tccb.gov.tr/" target="_blank" title="T.C. Cumhurbaşkanlığı Genel Sekreterliği Hukuk ve Mevzuat Genel Müdürlüğü"><span aria-hidden="true" class="ml-1">T.C. Cumhurbaşkanlığı Genel Sekreterliği Hukuk ve Mevzuat Genel Müdürlüğü</span></a>
-                        </div>
-                        <div class="col-sm-12 col-md-12 col-lg-7 text-center text-lg-right">
-                            <i class="far fa-copyright mr-2"></i>2020 Tüm Hakları Saklıdır. Gizlilik,
-                            Kullanım ve Telif Hakları bildiriminde belirtilen kurallar çerçevesinde hizmet
-                            sunulmaktadır.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-    <div id="loaderContainer" style="display: none;">
-        <div id="loader"></div>
-    </div>
-
-
-    
-    
-        <script src="/js/bundle.min.js?v=9SrF85DFK52EX0a_3gH7oMgJcZmXdWWmZvnPrHvGMYc"></script>
-    
-    <script src="/js/blockui.min.js"></script>
-    <script src="/js/Mevzuat.js?v=1.2"></script>
-
-
-    <render-script render="true">
-        <link href="/css/printDocumentsStyle.css" rel="stylesheet" />
-        <script type="text/javascript">
-            function resizeIframe(obj) {
-                var iframeHeight = getDocHeight(obj.contentWindow.document);
-
-                var totalHeight = iframeHeight;
-                obj.style.minHeight = iframeHeight + 'px';
-            }
-            function getDocHeight(D) {
-                return Math.max(
-                    Math.max(D.body.scrollHeight, D.documentElement.scrollHeight),
-                    Math.max(D.body.offsetHeight, D.documentElement.offsetHeight),
-                    Math.max(D.body.clientHeight, D.documentElement.clientHeight)
-                );
-            }
-
-            $(document).ready(function () {
-
-
-                var focusableElementsString = "a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]),  iframe, object, embed, *[tabindex], *[contenteditable]";
-                var activeEl = jQuery('#mevzuatDetay');
-                var allElInActiveEl = activeEl.find('*');
-                allElInActiveEl.filter(focusableElementsString).filter(':visible').first().focus();
-
-                $("#mevzuatDetay iframe").width($("#temp").width());
-                $(window).on('resize', function () {
-                    $("#mevzuatDetay iframe").width($("#temp").width());
-
-                    var iframe = document.getElementById('mevzuatDetayIframe');
-                    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-                    var eTop = $(innerDoc).find('#page-end').offset().top;
-                    $("#mevzuatDetayIframe").css("height", eTop + "px");
-                });
-            });
-            function clickI(id) {
-                Mevzuat.ChangeFavorites(id);
-            }
-            window.showLoader();
-        </script>
-
-    <script>
-        $(document).ready(function () {
-            $("#searchTable").on("click", "tbody tr i", function () {
-                var rowID = $(this)[0].id;
-                Mevzuat.ChangeFavorites(rowID);
-            });
-        });
-
-    </script>
-
-    <script>
-        function sendDataPassword() {
-            var formData = { OldPassword: $('#oldPassword').val(), Password: $('#password').val(), NewPassword: $('#newPassword').val() };
-            Mevzuat.Ajax("/User/ChangePassword", { data: formData }, function (e) {
-                if (e.IsSucceed) {//başarılı
-
-                    window.location.href = "/Anasayfa";
-                }
-                else {
-                    document.getElementById("oldPassword").value = "";
-                    document.getElementById("password").value = "";
-                    document.getElementById("newPassword").value = "";
-                }
-            });
-        }
-
-    </script>
-
-    <script>
-        function sendData() {
-            var postData = { Name: $('#name').val(), Surname: $('#surname').val(), Job: $('#job').val() };
-            Mevzuat.Ajax("User/UpdateUser", { data: postData }, function (e) {
-                $("#MyInformationsFormModal").modal("hide");
-                setTimeout(function () {
-                    location.href = '/Anasayfa';
-                }, 1000);
-            });
-        }
-    </script>
-</render-script>
-
-    
-
-<div class="modal fade" id="ContactFormModal" role="dialog" aria-labelledby="ContactFormModalTitle" aria-hidden="true">
-    <form id="contactForm">
-
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span class="modal-title font-weight-bold">Bize Ulaşın</span>
-                    <button type="button" title="Formu Kapat" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="form-group col-12 col-md-6">
-                            <label class="col-form-label col-form-label-sm" for="FirstName">Ad&#x131;n&#x131;z</label>
-                            <input type="text" class="form-control form-control-sm" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="3" id="FirstName" maxlength="60" name="FirstName" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="FirstName" data-valmsg-replace="true"></span>
-
-                        </div>
-                        <div class="form-group col-12 col-md-6">
-                            <label class="col-form-label col-form-label-sm" for="LastName">Soyad&#x131;n&#x131;z</label>
-                            <input type="text" class="form-control form-control-sm" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="2" id="LastName" maxlength="60" name="LastName" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="LastName" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-12 col-md-6">
-                            <label class="col-form-label col-form-label-sm" for="Email">E-Posta Adresiniz</label>
-                            <input type="text" class="form-control form-control-sm" data-val="true" data-val-regex="Ge&#xE7;erli bir E-posta adresi giriniz" data-val-regex-pattern="^([\w\.\-]&#x2B;)@([\w\-]&#x2B;)((\.(\w){2,3})&#x2B;)$" id="Email" name="Email" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Email" data-valmsg-replace="true"></span>
-                        </div>
-                        <div class="form-group col-12 col-md-6">
-                            <label class="col-form-label col-form-label-sm" for="Profession">Mesle&#x11F;iniz</label>
-                            <input type="text" class="form-control form-control-sm" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="3" id="Profession" maxlength="60" name="Profession" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Profession" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-8">
-                            <label class="col-form-label col-form-label-sm" for="ContactSubjectType">Konu</label>
-                            <select class="form-control form-control-sm" data-val="true" data-val-required="The Konu field is required." id="ContactSubjectType" name="ContactSubjectType">
-                                <option value="">Seçiniz</option>
-                            <option value="1">Mevzuat Hakk&#x131;nda</option>
-<option value="3">&#x130;nternet Sitesi Hakk&#x131;nda</option>
-<option value="4">Di&#x11F;er</option>
-</select>
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="ContactSubjectType" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-12">
-                            <label class="col-form-label col-form-label-sm" for="Message">Mesaj</label>
-                            <textarea class="form-control form-control-sm" rows="5" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="2000" data-val-length-min="10" id="Message" maxlength="2000" name="Message">
-</textarea>
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Message" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="g-recaptcha float-right" data-sitekey="6LfB6rQUAAAAAPkzXxHpLY8I4CFQHod0yJIg_hkl" data-callback="captchaCallBackCon"></div>
-                            <span data-valmsg-for="g-recaptcha-response" class="form-text m-b-none text-danger" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer d-block">
-                    <button type="button" class="btn btn-outline-secondary float-right" onclick="saveContactForm()">Gönder</button>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<script>
-    var captchaKeyyy = "";
-    var captchaCallBackCon = function (e) {
-        captchaKeyyy = e;
-    }
-
-    function saveContactForm() {
-        var captchaKey = captchaKeyyy;
-        Mevzuat.Ajax("/Anasayfa/SaveContactForm", {
-            form: "#contactForm", data: { GoogleReCaptchaResponse: captchaKey }
-        }, function (e) {
-            if (e.Status == 1) {//başarılı
-                $("#ContactFormModal").modal("hide");
-                captchaKeyy = "";
-            }
-        });
-    }
-</script>
-
-
-    
-
-
-<div class="modal fade" asp-formhelper="true" id="UserLoginFormModal" role="dialog" aria-labelledby="UserLoginFormModalTitle" aria-hidden="true">
-    <form id="UserLoginForm" method="post">
-        <div class="modal-dialog" role="document" style="max-width:400px;">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <button type="button" title="Formu Kapat" class="close" data-dismiss="modal">&times;</button>
-                    <div class="text-center mt-2 mb-3">
-                        <img src="/img/login_header.png" alt="" />
-                    </div>
-                    <div class="row">
-                        <div class="form-group col mb-2">
-                            <input id="Username" type="text" class="form-control" name="Username" placeholder="E-posta adresiniz" style="font-size:14px;" data-val="true" data-val-regex="Ge&#xE7;erli bir E-posta adresi giriniz" data-val-regex-pattern="^([\w\.\-]&#x2B;)@([\w\-]&#x2B;)((\.(\w){2,3})&#x2B;)$" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Username" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group col mb-2">
-                            <input autocomplete="off" id="Password" type="password" name="Password" class="form-control" placeholder="Şifreniz" style="font-size:14px;" data-val="true" data-val-length="&#x15E;ifreniz en az 6 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="6" maxlength="60">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group col mb-2">
-                            <button id="loginButton" type="button" onclick="loginForm()" class="btn btn-info btn-block center-block">Giriş</button>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group col-6">
-                            <a id="newUser" data-toggle="modal" data-target="#UserFormModal" class="d-inline-block" style="cursor:pointer;" tabindex="0" onkeypress="clickElement(event)">
-                                <div class="media small font-weight-bold text-secondary">
-                                    <i class="fa fa-user-plus mr-1" style="margin-top:3px;"></i> Yeni Üyelik
-                                </div>
-                            </a>
-                        </div>
-                        <div class="form-group  col-6 text-right">
-                            <a id="forgotPassword" data-toggle="modal" data-target="#ForgotPasswordFormModal" class="d-inline-block" style="cursor:pointer;" tabindex="0" onkeypress="clickElement(event)">
-                                <div class="media small font-weight-bold text-secondary">
-                                    <i class="fa fa-lock mr-1" style="margin-top:3px;"></i> Şifremi Unuttum
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <input name="antiforgerytoken" type="hidden" value="CfDJ8ASRPoFJ9zdNuHK-TimMUjqEaxCi-CU2UH74Qhg8Q8toaS2fTlslucQ8wE1_tHhDTSkDXoaUiUuObFCQe3i5JE75NXXbODMJJ7l7T8qxiET3iQ1wgBlaob9Jg0d9JtAO9WpIZggWFupoHx-DrOfJ2R0" /></form>
-</div>
-
-
-
-
-<!-- Recaptcha -->
-
-<script>
-    var UserLoginFormCallback = function (response) {
-
-    }
-    var input = document.getElementById("Password");
-    input.addEventListener("keyup", function (event) {
-        if (event.keyCode === 13) {
-            event.preventDefault();
-            loginForm();
-        }
-    });
-
-
-    $("#newUser").click(function () {
-        $("#UserLoginFormModal").modal("hide");
-    });
-    $("#forgotPassword").click(function () {
-        $("#UserLoginFormModal").modal("hide");
-    });
-
-    function loginForm() {
-        Mevzuat.Ajax("/Login/SignIn", { alert: false, form: "#UserLoginForm" }, function (e) {
-            if (e.Status == 1) {//başarılı
-                localStorage.setItem("token", e.Data.access_token);
-                $("#UserLoginFormModal").modal("hide");
-                this.Mevzuat.SetUser();
-                if (window.location.hash === "#anayasa") {
-                    setTimeout(function () {
-                        window.location.reload();
-                    }, 1000);
-                }
-            }
-            else {
-                document.getElementById("Username").value = "";
-                document.getElementById("Password").value = "";
-            }
-        });
-    }
-
-</script>
-
-
-    
-
-<!-- Recaptcha -->
-
-
-<div class="modal fade" asp-formhelper="true" id="UserFormModal" role="dialog" aria-labelledby="UserFormModalTitle" aria-hidden="true">
-    <form id="UserForm">
-        <div class="modal-dialog" role="document" style="max-width:400px;">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div>
-                        <span class="modal-title font-weight-bold"><i class="fas fa-user-plus mr-1" style="margin-top:3px;"></i> Yeni Üyelik</span>
-                        <button type="button" title="Formu Kapat" class="close" data-dismiss="modal">×</button>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="form-group col-12 mb-1">
-                            <input type="text" class="form-control" placeholder="Adınız" style="font-size:14px;" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="3" id="Name" maxlength="60" name="Name" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"></span>
-
-                        </div>
-                        <div class="form-group col-12 mb-1">
-                            <input type="text" class="form-control" placeholder="Soyadınız" style="font-size:14px;" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="2" id="Surname" maxlength="60" name="Surname" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Surname" data-valmsg-replace="true"></span>
-                        </div>
-                        <div class="form-group col-12 mb-1">
-                            <input type="text" class="form-control" placeholder="Mesleğiniz" style="font-size:14px;" data-val="true" data-val-length="Bu alan&#x131; doldurman&#x131;z gerekmektedir." data-val-length-max="60" data-val-length-min="3" id="Job" maxlength="60" name="Job" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Job" data-valmsg-replace="true"></span>
-                        </div>
-                        <div class="form-group col-12 mb-1">
-                            <input type="text" class="form-control" placeholder="E-posta adresiniz" style="font-size:14px;" data-val="true" data-val-regex="Ge&#xE7;erli bir E-posta adresi giriniz" data-val-regex-pattern="^([\w\.\-]&#x2B;)@([\w\-]&#x2B;)((\.(\w){2,3})&#x2B;)$" id="Username" name="Username" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Username" data-valmsg-replace="true"></span>
-                        </div>
-                        <div class="form-group col-12 mb-1">
-                            <input autocomplete="off" type="password" class="form-control" placeholder="Şifre" style="font-size:14px;" data-val="true" data-val-length="&#x15E;ifreniz en az 8 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="8" data-val-regex="&#x15E;ifrenizde en az bir k&#xFC;&#xE7;&#xFC;k harf, bir b&#xFC;y&#xFC;k harf, bir rakam ve bir &#xF6;zel karakter bulunmal&#x131;d&#x131;r." data-val-regex-pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).&#x2B;$" id="Password" maxlength="60" name="Password">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
-                        </div>
-                        <div class="form-group col-12 mb-1">
-                            <input autocomplete="off" type="password" class="form-control" placeholder="Şifre(Tekrar)" style="font-size:14px;" data-val="true" data-val-length="&#x15E;ifreniz en az 8 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="8" data-val-regex="&#x15E;ifrenizde en az bir k&#xFC;&#xE7;&#xFC;k harf, bir b&#xFC;y&#xFC;k harf, bir rakam ve bir &#xF6;zel karakter bulunmal&#x131;d&#x131;r." data-val-regex-pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).&#x2B;$" id="PasswordAgain" maxlength="60" name="PasswordAgain">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="PasswordAgain" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <div class="g-recaptcha float-right" data-sitekey="6LfB6rQUAAAAAPkzXxHpLY8I4CFQHod0yJIg_hkl" data-callback="captchaCallBack"></div>
-                            <span data-valmsg-for="g-recaptcha-response" class="form-text m-b-none text-danger" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="mt-3 text-right">
-                        <button type="button" onclick="saveForm()" class="btn btn-info center-block">Kaydet</button>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="form-group col small text-secondary" style="font-weight: 500;">
-                            Kaydı tamamladığınızda e-posta adresinize aktivasyon için mesaj gönderilecektir. <br />
-                            Aktivasyon işlemi sonrası sisteme giriş yapabilirsiniz.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </form>
-</div>
-
-<script>
-    var captchaKeyy = "";
-    var captchaCallBack = function (e) {
-        captchaKeyy = e;
-    }
-
-   
-
-    function saveForm() {
-        var captchaKey = captchaKeyy;
-        Mevzuat.Ajax("/User/SaveUserForm", {
-            alert: false, form: "#UserForm", data: { GoogleReCaptchaResponse: captchaKey }
-        }, function (e) {
-            if (e.Status == 1) {//başarılı
-                $("#UserFormModal").modal("hide");
-                captchaKeyy = "";
-                setTimeout(function () {
-                    window.location.reload();
-                }, 1500);
-            }
-            else {
-                document.getElementById("Username").value = "";
-                document.getElementById("Password").value = "";
-            }
-        });
-    }
-
-
-</script>
-
-    
-
-<div class="modal fade" id="ForgotPasswordFormModal" role="dialog" aria-labelledby="ForgotPasswordFormModalTitle" aria-hidden="true">
-    <form method="post">
-        <div class="modal-dialog" role="document" style="max-width:400px;">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div>
-                        <span class="modal-title font-weight-bold"><i class="fa fa-lock mr-1" style="margin-top:3px;"></i> Şifremi Unuttum</span>
-                        <button type="button" title="Formu Kapat" class="close" data-dismiss="modal" title="Formu Kapat">×</button>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="form-group col small text-secondary" style="font-weight: 500;">
-                            Şifrenizi sıfırlamak için lütfen sistemde kayıtlı e-posta adresinizi giriniz.
-                        </div>
-                    </div>
-                    <div class="row">
-
-                        <div class="form-group col mb-0">
-                            <input type="text" id="username" class="form-control" placeholder="E-posta adresinizi giriniz" style="font-size:14px;" data-val="true" data-val-length="&#x15E;ifreniz en az 6 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="5" data-val-regex="Ge&#xE7;erli bir E-posta adresi giriniz" data-val-regex-pattern="^([\w\.\-]&#x2B;)@([\w\-]&#x2B;)((\.(\w){2,3})&#x2B;)$" maxlength="60" name="Username" value="">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Username" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="mt-2 text-right">
-                        <button type="button" onclick="sendMail()" class="btn btn-info center-block">Gönder</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <input name="antiforgerytoken" type="hidden" value="CfDJ8ASRPoFJ9zdNuHK-TimMUjqEaxCi-CU2UH74Qhg8Q8toaS2fTlslucQ8wE1_tHhDTSkDXoaUiUuObFCQe3i5JE75NXXbODMJJ7l7T8qxiET3iQ1wgBlaob9Jg0d9JtAO9WpIZggWFupoHx-DrOfJ2R0" /></form>
-</div>
-
-<script>
-    var ForgotPasswordFormCallback = function (response) {
-        if (response.IsSucceed == true) {
-
-        }
-    }
-    function sendMail() {
-        var postData = { Username: $('#username').val() };
-        Mevzuat.Ajax("User/ForgotPasswordSendMail", { data: postData }, function (e) {
-            if (e.Status == 1) {
-                $("#ForgotPasswordFormModal").modal("hide");
-            }
-        });
-    }
-</script>
-
-
-    <div class="modal fade"  id="ForgotPasswordConfirmFormModal" role="dialog" aria-labelledby="ForgotPasswordConfirmFormModalTitle" aria-hidden="true">
-    <form method="post">
-        <div class="modal-dialog" role="document" style="max-width:400px;">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div>
-                        <span class="modal-title font-weight-bold"><i class="fa fa-lock mr-1" style="margin-top:3px;"></i> Şifremi Unuttum</span>
-                        <button type="button" title="Formu Kapat" class="close" data-dismiss="modal">×</button>
-                    </div>
-                    <br />
-                    <div class="row">
-                        <div class="form-group col mb-0">
-                            <input autocomplete="off" id="passwordConfirm" type="password" class="form-control form-control-sm" placeholder="Şifre" data-val="true" data-val-length="&#x15E;ifreniz en az 6 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="6" data-val-regex="&#x15E;ifrenizde en az bir k&#xFC;&#xE7;&#xFC;k harf, bir b&#xFC;y&#xFC;k harf, bir rakam ve bir &#xF6;zel karakter bulunmal&#x131;d&#x131;r." data-val-regex-pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).&#x2B;$" maxlength="60" name="Password">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <br />
-
-                    <div class="row">
-                        <div class="form-group col mb-0">
-                            <input autocomplete="off" id="newPasswordConfirm" type="password" class="form-control form-control-sm" placeholder="Şifre (Tekrar)" data-val="true" data-val-length="&#x15E;ifreniz en az 6 karakterden olu&#x15F;mal&#x131;d&#x131;r." data-val-length-max="60" data-val-length-min="6" data-val-regex="&#x15E;ifrenizde en az bir k&#xFC;&#xE7;&#xFC;k harf, bir b&#xFC;y&#xFC;k harf, bir rakam ve bir &#xF6;zel karakter bulunmal&#x131;d&#x131;r." data-val-regex-pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).&#x2B;$" maxlength="60" name="NewPassword">
-                            <span class="form-text m-b-none text-danger field-validation-valid" data-valmsg-for="NewPassword" data-valmsg-replace="true"></span>
-                        </div>
-                    </div>
-                    <div class="mt-2 text-right">
-                        <button type="button" onclick="sendPasswordData()" class="btn btn-primary ">Güncelle</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <input name="antiforgerytoken" type="hidden" value="CfDJ8ASRPoFJ9zdNuHK-TimMUjqEaxCi-CU2UH74Qhg8Q8toaS2fTlslucQ8wE1_tHhDTSkDXoaUiUuObFCQe3i5JE75NXXbODMJJ7l7T8qxiET3iQ1wgBlaob9Jg0d9JtAO9WpIZggWFupoHx-DrOfJ2R0" /></form>
-</div>
-
-
-    
-
-    <div class="modal fade" id="AnnouncementFormModal" role="dialog" aria-labelledby="AnnouncementFormModalTitle" aria-hidden="true">
-        <div class="modal-dialog" style="max-width:630px;">
-            <form id="announcementForm" style="text-align:center;" class="mt-5">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <div class="row ">
-                            <div class="media" style="text-align:center">
-                                <img src="/img/DUYURU.PNG" width="100%" height="auto">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer d-block" style="padding:3px">
-                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" title="Duyuruyu Kapat">Tamam</button>
-                    </div>
-                </div>
-            </form>
-            </div>
-        </div>
-
-
-
-
-
-    
-
-    <script src="/lib/combodate-1.0.7/combodate.js"></script>
-    <script src="/js/toastr.min.js"></script>
-    <script src="/lib/combodate-1.0.7/moment.min.js"></script>
-    <script src="/lib/combodate-1.0.7/combodateitems.js"></script>
-
-
-
-
-    <script src="/lib/owlcarousel/owl.carousel.min.js"></script>
-    <script type="text/javascript">
-        function clickNavigation(name) {
-            if (name == "anayasa") {
-                window.location.replace(window.location.origin + "/mevzuat?MevzuatNo=2709&MevzuatTur=1&MevzuatTertip=5");
-            }
-            else {
-                window.location.replace(window.location.origin + "/#" + name);
-            }
-        }
-
-        $('body').on('shown.bs.modal', function () {
-            var focusableElementsString = "a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]),  iframe, object, embed, *[tabindex], *[contenteditable]";
-            var activeModalId = document.getElementsByClassName('modal show')[0].id;
-            var activeEl = jQuery('#' + activeModalId);
-            var allElInActiveEl = activeEl.find('*');
-            allElInActiveEl.filter(focusableElementsString).filter(':visible').first().focus();
-        });
-
-        $(function () {
-            $('.dropdown-item').click(function (e) {
-                var id = $(this).attr("id");
-                switch (id) {
-                    case "myInformations":
-                        elementName = "#myInformationsTable";
-                        Mevzuat.Ajax('/Anasayfa/GetMyInformations', { element: elementName, noty: false, dataType: 'html' }, function (e) {
-                            $("#MyInformationsFormModal").modal("show");
-                        });
-                        break;
-                    case "myFavorites":
-                        break;
-                    default:
-                }
-            });
-            $("#dropdown-menu-Regulation").mouseover(function () {
-                document.getElementById("dropdown-menu-Regulation-Down").style.display = "block";
-            });
-
-            $("#dropdown-menu-Regulation").mouseleave(function () {
-                setTimeout(function () {
-                    document.getElementById("dropdown-menu-Regulation-Down").style.display = "none";
-                }, 300);
-            });
-            $("#dropdown-menu-Publications").mouseover(function () {
-                document.getElementById("dropdown-menu-Publications-Down").style.display = "block";
-            });
-
-            $("#dropdown-menu-Publications").mouseleave(function () {
-                setTimeout(function () {
-                    document.getElementById("dropdown-menu-Publications-Down").style.display = "none";
-                }, 300);
-            });
-
-            $("#userNameLoginDiv").mouseover(function () {
-                document.getElementById("userNameLoginDivDown").style.display = "block";
-            });
-
-            $("#userNameLoginDiv").mouseleave(function () {
-                setTimeout(function () {
-                    document.getElementById("userNameLoginDivDown").style.display = "none";
-                }, 300);
-            });
-            $(".dropdown-item").click(function () {
-                var item = $(".dropdown-item");
-                //Buraası açılacak
-                //document.getElementById("dropdown-menu-Publications-Down").style.display = "none";
-                //document.getElementById("userNameLoginDivDown").style.display = "none";
-                //document.getElementById("dropdown-menu-Regulation-Down").style.display = "none";
-                item.removeClass("active show");
-            });
-            $("#newUser,#contactButton").click(function () {
-                var s = document.createElement("script");
-                s.type = "text/javascript";
-                s.src = "https://www.google.com/recaptcha/api.js?hl=tr";
-                $("head").append(s);
-            });
-        });
-
-
-            function sendPasswordData() {
-                var key = window.location.search.split('key=')[1];
-                var postData = { Password: $('#passwordConfirm').val(), NewPassword: $('#newPasswordConfirm').val(), EntityID: key };
-                Mevzuat.Ajax("/User/PasswordConfirmation", { data: postData }, function (e) {
-                    if (e.IsSucceed) {
-                        window.location.href = "/";
-                    }
-                    else {
-                        document.getElementById("newPasswordConfirm").value = "";
-                        document.getElementById("passwordConfirm").value = "";
-                    }
-                });
-            }
-
-    </script>
-    <script>
-        function clickElement(e) {
-            if (e.keyCode === 13) {
-                e.target.click();
-            }
-        }
-        Mevzuat.SetUser();
-        $("#signOut").click(function () {
-            Mevzuat.Ajax("/Login/SignOut", { type: "GET" }, function (e) {
-                Mevzuat.SignOut();
-            });
-        });
-        //POP-UP göstermek isterlerse
-        //if (CheckAnnouncementTime() && window.location.hash == "" && window.location.pathname == "/") {
-        //    $("#AnnouncementFormModal").modal("show");
-        //}
-        $(document).ready(function () {
-            $("#navbarDropdownRegulation").click(function () {
-                document.getElementById("dropdown-menu-Publications-Down").style.display = "none";
-                document.getElementById("userNameLoginDivDown").style.display = "none";
-                if (document.getElementById("dropdown-menu-Regulation-Down").style["display"] == "block") {
-                    document.getElementById("dropdown-menu-Regulation-Down").style.display = "none";
-                }
-                else {
-                    document.getElementById("dropdown-menu-Regulation-Down").style.display = "block";
-                }
-            });
-            $("#navbarDropdownPublications").click(function () {
-                document.getElementById("dropdown-menu-Regulation-Down").style.display = "none";
-                document.getElementById("userNameLoginDivDown").style.display = "none";
-                if (document.getElementById("dropdown-menu-Publications-Down").style["display"] == "block") {
-                    document.getElementById("dropdown-menu-Publications-Down").style.display = "none";
-                }
-                else {
-                    document.getElementById("dropdown-menu-Publications-Down").style.display = "block";
-                }
-            });
-            $("#userNameLoginDiv").click(function () {
-                document.getElementById("dropdown-menu-Publications-Down").style.display = "none";
-                document.getElementById("dropdown-menu-Regulation-Down").style.display = "none";
-                if (document.getElementById("userNameLoginDivDown").style["display"] == "block") {
-                    document.getElementById("userNameLoginDivDown").style.display = "none";
-                }
-                else {
-                    document.getElementById("userNameLoginDivDown").style.display = "block";
-                }
-            });
-            $(".owl-carousel").owlCarousel({
-                loop: true,
-                margin: 10,
-                autoplay: true,
-                autowidth: false,
-                items: 1,
-                margin: 30,
-                stagePadding: 30,
-                smartSpeed: 450
-            });
-            var passwordIndex = window.location.pathname.indexOf("ForgotPassword");
-            if (passwordIndex > 0) {
-                $("#ForgotPasswordConfirmFormModal").modal("show");
-            }
-
-
-
-            var activeKey = window.location.search.indexOf("activeKey");
-            if (activeKey > 0) {
-                var key = window.location.search.split('activeKey=')[1];
-                Mevzuat.Ajax("/User/UserVerification/?key=" + key, { type: "GET" }, function (e) {
-                    if (e.IsSucceed) {
-                        setTimeout(function () {
-                            window.location.href = "/";
-                        }, 500);
-                    }
-                });
-            }
-
-            // mevzuatDipnotModalWrapper genisligini ekran boyutuna gore ayarla
-            setDipnotModalWidth();
-            window.addEventListener('resize', setDipnotModalWidth);
-        });
-
-        window.addEventListener('message', function (event) { if (event.data === 'openModal') { openModal(); } });
-        function openModal() {
-            $("#mevzuatDipnotModal").modal("show");
-        }
-        function setDipnotModalWidth() {
-            var screenWidth = window.innerWidth;
-            var div = document.getElementById('mevzuatDipnotModalWrapper');
-            if (screenWidth < 900) {
-                div.style.maxWidth = '100%';
-            } else {
-                div.style.maxWidth = '500px';
-            }
-        }
-    </script>
 
 </body>
+
 </html>
+    <p id="page-end"></p>
+    <script src="/lib/tooltip/tooltip.js"></script>
+    <script>
+        $(document).ready(function () {
+            jQuery('table').each(function (cmp) {
+                var parent = this.parentNode;
+                var wrapper = document.createElement('div');
+
+                parent.replaceChild(wrapper, this);
+                wrapper.appendChild(this);
+                this.parentElement.style.overflowX = 'auto';
+            });
+            if (window.location.search.indexOf("2709") != -1 || window.location.search.indexOf("MevzuatTur=19") != -1) {
+                var tableCss = document.styleSheets[0].cssRules[2].style;
+                tableCss.cssText = tableCss.cssText.replace("100%", "initial");
+            }
+            //$('.tooltip').tooltipster();
+            //replaceTable();
+            //$(window).on('resize', function () {
+            //    replaceTable();
+            //});
+            //replaceTable();
+        });
+            //function replaceTable() {
+            //    //if (window.location.search.indexOf("MevzuatTur=19") == -1) {
+            //    //    var iframe = document.getElementsByTagName("td");
+            //    //    var value = $('body').width() - 10;
+            //    //    for (var i = 0; i < iframe.length; i++) {
+            //    //        iframe[i].style.width = "initial !important";
+            //    //    }
+            //    //}
+
+
+            //    //var iframe = document.getElementsByClassName("MsoNormalTable");
+            //    //var value = $('body').width() - 10;
+            //
+            //    //for (var i = 0; i < iframe.length; i++) {
+            //    //    iframe[i].style.width = value;
+            //    //}
+
+            //    //var iframe2 = document.getElementsByClassName("MsoNormal");
+            //    ////for (var j = 0; j < iframe2.length; j++) {
+            //    ////    iframe2[j].style.width = value;
+            //    ////}
+            //}
+    </script>
+
+
+

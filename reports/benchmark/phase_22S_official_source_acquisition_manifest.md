@@ -35,6 +35,8 @@ Runtime code, source identity patches, article/span selector patches, Milvus wri
 
 ## Gate Rule
 
+Raw acquisition uses parser-accessible official endpoints when a public detail page is only a shell page. In this manifest that means Resmî Gazete item HTML for the repealed 2012 regulation, Mevzuat DOC files for consolidated laws, and Mevzuat iframe body HTML for consolidated tebliğ/yönetmelik body text.
+
 For Phase 22F readiness, each required source must have:
 
 - official URL
