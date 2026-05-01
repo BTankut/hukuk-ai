@@ -856,7 +856,15 @@ def milvus_client(uri: str):
     return MilvusClient(uri=uri)
 
 
-def create_target_collection(client: Any, target_collection: str, *, force: bool = False) -> None:
+def create_target_collection(
+    client: Any,
+    target_collection: str,
+    *,
+    force: bool = False,
+    create_index_on_create: bool = False,
+    index_type: str = "FLAT",
+    mmap_enabled: bool = True,
+) -> None:
     from pymilvus import DataType, MilvusClient
 
     if client.has_collection(collection_name=target_collection):
@@ -867,12 +875,30 @@ def create_target_collection(client: Any, target_collection: str, *, force: bool
     schema = MilvusClient.create_schema(auto_id=False, enable_dynamic_field=False)
     schema.add_field(field_name="id", datatype=DataType.VARCHAR, is_primary=True, max_length=256)
     schema.add_field(field_name="text", datatype=DataType.VARCHAR, max_length=65535)
-    schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=VECTOR_DIMENSION)
+    schema.add_field(
+        field_name="embedding",
+        datatype=DataType.FLOAT_VECTOR,
+        dim=VECTOR_DIMENSION,
+        mmap_enabled=mmap_enabled,
+    )
     schema.add_field(field_name="metadata", datatype=DataType.JSON)
 
+    if create_index_on_create:
+        index_params = make_index_params(client, index_type=index_type, mmap_enabled=mmap_enabled)
+        client.create_collection(collection_name=target_collection, schema=schema, index_params=index_params)
+    else:
+        client.create_collection(collection_name=target_collection, schema=schema)
+
+
+def make_index_params(client: Any, *, index_type: str, mmap_enabled: bool):
     index_params = client.prepare_index_params()
-    index_params.add_index(field_name="embedding", index_type="AUTOINDEX", metric_type="COSINE")
-    client.create_collection(collection_name=target_collection, schema=schema, index_params=index_params)
+    index_params.add_index(
+        field_name="embedding",
+        index_type=index_type,
+        metric_type="COSINE",
+        mmap_enabled=mmap_enabled,
+    )
+    return index_params
 
 
 def query_existing_ids(client: Any, collection: str, ids: list[str]) -> set[str]:
@@ -954,6 +980,7 @@ def clone_base_collection(
     base_collection: str,
     target_collection: str,
     batch_size: int,
+    flush_every: int,
 ) -> int:
     iterator = client.query_iterator(
         collection_name=base_collection,
@@ -968,6 +995,8 @@ def clone_base_collection(
                 break
             client.insert(collection_name=target_collection, data=rows)
             inserted += len(rows)
+            if flush_every > 0 and inserted % flush_every < len(rows):
+                client.flush(collection_name=target_collection)
             if inserted % 50000 < len(rows):
                 print(f"[phase22f] cloned_rows={inserted}", flush=True)
     finally:
@@ -992,12 +1021,20 @@ def build_shadow_collection(args: argparse.Namespace) -> dict[str, Any]:
             f"Refusing build due to collisions: canonical={canonical_collision_count}, binding={binding_collision_count}"
         )
 
-    create_target_collection(client, args.target_collection, force=args.force)
+    create_target_collection(
+        client,
+        args.target_collection,
+        force=args.force,
+        create_index_on_create=not args.defer_index,
+        index_type=args.index_type,
+        mmap_enabled=args.mmap_enabled,
+    )
     cloned_count = clone_base_collection(
         client,
         base_collection=args.base_collection,
         target_collection=args.target_collection,
         batch_size=args.clone_batch_size,
+        flush_every=args.clone_flush_every,
     )
 
     delta_rows: list[dict[str, Any]] = []
@@ -1016,8 +1053,12 @@ def build_shadow_collection(args: argparse.Namespace) -> dict[str, Any]:
         print(f"[phase22f] inserted_delta_rows={min(start + len(batch), len(delta_rows))}/{len(delta_rows)}", flush=True)
 
     client.flush(collection_name=args.target_collection)
-    client.load_collection(collection_name=args.target_collection)
-    time.sleep(2)
+    if args.defer_index:
+        index_params = make_index_params(client, index_type=args.index_type, mmap_enabled=args.mmap_enabled)
+        client.create_index(collection_name=args.target_collection, index_params=index_params, timeout=args.index_timeout)
+    if args.load_after_build:
+        client.load_collection(collection_name=args.target_collection)
+        time.sleep(2)
     target_stats = client.get_collection_stats(collection_name=args.target_collection)
     target_count = int(target_stats.get("row_count", 0))
 
@@ -1033,6 +1074,10 @@ def build_shadow_collection(args: argparse.Namespace) -> dict[str, Any]:
         "embedding_backend": "remote",
         "embedding_base_url": args.embedding_base_url,
         "embedding_model": args.embedding_model,
+        "index_type": args.index_type,
+        "mmap_enabled": bool(args.mmap_enabled),
+        "defer_index": bool(args.defer_index),
+        "load_after_build": bool(args.load_after_build),
         "source_catalog_hash": sha256_file(CATALOG_DELTA_JSON),
         "source_supplement_hash": sha256_file(SOURCE_SUPPLEMENT_JSON),
         "spans_hash": sha256_file(SPANS_JSONL),
@@ -1083,6 +1128,10 @@ def write_shadow_build_reports(report: dict[str, Any]) -> None:
         f"- vector_dimension: `{report['vector_dimension']}`",
         f"- embedding_backend: `{report['embedding_backend']}`",
         f"- embedding_model: `{report['embedding_model']}`",
+        f"- index_type: `{report['index_type']}`",
+        f"- mmap_enabled: `{str(report['mmap_enabled']).lower()}`",
+        f"- defer_index: `{str(report['defer_index']).lower()}`",
+        f"- load_after_build: `{str(report['load_after_build']).lower()}`",
         f"- source_catalog_hash: `{report['source_catalog_hash']}`",
         f"- source_supplement_hash: `{report['source_supplement_hash']}`",
         f"- backfill_source_count: `{report['backfill_source_count']}`",
@@ -1151,8 +1200,14 @@ def parse_args() -> argparse.Namespace:
     build.add_argument("--embedding-base-url", default=os.getenv("EMBEDDING_BASE_URL", EMBEDDING_BASE_URL))
     build.add_argument("--embedding-model", default=os.getenv("EMBEDDING_MODEL", EMBEDDING_MODEL))
     build.add_argument("--clone-batch-size", type=int, default=1000)
+    build.add_argument("--clone-flush-every", type=int, default=25000)
     build.add_argument("--embedding-batch-size", type=int, default=16)
     build.add_argument("--delta-insert-batch-size", type=int, default=100)
+    build.add_argument("--index-type", default="FLAT")
+    build.add_argument("--index-timeout", type=int, default=1800)
+    build.add_argument("--mmap-enabled", action=argparse.BooleanOptionalAction, default=True)
+    build.add_argument("--defer-index", action=argparse.BooleanOptionalAction, default=True)
+    build.add_argument("--load-after-build", action=argparse.BooleanOptionalAction, default=False)
     build.add_argument("--force", action="store_true", help="Drop/rebuild the Phase 22F target collection if it already exists.")
     build.set_defaults(func=command_build_shadow)
 
