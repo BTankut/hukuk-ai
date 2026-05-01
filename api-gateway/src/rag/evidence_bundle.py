@@ -185,6 +185,13 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "repeal_instrument_added": metadata.get("repeal_instrument_added"),
         "historical_source_not_marked_active": metadata.get("historical_source_not_marked_active"),
         "repealed_as_active_count": metadata.get("repealed_as_active_count"),
+        "temporal_claim_alignment_applied": metadata.get("temporal_claim_alignment_applied"),
+        "temporal_claim_primary_role": metadata.get("temporal_claim_primary_role"),
+        "temporal_claim_historical_source_key": metadata.get("temporal_claim_historical_source_key"),
+        "temporal_claim_repeal_source_key": metadata.get("temporal_claim_repeal_source_key"),
+        "temporal_claim_current_basis_source_key": metadata.get("temporal_claim_current_basis_source_key"),
+        "temporal_claim_consistency_status": metadata.get("temporal_claim_consistency_status"),
+        "temporal_claim_missing_reason": metadata.get("temporal_claim_missing_reason"),
     }
 
 

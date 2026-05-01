@@ -72,6 +72,7 @@ from rag.answer_slots import (
 )
 from rag.answer_synthesis import (
     apply_evidence_slot_synthesis_to_answer_text as _apply_evidence_slot_synthesis_to_answer_text_impl,
+    apply_temporal_claim_alignment as _apply_temporal_claim_alignment_impl,
     apply_verified_answer_slot_plan_to_answer_text as _apply_verified_answer_slot_plan_to_answer_text_impl,
     build_native_dialog_fallback_answer as _build_native_dialog_fallback_answer_impl,
     build_persisted_raw_answer_snapshot as _build_persisted_raw_answer_snapshot_impl,
@@ -7205,6 +7206,19 @@ def _apply_evidence_slot_synthesis_to_answer_text(
     )
 
 
+def _apply_temporal_claim_alignment(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any] | None,
+    trace_payload: dict[str, Any] | None,
+) -> tuple[str, dict[str, Any]]:
+    return _apply_temporal_claim_alignment_impl(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        trace_payload=trace_payload,
+    )
+
+
 def _trace_chunks_for_completeness(trace_payload: dict[str, Any] | None) -> list[RetrievedChunk]:
     if not isinstance(trace_payload, dict):
         return []
@@ -7493,6 +7507,20 @@ def _finalize_chat_response(
                 answer_contract["grounding_status"] = "partially_grounded"
                 answer_contract["unsupported_reason"] = None
                 answer_contract["answer_suppressed_due_to_evidence_gap"] = False
+    answer_text, temporal_claim_alignment = _apply_temporal_claim_alignment(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        trace_payload=trace_payload,
+    )
+    if temporal_claim_alignment.get("temporal_claim_alignment_applied") is True:
+        answer_contract.update(temporal_claim_alignment)
+        answer_contract["answer_text"] = answer_text
+        answer_contract["final_answer"] = answer_text
+        if final_mode in {"refusal", "blocked"}:
+            blocked = False
+            final_mode = "partial"
+            final_reason = None
+        final_reason = answer_contract.get("final_reason") or final_reason
     answer_contract = _refresh_contract_completeness_for_answer_text(
         answer_contract=answer_contract,
         answer_text=answer_text,
@@ -7512,6 +7540,20 @@ def _finalize_chat_response(
         verification=verification,
     )
     answer_contract = contract_repair.contract
+    answer_text, temporal_claim_alignment = _apply_temporal_claim_alignment(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+        trace_payload=trace_payload,
+    )
+    if temporal_claim_alignment.get("temporal_claim_alignment_applied") is True:
+        answer_contract.update(temporal_claim_alignment)
+        answer_contract["answer_text"] = answer_text
+        answer_contract["final_answer"] = answer_text
+        if final_mode in {"refusal", "blocked"}:
+            blocked = False
+            final_mode = "partial"
+            final_reason = None
+        final_reason = answer_contract.get("final_reason") or final_reason
     trace_payload = dict(trace_payload)
     trace_payload["final_mode"] = final_mode
     trace_payload["final_reason"] = final_reason

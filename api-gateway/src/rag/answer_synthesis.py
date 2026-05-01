@@ -6,6 +6,7 @@ and replacement decisions remain in the router until separately gated.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from answer_contract_v2 import controlled_fallback_answer
@@ -458,6 +459,539 @@ EVIDENCE_SLOT_SYNTHESIS_LABELS = {
     "document_selection_reason": "Belge seçimi",
     "hierarchy_or_conflict_rule": "Norm ilişkisi",
 }
+
+TEMPORAL_CLAIM_ALIGNMENT_HEADER = "Tarihsel/yürürlük zinciri:"
+_TEMPORAL_REPEALED_MODES = {
+    "historical_repealed_answer",
+    "repealed_transition_answer",
+    "not_currently_applicable_answer",
+    "repealed_or_uncertain",
+}
+_TEMPORAL_REPEALED_STATES = {"repealed", "historical", "historical_repealed"}
+_TEMPORAL_REPEAL_STATES = {"repeal_instrument"}
+_TEMPORAL_ACTIVE_STATES = {"active", "amended"}
+_TEMPORAL_REPEAL_TEXT_RE = re.compile(
+    r"\b("
+    r"m[uü]lga|"
+    r"y[uü]r[uü]rl[uü]kten\s+kald[ıi]r|"
+    r"yururlukten\s+kaldir|"
+    r"y[uü]r[uü]rl[uü]kten\s+kalk|"
+    r"yururlukten\s+kalk"
+    r")",
+    re.IGNORECASE,
+)
+_TEMPORAL_ARTICLE_RE = re.compile(r"\bm(?P<article>GEC\d+|\d+[a-z]?)\b", re.IGNORECASE)
+
+
+def _temporal_text(value: Any) -> str:
+    if value is None:
+        return ""
+    return re.sub(r"\s+", " ", str(value)).strip()
+
+
+def _temporal_first_text(*values: Any) -> str:
+    for value in values:
+        text = _temporal_text(value)
+        if text:
+            return text
+    return ""
+
+
+def _temporal_truthy(value: Any) -> bool:
+    if value is True:
+        return True
+    if isinstance(value, str):
+        return normalize_query_text(value) in {"1", "true", "yes", "y", "evet"}
+    return False
+
+
+def _temporal_normalized(value: Any) -> str:
+    return normalize_query_text(_temporal_text(value))
+
+
+def _temporal_has_repeal_text(*values: Any) -> bool:
+    return bool(_TEMPORAL_REPEAL_TEXT_RE.search(" ".join(_temporal_text(value) for value in values)))
+
+
+def _temporal_item_text(item: dict[str, Any]) -> str:
+    return " ".join(
+        _temporal_text(item.get(key))
+        for key in (
+            "quoted_or_extracted_span",
+            "excerpt",
+            "text",
+            "source_title",
+            "citation",
+            "source_id",
+            "source_identifier",
+            "effective_state",
+        )
+    )
+
+
+def _temporal_source_key(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    return _temporal_first_text(
+        item.get("source_id"),
+        item.get("canonical_source_key_v2"),
+        item.get("binding_source_key"),
+        item.get("relation_chain_source_key"),
+        item.get("citation"),
+        item.get("source_identifier"),
+    )
+
+
+def _temporal_article_raw(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    raw = _temporal_first_text(
+        item.get("article_or_section"),
+        item.get("madde_no"),
+        item.get("article"),
+    )
+    if raw:
+        return raw
+    for key in ("source_id", "citation", "source_identifier"):
+        match = _TEMPORAL_ARTICLE_RE.search(_temporal_text(item.get(key)))
+        if match:
+            return match.group("article")
+    return ""
+
+
+def _temporal_article_claim(item: dict[str, Any] | None) -> str:
+    raw = _temporal_article_raw(item)
+    if not raw:
+        return "unknown"
+    normalized = raw.strip().lower().replace("geç", "gec")
+    if normalized.startswith("gec"):
+        digits = "".join(ch for ch in normalized if ch.isdigit())
+        return f"geçici madde {digits}" if digits else "geçici madde"
+    if normalized.startswith("madde:") or normalized.startswith("geçici madde"):
+        return raw
+    return f"madde:{raw}"
+
+
+def _temporal_identifier_base(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    candidates = [
+        _temporal_text(item.get("source_identifier")),
+        _temporal_text(item.get("citation")),
+        _temporal_text(item.get("source_id")),
+    ]
+    for candidate in candidates:
+        candidate = re.sub(r"/f\.\w+$", "", candidate)
+        candidate = re.sub(r"\s+m\.(?:GEC\d+|\d+[a-z]?)\b.*$", "", candidate, flags=re.IGNORECASE)
+        if not candidate:
+            continue
+        if ":" in candidate:
+            parts = [part for part in candidate.split(":") if part]
+            for part in parts:
+                if re.fullmatch(r"\d{2,9}|[A-ZÇĞİÖŞÜA-Za-z_]+\d*", part):
+                    return part
+            continue
+        return candidate
+    return ""
+
+
+def _temporal_identifier_claim(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return "unknown"
+    article = _temporal_article_raw(item)
+    base = _temporal_identifier_base(item)
+    if base and article:
+        return f"{base} m.{article}"
+    return _temporal_first_text(item.get("citation"), item.get("source_identifier"), item.get("source_id"), "unknown")
+
+
+def _temporal_source_title(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return "unknown"
+    return _temporal_first_text(
+        item.get("source_title"),
+        item.get("full_title"),
+        item.get("belge_adi"),
+        item.get("kanun_adi"),
+        item.get("title"),
+        item.get("source"),
+        "unknown",
+    )
+
+
+def _temporal_citation(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return "unknown"
+    return _temporal_first_text(item.get("citation"), _temporal_identifier_claim(item), item.get("source_id"), "unknown")
+
+
+def _temporal_excerpt(item: dict[str, Any] | None, *, max_len: int = 360) -> str:
+    if not isinstance(item, dict):
+        return ""
+    value = _temporal_first_text(
+        item.get("quoted_or_extracted_span"),
+        item.get("excerpt"),
+        item.get("text"),
+        item.get("source_title"),
+    )
+    return compact_slot_value(value, max_len=max_len)
+
+
+def _temporal_family(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    return _temporal_normalized(
+        item.get("source_family")
+        or item.get("source_family_canonical")
+        or item.get("source_family_mapped")
+        or item.get("belge_turu")
+        or item.get("source_type")
+    )
+
+
+def _temporal_effective_state(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    return _temporal_normalized(item.get("effective_state") or item.get("historical_source_effective_state"))
+
+
+def _temporal_item_role(item: dict[str, Any]) -> str:
+    role = _temporal_normalized(item.get("relation_chain_role"))
+    if role in {"historical_rule", "repeal_instrument", "current_law_basis"}:
+        return role
+    state = _temporal_effective_state(item)
+    family = _temporal_family(item)
+    text = _temporal_item_text(item)
+    if state in _TEMPORAL_REPEAL_STATES:
+        return "repeal_instrument"
+    if role in {"repeal", "repeal_or_currentness_source"}:
+        return "repeal_instrument"
+    if role in {"current", "current_basis"}:
+        return "current_law_basis"
+    if state in _TEMPORAL_ACTIVE_STATES and _temporal_has_repeal_text(text):
+        return "repeal_instrument"
+    if state in _TEMPORAL_REPEALED_STATES or "mulga" in family:
+        return "historical_rule"
+    return ""
+
+
+def _temporal_find_keyed_evidence(evidence: list[dict[str, Any]], key: str) -> dict[str, Any] | None:
+    normalized_key = _temporal_normalized(key)
+    if not normalized_key:
+        return None
+    for item in evidence:
+        candidates = {
+            _temporal_normalized(item.get("source_id")),
+            _temporal_normalized(item.get("canonical_source_key_v2")),
+            _temporal_normalized(item.get("binding_source_key")),
+            _temporal_normalized(item.get("relation_chain_source_key")),
+        }
+        if normalized_key in candidates:
+            return item
+    return None
+
+
+def _temporal_collect_evidence(
+    *,
+    assembled_evidence: list[dict[str, Any]] | None,
+    trace_payload: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    found: list[dict[str, Any]] = []
+    if isinstance(assembled_evidence, list):
+        found.extend(item for item in assembled_evidence if isinstance(item, dict))
+    if isinstance(trace_payload, dict):
+        for key in ("assembled_evidence", "rerank_list"):
+            value = trace_payload.get(key)
+            if isinstance(value, list):
+                found.extend(item for item in value if isinstance(item, dict))
+        context = trace_payload.get("context_assembly")
+        if isinstance(context, dict) and isinstance(context.get("assembled_evidence"), list):
+            found.extend(item for item in context["assembled_evidence"] if isinstance(item, dict))
+    deduped: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in found:
+        marker = "|".join(
+            _temporal_text(item.get(key))
+            for key in ("source_id", "citation", "source_identifier", "article_or_section", "span_id")
+        )
+        if marker in seen:
+            continue
+        seen.add(marker)
+        deduped.append(item)
+    return deduped
+
+
+def _temporal_relation_chain_present(evidence: list[dict[str, Any]]) -> bool:
+    return any(
+        _temporal_truthy(item.get("relation_chain_expansion_applied"))
+        or bool(_temporal_text(item.get("relation_chain_role")))
+        for item in evidence
+    )
+
+
+def _temporal_roles(evidence: list[dict[str, Any]]) -> dict[str, dict[str, Any] | None]:
+    roles: dict[str, dict[str, Any] | None] = {
+        "historical": None,
+        "repeal": None,
+        "current": None,
+        "selected": evidence[0] if evidence else None,
+    }
+    current_key = ""
+    repeal_key = ""
+    historical_key = ""
+    for item in evidence:
+        current_key = current_key or _temporal_text(item.get("relation_chain_current_basis_source_key"))
+        repeal_key = repeal_key or _temporal_text(item.get("relation_chain_repeal_source_key"))
+        historical_key = historical_key or _temporal_text(item.get("relation_chain_source_key"))
+    if current_key:
+        roles["current"] = _temporal_find_keyed_evidence(evidence, current_key)
+    if repeal_key:
+        roles["repeal"] = _temporal_find_keyed_evidence(evidence, repeal_key)
+    if historical_key:
+        roles["historical"] = _temporal_find_keyed_evidence(evidence, historical_key)
+
+    for item in evidence:
+        role = _temporal_item_role(item)
+        if role == "historical_rule" and roles["historical"] is None:
+            roles["historical"] = item
+        elif role == "repeal_instrument" and roles["repeal"] is None:
+            roles["repeal"] = item
+        elif role == "current_law_basis" and roles["current"] is None:
+            roles["current"] = item
+
+    selected = roles["selected"]
+    if isinstance(selected, dict) and _temporal_item_role(selected) == "historical_rule":
+        roles["historical"] = selected
+    return roles
+
+
+def _temporal_context_present(answer_contract: dict[str, Any], evidence: list[dict[str, Any]]) -> bool:
+    del evidence
+    answer_mode = _temporal_text(answer_contract.get("answer_mode"))
+    effective_state = _temporal_normalized(answer_contract.get("effective_state_claimed"))
+    source_family = _temporal_normalized(answer_contract.get("source_family_claimed"))
+    if answer_mode in _TEMPORAL_REPEALED_MODES or effective_state in _TEMPORAL_REPEALED_STATES or "mulga" in source_family:
+        return True
+    return False
+
+
+def _temporal_line(label: str, item: dict[str, Any] | None, description: str) -> str:
+    if not isinstance(item, dict):
+        return f"- {label}: {description}"
+    title = _temporal_source_title(item)
+    identifier = _temporal_identifier_claim(item)
+    article = _temporal_article_claim(item)
+    excerpt = _temporal_excerpt(item)
+    citation = _temporal_citation(item)
+    basis = f"{title}; {identifier}; {article}"
+    if excerpt:
+        return f"- {label}: {description} {basis}. {excerpt} [Kaynak: {citation}]"
+    return f"- {label}: {description} {basis} [Kaynak: {citation}]"
+
+
+def _temporal_build_role_answer(
+    *,
+    roles: dict[str, dict[str, Any] | None],
+    relation_chain_present: bool,
+    missing_reason: str,
+) -> str:
+    lines: list[str] = [TEMPORAL_CLAIM_ALIGNMENT_HEADER]
+    historical = roles.get("historical") or roles.get("selected")
+    repeal = roles.get("repeal")
+    current = roles.get("current")
+    lines.append(
+        _temporal_line(
+            "Tarihsel kaynak",
+            historical,
+            "Bu kaynak doğrudan güncel hukuk dayanağı gibi değil, geçerli olduğu dönemle sınırlı okunmalıdır.",
+        )
+    )
+    if repeal is not None:
+        lines.append(
+            _temporal_line(
+                "Yürürlük/güncellik",
+                repeal,
+                "Bu kanıt tarihsel kaynağın yürürlükten kaldırılması veya güncellik sınırını gösterir.",
+            )
+        )
+    if current is not None:
+        lines.append(
+            _temporal_line(
+                "Güncel dayanak",
+                current,
+                "Bugünkü uygulama için ayrı güncel dayanak budur; tarihsel kaynağın yerine karıştırılmamalıdır.",
+            )
+        )
+    if not relation_chain_present or missing_reason != "none":
+        lines.append(
+            "- Sınır: İlişki zinciri tam doğrulanmadığı için cevap tarihsel/yürürlük değerlendirmesiyle sınırlıdır; "
+            "eksik neden: "
+            + missing_reason
+            + "."
+        )
+    return "\n".join(lines)
+
+
+def _temporal_missing_reason(
+    *,
+    relation_chain_present: bool,
+    roles: dict[str, dict[str, Any] | None],
+) -> str:
+    if not relation_chain_present:
+        return "no_relation_chain"
+    if roles.get("repeal") is None:
+        return "missing_repeal_source"
+    if roles.get("current") is None:
+        return "missing_current_basis_source"
+    if roles.get("historical") is None and roles.get("selected") is None:
+        return "no_historical_or_repealed_evidence"
+    return "none"
+
+
+def _temporal_status(
+    *,
+    relation_chain_present: bool,
+    missing_reason: str,
+    contract: dict[str, Any],
+    roles: dict[str, dict[str, Any] | None],
+) -> str:
+    if missing_reason == "no_historical_or_repealed_evidence":
+        return "no_historical_context"
+    effective_state = _temporal_normalized(contract.get("effective_state_claimed"))
+    if effective_state == "active" and _temporal_context_present(contract, [item for item in roles.values() if isinstance(item, dict)]):
+        return "corrected_repealed_not_active"
+    if not relation_chain_present or missing_reason != "none":
+        return "qualified_missing_relation"
+    return "aligned"
+
+
+def _temporal_contract_patch(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any],
+    roles: dict[str, dict[str, Any] | None],
+    relation_chain_present: bool,
+    missing_reason: str,
+    consistency_status: str,
+) -> dict[str, Any]:
+    historical = roles.get("historical") or roles.get("selected")
+    repeal = roles.get("repeal")
+    current = roles.get("current")
+    primary = historical or repeal or current
+    primary_role = "current_law_basis" if relation_chain_present and current is not None and missing_reason == "none" else "historical_rule"
+    source_identifier = _temporal_identifier_claim(primary)
+    article_or_section = _temporal_article_claim(primary)
+    answer_mode = (
+        answer_contract.get("answer_mode")
+        if answer_contract.get("answer_mode") in _TEMPORAL_REPEALED_MODES
+        else "qualified_answer"
+    )
+    patch = {
+        "temporal_claim_alignment_applied": True,
+        "temporal_claim_primary_role": primary_role,
+        "temporal_claim_historical_source_key": _temporal_source_key(historical),
+        "temporal_claim_repeal_source_key": _temporal_source_key(repeal),
+        "temporal_claim_current_basis_source_key": _temporal_source_key(current),
+        "temporal_claim_consistency_status": consistency_status,
+        "temporal_claim_missing_reason": missing_reason,
+        "temporal_claim_historical_identifier": _temporal_identifier_claim(historical) if historical else "",
+        "temporal_claim_repeal_identifier": _temporal_identifier_claim(repeal) if repeal else "",
+        "temporal_claim_current_basis_identifier": _temporal_identifier_claim(current) if current else "",
+        "answer_text": answer_text,
+        "final_answer": answer_text,
+        "answer_mode": answer_mode,
+        "grounding_status": "partially_grounded",
+        "source_family_claimed": "MULGA",
+        "source_title_claimed": _temporal_source_title(primary),
+        "source_identifier_claimed": source_identifier,
+        "article_or_section_claimed": article_or_section,
+        "effective_state_claimed": "repealed",
+        "temporal_qualification": _temporal_first_text(
+            answer_contract.get("temporal_qualification"),
+            "historical/repealed",
+        ),
+        "final_reason": (
+            f"dayanak=MULGA:{source_identifier}; madde={article_or_section}; "
+            f"yururluk=repealed; grounding=partially_grounded; sonuc={answer_mode}; belirsizlik=var"
+        ),
+        "needs_manual_review": True,
+        "unsupported_reason": None,
+        "answer_suppressed_due_to_evidence_gap": False,
+        "support_insufficient_for_specific_claim": False,
+        "insufficient_canonical_span_evidence": False,
+    }
+    try:
+        current_confidence = int(answer_contract.get("confidence_0_100") or 0)
+    except (TypeError, ValueError):
+        current_confidence = 0
+    patch["confidence_0_100"] = min(max(current_confidence, 40), 60)
+    return patch
+
+
+def apply_temporal_claim_alignment(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any] | None,
+    assembled_evidence: list[dict[str, Any]] | None = None,
+    trace_payload: dict[str, Any] | None = None,
+) -> tuple[str, dict[str, Any]]:
+    if not isinstance(answer_contract, dict):
+        return answer_text, {
+            "temporal_claim_alignment_applied": False,
+            "temporal_claim_primary_role": "",
+            "temporal_claim_historical_source_key": "",
+            "temporal_claim_repeal_source_key": "",
+            "temporal_claim_current_basis_source_key": "",
+            "temporal_claim_consistency_status": "no_historical_context",
+            "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+        }
+    evidence = _temporal_collect_evidence(assembled_evidence=assembled_evidence, trace_payload=trace_payload)
+    relation_chain_present = _temporal_relation_chain_present(evidence)
+    if not relation_chain_present and not _temporal_context_present(answer_contract, evidence):
+        return answer_text, {
+            "temporal_claim_alignment_applied": False,
+            "temporal_claim_primary_role": "",
+            "temporal_claim_historical_source_key": "",
+            "temporal_claim_repeal_source_key": "",
+            "temporal_claim_current_basis_source_key": "",
+            "temporal_claim_consistency_status": "no_historical_context",
+            "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+        }
+    roles = _temporal_roles(evidence)
+    if roles.get("historical") is None and roles.get("repeal") is None and roles.get("selected") is None:
+        return answer_text, {
+            "temporal_claim_alignment_applied": False,
+            "temporal_claim_primary_role": "",
+            "temporal_claim_historical_source_key": "",
+            "temporal_claim_repeal_source_key": "",
+            "temporal_claim_current_basis_source_key": "",
+            "temporal_claim_consistency_status": "no_historical_context",
+            "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+        }
+    missing_reason = _temporal_missing_reason(relation_chain_present=relation_chain_present, roles=roles)
+    consistency_status = _temporal_status(
+        relation_chain_present=relation_chain_present,
+        missing_reason=missing_reason,
+        contract=answer_contract,
+        roles=roles,
+    )
+    if (answer_text or "").strip().startswith(TEMPORAL_CLAIM_ALIGNMENT_HEADER):
+        aligned_answer = answer_text.strip()
+    else:
+        aligned_answer = _temporal_build_role_answer(
+            roles=roles,
+            relation_chain_present=relation_chain_present,
+            missing_reason=missing_reason,
+        )
+    patch = _temporal_contract_patch(
+        answer_text=aligned_answer,
+        answer_contract=answer_contract,
+        roles=roles,
+        relation_chain_present=relation_chain_present,
+        missing_reason=missing_reason,
+        consistency_status=consistency_status,
+    )
+    return aligned_answer, patch
 
 
 def apply_evidence_slot_synthesis_to_answer_text(
