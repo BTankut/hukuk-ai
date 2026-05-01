@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+import unicodedata
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -422,7 +423,8 @@ def extract_text(raw_path: Path) -> str:
 
 
 def normalized_article_no(label: str, number: str) -> str:
-    label_norm = label.casefold()
+    label_norm = unicodedata.normalize("NFKD", label.casefold().replace("i̇", "i"))
+    label_norm = "".join(ch for ch in label_norm if not unicodedata.combining(ch))
     if "geçici" in label_norm or "gecici" in label_norm:
         return f"gecici {number}"
     if "ek" in label_norm and "madde" in label_norm:
