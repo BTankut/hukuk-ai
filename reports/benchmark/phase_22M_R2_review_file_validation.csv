@@ -1,0 +1,4 @@
+input_group,path,status,row_count,schema_status,content_status,blocking_reason
+P0,reports/benchmark/legal_review_returns/filled_phase_22M_P0_manual_legal_review_packet.csv,valid,2,valid,legal_decisions_present,
+P1,reports/benchmark/legal_review_returns/filled_phase_22M_P1_manual_taxonomy_review_packet.csv,valid,6,valid_with_accepted_alias_schema,legal_decisions_present,
+official_source_checklist,reports/benchmark/legal_review_returns/filled_phase_22M_official_source_acquisition_checklist.csv,not_ready_for_backfill,12,valid,source_evidence_incomplete,"downloaded=false for all rows; sha256 empty for all rows; raw_file_path empty for all rows; parser_ready not true for all rows"
