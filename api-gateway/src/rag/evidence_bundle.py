@@ -173,6 +173,18 @@ def _serialize_trace_chunk(chunk: RetrievedChunk) -> dict[str, Any]:
         "yururluk_baslangic": metadata.get("yururluk_baslangic"),
         "yururluk_bitis": metadata.get("yururluk_bitis"),
         "mulga": metadata.get("mulga"),
+        "relation_chain_role": metadata.get("relation_chain_role"),
+        "relation_chain_expansion_applied": metadata.get("relation_chain_expansion_applied"),
+        "relation_chain_source_key": metadata.get("relation_chain_source_key"),
+        "relation_chain_repeal_source_key": metadata.get("relation_chain_repeal_source_key"),
+        "relation_chain_current_basis_source_key": metadata.get("relation_chain_current_basis_source_key"),
+        "relation_chain_span_keys": metadata.get("relation_chain_span_keys"),
+        "relation_chain_missing_reason": metadata.get("relation_chain_missing_reason"),
+        "historical_source_effective_state": metadata.get("historical_source_effective_state"),
+        "current_law_basis_added": metadata.get("current_law_basis_added"),
+        "repeal_instrument_added": metadata.get("repeal_instrument_added"),
+        "historical_source_not_marked_active": metadata.get("historical_source_not_marked_active"),
+        "repealed_as_active_count": metadata.get("repealed_as_active_count"),
     }
 
 

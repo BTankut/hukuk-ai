@@ -110,6 +110,7 @@ from rag.retrieval_orchestration import (
     _retrieve_active_chunks,
     _retrieve_explicit_article_chunks,
     _retrieve_law_bucket_chunks,
+    _retrieve_relation_chain_chunks,
     _retrieve_source_family_chunks,
     _retrieve_source_key_chunks,
 )
@@ -6040,6 +6041,7 @@ def _build_trace_payload(
     article_span_selector: dict[str, Any] | None = None,
     source_family_resolution: dict[str, Any] | None = None,
     retrieval_verification_features: dict[str, Any] | None = None,
+    relation_chain_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     assembled_evidence = _build_assembled_evidence(post_rerank_chunks, query=user_query)
     if not assembled_evidence and model_cited_source_ids:
@@ -6096,6 +6098,21 @@ def _build_trace_payload(
             "document_rerank_reason": (source_identity_reranker or {}).get("document_rerank_reason"),
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,
+            "relation_chain_policy": relation_chain_policy,
+            "relation_chain_expansion_applied": (relation_chain_policy or {}).get(
+                "relation_chain_expansion_applied"
+            ),
+            "relation_chain_source_key": (relation_chain_policy or {}).get("relation_chain_source_key"),
+            "relation_chain_repeal_source_key": (relation_chain_policy or {}).get(
+                "relation_chain_repeal_source_key"
+            ),
+            "relation_chain_current_basis_source_key": (relation_chain_policy or {}).get(
+                "relation_chain_current_basis_source_key"
+            ),
+            "relation_chain_missing_reason": (relation_chain_policy or {}).get(
+                "relation_chain_missing_reason"
+            ),
+            "relation_chain_span_keys": (relation_chain_policy or {}).get("relation_chain_span_keys"),
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
                 for law, madde in explicit_article_refs
@@ -8569,6 +8586,7 @@ async def chat_completions(
     source_cluster_selector: dict[str, Any] | None = None
     source_identity_reranker: dict[str, Any] | None = None
     article_span_selector: dict[str, Any] | None = None
+    relation_chain_policy: dict[str, Any] | None = None
     selected_source_keys: set[str] = set()
     family_routing_policy: dict[str, Any] | None = None
     if metadata_first_selector:
@@ -9057,6 +9075,39 @@ async def chat_completions(
                             len(counterpart_chunks),
                             len(retrieved_chunks),
                         )
+                relation_chain_chunks, relation_chain_policy = _retrieve_relation_chain_chunks(
+                    retriever=retriever,
+                    query=routing_query,
+                    chunks=retrieved_chunks,
+                    source_family_resolution=source_family_resolution,
+                )
+                if relation_chain_chunks:
+                    retrieved_chunks = _dedupe_retrieved_chunks(retrieved_chunks + relation_chain_chunks)
+                    if family_routing_policy is not None:
+                        family_routing_policy.update(
+                            {
+                                key: value
+                                for key, value in relation_chain_policy.items()
+                                if key.startswith("relation_chain_")
+                                or key
+                                in {
+                                    "current_law_basis_added",
+                                    "repeal_instrument_added",
+                                    "historical_source_effective_state",
+                                    "historical_source_not_marked_active",
+                                    "repealed_as_active_count",
+                                }
+                            }
+                        )
+                    logger.info(
+                        "Retrieval relation-chain: session=%s added=%d total=%d source=%s repeal=%s current=%s",
+                        session_id,
+                        len(relation_chain_chunks),
+                        len(retrieved_chunks),
+                        relation_chain_policy.get("relation_chain_source_key") if relation_chain_policy else None,
+                        relation_chain_policy.get("relation_chain_repeal_source_key") if relation_chain_policy else None,
+                        relation_chain_policy.get("relation_chain_current_basis_source_key") if relation_chain_policy else None,
+                    )
                 pre_rerank_chunks = list(retrieved_chunks)
         except Exception as exc:
             logger.warning(
@@ -9183,6 +9234,8 @@ async def chat_completions(
         chunks=post_rerank_chunks,
         family_routing_policy=family_routing_policy,
     )
+    if relation_chain_policy:
+        retrieval_verification_features.update(relation_chain_policy)
 
     # ── Orchestrator ─────────────────────────────────────────────────────────
     orchestrator = _get_orchestrator(request)
@@ -9326,6 +9379,7 @@ async def chat_completions(
         article_span_selector=article_span_selector,
         source_family_resolution=source_family_resolution_trace,
         retrieval_verification_features=retrieval_verification_features,
+        relation_chain_policy=relation_chain_policy,
     )
     logger.info(
         "Response timing: session=%s stage=trace_payload latency=%.0fms",
