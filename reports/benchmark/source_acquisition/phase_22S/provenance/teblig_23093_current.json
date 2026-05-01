@@ -1,0 +1,16 @@
+{
+  "source_id": "teblig_23093_current",
+  "raw_file_path": "reports/benchmark/source_acquisition/phase_22S/raw/teblig_23093_current.html",
+  "official_url": "https://www.mevzuat.gov.tr/Metin.Aspx?MevzuatIliski=0&MevzuatKod=9.5.23093",
+  "retrieved_at": "2026-05-01T14:13:14.677047Z",
+  "sha256": "430328ccfcde88bfa52384621f5688c04b571abed97aa18271fa13b42f3ddfc4",
+  "content_type": "text/html; charset=utf-8",
+  "file_size_bytes": "67314",
+  "download_method": "curl -L --fail --silent --show-error",
+  "source_title": "23093 Şirket Kuruluş Sözleşmesinin Ticaret Sicili Müdürlüklerinde İmzalanması Hakkında Tebliğ",
+  "source_family": "TEBLIGLER",
+  "qid_dependency": "TEB-06",
+  "http_code": "200",
+  "status": "downloaded",
+  "failure_reason": ""
+}

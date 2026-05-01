@@ -1,0 +1,16 @@
+{
+  "source_id": "law_6102_current",
+  "raw_file_path": "reports/benchmark/source_acquisition/phase_22S/raw/law_6102_current.pdf",
+  "official_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.6102.pdf",
+  "retrieved_at": "2026-05-01T14:13:14.677047Z",
+  "sha256": "48e9febb8d29e3df29e12d1c4607d1dd3e4fca29aa3b16c4c12b0674e90ce6cd",
+  "content_type": "application/pdf",
+  "file_size_bytes": "3627130",
+  "download_method": "curl -L --fail --silent --show-error",
+  "source_title": "6102 sayılı Türk Ticaret Kanunu m.210",
+  "source_family": "KANUN",
+  "qid_dependency": "TEB-06",
+  "http_code": "200",
+  "status": "downloaded",
+  "failure_reason": ""
+}

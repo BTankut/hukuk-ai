@@ -1,0 +1,16 @@
+{
+  "source_id": "ticaret_sicili_yonetmeligi",
+  "raw_file_path": "reports/benchmark/source_acquisition/phase_22S/raw/ticaret_sicili_yonetmeligi.html",
+  "official_url": "https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=20124093&MevzuatTertip=5&MevzuatTur=21",
+  "retrieved_at": "2026-05-01T14:13:14.677047Z",
+  "sha256": "70ce4c16c7cf4b95d8eeecb8e995a47bdef6638d748e962eb9731790f53051f9",
+  "content_type": "text/html; charset=utf-8",
+  "file_size_bytes": "67267",
+  "download_method": "curl -L --fail --silent --show-error",
+  "source_title": "Ticaret Sicili Yönetmeliği relevant framework provisions",
+  "source_family": "YONETMELIK",
+  "qid_dependency": "TEB-06",
+  "http_code": "200",
+  "status": "downloaded",
+  "failure_reason": ""
+}

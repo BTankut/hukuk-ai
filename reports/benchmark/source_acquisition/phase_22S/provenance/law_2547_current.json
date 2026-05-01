@@ -1,0 +1,16 @@
+{
+  "source_id": "law_2547_current",
+  "raw_file_path": "reports/benchmark/source_acquisition/phase_22S/raw/law_2547_current.pdf",
+  "official_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.2547.pdf",
+  "retrieved_at": "2026-05-01T14:13:14.677047Z",
+  "sha256": "a6483e549fceb2b28625c5eb1229e1c2adeb1783c42c817b00e26ad59d247ff4",
+  "content_type": "application/pdf",
+  "file_size_bytes": "1176626",
+  "download_method": "curl -L --fail --silent --show-error",
+  "source_title": "2547 sayılı Yükseköğretim Kanunu m.54",
+  "source_family": "KANUN",
+  "qid_dependency": "MULGA-01",
+  "http_code": "200",
+  "status": "downloaded",
+  "failure_reason": ""
+}

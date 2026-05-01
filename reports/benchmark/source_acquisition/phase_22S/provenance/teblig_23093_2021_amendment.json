@@ -1,0 +1,16 @@
+{
+  "source_id": "teblig_23093_2021_amendment",
+  "raw_file_path": "reports/benchmark/source_acquisition/phase_22S/raw/teblig_23093_2021_amendment.html",
+  "official_url": "https://www.resmigazete.gov.tr/eskiler/2021/02/20210220-21.htm",
+  "retrieved_at": "2026-05-01T14:13:14.677047Z",
+  "sha256": "6a60ce1f6217d4c686bb59f0d6525da3963e4e81959ec24c769fde68661a879c",
+  "content_type": "text/html",
+  "file_size_bytes": "36529",
+  "download_method": "curl -L --fail --silent --show-error",
+  "source_title": "2021 amendment instrument for 23093 current text control",
+  "source_family": "TEBLIGLER_AMENDMENT",
+  "qid_dependency": "TEB-06",
+  "http_code": "200",
+  "status": "downloaded",
+  "failure_reason": ""
+}
