@@ -1,0 +1,7 @@
+qid,normalized_action,legal_review_file_status,runtime_relabel_allowed,backfill_required,future_fix_allowed,reason
+CBY-04,needs_more_legal_review,missing_filled_review_file,false,unconfirmed,false,"No filled P1 legal review result was provided; CB regulation versus CB decree boundary remains legally unconfirmed."
+KANUN-12,needs_more_legal_review,missing_filled_review_file,false,unconfirmed,false,"No filled P1 legal review result was provided; primary law identity and benchmark rubric status remain unconfirmed."
+KKY-01,needs_more_legal_review,missing_filled_review_file,false,unconfirmed,false,"No filled P1 legal review result was provided; KKY versus generic YONETMELIK taxonomy rule remains unconfirmed."
+KKY-03,needs_more_legal_review,missing_filled_review_file,false,unconfirmed,false,"No filled P1 legal review result was provided; expected KKY source and exclusion of the selected technical regulation remain unconfirmed."
+TUZUK-05,needs_more_legal_review,missing_filled_review_file,false,unconfirmed,false,"No filled P1 legal review result was provided; exact tüzük source/article and corpus backfill requirement remain unconfirmed."
+YON-04,needs_more_legal_review,missing_filled_review_file,false,unconfirmed,false,"No filled P1 legal review result was provided; exact expected yönetmelik identity remains unconfirmed."
