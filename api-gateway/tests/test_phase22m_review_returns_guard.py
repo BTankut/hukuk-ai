@@ -50,6 +50,17 @@ OFFICIAL_COLUMNS = [
 ]
 
 
+P1_ALIAS_COLUMNS = [
+    "qid",
+    "legal_reviewer_decision",
+    "legal_reviewer_notes",
+    "confirmed_expected_source",
+    "taxonomy_effective_action",
+    "runtime_relabel_safe",
+    "backfill_required",
+]
+
+
 def returns_dir(tmp_path: Path) -> Path:
     path = tmp_path / "reports" / "benchmark" / "legal_review_returns"
     path.mkdir(parents=True)
@@ -96,6 +107,20 @@ def test_phase22m_guard_reports_missing_columns(tmp_path: Path) -> None:
 def test_phase22m_guard_passes_with_complete_columns(tmp_path: Path) -> None:
     base = returns_dir(tmp_path)
     write_complete_returns(base)
+
+    code, message = guard.check(tmp_path)
+
+    assert code == 0
+    assert message == "Phase 22M-R2 intake may proceed"
+
+
+def test_phase22m_guard_accepts_p1_return_alias_columns(tmp_path: Path) -> None:
+    base = returns_dir(tmp_path)
+    write_complete_returns(base)
+    write_csv(
+        base / "filled_phase_22M_P1_manual_taxonomy_review_packet.csv",
+        P1_ALIAS_COLUMNS,
+    )
 
     code, message = guard.check(tmp_path)
 

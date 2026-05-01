@@ -6,47 +6,67 @@ from __future__ import annotations
 import argparse
 import csv
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, NamedTuple
+
+
+class RequiredFile(NamedTuple):
+    filename: str
+    column_sets: tuple[set[str], ...]
 
 
 REQUIRED_FILES = {
-    "P0": (
+    "P0": RequiredFile(
         "filled_phase_22M_P0_manual_legal_review_packet.csv",
-        {
-            "qid",
-            "legal_reviewer_decision",
-            "legal_reviewer_notes",
-            "confirmed_expected_source",
-            "confirmed_article_or_clause",
-            "official_source_url",
-            "effective_state_decision",
-            "current_law_relation",
-            "backfill_required",
-        },
+        (
+            {
+                "qid",
+                "legal_reviewer_decision",
+                "legal_reviewer_notes",
+                "confirmed_expected_source",
+                "confirmed_article_or_clause",
+                "official_source_url",
+                "effective_state_decision",
+                "current_law_relation",
+                "backfill_required",
+            },
+        ),
     ),
-    "P1": (
+    "P1": RequiredFile(
         "filled_phase_22M_P1_manual_taxonomy_review_packet.csv",
-        {
-            "qid",
-            "legal_reviewer_decision",
-            "legal_reviewer_notes",
-            "expected_source_if_any",
-            "taxonomy_decision",
-            "runtime_relabel_allowed",
-            "backfill_required",
-        },
+        (
+            {
+                "qid",
+                "legal_reviewer_decision",
+                "legal_reviewer_notes",
+                "expected_source_if_any",
+                "taxonomy_decision",
+                "runtime_relabel_allowed",
+                "backfill_required",
+            },
+            {
+                "qid",
+                "legal_reviewer_decision",
+                "legal_reviewer_notes",
+                "confirmed_expected_source",
+                "taxonomy_effective_action",
+                "runtime_relabel_safe",
+                "backfill_required",
+            },
+        ),
     ),
-    "official_source": (
+    "official_source": RequiredFile(
         "filled_phase_22M_official_source_acquisition_checklist.csv",
-        {
-            "source_title",
-            "official_url",
-            "downloaded",
-            "raw_file_path",
-            "sha256",
-            "parser_ready",
-            "article_boundaries_detectable",
-        },
+        (
+            {
+                "source_title",
+                "official_url",
+                "downloaded",
+                "raw_file_path",
+                "sha256",
+                "parser_ready",
+                "article_boundaries_detectable",
+            },
+        ),
     ),
 }
 
@@ -64,9 +84,9 @@ def return_dir(root: Path) -> Path:
 
 def missing_files(base_dir: Path) -> list[Path]:
     return [
-        base_dir / filename
-        for filename, _required_columns in REQUIRED_FILES.values()
-        if not (base_dir / filename).is_file()
+        base_dir / required_file.filename
+        for required_file in REQUIRED_FILES.values()
+        if not (base_dir / required_file.filename).is_file()
     ]
 
 
@@ -82,12 +102,16 @@ def read_header(path: Path) -> set[str]:
 
 def missing_columns(base_dir: Path) -> dict[str, list[str]]:
     failures: dict[str, list[str]] = {}
-    for label, (filename, required_columns) in REQUIRED_FILES.items():
-        path = base_dir / filename
+    for label, required_file in REQUIRED_FILES.items():
+        path = base_dir / required_file.filename
         actual_columns = read_header(path)
-        missing = sorted(required_columns - actual_columns)
-        if missing:
-            failures[label] = missing
+        missing_by_schema = [
+            sorted(required_columns - actual_columns)
+            for required_columns in required_file.column_sets
+        ]
+        if any(not missing for missing in missing_by_schema):
+            continue
+        failures[label] = min(missing_by_schema, key=len)
     return failures
 
 
