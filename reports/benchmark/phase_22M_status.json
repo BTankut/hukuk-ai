@@ -1,7 +1,7 @@
 {
-  "phase": "22M",
-  "status": "awaiting_official_source_acquisition",
-  "phase22F_allowed": false,
+  "phase": "22S",
+  "status": "official_source_acquisition_complete_phase22F_ready",
+  "phase22F_allowed": true,
   "productization_allowed": false,
   "finetuning_allowed": false,
   "received_return_files": [
@@ -9,6 +9,9 @@
     "reports/benchmark/legal_review_returns/filled_phase_22M_P1_manual_taxonomy_review_packet.csv",
     "reports/benchmark/legal_review_returns/filled_phase_22M_official_source_acquisition_checklist.csv"
   ],
-  "next_phase_when_ready": "Phase 22S Official Source Acquisition",
-  "runtime_work_allowed": false
+  "next_phase_when_ready": "Phase 22F P0 Shadow Backfill Implementation",
+  "runtime_work_allowed": false,
+  "source_acquisition_manifest": "reports/benchmark/phase_22S_official_source_acquisition_manifest.csv",
+  "source_provenance": "reports/benchmark/phase_22S_raw_source_provenance.csv",
+  "parser_readiness_audit": "reports/benchmark/phase_22S_parser_readiness_audit.csv"
 }
