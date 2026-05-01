@@ -1877,37 +1877,39 @@ class TestLawSignalParsing:
 
         assert resolution.historical_scope_detected is True
         assert resolution.current_law_prior_blocked_by_historical_scope is False
-        assert resolution.predicted_family == "mulga_kanun"
+        assert resolution.predicted_family == "tuzuk"
         assert resolution.family_collision_pair == "tuzuk|mulga_kanun"
+        assert resolution.collision_resolution_reason == "historical_non_law_document_type_prefers_named_family"
 
-    def test_source_family_prior_prefers_mulga_for_still_relying_on_old_regulation_risk(self):
+    def test_source_family_prior_prefers_named_regulation_for_still_relying_on_old_regulation_risk(self):
         resolution = _resolve_source_family_prior(
             "Yükseköğretim öğrencisine disiplin cezası verilirken hâlâ eski yönetmeliğe dayanmak güvenli midir?"
         )
 
         assert resolution.historical_scope_detected is True
-        assert resolution.predicted_family == "mulga_kanun"
-        assert "legacy_source_risk_signal" in resolution.family_candidates[0].signals
+        assert resolution.predicted_family == "yonetmelik"
+        assert resolution.collision_resolution_reason == "historical_non_law_document_type_prefers_named_family"
 
-    def test_source_family_prior_prefers_mulga_for_named_regulation_still_reliance_risk(self):
+    def test_source_family_prior_prefers_named_regulation_for_named_regulation_still_reliance_risk(self):
         resolution = _resolve_source_family_prior(
             "Yükseköğretim öğrencisine disiplin cezası verilirken hâlâ "
             "Yükseköğretim Kurumları Öğrenci Disiplin Yönetmeliğine dayanmak güvenli midir?"
         )
 
         assert resolution.historical_scope_detected is True
-        assert resolution.predicted_family == "mulga_kanun"
+        assert resolution.predicted_family == "yonetmelik"
         assert resolution.family_collision_pair.endswith("mulga_kanun")
+        assert resolution.collision_resolution_reason == "historical_non_law_document_type_prefers_named_family"
 
-    def test_source_family_prior_prefers_mulga_for_old_dated_regulation_application_risk(self):
+    def test_source_family_prior_prefers_named_non_law_family_for_old_dated_regulation_application_risk(self):
         resolution = _resolve_source_family_prior(
             "Kurum arşiv hizmetleri için 1988 tarihli Devlet Arşiv Hizmetleri Hakkında "
             "Yönetmeliği esas almak neden hatalıdır?"
         )
 
         assert resolution.historical_scope_detected is True
-        assert resolution.predicted_family == "mulga_kanun"
-        assert "legacy_source_risk_signal" in resolution.family_candidates[0].signals
+        assert resolution.predicted_family == "cb_yonetmelik"
+        assert resolution.collision_resolution_reason == "historical_non_law_document_type_prefers_named_family"
 
     def test_source_family_prior_prefers_mulga_for_temporary_limit_auto_application_risk(self):
         resolution = _resolve_source_family_prior(

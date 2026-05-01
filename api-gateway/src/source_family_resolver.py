@@ -69,6 +69,17 @@ QUERY_EXPANSIONS: dict[str, str] = {
     "uy": "üniversite yönetmeliği öğrenci lisansüstü madde",
 }
 
+YONETMELIK_TERMS = (
+    "yönetmelik",
+    "yonetmelik",
+    "yönetmeliği",
+    "yonetmeligi",
+    "yönetmeliğe",
+    "yonetmelige",
+    "yönetmeliğine",
+    "yonetmeligine",
+)
+
 
 @dataclass(slots=True)
 class SourceFamilyCandidate:
@@ -617,11 +628,9 @@ def _looks_like_scenario_current_law_question(normalized_query: str) -> bool:
 
 
 def _names_legacy_non_law_document_type(normalized_query: str) -> bool:
-    if _looks_like_direct_legacy_source_application(normalized_query):
-        return False
     if contains_any(normalized_query, ("eski kanun", "mulga kanun", "yururlukten kaldirilmis kanun")):
         return False
-    return contains_any(
+    non_law_document_type_named = contains_any(
         normalized_query,
         (
             "tuzuk",
@@ -629,10 +638,45 @@ def _names_legacy_non_law_document_type(normalized_query: str) -> bool:
             "tuzukleri",
             "khk",
             "kanun hukmunde kararname",
-            "yonetmelik",
-            "yonetmeligi",
+            *YONETMELIK_TERMS,
         ),
     )
+    if _looks_like_direct_legacy_source_application(normalized_query) and not non_law_document_type_named:
+        return False
+    return non_law_document_type_named
+
+
+def _preferred_legacy_non_law_family(
+    scores: dict[str, dict[str, object]],
+    *,
+    normalized_query: str,
+    central_higher_education_regulation: bool,
+) -> str | None:
+    """Return the named non-law family for historical/repealed-source questions.
+
+    "Mülga" is a temporal state, not a license to collapse explicitly named
+    old regulations, bylaws, or KHKs into the repealed-law family. This keeps
+    source selection tied to the document type named by the user while still
+    preserving mulga_kanun as a fallback family.
+    """
+
+    if not _names_legacy_non_law_document_type(normalized_query):
+        return None
+    if central_higher_education_regulation and _has_signal(scores, "yonetmelik"):
+        return "yonetmelik"
+    if _has_signal(scores, "khk"):
+        return "khk"
+    if _has_signal(scores, "tuzuk"):
+        return "tuzuk"
+    if _has_signal(scores, "cb_yonetmelik"):
+        return "cb_yonetmelik"
+    if _has_signal(scores, "kky"):
+        return "kky"
+    if _has_signal(scores, "uy") and not _has_signal(scores, "yonetmelik"):
+        return "uy"
+    if _has_signal(scores, "yonetmelik"):
+        return "yonetmelik"
+    return None
 
 
 def _domain_query_expansions(normalized_query: str, predicted_family: str | None) -> list[str]:
@@ -882,6 +926,10 @@ def _apply_family_collision_rules(
         )
         or (
             contains_any(normalized_query, ("yok", "yuksekogretim"))
+            and contains_any(normalized_query, YONETMELIK_TERMS)
+        )
+        or (
+            contains_any(normalized_query, ("yok", "yuksekogretim"))
             and contains_any(
                 normalized_query,
                 (
@@ -894,6 +942,36 @@ def _apply_family_collision_rules(
             )
         )
     )
+
+    legacy_non_law_preferred_family = _preferred_legacy_non_law_family(
+        scores,
+        normalized_query=normalized_query,
+        central_higher_education_regulation=central_higher_education_regulation,
+    )
+    if historical_scope_detected and _has_signal(scores, "mulga_kanun") and legacy_non_law_preferred_family:
+        competing_families = tuple(
+            family
+            for family in (
+                "khk",
+                "tuzuk",
+                "yonetmelik",
+                "cb_yonetmelik",
+                "kky",
+                "uy",
+            )
+            if family in scores
+        )
+        apply_collision(
+            pair="|".join((*competing_families, "mulga_kanun")),
+            preferred_family=legacy_non_law_preferred_family,
+            preferred_boost=5.0,
+            fallback_families=("mulga_kanun",),
+            fallback_boost=1.0,
+            demoted_families=("mulga_kanun",),
+            demote_amount=3.0,
+            reason="historical_non_law_document_type_prefers_named_family",
+        )
+        return collision_detected, collision_pair, resolution_reason
 
     if repealed_scope_detected and (_has_signal(scores, "kanun") or _has_signal(scores, "mulga_kanun")):
         apply_collision(
@@ -1123,7 +1201,6 @@ def resolve_source_family_prior(
     legacy_source_risk_detected = (
         _looks_like_legacy_source_risk_question(normalized_query)
         and not current_answer_over_legacy_context
-        and not legacy_non_law_document_type_named
     )
     historical_scope_detected = (
         repealed_scope_detected
@@ -1340,7 +1417,7 @@ def resolve_source_family_prior(
     )
     if contains_any(normalized_query, university_terms):
         _add(scores, "uy", 3.0, "university_namespace_signal")
-        if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
+        if contains_any(normalized_query, YONETMELIK_TERMS):
             _add(scores, "uy", 3.0, "university_regulation_signal")
         if contains_any(normalized_query, ("mazeret sinavi", "tek ders", "butunleme", "sinav hakki")):
             _add(scores, "uy", 5.0, "university_exam_rights_signal")
@@ -1386,7 +1463,7 @@ def resolve_source_family_prior(
     )
     if contains_any(normalized_query, agency_terms):
         _add(scores, "kky", 2.5, "agency_or_board_namespace_signal")
-        if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
+        if contains_any(normalized_query, YONETMELIK_TERMS):
             _add(scores, "kky", 2.5, "agency_regulation_signal")
         if contains_any(normalized_query, ("bankacilik", "elektronik bankacilik", "bilgi sistemleri", "dis hizmet")):
             _add(scores, "kky", 5.0, "banking_supervision_regulation_signal")
@@ -1398,7 +1475,7 @@ def resolve_source_family_prior(
         if contains_any(normalized_query, ("btk", "mobil operator", "abonelik", "cayma bedeli", "tarife degisikligi")):
             _add(scores, "kky", 5.0, "telecom_subscription_regulation_signal")
 
-    if contains_any(normalized_query, ("yönetmelik", "yonetmelik", "yönetmeliği", "yonetmeligi")):
+    if contains_any(normalized_query, YONETMELIK_TERMS):
         _add(scores, "yonetmelik", 3.0, "generic_regulation_signal")
     if contains_any(
         normalized_query,
