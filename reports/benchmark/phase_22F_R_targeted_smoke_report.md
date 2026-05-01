@@ -82,7 +82,7 @@ pass_proxy: 7/13
 fail_proxy: 6/13
 average_score_0_10_proxy: 6.63
 TEBLIGLER: 7/8 PASS
-MULGA: 0/5 PASS
+MULGA: 0/5 FAIL
 repealed_as_active_count: 1
 TEB-06: PASS
 ```
