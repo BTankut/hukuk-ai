@@ -1,0 +1,14 @@
+{
+  "phase": "22M",
+  "status": "awaiting_legal_review_returns",
+  "phase22F_allowed": false,
+  "productization_allowed": false,
+  "finetuning_allowed": false,
+  "required_return_files": [
+    "reports/benchmark/legal_review_returns/filled_phase_22M_P0_manual_legal_review_packet.csv",
+    "reports/benchmark/legal_review_returns/filled_phase_22M_P1_manual_taxonomy_review_packet.csv",
+    "reports/benchmark/legal_review_returns/filled_phase_22M_official_source_acquisition_checklist.csv"
+  ],
+  "next_phase_when_ready": "Phase 22M-R2",
+  "runtime_work_allowed": false
+}
