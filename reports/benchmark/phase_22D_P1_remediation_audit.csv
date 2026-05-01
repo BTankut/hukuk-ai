@@ -1,0 +1,7 @@
+qid,phase22d_result,score_0_10_proxy,pass_fail,selected_document_id,selected_main_span_id,source_family_canonical,expected_source_family_canonical,root_cause,decision
+CBY-04,no_runtime_patch,6.85,FAIL,DEVLET ARŞİVLERİ BAŞKANLIĞI HAKKINDA CUMHURBAŞKANLIĞI KARARNAMESİ (KARARNAME NUMARASI: 11),11 m.10/f.0,CB_KARARNAME,CB_YONETMELIK,family_boundary_conflict,manual_legal_review_required
+KANUN-12,no_runtime_patch,1.45,FAIL,ARAŞTIRMA REAKTÖRLERİNİN GÜVENLİĞİ İÇİN ÖZEL İLKELER YÖNETMELİĞİ,12879 m.15/f.0,KKY,KANUN,wrong_document_selection,defer_not_safe_to_fix
+KKY-01,no_runtime_patch,6.65,FAIL,BANKALARIN BİLGİ SİSTEMLERİ VE ELEKTRONİK BANKACILIK HİZMETLERİ HAKKINDA YÖNETMELİK,34360 m.1/f.0,YONETMELIK,KKY,kky_yonetmelik_family_boundary,manual_legal_review_required
+KKY-03,no_runtime_patch,1.45,FAIL,ARAŞTIRMA REAKTÖRLERİNİN GÜVENLİĞİ İÇİN ÖZEL İLKELER YÖNETMELİĞİ,12879 m.4/f.0,YONETMELIK,KKY,wrong_document_selection,defer_not_safe_to_fix
+TUZUK-05,no_runtime_patch,3.25,FAIL,GIDA MADDELERİNİN VE UMUMİ SAĞLIĞI İLGİLENDİREN EŞYA VE LEVAZIMIN HUSUSİ VASIFLARINI GÖSTEREN TÜZÜK,315481 m.0/f.0,TUZUK,TUZUK,wrong_document_or_article_zero_selection,defer_not_safe_to_fix
+YON-04,no_runtime_patch,3.25,FAIL,NÜKLEER GÜÇ SANTRALLERİNİN GÜVENLİĞİ İÇİN ÖZEL İLKELER YÖNETMELİĞİ,12536 m.23/f.0,YONETMELIK,YONETMELIK,wrong_document_selection,defer_not_safe_to_fix
