@@ -1549,10 +1549,8 @@ def _s7m_historical_repeal_proof_answer(
         support_count += 1
         if support_count >= 2:
             break
-    lines.append(
-        "- Sonuç: Cevap, tarihsel/mülga kullanım riski ve seçili kanıtla sınırlıdır. "
-        f"Gerekçe: {reason}."
-    )
+    del reason
+    lines.append("- Sonuç: Cevap, tarihsel/mülga kullanım riski ve seçili kanıtla sınırlıdır.")
     return "\n".join(lines)
 
 
