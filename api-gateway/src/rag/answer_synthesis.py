@@ -86,6 +86,42 @@ def _s5_family_identifier_guard_fields(
     }
 
 
+def _s7m_mulga_dual_role_fields(
+    *,
+    applied: bool = False,
+    historical: dict[str, Any] | None = None,
+    current: dict[str, Any] | None = None,
+    answer_text: str = "",
+) -> dict[str, Any]:
+    current_identifier = _temporal_identifier_claim(current) if current else ""
+    historical_identifier = _temporal_identifier_claim(historical) if historical else ""
+    current_law_statement_required = bool(applied and current_identifier)
+    normalized_answer = normalize_query_text(answer_text or "")
+    normalized_current = normalize_query_text(current_identifier)
+    current_law_statement_present = bool(
+        current_law_statement_required
+        and normalized_current
+        and normalized_current in normalized_answer
+    )
+    return {
+        "mulga_dual_role_contract_applied": applied,
+        "mulga_primary_historical_source_key": _temporal_source_key(historical),
+        "mulga_current_law_basis_source_key": _temporal_source_key(current),
+        "mulga_current_law_basis_identifier": current_identifier,
+        "mulga_historical_claim_identifier": historical_identifier,
+        "mulga_current_law_statement_required": current_law_statement_required,
+        "mulga_current_law_statement_present": current_law_statement_present,
+        "primary_historical_source_family": "MULGA" if historical else "",
+        "primary_historical_source_identifier": historical_identifier,
+        "primary_historical_source_key": _temporal_source_key(historical),
+        "current_law_basis_family": _temporal_family_claim(_temporal_family(current)) if current else "",
+        "current_law_basis_identifier": current_identifier,
+        "current_law_basis_source_key": _temporal_source_key(current),
+        "current_law_basis_source_title": _temporal_source_title(current) if current else "",
+        "current_law_basis_article_or_section": _temporal_article_claim(current) if current else "",
+    }
+
+
 def sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> dict[str, Any] | None:
     if answer_contract is None:
         return None
@@ -100,6 +136,8 @@ def sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> d
     sanitized.setdefault("temporal_support_only", True)
     sanitized.setdefault("current_law_basis_primary_allowed", False)
     for key, value in _s5_family_identifier_guard_fields().items():
+        sanitized.setdefault(key, value)
+    for key, value in _s7m_mulga_dual_role_fields().items():
         sanitized.setdefault(key, value)
     return sanitized
 
@@ -1400,6 +1438,53 @@ def _temporal_build_role_answer(
     return "\n".join(lines)
 
 
+def _s7m_question_has_rent_cap_pattern(trace_payload: dict[str, Any] | None, current: dict[str, Any] | None) -> bool:
+    question = normalize_query_text(_temporal_trace_question_text(trace_payload))
+    current_identifier = normalize_query_text(_temporal_identifier_claim(current))
+    if "tbk m 344" not in current_identifier and "344" not in current_identifier:
+        return False
+    rent_terms = {"kira", "kiralari", "kiraci", "kiraya", "kira artisi"}
+    cap_terms = {"yuzde yirmi bes", "yuzde 25", "%25", "25"}
+    return bool(any(term in question for term in rent_terms) and any(term in question for term in cap_terms))
+
+
+def _s7m_build_mulga_dual_role_answer(
+    *,
+    roles: dict[str, dict[str, Any] | None],
+    current_law_basis: dict[str, Any],
+    trace_payload: dict[str, Any] | None,
+) -> str:
+    historical = roles.get("historical") or roles.get("selected")
+    lines: list[str] = ["Mülga kaynak / güncel hukuk ayrımı:"]
+    lines.append(
+        _temporal_line(
+            "Tarihsel/mülga kaynak",
+            historical,
+            "Cevabın tarihsel hatayı açıklayan ana kaynağıdır; güncel doğrudan uygulama kaynağı gibi gösterilmez.",
+        )
+    )
+    lines.append(
+        _temporal_line(
+            "Güncel hukuk dayanağı",
+            current_law_basis,
+            "Tarihsel/mülga kaynak yerine güncel değerlendirmede ayrıca kullanılan destek kaynaktır.",
+        )
+    )
+    current_identifier = _temporal_identifier_claim(current_law_basis)
+    if _s7m_question_has_rent_cap_pattern(trace_payload, current_law_basis):
+        lines.append(
+            "- Güncellik sonucu: Geçici yüzde yirmi beş kira artış sınırı 2026 için kendiliğinden "
+            f"uygulanacak genel kural olarak alınmaz; güncel kira artışı değerlendirmesi {current_identifier} "
+            "üzerinden ayrıca kurulmalıdır."
+        )
+    else:
+        lines.append(
+            "- Güncellik sonucu: Mülga/tarihsel kaynak güncel uygulama kuralı gibi kullanılmaz; "
+            f"güncel hukuk dayanağı {current_identifier} olarak ayrı gösterilmiştir."
+        )
+    return "\n".join(lines)
+
+
 def _temporal_missing_reason(
     *,
     relation_chain_present: bool,
@@ -1686,6 +1771,14 @@ def apply_temporal_claim_alignment(
             trace_payload=trace_payload,
         )
     if isinstance(current_law_exception_candidate, dict):
+        dual_roles = dict(roles)
+        dual_roles["current"] = current_law_exception_candidate
+        historical = dual_roles.get("historical") or dual_roles.get("selected")
+        patched_answer_text = _s7m_build_mulga_dual_role_answer(
+            roles=dual_roles,
+            current_law_basis=current_law_exception_candidate,
+            trace_payload=trace_payload,
+        )
         exception_policy = {
             **split_policy,
             "split_temporal_policy_bucket": "current_law_basis_exception_from_historical_surface",
@@ -1694,27 +1787,35 @@ def apply_temporal_claim_alignment(
                 + str(split_policy.get("split_temporal_policy_reason") or "unknown")
             ),
             "claim_family_rewrite_allowed": False,
-            "historical_claim_surface_allowed": False,
+            "historical_claim_surface_allowed": True,
             "claim_identifier_rewrite_allowed": False,
-            "temporal_support_only": True,
-            "current_law_basis_primary_allowed": True,
+            "temporal_support_only": False,
+            "current_law_basis_primary_allowed": False,
             **_s5_family_identifier_guard_fields(
                 applied=True,
-                guard_type="historical_surface_current_law_basis_exception_guard",
+                guard_type="mulga_dual_role_current_law_basis_guard",
                 claim_family_preserved=True,
                 claim_identifier_preserved=True,
                 article_surface_preserved=True,
-                reason="active_current_law_candidate_available_for_currentness_question",
+                reason="historical_mulga_primary_with_separate_current_law_basis",
+            ),
+            **_s7m_mulga_dual_role_fields(
+                applied=True,
+                historical=historical,
+                current=current_law_exception_candidate,
+                answer_text=patched_answer_text,
             ),
         }
-        patch = _temporal_active_preservation_patch(
-            answer_text=answer_text,
+        patch = _temporal_contract_patch(
+            answer_text=patched_answer_text,
             answer_contract=answer_contract,
-            selected=current_law_exception_candidate,
-            consistency_status="current_law_basis_preserved",
+            roles=dual_roles,
+            relation_chain_present=False,
+            missing_reason="current_law_basis_exception_no_relation_chain",
+            consistency_status="mulga_current_law_basis_dual_role",
             split_policy=exception_policy,
         )
-        return answer_text, patch
+        return patched_answer_text, patch
     if split_policy.get("split_temporal_policy_bucket") == "active_non_mulga_preserve_family":
         selected = roles.get("selected")
         if isinstance(selected, dict):

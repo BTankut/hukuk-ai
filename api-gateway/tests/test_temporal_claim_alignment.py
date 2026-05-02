@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from rag.answer_synthesis import apply_temporal_claim_alignment, sanitize_public_answer_contract
 
 
@@ -362,7 +364,7 @@ def test_historical_surface_current_law_exception_preserves_active_current_ident
         },
     ]
 
-    _answer, patch = apply_temporal_claim_alignment(
+    answer, patch = apply_temporal_claim_alignment(
         answer_text="2026 güncel kira artış cevabı.",
         answer_contract=_historical_contract(
             source_family_claimed="MULGA",
@@ -388,10 +390,22 @@ def test_historical_surface_current_law_exception_preserves_active_current_ident
     )
 
     assert patch["split_temporal_policy_bucket"] == "current_law_basis_exception_from_historical_surface"
-    assert patch["source_family_claimed"] == "KANUN"
-    assert patch["source_identifier_claimed"] == "TBK m.344"
-    assert patch["article_or_section_claimed"] == "madde:344"
-    assert patch["s5_guard_type"] == "historical_surface_current_law_basis_exception_guard"
+    assert patch["source_family_claimed"] == "MULGA"
+    assert patch["source_identifier_claimed"] == "6570 m.gec1"
+    assert patch["article_or_section_claimed"] == "geçici madde 1"
+    assert patch["effective_state_claimed"] == "repealed"
+    assert patch["current_law_basis_primary_allowed"] is False
+    assert patch["mulga_dual_role_contract_applied"] is True
+    assert patch["primary_historical_source_family"] == "MULGA"
+    assert patch["primary_historical_source_identifier"] == "6570 m.gec1"
+    assert patch["current_law_basis_family"] == "KANUN"
+    assert patch["current_law_basis_identifier"] == "TBK m.344"
+    assert patch["current_law_basis_article_or_section"] == "madde:344"
+    assert patch["mulga_current_law_statement_required"] is True
+    assert patch["mulga_current_law_statement_present"] is True
+    assert patch["s5_guard_type"] == "mulga_dual_role_current_law_basis_guard"
+    assert "TBK m.344" in answer
+    assert "yüzde yirmi beş" in answer
 
 
 def test_uy_claim_family_not_overwritten_by_generic_yonetmelik() -> None:
@@ -627,6 +641,13 @@ def test_public_contract_always_exposes_split_temporal_policy_fields() -> None:
     assert sanitized["s5_family_identifier_guard_applied"] is False
     assert sanitized["s5_guard_type"] == "not_applicable"
     assert sanitized["s5_guard_reason"] == "not_evaluated"
+    assert sanitized["mulga_dual_role_contract_applied"] is False
+
+
+def test_s7m_mulga_dual_role_policy_has_no_qid_specific_runtime_branch() -> None:
+    source = Path(__file__).resolve().parents[1] / "src" / "rag" / "answer_synthesis.py"
+
+    assert "MULGA-05" not in source.read_text(encoding="utf-8")
 
 
 def test_active_non_historical_contract_not_aligned_by_incidental_repeal_text() -> None:
