@@ -470,6 +470,40 @@ _TEMPORAL_REPEALED_MODES = {
 _TEMPORAL_REPEALED_STATES = {"repealed", "historical", "historical_repealed"}
 _TEMPORAL_REPEAL_STATES = {"repeal_instrument"}
 _TEMPORAL_ACTIVE_STATES = {"active", "amended"}
+_SPLIT_ACTIVE_NON_MULGA_FAMILIES = {
+    "kanun",
+    "khk",
+    "teblig",
+    "tebligler",
+    "tuzuk",
+    "uy",
+    "kky",
+    "yonetmelik",
+    "cb_genelge",
+    "cb_karar",
+    "cb_kararname",
+    "cb_yonetmelik",
+}
+_SPLIT_ACTIVE_NON_REPEALED_STATES = {"active", "current", "amended", "unknown_non_repealed", "unknown"}
+_SPLIT_HISTORICAL_RISK_TERMS = (
+    "hatali",
+    "hata",
+    "risk",
+    "riskli",
+    "guvenli",
+    "dogrudan",
+    "dayanmak",
+    "esas almak",
+    "hukum kurmak",
+)
+_SPLIT_HISTORICAL_CONTEXT_TERMS = (
+    "eski",
+    "mulga",
+    "tarihsel",
+    "tarihli",
+    "yururlukten kaldir",
+    "yururlukten kalk",
+)
 _TEMPORAL_REPEAL_TEXT_RE = re.compile(
     r"\b("
     r"m[uü]lga|"
@@ -649,10 +683,38 @@ def _temporal_family(item: dict[str, Any] | None) -> str:
     )
 
 
+def _temporal_family_claim(family: str) -> str:
+    aliases = {
+        "teblig": "TEBLIGLER",
+        "tebligler": "TEBLIGLER",
+        "mulga_kanun": "MULGA",
+        "mulga": "MULGA",
+        "cb_genelge": "CB_GENELGE",
+        "cb_karar": "CB_KARAR",
+        "cb_kararname": "CB_KARARNAME",
+        "cb_yonetmelik": "CB_YONETMELIK",
+    }
+    normalized = _temporal_normalized(family)
+    if not normalized:
+        return "UNKNOWN"
+    return aliases.get(normalized, normalized.upper())
+
+
 def _temporal_effective_state(item: dict[str, Any] | None) -> str:
     if not isinstance(item, dict):
         return ""
     return _temporal_normalized(item.get("effective_state") or item.get("historical_source_effective_state"))
+
+
+def _temporal_effective_state_claim(item: dict[str, Any] | None) -> str:
+    state = _temporal_effective_state(item)
+    if state in {"active", "current"}:
+        return "active"
+    if state == "amended":
+        return "amended"
+    if state in _TEMPORAL_REPEALED_STATES or state in _TEMPORAL_REPEAL_STATES:
+        return "repealed"
+    return "unknown"
 
 
 def _temporal_item_role(item: dict[str, Any]) -> str:
@@ -717,6 +779,164 @@ def _temporal_collect_evidence(
         seen.add(marker)
         deduped.append(item)
     return deduped
+
+
+def _temporal_trace_parent(trace_payload: dict[str, Any] | None, key: str) -> dict[str, Any]:
+    if not isinstance(trace_payload, dict):
+        return {}
+    direct = trace_payload.get(key)
+    if isinstance(direct, dict):
+        return direct
+    for parent_key in ("retrieval", "parsed_query", "query_signals", "context_assembly"):
+        parent = trace_payload.get(parent_key)
+        if isinstance(parent, dict) and isinstance(parent.get(key), dict):
+            return parent[key]
+    return {}
+
+
+def _temporal_trace_question_text(trace_payload: dict[str, Any] | None) -> str:
+    if not isinstance(trace_payload, dict):
+        return ""
+    direct = _temporal_text(trace_payload.get("question_raw") or trace_payload.get("question"))
+    if direct:
+        return direct
+    for parent_key in ("query_signals", "parsed_query", "retrieval"):
+        parent = trace_payload.get(parent_key)
+        if not isinstance(parent, dict):
+            continue
+        value = _temporal_first_text(parent.get("user_query"), parent.get("retrieval_query"), parent.get("enriched_query"))
+        if value:
+            return value
+    return ""
+
+
+def _split_trace_family_values(family_resolution: dict[str, Any]) -> list[str]:
+    values: list[str] = []
+    for key in ("predicted_family", "expected_family_prior"):
+        values.append(_temporal_normalized(family_resolution.get(key)))
+    for key in ("preferred_families", "fallback_families", "routing_families"):
+        raw = family_resolution.get(key)
+        if isinstance(raw, list):
+            values.extend(_temporal_normalized(item) for item in raw)
+    return [value for value in values if value]
+
+
+def _split_family_candidate_has_signal(family_resolution: dict[str, Any], signal: str) -> bool:
+    candidates = family_resolution.get("family_candidates")
+    if not isinstance(candidates, list):
+        return False
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        signals = candidate.get("signals")
+        if isinstance(signals, list) and signal in {str(item) for item in signals}:
+            return True
+    return False
+
+
+def _split_query_has_historical_surface_intent(question: str) -> bool:
+    normalized = normalize_query_text(question or "")
+    if not normalized:
+        return False
+    has_risk_term = any(term in normalized for term in _SPLIT_HISTORICAL_RISK_TERMS)
+    has_context_term = any(term in normalized for term in _SPLIT_HISTORICAL_CONTEXT_TERMS)
+    has_old_year = any(int(match.group(0)) < 2018 for match in re.finditer(r"\b(?:19|20)\d{2}\b", normalized))
+    return bool(has_risk_term and (has_context_term or has_old_year))
+
+
+def _split_temporal_historical_surface_intent(
+    *,
+    answer_contract: dict[str, Any],
+    selected: dict[str, Any] | None,
+    trace_payload: dict[str, Any] | None,
+) -> tuple[bool, str]:
+    selected_family = _temporal_family(selected)
+    selected_state = _temporal_effective_state(selected)
+    if selected_state in _TEMPORAL_REPEALED_STATES or "mulga" in selected_family:
+        return True, "selected_evidence_historical_or_repealed"
+
+    family_resolution = _temporal_trace_parent(trace_payload, "source_family_resolution")
+    selector = _temporal_trace_parent(trace_payload, "article_span_selector")
+    question = _temporal_trace_question_text(trace_payload)
+    if _temporal_truthy(selector.get("legacy_candidate_preferred")):
+        return True, "legacy_candidate_preferred"
+    if _split_family_candidate_has_signal(family_resolution, "legacy_source_risk_signal"):
+        return True, "legacy_source_risk_signal"
+    if _temporal_truthy(family_resolution.get("repealed_scope_detected")) and _split_query_has_historical_surface_intent(question):
+        return True, "repealed_scope_with_historical_surface_intent"
+    family_values = set(_split_trace_family_values(family_resolution))
+    if {"mulga", "mulga_kanun"} & family_values and _split_query_has_historical_surface_intent(question):
+        return True, "mulga_family_context_with_historical_surface_intent"
+    if _split_query_has_historical_surface_intent(question):
+        return True, "query_historical_surface_intent"
+    if (
+        _temporal_normalized(answer_contract.get("source_family_claimed")) == "mulga"
+        and selected_state not in _SPLIT_ACTIVE_NON_REPEALED_STATES
+    ):
+        return True, "contract_mulga_with_non_active_selected_evidence"
+    return False, "no_historical_surface_intent"
+
+
+def _split_temporal_policy(
+    *,
+    answer_contract: dict[str, Any],
+    roles: dict[str, dict[str, Any] | None],
+    relation_chain_present: bool,
+    missing_reason: str,
+    trace_payload: dict[str, Any] | None,
+) -> dict[str, Any]:
+    selected = roles.get("selected")
+    selected_family = _temporal_family(selected)
+    selected_state = _temporal_effective_state(selected) or "unknown"
+    historical_surface_intent, intent_reason = _split_temporal_historical_surface_intent(
+        answer_contract=answer_contract,
+        selected=selected,
+        trace_payload=trace_payload,
+    )
+    if relation_chain_present and missing_reason == "none":
+        return {
+            "split_temporal_policy_applied": True,
+            "claim_family_rewrite_allowed": "controlled",
+            "historical_claim_surface_allowed": True,
+            "split_temporal_policy_bucket": "relation_chain_historical_three_part_claim",
+            "split_temporal_policy_reason": "complete_relation_chain",
+            "claim_identifier_rewrite_allowed": "controlled",
+            "temporal_support_only": False,
+        }
+    if (
+        not relation_chain_present
+        and selected_family in _SPLIT_ACTIVE_NON_MULGA_FAMILIES
+        and selected_state in _SPLIT_ACTIVE_NON_REPEALED_STATES
+        and not historical_surface_intent
+    ):
+        return {
+            "split_temporal_policy_applied": True,
+            "claim_family_rewrite_allowed": False,
+            "historical_claim_surface_allowed": False,
+            "split_temporal_policy_bucket": "active_non_mulga_preserve_family",
+            "split_temporal_policy_reason": f"active_selected_evidence_without_relation_chain:{intent_reason}",
+            "claim_identifier_rewrite_allowed": False,
+            "temporal_support_only": True,
+        }
+    if not relation_chain_present and historical_surface_intent:
+        return {
+            "split_temporal_policy_applied": True,
+            "claim_family_rewrite_allowed": "limited_to_historical_surface",
+            "historical_claim_surface_allowed": True,
+            "split_temporal_policy_bucket": "legacy_mulga_historical_surface_without_relation_chain",
+            "split_temporal_policy_reason": intent_reason,
+            "claim_identifier_rewrite_allowed": "limited_to_historical_surface",
+            "temporal_support_only": False,
+        }
+    return {
+        "split_temporal_policy_applied": False,
+        "claim_family_rewrite_allowed": False,
+        "historical_claim_surface_allowed": False,
+        "split_temporal_policy_bucket": "not_applicable",
+        "split_temporal_policy_reason": intent_reason,
+        "claim_identifier_rewrite_allowed": False,
+        "temporal_support_only": True,
+    }
 
 
 def _temporal_relation_chain_present(evidence: list[dict[str, Any]]) -> bool:
@@ -871,6 +1091,7 @@ def _temporal_contract_patch(
     relation_chain_present: bool,
     missing_reason: str,
     consistency_status: str,
+    split_policy: dict[str, Any],
 ) -> dict[str, Any]:
     historical = roles.get("historical") or roles.get("selected")
     repeal = roles.get("repeal")
@@ -917,6 +1138,7 @@ def _temporal_contract_patch(
         "answer_suppressed_due_to_evidence_gap": False,
         "support_insufficient_for_specific_claim": False,
         "insufficient_canonical_span_evidence": False,
+        **split_policy,
     }
     try:
         current_confidence = int(answer_contract.get("confidence_0_100") or 0)
@@ -924,6 +1146,65 @@ def _temporal_contract_patch(
         current_confidence = 0
     patch["confidence_0_100"] = min(max(current_confidence, 40), 60)
     return patch
+
+
+def _temporal_active_preservation_patch(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any],
+    selected: dict[str, Any],
+    consistency_status: str,
+    split_policy: dict[str, Any],
+) -> dict[str, Any]:
+    selected_family = _temporal_family(selected)
+    source_family = _temporal_family_claim(selected_family)
+    source_identifier = _temporal_identifier_claim(selected)
+    article_or_section = _temporal_article_claim(selected)
+    effective_state = _temporal_effective_state_claim(selected)
+    answer_mode = _temporal_text(answer_contract.get("answer_mode"))
+    if answer_mode in _TEMPORAL_REPEALED_MODES or not answer_mode:
+        answer_mode = "qualified_answer"
+    grounding_status = _temporal_text(answer_contract.get("grounding_status")) or "partially_grounded"
+    needs_manual_review = bool(answer_contract.get("needs_manual_review"))
+    unsupported_reason = answer_contract.get("unsupported_reason")
+    if unsupported_reason in {"temporal_mismatch", "source_validity_unknown"}:
+        unsupported_reason = None
+    final_reason = (
+        f"dayanak={source_family}:{source_identifier}; madde={article_or_section}; "
+        f"yururluk={effective_state}; grounding={grounding_status}; sonuc={answer_mode}; "
+        f"belirsizlik={'var' if needs_manual_review else 'yok'}"
+    )
+    try:
+        current_confidence = int(answer_contract.get("confidence_0_100") or 0)
+    except (TypeError, ValueError):
+        current_confidence = 0
+    return {
+        "temporal_claim_alignment_applied": True,
+        "temporal_claim_primary_role": "selected_active_source",
+        "temporal_claim_historical_source_key": "",
+        "temporal_claim_repeal_source_key": "",
+        "temporal_claim_current_basis_source_key": "",
+        "temporal_claim_consistency_status": consistency_status,
+        "temporal_claim_missing_reason": "support_only_active_non_mulga_preservation",
+        "temporal_claim_historical_identifier": "",
+        "temporal_claim_repeal_identifier": "",
+        "temporal_claim_current_basis_identifier": "",
+        "answer_text": answer_text,
+        "final_answer": answer_text,
+        "answer_mode": answer_mode,
+        "grounding_status": grounding_status,
+        "source_family_claimed": source_family,
+        "source_title_claimed": _temporal_source_title(selected),
+        "source_identifier_claimed": source_identifier,
+        "article_or_section_claimed": article_or_section,
+        "effective_state_claimed": effective_state,
+        "temporal_qualification": _temporal_first_text(answer_contract.get("temporal_qualification"), "current"),
+        "final_reason": final_reason,
+        "needs_manual_review": needs_manual_review,
+        "unsupported_reason": unsupported_reason,
+        "confidence_0_100": current_confidence,
+        **split_policy,
+    }
 
 
 def apply_temporal_claim_alignment(
@@ -942,6 +1223,13 @@ def apply_temporal_claim_alignment(
             "temporal_claim_current_basis_source_key": "",
             "temporal_claim_consistency_status": "no_historical_context",
             "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+            "split_temporal_policy_applied": False,
+            "claim_family_rewrite_allowed": False,
+            "historical_claim_surface_allowed": False,
+            "split_temporal_policy_bucket": "not_applicable",
+            "split_temporal_policy_reason": "no_contract",
+            "claim_identifier_rewrite_allowed": False,
+            "temporal_support_only": True,
         }
     evidence = _temporal_collect_evidence(assembled_evidence=assembled_evidence, trace_payload=trace_payload)
     relation_chain_present = _temporal_relation_chain_present(evidence)
@@ -954,6 +1242,13 @@ def apply_temporal_claim_alignment(
             "temporal_claim_current_basis_source_key": "",
             "temporal_claim_consistency_status": "no_historical_context",
             "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+            "split_temporal_policy_applied": False,
+            "claim_family_rewrite_allowed": False,
+            "historical_claim_surface_allowed": False,
+            "split_temporal_policy_bucket": "not_applicable",
+            "split_temporal_policy_reason": "no_historical_or_repealed_evidence",
+            "claim_identifier_rewrite_allowed": False,
+            "temporal_support_only": True,
         }
     roles = _temporal_roles(evidence)
     if roles.get("historical") is None and roles.get("repeal") is None and roles.get("selected") is None:
@@ -965,6 +1260,13 @@ def apply_temporal_claim_alignment(
             "temporal_claim_current_basis_source_key": "",
             "temporal_claim_consistency_status": "no_historical_context",
             "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+            "split_temporal_policy_applied": False,
+            "claim_family_rewrite_allowed": False,
+            "historical_claim_surface_allowed": False,
+            "split_temporal_policy_bucket": "not_applicable",
+            "split_temporal_policy_reason": "no_historical_or_repealed_evidence",
+            "claim_identifier_rewrite_allowed": False,
+            "temporal_support_only": True,
         }
     missing_reason = _temporal_missing_reason(relation_chain_present=relation_chain_present, roles=roles)
     consistency_status = _temporal_status(
@@ -973,6 +1275,24 @@ def apply_temporal_claim_alignment(
         contract=answer_contract,
         roles=roles,
     )
+    split_policy = _split_temporal_policy(
+        answer_contract=answer_contract,
+        roles=roles,
+        relation_chain_present=relation_chain_present,
+        missing_reason=missing_reason,
+        trace_payload=trace_payload,
+    )
+    if split_policy.get("split_temporal_policy_bucket") == "active_non_mulga_preserve_family":
+        selected = roles.get("selected")
+        if isinstance(selected, dict):
+            patch = _temporal_active_preservation_patch(
+                answer_text=answer_text,
+                answer_contract=answer_contract,
+                selected=selected,
+                consistency_status="active_non_mulga_preserved",
+                split_policy=split_policy,
+            )
+            return answer_text, patch
     if (answer_text or "").strip().startswith(TEMPORAL_CLAIM_ALIGNMENT_HEADER):
         aligned_answer = answer_text.strip()
     else:
@@ -988,6 +1308,7 @@ def apply_temporal_claim_alignment(
         relation_chain_present=relation_chain_present,
         missing_reason=missing_reason,
         consistency_status=consistency_status,
+        split_policy=split_policy,
     )
     return aligned_answer, patch
 
