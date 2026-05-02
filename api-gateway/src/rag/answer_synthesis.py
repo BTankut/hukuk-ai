@@ -72,6 +72,14 @@ def sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> d
         return None
     sanitized = dict(answer_contract)
     sanitized["final_mode"] = sanitize_public_final_mode(answer_contract.get("final_mode"))
+    sanitized.setdefault("split_temporal_policy_applied", False)
+    sanitized.setdefault("claim_family_rewrite_allowed", False)
+    sanitized.setdefault("historical_claim_surface_allowed", False)
+    sanitized.setdefault("split_temporal_policy_bucket", "not_applicable")
+    sanitized.setdefault("split_temporal_policy_reason", "not_evaluated")
+    sanitized.setdefault("claim_identifier_rewrite_allowed", False)
+    sanitized.setdefault("temporal_support_only", True)
+    sanitized.setdefault("current_law_basis_primary_allowed", False)
     return sanitized
 
 

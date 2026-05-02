@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rag.answer_synthesis import apply_temporal_claim_alignment
+from rag.answer_synthesis import apply_temporal_claim_alignment, sanitize_public_answer_contract
 
 
 def _historical_chain_evidence() -> list[dict[str, object]]:
@@ -321,6 +321,25 @@ def test_no_qid_specific_split_temporal_policy() -> None:
     assert patch["split_temporal_policy_bucket"] == "active_non_mulga_preserve_family"
     assert patch["source_family_claimed"] == "KANUN"
     assert "RANDOM-NATURAL-LANGUAGE-CASE" not in patch["split_temporal_policy_reason"]
+
+
+def test_public_contract_always_exposes_split_temporal_policy_fields() -> None:
+    sanitized = sanitize_public_answer_contract(
+        {
+            "final_mode": "answer",
+            "source_family_claimed": "YONETMELIK",
+            "effective_state_claimed": "active",
+        }
+    )
+
+    assert sanitized is not None
+    assert sanitized["split_temporal_policy_applied"] is False
+    assert sanitized["split_temporal_policy_bucket"] == "not_applicable"
+    assert sanitized["split_temporal_policy_reason"] == "not_evaluated"
+    assert sanitized["claim_family_rewrite_allowed"] is False
+    assert sanitized["claim_identifier_rewrite_allowed"] is False
+    assert sanitized["historical_claim_surface_allowed"] is False
+    assert sanitized["temporal_support_only"] is True
 
 
 def test_active_non_historical_contract_not_aligned_by_incidental_repeal_text() -> None:
