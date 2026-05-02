@@ -1316,6 +1316,47 @@ def _temporal_line(label: str, item: dict[str, Any] | None, description: str) ->
     return f"- {label}: {description} {basis} [Kaynak: {citation}]"
 
 
+def _s5_active_non_mulga_clamp_answer(
+    *,
+    selected: dict[str, Any],
+    evidence: list[dict[str, Any]],
+) -> str:
+    lines = ["Güncellik/yürürlük sınırı:"]
+    lines.append(
+        _temporal_line(
+            "Seçili aktif kaynak",
+            selected,
+            "Kaynak ailesi ve madde kimliği aktif kanıttan korunur.",
+        )
+    )
+    selected_key = _temporal_source_key(selected)
+    support_count = 0
+    for item in evidence:
+        if item is selected or _temporal_source_key(item) == selected_key:
+            continue
+        family = _temporal_family(item)
+        state = _temporal_effective_state(item) or "unknown"
+        if family not in _SPLIT_ACTIVE_NON_MULGA_FAMILIES or state not in _SPLIT_ACTIVE_NON_REPEALED_STATES:
+            continue
+        if not _temporal_article_raw(item):
+            continue
+        lines.append(
+            _temporal_line(
+                "Güncel destek kaynağı",
+                item,
+                "Seçili kaynakla karıştırılmadan ayrıca dikkate alınması gereken aktif destektir.",
+            )
+        )
+        support_count += 1
+        if support_count >= 3:
+            break
+    lines.append(
+        "- Sınır: Soru tarihsel/güncellik riski içerdiği için yalnız seçili kaynakla nihai güncel sonuç "
+        "kurulmaz; cevap seçili madde ve gösterilen aktif desteklerle sınırlıdır."
+    )
+    return "\n".join(lines)
+
+
 def _temporal_build_role_answer(
     *,
     roles: dict[str, dict[str, Any] | None],
@@ -1677,14 +1718,20 @@ def apply_temporal_claim_alignment(
     if split_policy.get("split_temporal_policy_bucket") == "active_non_mulga_preserve_family":
         selected = roles.get("selected")
         if isinstance(selected, dict):
+            patched_answer_text = answer_text
+            if split_policy.get("s5_guard_type") == "active_non_mulga_historical_surface_clamp":
+                patched_answer_text = _s5_active_non_mulga_clamp_answer(
+                    selected=selected,
+                    evidence=evidence,
+                )
             patch = _temporal_active_preservation_patch(
-                answer_text=answer_text,
+                answer_text=patched_answer_text,
                 answer_contract=answer_contract,
                 selected=selected,
                 consistency_status="active_non_mulga_preserved",
                 split_policy=split_policy,
             )
-            return answer_text, patch
+            return patched_answer_text, patch
     if (answer_text or "").strip().startswith(TEMPORAL_CLAIM_ALIGNMENT_HEADER):
         aligned_answer = answer_text.strip()
     else:
