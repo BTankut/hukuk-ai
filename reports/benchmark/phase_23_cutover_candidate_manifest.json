@@ -1,0 +1,195 @@
+{
+  "phase": "23",
+  "artifact": "cutover_candidate_manifest",
+  "generated_at_utc": "2026-05-02T20:21:54Z",
+  "scope": "controlled_cutover_readiness_only",
+  "cutover_executed": false,
+  "candidate_git_sha": "6a85a5178d5dbd9e88677fd0acf6b92bdfdd0e76",
+  "candidate_git_sha_basis": "runtime_provenance.git_sha from the validated Phase 22F-S7 full shadow benchmark run",
+  "manifest_repo_head_before_phase23": "3cbe2a6b18069ae3acdfcc85a03861eb7114af59",
+  "candidate_api_url": "http://127.0.0.1:8028/v1",
+  "candidate_lane": "phase22f_s7_full_shadow",
+  "candidate_model": "hukuk-ai-poc",
+  "candidate_dgx_model_env": "/models/merged_model_fabric_stage_20260321",
+  "candidate_milvus_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "candidate_milvus_entity_count": 349403,
+  "candidate_vector_dimension": 1024,
+  "candidate_source_catalog_hash": "composite_sha256:19ad43bcd9f1c636ad05588cb42ad37e84f47a3e8671e53ba117c14863cc96d2",
+  "candidate_source_supplement_hash": "composite_sha256:eb61e773b85e791d068d8a25aacb33c3ed3f88ae0f469fccbe6b129ae61070c0",
+  "candidate_guardrails_state": "disabled",
+  "candidate_verification_state": "disabled",
+  "candidate_presidio_state": "disabled",
+  "candidate_benchmark_run_dir": "reports/benchmark/runs/20260502T1858Z_phase22F_S7_full_shadow_benchmark",
+  "candidate_green_lane_dir": "reports/benchmark/runs/20260502T1831Z_phase22F_S7_combined_guard_smoke",
+  "baseline_live_api_url": "http://127.0.0.1:8000/v1",
+  "baseline_live_collection": "mevzuat_faz1_shadow_20260418_compat1024",
+  "baseline_live_entity_count": 349191,
+  "baseline_live_git_sha": "not_runtime_exposed",
+  "baseline_live_git_sha_basis": "live 8000 health/process probe exposes model and collection but not a bound git SHA; repo HEAD before Phase 23 was 3cbe2a6b18069ae3acdfcc85a03861eb7114af59",
+  "baseline_live_model": "hukuk-ai-poc",
+  "baseline_live_dgx_model_env": "/models/merged_model_fabric_stage_20260321",
+  "baseline_live_guardrails_state": "disabled",
+  "baseline_live_verification_state": "disabled",
+  "baseline_live_lane": "current_serving_lane",
+  "candidate_benchmark_result": {
+    "raw_score_proxy": 816.86,
+    "pass_proxy": "91/100",
+    "wrong_family": 6,
+    "wrong_document": 4,
+    "hallucinated_identifier": 4,
+    "contract_valid": "100/100",
+    "unsupported_confident_answer": 0,
+    "answer_contract_invalid": 0,
+    "repealed_as_active_count": 0,
+    "source_key_v2_collision": 0,
+    "binding_collision": 0,
+    "green_lane": "PASS"
+  },
+  "candidate_source_catalog_hash_inputs": [
+    {
+      "path": "api-gateway/src/rag/source_catalog.py",
+      "sha256": "f04dc600f306f5724c8e795fcf462bf601083e62250505686c3da55fb2a9016e",
+      "bytes": 38132
+    },
+    {
+      "path": "api-gateway/src/rag/retriever.py",
+      "sha256": "d036bc2152af51a90689464af303009d822594076feb7a6a07ac93c7db74b20a",
+      "bytes": 18918
+    },
+    {
+      "path": "api-gateway/src/source_family_resolver.py",
+      "sha256": "b9f622111e2a247874cb6d03a8e0b47b4a3b2f47e6bf556bb55f650fc30e77c1",
+      "bytes": 59395
+    },
+    {
+      "path": "reports/benchmark/phase_05_canonical_source_catalog.csv",
+      "sha256": "3e1a906ca1c0daaffc839b8757c6bdac25228d8f4e60f5001c2534a00fa309b2",
+      "bytes": 7390345
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/cmk/source_manifest.json",
+      "sha256": "1929713475ab06e76691b98409463b147e576e281c0f4414ab301113e7ac6578",
+      "bytes": 907
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/hmk/source_manifest.json",
+      "sha256": "f5b2ad40df50e1415ecef157edb2e3394ca9f98ea5c4f150b12220e507844cae",
+      "bytes": 908
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/ik/source_manifest.json",
+      "sha256": "fdefff21b1548fd7973d5321ac45bc4e6c5719d17b3abb4fb9b8ee7da1dae9a2",
+      "bytes": 915
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/tck/source_manifest.json",
+      "sha256": "352e420ceb3e79ba7c52260c0ff85c6d0e5da7f933580a5726628e202ce73bf0",
+      "bytes": 900
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/tmk_core_corpus/source_manifest.json",
+      "sha256": "a99d7b5eb1a9234bf0a3e842cb3b6d37df42007b2b8fcbe0a112f4b5d6a625b2",
+      "bytes": 928
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/ttk/source_manifest.json",
+      "sha256": "700d7ac77b43111cced6033f3fccf183a63ff51ea60adc55451d01c5771b2519",
+      "bytes": 906
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/cmk/normalized_source.txt",
+      "sha256": "ef03790c8c2ef82229a7eeceb0f79c50e696be4f7735b931cfc7e92a44567ad9",
+      "bytes": 372814
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/hmk/normalized_source.txt",
+      "sha256": "bf1a326eb121e0d73a33e74a7db43af0e1f0e25f2201b7117bc958399315fdf4",
+      "bytes": 298250
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/ik/normalized_source.txt",
+      "sha256": "3577da9cfbdc706947641146948f93346a2f2c194d88c07a09b0690c508880f9",
+      "bytes": 453984
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/tck/normalized_source.txt",
+      "sha256": "9cde7d1ac5290f2a4f1e2b4d19ffc2c67b888535850db23c90fe52d8e46ae872",
+      "bytes": 307546
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/tmk_core_corpus/normalized_source.txt",
+      "sha256": "0de4c7b84a9111d353ad1e61f9dd6938d14c4a7339377a25ba646a758c0ed591",
+      "bytes": 425015
+    },
+    {
+      "path": "data/primary_sources/full_acquisition/ttk/normalized_source.txt",
+      "sha256": "1325e46fb164cf0218fa15d20078cb97ccf907cfbc2e170020d47bc9bd753742",
+      "bytes": 1060631
+    }
+  ],
+  "candidate_source_supplement_hash_inputs": [
+    {
+      "path": "api-gateway/src/rag/source_supplements.py",
+      "sha256": "a8218c22532ff53e61975d3b1d105d93fdb3f23876065c6719c0a8913a86f0ae",
+      "bytes": 25822
+    },
+    {
+      "path": "reports/benchmark/phase_16a_corpus_materialization_remediation.csv",
+      "sha256": "ebf51c4c156c37d25011368f80ca785fb599e4eeb1d0ba86cc341151a52563f8",
+      "bytes": 7813
+    },
+    {
+      "path": "reports/benchmark/phase_16e_corpus_materialization_remediation.csv",
+      "sha256": "40179b1b8a39bea7b10ad22ef6a4fb56ea140704e74b9cbf4b97cd1a3e454aad",
+      "bytes": 3703
+    },
+    {
+      "path": "reports/benchmark/phase_16b_source_key_v2_collision_report.csv",
+      "sha256": "9872acbb5ba08e2d899feede9a0ee0b0527ea3a32016df89909aca72e6d3c976",
+      "bytes": 2329
+    },
+    {
+      "path": "reports/benchmark/phase_16e_source_key_v2_collision_report.csv",
+      "sha256": "06a125e1f0b5f99e18e427f42d9166984fc9c18250ce9b31ceae7b146dcdf73b",
+      "bytes": 1302
+    },
+    {
+      "path": "reports/benchmark/phase_17_corpus_materialization_audit.csv",
+      "sha256": "dff7afd5785b5b564b7883dd260e111d573b1243fbf738ecd09dd2a190c87bdb",
+      "bytes": 1212
+    },
+    {
+      "path": "reports/benchmark/phase_17a_corpus_materialization_remediation.csv",
+      "sha256": "82728fbeb06791512ff27542650c25d5fa906e6362761a043526010ea8ea8d18",
+      "bytes": 2028
+    },
+    {
+      "path": "reports/benchmark/phase_17b_corpus_materialization_remediation.csv",
+      "sha256": "f7800ac8dcf0b0009b5901922b31d4cd866535850d64b968aef40db09df58a33",
+      "bytes": 2676
+    },
+    {
+      "path": "reports/benchmark/phase_17a_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab",
+      "bytes": 1499
+    },
+    {
+      "path": "reports/benchmark/phase_17b_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab",
+      "bytes": 1499
+    },
+    {
+      "path": "reports/benchmark/phase_18e_side_backlog_source_materialization_report.md",
+      "sha256": "9c472e41f8ec75495b634bb5bf1863849944bbd3a4477b0749cc1b3852f1411a",
+      "bytes": 3386
+    }
+  ],
+  "non_actions": [
+    "live 8000 was not modified",
+    "no source acquisition",
+    "no corpus materialization",
+    "no model change",
+    "no prompt change",
+    "no retrieval/top-k change"
+  ]
+}
