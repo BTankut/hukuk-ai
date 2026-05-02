@@ -67,6 +67,25 @@ def sanitize_public_final_mode(final_mode: str | None) -> str | None:
     return final_mode
 
 
+def _s5_family_identifier_guard_fields(
+    *,
+    applied: bool = False,
+    guard_type: str = "not_applicable",
+    claim_family_preserved: bool = False,
+    claim_identifier_preserved: bool = False,
+    article_surface_preserved: bool = False,
+    reason: str = "not_evaluated",
+) -> dict[str, Any]:
+    return {
+        "s5_family_identifier_guard_applied": applied,
+        "s5_guard_type": guard_type,
+        "s5_claim_family_preserved": claim_family_preserved,
+        "s5_claim_identifier_preserved": claim_identifier_preserved,
+        "s5_article_surface_preserved": article_surface_preserved,
+        "s5_guard_reason": reason,
+    }
+
+
 def sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> dict[str, Any] | None:
     if answer_contract is None:
         return None
@@ -80,6 +99,8 @@ def sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> d
     sanitized.setdefault("claim_identifier_rewrite_allowed", False)
     sanitized.setdefault("temporal_support_only", True)
     sanitized.setdefault("current_law_basis_primary_allowed", False)
+    for key, value in _s5_family_identifier_guard_fields().items():
+        sanitized.setdefault(key, value)
     return sanitized
 
 
@@ -852,6 +873,122 @@ def _split_query_has_historical_surface_intent(question: str) -> bool:
     return bool(has_risk_term and (has_context_term or has_old_year))
 
 
+def _s5_trace_family_surface(trace_payload: dict[str, Any] | None) -> str:
+    if not isinstance(trace_payload, dict):
+        return ""
+    family_resolution = _temporal_trace_parent(trace_payload, "source_family_resolution")
+    selector = _temporal_trace_parent(trace_payload, "article_span_selector")
+    values: list[str] = []
+    for parent in (trace_payload, family_resolution, selector):
+        for key in (
+            "predicted_family",
+            "expected_family_prior",
+            "preferred_families",
+            "preferred_source_families",
+            "fallback_families",
+            "routing_families",
+            "pre_filter_family_set",
+            "reranked_family_set",
+            "family_collision_pair",
+            "collision_resolution_reason",
+            "selected_family_source",
+        ):
+            raw = parent.get(key)
+            if isinstance(raw, list):
+                values.extend(_temporal_text(item) for item in raw)
+            else:
+                values.append(_temporal_text(raw))
+    return normalize_query_text(" | ".join(value for value in values if value))
+
+
+def _s5_trace_mentions_family(trace_payload: dict[str, Any] | None, family: str) -> bool:
+    surface = _s5_trace_family_surface(trace_payload)
+    if not surface:
+        return False
+    normalized_family = re.escape(normalize_query_text(family))
+    return bool(re.search(rf"(?:^|[^a-z0-9_]){normalized_family}(?:$|[^a-z0-9_])", surface))
+
+
+def _s5_query_has_undergraduate_university_course_signal(question: str) -> bool:
+    normalized = normalize_query_text(question or "")
+    if not normalized or "lisansustu" in normalized:
+        return False
+    has_university = "universite" in normalized or "universitesi" in normalized
+    has_undergraduate = "on lisans" in normalized or re.search(r"(?:^|\s)lisans(?:\s|$)", normalized) is not None
+    has_course_registration = any(
+        term in normalized
+        for term in (
+            "ders",
+            "kayit",
+            "kredi",
+            "sinav",
+            "egitim ogretim",
+        )
+    )
+    return bool(has_university and has_undergraduate and has_course_registration)
+
+
+def _s5_viable_uy_candidate(item: dict[str, Any]) -> bool:
+    if _temporal_family(item) != "uy":
+        return False
+    state = _temporal_effective_state(item) or "unknown"
+    if state not in _SPLIT_ACTIVE_NON_REPEALED_STATES:
+        return False
+    title = normalize_query_text(_temporal_source_title(item))
+    if "universite" not in title and "universitesi" not in title:
+        return False
+    if "lisansustu" in title:
+        return False
+    if "lisans" not in title:
+        return False
+    return bool(_temporal_article_raw(item) or _temporal_identifier_base(item))
+
+
+def _s5_select_uy_boundary_candidate(
+    *,
+    evidence: list[dict[str, Any]],
+    trace_payload: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not _s5_query_has_undergraduate_university_course_signal(_temporal_trace_question_text(trace_payload)):
+        return None
+    if not (_s5_trace_mentions_family(trace_payload, "uy") and _s5_trace_mentions_family(trace_payload, "yonetmelik")):
+        return None
+    for item in evidence:
+        if _s5_viable_uy_candidate(item):
+            return item
+    return None
+
+
+def _s5_active_non_mulga_guard_fields(
+    *,
+    answer_contract: dict[str, Any],
+    selected: dict[str, Any] | None,
+    historical_surface_intent: bool,
+    intent_reason: str,
+) -> dict[str, Any]:
+    selected_family = _temporal_family(selected)
+    claimed_family = _temporal_normalized(answer_contract.get("source_family_claimed"))
+    guard_type = "active_non_mulga_claim_preservation"
+    reason = "active_selected_non_mulga_claim_preserved"
+    if historical_surface_intent:
+        guard_type = "active_non_mulga_historical_surface_clamp"
+        reason = f"active_selected_non_mulga_blocks_historical_surface:{intent_reason}"
+    if selected_family in {"teblig", "tebligler"} and claimed_family in {"mulga", "mulga_kanun"}:
+        guard_type = "teblig_domain_mismatch_guard"
+        reason = f"active_teblig_blocks_mulga_claim_overwrite:{intent_reason}"
+    if selected_family == "uy" and claimed_family in {"yonetmelik", "kky"}:
+        guard_type = "uy_yonetmelik_family_boundary_guard"
+        reason = f"active_uy_blocks_generic_yonetmelik_claim_overwrite:{intent_reason}"
+    return _s5_family_identifier_guard_fields(
+        applied=True,
+        guard_type=guard_type,
+        claim_family_preserved=True,
+        claim_identifier_preserved=True,
+        article_surface_preserved=True,
+        reason=reason,
+    )
+
+
 def _split_temporal_historical_surface_intent(
     *,
     answer_contract: dict[str, Any],
@@ -942,12 +1079,16 @@ def _split_temporal_policy(
                 answer_contract=answer_contract,
                 trace_payload=trace_payload,
             ),
+            **_s5_family_identifier_guard_fields(
+                applied=False,
+                guard_type="relation_chain_controlled_historical_claim",
+                reason="complete_relation_chain_controls_historical_surface",
+            ),
         }
     if (
         not relation_chain_present
         and selected_family in _SPLIT_ACTIVE_NON_MULGA_FAMILIES
         and selected_state in _SPLIT_ACTIVE_NON_REPEALED_STATES
-        and not historical_surface_intent
     ):
         return {
             "split_temporal_policy_applied": True,
@@ -958,8 +1099,15 @@ def _split_temporal_policy(
             "claim_identifier_rewrite_allowed": False,
             "temporal_support_only": True,
             "current_law_basis_primary_allowed": False,
+            **_s5_active_non_mulga_guard_fields(
+                answer_contract=answer_contract,
+                selected=selected,
+                historical_surface_intent=historical_surface_intent,
+                intent_reason=intent_reason,
+            ),
         }
     if not relation_chain_present and historical_surface_intent:
+        selected_article_present = bool(_temporal_article_raw(selected))
         return {
             "split_temporal_policy_applied": True,
             "claim_family_rewrite_allowed": "limited_to_historical_surface",
@@ -969,6 +1117,18 @@ def _split_temporal_policy(
             "claim_identifier_rewrite_allowed": "limited_to_historical_surface",
             "temporal_support_only": False,
             "current_law_basis_primary_allowed": False,
+            **_s5_family_identifier_guard_fields(
+                applied=selected_article_present,
+                guard_type="historical_article_surface_guard" if selected_article_present else "not_applicable",
+                claim_family_preserved=False,
+                claim_identifier_preserved=selected_article_present,
+                article_surface_preserved=selected_article_present,
+                reason=(
+                    f"historical_surface_claim_keeps_selected_article:{intent_reason}"
+                    if selected_article_present
+                    else f"historical_surface_without_selected_article:{intent_reason}"
+                ),
+            ),
         }
     return {
         "split_temporal_policy_applied": False,
@@ -979,6 +1139,7 @@ def _split_temporal_policy(
         "claim_identifier_rewrite_allowed": False,
         "temporal_support_only": True,
         "current_law_basis_primary_allowed": False,
+        **_s5_family_identifier_guard_fields(reason=intent_reason),
     }
 
 
@@ -1282,9 +1443,42 @@ def apply_temporal_claim_alignment(
             "split_temporal_policy_reason": "no_contract",
             "claim_identifier_rewrite_allowed": False,
             "temporal_support_only": True,
+            "current_law_basis_primary_allowed": False,
+            **_s5_family_identifier_guard_fields(reason="no_contract"),
         }
     evidence = _temporal_collect_evidence(assembled_evidence=assembled_evidence, trace_payload=trace_payload)
     relation_chain_present = _temporal_relation_chain_present(evidence)
+    uy_boundary_candidate = _s5_select_uy_boundary_candidate(
+        evidence=evidence,
+        trace_payload=trace_payload,
+    )
+    if isinstance(uy_boundary_candidate, dict) and not relation_chain_present:
+        split_policy = {
+            "split_temporal_policy_applied": True,
+            "claim_family_rewrite_allowed": False,
+            "historical_claim_surface_allowed": False,
+            "split_temporal_policy_bucket": "active_non_mulga_preserve_family",
+            "split_temporal_policy_reason": "s5_uy_yonetmelik_boundary_candidate_available",
+            "claim_identifier_rewrite_allowed": False,
+            "temporal_support_only": True,
+            "current_law_basis_primary_allowed": False,
+            **_s5_family_identifier_guard_fields(
+                applied=True,
+                guard_type="uy_yonetmelik_family_boundary_guard",
+                claim_family_preserved=True,
+                claim_identifier_preserved=True,
+                article_surface_preserved=True,
+                reason="uy_candidate_available_with_undergraduate_course_registration_terms",
+            ),
+        }
+        patch = _temporal_active_preservation_patch(
+            answer_text=answer_text,
+            answer_contract=answer_contract,
+            selected=uy_boundary_candidate,
+            consistency_status="uy_family_boundary_preserved",
+            split_policy=split_policy,
+        )
+        return answer_text, patch
     if not relation_chain_present and not _temporal_context_present(answer_contract, evidence):
         return answer_text, {
             "temporal_claim_alignment_applied": False,
@@ -1301,6 +1495,8 @@ def apply_temporal_claim_alignment(
             "split_temporal_policy_reason": "no_historical_or_repealed_evidence",
             "claim_identifier_rewrite_allowed": False,
             "temporal_support_only": True,
+            "current_law_basis_primary_allowed": False,
+            **_s5_family_identifier_guard_fields(reason="no_historical_or_repealed_evidence"),
         }
     roles = _temporal_roles(evidence)
     if roles.get("historical") is None and roles.get("repeal") is None and roles.get("selected") is None:
@@ -1319,6 +1515,8 @@ def apply_temporal_claim_alignment(
             "split_temporal_policy_reason": "no_historical_or_repealed_evidence",
             "claim_identifier_rewrite_allowed": False,
             "temporal_support_only": True,
+            "current_law_basis_primary_allowed": False,
+            **_s5_family_identifier_guard_fields(reason="no_historical_or_repealed_evidence"),
         }
     missing_reason = _temporal_missing_reason(relation_chain_present=relation_chain_present, roles=roles)
     consistency_status = _temporal_status(
