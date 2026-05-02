@@ -338,6 +338,62 @@ def test_historical_article_surface_preserved() -> None:
     assert patch["s5_article_surface_preserved"] is True
 
 
+def test_historical_surface_current_law_exception_preserves_active_current_identifier() -> None:
+    evidence = [
+        {
+            "source_id": "6570:6570:mGEC1:f0:from1955-05-27:to1900-01-01",
+            "citation": "6570 m.GEC1/f.0",
+            "source_identifier": "6570 m.2",
+            "source_title": "Yürürlükten Kaldırılan Hükümler",
+            "source_family": "mulga_kanun",
+            "article_or_section": "gec1",
+            "effective_state": "repealed",
+            "quoted_or_extracted_span": "Geçici madde tarihsel kira rejimini düzenler.",
+        },
+        {
+            "source_id": "TBK:6098:m344:f0:from2011-02-04:to9999-12-31",
+            "citation": "TBK m.344/f.0",
+            "source_identifier": "TBK m.1",
+            "source_title": "Türk Borçlar Kanunu",
+            "source_family": "kanun",
+            "article_or_section": "344",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Kira bedeli artışında TÜFE on iki aylık ortalama sınırı uygulanır.",
+        },
+    ]
+
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="2026 güncel kira artış cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="6570 m.gec1",
+            effective_state_claimed="repealed",
+            answer_mode="repealed_transition_answer",
+        ),
+        assembled_evidence=evidence,
+        trace_payload={
+            "question_raw": (
+                "2026 kira artış sorusunda geçici yüzde yirmi beş sınırını hâlâ otomatik "
+                "uygulamak neden güncellik hatasıdır?"
+            ),
+            "retrieval": {
+                "source_family_resolution": {
+                    "preferred_source_families": ["mulga_kanun", "kanun"],
+                    "pre_filter_family_set": "kanun | mulga_kanun",
+                    "reranked_family_set": "mulga_kanun | kanun",
+                    "family_collision_pair": "kanun|mulga_kanun",
+                }
+            },
+        },
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "current_law_basis_exception_from_historical_surface"
+    assert patch["source_family_claimed"] == "KANUN"
+    assert patch["source_identifier_claimed"] == "TBK m.344"
+    assert patch["article_or_section_claimed"] == "madde:344"
+    assert patch["s5_guard_type"] == "historical_surface_current_law_basis_exception_guard"
+
+
 def test_uy_claim_family_not_overwritten_by_generic_yonetmelik() -> None:
     evidence = [
         {

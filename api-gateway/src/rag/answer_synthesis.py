@@ -533,6 +533,36 @@ _SPLIT_HISTORICAL_CONTEXT_TERMS = (
     "yururlukten kaldir",
     "yururlukten kalk",
 )
+_S5_CURRENT_LAW_EXCEPTION_TERMS = (
+    "2026",
+    "bugun",
+    "guncel",
+    "guncellik",
+    "mevcut",
+    "hala",
+    "halen",
+    "gecerli",
+    "otomatik",
+    "uygulamak",
+    "uygulan",
+    "esas alin",
+)
+_S5_QUERY_STOPWORDS = {
+    "hangi",
+    "neden",
+    "sadece",
+    "yerine",
+    "cevabi",
+    "cevap",
+    "sorusu",
+    "sorusunda",
+    "hakkinda",
+    "madde",
+    "kanun",
+    "tuzuk",
+    "teblig",
+    "yonetmelik",
+}
 _TEMPORAL_REPEAL_TEXT_RE = re.compile(
     r"\b("
     r"m[uü]lga|"
@@ -956,6 +986,79 @@ def _s5_select_uy_boundary_candidate(
     for item in evidence:
         if _s5_viable_uy_candidate(item):
             return item
+    return None
+
+
+def _s5_query_has_current_law_exception_need(trace_payload: dict[str, Any] | None) -> bool:
+    question = normalize_query_text(_temporal_trace_question_text(trace_payload))
+    if not question:
+        return False
+    return any(term in question for term in _S5_CURRENT_LAW_EXCEPTION_TERMS)
+
+
+def _s5_query_content_terms(trace_payload: dict[str, Any] | None) -> set[str]:
+    question = normalize_query_text(_temporal_trace_question_text(trace_payload))
+    terms = {
+        token
+        for token in re.findall(r"[a-z0-9]{4,}", question)
+        if token not in _S5_QUERY_STOPWORDS
+    }
+    return terms
+
+
+def _s5_current_law_candidate_score(item: dict[str, Any], query_terms: set[str]) -> int:
+    family = _temporal_family(item)
+    if family not in _SPLIT_ACTIVE_NON_MULGA_FAMILIES:
+        return -1_000
+    state = _temporal_effective_state(item) or "unknown"
+    if state not in _SPLIT_ACTIVE_NON_REPEALED_STATES:
+        return -1_000
+    article = _temporal_article_raw(item)
+    if not article or article == "0":
+        return -1_000
+    item_text = normalize_query_text(_temporal_item_text(item))
+    overlap = {term for term in query_terms if term in item_text}
+    score = 10 * len(overlap)
+    if family in {"kanun", "khk"}:
+        score += 25
+    else:
+        score += 15
+    score += 10
+    if "gecici madde" in item_text or "yururlukten kaldir" in item_text or "islenemeyen" in item_text:
+        score -= 25
+    if "yuzde yirmi bes" in item_text or "%25" in item_text:
+        score -= 15
+    return score
+
+
+def _s5_select_current_law_basis_exception_candidate(
+    *,
+    evidence: list[dict[str, Any]],
+    roles: dict[str, dict[str, Any] | None],
+    trace_payload: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    selected = roles.get("historical") or roles.get("selected")
+    selected_family = _temporal_family(selected)
+    selected_state = _temporal_effective_state(selected)
+    if selected_state not in _TEMPORAL_REPEALED_STATES and "mulga" not in selected_family:
+        return None
+    if not _s5_query_has_current_law_exception_need(trace_payload):
+        return None
+    if not (
+        (_s5_trace_mentions_family(trace_payload, "mulga") or _s5_trace_mentions_family(trace_payload, "mulga_kanun"))
+        and _s5_trace_mentions_family(trace_payload, "kanun")
+    ):
+        return None
+    query_terms = _s5_query_content_terms(trace_payload)
+    best_item: dict[str, Any] | None = None
+    best_score = -1_000
+    for item in evidence:
+        score = _s5_current_law_candidate_score(item, query_terms)
+        if score > best_score:
+            best_item = item
+            best_score = score
+    if best_item is not None and best_score >= 35:
+        return best_item
     return None
 
 
@@ -1532,6 +1635,43 @@ def apply_temporal_claim_alignment(
         missing_reason=missing_reason,
         trace_payload=trace_payload,
     )
+    current_law_exception_candidate = None
+    if split_policy.get("split_temporal_policy_bucket") == "legacy_mulga_historical_surface_without_relation_chain":
+        current_law_exception_candidate = _s5_select_current_law_basis_exception_candidate(
+            evidence=evidence,
+            roles=roles,
+            trace_payload=trace_payload,
+        )
+    if isinstance(current_law_exception_candidate, dict):
+        exception_policy = {
+            **split_policy,
+            "split_temporal_policy_bucket": "current_law_basis_exception_from_historical_surface",
+            "split_temporal_policy_reason": (
+                "s5_current_law_basis_candidate_available:"
+                + str(split_policy.get("split_temporal_policy_reason") or "unknown")
+            ),
+            "claim_family_rewrite_allowed": False,
+            "historical_claim_surface_allowed": False,
+            "claim_identifier_rewrite_allowed": False,
+            "temporal_support_only": True,
+            "current_law_basis_primary_allowed": True,
+            **_s5_family_identifier_guard_fields(
+                applied=True,
+                guard_type="historical_surface_current_law_basis_exception_guard",
+                claim_family_preserved=True,
+                claim_identifier_preserved=True,
+                article_surface_preserved=True,
+                reason="active_current_law_candidate_available_for_currentness_question",
+            ),
+        }
+        patch = _temporal_active_preservation_patch(
+            answer_text=answer_text,
+            answer_contract=answer_contract,
+            selected=current_law_exception_candidate,
+            consistency_status="current_law_basis_preserved",
+            split_policy=exception_policy,
+        )
+        return answer_text, patch
     if split_policy.get("split_temporal_policy_bucket") == "active_non_mulga_preserve_family":
         selected = roles.get("selected")
         if isinstance(selected, dict):
