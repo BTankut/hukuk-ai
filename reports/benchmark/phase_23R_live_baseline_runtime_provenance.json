@@ -1,0 +1,84 @@
+{
+  "phase": "23R-A",
+  "artifact": "live_baseline_runtime_provenance",
+  "generated_at_utc": "2026-05-02T21:28:16Z",
+  "live_api_url": "http://127.0.0.1:8000/v1",
+  "restore_attempted": true,
+  "restore_status": "restored",
+  "listener_before_restore": false,
+  "listener_after_restore": true,
+  "pid": 93023,
+  "health": {
+    "status": "ok",
+    "service": "hukuk-ai-api-gateway",
+    "lane": "current_serving_lane",
+    "api_version": "2026-03-24-rc-h",
+    "guardrails": "disabled",
+    "retriever": "milvus",
+    "verification": "disabled"
+  },
+  "models": {
+    "object": "list",
+    "api_version": "2026-03-24-rc-h",
+    "lane": "current_serving_lane",
+    "data": [
+      {
+        "id": "hukuk-ai-poc",
+        "object": "model",
+        "owned_by": "hukuk-ai",
+        "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+        "api_version": "2026-03-24-rc-h",
+        "lane": "current_serving_lane"
+      }
+    ]
+  },
+  "runtime_env": {
+    "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+    "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+    "MILVUS_ENABLED": "true",
+    "MILVUS_URI": "http://localhost:19530",
+    "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024",
+    "EMBEDDING_BACKEND": "remote",
+    "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+    "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+    "RELEASE_LANE_ID": "current_serving_lane",
+    "API_VERSION_LABEL": "2026-03-24-rc-h",
+    "PARITY_TRACE_ENABLED": "true",
+    "GUARDRAILS_ENABLED": "false",
+    "PRESIDIO_ENABLED": "false",
+    "USE_VERIFICATION": "false",
+    "VERIFICATION_ENABLED": "false"
+  },
+  "milvus": {
+    "collection": "mevzuat_faz1_shadow_20260418_compat1024",
+    "exists": true,
+    "entity_count": 349191,
+    "vector_dimension": 1024
+  },
+  "dependency_checks": {
+    "embedding_models_endpoint": "ok:intfloat/multilingual-e5-large-instruct",
+    "dgx_models_endpoint": "ok:/models/merged_model_fabric_stage_20260321",
+    "milvus_container": "running:hukuk-ai-milvus",
+    "tmux": "no server running",
+    "docker": "available"
+  },
+  "commands": {
+    "listener_check": "lsof -nP -iTCP:8000 -sTCP:LISTEN",
+    "health_check": "curl -sS --max-time 5 http://127.0.0.1:8000/v1/health",
+    "models_check": "curl -sS --max-time 5 http://127.0.0.1:8000/v1/models",
+    "restore_command": "env DGX_BASE_URL=http://192.168.12.243:30000/v1 DGX_MODEL=/models/merged_model_fabric_stage_20260321 MILVUS_ENABLED=true MILVUS_URI=http://localhost:19530 MILVUS_COLLECTION=mevzuat_faz1_shadow_20260418_compat1024 EMBEDDING_BACKEND=remote EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1 EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct RELEASE_LANE_ID=current_serving_lane API_VERSION_LABEL=2026-03-24-rc-h API_AUTH_ENABLED=false AUDIT_LOG_ENABLED=false SESSION_STORE_BACKEND=memory SESSION_STORE_REDIS_REQUIRED=false SESSION_STORE_REDIS_PING_ON_STARTUP=false TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK=true PARITY_TRACE_ENABLED=true RERANKER_ENABLED=false GUARDRAILS_ENABLED=false PRESIDIO_ENABLED=false USE_VERIFICATION=false VERIFICATION_ENABLED=false api-gateway/.venv/bin/python -m uvicorn api-gateway.src.main:app --host 127.0.0.1 --port 8000 --log-level info"
+  },
+  "acceptance": {
+    "8000_healthy_on_baseline": true,
+    "explicit_operational_blocker_documented": false
+  },
+  "non_actions": [
+    "no candidate cutover",
+    "no productization",
+    "no fine-tuning",
+    "no model change",
+    "no prompt or retrieval change",
+    "no source acquisition",
+    "no corpus materialization"
+  ]
+}
