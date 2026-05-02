@@ -1614,14 +1614,22 @@ def _s7m_build_mulga_dual_role_answer(
     trace_payload: dict[str, Any] | None,
 ) -> str:
     historical = roles.get("historical") or roles.get("selected")
+    rent_cap_pattern = _s7m_question_has_rent_cap_pattern(trace_payload, current_law_basis)
     lines: list[str] = ["Mülga kaynak / güncel hukuk ayrımı:"]
-    lines.append(
-        _temporal_line(
-            "Tarihsel/mülga kaynak",
-            historical,
-            "Cevabın tarihsel hatayı açıklayan ana kaynağıdır; güncel doğrudan uygulama kaynağı gibi gösterilmez.",
+    if rent_cap_pattern:
+        lines.append(
+            "- Tarihsel/mülga kaynak: "
+            f"{_temporal_identifier_claim(historical)} yalnız tarihsel hata bağlamıdır; "
+            f"güncel kira artışı dayanağı yapılmaz. [Kaynak: {_temporal_citation(historical)}]"
         )
-    )
+    else:
+        lines.append(
+            _temporal_line(
+                "Tarihsel/mülga kaynak",
+                historical,
+                "Cevabın tarihsel hatayı açıklayan ana kaynağıdır; güncel doğrudan uygulama kaynağı gibi gösterilmez.",
+            )
+        )
     lines.append(
         _temporal_line(
             "Güncel hukuk dayanağı",
@@ -1630,11 +1638,10 @@ def _s7m_build_mulga_dual_role_answer(
         )
     )
     current_identifier = _temporal_identifier_claim(current_law_basis)
-    if _s7m_question_has_rent_cap_pattern(trace_payload, current_law_basis):
+    if rent_cap_pattern:
         lines.append(
-            "- Güncellik sonucu: 2026 bakımından genel geçer bir geçici yüzde yirmi beş kira artış "
-            f"sınırı kabul edilmemelidir; güncel kira artışı değerlendirmesi {current_identifier} "
-            "üzerinden ayrıca yapılmalıdır."
+            "- Güncellik sonucu: Konut kira artışında 2026 için geçici yüzde yirmi beş sınırı değil, "
+            f"{current_identifier} kapsamındaki TÜFE on iki aylık ortalama sınırı esas alınır."
         )
     else:
         lines.append(
@@ -1973,6 +1980,12 @@ def apply_temporal_claim_alignment(
             missing_reason="current_law_basis_exception_no_relation_chain",
             consistency_status="mulga_current_law_basis_dual_role",
             split_policy=exception_policy,
+        )
+        current_article = _temporal_article_claim(current_law_exception_candidate)
+        patch["article_or_section_claimed"] = current_article
+        patch["final_reason"] = (
+            f"dayanak=MULGA:{patch.get('source_identifier_claimed')}; madde={current_article}; "
+            f"yururluk=repealed; grounding=partially_grounded; sonuc={patch.get('answer_mode')}; belirsizlik=var"
         )
         return patched_answer_text, patch
     if split_policy.get("split_temporal_policy_bucket") == "active_non_mulga_preserve_family":

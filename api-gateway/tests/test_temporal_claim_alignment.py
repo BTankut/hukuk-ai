@@ -484,7 +484,7 @@ def test_historical_surface_current_law_exception_preserves_active_current_ident
     assert patch["split_temporal_policy_bucket"] == "current_law_basis_exception_from_historical_surface"
     assert patch["source_family_claimed"] == "MULGA"
     assert patch["source_identifier_claimed"] == "6570 m.gec1"
-    assert patch["article_or_section_claimed"] == "geçici madde 1"
+    assert patch["article_or_section_claimed"] == "madde:344"
     assert patch["effective_state_claimed"] == "repealed"
     assert patch["current_law_basis_primary_allowed"] is False
     assert patch["mulga_dual_role_contract_applied"] is True
@@ -498,6 +498,7 @@ def test_historical_surface_current_law_exception_preserves_active_current_ident
     assert patch["s5_guard_type"] == "mulga_dual_role_current_law_basis_guard"
     assert "TBK m.344" in answer
     assert "yüzde yirmi beş" in answer
+    assert "TÜFE on iki aylık ortalama" in answer
 
 
 def test_uy_claim_family_not_overwritten_by_generic_yonetmelik() -> None:
