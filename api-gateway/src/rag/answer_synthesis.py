@@ -1008,7 +1008,7 @@ def _s5_query_content_terms(trace_payload: dict[str, Any] | None) -> set[str]:
 
 def _s5_current_law_candidate_score(item: dict[str, Any], query_terms: set[str]) -> int:
     family = _temporal_family(item)
-    if family not in _SPLIT_ACTIVE_NON_MULGA_FAMILIES:
+    if family not in {"kanun", "khk"}:
         return -1_000
     state = _temporal_effective_state(item) or "unknown"
     if state not in _SPLIT_ACTIVE_NON_REPEALED_STATES:
