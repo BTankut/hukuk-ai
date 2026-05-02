@@ -470,44 +470,6 @@ _TEMPORAL_REPEALED_MODES = {
 _TEMPORAL_REPEALED_STATES = {"repealed", "historical", "historical_repealed"}
 _TEMPORAL_REPEAL_STATES = {"repeal_instrument"}
 _TEMPORAL_ACTIVE_STATES = {"active", "amended"}
-_TEMPORAL_CURRENTNESS_TERMS = (
-    "bugun",
-    "guncel",
-    "guncellik",
-    "halen",
-    "hala",
-    "yururlukte",
-    "yururluk durumu",
-    "gecerli",
-    "uygulanir",
-    "uygulanabilir",
-    "dayanmak",
-    "dayanabilir",
-    "dogrudan",
-    "esas alin",
-    "son durum",
-    "current",
-    "applicability",
-    "still valid",
-)
-_TEMPORAL_FAMILY_CLAIM_MAP = {
-    "kanun": "KANUN",
-    "khk": "KHK",
-    "tuzuk": "TUZUK",
-    "teblig": "TEBLIGLER",
-    "tebligler": "TEBLIGLER",
-    "yonetmelik": "YONETMELIK",
-    "kamu_kurum_yonetmelik": "KKY",
-    "kky": "KKY",
-    "universite_yonetmelik": "UY",
-    "uy": "UY",
-    "cb_yonetmelik": "CB_YONETMELIK",
-    "cb_kararname": "CB_KARARNAME",
-    "cb_karar": "CB_KARAR",
-    "cb_genelge": "CB_GENELGE",
-    "mulga": "MULGA",
-    "mulga_kanun": "MULGA",
-}
 _TEMPORAL_REPEAL_TEXT_RE = re.compile(
     r"\b("
     r"m[uü]lga|"
@@ -657,52 +619,6 @@ def _temporal_source_title(item: dict[str, Any] | None) -> str:
     )
 
 
-def _temporal_family_claim(item: dict[str, Any] | None) -> str:
-    family = _temporal_family(item)
-    return _TEMPORAL_FAMILY_CLAIM_MAP.get(family, family.upper() if family else "unknown")
-
-
-def _temporal_question_text(trace_payload: dict[str, Any] | None, answer_contract: dict[str, Any]) -> str:
-    values: list[Any] = []
-    if isinstance(trace_payload, dict):
-        values.extend(
-            [
-                trace_payload.get("question_raw"),
-                trace_payload.get("question_normalized"),
-                trace_payload.get("query"),
-                trace_payload.get("user_message"),
-            ]
-        )
-        for parent_key in ("query_signals", "parsed_query"):
-            parent = trace_payload.get(parent_key)
-            if isinstance(parent, dict):
-                values.extend(
-                    [
-                        parent.get("user_query"),
-                        parent.get("retrieval_query"),
-                        parent.get("enriched_query"),
-                        parent.get("normalized_question"),
-                    ]
-                )
-    values.extend(
-        [
-            answer_contract.get("question"),
-            answer_contract.get("question_raw"),
-            answer_contract.get("user_query"),
-        ]
-    )
-    return " ".join(_temporal_text(value) for value in values if _temporal_text(value))
-
-
-def _temporal_query_has_currentness_intent(
-    *,
-    trace_payload: dict[str, Any] | None,
-    answer_contract: dict[str, Any],
-) -> bool:
-    normalized = _temporal_normalized(_temporal_question_text(trace_payload, answer_contract))
-    return any(term in normalized for term in _TEMPORAL_CURRENTNESS_TERMS)
-
-
 def _temporal_citation(item: dict[str, Any] | None) -> str:
     if not isinstance(item, dict):
         return "unknown"
@@ -807,18 +723,6 @@ def _temporal_relation_chain_present(evidence: list[dict[str, Any]]) -> bool:
     return any(
         _temporal_truthy(item.get("relation_chain_expansion_applied"))
         or bool(_temporal_text(item.get("relation_chain_role")))
-        for item in evidence
-    )
-
-
-def _temporal_relation_chain_expansion_applied(evidence: list[dict[str, Any]]) -> bool:
-    return any(_temporal_truthy(item.get("relation_chain_expansion_applied")) for item in evidence)
-
-
-def _temporal_relation_chain_has_repeal_or_current_basis(evidence: list[dict[str, Any]]) -> bool:
-    return any(
-        _temporal_text(item.get("relation_chain_repeal_source_key"))
-        or _temporal_text(item.get("relation_chain_current_basis_source_key"))
         for item in evidence
     )
 
@@ -959,159 +863,6 @@ def _temporal_status(
     return "aligned"
 
 
-def _temporal_empty_patch(
-    *,
-    scope_decision: str,
-    scope_reason: str,
-    missing_reason: str = "no_historical_or_repealed_evidence",
-    consistency_status: str = "no_historical_context",
-    support_only: bool = False,
-) -> dict[str, Any]:
-    return {
-        "temporal_claim_alignment_applied": False,
-        "temporal_claim_primary_role": "",
-        "temporal_claim_historical_source_key": "",
-        "temporal_claim_repeal_source_key": "",
-        "temporal_claim_current_basis_source_key": "",
-        "temporal_claim_consistency_status": consistency_status,
-        "temporal_claim_missing_reason": missing_reason,
-        "temporal_alignment_scope_decision": scope_decision,
-        "temporal_alignment_scope_reason": scope_reason,
-        "temporal_alignment_claim_family_rewrite_allowed": False,
-        "temporal_alignment_claim_identifier_rewrite_allowed": False,
-        "temporal_alignment_support_only": support_only,
-    }
-
-
-def _temporal_scope_decision(
-    *,
-    answer_contract: dict[str, Any],
-    evidence: list[dict[str, Any]],
-    roles: dict[str, dict[str, Any] | None],
-    trace_payload: dict[str, Any] | None,
-) -> dict[str, Any]:
-    selected = roles.get("selected")
-    selected_state = _temporal_effective_state(selected)
-    relation_chain_expanded = _temporal_relation_chain_expansion_applied(evidence)
-    relation_has_repeal_or_current = _temporal_relation_chain_has_repeal_or_current_basis(evidence)
-    query_has_currentness = _temporal_query_has_currentness_intent(
-        trace_payload=trace_payload,
-        answer_contract=answer_contract,
-    )
-    rewrite_allowed = bool(
-        relation_chain_expanded
-        and relation_has_repeal_or_current
-        and selected_state in _TEMPORAL_REPEALED_STATES
-        and query_has_currentness
-    )
-    if rewrite_allowed:
-        decision = "claim_rewrite_allowed"
-        reason = (
-            "relation_chain_expansion_with_repeal_or_current_basis_and_historical_selected_source_and_currentness_intent"
-        )
-    elif not relation_chain_expanded:
-        decision = "support_only_no_relation_chain"
-        reason = "relation_chain_expansion_applied_false"
-    elif not relation_has_repeal_or_current:
-        decision = "support_only_missing_repeal_or_current_basis"
-        reason = "relation_chain_lacks_repeal_or_current_law_basis"
-    elif selected_state not in _TEMPORAL_REPEALED_STATES:
-        decision = "support_only_selected_source_not_historical"
-        reason = f"selected_effective_state={selected_state or 'unknown'}"
-    elif not query_has_currentness:
-        decision = "support_only_no_currentness_intent"
-        reason = "query_lacks_currentness_or_applicability_intent"
-    else:
-        decision = "support_only_unknown_scope_block"
-        reason = "claim_rewrite_scope_not_satisfied"
-    return {
-        "rewrite_allowed": rewrite_allowed,
-        "decision": decision,
-        "reason": reason,
-        "selected_effective_state": selected_state,
-        "relation_chain_expanded": relation_chain_expanded,
-        "relation_has_repeal_or_current": relation_has_repeal_or_current,
-        "query_has_currentness": query_has_currentness,
-    }
-
-
-def _temporal_support_only_patch(
-    *,
-    answer_text: str,
-    answer_contract: dict[str, Any],
-    roles: dict[str, dict[str, Any] | None],
-    relation_chain_present: bool,
-    missing_reason: str,
-    consistency_status: str,
-    scope: dict[str, Any],
-) -> dict[str, Any]:
-    selected = roles.get("selected")
-    patch = {
-        "temporal_claim_alignment_applied": True,
-        "temporal_claim_primary_role": "support_only",
-        "temporal_claim_historical_source_key": _temporal_source_key(roles.get("historical")),
-        "temporal_claim_repeal_source_key": _temporal_source_key(roles.get("repeal")),
-        "temporal_claim_current_basis_source_key": _temporal_source_key(roles.get("current")),
-        "temporal_claim_consistency_status": consistency_status,
-        "temporal_claim_missing_reason": missing_reason,
-        "temporal_claim_historical_identifier": _temporal_identifier_claim(roles.get("historical"))
-        if roles.get("historical")
-        else "",
-        "temporal_claim_repeal_identifier": _temporal_identifier_claim(roles.get("repeal"))
-        if roles.get("repeal")
-        else "",
-        "temporal_claim_current_basis_identifier": _temporal_identifier_claim(roles.get("current"))
-        if roles.get("current")
-        else "",
-        "temporal_alignment_scope_decision": scope["decision"],
-        "temporal_alignment_scope_reason": scope["reason"],
-        "temporal_alignment_claim_family_rewrite_allowed": False,
-        "temporal_alignment_claim_identifier_rewrite_allowed": False,
-        "temporal_alignment_support_only": True,
-        "answer_text": answer_text,
-        "final_answer": answer_text,
-    }
-    selected_family = _temporal_family_claim(selected)
-    selected_state = _temporal_effective_state(selected)
-    claimed_family = _temporal_normalized(answer_contract.get("source_family_claimed"))
-    claimed_state = _temporal_normalized(answer_contract.get("effective_state_claimed"))
-    preserve_active_non_mulga = (
-        selected_family != "unknown"
-        and selected_family != "MULGA"
-        and selected_state in _TEMPORAL_ACTIVE_STATES
-        and (claimed_family == "mulga" or claimed_state in _TEMPORAL_REPEALED_STATES)
-    )
-    preserve_selected_mulga = (
-        selected_family == "MULGA"
-        and selected_state in _TEMPORAL_REPEALED_STATES
-        and (claimed_family != "mulga" or claimed_state in {"", "active", "amended", "unknown"})
-    )
-    if preserve_active_non_mulga or preserve_selected_mulga:
-        source_identifier = _temporal_identifier_claim(selected)
-        article_or_section = _temporal_article_claim(selected)
-        patch.update(
-            {
-                "source_family_claimed": selected_family,
-                "source_title_claimed": _temporal_source_title(selected),
-                "source_identifier_claimed": source_identifier,
-                "article_or_section_claimed": article_or_section,
-                "effective_state_claimed": selected_state,
-                "answer_mode": answer_contract.get("answer_mode") or "qualified_answer",
-                "final_reason": (
-                    f"dayanak={selected_family}:{source_identifier}; madde={article_or_section}; "
-                    f"yururluk={selected_state}; temporal_alignment=support_only; "
-                    f"scope_reason={scope['reason']}"
-                ),
-            }
-        )
-    if relation_chain_present:
-        patch["temporal_qualification"] = _temporal_first_text(
-            answer_contract.get("temporal_qualification"),
-            "relation_chain_support_only",
-        )
-    return patch
-
-
 def _temporal_contract_patch(
     *,
     answer_text: str,
@@ -1144,13 +895,6 @@ def _temporal_contract_patch(
         "temporal_claim_historical_identifier": _temporal_identifier_claim(historical) if historical else "",
         "temporal_claim_repeal_identifier": _temporal_identifier_claim(repeal) if repeal else "",
         "temporal_claim_current_basis_identifier": _temporal_identifier_claim(current) if current else "",
-        "temporal_alignment_scope_decision": "claim_rewrite_allowed",
-        "temporal_alignment_scope_reason": (
-            "relation_chain_expansion_with_repeal_or_current_basis_and_historical_selected_source_and_currentness_intent"
-        ),
-        "temporal_alignment_claim_family_rewrite_allowed": True,
-        "temporal_alignment_claim_identifier_rewrite_allowed": True,
-        "temporal_alignment_support_only": False,
         "answer_text": answer_text,
         "final_answer": answer_text,
         "answer_mode": answer_mode,
@@ -1190,23 +934,38 @@ def apply_temporal_claim_alignment(
     trace_payload: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     if not isinstance(answer_contract, dict):
-        return answer_text, _temporal_empty_patch(
-            scope_decision="no_contract",
-            scope_reason="answer_contract_missing_or_invalid",
-        )
+        return answer_text, {
+            "temporal_claim_alignment_applied": False,
+            "temporal_claim_primary_role": "",
+            "temporal_claim_historical_source_key": "",
+            "temporal_claim_repeal_source_key": "",
+            "temporal_claim_current_basis_source_key": "",
+            "temporal_claim_consistency_status": "no_historical_context",
+            "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+        }
     evidence = _temporal_collect_evidence(assembled_evidence=assembled_evidence, trace_payload=trace_payload)
     relation_chain_present = _temporal_relation_chain_present(evidence)
     if not relation_chain_present and not _temporal_context_present(answer_contract, evidence):
-        return answer_text, _temporal_empty_patch(
-            scope_decision="not_applicable",
-            scope_reason="no_relation_chain_or_temporal_contract_context",
-        )
+        return answer_text, {
+            "temporal_claim_alignment_applied": False,
+            "temporal_claim_primary_role": "",
+            "temporal_claim_historical_source_key": "",
+            "temporal_claim_repeal_source_key": "",
+            "temporal_claim_current_basis_source_key": "",
+            "temporal_claim_consistency_status": "no_historical_context",
+            "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+        }
     roles = _temporal_roles(evidence)
     if roles.get("historical") is None and roles.get("repeal") is None and roles.get("selected") is None:
-        return answer_text, _temporal_empty_patch(
-            scope_decision="not_applicable",
-            scope_reason="no_selected_historical_or_repeal_evidence",
-        )
+        return answer_text, {
+            "temporal_claim_alignment_applied": False,
+            "temporal_claim_primary_role": "",
+            "temporal_claim_historical_source_key": "",
+            "temporal_claim_repeal_source_key": "",
+            "temporal_claim_current_basis_source_key": "",
+            "temporal_claim_consistency_status": "no_historical_context",
+            "temporal_claim_missing_reason": "no_historical_or_repealed_evidence",
+        }
     missing_reason = _temporal_missing_reason(relation_chain_present=relation_chain_present, roles=roles)
     consistency_status = _temporal_status(
         relation_chain_present=relation_chain_present,
@@ -1214,23 +973,6 @@ def apply_temporal_claim_alignment(
         contract=answer_contract,
         roles=roles,
     )
-    scope = _temporal_scope_decision(
-        answer_contract=answer_contract,
-        evidence=evidence,
-        roles=roles,
-        trace_payload=trace_payload,
-    )
-    if not scope["rewrite_allowed"]:
-        patch = _temporal_support_only_patch(
-            answer_text=answer_text,
-            answer_contract=answer_contract,
-            roles=roles,
-            relation_chain_present=relation_chain_present,
-            missing_reason=missing_reason,
-            consistency_status=consistency_status,
-            scope=scope,
-        )
-        return answer_text, patch
     if (answer_text or "").strip().startswith(TEMPORAL_CLAIM_ALIGNMENT_HEADER):
         aligned_answer = answer_text.strip()
     else:

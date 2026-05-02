@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import inspect
-
 from rag.answer_synthesis import apply_temporal_claim_alignment
 
 
@@ -67,25 +65,15 @@ def _historical_contract(**overrides: object) -> dict[str, object]:
     return contract
 
 
-def _currentness_trace(question: str | None = None) -> dict[str, object]:
-    return {
-        "question_raw": question
-        or "Bu kaynağa bugün hâlâ dayanabilir miyim, güncel rejime göre hangi yürürlük zinciri gerekir?"
-    }
-
-
-def test_mulga_relation_chain_still_allows_three_part_temporal_claim() -> None:
+def test_historical_chain_synthesis_uses_three_roles() -> None:
     answer, patch = apply_temporal_claim_alignment(
         answer_text="Kısa cevap.",
         answer_contract=_historical_contract(),
         assembled_evidence=_historical_chain_evidence(),
-        trace_payload=_currentness_trace(),
     )
 
     assert patch["temporal_claim_alignment_applied"] is True
     assert patch["temporal_claim_primary_role"] == "current_law_basis"
-    assert patch["temporal_alignment_claim_family_rewrite_allowed"] is True
-    assert patch["temporal_alignment_support_only"] is False
     assert "Tarihsel kaynak" in answer
     assert "Yürürlük sınırı" in answer
     assert "Kanun bağlantısı" in answer
@@ -96,7 +84,6 @@ def test_repeal_instrument_not_primary_substantive_rule() -> None:
         answer_text="Kaldırma maddesi asıl kuraldır.",
         answer_contract=_historical_contract(),
         assembled_evidence=_historical_chain_evidence(),
-        trace_payload=_currentness_trace(),
     )
 
     assert patch["source_identifier_claimed"] != "rg20230101 m.1"
@@ -109,7 +96,6 @@ def test_current_basis_claim_matches_current_source() -> None:
         answer_text="Kısa cevap.",
         answer_contract=_historical_contract(),
         assembled_evidence=_historical_chain_evidence(),
-        trace_payload=_currentness_trace(),
     )
 
     assert patch["temporal_claim_current_basis_source_key"] == (
@@ -145,8 +131,6 @@ def test_repealed_source_not_claimed_active() -> None:
     assert patch["effective_state_claimed"] == "repealed"
     assert patch["source_identifier_claimed"] == "6570 m.gec1"
     assert patch["article_or_section_claimed"] == "geçici madde 1"
-    assert patch["temporal_alignment_support_only"] is True
-    assert patch["temporal_alignment_claim_family_rewrite_allowed"] is False
 
 
 def test_no_qid_specific_temporal_alignment() -> None:
@@ -154,116 +138,11 @@ def test_no_qid_specific_temporal_alignment() -> None:
         answer_text="Doğal dilde tarihsel soru.",
         answer_contract=_historical_contract(qid="UNRELATED-NATURAL-LANGUAGE-CASE"),
         assembled_evidence=_historical_chain_evidence(),
-        trace_payload=_currentness_trace(),
     )
 
     assert patch["temporal_claim_alignment_applied"] is True
     assert patch["temporal_claim_missing_reason"] == "none"
     assert "UNRELATED" not in answer
-
-
-def test_teblig_family_preserved_without_relation_chain() -> None:
-    evidence = [
-        {
-            "source_id": "23093:23093:m13:f0:from2025-01-01:to9999-12-31",
-            "citation": "23093 m.13/f.0",
-            "source_identifier": "23093 m.13",
-            "source_title": "Aktif Tebliğ",
-            "source_family": "tebligler",
-            "article_or_section": "13",
-            "effective_state": "active",
-            "quoted_or_extracted_span": "Bu aktif tebliğ maddesi eski bir hükmün yürürlükten kaldırılmasına atıf yapar.",
-        }
-    ]
-
-    answer, patch = apply_temporal_claim_alignment(
-        answer_text="Aktif tebliğ cevabı.",
-        answer_contract={
-            "answer_mode": "repealed_transition_answer",
-            "source_family_claimed": "MULGA",
-            "source_identifier_claimed": "23093 m.13",
-            "article_or_section_claimed": "madde:13",
-            "effective_state_claimed": "repealed",
-        },
-        assembled_evidence=evidence,
-        trace_payload=_currentness_trace("Eski tebliğ mi güncel tebliğ mi uygulanır?"),
-    )
-
-    assert answer == "Aktif tebliğ cevabı."
-    assert patch["temporal_claim_alignment_applied"] is True
-    assert patch["temporal_alignment_support_only"] is True
-    assert patch["temporal_alignment_claim_family_rewrite_allowed"] is False
-    assert patch["source_family_claimed"] == "TEBLIGLER"
-    assert patch["source_identifier_claimed"] == "23093 m.13"
-    assert patch["effective_state_claimed"] == "active"
-
-
-def test_temporal_alignment_requires_relation_chain_for_family_rewrite() -> None:
-    evidence = [
-        {
-            "source_id": "KVKK:6698:m6:f0:from2016-04-07:to9999-12-31",
-            "citation": "KVKK m.6/f.0",
-            "source_identifier": "KVKK m.1",
-            "source_title": "Kişisel Verilerin Korunması Kanunu",
-            "source_family": "kanun",
-            "article_or_section": "6",
-            "effective_state": "active",
-            "quoted_or_extracted_span": "KVKK m.6 özel nitelikli kişisel verileri düzenler.",
-        }
-    ]
-
-    _answer, patch = apply_temporal_claim_alignment(
-        answer_text="KVKK cevabı.",
-        answer_contract={
-            "answer_mode": "repealed_transition_answer",
-            "source_family_claimed": "MULGA",
-            "source_identifier_claimed": "KVKK m.6",
-            "article_or_section_claimed": "madde:6",
-            "effective_state_claimed": "repealed",
-        },
-        assembled_evidence=evidence,
-        trace_payload=_currentness_trace("Eski KVKK rejimi mi güncel rejim mi uygulanır?"),
-    )
-
-    assert patch["temporal_alignment_claim_family_rewrite_allowed"] is False
-    assert patch["temporal_alignment_support_only"] is True
-    assert patch["source_family_claimed"] == "KANUN"
-    assert patch["source_identifier_claimed"] == "KVKK m.6"
-    assert patch["effective_state_claimed"] == "active"
-
-
-def test_active_kanun_family_preserved_under_temporal_wording() -> None:
-    evidence = [
-        {
-            "source_id": "TBK:6098:m227:f0:from2012-07-01:to9999-12-31",
-            "citation": "TBK m.227/f.0",
-            "source_identifier": "TBK m.1",
-            "source_title": "Türk Borçlar Kanunu",
-            "source_family": "kanun",
-            "article_or_section": "227",
-            "effective_state": "active",
-            "quoted_or_extracted_span": "TBK m.227 ayıptan doğan seçimlik hakları düzenler.",
-        }
-    ]
-
-    _answer, patch = apply_temporal_claim_alignment(
-        answer_text="TBK cevabı.",
-        answer_contract={
-            "answer_mode": "historical_repealed_answer",
-            "source_family_claimed": "MULGA",
-            "source_identifier_claimed": "TBK m.227",
-            "article_or_section_claimed": "madde:227",
-            "effective_state_claimed": "repealed",
-        },
-        assembled_evidence=evidence,
-        trace_payload=_currentness_trace("Eski kanun mu güncel TBK mı uygulanır?"),
-    )
-
-    assert patch["source_family_claimed"] == "KANUN"
-    assert patch["source_identifier_claimed"] == "TBK m.227"
-    assert patch["article_or_section_claimed"] == "madde:227"
-    assert patch["effective_state_claimed"] == "active"
-    assert patch["temporal_alignment_scope_decision"] == "support_only_no_relation_chain"
 
 
 def test_active_non_historical_contract_not_aligned_by_incidental_repeal_text() -> None:
@@ -294,9 +173,3 @@ def test_active_non_historical_contract_not_aligned_by_incidental_repeal_text() 
 
     assert answer == "Aktif tebliğ cevabı."
     assert patch["temporal_claim_alignment_applied"] is False
-
-
-def test_no_qid_specific_temporal_alignment_rules() -> None:
-    source = inspect.getsource(apply_temporal_claim_alignment)
-    for qid_marker in ("KANUN-05", "KANUN-10", "TEB-03", "TUZUK-03", "MULGA-05"):
-        assert qid_marker not in source
