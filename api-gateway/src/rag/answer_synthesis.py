@@ -1026,6 +1026,8 @@ def _s5_current_law_candidate_score(item: dict[str, Any], query_terms: set[str])
     score += 10
     if "gecici madde" in item_text or "yururlukten kaldir" in item_text or "islenemeyen" in item_text:
         score -= 25
+    if "uygulanmaz" in item_text or "mulga" in item_text or "8 yil sureyle" in item_text:
+        score -= 25
     if "yuzde yirmi bes" in item_text or "%25" in item_text:
         score -= 15
     return score
