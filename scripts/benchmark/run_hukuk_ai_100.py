@@ -275,6 +275,11 @@ ANSWER_FIELDS = [
     "current_law_basis_source_key",
     "current_law_basis_source_title",
     "current_law_basis_article_or_section",
+    "s7m_historical_repeal_proof_contract_applied",
+    "s7m_historical_repeal_proof_source_key",
+    "s7m_historical_repeal_proof_identifier",
+    "s7m_historical_repeal_query_match",
+    "s7m_historical_repeal_proof_reason",
     "expected_family_prior",
     "scenario_current_law_prior",
     "historical_or_repealed_question",
@@ -1257,6 +1262,17 @@ def extract_row(row: dict[str, str], response: dict[str, Any], response_time_ms:
         "current_law_basis_source_key": contract_value(response, "current_law_basis_source_key"),
         "current_law_basis_source_title": contract_value(response, "current_law_basis_source_title"),
         "current_law_basis_article_or_section": contract_value(response, "current_law_basis_article_or_section"),
+        "s7m_historical_repeal_proof_contract_applied": contract_value(
+            response, "s7m_historical_repeal_proof_contract_applied"
+        ),
+        "s7m_historical_repeal_proof_source_key": contract_value(
+            response, "s7m_historical_repeal_proof_source_key"
+        ),
+        "s7m_historical_repeal_proof_identifier": contract_value(
+            response, "s7m_historical_repeal_proof_identifier"
+        ),
+        "s7m_historical_repeal_query_match": contract_value(response, "s7m_historical_repeal_query_match"),
+        "s7m_historical_repeal_proof_reason": contract_value(response, "s7m_historical_repeal_proof_reason"),
         "expected_family_prior": retrieval_feature_value(response, "expected_family_prior"),
         "scenario_current_law_prior": retrieval_feature_value(response, "scenario_current_law_prior"),
         "historical_or_repealed_question": retrieval_feature_value(response, "historical_or_repealed_question"),

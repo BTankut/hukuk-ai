@@ -310,6 +310,98 @@ def test_active_non_mulga_historical_surface_clamp_preserves_claim_identifier() 
     assert patch["s5_article_surface_preserved"] is True
 
 
+def test_matching_active_repeal_proof_gets_mulga_historical_surface() -> None:
+    evidence = [
+        {
+            "source_id": "20135150:20135150:m90:f0:from2013-07-01:to9999-12-31",
+            "citation": "20135150 m.90/f.0",
+            "source_identifier": "20135150 m.1",
+            "source_title": "Tapu Sicili Tüzüğü",
+            "source_family": "tuzuk",
+            "article_or_section": "90",
+            "effective_state": "active",
+            "quoted_or_extracted_span": (
+                "18/5/1994 tarihli Tapu Sicili Tüzüğü yürürlükten kaldırılmıştır."
+            ),
+        }
+    ]
+
+    answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif tüzük cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="MULGA m.90",
+            effective_state_claimed="repealed",
+            answer_mode="not_currently_applicable_answer",
+        ),
+        assembled_evidence=evidence,
+        trace_payload=_legacy_mulga_trace(),
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "historical_repeal_proof_from_active_selected_source"
+    assert patch["source_family_claimed"] == "MULGA"
+    assert patch["effective_state_claimed"] == "repealed"
+    assert patch["s5_guard_type"] == "mulga_historical_repeal_proof_guard"
+    assert patch["s7m_historical_repeal_proof_contract_applied"] is True
+    assert patch["s7m_historical_repeal_query_match"] is True
+    assert "Mülga/hedef kaynak" in answer
+
+
+def test_matching_legacy_khk_target_gets_mulga_historical_surface() -> None:
+    evidence = [
+        {
+            "source_id": "555:555:m18:f0:from1995-06-27:to9999-12-31",
+            "citation": "555 m.18/f.0",
+            "source_identifier": "555 m.1",
+            "source_title": "Coğrafi İşaretlerin Korunması Hakkında Kanun Hükmünde Kararname",
+            "source_family": "khk",
+            "article_or_section": "18",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Ticari markalarla ilişki ve eski KHK sistemindeki tescil sınırı.",
+        }
+    ]
+
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif KHK cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="555 m.18",
+            effective_state_claimed="repealed",
+            answer_mode="not_currently_applicable_answer",
+        ),
+        assembled_evidence=evidence,
+        trace_payload={
+            "question_raw": (
+                "Marka, patent ve tasarım uyuşmazlığında 551/554/555/556 sayılı eski KHK'larla "
+                "2026'da doğrudan hüküm kurmak neden risklidir?"
+            ),
+            "retrieval": {
+                "source_family_resolution": {
+                    "predicted_family": "khk",
+                    "historical_or_repealed_question": True,
+                    "historical_scope_detected": True,
+                    "family_candidates": [
+                        {
+                            "family": "mulga_kanun",
+                            "signals": ["legacy_source_risk_signal"],
+                        }
+                    ],
+                },
+                "article_span_selector": {
+                    "legacy_intent_binding_active": True,
+                    "legacy_candidate_preferred": False,
+                },
+            },
+        },
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "historical_repeal_proof_from_active_selected_source"
+    assert patch["source_family_claimed"] == "MULGA"
+    assert patch["effective_state_claimed"] == "repealed"
+    assert patch["s5_guard_type"] == "mulga_historical_repeal_proof_guard"
+    assert patch["s7m_historical_repeal_proof_reason"].startswith("active_selected_legacy_khk_target")
+
+
 def test_historical_article_surface_preserved() -> None:
     evidence = [
         {
@@ -642,6 +734,7 @@ def test_public_contract_always_exposes_split_temporal_policy_fields() -> None:
     assert sanitized["s5_guard_type"] == "not_applicable"
     assert sanitized["s5_guard_reason"] == "not_evaluated"
     assert sanitized["mulga_dual_role_contract_applied"] is False
+    assert sanitized["s7m_historical_repeal_proof_contract_applied"] is False
 
 
 def test_s7m_mulga_dual_role_policy_has_no_qid_specific_runtime_branch() -> None:

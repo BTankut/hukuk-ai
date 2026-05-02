@@ -122,6 +122,22 @@ def _s7m_mulga_dual_role_fields(
     }
 
 
+def _s7m_historical_repeal_proof_fields(
+    *,
+    applied: bool = False,
+    selected: dict[str, Any] | None = None,
+    reason: str = "",
+    query_match: bool = False,
+) -> dict[str, Any]:
+    return {
+        "s7m_historical_repeal_proof_contract_applied": applied,
+        "s7m_historical_repeal_proof_source_key": _temporal_source_key(selected),
+        "s7m_historical_repeal_proof_identifier": _temporal_identifier_claim(selected) if selected else "",
+        "s7m_historical_repeal_query_match": query_match,
+        "s7m_historical_repeal_proof_reason": reason,
+    }
+
+
 def sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> dict[str, Any] | None:
     if answer_contract is None:
         return None
@@ -138,6 +154,8 @@ def sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> d
     for key, value in _s5_family_identifier_guard_fields().items():
         sanitized.setdefault(key, value)
     for key, value in _s7m_mulga_dual_role_fields().items():
+        sanitized.setdefault(key, value)
+    for key, value in _s7m_historical_repeal_proof_fields().items():
         sanitized.setdefault(key, value)
     return sanitized
 
@@ -601,6 +619,30 @@ _S5_QUERY_STOPWORDS = {
     "teblig",
     "yonetmelik",
 }
+_S7M_HISTORICAL_TARGET_STOPWORDS = _S5_QUERY_STOPWORDS | {
+    "eski",
+    "tarihli",
+    "tarihinde",
+    "tarihsel",
+    "mulga",
+    "dogrudan",
+    "kullanmak",
+    "kullanilmasi",
+    "dayanmak",
+    "esas",
+    "almak",
+    "hukum",
+    "kurmak",
+    "hatali",
+    "hata",
+    "riskli",
+    "risk",
+    "guvenli",
+    "islemlerinde",
+    "uyusmazliginda",
+    "hizmetleri",
+    "hukumleri",
+}
 _TEMPORAL_REPEAL_TEXT_RE = re.compile(
     r"\b("
     r"m[uü]lga|"
@@ -1044,6 +1086,75 @@ def _s5_query_content_terms(trace_payload: dict[str, Any] | None) -> set[str]:
     return terms
 
 
+def _s7m_historical_target_terms(value: str) -> set[str]:
+    normalized = normalize_query_text(value or "")
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]{4,}", normalized)
+        if token not in _S7M_HISTORICAL_TARGET_STOPWORDS and not token.isdigit()
+    }
+
+
+def _s7m_selected_identifier_mentions_query(selected: dict[str, Any] | None, question: str) -> bool:
+    identifier_base = normalize_query_text(_temporal_identifier_base(selected))
+    if not identifier_base or len(identifier_base) < 3:
+        return False
+    return bool(re.search(rf"(?:^|[^a-z0-9]){re.escape(identifier_base)}(?:$|[^a-z0-9])", question))
+
+
+def _s7m_active_selected_matches_historical_query(
+    *,
+    selected: dict[str, Any] | None,
+    trace_payload: dict[str, Any] | None,
+) -> tuple[bool, str]:
+    if not isinstance(selected, dict):
+        return False, "no_selected_source"
+    question = normalize_query_text(_temporal_trace_question_text(trace_payload))
+    if not question:
+        return False, "no_question_text"
+    title_terms = _s7m_historical_target_terms(_temporal_source_title(selected))
+    item_terms = _s7m_historical_target_terms(_temporal_item_text(selected))
+    question_terms = _s7m_historical_target_terms(question)
+    title_overlap = title_terms & question_terms
+    item_overlap = item_terms & question_terms
+    identifier_match = _s7m_selected_identifier_mentions_query(selected, question)
+    if len(title_overlap) >= 2:
+        return True, "selected_title_matches_historical_query"
+    if identifier_match:
+        return True, "selected_identifier_matches_historical_query"
+    if _temporal_family(selected) == "khk" and "khk" in question and item_overlap:
+        return True, "selected_khk_content_matches_historical_query"
+    return False, "selected_source_does_not_match_historical_query"
+
+
+def _s7m_active_historical_repeal_proof_applies(
+    *,
+    selected: dict[str, Any] | None,
+    trace_payload: dict[str, Any] | None,
+) -> tuple[bool, str]:
+    if not isinstance(selected, dict):
+        return False, "no_selected_source"
+    family = _temporal_family(selected)
+    state = _temporal_effective_state(selected) or "unknown"
+    if family not in _SPLIT_ACTIVE_NON_MULGA_FAMILIES or state not in _SPLIT_ACTIVE_NON_REPEALED_STATES:
+        return False, "selected_not_active_non_mulga"
+    question = normalize_query_text(_temporal_trace_question_text(trace_payload))
+    if not _split_query_has_historical_surface_intent(question):
+        return False, "no_historical_surface_intent"
+    query_match, match_reason = _s7m_active_selected_matches_historical_query(
+        selected=selected,
+        trace_payload=trace_payload,
+    )
+    if not query_match:
+        return False, match_reason
+    item_text = _temporal_item_text(selected)
+    if _temporal_has_repeal_text(item_text):
+        return True, f"active_selected_repeal_proof:{match_reason}"
+    if family == "khk" and "khk" in question and ("eski" in question or "2026" in question):
+        return True, f"active_selected_legacy_khk_target:{match_reason}"
+    return False, "selected_active_source_not_repeal_or_legacy_target"
+
+
 def _s5_current_law_candidate_score(item: dict[str, Any], query_terms: set[str]) -> int:
     family = _temporal_family(item)
     if family not in {"kanun", "khk"}:
@@ -1395,6 +1506,56 @@ def _s5_active_non_mulga_clamp_answer(
     return "\n".join(lines)
 
 
+def _s7m_historical_repeal_proof_answer(
+    *,
+    selected: dict[str, Any],
+    evidence: list[dict[str, Any]],
+    reason: str,
+) -> str:
+    lines = ["Mülga/hedef kaynak ve güncel kanıt ayrımı:"]
+    lines.append(
+        _temporal_line(
+            "Tarihsel/mülga hedef",
+            selected,
+            "Soru eski/tarihsel kaynağın güncel doğrudan dayanak yapılmasını sorguladığı için "
+            "primary claim aktif kaynak değil, tarihsel/mülga kullanım riskidir.",
+        )
+    )
+    lines.append(
+        _temporal_line(
+            "Yürürlük/güncellik kanıtı",
+            selected,
+            "Seçili kaynak bu tarihsel kullanım riskini gösteren destek kanıtı olarak okunur.",
+        )
+    )
+    selected_key = _temporal_source_key(selected)
+    support_count = 0
+    for item in evidence:
+        if item is selected or _temporal_source_key(item) == selected_key:
+            continue
+        family = _temporal_family(item)
+        state = _temporal_effective_state(item) or "unknown"
+        if family not in _SPLIT_ACTIVE_NON_MULGA_FAMILIES or state not in _SPLIT_ACTIVE_NON_REPEALED_STATES:
+            continue
+        if not _temporal_article_raw(item):
+            continue
+        lines.append(
+            _temporal_line(
+                "Ayrı güncel destek",
+                item,
+                "Tarihsel/mülga hedefle karıştırılmadan ayrıca dikkate alınması gereken destek kanıttır.",
+            )
+        )
+        support_count += 1
+        if support_count >= 2:
+            break
+    lines.append(
+        "- Sonuç: Eski/tarihsel kaynak güncel doğrudan dayanak gibi kurulmaz; cevap, "
+        f"tarihsel/mülga kullanım riski ve seçili kanıtla sınırlıdır. Gerekçe: {reason}."
+    )
+    return "\n".join(lines)
+
+
 def _temporal_build_role_answer(
     *,
     roles: dict[str, dict[str, Any] | None],
@@ -1473,9 +1634,9 @@ def _s7m_build_mulga_dual_role_answer(
     current_identifier = _temporal_identifier_claim(current_law_basis)
     if _s7m_question_has_rent_cap_pattern(trace_payload, current_law_basis):
         lines.append(
-            "- Güncellik sonucu: Geçici yüzde yirmi beş kira artış sınırı 2026 için kendiliğinden "
-            f"uygulanacak genel kural olarak alınmaz; güncel kira artışı değerlendirmesi {current_identifier} "
-            "üzerinden ayrıca kurulmalıdır."
+            "- Güncellik sonucu: 2026 bakımından genel geçer bir geçici yüzde yirmi beş kira artış "
+            f"sınırı kabul edilmemelidir; güncel kira artışı değerlendirmesi {current_identifier} "
+            "üzerinden ayrıca yapılmalıdır."
         )
     else:
         lines.append(
@@ -1819,6 +1980,55 @@ def apply_temporal_claim_alignment(
     if split_policy.get("split_temporal_policy_bucket") == "active_non_mulga_preserve_family":
         selected = roles.get("selected")
         if isinstance(selected, dict):
+            proof_applies, proof_reason = _s7m_active_historical_repeal_proof_applies(
+                selected=selected,
+                trace_payload=trace_payload,
+            )
+            if (
+                proof_applies
+                and split_policy.get("s5_guard_type") == "active_non_mulga_historical_surface_clamp"
+            ):
+                patched_answer_text = _s7m_historical_repeal_proof_answer(
+                    selected=selected,
+                    evidence=evidence,
+                    reason=proof_reason,
+                )
+                proof_policy = {
+                    **split_policy,
+                    "split_temporal_policy_bucket": "historical_repeal_proof_from_active_selected_source",
+                    "split_temporal_policy_reason": proof_reason,
+                    "claim_family_rewrite_allowed": "limited_to_historical_surface",
+                    "historical_claim_surface_allowed": True,
+                    "claim_identifier_rewrite_allowed": "limited_to_historical_surface",
+                    "temporal_support_only": False,
+                    "current_law_basis_primary_allowed": False,
+                    **_s5_family_identifier_guard_fields(
+                        applied=True,
+                        guard_type="mulga_historical_repeal_proof_guard",
+                        claim_family_preserved=False,
+                        claim_identifier_preserved=True,
+                        article_surface_preserved=True,
+                        reason=proof_reason,
+                    ),
+                    **_s7m_historical_repeal_proof_fields(
+                        applied=True,
+                        selected=selected,
+                        reason=proof_reason,
+                        query_match=True,
+                    ),
+                }
+                proof_roles = dict(roles)
+                proof_roles["historical"] = selected
+                patch = _temporal_contract_patch(
+                    answer_text=patched_answer_text,
+                    answer_contract=answer_contract,
+                    roles=proof_roles,
+                    relation_chain_present=False,
+                    missing_reason="historical_repeal_proof_no_relation_chain",
+                    consistency_status="mulga_historical_repeal_proof_contract",
+                    split_policy=proof_policy,
+                )
+                return patched_answer_text, patch
             patched_answer_text = answer_text
             if split_policy.get("s5_guard_type") == "active_non_mulga_historical_surface_clamp":
                 patched_answer_text = _s5_active_non_mulga_clamp_answer(
