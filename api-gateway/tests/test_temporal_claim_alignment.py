@@ -65,6 +65,104 @@ def _historical_contract(**overrides: object) -> dict[str, object]:
     return contract
 
 
+def _active_kanun_evidence() -> list[dict[str, object]]:
+    return [
+        {
+            "source_id": "KVKK:6698:m6:f0:from2016-04-07:to9999-12-31",
+            "citation": "KVKK m.6/f.0",
+            "source_identifier": "KVKK m.1",
+            "source_title": "Kişisel Verilerin Korunması Kanunu",
+            "source_family": "kanun",
+            "article_or_section": "6",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Güncel özel nitelikli kişisel veri işleme rejimi.",
+        }
+    ]
+
+
+def _active_preservation_trace() -> dict[str, object]:
+    return {
+        "question_raw": (
+            "Cevabı eski KVKK yurt dışı aktarım rejimine göre mi, yoksa güncel rejime göre mi kurmalısın?"
+        ),
+        "retrieval": {
+            "source_family_resolution": {
+                "predicted_family": "kanun",
+                "historical_or_repealed_question": True,
+                "historical_scope_detected": True,
+                "preferred_families": ["kanun"],
+            },
+            "article_span_selector": {
+                "legacy_intent_binding_active": True,
+                "legacy_candidate_preferred": False,
+                "scenario_current_law_question": True,
+            },
+        },
+    }
+
+
+def _legacy_mulga_trace() -> dict[str, object]:
+    return {
+        "question_raw": "Tapu işlemlerinde 1994 tarihli Tapu Sicili Tüzüğünü kullanmak neden doğrudan hata üretir?",
+        "retrieval": {
+            "source_family_resolution": {
+                "predicted_family": "tuzuk",
+                "historical_or_repealed_question": True,
+                "historical_scope_detected": True,
+                "family_candidates": [
+                    {
+                        "family": "mulga_kanun",
+                        "signals": ["legacy_source_risk_signal"],
+                    }
+                ],
+            },
+            "article_span_selector": {
+                "legacy_intent_binding_active": True,
+                "legacy_candidate_preferred": False,
+            },
+        },
+    }
+
+
+def test_active_non_mulga_preserves_claim_family() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif kanun cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            effective_state_claimed="repealed",
+            answer_mode="repealed_transition_answer",
+        ),
+        assembled_evidence=_active_kanun_evidence(),
+        trace_payload=_active_preservation_trace(),
+    )
+
+    assert patch["split_temporal_policy_applied"] is True
+    assert patch["split_temporal_policy_bucket"] == "active_non_mulga_preserve_family"
+    assert patch["claim_family_rewrite_allowed"] is False
+    assert patch["historical_claim_surface_allowed"] is False
+    assert patch["source_family_claimed"] == "KANUN"
+    assert patch["source_family_claimed"] != "MULGA"
+
+
+def test_active_non_mulga_preserves_claim_identifier() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif kanun cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="MULGA m.0",
+            effective_state_claimed="repealed",
+            answer_mode="repealed_transition_answer",
+        ),
+        assembled_evidence=_active_kanun_evidence(),
+        trace_payload=_active_preservation_trace(),
+    )
+
+    assert patch["source_identifier_claimed"] == "KVKK m.6"
+    assert patch["article_or_section_claimed"] == "madde:6"
+    assert patch["claim_identifier_rewrite_allowed"] is False
+    assert patch["temporal_support_only"] is True
+
+
 def test_historical_chain_synthesis_uses_three_roles() -> None:
     answer, patch = apply_temporal_claim_alignment(
         answer_text="Kısa cevap.",
@@ -79,6 +177,19 @@ def test_historical_chain_synthesis_uses_three_roles() -> None:
     assert "Kanun bağlantısı" in answer
 
 
+def test_relation_chain_allows_controlled_historical_claim() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Kısa cevap.",
+        answer_contract=_historical_contract(),
+        assembled_evidence=_historical_chain_evidence(),
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "relation_chain_historical_three_part_claim"
+    assert patch["claim_family_rewrite_allowed"] == "controlled"
+    assert patch["claim_identifier_rewrite_allowed"] == "controlled"
+    assert patch["historical_claim_surface_allowed"] is True
+
+
 def test_repeal_instrument_not_primary_substantive_rule() -> None:
     _answer, patch = apply_temporal_claim_alignment(
         answer_text="Kaldırma maddesi asıl kuraldır.",
@@ -88,6 +199,39 @@ def test_repeal_instrument_not_primary_substantive_rule() -> None:
 
     assert patch["source_identifier_claimed"] != "rg20230101 m.1"
     assert patch["temporal_claim_repeal_source_key"].endswith("rg20230101:m1:f0:from2023-01-01:to9999-12-31")
+    assert patch["effective_state_claimed"] == "repealed"
+
+
+def test_legacy_mulga_without_relation_chain_keeps_historical_surface() -> None:
+    evidence = [
+        {
+            "source_id": "20135150:20135150:m90:f0:from1900-01-01:to9999-12-31",
+            "citation": "20135150 m.90/f.0",
+            "source_identifier": "20135150 m.1",
+            "source_title": "Tapu Sicili Tüzüğü",
+            "source_family": "tuzuk",
+            "article_or_section": "90",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Tapu sicili tüzüğünün tarihsel maddesi.",
+        }
+    ]
+
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="1994 tarihli tüzük bugün doğrudan uygulanmamalıdır.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="20135150 m.90",
+            effective_state_claimed="repealed",
+            answer_mode="not_currently_applicable_answer",
+        ),
+        assembled_evidence=evidence,
+        trace_payload=_legacy_mulga_trace(),
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "legacy_mulga_historical_surface_without_relation_chain"
+    assert patch["claim_family_rewrite_allowed"] == "limited_to_historical_surface"
+    assert patch["historical_claim_surface_allowed"] is True
+    assert patch["source_family_claimed"] == "MULGA"
     assert patch["effective_state_claimed"] == "repealed"
 
 
@@ -102,6 +246,22 @@ def test_current_basis_claim_matches_current_source() -> None:
         "phase:test:law:2547:m54:f0:from1981-01-01:to9999-12-31"
     )
     assert patch["temporal_claim_current_basis_identifier"] == "2547 m.54"
+
+
+def test_current_law_basis_is_support_unless_current_only() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Tarihsel yönetmelik maddesi.",
+        answer_contract=_historical_contract(answer_mode="historical_repealed_answer"),
+        assembled_evidence=_historical_chain_evidence(),
+        trace_payload={
+            "question_raw": "2012 tarihli disiplin yönetmeliğinin 22. maddesindeki tarihsel kural neydi?"
+        },
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "relation_chain_historical_three_part_claim"
+    assert patch["current_law_basis_primary_allowed"] is False
+    assert patch["temporal_claim_current_basis_identifier"] == "2547 m.54"
+    assert patch["source_identifier_claimed"] == "12345 m.22"
 
 
 def test_repealed_source_not_claimed_active() -> None:
@@ -143,6 +303,24 @@ def test_no_qid_specific_temporal_alignment() -> None:
     assert patch["temporal_claim_alignment_applied"] is True
     assert patch["temporal_claim_missing_reason"] == "none"
     assert "UNRELATED" not in answer
+
+
+def test_no_qid_specific_split_temporal_policy() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif kanun cevabı.",
+        answer_contract=_historical_contract(
+            qid="RANDOM-NATURAL-LANGUAGE-CASE",
+            source_family_claimed="MULGA",
+            effective_state_claimed="repealed",
+            answer_mode="repealed_transition_answer",
+        ),
+        assembled_evidence=_active_kanun_evidence(),
+        trace_payload=_active_preservation_trace(),
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "active_non_mulga_preserve_family"
+    assert patch["source_family_claimed"] == "KANUN"
+    assert "RANDOM-NATURAL-LANGUAGE-CASE" not in patch["split_temporal_policy_reason"]
 
 
 def test_active_non_historical_contract_not_aligned_by_incidental_repeal_text() -> None:
