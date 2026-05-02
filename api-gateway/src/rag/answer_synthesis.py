@@ -1550,8 +1550,8 @@ def _s7m_historical_repeal_proof_answer(
         if support_count >= 2:
             break
     lines.append(
-        "- Sonuç: Eski/tarihsel kaynak güncel doğrudan dayanak gibi kurulmaz; cevap, "
-        f"tarihsel/mülga kullanım riski ve seçili kanıtla sınırlıdır. Gerekçe: {reason}."
+        "- Sonuç: Cevap, tarihsel/mülga kullanım riski ve seçili kanıtla sınırlıdır. "
+        f"Gerekçe: {reason}."
     )
     return "\n".join(lines)
 
