@@ -80,6 +80,36 @@ def _active_kanun_evidence() -> list[dict[str, object]]:
     ]
 
 
+def _active_tuzuk_evidence() -> list[dict[str, object]]:
+    return [
+        {
+            "source_id": "859727:859727:m4:f0:from1985-09-07:to9999-12-31",
+            "citation": "859727 m.4/f.0",
+            "source_identifier": "859727 m.1",
+            "source_title": "Radyasyon Güvenliği Tüzüğü",
+            "source_family": "tuzuk",
+            "article_or_section": "4",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Aktif tüzük m.4 radyasyon güvenliği kapsamını düzenler.",
+        }
+    ]
+
+
+def _active_teblig_evidence() -> list[dict[str, object]]:
+    return [
+        {
+            "source_id": "23093:23093:m13:f0:from2025-01-01:to9999-12-31",
+            "citation": "23093 m.13/f.0",
+            "source_identifier": "23093 m.1",
+            "source_title": "Aktif Tebliğ",
+            "source_family": "tebligler",
+            "article_or_section": "13",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Aktif tebliğ m.13 elektronik bildirim usulünü düzenler.",
+        }
+    ]
+
+
 def _active_preservation_trace() -> dict[str, object]:
     return {
         "question_raw": (
@@ -140,6 +170,9 @@ def test_active_non_mulga_preserves_claim_family() -> None:
     assert patch["split_temporal_policy_bucket"] == "active_non_mulga_preserve_family"
     assert patch["claim_family_rewrite_allowed"] is False
     assert patch["historical_claim_surface_allowed"] is False
+    assert patch["s5_family_identifier_guard_applied"] is True
+    assert patch["s5_guard_type"] == "active_non_mulga_claim_preservation"
+    assert patch["s5_claim_family_preserved"] is True
     assert patch["source_family_claimed"] == "KANUN"
     assert patch["source_family_claimed"] != "MULGA"
 
@@ -161,6 +194,7 @@ def test_active_non_mulga_preserves_claim_identifier() -> None:
     assert patch["article_or_section_claimed"] == "madde:6"
     assert patch["claim_identifier_rewrite_allowed"] is False
     assert patch["temporal_support_only"] is True
+    assert patch["s5_claim_identifier_preserved"] is True
 
 
 def test_historical_chain_synthesis_uses_three_roles() -> None:
@@ -209,9 +243,9 @@ def test_legacy_mulga_without_relation_chain_keeps_historical_surface() -> None:
             "citation": "20135150 m.90/f.0",
             "source_identifier": "20135150 m.1",
             "source_title": "Tapu Sicili Tüzüğü",
-            "source_family": "tuzuk",
+            "source_family": "mulga_kanun",
             "article_or_section": "90",
-            "effective_state": "active",
+            "effective_state": "historical_repealed",
             "quoted_or_extracted_span": "Tapu sicili tüzüğünün tarihsel maddesi.",
         }
     ]
@@ -233,6 +267,181 @@ def test_legacy_mulga_without_relation_chain_keeps_historical_surface() -> None:
     assert patch["historical_claim_surface_allowed"] is True
     assert patch["source_family_claimed"] == "MULGA"
     assert patch["effective_state_claimed"] == "repealed"
+
+
+def test_active_non_mulga_historical_surface_clamp_preserves_claim_family() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif tüzük cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="MULGA m.4",
+            effective_state_claimed="repealed",
+            answer_mode="not_currently_applicable_answer",
+        ),
+        assembled_evidence=_active_tuzuk_evidence(),
+        trace_payload=_legacy_mulga_trace(),
+    )
+
+    assert patch["split_temporal_policy_bucket"] == "active_non_mulga_preserve_family"
+    assert patch["source_family_claimed"] == "TUZUK"
+    assert patch["source_family_claimed"] != "MULGA"
+    assert patch["s5_guard_type"] == "active_non_mulga_historical_surface_clamp"
+    assert patch["s5_claim_family_preserved"] is True
+
+
+def test_active_non_mulga_historical_surface_clamp_preserves_claim_identifier() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif tüzük cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="MULGA m.4",
+            effective_state_claimed="repealed",
+            answer_mode="not_currently_applicable_answer",
+        ),
+        assembled_evidence=_active_tuzuk_evidence(),
+        trace_payload=_legacy_mulga_trace(),
+    )
+
+    assert patch["source_identifier_claimed"] == "859727 m.4"
+    assert patch["article_or_section_claimed"] == "madde:4"
+    assert patch["s5_claim_identifier_preserved"] is True
+    assert patch["s5_article_surface_preserved"] is True
+
+
+def test_historical_article_surface_preserved() -> None:
+    evidence = [
+        {
+            "source_id": "6570:6570:mGEC1:f0:from1955-05-27:to1900-01-01",
+            "citation": "6570 m.GEC1/f.0",
+            "source_identifier": "6570 m.2",
+            "source_title": "Yürürlükten Kaldırılan Hükümler",
+            "source_family": "mulga_kanun",
+            "article_or_section": "gec1",
+            "effective_state": "repealed",
+            "quoted_or_extracted_span": "Geçici madde tarihsel kira rejimini düzenler.",
+        }
+    ]
+
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Tarihsel cevap.",
+        answer_contract=_historical_contract(
+            source_identifier_claimed="6570 m.2",
+            article_or_section_claimed="madde:2",
+            effective_state_claimed="active",
+        ),
+        assembled_evidence=evidence,
+    )
+
+    assert patch["source_identifier_claimed"] == "6570 m.gec1"
+    assert patch["article_or_section_claimed"] == "geçici madde 1"
+    assert patch["s5_guard_type"] == "historical_article_surface_guard"
+    assert patch["s5_article_surface_preserved"] is True
+
+
+def test_uy_claim_family_not_overwritten_by_generic_yonetmelik() -> None:
+    evidence = [
+        {
+            "source_id": "kky:12420:m4:f0",
+            "citation": "12420 m.4/f.0",
+            "source_identifier": "12420 m.1",
+            "source_title": "Savunma Araştırmaları Enstitüsü Yönetmeliği",
+            "source_family": "kky",
+            "article_or_section": "4",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Genel yönetmelik hükmü.",
+        },
+        {
+            "source_id": "uy:24839:m7:f0",
+            "citation": "24839 m.7/f.0",
+            "source_identifier": "24839 m.1",
+            "source_title": "Siirt Üniversitesi Ön Lisans ve Lisans Eğitim-Öğretim ve Sınav Yönetmeliği",
+            "source_family": "uy",
+            "article_or_section": "7",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Kayıt yenileme, ders kayıt koşulu ve kredi yükü düzenlenir.",
+        },
+    ]
+
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Üniversite yönetmeliği cevabı.",
+        answer_contract={
+            "answer_mode": "qualified_answer",
+            "source_family_claimed": "YONETMELIK",
+            "source_identifier_claimed": "12420 m.4",
+            "article_or_section_claimed": "madde:4",
+            "effective_state_claimed": "active",
+        },
+        assembled_evidence=evidence,
+        trace_payload={
+            "question_raw": (
+                "Bir lisans öğrencisinin ders ekle-sil, kayıt yenileme ve dönemlik azami kredi yükü "
+                "hangi üniversite yönetmeliğinde düzenlenir?"
+            ),
+            "retrieval": {
+                "source_family_resolution": {
+                    "preferred_source_families": ["uy"],
+                    "pre_filter_family_set": "yonetmelik | uy",
+                    "reranked_family_set": "yonetmelik | uy",
+                    "family_collision_pair": "uy|yonetmelik",
+                }
+            },
+        },
+    )
+
+    assert patch["source_family_claimed"] == "UY"
+    assert patch["source_identifier_claimed"] == "24839 m.7"
+    assert patch["s5_guard_type"] == "uy_yonetmelik_family_boundary_guard"
+    assert patch["s5_claim_family_preserved"] is True
+
+
+def test_teblig_claim_family_not_overwritten_by_mulga() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif tebliğ cevabı.",
+        answer_contract=_historical_contract(
+            source_family_claimed="MULGA",
+            source_identifier_claimed="MULGA m.13",
+            effective_state_claimed="repealed",
+            answer_mode="not_currently_applicable_answer",
+        ),
+        assembled_evidence=_active_teblig_evidence(),
+        trace_payload=_legacy_mulga_trace(),
+    )
+
+    assert patch["source_family_claimed"] == "TEBLIGLER"
+    assert patch["source_identifier_claimed"] == "23093 m.13"
+    assert patch["s5_guard_type"] == "teblig_domain_mismatch_guard"
+    assert patch["s5_claim_family_preserved"] is True
+
+
+def test_supporting_temporal_note_does_not_overwrite_primary_claim() -> None:
+    evidence = [
+        {
+            "source_id": "23093:23093:m13:f0:from2025-01-01:to9999-12-31",
+            "citation": "23093 m.13/f.0",
+            "source_identifier": "23093 m.13",
+            "source_title": "Aktif Tebliğ",
+            "source_family": "tebligler",
+            "article_or_section": "13",
+            "effective_state": "active",
+            "quoted_or_extracted_span": "Bu aktif tebliğ maddesi eski bir hükmün yürürlükten kaldırılmasına atıf yapar.",
+        }
+    ]
+
+    answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif tebliğ cevabı.",
+        answer_contract={
+            "answer_mode": "qualified_answer",
+            "source_family_claimed": "TEBLIGLER",
+            "source_identifier_claimed": "23093 m.13",
+            "article_or_section_claimed": "madde:13",
+            "effective_state_claimed": "active",
+        },
+        assembled_evidence=evidence,
+    )
+
+    assert answer == "Aktif tebliğ cevabı."
+    assert patch["temporal_claim_alignment_applied"] is False
+    assert patch.get("source_family_claimed", "TEBLIGLER") == "TEBLIGLER"
 
 
 def test_current_basis_claim_matches_current_source() -> None:
@@ -323,6 +532,25 @@ def test_no_qid_specific_split_temporal_policy() -> None:
     assert "RANDOM-NATURAL-LANGUAGE-CASE" not in patch["split_temporal_policy_reason"]
 
 
+def test_no_qid_specific_s5_rules() -> None:
+    _answer, patch = apply_temporal_claim_alignment(
+        answer_text="Aktif tüzük cevabı.",
+        answer_contract=_historical_contract(
+            qid="TUZUK-04",
+            source_family_claimed="MULGA",
+            source_identifier_claimed="MULGA m.4",
+            effective_state_claimed="repealed",
+            answer_mode="not_currently_applicable_answer",
+        ),
+        assembled_evidence=_active_tuzuk_evidence(),
+        trace_payload=_legacy_mulga_trace(),
+    )
+
+    assert patch["s5_family_identifier_guard_applied"] is True
+    assert patch["s5_guard_type"] == "active_non_mulga_historical_surface_clamp"
+    assert "TUZUK-04" not in patch["s5_guard_reason"]
+
+
 def test_public_contract_always_exposes_split_temporal_policy_fields() -> None:
     sanitized = sanitize_public_answer_contract(
         {
@@ -340,6 +568,9 @@ def test_public_contract_always_exposes_split_temporal_policy_fields() -> None:
     assert sanitized["claim_identifier_rewrite_allowed"] is False
     assert sanitized["historical_claim_surface_allowed"] is False
     assert sanitized["temporal_support_only"] is True
+    assert sanitized["s5_family_identifier_guard_applied"] is False
+    assert sanitized["s5_guard_type"] == "not_applicable"
+    assert sanitized["s5_guard_reason"] == "not_evaluated"
 
 
 def test_active_non_historical_contract_not_aligned_by_incidental_repeal_text() -> None:
