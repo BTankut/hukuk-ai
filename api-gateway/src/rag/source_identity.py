@@ -1514,6 +1514,96 @@ def _metadata_lookup_has_strong_query_anchor(query_metadata_signals: dict[str, A
     return False
 
 
+_TEB_KDV_GENERAL_APPLICATION_SOURCE_KEY = "19631"
+_TEB_KDV_CORE_SIGNAL_TERMS = ("kdv", "katma deger vergisi")
+_TEB_KDV_OPERATIONAL_SIGNAL_TERMS = (
+    "tevkifat",
+    "iade",
+    "konsolide",
+    "ana teblig",
+    "genel uygulama teblig",
+    "uygulama teblig",
+)
+
+
+def _teb_kdv_family_context_present(
+    *,
+    query: str,
+    requested_source_families: list[str],
+    source_family_resolution: SourceFamilyResolution | None,
+    query_metadata_signals: dict[str, Any] | None,
+) -> bool:
+    families: list[str] = [*requested_source_families]
+    if source_family_resolution is not None:
+        families.extend(source_family_resolution.routing_families)
+        families.extend(source_family_resolution.preferred_families)
+        if source_family_resolution.predicted_family:
+            families.append(source_family_resolution.predicted_family)
+    raw_parsed_families = (
+        query_metadata_signals.get("parsed_family_candidates")
+        if isinstance(query_metadata_signals, dict)
+        else []
+    )
+    if isinstance(raw_parsed_families, list):
+        families.extend(str(family) for family in raw_parsed_families if str(family or "").strip())
+
+    family_set = set(_expand_source_family_aliases(families))
+    if "teblig" in family_set:
+        return True
+
+    normalized_query = f" {normalize_canonical_text(query)} "
+    return " teblig " in normalized_query
+
+
+def _detect_teb_kdv_source_identity_signal(
+    *,
+    query: str,
+    requested_source_families: list[str],
+    source_family_resolution: SourceFamilyResolution | None,
+    query_metadata_signals: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    normalized_query = f" {normalize_canonical_text(query)} "
+    family_context = _teb_kdv_family_context_present(
+        query=query,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        query_metadata_signals=query_metadata_signals,
+    )
+    core_hits = [
+        term
+        for term in _TEB_KDV_CORE_SIGNAL_TERMS
+        if f" {term} " in normalized_query or term in normalized_query
+    ]
+    operational_hits = [
+        term
+        for term in _TEB_KDV_OPERATIONAL_SIGNAL_TERMS
+        if term in normalized_query
+    ]
+    detected = bool(family_context and core_hits and operational_hits)
+    return {
+        "teb_kdv_signal_detected": detected,
+        "teb_kdv_family_context_present": family_context,
+        "teb_kdv_core_signal_terms": core_hits,
+        "teb_kdv_operational_signal_terms": operational_hits,
+        "teb_kdv_candidate_source_key": _TEB_KDV_GENERAL_APPLICATION_SOURCE_KEY if detected else "",
+        "teb_kdv_candidate_injection_reason": (
+            "kdv_teblig_operational_signal_bundle" if detected else ""
+        ),
+    }
+
+
+def _record_is_teb_kdv_general_application_source(record: dict[str, Any]) -> bool:
+    source_key = str(record.get("source_key") or "").strip()
+    family = str(record.get("source_family_canonical") or record.get("source_family_raw") or "").strip().lower()
+    title = normalize_canonical_text(record.get("canonical_title") or "")
+    return (
+        source_key == _TEB_KDV_GENERAL_APPLICATION_SOURCE_KEY
+        and family == "teblig"
+        and "katma deger vergisi" in title
+        and "genel uygulama teblig" in title
+    )
+
+
 def _query_has_academic_regulation_intent(query: str) -> bool:
     normalized = f" {normalize_query_text(query)} "
     return any(
@@ -1972,7 +2062,14 @@ def _select_metadata_first_source_candidates(
         return None
     if query_metadata_signals is None:
         query_metadata_signals = _parse_metadata_lookup_query_signals(query)
-    if not _metadata_lookup_has_strong_query_anchor(query_metadata_signals):
+    teb_kdv_signal = _detect_teb_kdv_source_identity_signal(
+        query=query,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        query_metadata_signals=query_metadata_signals,
+    )
+    teb_kdv_signal_detected = bool(teb_kdv_signal["teb_kdv_signal_detected"])
+    if not _metadata_lookup_has_strong_query_anchor(query_metadata_signals) and not teb_kdv_signal_detected:
         return None
     catalog = (catalog_loader or load_canonical_source_catalog)()
     if not catalog:
@@ -1987,6 +2084,17 @@ def _select_metadata_first_source_candidates(
             source_family_resolution=source_family_resolution,
             query_metadata_signals=query_metadata_signals,
         )
+        teb_kdv_candidate_match = bool(
+            teb_kdv_signal_detected and _record_is_teb_kdv_general_application_source(record)
+        )
+        if teb_kdv_candidate_match:
+            score += 95.0
+            reasons.extend(
+                [
+                    "teb_kdv_candidate_injected",
+                    "teb_kdv_rerank_boost_applied",
+                ]
+            )
         title_overlap = 0
         for reason in reasons:
             if reason.startswith("title_overlap:"):
@@ -2001,12 +2109,27 @@ def _select_metadata_first_source_candidates(
             or reason.startswith("cb_genelge_topic_match:")
             for reason in reasons
         )
+        has_teb_kdv_anchor = teb_kdv_candidate_match
         has_issuer_family_anchor = "issuer_exact" in reasons and (
             "parsed_family_match" in reasons or "family_match" in reasons or "prior_family_match" in reasons
         )
-        if not has_identifier_anchor and not has_strong_title_anchor and not has_title_ngram_anchor and not has_issuer_family_anchor:
+        if (
+            not has_identifier_anchor
+            and not has_strong_title_anchor
+            and not has_title_ngram_anchor
+            and not has_issuer_family_anchor
+            and not has_teb_kdv_anchor
+        ):
             continue
-        threshold = 24.0 if has_identifier_anchor else 30.0 if has_issuer_family_anchor else 32.0
+        threshold = (
+            20.0
+            if has_teb_kdv_anchor
+            else 24.0
+            if has_identifier_anchor
+            else 30.0
+            if has_issuer_family_anchor
+            else 32.0
+        )
         if score < threshold:
             continue
         strict_document_type_conflict = any(
@@ -2021,6 +2144,8 @@ def _select_metadata_first_source_candidates(
             lookup_source = "normalized_title_lookup"
         elif has_issuer_family_anchor:
             lookup_source = "issuer_family_lookup"
+        elif has_teb_kdv_anchor:
+            lookup_source = "teb_kdv_source_identity_lookup"
         else:
             lookup_source = "title_ngram_family_lookup"
         scored.append(
@@ -2040,6 +2165,7 @@ def _select_metadata_first_source_candidates(
                 "metadata_lookup_source": lookup_source,
                 "metadata_lookup_confidence": round(min(0.99, 0.45 + score / 100.0), 3),
                 "match_reasons": reasons,
+                "teb_kdv_rerank_boost_applied": has_teb_kdv_anchor,
                 "focus_keys": [
                     key
                     for key in (
@@ -2084,6 +2210,10 @@ def _select_metadata_first_source_candidates(
             repealed_candidate_demoted = True
     for rank, item in enumerate(ranked, start=1):
         item["metadata_lookup_rank"] = rank
+    teb_kdv_candidate_injected = any(
+        str(item.get("source_key") or "") == _TEB_KDV_GENERAL_APPLICATION_SOURCE_KEY
+        for item in scored
+    )
     selected_ranked = ranked
     if any("identifier_exact" in (item.get("match_reasons") or []) for item in ranked):
         exact_identifier_ranked = [
@@ -2114,6 +2244,16 @@ def _select_metadata_first_source_candidates(
         "active_candidate_available": active_candidate_available,
         "repealed_candidate_demoted": repealed_candidate_demoted,
         "temporal_family_guard_triggered": repealed_candidate_demoted,
+        "teb_kdv_signal_detected": teb_kdv_signal_detected,
+        "teb_kdv_candidate_injected": teb_kdv_candidate_injected,
+        "teb_kdv_candidate_source_key": (
+            _TEB_KDV_GENERAL_APPLICATION_SOURCE_KEY if teb_kdv_candidate_injected else ""
+        ),
+        "teb_kdv_candidate_injection_reason": (
+            str(teb_kdv_signal.get("teb_kdv_candidate_injection_reason") or "")
+            if teb_kdv_candidate_injected
+            else ""
+        ),
         "query_metadata_signals": query_metadata_signals,
         "candidates": ranked,
     }
