@@ -877,6 +877,34 @@ def _split_temporal_historical_surface_intent(
     return False, "no_historical_surface_intent"
 
 
+def _split_current_law_basis_primary_allowed(
+    *,
+    answer_contract: dict[str, Any],
+    trace_payload: dict[str, Any] | None,
+) -> bool:
+    answer_mode = _temporal_text(answer_contract.get("answer_mode"))
+    if answer_mode in {"repealed_transition_answer", "not_currently_applicable_answer"}:
+        return True
+    normalized_question = normalize_query_text(_temporal_trace_question_text(trace_payload))
+    return any(
+        term in normalized_question
+        for term in (
+            "bugun",
+            "guncel",
+            "mevcut",
+            "hala",
+            "halen",
+            "gecerli",
+            "gecis",
+            "yerine gec",
+            "dogrudan uygulan",
+            "guvenli",
+            "risk",
+            "2026",
+        )
+    )
+
+
 def _split_temporal_policy(
     *,
     answer_contract: dict[str, Any],
@@ -902,6 +930,10 @@ def _split_temporal_policy(
             "split_temporal_policy_reason": "complete_relation_chain",
             "claim_identifier_rewrite_allowed": "controlled",
             "temporal_support_only": False,
+            "current_law_basis_primary_allowed": _split_current_law_basis_primary_allowed(
+                answer_contract=answer_contract,
+                trace_payload=trace_payload,
+            ),
         }
     if (
         not relation_chain_present
@@ -917,6 +949,7 @@ def _split_temporal_policy(
             "split_temporal_policy_reason": f"active_selected_evidence_without_relation_chain:{intent_reason}",
             "claim_identifier_rewrite_allowed": False,
             "temporal_support_only": True,
+            "current_law_basis_primary_allowed": False,
         }
     if not relation_chain_present and historical_surface_intent:
         return {
@@ -927,6 +960,7 @@ def _split_temporal_policy(
             "split_temporal_policy_reason": intent_reason,
             "claim_identifier_rewrite_allowed": "limited_to_historical_surface",
             "temporal_support_only": False,
+            "current_law_basis_primary_allowed": False,
         }
     return {
         "split_temporal_policy_applied": False,
@@ -936,6 +970,7 @@ def _split_temporal_policy(
         "split_temporal_policy_reason": intent_reason,
         "claim_identifier_rewrite_allowed": False,
         "temporal_support_only": True,
+        "current_law_basis_primary_allowed": False,
     }
 
 
@@ -1096,8 +1131,17 @@ def _temporal_contract_patch(
     historical = roles.get("historical") or roles.get("selected")
     repeal = roles.get("repeal")
     current = roles.get("current")
-    primary = historical or repeal or current
-    primary_role = "current_law_basis" if relation_chain_present and current is not None and missing_reason == "none" else "historical_rule"
+    current_primary_allowed = bool(split_policy.get("current_law_basis_primary_allowed"))
+    primary = (
+        current
+        if relation_chain_present and current is not None and missing_reason == "none" and current_primary_allowed
+        else historical or repeal or current
+    )
+    primary_role = (
+        "current_law_basis"
+        if primary is current and relation_chain_present and current is not None and missing_reason == "none"
+        else "historical_rule"
+    )
     source_identifier = _temporal_identifier_claim(primary)
     article_or_section = _temporal_article_claim(primary)
     answer_mode = (
