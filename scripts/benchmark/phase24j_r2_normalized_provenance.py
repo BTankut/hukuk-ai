@@ -509,6 +509,13 @@ def boolish(value: Any) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes"}
 
 
+def score_float(value: Any) -> float:
+    try:
+        return float(str(value).strip())
+    except Exception:
+        return 0.0
+
+
 def paired_smoke(args: argparse.Namespace) -> dict[str, Any]:
     base_run = Path(args.base_run)
     target_run = Path(args.target_run)
@@ -560,6 +567,13 @@ def paired_smoke(args: argparse.Namespace) -> dict[str, Any]:
     no_critical_regression = all(
         row["target_pass"] == row["base_pass"] == "PASS" or row["qid"] not in CRITICAL_QIDS for row in rows
     )
+    affected_rows = [row for row in rows if row["qid"] in {"KANUN-12", "KKY-03", "TUZUK-04", "YON-04"}]
+    affected_improved = [
+        row for row in affected_rows if score_float(row["target_score"]) > score_float(row["base_score"])
+    ]
+    affected_worse = [
+        row for row in affected_rows if score_float(row["target_score"]) < score_float(row["base_score"])
+    ]
     acceptance = (
         target_contract_valid_all
         and target_no_unsupported
@@ -631,8 +645,37 @@ def paired_smoke(args: argparse.Namespace) -> dict[str, Any]:
             f"- target_binding_collision_zero: `{target_no_binding_collision}`",
             f"- target_rerank_and_evidence_non_empty: `{target_evidence_non_empty}`",
             f"- no_critical_regression_vs_base: `{no_critical_regression}`",
+            f"- affected_residual_improved_count: `{len(affected_improved)}`",
+            f"- affected_residual_worse_count: `{len(affected_worse)}`",
         ]
     )
+    if args.scope == "residual":
+        lines.extend(
+            [
+                "",
+                "## Affected Residual Delta",
+                "",
+                "| qid | base_score | target_score | delta | note |",
+                "|---|---:|---:|---:|---|",
+            ]
+        )
+        for row in affected_rows:
+            delta = score_float(row["target_score"]) - score_float(row["base_score"])
+            if delta > 0:
+                note = "improved"
+            elif delta < 0:
+                note = "worse"
+            else:
+                note = "unchanged"
+            lines.append(
+                f"| {row['qid']} | {row['base_score']} | {row['target_score']} | {delta:.2f} | {note} |"
+            )
+        lines.extend(
+            [
+                "",
+                "No affected residual row improved. `TUZUK-04` changed source/span and scored lower; the others stayed unchanged. This satisfies the documentation requirement but does not justify opening full shadow benchmark.",
+            ]
+        )
     out_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return {
         "scope": args.scope,
@@ -658,8 +701,18 @@ def decision(args: argparse.Namespace) -> None:
         option = "Option C - TARGET still loses guards"
         next_action = "Open selector/evidence assembly audit"
     elif residual_exists:
-        option = "Option A - TARGET clean and paired residual smoke available"
-        next_action = "Open Phase 24K-R2 full shadow benchmark only if residual gate passed"
+        residual_rows = read_csv(RESIDUAL_SMOKE_CSV)
+        affected_rows = [
+            row for row in residual_rows if row.get("qid") in {"KANUN-12", "KKY-03", "TUZUK-04", "YON-04"}
+        ]
+        affected_improved = any(score_float(row.get("target_score")) > score_float(row.get("base_score")) for row in affected_rows)
+        affected_worse = any(score_float(row.get("target_score")) < score_float(row.get("base_score")) for row in affected_rows)
+        if affected_improved and not affected_worse:
+            option = "Option A - TARGET is clean and improves/no-regresses"
+            next_action = "Open Phase 24K-R2 full shadow benchmark on TARGET"
+        else:
+            option = "Option B - TARGET clean but no improvement"
+            next_action = "Keep Phase24J collection as diagnostic only; do not run full benchmark"
     else:
         option = "Option B - TARGET clean but residual improvement not evaluated"
         next_action = "Keep Phase24J collection as diagnostic only"
