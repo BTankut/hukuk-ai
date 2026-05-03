@@ -1,0 +1,10 @@
+qid,current_status,requires_legal_review,legal_review_available,requires_scorer_review,scorer_review_available,requires_corpus_backfill,source_acquisition_available,runtime_fix_allowed,shadow_remediation_allowed,internal_eval_blocker,productization_blocker,next_action
+CBY-04,pending_legal_scorer_review,true,false,true,false,false,false,false,false,false,true,refresh_legal_scorer_followup
+CBY-06,pending_legal_scorer_review,true,false,true,false,false,false,false,false,false,true,refresh_legal_scorer_followup
+KANUN-12,pending_source_acquisition_and_shadow_plan,true,false,false,false,true,false,false,false,true,true,prepare_official_source_acquisition_checklist
+KKY-01,pending_legal_scorer_review,true,false,true,false,false,false,false,false,false,true,refresh_legal_scorer_followup
+KKY-03,pending_source_acquisition_and_shadow_plan,true,false,false,false,true,false,false,false,true,true,prepare_official_source_acquisition_checklist
+TEB-04,pending_legal_scorer_review,true,false,true,false,false,false,false,false,true,true,refresh_legal_scorer_followup
+TUZUK-04,pending_mixed_review_and_source_readiness,true,false,false,false,true,false,false,false,false,true,refresh_review_and_prepare_source_checklist
+TUZUK-05,pending_source_acquisition_and_legal_confirmation,true,false,false,false,true,false,false,false,true,true,prepare_official_source_acquisition_checklist
+YON-04,pending_source_acquisition_and_shadow_plan,true,false,false,false,true,false,false,false,true,true,prepare_official_source_acquisition_checklist
