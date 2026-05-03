@@ -102,6 +102,7 @@ def utc_now() -> str:
 
 
 def rel(path: Path) -> str:
+    path = path if path.is_absolute() else REPO_ROOT / path
     return path.relative_to(REPO_ROOT).as_posix()
 
 
