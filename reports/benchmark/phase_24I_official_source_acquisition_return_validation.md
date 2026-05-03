@@ -1,12 +1,14 @@
 # Phase 24I Official Source Acquisition Return Validation
 
-Generated: 2026-05-03T14:20:00Z
+Generated: 2026-05-03T14:31:36Z
 
 Input:
 
 - `reports/benchmark/legal_review_returns/filled_phase_24I_official_source_acquisition_checklist.csv`
 - ZIP delivery unpacked at `reports/benchmark/legal_review_returns/phase_24I_source_acquisition_delivery/`
 - Delivery CSV mirror: `reports/benchmark/legal_review_returns/phase_24I_source_acquisition_delivery/filled_phase_24I_official_source_acquisition_checklist_completed.csv`
+- Supplemental confirmed checklist: `reports/benchmark/filled_phase_24I_official_source_acquisition_checklist.csv`
+- Supplemental confirmed notes: `reports/benchmark/filled_phase_24I_official_source_acquisition_notes.md`
 
 Output CSV:
 
@@ -18,6 +20,8 @@ The ZIP delivery contained the completed Phase 24I CSV plus four raw `.txt` file
 
 No separate standalone acquisition-record files were present in the ZIP. The delivered raw `.txt` files themselves are structured as text-copy/acquisition records: each file starts with QID, acquisition kind, canonical URL/source metadata, publication metadata, article-boundary notes, parser-readiness assessment, and legal-reviewer confirmation.
 
+The supplemental confirmed checklist supersedes the earlier `needs_more_review` fields for KANUN-12, KKY-03, TUZUK-04, and YON-04. TUZUK-05 remains unresolved.
+
 ## Validation Summary
 
 | Check | Result |
@@ -28,28 +32,29 @@ No separate standalone acquisition-record files were present in the ZIP. The del
 | Raw file paths populated | PARTIAL: 4 paths populated, TUZUK-05 `not_downloaded` |
 | Raw files exist in repo | PARTIAL: 4/5 |
 | SHA256 verified | PARTIAL: 4/5 |
-| Parser readiness complete | PARTIAL: yes for KANUN-12/YON-04, unclear for KKY-03/TUZUK-04, no for TUZUK-05 |
-| Legal reviewer confirmation complete | FAIL: all rows `needs_more_review` |
+| Parser readiness complete | PARTIAL: yes for KANUN-12, KKY-03, TUZUK-04, and YON-04; no for TUZUK-05 |
+| Legal reviewer confirmation complete | PARTIAL: confirmed for 4/5; TUZUK-05 remains `needs_more_review` |
+| Safe shadow-backfill candidates | PARTIAL: 4/5, with TUZUK-04 limited to historical/repealed-source handling |
 
 ## Row Status
 
 | QID | Source Acquisition Status | Safe For Shadow Backfill | Blocking Reason |
 |---|---|---|---|
-| KANUN-12 | raw_verified_legal_pending | false | Raw file present and SHA256 verified; legal confirmation remains `needs_more_review`. |
-| KKY-03 | raw_verified_parser_legal_pending | false | Raw file present and SHA256 verified; parser readiness unclear; legal confirmation remains `needs_more_review`. |
-| TUZUK-04 | raw_verified_parser_legal_pending | false | Raw file present and SHA256 verified; repealed/current-law handling unresolved; legal confirmation remains `needs_more_review`. |
-| TUZUK-05 | source_not_acquired | false | No official source identified or downloaded. |
-| YON-04 | raw_verified_legal_pending | false | Raw file present and SHA256 verified; legal confirmation remains `needs_more_review`. |
+| KANUN-12 | raw_verified_ready | true | Raw file, SHA256, parser readiness, and legal confirmation verified. Use 5651 as primary source; secondary regulation only supports operational detail. |
+| KKY-03 | raw_verified_ready | true | Raw file, SHA256, parser readiness, and legal confirmation verified. Source family is confirmed as `YONETMELIK`, not KKY. |
+| TUZUK-04 | raw_verified_historical_repealed_ready | true | Raw file, SHA256, parser readiness, and legal confirmation verified only for historical/repealed-source handling; not standalone current-law authority. |
+| TUZUK-05 | source_not_acquired | false | No official source identified or downloaded; benchmark/source identity remains ambiguous. |
+| YON-04 | raw_verified_ready | true | Raw file, SHA256, parser readiness, and legal confirmation verified. Use KVKK official regulation page with 6698 m.7 as supporting basis. |
 
 ## Expert Delivery Notes Captured
 
 | QID | Expert Note | Gate Impact |
 |---|---|---|
-| KANUN-12 | 5651 sayılı Kanun source, RG metadata, and relevant MADDE headings were identified; supporting `İnternet Toplu Kullanım Sağlayıcıları Hakkında Yönetmelik` m.4/m.5/m.9-m.11 was noted. | Source acquisition strengthened, but legal confirmation remains pending. |
-| KKY-03 | Source family was corrected to `YONETMELIK`; BDDK official list links to the mevzuat.gov.tr record; exact residual span was left `needs_more_review`. | Do not ingest as KKY; parser/source identity work remains required. |
-| TUZUK-04 | `Radyasyon Güvenliği Tüzüğü` was treated as historical/repealed; 2023 repeal decision was noted. | Historical/current-law split must be preserved before use in answers. |
+| KANUN-12 | 5651 sayılı Kanun source, RG metadata, and relevant MADDE headings were identified; supporting `İnternet Toplu Kullanım Sağlayıcıları Hakkında Yönetmelik` m.4/m.5/m.9-m.11 was noted. | Confirmed for source backfill with primary/supporting-source separation. |
+| KKY-03 | Source family was corrected to `YONETMELIK`; BDDK official list links to the mevzuat.gov.tr record; spans m.13/m.29/m.34/m.37/m.46 were confirmed. | Confirmed for source backfill under `YONETMELIK` identity. |
+| TUZUK-04 | `Radyasyon Güvenliği Tüzüğü` was treated as historical/repealed; 2023 repeal decision was noted. | Confirmed only for historical/repealed handling; current-law companion sources are still required where the question asks current law. |
 | TUZUK-05 | Exact tüzük/source name was not present in the instruction or blank CSV; safely left `not_found` / `needs_more_review`. | Still a hard source-acquisition blocker. |
-| YON-04 | KVKK official page text, RG metadata, and m.7-m.12 boundaries were captured; 6698 sayılı Kanun m.7 was noted as supporting source. | Source acquisition strengthened, but legal confirmation remains pending. |
+| YON-04 | KVKK official page text, RG metadata, and m.7-m.12 boundaries were captured; 6698 sayılı Kanun m.7 was noted as supporting source. | Confirmed for source backfill with supporting primary-law basis. |
 
 ## Verified Raw Files
 
@@ -62,6 +67,8 @@ No separate standalone acquisition-record files were present in the ZIP. The del
 
 ## Decision
 
-Phase 24I return validation status: partially verified but still blocked.
+Phase 24I return validation status: partially confirmed, with targeted shadow-backfill candidates.
 
-No row is safe for shadow backfill until legal confirmation is upgraded from `needs_more_review`; KKY-03 and TUZUK-04 also require parser readiness confirmation, and TUZUK-05 still requires source identification/acquisition.
+KANUN-12, KKY-03, TUZUK-04, and YON-04 are safe for targeted shadow backfill under the source-scope constraints above. TUZUK-04 must remain historical/repealed and must not be used as standalone current-law authority.
+
+TUZUK-05 remains blocked because the exact source identity is still not identified.
