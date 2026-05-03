@@ -1,0 +1,258 @@
+{
+  "api_command_template": "env <normalized_env> MILVUS_COLLECTION=<collection> api-gateway/.venv/bin/python -m uvicorn api-gateway.src.main:app --host 127.0.0.1 --port <port> --log-level info",
+  "base_api": "http://127.0.0.1:8032/v1",
+  "base_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "base_port": 8032,
+  "collection_load_verification_command": "api-gateway/.venv/bin/python scripts/benchmark/phase24j_r2_normalized_provenance.py verify-collections",
+  "generated_at_utc": "2026-05-03T16:46:56.751247+00:00",
+  "hashes": {
+    "config_hashes": [
+      {
+        "bytes": 10674,
+        "exists": true,
+        "path": "api-gateway/src/rag/required_slot_matrix.py",
+        "sha256": "7e24673fc8fcae2b8adde1795d39cc98da2ebd9ac270a01854f79dd47b0d1a5c"
+      },
+      {
+        "bytes": 6140,
+        "exists": true,
+        "path": "api-gateway/src/rag/required_slot_matrix.json",
+        "sha256": "5619710ebd8c808e32a95c5762cccc2e5e523ba8b0b5b7498e8bcade004363ae"
+      },
+      {
+        "bytes": 37758,
+        "exists": true,
+        "path": "configs/evaluation/hukuk_ai_100_public_questions.csv",
+        "sha256": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e"
+      },
+      {
+        "bytes": 4985,
+        "exists": true,
+        "path": "evaluation/hukuk_ai_100_article_alignment.py",
+        "sha256": "b76ca74a993d3e32416739c8412fcf572b41e58cf584659733d9f38741b284e5"
+      },
+      {
+        "bytes": 9521,
+        "exists": true,
+        "path": "evaluation/hukuk_ai_100_source_schema.py",
+        "sha256": "31ea49c93f36ff4aa9c8d9faf545c396a9240302d75a85c49e7a39d044513eb6"
+      },
+      {
+        "bytes": 69254,
+        "exists": true,
+        "path": "scripts/benchmark/run_hukuk_ai_100.py",
+        "sha256": "dc6638c21c47922eaf7d45f7a34f10fdca91a8c2ccddfc885534e00e08232ec0"
+      },
+      {
+        "bytes": 87913,
+        "exists": true,
+        "path": "scripts/benchmark/score_hukuk_ai_100.py",
+        "sha256": "a48bdc924b29f440517eb4f437ce54b3f6ac9a4d5fe3dcb8f7b65d4f6300ceea"
+      }
+    ],
+    "source_catalog_hashes": [
+      {
+        "bytes": 38132,
+        "exists": true,
+        "path": "api-gateway/src/rag/source_catalog.py",
+        "sha256": "f04dc600f306f5724c8e795fcf462bf601083e62250505686c3da55fb2a9016e"
+      },
+      {
+        "bytes": 18918,
+        "exists": true,
+        "path": "api-gateway/src/rag/retriever.py",
+        "sha256": "d036bc2152af51a90689464af303009d822594076feb7a6a07ac93c7db74b20a"
+      },
+      {
+        "bytes": 59395,
+        "exists": true,
+        "path": "api-gateway/src/source_family_resolver.py",
+        "sha256": "b9f622111e2a247874cb6d03a8e0b47b4a3b2f47e6bf556bb55f650fc30e77c1"
+      },
+      {
+        "bytes": 7390345,
+        "exists": true,
+        "path": "reports/benchmark/phase_05_canonical_source_catalog.csv",
+        "sha256": "3e1a906ca1c0daaffc839b8757c6bdac25228d8f4e60f5001c2534a00fa309b2"
+      },
+      {
+        "bytes": 907,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/cmk/source_manifest.json",
+        "sha256": "1929713475ab06e76691b98409463b147e576e281c0f4414ab301113e7ac6578"
+      },
+      {
+        "bytes": 908,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/hmk/source_manifest.json",
+        "sha256": "f5b2ad40df50e1415ecef157edb2e3394ca9f98ea5c4f150b12220e507844cae"
+      },
+      {
+        "bytes": 915,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/ik/source_manifest.json",
+        "sha256": "fdefff21b1548fd7973d5321ac45bc4e6c5719d17b3abb4fb9b8ee7da1dae9a2"
+      },
+      {
+        "bytes": 900,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/tck/source_manifest.json",
+        "sha256": "352e420ceb3e79ba7c52260c0ff85c6d0e5da7f933580a5726628e202ce73bf0"
+      },
+      {
+        "bytes": 928,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/tmk_core_corpus/source_manifest.json",
+        "sha256": "a99d7b5eb1a9234bf0a3e842cb3b6d37df42007b2b8fcbe0a112f4b5d6a625b2"
+      },
+      {
+        "bytes": 906,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/ttk/source_manifest.json",
+        "sha256": "700d7ac77b43111cced6033f3fccf183a63ff51ea60adc55451d01c5771b2519"
+      },
+      {
+        "bytes": 372814,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/cmk/normalized_source.txt",
+        "sha256": "ef03790c8c2ef82229a7eeceb0f79c50e696be4f7735b931cfc7e92a44567ad9"
+      },
+      {
+        "bytes": 298250,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/hmk/normalized_source.txt",
+        "sha256": "bf1a326eb121e0d73a33e74a7db43af0e1f0e25f2201b7117bc958399315fdf4"
+      },
+      {
+        "bytes": 453984,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/ik/normalized_source.txt",
+        "sha256": "3577da9cfbdc706947641146948f93346a2f2c194d88c07a09b0690c508880f9"
+      },
+      {
+        "bytes": 307546,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/tck/normalized_source.txt",
+        "sha256": "9cde7d1ac5290f2a4f1e2b4d19ffc2c67b888535850db23c90fe52d8e46ae872"
+      },
+      {
+        "bytes": 425015,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/tmk_core_corpus/normalized_source.txt",
+        "sha256": "0de4c7b84a9111d353ad1e61f9dd6938d14c4a7339377a25ba646a758c0ed591"
+      },
+      {
+        "bytes": 1060631,
+        "exists": true,
+        "path": "data/primary_sources/full_acquisition/ttk/normalized_source.txt",
+        "sha256": "1325e46fb164cf0218fa15d20078cb97ccf907cfbc2e170020d47bc9bd753742"
+      }
+    ],
+    "source_supplement_hashes": [
+      {
+        "bytes": 25822,
+        "exists": true,
+        "path": "api-gateway/src/rag/source_supplements.py",
+        "sha256": "a8218c22532ff53e61975d3b1d105d93fdb3f23876065c6719c0a8913a86f0ae"
+      },
+      {
+        "bytes": 7813,
+        "exists": true,
+        "path": "reports/benchmark/phase_16a_corpus_materialization_remediation.csv",
+        "sha256": "ebf51c4c156c37d25011368f80ca785fb599e4eeb1d0ba86cc341151a52563f8"
+      },
+      {
+        "bytes": 3703,
+        "exists": true,
+        "path": "reports/benchmark/phase_16e_corpus_materialization_remediation.csv",
+        "sha256": "40179b1b8a39bea7b10ad22ef6a4fb56ea140704e74b9cbf4b97cd1a3e454aad"
+      },
+      {
+        "bytes": 2329,
+        "exists": true,
+        "path": "reports/benchmark/phase_16b_source_key_v2_collision_report.csv",
+        "sha256": "9872acbb5ba08e2d899feede9a0ee0b0527ea3a32016df89909aca72e6d3c976"
+      },
+      {
+        "bytes": 1302,
+        "exists": true,
+        "path": "reports/benchmark/phase_16e_source_key_v2_collision_report.csv",
+        "sha256": "06a125e1f0b5f99e18e427f42d9166984fc9c18250ce9b31ceae7b146dcdf73b"
+      },
+      {
+        "bytes": 1212,
+        "exists": true,
+        "path": "reports/benchmark/phase_17_corpus_materialization_audit.csv",
+        "sha256": "dff7afd5785b5b564b7883dd260e111d573b1243fbf738ecd09dd2a190c87bdb"
+      },
+      {
+        "bytes": 2028,
+        "exists": true,
+        "path": "reports/benchmark/phase_17a_corpus_materialization_remediation.csv",
+        "sha256": "82728fbeb06791512ff27542650c25d5fa906e6362761a043526010ea8ea8d18"
+      },
+      {
+        "bytes": 2676,
+        "exists": true,
+        "path": "reports/benchmark/phase_17b_corpus_materialization_remediation.csv",
+        "sha256": "f7800ac8dcf0b0009b5901922b31d4cd866535850d64b968aef40db09df58a33"
+      },
+      {
+        "bytes": 1499,
+        "exists": true,
+        "path": "reports/benchmark/phase_17a_sourcekey_binding_audit.csv",
+        "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+      },
+      {
+        "bytes": 1499,
+        "exists": true,
+        "path": "reports/benchmark/phase_17b_sourcekey_binding_audit.csv",
+        "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+      },
+      {
+        "bytes": 3386,
+        "exists": true,
+        "path": "reports/benchmark/phase_18e_side_backlog_source_materialization_report.md",
+        "sha256": "9c472e41f8ec75495b634bb5bf1863849944bbd3a4477b0749cc1b3852f1411a"
+      }
+    ]
+  },
+  "health_check_command": "curl -sS http://127.0.0.1:<port>/v1/health",
+  "models_check_command": "curl -sS -H 'Authorization: Bearer benchmark' http://127.0.0.1:<port>/v1/models",
+  "normalized_env": {
+    "ALLOW_ANONYMOUS_INTERNAL_SMOKE": "false",
+    "API_AUTH_ENABLED": "true",
+    "API_AUTH_KEYS": "benchmark",
+    "API_VERSION_LABEL": "2026-05-03-phase24j-r2-normalized",
+    "AUDIT_LOG_ENABLED": "false",
+    "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+    "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+    "EMBEDDING_BACKEND": "remote",
+    "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+    "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+    "GUARDRAILS_ENABLED": "false",
+    "MILVUS_COLLECTION": "<collection>",
+    "MILVUS_ENABLED": "true",
+    "MILVUS_URI": "http://localhost:19530",
+    "PARITY_TRACE_ENABLED": "false",
+    "PRESIDIO_ENABLED": "false",
+    "RELEASE_CONTROLS_STRICT": "true",
+    "RELEASE_LANE_ID": "phase24j_r2_normalized_pair",
+    "RERANKER_ENABLED": "false",
+    "SESSION_STORE_BACKEND": "memory",
+    "SESSION_STORE_REDIS_PING_ON_STARTUP": "false",
+    "SESSION_STORE_REDIS_REQUIRED": "false",
+    "TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK": "true",
+    "USE_VERIFICATION": "false"
+  },
+  "same_code_checkout": "/Users/btmacstudio/Projects/hukuk-ai",
+  "same_env_except": [
+    "MILVUS_COLLECTION",
+    "api_port"
+  ],
+  "same_git_sha": "2680fff9809e61e83df5ee6dd56a13b42928d414",
+  "target_api": "http://127.0.0.1:8033/v1",
+  "target_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24j",
+  "target_port": 8033,
+  "trace_completeness_check": "trace.jsonl must contain non-empty rerank_list and assembled_evidence for critical guard qids"
+}
