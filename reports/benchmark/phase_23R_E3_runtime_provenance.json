@@ -1,0 +1,74 @@
+{
+  "phase": "23R-E3",
+  "artifact": "post_cutover_runtime_provenance",
+  "timestamp": "2026-05-03T07:59:41Z",
+  "git_sha": "d704af694742f4c800641c04c206aed5db4cd120",
+  "api_url": "http://127.0.0.1:8000/v1",
+  "pid": 69376,
+  "scope": "benchmark_only",
+  "health": {
+    "status": "ok",
+    "service": "hukuk-ai-api-gateway",
+    "lane": "phase22f_s7_full_shadow",
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "guardrails": "disabled",
+    "retriever": "milvus",
+    "verification": "disabled"
+  },
+  "models": {
+    "auth": "Authorization: Bearer benchmark",
+    "object": "list",
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "lane": "phase22f_s7_full_shadow",
+    "data": [
+      {
+        "id": "hukuk-ai-poc",
+        "object": "model",
+        "owned_by": "hukuk-ai",
+        "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+        "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+        "lane": "phase22f_s7_full_shadow"
+      }
+    ]
+  },
+  "models_no_auth_response": {
+    "status": 401,
+    "detail": "Yetkisiz istek",
+    "interpretation": "expected because RELEASE_CONTROLS_STRICT=true and API_AUTH_KEYS=benchmark"
+  },
+  "runtime_env": {
+    "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+    "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+    "MILVUS_ENABLED": "true",
+    "MILVUS_URI": "http://localhost:19530",
+    "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "EMBEDDING_BACKEND": "remote",
+    "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+    "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+    "RELEASE_LANE_ID": "phase22f_s7_full_shadow",
+    "RELEASE_CONTROLS_STRICT": "true",
+    "API_VERSION_LABEL": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "API_AUTH_KEYS": "benchmark",
+    "GUARDRAILS_ENABLED": "false",
+    "PRESIDIO_ENABLED": "false",
+    "USE_VERIFICATION": "false"
+  },
+  "milvus": {
+    "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "entity_count": 349403,
+    "vector_dimension": 1024
+  },
+  "dgx_models": {
+    "url": "http://192.168.12.243:30000/v1/models",
+    "model": "/models/merged_model_fabric_stage_20260321",
+    "ok": true
+  },
+  "acceptance": {
+    "live_8000_healthy": true,
+    "model_correct": true,
+    "collection_correct": true,
+    "entity_count_correct": true,
+    "vector_dimension_correct": true,
+    "runtime_provenance_present": true
+  }
+}
