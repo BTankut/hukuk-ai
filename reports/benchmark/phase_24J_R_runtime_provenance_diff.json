@@ -1,0 +1,42 @@
+{
+  "base_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "base_run": "reports/benchmark/runs/phase23R_candidate_verification_smoke_20260502T213055Z",
+  "diagnostic_interpretation": "Provenance is not identical except collection: git_sha and runtime lane/api_version differ. Hashes for catalog/config/supplements are equal in the captured provenance.",
+  "diffs": {
+    "api_url": {
+      "base": "http://127.0.0.1:8028/v1",
+      "target": "http://127.0.0.1:8031/v1"
+    },
+    "gateway_health.api_version": {
+      "base": "2026-05-02-phase22f-s7-full-shadow",
+      "target": "2026-05-03-phase24j-residual-shadow"
+    },
+    "gateway_health.lane": {
+      "base": "phase22f_s7_full_shadow",
+      "target": "phase24j_residual_shadow"
+    },
+    "git_sha": {
+      "base": "6015c2d48d201d941b761477d19b8a188fd3c465",
+      "target": "090a77ce971b8d03c99a5ea89e8d97935efe5678"
+    },
+    "milvus_collection": {
+      "base": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "target": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24j"
+    }
+  },
+  "generated_at_utc": "2026-05-03T16:29:27.170852+00:00",
+  "hash_equal": {
+    "benchmark_question_file_hash_equal": true,
+    "config_hashes_equal": true,
+    "source_catalog_hashes_equal": true,
+    "source_supplement_hashes_equal": true
+  },
+  "material_differences_beyond_collection": [
+    "api_url",
+    "git_sha",
+    "gateway_health.lane",
+    "gateway_health.api_version"
+  ],
+  "target_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24j",
+  "target_run": "reports/benchmark/runs/phase_24J_targeted_shadow_smoke_20260503T145613Z"
+}
