@@ -1,0 +1,19 @@
+# Runtime Provenance
+
+- timestamp_utc: `2026-05-03T09:13:50.876437+00:00`
+- git_sha: `b68ce3cdbe152da93338f007976e7d76534db993`
+- branch: `bt/hukuk-ai-100-benchmark-hardening`
+- dirty_worktree: `True`
+- api_url: `http://127.0.0.1:8000/v1`
+- gateway_model_name: `hukuk-ai-poc`
+- dgx_base_url: `http://192.168.12.243:30000/v1`
+- dgx_model_env: `/models/merged_model_fabric_stage_20260321`
+- milvus_collection: `mevzuat_faz1_shadow_20260418_compat1024_p0_backfill`
+- milvus_entity_count: `None`
+- vector_dimension: `None`
+- embedding_backend: `remote`
+- embedding_base_url: `http://127.0.0.1:8081/v1`
+- guardrails_enabled: `false`
+- presidio_enabled: `false`
+- live_8000_untouched: `False`
+- live_8000_collection: `mevzuat_faz1_shadow_20260418_compat1024_p0_backfill`

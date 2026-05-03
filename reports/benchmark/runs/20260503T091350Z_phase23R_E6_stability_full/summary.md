@@ -1,0 +1,23 @@
+# hukuk-ai 100 benchmark run
+
+- run_dir: `reports/benchmark/runs/20260503T091350Z_phase23R_E6_stability_full`
+- api_url: `http://127.0.0.1:8000/v1`
+- model: `hukuk-ai-poc`
+- include_trace: `True`
+- total: 100
+- answered: 100
+- refused_or_empty: 0
+- errors: 0
+- missing_trace: 0
+- missing_confidence_0_100: 0
+- missing_final_reason: 0
+- missing_contract_fields: 0
+- contract_valid: 100
+- unsupported_confident_answer: 0
+- runtime_provenance: `reports/benchmark/runs/20260503T091350Z_phase23R_E6_stability_full/runtime_provenance.json`
+- runtime_provenance_git_sha: `b68ce3cdbe152da93338f007976e7d76534db993`
+- runtime_provenance_dgx_model_env: `/models/merged_model_fabric_stage_20260321`
+- runtime_provenance_milvus_collection: `mevzuat_faz1_shadow_20260418_compat1024_p0_backfill`
+- runtime_provenance_milvus_entity_count: None
+- runtime_provenance_vector_dimension: None
+- runtime_provenance_live_8000_untouched: False
