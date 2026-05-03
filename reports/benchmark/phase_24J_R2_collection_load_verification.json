@@ -1,0 +1,33 @@
+{
+  "acceptance": true,
+  "collections": [
+    {
+      "acceptance": true,
+      "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "entity_count": 349403,
+      "expected_entity_count": 349403,
+      "index_available": true,
+      "indexes": [
+        "embedding"
+      ],
+      "load_state_after": "Loaded",
+      "load_state_before": "Loaded",
+      "vector_dimension": 1024
+    },
+    {
+      "acceptance": true,
+      "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24j",
+      "entity_count": 349420,
+      "expected_entity_count": 349420,
+      "index_available": true,
+      "indexes": [
+        "embedding"
+      ],
+      "load_state_after": "Loaded",
+      "load_state_before": "NotLoad",
+      "vector_dimension": 1024
+    }
+  ],
+  "generated_at_utc": "2026-05-03T16:47:03.662590+00:00",
+  "milvus_uri": "http://localhost:19530"
+}
