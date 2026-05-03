@@ -1,0 +1,55 @@
+QID: YON-04
+ACQUISITION_KIND: official institutional text copy and source acquisition record
+PRIMARY_SOURCE_TITLE: Kişisel Verilerin Silinmesi, Yok Edilmesi veya Anonim Hale Getirilmesi Hakkında Yönetmelik
+SOURCE_FAMILY: YONETMELIK
+OFFICIAL_URL: https://www.kvkk.gov.tr/Icerik/5441/KISISEL-VERILERIN-SILINMESI-YOK-EDILMESI-VEYA-ANONIM-HALE-GETIRILMESI-HAKKINDA-YONETMELIK
+OFFICIAL_PUBLICATION_DATE: 2017-10-28
+OFFICIAL_GAZETTE_NO: 30224
+EFFECTIVE_STATE: amended
+AMENDMENT_REFERENCE: 2019-04-28 / 30758
+SUPPORTING_SOURCE: 6698 sayılı Kişisel Verilerin Korunması Kanunu m.7; KVKK official page links Kanun to mevzuat.gov.tr.
+
+ARTICLE_BOUNDARY_NOTES:
+- MADDE headings are cleanly detectable in the official KVKK page.
+- Required spans are present: m.7 (ilkeler), m.8 (kişisel verilerin silinmesi), m.9 (kişisel verilerin yok edilmesi), m.10 (anonim hale getirme), m.11 and m.12 (süreler/talep üzerine imha).
+- The page includes original RG publication and amendment RG metadata.
+
+TEXT COPY / EXCERPTS:
+KİŞİSEL VERİLERİN SİLİNMESİ, YOK EDİLMESİ VEYA ANONİM HALE GETİRİLMESİ HAKKINDA YÖNETMELİK
+
+Amaç
+MADDE 1 – Bu Yönetmeliğin amacı, tamamen veya kısmen otomatik olan ya da herhangi bir veri kayıt sisteminin parçası olmak kaydıyla otomatik olmayan yollarla işlenen kişisel verilerin silinmesi, yok edilmesi veya anonim hale getirilmesine ilişkin usul ve esasları belirlemektir.
+
+Kapsam
+MADDE 2 – Bu Yönetmelik hükümleri; 6698 sayılı Kişisel Verilerin Korunması Kanununun 7 nci maddesi uyarınca veri sorumluları hakkında uygulanır.
+
+Dayanak
+MADDE 3 – Bu Yönetmelik, 6698 sayılı Kanunun 7 nci maddesinin üçüncü fıkrası ile 22 nci maddesinin birinci fıkrasının (e) bendine dayanılarak hazırlanmıştır.
+
+İlkeler
+MADDE 7 – Kanunun 5 inci ve 6 ncı maddelerinde yer alan kişisel verilerin işlenme şartlarının tamamının ortadan kalkması halinde, kişisel verilerin veri sorumlusu tarafından resen veya ilgili kişinin talebi üzerine silinmesi, yok edilmesi veya anonim hale getirilmesi gerekir. İşlemler kayıt altına alınır ve kayıtlar en az üç yıl süreyle saklanır. Veri sorumlusu, yöntemleri ilgili politika ve prosedürlerinde açıklamakla yükümlüdür.
+
+Kişisel verilerin silinmesi
+MADDE 8 – Kişisel verilerin silinmesi, kişisel verilerin ilgili kullanıcılar için hiçbir şekilde erişilemez ve tekrar kullanılamaz hale getirilmesi işlemidir. Veri sorumlusu gerekli teknik ve idari tedbirleri almakla yükümlüdür.
+
+Kişisel verilerin yok edilmesi
+MADDE 9 – Kişisel verilerin yok edilmesi, kişisel verilerin hiç kimse tarafından hiçbir şekilde erişilemez, geri getirilemez ve tekrar kullanılamaz hale getirilmesi işlemidir. Veri sorumlusu gerekli teknik ve idari tedbirleri almakla yükümlüdür.
+
+Kişisel verilerin anonim hale getirilmesi
+MADDE 10 – Kişisel verilerin anonim hale getirilmesi, kişisel verilerin başka verilerle eşleştirilse dahi hiçbir surette kimliği belirli veya belirlenebilir bir gerçek kişiyle ilişkilendirilemeyecek hale getirilmesidir. Veri sorumlusu gerekli teknik ve idari tedbirleri almakla yükümlüdür.
+
+Kişisel verileri resen silme, yok etme veya anonim hale getirme süreleri
+MADDE 11 – Kişisel veri saklama ve imha politikası hazırlamış veri sorumlusu, yükümlülüğün ortaya çıktığı tarihi takip eden ilk periyodik imha işleminde kişisel verileri siler, yok eder veya anonim hale getirir. Periyodik imha aralığı her halde altı ayı geçemez. Politika hazırlama yükümlülüğü olmayan veri sorumlusu, yükümlülüğün ortaya çıktığı tarihi takip eden üç ay içinde işlemi yapar.
+
+Kişisel verileri ilgili kişinin talep etmesi durumunda silme ve yok etme süreleri
+MADDE 12 – İlgili kişi Kanunun 11 inci ve 13 üncü maddelerine istinaden başvurduğunda, işleme şartlarının tamamı ortadan kalkmışsa veri sorumlusu talebe konu kişisel verileri siler, yok eder veya anonim hale getirir ve talebi en geç otuz gün içinde sonuçlandırır. Şartlar ortadan kalkmamışsa gerekçeli ret mümkündür.
+
+Yürürlük
+MADDE 14 – Bu Yönetmelik 1/1/2018 tarihinde yürürlüğe girer.
+
+Yönetmeliğin yayımlandığı Resmi Gazete: 28/10/2017 / 30224
+Yönetmelikte değişiklik yapan Yönetmelik: 28/4/2019 / 30758
+
+PARSER_READINESS_ASSESSMENT: yes; official page is text HTML and MADDE headings are clean.
+LEGAL_REVIEWER_CONFIRMATION: needs_more_review
+LOCAL_NOTE: This local file is an official institutional text copy/acquisition record.

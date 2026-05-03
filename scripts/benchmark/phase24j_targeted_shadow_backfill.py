@@ -472,7 +472,7 @@ def materialize_spans() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
                 "fikra_no": "0",
                 "display_citation": citation_for(spec, article_no),
                 "resmi_gazete_tarih": spec.effective_start if spec.qid != "YON-04" else "2017-10-28",
-                "resmi_gazete_sayi": "32353" if spec.qid == "TUZUK-04" else ("30224" if spec.qid == "YON-04" else ""),
+                "resmi_gazete_sayi": "18861" if spec.qid == "TUZUK-04" else ("30224" if spec.qid == "YON-04" else ""),
                 "issuer": spec.issuer,
                 "mulga": spec.mulga,
                 "body": body,

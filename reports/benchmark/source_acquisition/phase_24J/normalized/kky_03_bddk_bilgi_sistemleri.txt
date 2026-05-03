@@ -1,0 +1,49 @@
+QID: KKY-03
+ACQUISITION_KIND: official/public text copy and source acquisition record
+PRIMARY_SOURCE_TITLE: Bankaların Bilgi Sistemleri ve Elektronik Bankacılık Hizmetleri Hakkında Yönetmelik
+SOURCE_FAMILY: YONETMELIK
+OFFICIAL_URL: https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=34360&MevzuatTertip=5&MevzuatTur=7
+OFFICIAL_INSTITUTIONAL_INDEX_URL: https://www.bddk.org.tr/Mevzuat/Liste/134
+OFFICIAL_PUBLICATION_DATE: 2020-03-15
+OFFICIAL_GAZETTE_NO: 31069
+EFFECTIVE_STATE: amended
+AMENDMENT_REFERENCE: 2020-06-20 / 31161
+
+ARTICLE_BOUNDARY_NOTES:
+- Source family is YONETMELIK, not KKY.
+- BDDK official list links to the exact mevzuat.gov.tr record for this regulation.
+- Public/current text copies show detectable MADDE headings.
+- Without the residual-plan question text, the exact QID-specific span requires legal reviewer confirmation.
+- Likely technical corpus spans for bank information systems include m.13 (iz kayıtlarının oluşturulması ve takibi), m.29 (dış hizmet alımı sürecinin yönetimi), m.34 (kimlik doğrulama ve işlem güvenliği), m.37 (müşterilerin bilgilendirilmesi), and m.46 (staggered yürürlük).
+- Companion sources may include 6698 sayılı KVKK for personal data and public information security sources if the residual question requires them.
+
+TEXT COPY / EXCERPTS:
+Bankaların Bilgi Sistemleri ve Elektronik Bankacılık Hizmetleri Hakkında Yönetmelik
+15 Mart 2020 Tarihli Resmi Gazete
+Sayı: 31069
+Bankacılık Düzenleme ve Denetleme Kurumundan
+
+Amaç ve kapsam
+MADDE 1 – Bu Yönetmeliğin amacı, bankaların faaliyetlerinin ifasında kullandıkları bilgi sistemlerinin yönetimi ile elektronik bankacılık hizmetlerinin sunulmasında ve bunlara ilişkin risklerin yönetiminde esas alınacak asgari usul ve esaslar ile tesis edilmesi gereken bilgi sistemleri kontrollerini düzenlemektir.
+
+Dayanak
+MADDE 2 – Bu Yönetmelik, 5411 sayılı Bankacılık Kanununun 93 üncü maddesi uyarınca düzenlenmiştir.
+
+İz kayıtlarının oluşturulması ve takibi
+MADDE 13 – Banka, bilgi sistemlerinin ve faaliyetlerinin boyutu ve karmaşıklığıyla orantılı olacak şekilde bilgi sistemleri dahilinde gerçekleşen işlem ve olaylara ilişkin etkin bir iz kayıt mekanizması tesis eder. İz kayıtları asgari olarak kaydı oluşturan sistem, tarih/saat/zaman dilimi, işlem/olay ve ilişkili tekil kullanıcı veya sistem bilgisini barındırır. İlgili bazı iz kayıtları asgari beş yıl boyunca banka nezdinde saklanır.
+
+Dış hizmet alımı sürecinin yönetimi
+MADDE 29 – Banka üst yönetimi, dış hizmet olarak alınacak hizmetlerin banka açısından doğuracağı risklerin değerlendirilmesi, yönetilmesi ve dış hizmet sağlayıcı ile ilişkilerin etkin şekilde yürütülmesine yönelik gözetim mekanizması tesis eder. Dış hizmet alımı kapsamında risk değerlendirmesi, sağlayıcı seçimi, hizmet seviyesi/güvenlik/performance/gizlilik takibi, sözleşme hükümleri, veri teslimi ve imha hükümleri gibi konular düzenlenir.
+
+Kimlik doğrulama ve işlem güvenliği
+MADDE 34 – Elektronik bankacılık hizmetlerinde iki bileşenli kimlik doğrulama ve kimlik doğrulama verilerinin gizliliği başta olmak üzere işlem güvenliği hükümleri düzenlenir.
+
+Müşterilerin bilgilendirilmesi
+MADDE 37 – Elektronik bankacılık hizmetlerinden yararlanacak müşterilerin şartlar, riskler, güvenlik prensipleri ve ilgili bilgilendirmelere erişimine ilişkin hükümler düzenlenir.
+
+Yürürlük
+MADDE 46 – Bazı maddeler 2020-07-01 tarihinde, diğer hükümler 2021-01-01 tarihinde yürürlüğe girer.
+
+PARSER_READINESS_ASSESSMENT: unclear; official mevzuat URL is identified, BDDK official page confirms the record, and public text has clean MADDE headings, but the exact QID span needs residual-plan/legal reviewer confirmation.
+LEGAL_REVIEWER_CONFIRMATION: needs_more_review
+LOCAL_NOTE: This local file is a text-copy/acquisition record, not a downloaded official dynamic mevzuat page.

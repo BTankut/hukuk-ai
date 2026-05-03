@@ -1,0 +1,77 @@
+{
+  "base_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "generated_at_utc": "2026-05-03T14:43:23.699618+00:00",
+  "phase": "24J",
+  "source_count": 4,
+  "sources": {
+    "kanun_12_5651": {
+      "effective_end": "9999-12-31",
+      "effective_start": "2007-05-23",
+      "effective_state": "active_amended",
+      "materialized_articles": [
+        "5",
+        "6",
+        "7",
+        "11"
+      ],
+      "official_url": "https://www.mevzuat.gov.tr/MevzuatMetin/1.5.5651.pdf",
+      "source_family": "kanun",
+      "source_identifier": "5651",
+      "source_title": "5651 sayılı İnternet Ortamında Yapılan Yayınların Düzenlenmesi ve Bu Yayınlar Yoluyla İşlenen Suçlarla Mücadele Edilmesi Hakkında Kanun",
+      "span_count": 4
+    },
+    "kky_03_bddk_bilgi_sistemleri": {
+      "effective_end": "9999-12-31",
+      "effective_start": "2020-03-15",
+      "effective_state": "active_amended",
+      "materialized_articles": [
+        "13",
+        "29",
+        "34",
+        "37",
+        "46"
+      ],
+      "official_url": "https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=34360&MevzuatTertip=5&MevzuatTur=7",
+      "source_family": "yonetmelik",
+      "source_identifier": "34360",
+      "source_title": "Bankaların Bilgi Sistemleri ve Elektronik Bankacılık Hizmetleri Hakkında Yönetmelik",
+      "span_count": 5
+    },
+    "tuzuk_04_radyasyon_guvenligi": {
+      "effective_end": "2023-10-28",
+      "effective_start": "1985-09-07",
+      "effective_state": "historical_repealed",
+      "materialized_articles": [
+        "1",
+        "7"
+      ],
+      "official_url": "https://www.mevzuat.gov.tr/MevzuatMetin/2.5.859727.pdf",
+      "source_family": "tuzuk",
+      "source_identifier": "859727",
+      "source_title": "Radyasyon Güvenliği Tüzüğü",
+      "span_count": 2
+    },
+    "yon_04_kvkk_silme_yok_etme_anonim": {
+      "effective_end": "9999-12-31",
+      "effective_start": "2018-01-01",
+      "effective_state": "active_amended",
+      "materialized_articles": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "official_url": "https://www.kvkk.gov.tr/Icerik/5441/KISISEL-VERILERIN-SILINMESI-YOK-EDILMESI-VEYA-ANONIM-HALE-GETIRILMESI-HAKKINDA-YONETMELIK",
+      "source_family": "yonetmelik",
+      "source_identifier": "30224",
+      "source_title": "Kişisel Verilerin Silinmesi, Yok Edilmesi veya Anonim Hale Getirilmesi Hakkında Yönetmelik",
+      "span_count": 6
+    }
+  },
+  "span_count": 17,
+  "spans_csv": "reports/benchmark/source_acquisition/phase_24J/spans/phase_24J_residual_spans.csv",
+  "spans_jsonl": "reports/benchmark/source_acquisition/phase_24J/spans/phase_24J_residual_spans.jsonl",
+  "target_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24j"
+}
