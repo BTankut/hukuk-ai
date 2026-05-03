@@ -1,0 +1,44 @@
+QID: KANUN-12
+ACQUISITION_KIND: official/public text copy and source acquisition record
+PRIMARY_SOURCE_TITLE: İnternet Ortamında Yapılan Yayınların Düzenlenmesi ve Bu Yayınlar Yoluyla İşlenen Suçlarla Mücadele Edilmesi Hakkında Kanun
+SOURCE_FAMILY: KANUN
+OFFICIAL_URL_CANONICAL: https://www.mevzuat.gov.tr/MevzuatMetin/1.5.5651.pdf
+PUBLIC_GOV_TEXT_COPY_URL_USED_FOR_EXTRACTION: https://cdniys.tarimorman.gov.tr/api/File/GetFile/462/KonuIcerik/1300/1648/DosyaGaleri/5651-say%C4%B1l%C4%B1-kanun.pdf
+LAW_NUMBER: 5651
+ACCEPTANCE_DATE: 2007-05-04
+OFFICIAL_PUBLICATION_DATE: 2007-05-23
+OFFICIAL_GAZETTE_NO: 26530
+EFFECTIVE_STATE: amended
+
+ARTICLE_BOUNDARY_NOTES:
+- MADDE headings are detectable in the text-searchable PDF.
+- Required/likely relevant spans are visible: m.5 (Yer sağlayıcının yükümlülükleri), m.6 (Erişim sağlayıcının yükümlülükleri), m.7 (Toplu kullanım sağlayıcıların yükümlülükleri), m.11 (Yönetmelikler).
+- Supporting source for BTK/toplu kullanım obligations: İnternet Toplu Kullanım Sağlayıcıları Hakkında Yönetmelik. Relevant headings include MADDE 4, MADDE 5, MADDE 9, MADDE 10, MADDE 11. Current/public record indicates mevzuat no 19559 and amendment/publication references 2007-11-01/26687 and 2017-04-11.
+
+TEXT COPY / EXCERPTS:
+İnternet Ortamında Yapılan Yayınların Düzenlenmesi ve Bu Yayınlar Yoluyla İşlenen Suçlarla Mücadele Edilmesi Hakkında Kanun
+Kanun Numarası: 5651
+Kabul Tarihi: 4/5/2007
+Yayımlandığı R.Gazete: Tarih: 23/5/2007 Sayı: 26530
+
+Amaç ve kapsam
+MADDE 1- Bu Kanunun amaç ve kapsamı; içerik sağlayıcı, yer sağlayıcı, erişim sağlayıcı ve toplu kullanım sağlayıcıların yükümlülük ve sorumlulukları ile internet ortamında işlenen belirli suçlarla içerik, yer ve erişim sağlayıcıları üzerinden mücadeleye ilişkin esas ve usulleri düzenlemektir.
+
+Tanımlar
+MADDE 2- İlgili tanımlar arasında erişim sağlayıcı, içerik sağlayıcı, toplu kullanım sağlayıcı, trafik bilgisi ve yer sağlayıcı yer alır.
+
+Yer sağlayıcının yükümlülükleri
+MADDE 5- Yer sağlayıcı, yer sağladığı içeriği kontrol etmek veya hukuka aykırı bir faaliyetin söz konusu olup olmadığını araştırmakla yükümlü değildir. Yer sağlayıcı, yer sağladığı hizmetlere ilişkin trafik bilgilerini bir yıldan az ve iki yıldan fazla olmamak üzere yönetmelikte belirlenecek süre kadar saklamakla ve bu bilgilerin doğruluğunu, bütünlüğünü ve gizliliğini sağlamakla yükümlüdür.
+
+Erişim sağlayıcının yükümlülükleri
+MADDE 6- Erişim sağlayıcı; sağladığı hizmetlere ilişkin yönetmelikte belirtilen trafik bilgilerini altı aydan az ve iki yıldan fazla olmamak üzere yönetmelikte belirlenecek süre kadar saklamakla ve bu bilgilerin doğruluğunu, bütünlüğünü ve gizliliğini sağlamakla yükümlüdür.
+
+Toplu kullanım sağlayıcıların yükümlülükleri
+MADDE 7- Ticari amaçla toplu kullanım sağlayıcılar mahalli mülki amirden izin belgesi almakla yükümlüdür. Ticari amaçla olup olmadığına bakılmaksızın bütün internet toplu kullanım sağlayıcılar, konusu suç oluşturan içeriklere erişimin engellenmesi ve kullanıma ilişkin erişim kayıtlarının tutulması hususlarında yönetmelikle belirlenen tedbirleri almakla yükümlüdür. Ticari amaçla toplu kullanım sağlayıcılar, ailenin ve çocukların korunması, suçun önlenmesi ve suçluların tespiti kapsamında yönetmelikte belirlenen tedbirleri almakla yükümlüdür.
+
+Yönetmelikler
+MADDE 11- Bu Kanunun uygulanmasına ilişkin esas ve usuller yönetmeliklerle düzenlenir. Yer, erişim ve toplu kullanım sağlayıcıların yükümlülüklerine ilişkin esas ve usuller Kurum tarafından çıkarılacak yönetmelikle düzenlenir.
+
+PARSER_READINESS_ASSESSMENT: yes; source PDF is text-searchable and MADDE headings are visible.
+LEGAL_REVIEWER_CONFIRMATION: needs_more_review
+LOCAL_NOTE: This local file is a text-copy/acquisition record, not a downloaded official binary PDF. It was prepared because direct binary download was not available in the execution container.

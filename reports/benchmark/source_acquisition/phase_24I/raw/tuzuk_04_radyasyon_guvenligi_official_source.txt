@@ -1,0 +1,41 @@
+QID: TUZUK-04
+ACQUISITION_KIND: official/public text copy and source acquisition record
+PRIMARY_SOURCE_TITLE: Radyasyon Güvenliği Tüzüğü
+SOURCE_FAMILY: TUZUK
+OFFICIAL_URL_CANONICAL: https://www.mevzuat.gov.tr/MevzuatMetin/2.5.859727.pdf
+BKK_DATE_AND_NO: 1985-07-24 / 85/9727
+DAYANAK_KANUN: 1982-07-09 / 2690
+OFFICIAL_PUBLICATION_DATE: 1985-09-07
+OFFICIAL_GAZETTE_NO: 18861
+EFFECTIVE_STATE: repealed
+REPEAL_REFERENCE: Radyasyon Güvenliği Tüzüğünün Yürürlükten Kaldırılması Hakkında Karar, Karar Sayısı 7742, RG 2023-10-28 / 32353
+
+ARTICLE_BOUNDARY_NOTES:
+- Historical tüzük source is a PDF and public text copies show article boundaries.
+- MADDE headings and section headings are visible in indexed/current copies.
+- Because the tüzük has been repealed, it should be treated as a historical source, not current-law authority.
+- Current-law comparison should add Radyasyon Güvenliği Yönetmeliği and Radyasyon Tesislerine ve Radyasyon Uygulamalarına İlişkin Yetkilendirmeler Yönetmeliği if the residual row asks a current-law question.
+
+TEXT COPY / EXCERPTS:
+RADYASYON GÜVENLİĞİ TÜZÜĞÜ
+Bakanlar Kurulu Kararının Tarihi: 24/7/1985, No: 85/9727
+Dayandığı Kanunun Tarihi: 9/7/1982, No: 2690
+Yayımlandığı Resmi Gazetenin Tarihi: 7/9/1985, No: 18861
+
+BİRİNCİ KISIM
+Genel Hükümler
+BİRİNCİ BÖLÜM
+Kapsam, Terimler ve Kısaltmalar
+
+Kapsam
+MADDE 1 – İyonlaştırıcı radyasyon kaynakları içeren, kullanan, üreten, ithal ve ihraç eden, alan, satan, taşıyan ve depolayan resmi/özel kurum ve kuruluşlar ile gerçek kişilerin uyacağı kuralları düzenler. Düşük özgül aktiviteli bazı radyoaktif maddeler kapsam dışıdır.
+
+Lisans ve izin ekseni
+MADDE 7 – Tüzük kapsamına giren radyasyon kaynaklarının bulundurulması, kullanılması, imal, ithal ve ihraç edilmesi, alınması, satılması, taşınması, depolanması ve radyasyon kaynaklarıyla çalışılabilmesi Kurumca verilecek lisansa bağlıdır.
+
+REPEAL NOTE:
+Radyasyon Güvenliği Tüzüğü 7742 sayılı Cumhurbaşkanı Kararı ile yürürlükten kaldırılmıştır. RG bilgisi: 2023-10-28 / 32353.
+
+PARSER_READINESS_ASSESSMENT: unclear; PDF article boundaries appear parseable, but historical PDF should be manually checked before parser ingestion.
+LEGAL_REVIEWER_CONFIRMATION: needs_more_review
+LOCAL_NOTE: This local file is a text-copy/acquisition record, not a downloaded official binary PDF.
