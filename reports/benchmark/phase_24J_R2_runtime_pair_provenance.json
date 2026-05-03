@@ -1,0 +1,163 @@
+{
+  "acceptance": true,
+  "allowed_env_diff": [
+    "MILVUS_COLLECTION"
+  ],
+  "base": {
+    "api_url": "http://127.0.0.1:8032/v1",
+    "health": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-05-03-phase24j-r2-normalized",
+        "guardrails": "disabled",
+        "lane": "phase24j_r2_normalized_pair",
+        "retriever": "milvus",
+        "service": "hukuk-ai-api-gateway",
+        "status": "ok",
+        "verification": "disabled"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8032/v1/health"
+    },
+    "label": "BASE",
+    "model_detail": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-05-03-phase24j-r2-normalized",
+        "created": 1777826899,
+        "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+        "id": "hukuk-ai-poc",
+        "lane": "phase24j_r2_normalized_pair",
+        "object": "model",
+        "owned_by": "hukuk-ai"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8032/v1/models/hukuk-ai-poc"
+    },
+    "models": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-05-03-phase24j-r2-normalized",
+        "data": [
+          {
+            "api_version": "2026-05-03-phase24j-r2-normalized",
+            "created": 1777826899,
+            "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+            "id": "hukuk-ai-poc",
+            "lane": "phase24j_r2_normalized_pair",
+            "object": "model",
+            "owned_by": "hukuk-ai"
+          }
+        ],
+        "headers": {
+          "X-Hukuk-AI-API-Version": "2026-05-03-phase24j-r2-normalized",
+          "X-Hukuk-AI-Lane": "phase24j_r2_normalized_pair",
+          "X-Request-ID": "req-59faf10ee56246f19192"
+        },
+        "lane": "phase24j_r2_normalized_pair",
+        "object": "list"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8032/v1/models"
+    },
+    "pid": "39841",
+    "port": 8032,
+    "process_env": {
+      "API_VERSION_LABEL": "2026-05-03-phase24j-r2-normalized",
+      "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+      "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+      "EMBEDDING_BACKEND": "remote",
+      "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+      "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+      "GUARDRAILS_ENABLED": "false",
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "PRESIDIO_ENABLED": "false",
+      "RELEASE_LANE_ID": "phase24j_r2_normalized_pair",
+      "RERANKER_ENABLED": "false",
+      "USE_VERIFICATION": "false"
+    }
+  },
+  "env_diffs": {
+    "MILVUS_COLLECTION": {
+      "base": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "target": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24j"
+    }
+  },
+  "generated_at_utc": "2026-05-03T16:48:19.326464+00:00",
+  "git_sha": "d0c1a7c6bd7ca6b01f1e30dd2a6140970f97bd5c",
+  "health_diffs": {},
+  "target": {
+    "api_url": "http://127.0.0.1:8033/v1",
+    "health": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-05-03-phase24j-r2-normalized",
+        "guardrails": "disabled",
+        "lane": "phase24j_r2_normalized_pair",
+        "retriever": "milvus",
+        "service": "hukuk-ai-api-gateway",
+        "status": "ok",
+        "verification": "disabled"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8033/v1/health"
+    },
+    "label": "TARGET",
+    "model_detail": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-05-03-phase24j-r2-normalized",
+        "created": 1777826899,
+        "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+        "id": "hukuk-ai-poc",
+        "lane": "phase24j_r2_normalized_pair",
+        "object": "model",
+        "owned_by": "hukuk-ai"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8033/v1/models/hukuk-ai-poc"
+    },
+    "models": {
+      "ok": true,
+      "payload": {
+        "api_version": "2026-05-03-phase24j-r2-normalized",
+        "data": [
+          {
+            "api_version": "2026-05-03-phase24j-r2-normalized",
+            "created": 1777826899,
+            "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+            "id": "hukuk-ai-poc",
+            "lane": "phase24j_r2_normalized_pair",
+            "object": "model",
+            "owned_by": "hukuk-ai"
+          }
+        ],
+        "headers": {
+          "X-Hukuk-AI-API-Version": "2026-05-03-phase24j-r2-normalized",
+          "X-Hukuk-AI-Lane": "phase24j_r2_normalized_pair",
+          "X-Request-ID": "req-8247d8f2c3794dbfa637"
+        },
+        "lane": "phase24j_r2_normalized_pair",
+        "object": "list"
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8033/v1/models"
+    },
+    "pid": "39900",
+    "port": 8033,
+    "process_env": {
+      "API_VERSION_LABEL": "2026-05-03-phase24j-r2-normalized",
+      "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+      "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+      "EMBEDDING_BACKEND": "remote",
+      "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+      "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+      "GUARDRAILS_ENABLED": "false",
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24j",
+      "PRESIDIO_ENABLED": "false",
+      "RELEASE_LANE_ID": "phase24j_r2_normalized_pair",
+      "RERANKER_ENABLED": "false",
+      "USE_VERIFICATION": "false"
+    }
+  }
+}
