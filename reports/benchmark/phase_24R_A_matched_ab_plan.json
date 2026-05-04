@@ -1,0 +1,83 @@
+{
+  "allowed_differences": [
+    "MILVUS_COLLECTION",
+    "entity_count",
+    "port",
+    "release_lane_id",
+    "api_version_label"
+  ],
+  "answer_key_usage": "for scorer only; benchmark answer key is not used for remediation or runtime changes",
+  "base": {
+    "api_url": "http://127.0.0.1:8035/v1",
+    "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "expected_entity_count": 349403
+  },
+  "branch": "bt/hukuk-ai-100-benchmark-hardening",
+  "cby": {
+    "api_url": "http://127.0.0.1:8036/v1",
+    "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+    "expected_entity_count": 349405
+  },
+  "fine_tuning": "closed",
+  "gate_sequence": [
+    "24R-B runtime pair verification",
+    "24R-C targeted A/B smoke",
+    "24R-D full A/B only if C passes",
+    "24R-E merge decision",
+    "24R-F TEB raw intake",
+    "24R-G trace compliance",
+    "24R final report"
+  ],
+  "generated_at_utc": "2026-05-04T20:14:31.335632+00:00",
+  "identical_fields_required": [
+    "git_sha",
+    "gateway_code",
+    "scorer",
+    "model",
+    "DGX_MODEL",
+    "prompt_behavior",
+    "retrieval_top_k",
+    "embedding_backend",
+    "embedding_model",
+    "guardrails_state",
+    "verification_state",
+    "source_catalog_config",
+    "source_supplement_config"
+  ],
+  "internal_eval": "closed",
+  "large_trace_policy": "summary-only; do not commit trace.jsonl",
+  "live_8000_modified": false,
+  "phase": "24R-A",
+  "plan_authoring_git_sha": "fa93e931726dea322596f1710038d97f824f7c1d",
+  "productization": "closed",
+  "purpose": "matched same-runtime base-vs-CBY A/B evidence run",
+  "runtime_env": {
+    "API_AUTH_ENABLED": "false",
+    "API_AUTH_KEYS": "benchmark",
+    "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+    "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+    "EMBEDDING_BACKEND": "remote",
+    "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+    "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+    "GUARDRAILS_ENABLED": "false",
+    "MILVUS_ENABLED": "true",
+    "MILVUS_URI": "http://localhost:19530",
+    "PARITY_TRACE_ENABLED": "false",
+    "PRESIDIO_ENABLED": "false",
+    "RERANKER_ENABLED": "false",
+    "USE_VERIFICATION": "false"
+  },
+  "targeted_qids": [
+    "CBY-06",
+    "CBY-05",
+    "MULGA-01",
+    "MULGA-05",
+    "TEB-06",
+    "KANUN-12",
+    "YON-04",
+    "TUZUK-04",
+    "CBG-01",
+    "CBKAR-08",
+    "UY-01"
+  ]
+}
