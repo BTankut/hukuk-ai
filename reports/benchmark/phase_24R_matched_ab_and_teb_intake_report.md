@@ -10,7 +10,7 @@ Phase24R-D full A/B benchmark = c301ddd
 Phase24R-E CBY merge decision = 871c3bf
 Phase24R-F TEB raw intake = d269da7
 Phase24R-G trace compliance = 797b5b0
-Phase24R final report = commit containing this file
+Phase24R final report = 258aab4
 ```
 
 ## Matched A/B Plan
