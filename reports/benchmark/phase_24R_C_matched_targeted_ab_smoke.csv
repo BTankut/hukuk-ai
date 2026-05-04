@@ -1,0 +1,12 @@
+qid,base_score,cby_score,score_delta,base_pass,cby_pass,pass_to_fail,fail_to_pass,base_contract_valid,cby_contract_valid,base_unsupported_confident,cby_unsupported_confident,base_source_key_v2_collision,cby_source_key_v2_collision,base_binding_collision,cby_binding_collision,base_family,cby_family,base_identifier,cby_identifier,base_effective_state,cby_effective_state,critical_guard_regression,note
+CBY-06,6.80,8.58,1.78,FAIL,PASS,false,true,True,True,False,False,False,False,False,False,CB_YONETMELIK,CB_YONETMELIK,20046801 m.14,DEGISIKLIK m.1,active,active,false,target improved on CBY collection
+CBY-05,8.00,8.00,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,CB_YONETMELIK,CB_YONETMELIK,20046801 m.9,20046801 m.9,active,active,false,same-family neighbor unchanged
+MULGA-01,8.37,8.37,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,MULGA,MULGA,2547 m.54,2547 m.54,repealed,repealed,false,unchanged
+MULGA-05,4.00,4.00,0.00,FAIL,FAIL,false,false,True,True,False,False,False,False,False,False,MULGA,MULGA,6570 m.gec1,6570 m.gec1,repealed,repealed,false,unchanged
+TEB-06,8.90,8.90,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,TEBLIGLER,TEBLIGLER,23093 m.1,23093 m.1,active,active,false,unchanged
+KANUN-12,8.99,8.99,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,KANUN,KANUN,5651 m.6,5651 m.6,active,active,false,unchanged
+YON-04,8.22,8.22,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,YONETMELIK,YONETMELIK,KVKK İmha Yönetmeliği m.10/f.0,KVKK İmha Yönetmeliği m.10/f.0,active,active,false,unchanged
+TUZUK-04,4.63,4.63,0.00,FAIL,FAIL,false,false,True,True,False,False,False,False,False,False,MULGA,MULGA,859727 m.4,859727 m.4,repealed,repealed,false,repealed/MULGA claim preserved; no active-current-law claim
+CBG-01,8.65,8.65,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,CB_GENELGE,CB_GENELGE,2024/7 m.0,2024/7 m.0,active,active,false,unchanged
+CBKAR-08,9.25,9.25,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,CB_KARAR,CB_KARAR,GEÇICI m.1,GEÇICI m.1,active,active,false,unchanged
+UY-01,7.82,7.82,0.00,PASS,PASS,false,false,True,True,False,False,False,False,False,False,UY,UY,24839 m.7,24839 m.7,active,active,false,unchanged
