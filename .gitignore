@@ -38,3 +38,9 @@ evaluation/private/
 *_master.csv
 reports/benchmark/runs/
 reports/benchmark/green_lane/
+
+# Benchmark traces are local by default. Commit only derived summaries unless an
+# explicit trace-policy exception is recorded.
+reports/benchmark/runs/**/trace*.jsonl
+reports/benchmark/runs/**/trace*.jsonl.gz
+reports/benchmark/runs/**/trace*.jsonl.zst
