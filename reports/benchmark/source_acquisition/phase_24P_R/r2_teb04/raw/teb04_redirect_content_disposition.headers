@@ -1,0 +1,16 @@
+HTTP/1.1 400 Bad Request
+Date: Mon, 04 May 2026 13:22:37 GMT
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+X-Frame-Options: DENY
+Content-Security-Policy: frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+

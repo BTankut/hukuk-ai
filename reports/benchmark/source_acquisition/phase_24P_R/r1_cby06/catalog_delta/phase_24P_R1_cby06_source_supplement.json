@@ -1,0 +1,32 @@
+{
+  "phase24p-r1:cb_yonetmelik:11153:m1:karar11153:from2026-04-03:to9999-12-31": {
+    "binding_source_key": "phase24p-r1:cb_yonetmelik:11153:m1:karar11153:from2026-04-03:to9999-12-31",
+    "canonical_identifier": "11153",
+    "canonical_identifier_display": "Karar 11153 m.1 / Personel Servis Hizmet Yönetmeliği m.11 ek fıkra",
+    "citation": "Karar 11153 m.1 / Personel Servis Hizmet Yönetmeliği m.11 ek fıkra",
+    "normalized_ocr_sha256": "9ffabf7aa48476431298308b2bfd302d017704c8baf734bbfd20ee5c57656fe2",
+    "official_url": "https://www.resmigazete.gov.tr/eskiler/2026/04/20260403-7.pdf",
+    "raw_sha256": "ee7fb174b947cb3e0b56aec314fd553ad1c4a9edd80c1acd77f5ebde185577ae",
+    "source_family": "cb_yonetmelik",
+    "source_family_raw": "CB_YONETMELIK",
+    "source_key": "11153",
+    "source_title": "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliğinde Değişiklik Yapılmasına Dair Yönetmelik",
+    "span_id": "phase24p-r1:cb_yonetmelik:11153:m1:karar11153:from2026-04-03:to9999-12-31",
+    "text": "Karar 11153 m.1 / Personel Servis Hizmet Yönetmeliği m.11 ek fıkra\n03.04.2026 tarihli ve 33213 sayılı Resmî Gazete'de yayımlanan 11153 sayılı Karar ile Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliğinin 11 inci maddesine birinci fıkrasından sonra gelmek üzere aşağıdaki fıkra eklenmiştir.\n\n\"Bu Yönetmelik kapsamında taşınacak personelin, okul öncesi eğitim ve zorunlu\neğitim kapsamında bulunan öğrenci çocukları ile kreş, gündüz bakımevleri ve\nçocuk kulüplerine devam eden çocukları; personelin refakatinde bulunması,\nilgili trafik komisyonlarından bu taşıma için ayrıca izin alınması ve 25/10/2017\ntarihli ve 30221 sayılı Resmi Gazete'de yayımlanan Okul Servis Araçları\nYönetmeliğinde belirtilen yükümlülüklere uygun bir şekilde taşıma yapılması\nkaydıyla, personel servis araçlarından yararlandırılabilir.\""
+  },
+  "phase24p-r1:cb_yonetmelik:20046801:m11:karar11153:from2026-04-03:to9999-12-31": {
+    "binding_source_key": "phase24p-r1:cb_yonetmelik:20046801:m11:karar11153:from2026-04-03:to9999-12-31",
+    "canonical_identifier": "20046801",
+    "canonical_identifier_display": "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliği m.11 ek fıkra (Karar 11153)",
+    "citation": "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliği m.11 ek fıkra (Karar 11153)",
+    "normalized_ocr_sha256": "9ffabf7aa48476431298308b2bfd302d017704c8baf734bbfd20ee5c57656fe2",
+    "official_url": "https://www.resmigazete.gov.tr/eskiler/2026/04/20260403-7.pdf",
+    "raw_sha256": "ee7fb174b947cb3e0b56aec314fd553ad1c4a9edd80c1acd77f5ebde185577ae",
+    "source_family": "cb_yonetmelik",
+    "source_family_raw": "CB_YONETMELIK",
+    "source_key": "20046801",
+    "source_title": "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliği",
+    "span_id": "phase24p-r1:cb_yonetmelik:20046801:m11:karar11153:from2026-04-03:to9999-12-31",
+    "text": "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliği m.11 ek fıkra (Karar 11153)\nKamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliği m.11'e 03.04.2026 tarihli RG 33213, Karar 11153 ile eklenen fıkra:\n\n\"Bu Yönetmelik kapsamında taşınacak personelin, okul öncesi eğitim ve zorunlu\neğitim kapsamında bulunan öğrenci çocukları ile kreş, gündüz bakımevleri ve\nçocuk kulüplerine devam eden çocukları; personelin refakatinde bulunması,\nilgili trafik komisyonlarından bu taşıma için ayrıca izin alınması ve 25/10/2017\ntarihli ve 30221 sayılı Resmi Gazete'de yayımlanan Okul Servis Araçları\nYönetmeliğinde belirtilen yükümlülüklere uygun bir şekilde taşıma yapılması\nkaydıyla, personel servis araçlarından yararlandırılabilir.\""
+  }
+}

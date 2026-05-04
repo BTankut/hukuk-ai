@@ -1,0 +1,38 @@
+{
+  "base_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "generated_at_utc": "2026-05-04T13:15:53.527927+00:00",
+  "phase": "24P-R1",
+  "source_count": 2,
+  "sources": {
+    "cby_06_20046801_madde_11_added_paragraph": {
+      "article_no": "11",
+      "decision_no": "11153",
+      "normalized_ocr_sha256": "9ffabf7aa48476431298308b2bfd302d017704c8baf734bbfd20ee5c57656fe2",
+      "official_gazette_no": "33213",
+      "publication_date": "2026-04-03",
+      "raw_sha256": "ee7fb174b947cb3e0b56aec314fd553ad1c4a9edd80c1acd77f5ebde185577ae",
+      "source_family": "cb_yonetmelik",
+      "source_family_raw": "CB_YONETMELIK",
+      "source_identifier": "20046801",
+      "source_title": "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliği",
+      "span_type": "amended_article_added_paragraph"
+    },
+    "cby_06_karar_11153_madde_1": {
+      "article_no": "1",
+      "decision_no": "11153",
+      "normalized_ocr_sha256": "9ffabf7aa48476431298308b2bfd302d017704c8baf734bbfd20ee5c57656fe2",
+      "official_gazette_no": "33213",
+      "publication_date": "2026-04-03",
+      "raw_sha256": "ee7fb174b947cb3e0b56aec314fd553ad1c4a9edd80c1acd77f5ebde185577ae",
+      "source_family": "cb_yonetmelik",
+      "source_family_raw": "CB_YONETMELIK",
+      "source_identifier": "11153",
+      "source_title": "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliğinde Değişiklik Yapılmasına Dair Yönetmelik",
+      "span_type": "amendment_article"
+    }
+  },
+  "span_count": 2,
+  "spans_csv": "reports/benchmark/source_acquisition/phase_24P_R/r1_cby06/spans/phase_24P_R1_cby06_spans.csv",
+  "spans_jsonl": "reports/benchmark/source_acquisition/phase_24P_R/r1_cby06/spans/phase_24P_R1_cby06_spans.jsonl",
+  "target_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06"
+}
