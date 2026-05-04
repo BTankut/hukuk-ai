@@ -1,0 +1,48 @@
+Phase 24P CBY-06 normalized OCR transcription
+
+Source URL:
+https://www.resmigazete.gov.tr/eskiler/2026/04/20260403-7.pdf
+
+Raw file:
+reports/benchmark/source_acquisition/phase_24P/raw/cby_06_rg_20260403_33213_karar_11153.pdf
+
+Extraction note:
+The PDF text layer is not directly parser-ready. The text below is a normalized
+transcription from the locally rendered official Resmi Gazete PDF page OCR.
+
+3 Nisan 2026 CUMA
+Resmi Gazete
+Sayı: 33213
+
+YÖNETMELİK
+
+Karar Sayısı: 11153
+
+Ekli "Kamu Kurum ve Kuruluşları Personel Servis Hizmet Yönetmeliğinde Değişiklik
+Yapılmasına Dair Yönetmelik"in yürürlüğe konulmasına, 237 sayılı Taşıt Kanunu ile
+1 sayılı Cumhurbaşkanlığı Teşkilatı Hakkında Cumhurbaşkanlığı Kararnamesinin
+477 nci ve 537 nci maddeleri gereğince karar verilmiştir.
+
+2 Nisan 2026
+Recep Tayyip ERDOĞAN
+CUMHURBAŞKANI
+
+KAMU KURUM VE KURULUŞLARI PERSONEL SERVİS HİZMET
+YÖNETMELİĞİNDE DEĞİŞİKLİK YAPILMASINA DAİR YÖNETMELİK
+
+MADDE 1- 6/2/2004 tarihli ve 2004/6801 sayılı Bakanlar Kurulu Kararı
+ile yürürlüğe konulan Kamu Kurum ve Kuruluşları Personel Servis Hizmet
+Yönetmeliğinin 11 inci maddesine birinci fıkrasından sonra gelmek üzere
+aşağıdaki fıkra eklenmiştir.
+
+"Bu Yönetmelik kapsamında taşınacak personelin, okul öncesi eğitim ve zorunlu
+eğitim kapsamında bulunan öğrenci çocukları ile kreş, gündüz bakımevleri ve
+çocuk kulüplerine devam eden çocukları; personelin refakatinde bulunması,
+ilgili trafik komisyonlarından bu taşıma için ayrıca izin alınması ve 25/10/2017
+tarihli ve 30221 sayılı Resmi Gazete'de yayımlanan Okul Servis Araçları
+Yönetmeliğinde belirtilen yükümlülüklere uygun bir şekilde taşıma yapılması
+kaydıyla, personel servis araçlarından yararlandırılabilir."
+
+MADDE 2- Bu Yönetmelik yayımı tarihinde yürürlüğe girer.
+
+MADDE 3- Bu Yönetmelik hükümlerini Cumhurbaşkanı yürütür.
