@@ -1141,6 +1141,12 @@ def _s7m_active_historical_repeal_proof_applies(
     question = normalize_query_text(_temporal_trace_question_text(trace_payload))
     if not _split_query_has_historical_surface_intent(question):
         return False, "no_historical_surface_intent"
+    if (
+        family == "tuzuk"
+        and "tuzuk" in question
+        and any(term in question for term in ("eski", "2026", "uyum", "guncel", "yururluk"))
+    ):
+        return True, "active_selected_legacy_tuzuk_current_law_risk"
     query_match, match_reason = _s7m_active_selected_matches_historical_query(
         selected=selected,
         trace_payload=trace_payload,

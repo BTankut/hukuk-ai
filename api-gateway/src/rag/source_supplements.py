@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+import os
 import re
 import unicodedata
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 from rag.orchestrator import RetrievedChunk
@@ -31,6 +34,7 @@ _LAW_SOURCE_SUPPLEMENT_KEYS_BY_HINT = {
     "HUAK": ("6325", "7445"),
     "6325": ("6325", "7445"),
     "7201": ("7201",),
+    "5651": ("5651",),
 }
 
 
@@ -63,10 +67,87 @@ def _focus_key_values(row: dict[str, Any]) -> set[str]:
     return {value for value in values if value}
 
 
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _phase24n_spans_path() -> Path:
+    configured = os.getenv("PHASE24N_SOURCE_SUPPLEMENT_SPANS_PATH", "").strip()
+    if configured:
+        return Path(configured)
+    return (
+        _repo_root()
+        / "reports"
+        / "benchmark"
+        / "source_acquisition"
+        / "phase_24N"
+        / "spans"
+        / "phase_24N_residual_spans.jsonl"
+    )
+
+
+@lru_cache(maxsize=1)
+def _load_phase24n_source_supplements() -> tuple[dict[str, Any], ...]:
+    """Shadow-reviewed official article spans materialized after Phase 24N."""
+    if os.getenv("ENABLE_PHASE24N_SOURCE_SUPPLEMENTS", "true").lower() not in {"1", "true", "yes"}:
+        return ()
+    path = _phase24n_spans_path()
+    if not path.is_file():
+        return ()
+
+    rows: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            span = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        source_identifier = _clean(span.get("source_identifier"))
+        source_family = _clean(span.get("source_family"))
+        title = _clean(span.get("source_title"))
+        article_no = _clean(span.get("article_no"))
+        body = _clean(span.get("body"))
+        if not source_identifier or not source_family or not title or not article_no or not body:
+            continue
+        citation = _clean(span.get("display_citation")) or f"{source_identifier} m.{article_no}"
+        text = f"{citation}\n{body}".strip()
+        rows.append(
+            {
+                "source_key": source_identifier,
+                "source_family": source_family,
+                "canonical_identifier": source_identifier,
+                "canonical_identifier_display": citation,
+                "canonical_title": title,
+                "canonical_title_normalized": normalize_canonical_text(title),
+                "alias_titles": [
+                    _clean(span.get("source_id")),
+                    _clean(span.get("belge_kisa_adi")),
+                    _clean(span.get("official_gazette_no") or span.get("resmi_gazete_sayi")),
+                ],
+                "issuer": span.get("issuer"),
+                "official_gazette_no": span.get("resmi_gazete_sayi"),
+                "official_gazette_date": span.get("resmi_gazete_tarih"),
+                "effective_start": span.get("effective_start"),
+                "effective_end": span.get("effective_end"),
+                "effective_state": span.get("effective_state") or "active",
+                "official_source_url": span.get("official_url"),
+                "citation": f"{citation}/f.0" if "/f" not in citation else citation,
+                "source": source_identifier,
+                "span_id": _clean(span.get("canonical_source_key_v2")) or f"{source_identifier} m.{article_no}/f.0",
+                "article_no": article_no,
+                "text": text,
+                "phase24n_source_supplement": True,
+                "phase24n_qid_dependency": span.get("qid_dependency"),
+            }
+        )
+    return tuple(rows)
+
+
 @lru_cache(maxsize=1)
 def load_source_supplements() -> tuple[dict[str, Any], ...]:
     """Official-source body supplements for catalog rows with unreadable indexed body text."""
-    return (
+    static_supplements = (
         {
             "source_key": "3",
             "source_family": "cb_genelge",
@@ -313,6 +394,7 @@ MADDE 598- (1) Esas sermaye paylarının geçişlerinin tescil edilmesi için ş
 (3) Sicil kaydına güvenen iyiniyetli kişinin güveni korunur.""",
         },
     )
+    return static_supplements + _load_phase24n_source_supplements()
 
 
 def load_source_supplements_for_keys(

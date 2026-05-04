@@ -3092,6 +3092,64 @@ def _looks_like_data_protection_law_query(user_query: str) -> bool:
     )
 
 
+def _has_explicit_data_protection_anchor(user_query: str) -> bool:
+    return _contains_any_query_term(
+        user_query,
+        (
+            "kişisel veri",
+            "kisisel veri",
+            "kvkk",
+            "veri sorumlusu",
+            "özel nitelikli veri",
+            "ozel nitelikli veri",
+            "biyometrik",
+            "anonim hale",
+            "veri imha",
+            "saklama-imha",
+            "saklama imha",
+        ),
+    )
+
+
+def _looks_like_internet_law_query(user_query: str) -> bool:
+    internet_actor_terms = (
+        "hosting",
+        "yer sağlayıcı",
+        "yer saglayici",
+        "erişim sağlayıcı",
+        "erisim saglayici",
+        "toplu kullanım sağlayıcı",
+        "toplu kullanim saglayici",
+        "içerik sağlayıcı",
+        "icerik saglayici",
+        "internet ortamı",
+        "internet ortami",
+        "trafik bilgisi",
+        "trafik verisi",
+        "log kaydı",
+        "log kaydi",
+        "btk",
+        "bilgi teknolojileri ve iletişim kurumu",
+        "bilgi teknolojileri ve iletisim kurumu",
+    )
+    obligation_terms = (
+        "saklama",
+        "saklamak",
+        "yükümlülük",
+        "yukumluluk",
+        "talep",
+        "cevap",
+        "erişim engeli",
+        "erisim engeli",
+        "içerik çıkarma",
+        "icerik cikarma",
+    )
+    return _contains_any_query_term(user_query, internet_actor_terms) and _contains_any_query_term(
+        user_query,
+        obligation_terms,
+    )
+
+
 def _looks_like_rent_increase_tbk_query(user_query: str) -> bool:
     rent_increase_terms = (
         "kira artış",
@@ -3217,12 +3275,17 @@ def _looks_like_civil_mediation_law_query(user_query: str) -> bool:
 
 def _infer_domain_law_hints(query: str) -> list[str]:
     laws: list[str] = []
+    internet_law_query = _looks_like_internet_law_query(query)
     if _looks_like_commercial_company_law_query(query):
         laws.append("TTK")
     if _looks_like_labor_law_query(query):
         laws.extend(["IK", "4857"])
-    if _looks_like_data_protection_law_query(query):
+    if _looks_like_data_protection_law_query(query) and (
+        not internet_law_query or _has_explicit_data_protection_anchor(query)
+    ):
         laws.extend(["KVKK", "6698"])
+    if internet_law_query:
+        laws.append("5651")
     if _looks_like_rent_increase_tbk_query(query):
         laws.extend(["TBK", "6098"])
     if _looks_like_electronic_notification_law_query(query):
@@ -3234,6 +3297,7 @@ def _infer_domain_law_hints(query: str) -> list[str]:
 
 def _infer_domain_article_refs(query: str) -> list[tuple[str, str]]:
     refs: list[tuple[str, str]] = []
+    internet_law_query = _looks_like_internet_law_query(query)
     if _looks_like_commercial_company_law_query(query):
         refs.extend([("TTK", "595"), ("TTK", "598")])
     if _contains_any_query_term(
@@ -3262,8 +3326,12 @@ def _infer_domain_article_refs(query: str) -> list[tuple[str, str]]:
         ("yıllık ücretli izin", "yillik ucretli izin", "ücretli izin", "ucretli izin", "kesintisiz"),
     ):
         refs.extend([("IK", "56"), ("4857", "56")])
-    if _looks_like_data_protection_law_query(query):
+    if _looks_like_data_protection_law_query(query) and (
+        not internet_law_query or _has_explicit_data_protection_anchor(query)
+    ):
         refs.extend([("KVKK", "6"), ("KVKK", "10"), ("KVKK", "12"), ("6698", "6"), ("6698", "10"), ("6698", "12")])
+    if internet_law_query:
+        refs.extend([("5651", "5"), ("5651", "6"), ("5651", "7"), ("5651", "11")])
     if _looks_like_rent_increase_tbk_query(query):
         refs.extend([("TBK", "344"), ("6098", "344")])
     if _looks_like_civil_mediation_law_query(query):
@@ -3274,7 +3342,7 @@ def _infer_domain_article_refs(query: str) -> list[tuple[str, str]]:
 def _domain_law_source_family_hints(domain_law_hints: list[str]) -> list[str]:
     hints = set(domain_law_hints)
     families = ["kanun"]
-    if hints & {"IK", "4857", "KVKK", "6698", "7201", "HUAK", "6325"}:
+    if hints & {"IK", "4857", "KVKK", "6698", "7201", "HUAK", "6325", "5651"}:
         families.append("yonetmelik")
     if hints & {"KVKK", "6698"}:
         families.append("cb_genelge")
@@ -3307,6 +3375,8 @@ def _domain_law_supporting_source_family_hints(query: str, domain_law_hints: lis
         families.extend(["yonetmelik", "kky"])
     if hints & {"KVKK", "6698", "7201", "HUAK", "6325"}:
         families.append("yonetmelik")
+    if "5651" in hints and _looks_like_internet_law_query(query):
+        families.append("yonetmelik")
     return dedupe_strings(_expand_source_family_aliases(families))
 
 
@@ -3330,6 +3400,10 @@ def _domain_law_term_hints(query: str, domain_law_hints: list[str]) -> list[str]
     if hints & {"KVKK", "6698"}:
         terms.append(
             "6698 KVKK m.6 özel nitelikli kişisel veri biyometrik veri m.10 aydınlatma m.12 veri güvenliği saklama imha yönetmeliği"
+        )
+    if "5651" in hints:
+        terms.append(
+            "5651 sayılı İnternet Ortamında Yapılan Yayınların Düzenlenmesi Kanunu m.5 m.6 m.7 m.11 yer sağlayıcı erişim sağlayıcı trafik bilgisi saklama BTK talebi"
         )
     if hints & {"TBK", "6098"} and _looks_like_rent_increase_tbk_query(query):
         terms.append("6098 TBK m.344 kira artış oranı geçici yüzde 25 sınırı sona erdi güncel genel rejim")
@@ -8185,6 +8259,16 @@ async def _prepare_retrieval_runtime_context(
         for part in source_family_resolution.query_expansions
         if str(part or "").strip() and str(part or "").strip() not in generic_metadata_lookup_expansions
     ]
+    metadata_lookup_query_expansions = dedupe_strings(
+        [
+            *metadata_lookup_query_expansions,
+            *[
+                str(part or "").strip()
+                for part in ((retrieval_plan or {}).get("term_hints") or [])
+                if str(part or "").strip()
+            ],
+        ]
+    )
     metadata_lookup_query = " ".join(
         part
         for part in [routing_query, *metadata_lookup_query_expansions]
@@ -8834,9 +8918,25 @@ async def chat_completions(
                             metadata_first_source_keys,
                             len(retrieved_chunks),
                         )
+                    source_supplement_lookup_keys = dedupe_strings(
+                        [
+                            *metadata_first_source_keys,
+                            *[
+                                str(value or "").strip()
+                                for candidate in (metadata_first_selector.get("candidates") or [])
+                                if isinstance(candidate, dict)
+                                for value in (
+                                    candidate.get("canonical_title"),
+                                    candidate.get("canonical_identifier"),
+                                    *(candidate.get("focus_keys") or []),
+                                )
+                                if str(value or "").strip()
+                            ],
+                        ]
+                    )
                     source_supplement_chunks = _build_source_supplement_chunks(
                         load_source_supplements_for_keys(
-                            metadata_first_source_keys,
+                            source_supplement_lookup_keys,
                             source_families=set(requested_source_families) if requested_source_families else None,
                         )
                     )
@@ -9048,6 +9148,17 @@ async def chat_completions(
                         retrieved_chunks = _dedupe_retrieved_chunks(
                             marked_support_chunks + retrieved_chunks
                         )
+                        if selected_source_keys:
+                            retrieved_chunks = _prioritize_chunks_for_source_families(
+                                query=routing_query,
+                                chunks=retrieved_chunks,
+                                source_families=requested_source_families,
+                                selected_source_keys=selected_source_keys,
+                            )
+                            retrieved_chunks = _focus_chunks_on_selected_sources(
+                                chunks=retrieved_chunks,
+                                selected_source_keys=selected_source_keys,
+                            )
                         logger.info(
                             "Retrieval domain-law-supporting-sources: session=%s sources=%s families=%s added=%d total=%d",
                             session_id,

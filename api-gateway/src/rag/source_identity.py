@@ -3028,6 +3028,10 @@ def _chunk_matches_selected_source_key(
     for candidate in (
         _resolve_chunk_source_key(chunk),
         _resolve_chunk_document_key(chunk),
+        (chunk.metadata or {}).get("source_title"),
+        (chunk.metadata or {}).get("canonical_title"),
+        (chunk.metadata or {}).get("belge_adi"),
+        (chunk.metadata or {}).get("law_name"),
         (
             binding_source_key_resolver(chunk, False)
             if binding_source_key_resolver
