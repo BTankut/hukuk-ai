@@ -1,0 +1,273 @@
+{
+  "acceptance": {
+    "both_models_ok": true,
+    "both_runtimes_healthy": true,
+    "collections_loaded": true,
+    "entity_counts_expected": true,
+    "only_allowed_env_diffs": true,
+    "passed": true
+  },
+  "config_hashes": [
+    {
+      "bytes": 10674,
+      "path": "api-gateway/src/rag/required_slot_matrix.py",
+      "sha256": "7e24673fc8fcae2b8adde1795d39cc98da2ebd9ac270a01854f79dd47b0d1a5c"
+    },
+    {
+      "bytes": 6140,
+      "path": "api-gateway/src/rag/required_slot_matrix.json",
+      "sha256": "5619710ebd8c808e32a95c5762cccc2e5e523ba8b0b5b7498e8bcade004363ae"
+    },
+    {
+      "bytes": 37758,
+      "path": "configs/evaluation/hukuk_ai_100_public_questions.csv",
+      "sha256": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e"
+    },
+    {
+      "bytes": 4985,
+      "path": "evaluation/hukuk_ai_100_article_alignment.py",
+      "sha256": "b76ca74a993d3e32416739c8412fcf572b41e58cf584659733d9f38741b284e5"
+    },
+    {
+      "bytes": 9521,
+      "path": "evaluation/hukuk_ai_100_source_schema.py",
+      "sha256": "31ea49c93f36ff4aa9c8d9faf545c396a9240302d75a85c49e7a39d044513eb6"
+    },
+    {
+      "bytes": 69254,
+      "path": "scripts/benchmark/run_hukuk_ai_100.py",
+      "sha256": "dc6638c21c47922eaf7d45f7a34f10fdca91a8c2ccddfc885534e00e08232ec0"
+    },
+    {
+      "bytes": 87913,
+      "path": "scripts/benchmark/score_hukuk_ai_100.py",
+      "sha256": "a48bdc924b29f440517eb4f437ce54b3f6ac9a4d5fe3dcb8f7b65d4f6300ceea"
+    }
+  ],
+  "dirty_worktree": true,
+  "dirty_worktree_status_excerpt": " D docs/LAWYER-REVIEW-KANONIK-TEMPLATE-reviewed.csv\n D docs/hukuk_ai_repo_hardening_plan.md\n M reports/benchmark/hukuk_ai_revised_phase17F_phase18_tasks_after_expert_and_phase17E.md\n D reports/benchmark/phase_17_final_summary.md\n?? coordination/faz19-current-authority-candidate-fingerprint-table-20260325.json\n?? coordination/faz19-current-authority-candidate-fingerprint-table-20260325.md\n?? coordination/faz19-current-authority-frontier-pack-20260325.json\n?? coordination/faz19-current-authority-frontier-pack-20260325.md\n?? coordination/faz19-current-authority-reconciliation-20260325.json\n?? coordination/faz19-current-authority-reconciliation-20260325.md\n?? coordination/faz19-current-authority-reference-contrast-20260325.json\n?? coordination/faz19-current-authority-reference-contrast-20260325.md\n?? coordination/faz19-current-authority-root-cause-table-20260325.json\n?? coordination/faz19-current-authority-root-cause-table-20260325.md\n?? coordination/faz19-next-official-work-20260325.json\n?? coordination/faz19-next-official-work-20260325.md\n?? coordination/faz19-steering-decision-table-20260325.md\n?? coordination/faz26_backups/\n?? coordination/faz26_restore/\n?? coordination/faz28_backups/",
+  "env_diffs": {
+    "API_VERSION_LABEL": {
+      "allowed": true,
+      "base": "2026-05-04-phase24r-base-matched-ab",
+      "cby": "2026-05-04-phase24r-cby-matched-ab"
+    },
+    "MILVUS_COLLECTION": {
+      "allowed": true,
+      "base": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "cby": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06"
+    },
+    "RELEASE_LANE_ID": {
+      "allowed": true,
+      "base": "phase24r_base_matched_ab",
+      "cby": "phase24r_cby_matched_ab"
+    }
+  },
+  "generated_at_utc": "2026-05-04T20:17:32.727982+00:00",
+  "git_sha": "a1122c31614d643098cf11d944d63ea9a797bbff",
+  "lanes": {
+    "BASE": {
+      "api_url": "http://127.0.0.1:8035/v1",
+      "entity_count": 349403,
+      "env": {
+        "ALLOW_ANONYMOUS_INTERNAL_SMOKE": "false",
+        "API_AUTH_ENABLED": "false",
+        "API_AUTH_KEYS": "benchmark",
+        "API_VERSION_LABEL": "2026-05-04-phase24r-base-matched-ab",
+        "AUDIT_LOG_ENABLED": "false",
+        "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+        "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+        "EMBEDDING_BACKEND": "remote",
+        "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+        "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+        "GUARDRAILS_ENABLED": "false",
+        "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+        "MILVUS_ENABLED": "true",
+        "MILVUS_URI": "http://localhost:19530",
+        "PARITY_TRACE_ENABLED": "false",
+        "PRESIDIO_ENABLED": "false",
+        "RELEASE_LANE_ID": "phase24r_base_matched_ab",
+        "RERANKER_ENABLED": "false",
+        "SESSION_STORE_BACKEND": "memory",
+        "SESSION_STORE_REDIS_PING_ON_STARTUP": "false",
+        "SESSION_STORE_REDIS_REQUIRED": "false",
+        "TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK": "true",
+        "USE_VERIFICATION": "false"
+      },
+      "expected_entity_count": 349403,
+      "health": {
+        "api_version": "2026-05-04-phase24r-base-matched-ab",
+        "guardrails": "disabled",
+        "lane": "phase24r_base_matched_ab",
+        "retriever": "milvus",
+        "service": "hukuk-ai-api-gateway",
+        "status": "ok",
+        "verification": "disabled"
+      },
+      "load_state": "Loaded",
+      "milvus_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "models": {
+        "api_version": "2026-05-04-phase24r-base-matched-ab",
+        "data": [
+          {
+            "api_version": "2026-05-04-phase24r-base-matched-ab",
+            "created": 1777925852,
+            "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+            "id": "hukuk-ai-poc",
+            "lane": "phase24r_base_matched_ab",
+            "object": "model",
+            "owned_by": "hukuk-ai"
+          }
+        ],
+        "headers": {
+          "X-Hukuk-AI-API-Version": "2026-05-04-phase24r-base-matched-ab",
+          "X-Hukuk-AI-Lane": "phase24r_base_matched_ab",
+          "X-Request-ID": "req-242e93d6a43340ec9dcc"
+        },
+        "lane": "phase24r_base_matched_ab",
+        "object": "list"
+      },
+      "pid": "26325",
+      "port": 8035
+    },
+    "CBY": {
+      "api_url": "http://127.0.0.1:8036/v1",
+      "entity_count": 349405,
+      "env": {
+        "ALLOW_ANONYMOUS_INTERNAL_SMOKE": "false",
+        "API_AUTH_ENABLED": "false",
+        "API_AUTH_KEYS": "benchmark",
+        "API_VERSION_LABEL": "2026-05-04-phase24r-cby-matched-ab",
+        "AUDIT_LOG_ENABLED": "false",
+        "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+        "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+        "EMBEDDING_BACKEND": "remote",
+        "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+        "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+        "GUARDRAILS_ENABLED": "false",
+        "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+        "MILVUS_ENABLED": "true",
+        "MILVUS_URI": "http://localhost:19530",
+        "PARITY_TRACE_ENABLED": "false",
+        "PRESIDIO_ENABLED": "false",
+        "RELEASE_LANE_ID": "phase24r_cby_matched_ab",
+        "RERANKER_ENABLED": "false",
+        "SESSION_STORE_BACKEND": "memory",
+        "SESSION_STORE_REDIS_PING_ON_STARTUP": "false",
+        "SESSION_STORE_REDIS_REQUIRED": "false",
+        "TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK": "true",
+        "USE_VERIFICATION": "false"
+      },
+      "expected_entity_count": 349405,
+      "health": {
+        "api_version": "2026-05-04-phase24r-cby-matched-ab",
+        "guardrails": "disabled",
+        "lane": "phase24r_cby_matched_ab",
+        "retriever": "milvus",
+        "service": "hukuk-ai-api-gateway",
+        "status": "ok",
+        "verification": "disabled"
+      },
+      "load_state": "Loaded",
+      "milvus_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+      "models": {
+        "api_version": "2026-05-04-phase24r-cby-matched-ab",
+        "data": [
+          {
+            "api_version": "2026-05-04-phase24r-cby-matched-ab",
+            "created": 1777925852,
+            "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+            "id": "hukuk-ai-poc",
+            "lane": "phase24r_cby_matched_ab",
+            "object": "model",
+            "owned_by": "hukuk-ai"
+          }
+        ],
+        "headers": {
+          "X-Hukuk-AI-API-Version": "2026-05-04-phase24r-cby-matched-ab",
+          "X-Hukuk-AI-Lane": "phase24r_cby_matched_ab",
+          "X-Request-ID": "req-83a102cf35614bd1bdce"
+        },
+        "lane": "phase24r_cby_matched_ab",
+        "object": "list"
+      },
+      "pid": "26422",
+      "port": 8036
+    }
+  },
+  "live_8000_health": {
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "guardrails": "disabled",
+    "lane": "phase22f_s7_full_shadow",
+    "retriever": "milvus",
+    "service": "hukuk-ai-api-gateway",
+    "status": "ok",
+    "verification": "disabled"
+  },
+  "live_8000_modified": false,
+  "phase": "24R-B",
+  "source_catalog_hashes": [
+    {
+      "bytes": 38132,
+      "path": "api-gateway/src/rag/source_catalog.py",
+      "sha256": "f04dc600f306f5724c8e795fcf462bf601083e62250505686c3da55fb2a9016e"
+    },
+    {
+      "bytes": 18918,
+      "path": "api-gateway/src/rag/retriever.py",
+      "sha256": "d036bc2152af51a90689464af303009d822594076feb7a6a07ac93c7db74b20a"
+    },
+    {
+      "bytes": 59395,
+      "path": "api-gateway/src/source_family_resolver.py",
+      "sha256": "b9f622111e2a247874cb6d03a8e0b47b4a3b2f47e6bf556bb55f650fc30e77c1"
+    },
+    {
+      "bytes": 7390345,
+      "path": "reports/benchmark/phase_05_canonical_source_catalog.csv",
+      "sha256": "3e1a906ca1c0daaffc839b8757c6bdac25228d8f4e60f5001c2534a00fa309b2"
+    }
+  ],
+  "source_supplement_hashes": [
+    {
+      "bytes": 29135,
+      "path": "api-gateway/src/rag/source_supplements.py",
+      "sha256": "b9ed3492fec515993e215341c7c7ef5b75b74fd2c7cb581afa720bd50c125466"
+    },
+    {
+      "bytes": 7813,
+      "path": "reports/benchmark/phase_16a_corpus_materialization_remediation.csv",
+      "sha256": "ebf51c4c156c37d25011368f80ca785fb599e4eeb1d0ba86cc341151a52563f8"
+    },
+    {
+      "bytes": 3703,
+      "path": "reports/benchmark/phase_16e_corpus_materialization_remediation.csv",
+      "sha256": "40179b1b8a39bea7b10ad22ef6a4fb56ea140704e74b9cbf4b97cd1a3e454aad"
+    },
+    {
+      "bytes": 1212,
+      "path": "reports/benchmark/phase_17_corpus_materialization_audit.csv",
+      "sha256": "dff7afd5785b5b564b7883dd260e111d573b1243fbf738ecd09dd2a190c87bdb"
+    },
+    {
+      "bytes": 2028,
+      "path": "reports/benchmark/phase_17a_corpus_materialization_remediation.csv",
+      "sha256": "82728fbeb06791512ff27542650c25d5fa906e6362761a043526010ea8ea8d18"
+    },
+    {
+      "bytes": 2676,
+      "path": "reports/benchmark/phase_17b_corpus_materialization_remediation.csv",
+      "sha256": "f7800ac8dcf0b0009b5901922b31d4cd866535850d64b968aef40db09df58a33"
+    },
+    {
+      "bytes": 1499,
+      "path": "reports/benchmark/phase_17a_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+    },
+    {
+      "bytes": 1499,
+      "path": "reports/benchmark/phase_17b_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+    }
+  ]
+}
