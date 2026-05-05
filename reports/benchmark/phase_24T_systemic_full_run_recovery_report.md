@@ -11,7 +11,7 @@ Phase24T-B score delta attribution = ab73dc6
 Phase24T-C document identity regression audit = 6b84189
 Phase24T-D Phase23R-E baseline reproduction = 392f4b1
 Phase24T-E recovery design = 189bcdb
-Phase24T-F final report = pending_this_commit
+Phase24T-F final report = d36aa00
 ```
 
 ## Provenance Diff
