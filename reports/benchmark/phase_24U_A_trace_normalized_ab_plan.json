@@ -1,0 +1,116 @@
+{
+  "phase": "24U-A",
+  "generated_at_utc": "2026-05-05T12:10:58Z",
+  "branch": "bt/hukuk-ai-100-benchmark-hardening",
+  "git_sha": "e803eee2cbafeed07cae02b3cffee6de5085801e",
+  "live_8000_change": false,
+  "live_8000_health": {
+    "status": "ok",
+    "service": "hukuk-ai-api-gateway",
+    "lane": "phase22f_s7_full_shadow",
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "guardrails": "disabled",
+    "retriever": "milvus",
+    "verification": "disabled"
+  },
+  "live_model": "hukuk-ai-poc",
+  "ports": {
+    "base_api": "http://127.0.0.1:8037/v1",
+    "cby_api": "http://127.0.0.1:8038/v1",
+    "ablation_api": "http://127.0.0.1:8039/v1",
+    "preflight": "8037/8038/8039 free"
+  },
+  "collections": {
+    "base": {
+      "name": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "row_count": 349403,
+      "load_state": "Loaded"
+    },
+    "cby": {
+      "name": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+      "row_count": 349405,
+      "load_state": "Loaded"
+    }
+  },
+  "shared_runtime": {
+    "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+    "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+    "MILVUS_ENABLED": "true",
+    "MILVUS_URI": "http://localhost:19530",
+    "EMBEDDING_BACKEND": "remote",
+    "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+    "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+    "RELEASE_CONTROLS_STRICT": "true",
+    "API_AUTH_ENABLED": "false",
+    "API_AUTH_KEYS": "benchmark",
+    "AUDIT_LOG_ENABLED": "false",
+    "ALLOW_ANONYMOUS_INTERNAL_SMOKE": "false",
+    "SESSION_STORE_BACKEND": "memory",
+    "SESSION_STORE_REDIS_REQUIRED": "false",
+    "SESSION_STORE_REDIS_PING_ON_STARTUP": "false",
+    "TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK": "true",
+    "PARITY_TRACE_ENABLED": "false",
+    "RERANKER_ENABLED": "false",
+    "GUARDRAILS_ENABLED": "false",
+    "PRESIDIO_ENABLED": "false",
+    "USE_VERIFICATION": "false"
+  },
+  "candidate_differences": {
+    "8037_base": {
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "RELEASE_LANE_ID": "phase24u_base_trace_on",
+      "API_VERSION_LABEL": "2026-05-05-phase24u-base-trace-on",
+      "ENABLE_PHASE24N_SOURCE_SUPPLEMENTS": "default/current"
+    },
+    "8038_cby": {
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+      "RELEASE_LANE_ID": "phase24u_cby_trace_on",
+      "API_VERSION_LABEL": "2026-05-05-phase24u-cby-trace-on",
+      "ENABLE_PHASE24N_SOURCE_SUPPLEMENTS": "default/current"
+    },
+    "8039_ablation": {
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "RELEASE_LANE_ID": "phase24u_base_supplement_ablation",
+      "API_VERSION_LABEL": "2026-05-05-phase24u-supplement-ablation",
+      "ENABLE_PHASE24N_SOURCE_SUPPLEMENTS": "false"
+    }
+  },
+  "benchmark_contract": {
+    "include_trace": true,
+    "model": "hukuk-ai-poc",
+    "api_key": "benchmark",
+    "runner": "scripts/benchmark/run_hukuk_ai_100.py",
+    "scorer": "scripts/benchmark/score_hukuk_ai_100.py",
+    "runner_flag_rule": "do not pass --no-trace; --allow-missing-trace may be used only to complete diagnostic logging if every response is later audited"
+  },
+  "reference_scores": {
+    "phase23R_E": {
+      "raw_score_proxy": 816.86,
+      "pass_proxy": 91,
+      "run_dir": "reports/benchmark/runs/20260503T080937Z_phase23R_E5_post_cutover_full"
+    },
+    "phase24T_D_current_trace_on": {
+      "raw_score_proxy": 805.09,
+      "pass_proxy": 89
+    }
+  },
+  "commit_sequence": [
+    "Plan Phase 24U trace-normalized matched A/B",
+    "Run Phase 24U BASE trace-on full benchmark",
+    "Run Phase 24U CBY trace-on full benchmark",
+    "Run Phase 24U source supplement ablation",
+    "Attribute Phase 24U source supplement drift rows",
+    "Record Phase 24U trace-normalized ablation decision",
+    "Report Phase 24U trace-normalized ablation outcome"
+  ],
+  "stop_rules": [
+    "live 8000 would be modified",
+    "include_trace cannot be enabled",
+    "runtime provenance differs beyond intended collection/env flag",
+    "contract invalid appears",
+    "unsupported confident appears",
+    "source_key_v2 collision appears",
+    "binding collision appears",
+    "large trace files are staged"
+  ]
+}
