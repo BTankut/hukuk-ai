@@ -1,0 +1,453 @@
+{
+  "acceptance": {
+    "all_material_differences_identified": true,
+    "git_sha_or_scorer_or_runtime_command_diffs_marked_possible_cause": true,
+    "runtime_behavior_changed": false
+  },
+  "comparisons_vs_phase23RE": {
+    "phase24R_base_bad": {
+      "diffs": [
+        {
+          "candidate": "http://127.0.0.1:8035/v1",
+          "field": "api_url",
+          "material": true,
+          "phase23RE": "http://127.0.0.1:8000/v1"
+        },
+        {
+          "candidate": "phase24r_base_matched_ab",
+          "field": "lane",
+          "material": true,
+          "phase23RE": "phase22f_s7_full_shadow"
+        },
+        {
+          "candidate": "2026-05-04-phase24r-base-matched-ab",
+          "field": "api_version",
+          "material": true,
+          "phase23RE": "2026-05-03-phase23R-E-benchmark-only-cutover"
+        },
+        {
+          "candidate": "5ee5fa21147eb90cb225575723253e7449d3eb6d",
+          "field": "git_sha",
+          "material": true,
+          "phase23RE": "b34ed1c8c72cd9c1108282eda50d53dd4d35c032"
+        },
+        {
+          "candidate": 349403,
+          "field": "entity_count",
+          "material": false,
+          "phase23RE": null
+        },
+        {
+          "candidate": 1024,
+          "field": "vector_dimension",
+          "material": false,
+          "phase23RE": null
+        },
+        {
+          "candidate": "282503e998ca442b6874b75c0c0c2635e7780ae14fe22edb416095b526d683b2",
+          "field": "source_supplement_hash",
+          "material": true,
+          "phase23RE": "a301cdd8a80d7086fefbaac5210602d0f3c14916bdb87fd9c9308fdb9233972f"
+        },
+        {
+          "candidate": false,
+          "field": "include_trace",
+          "material": true,
+          "phase23RE": true
+        },
+        {
+          "candidate": true,
+          "field": "models_response_ok",
+          "material": false,
+          "phase23RE": false
+        }
+      ],
+      "material_diff_count": 6
+    },
+    "phase24R_cby_bad": {
+      "diffs": [
+        {
+          "candidate": "http://127.0.0.1:8036/v1",
+          "field": "api_url",
+          "material": true,
+          "phase23RE": "http://127.0.0.1:8000/v1"
+        },
+        {
+          "candidate": "phase24r_cby_matched_ab",
+          "field": "lane",
+          "material": true,
+          "phase23RE": "phase22f_s7_full_shadow"
+        },
+        {
+          "candidate": "2026-05-04-phase24r-cby-matched-ab",
+          "field": "api_version",
+          "material": true,
+          "phase23RE": "2026-05-03-phase23R-E-benchmark-only-cutover"
+        },
+        {
+          "candidate": "5ee5fa21147eb90cb225575723253e7449d3eb6d",
+          "field": "git_sha",
+          "material": true,
+          "phase23RE": "b34ed1c8c72cd9c1108282eda50d53dd4d35c032"
+        },
+        {
+          "candidate": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+          "field": "MILVUS_COLLECTION",
+          "material": true,
+          "phase23RE": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill"
+        },
+        {
+          "candidate": 349405,
+          "field": "entity_count",
+          "material": false,
+          "phase23RE": null
+        },
+        {
+          "candidate": 1024,
+          "field": "vector_dimension",
+          "material": false,
+          "phase23RE": null
+        },
+        {
+          "candidate": "282503e998ca442b6874b75c0c0c2635e7780ae14fe22edb416095b526d683b2",
+          "field": "source_supplement_hash",
+          "material": true,
+          "phase23RE": "a301cdd8a80d7086fefbaac5210602d0f3c14916bdb87fd9c9308fdb9233972f"
+        },
+        {
+          "candidate": false,
+          "field": "include_trace",
+          "material": true,
+          "phase23RE": true
+        },
+        {
+          "candidate": true,
+          "field": "models_response_ok",
+          "material": false,
+          "phase23RE": false
+        }
+      ],
+      "material_diff_count": 7
+    },
+    "phase24S_cby_live_bad": {
+      "diffs": [
+        {
+          "candidate": "phase24s_cby_benchmark_only",
+          "field": "lane",
+          "material": true,
+          "phase23RE": "phase22f_s7_full_shadow"
+        },
+        {
+          "candidate": "2026-05-05-phase24s-cby-benchmark-only-cutover",
+          "field": "api_version",
+          "material": true,
+          "phase23RE": "2026-05-03-phase23R-E-benchmark-only-cutover"
+        },
+        {
+          "candidate": "fe10184882504b103c12e1705eb3d681c92d00a8",
+          "field": "git_sha",
+          "material": true,
+          "phase23RE": "b34ed1c8c72cd9c1108282eda50d53dd4d35c032"
+        },
+        {
+          "candidate": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+          "field": "MILVUS_COLLECTION",
+          "material": true,
+          "phase23RE": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill"
+        },
+        {
+          "candidate": 349405,
+          "field": "entity_count",
+          "material": false,
+          "phase23RE": null
+        },
+        {
+          "candidate": 1024,
+          "field": "vector_dimension",
+          "material": false,
+          "phase23RE": null
+        },
+        {
+          "candidate": "282503e998ca442b6874b75c0c0c2635e7780ae14fe22edb416095b526d683b2",
+          "field": "source_supplement_hash",
+          "material": true,
+          "phase23RE": "a301cdd8a80d7086fefbaac5210602d0f3c14916bdb87fd9c9308fdb9233972f"
+        },
+        {
+          "candidate": false,
+          "field": "include_trace",
+          "material": true,
+          "phase23RE": true
+        }
+      ],
+      "material_diff_count": 6
+    }
+  },
+  "current_head": "57d13b6278814f82f42f711160afcf26d76432d8",
+  "generated_at_utc": "2026-05-05T10:20:00Z",
+  "key_findings": [
+    {
+      "detail": "Phase23R-E used include_trace=True; low Phase24R/S full runs used include_trace=False. The scorer consumes trace-derived selector/document fields, so this is a material provenance/scoring equivalence break.",
+      "finding": "include_trace differs from Phase23R-E",
+      "possible_cause": true,
+      "run": "phase24R_base_bad"
+    },
+    {
+      "detail": "Runtime checkout differs; reproduction under current code with the Phase23R-E trace-on command is required.",
+      "finding": "git_sha differs",
+      "possible_cause": true,
+      "run": "phase24R_base_bad"
+    },
+    {
+      "detail": "Phase23R-E used include_trace=True; low Phase24R/S full runs used include_trace=False. The scorer consumes trace-derived selector/document fields, so this is a material provenance/scoring equivalence break.",
+      "finding": "include_trace differs from Phase23R-E",
+      "possible_cause": true,
+      "run": "phase24R_cby_bad"
+    },
+    {
+      "detail": "Runtime checkout differs; reproduction under current code with the Phase23R-E trace-on command is required.",
+      "finding": "git_sha differs",
+      "possible_cause": true,
+      "run": "phase24R_cby_bad"
+    },
+    {
+      "detail": "CBY candidate collection has +2 entities and should only be evaluated under matched trace/scorer conditions.",
+      "finding": "collection differs",
+      "possible_cause": true,
+      "run": "phase24R_cby_bad"
+    },
+    {
+      "detail": "Phase23R-E used include_trace=True; low Phase24R/S full runs used include_trace=False. The scorer consumes trace-derived selector/document fields, so this is a material provenance/scoring equivalence break.",
+      "finding": "include_trace differs from Phase23R-E",
+      "possible_cause": true,
+      "run": "phase24S_cby_live_bad"
+    },
+    {
+      "detail": "Runtime checkout differs; reproduction under current code with the Phase23R-E trace-on command is required.",
+      "finding": "git_sha differs",
+      "possible_cause": true,
+      "run": "phase24S_cby_live_bad"
+    },
+    {
+      "detail": "CBY candidate collection has +2 entities and should only be evaluated under matched trace/scorer conditions.",
+      "finding": "collection differs",
+      "possible_cause": true,
+      "run": "phase24S_cby_live_bad"
+    }
+  ],
+  "phase": "24T-A",
+  "runs": {
+    "phase23RE_E5_good": {
+      "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "answered": 100,
+      "api_url": "http://127.0.0.1:8000/v1",
+      "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+      "branch": "bt/hukuk-ai-100-benchmark-hardening",
+      "config_hash": "72d622683680e538247629cccb16207e71bc1372a8faa38f98c3f2e31ea6d431",
+      "contract_valid": 100,
+      "dirty_worktree": true,
+      "embedding_backend": "remote",
+      "embedding_base_url": "http://127.0.0.1:8081/v1",
+      "embedding_model": "intfloat/multilingual-e5-large-instruct",
+      "endpoint": "http://127.0.0.1:8000/v1/chat/completions",
+      "entity_count": null,
+      "fail_proxy": 9,
+      "git_sha": "b34ed1c8c72cd9c1108282eda50d53dd4d35c032",
+      "guardrails": "false",
+      "hallucinated_identifier": 4,
+      "include_trace": true,
+      "lane": "phase22f_s7_full_shadow",
+      "max_tokens": 1200,
+      "model": "hukuk-ai-poc",
+      "models_response_ok": false,
+      "pass_proxy": 91,
+      "presidio": "false",
+      "questions_hash": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e",
+      "raw_score_proxy": 816.86,
+      "required_slot_matrix_hash": "7e24673fc8fcae2b8adde1795d39cc98da2ebd9ac270a01854f79dd47b0d1a5c",
+      "run_dir": "reports/benchmark/runs/20260503T080937Z_phase23R_E5_post_cutover_full",
+      "runner_hash": "dc6638c21c47922eaf7d45f7a34f10fdca91a8c2ccddfc885534e00e08232ec0",
+      "runtime_env": {
+        "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+        "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+        "EMBEDDING_BACKEND": "remote",
+        "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+        "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+        "GUARDRAILS_ENABLED": "false",
+        "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+        "MILVUS_ENABLED": "true",
+        "MILVUS_URI": "http://localhost:19530",
+        "PRESIDIO_ENABLED": "false"
+      },
+      "scorer_hash": "a48bdc924b29f440517eb4f437ce54b3f6ac9a4d5fe3dcb8f7b65d4f6300ceea",
+      "source_catalog_hash": "36e1d6b7232772c8b03d2f5882d6acb673b067dba3c76063d85ff9c554d3446b",
+      "source_supplement_hash": "a301cdd8a80d7086fefbaac5210602d0f3c14916bdb87fd9c9308fdb9233972f",
+      "top_k": 20,
+      "unsupported_confident_answer": 0,
+      "vector_dimension": null,
+      "verification": "disabled",
+      "wrong_document": 4,
+      "wrong_family": 6
+    },
+    "phase24R_base_bad": {
+      "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "answered": 100,
+      "api_url": "http://127.0.0.1:8035/v1",
+      "api_version": "2026-05-04-phase24r-base-matched-ab",
+      "branch": "bt/hukuk-ai-100-benchmark-hardening",
+      "config_hash": "72d622683680e538247629cccb16207e71bc1372a8faa38f98c3f2e31ea6d431",
+      "contract_valid": 100,
+      "dirty_worktree": true,
+      "embedding_backend": "remote",
+      "embedding_base_url": "http://127.0.0.1:8081/v1",
+      "embedding_model": "intfloat/multilingual-e5-large-instruct",
+      "endpoint": "http://127.0.0.1:8035/v1/chat/completions",
+      "entity_count": 349403,
+      "fail_proxy": 28,
+      "git_sha": "5ee5fa21147eb90cb225575723253e7449d3eb6d",
+      "guardrails": "false",
+      "hallucinated_identifier": 25,
+      "include_trace": false,
+      "lane": "phase24r_base_matched_ab",
+      "max_tokens": 1200,
+      "model": "hukuk-ai-poc",
+      "models_response_ok": true,
+      "pass_proxy": 72,
+      "presidio": "false",
+      "questions_hash": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e",
+      "raw_score_proxy": 725.4,
+      "required_slot_matrix_hash": "7e24673fc8fcae2b8adde1795d39cc98da2ebd9ac270a01854f79dd47b0d1a5c",
+      "run_dir": "reports/benchmark/runs/phase_24R_D_base_full_20260504T2035Z",
+      "runner_hash": "dc6638c21c47922eaf7d45f7a34f10fdca91a8c2ccddfc885534e00e08232ec0",
+      "runtime_env": {
+        "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+        "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+        "EMBEDDING_BACKEND": "remote",
+        "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+        "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+        "GUARDRAILS_ENABLED": "false",
+        "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+        "MILVUS_ENABLED": "true",
+        "MILVUS_URI": "http://localhost:19530",
+        "PRESIDIO_ENABLED": "false"
+      },
+      "scorer_hash": "a48bdc924b29f440517eb4f437ce54b3f6ac9a4d5fe3dcb8f7b65d4f6300ceea",
+      "source_catalog_hash": "36e1d6b7232772c8b03d2f5882d6acb673b067dba3c76063d85ff9c554d3446b",
+      "source_supplement_hash": "282503e998ca442b6874b75c0c0c2635e7780ae14fe22edb416095b526d683b2",
+      "top_k": 20,
+      "unsupported_confident_answer": 0,
+      "vector_dimension": 1024,
+      "verification": "disabled",
+      "wrong_document": 21,
+      "wrong_family": 8
+    },
+    "phase24R_cby_bad": {
+      "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+      "answered": 100,
+      "api_url": "http://127.0.0.1:8036/v1",
+      "api_version": "2026-05-04-phase24r-cby-matched-ab",
+      "branch": "bt/hukuk-ai-100-benchmark-hardening",
+      "config_hash": "72d622683680e538247629cccb16207e71bc1372a8faa38f98c3f2e31ea6d431",
+      "contract_valid": 100,
+      "dirty_worktree": true,
+      "embedding_backend": "remote",
+      "embedding_base_url": "http://127.0.0.1:8081/v1",
+      "embedding_model": "intfloat/multilingual-e5-large-instruct",
+      "endpoint": "http://127.0.0.1:8036/v1/chat/completions",
+      "entity_count": 349405,
+      "fail_proxy": 27,
+      "git_sha": "5ee5fa21147eb90cb225575723253e7449d3eb6d",
+      "guardrails": "false",
+      "hallucinated_identifier": 25,
+      "include_trace": false,
+      "lane": "phase24r_cby_matched_ab",
+      "max_tokens": 1200,
+      "model": "hukuk-ai-poc",
+      "models_response_ok": true,
+      "pass_proxy": 73,
+      "presidio": "false",
+      "questions_hash": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e",
+      "raw_score_proxy": 727.18,
+      "required_slot_matrix_hash": "7e24673fc8fcae2b8adde1795d39cc98da2ebd9ac270a01854f79dd47b0d1a5c",
+      "run_dir": "reports/benchmark/runs/phase_24R_D_cby_full_20260504T2130Z",
+      "runner_hash": "dc6638c21c47922eaf7d45f7a34f10fdca91a8c2ccddfc885534e00e08232ec0",
+      "runtime_env": {
+        "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+        "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+        "EMBEDDING_BACKEND": "remote",
+        "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+        "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+        "GUARDRAILS_ENABLED": "false",
+        "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+        "MILVUS_ENABLED": "true",
+        "MILVUS_URI": "http://localhost:19530",
+        "PRESIDIO_ENABLED": "false"
+      },
+      "scorer_hash": "a48bdc924b29f440517eb4f437ce54b3f6ac9a4d5fe3dcb8f7b65d4f6300ceea",
+      "source_catalog_hash": "36e1d6b7232772c8b03d2f5882d6acb673b067dba3c76063d85ff9c554d3446b",
+      "source_supplement_hash": "282503e998ca442b6874b75c0c0c2635e7780ae14fe22edb416095b526d683b2",
+      "top_k": 20,
+      "unsupported_confident_answer": 0,
+      "vector_dimension": 1024,
+      "verification": "disabled",
+      "wrong_document": 21,
+      "wrong_family": 8
+    },
+    "phase24S_cby_live_bad": {
+      "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+      "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+      "answered": 100,
+      "api_url": "http://127.0.0.1:8000/v1",
+      "api_version": "2026-05-05-phase24s-cby-benchmark-only-cutover",
+      "branch": "bt/hukuk-ai-100-benchmark-hardening",
+      "config_hash": "72d622683680e538247629cccb16207e71bc1372a8faa38f98c3f2e31ea6d431",
+      "contract_valid": 100,
+      "dirty_worktree": true,
+      "embedding_backend": "remote",
+      "embedding_base_url": "http://127.0.0.1:8081/v1",
+      "embedding_model": "intfloat/multilingual-e5-large-instruct",
+      "endpoint": "http://127.0.0.1:8000/v1/chat/completions",
+      "entity_count": 349405,
+      "fail_proxy": 27,
+      "git_sha": "fe10184882504b103c12e1705eb3d681c92d00a8",
+      "guardrails": "false",
+      "hallucinated_identifier": 25,
+      "include_trace": false,
+      "lane": "phase24s_cby_benchmark_only",
+      "max_tokens": 1200,
+      "model": "hukuk-ai-poc",
+      "models_response_ok": false,
+      "pass_proxy": 73,
+      "presidio": "false",
+      "questions_hash": "bded132559098da305eabbf8cfd710acdac23b0b26067b7fbd46dff1f41a608e",
+      "raw_score_proxy": 727.18,
+      "required_slot_matrix_hash": "7e24673fc8fcae2b8adde1795d39cc98da2ebd9ac270a01854f79dd47b0d1a5c",
+      "run_dir": "reports/benchmark/runs/phase_24S_E_post_cutover_full_20260505T071958Z",
+      "runner_hash": "dc6638c21c47922eaf7d45f7a34f10fdca91a8c2ccddfc885534e00e08232ec0",
+      "runtime_env": {
+        "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+        "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+        "EMBEDDING_BACKEND": "remote",
+        "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+        "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+        "GUARDRAILS_ENABLED": "false",
+        "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24p_cby06",
+        "MILVUS_ENABLED": "true",
+        "MILVUS_URI": "http://localhost:19530",
+        "PRESIDIO_ENABLED": "false"
+      },
+      "scorer_hash": "a48bdc924b29f440517eb4f437ce54b3f6ac9a4d5fe3dcb8f7b65d4f6300ceea",
+      "source_catalog_hash": "36e1d6b7232772c8b03d2f5882d6acb673b067dba3c76063d85ff9c554d3446b",
+      "source_supplement_hash": "282503e998ca442b6874b75c0c0c2635e7780ae14fe22edb416095b526d683b2",
+      "top_k": 20,
+      "unsupported_confident_answer": 0,
+      "vector_dimension": 1024,
+      "verification": "disabled",
+      "wrong_document": 21,
+      "wrong_family": 8
+    }
+  }
+}
