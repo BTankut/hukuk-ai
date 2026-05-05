@@ -603,6 +603,15 @@ def _source_identity_reranker_enabled() -> bool:
     return os.getenv("SOURCE_IDENTITY_RERANKER_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
 
 
+def _phase24w_source_identity_recovery_enabled() -> bool:
+    return os.getenv("ENABLE_PHASE24W_SOURCE_IDENTITY_RECOVERY", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 def _chunk_source_identity_values(chunk: RetrievedChunk) -> set[str]:
     metadata = chunk.metadata or {}
     values: set[str] = set()
@@ -3025,13 +3034,9 @@ def _chunk_matches_selected_source_key(
         )
         if value
     }
-    for candidate in (
+    identity_candidates: list[Any] = [
         _resolve_chunk_source_key(chunk),
         _resolve_chunk_document_key(chunk),
-        (chunk.metadata or {}).get("source_title"),
-        (chunk.metadata or {}).get("canonical_title"),
-        (chunk.metadata or {}).get("belge_adi"),
-        (chunk.metadata or {}).get("law_name"),
         (
             binding_source_key_resolver(chunk, False)
             if binding_source_key_resolver
@@ -3042,7 +3047,17 @@ def _chunk_matches_selected_source_key(
             if binding_source_key_resolver
             else _resolve_chunk_binding_source_key(chunk, include_span=True)
         ),
-    ):
+    ]
+    if not _phase24w_source_identity_recovery_enabled():
+        identity_candidates.extend(
+            [
+                (chunk.metadata or {}).get("source_title"),
+                (chunk.metadata or {}).get("canonical_title"),
+                (chunk.metadata or {}).get("belge_adi"),
+                (chunk.metadata or {}).get("law_name"),
+            ]
+        )
+    for candidate in identity_candidates:
         for value in (
             str(candidate).strip().lower(),
             _normalize_tr_text(str(candidate)),

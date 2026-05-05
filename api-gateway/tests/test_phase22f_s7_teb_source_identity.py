@@ -1,6 +1,8 @@
 from pathlib import Path
 
+from rag.orchestrator import RetrievedChunk
 from rag.source_identity import (
+    _chunk_matches_selected_source_key,
     _detect_teb_kdv_source_identity_signal,
     _select_metadata_first_source_candidates,
 )
@@ -91,6 +93,42 @@ def test_non_kdv_teblig_query_does_not_force_kdv_general_application_source():
     )
 
     assert selector is None or "19631" not in selector.get("selected_source_keys", [])
+
+
+def test_phase24w_recovery_flag_blocks_title_only_selected_source_match(monkeypatch):
+    chunk = RetrievedChunk(
+        text="body",
+        citation="123 m.1/f.0",
+        source="123",
+        metadata={
+            "canonical_identifier": "123",
+            "source_title": "Example Regulation",
+            "madde_no": "1",
+        },
+    )
+
+    monkeypatch.delenv("ENABLE_PHASE24W_SOURCE_IDENTITY_RECOVERY", raising=False)
+    assert _chunk_matches_selected_source_key(chunk, {"Example Regulation"}) is True
+
+    monkeypatch.setenv("ENABLE_PHASE24W_SOURCE_IDENTITY_RECOVERY", "true")
+    assert _chunk_matches_selected_source_key(chunk, {"Example Regulation"}) is False
+
+
+def test_phase24w_recovery_flag_preserves_canonical_selected_source_match(monkeypatch):
+    chunk = RetrievedChunk(
+        text="body",
+        citation="123 m.1/f.0",
+        source="123",
+        metadata={
+            "canonical_identifier": "123",
+            "source_title": "Example Regulation",
+            "madde_no": "1",
+        },
+    )
+
+    monkeypatch.setenv("ENABLE_PHASE24W_SOURCE_IDENTITY_RECOVERY", "true")
+
+    assert _chunk_matches_selected_source_key(chunk, {"123"}) is True
 
 
 def test_phase22f_s7_source_identity_fix_has_no_qid_specific_runtime_branch():
