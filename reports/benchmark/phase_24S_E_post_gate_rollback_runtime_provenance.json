@@ -1,0 +1,97 @@
+{
+  "phase": "24S-rollback-after-E-fail",
+  "generated_at_utc": "2026-05-05T08:22:31Z",
+  "git": {
+    "branch": "bt/hukuk-ai-100-benchmark-hardening",
+    "head": "fbcb42da899e77e73252b15174ce0808dc6d1a8e"
+  },
+  "live_api_url": "http://127.0.0.1:8000/v1",
+  "live_pid": 46587,
+  "process_manager": "tmux session hukuk_ai_live_8000",
+  "runtime_env": {
+    "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+    "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+    "MILVUS_ENABLED": "true",
+    "MILVUS_URI": "http://localhost:19530",
+    "MILVUS_COLLECTION": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "EMBEDDING_BACKEND": "remote",
+    "EMBEDDING_BASE_URL": "http://127.0.0.1:8081/v1",
+    "EMBEDDING_MODEL": "intfloat/multilingual-e5-large-instruct",
+    "RELEASE_LANE_ID": "phase22f_s7_full_shadow",
+    "RELEASE_CONTROLS_STRICT": "true",
+    "API_VERSION_LABEL": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "API_AUTH_ENABLED": "false",
+    "API_AUTH_KEYS": "benchmark",
+    "AUDIT_LOG_ENABLED": "false",
+    "ALLOW_ANONYMOUS_INTERNAL_SMOKE": "false",
+    "SESSION_STORE_BACKEND": "memory",
+    "SESSION_STORE_REDIS_REQUIRED": "false",
+    "SESSION_STORE_REDIS_PING_ON_STARTUP": "false",
+    "TOKEN_ACCOUNTING_APPROXIMATE_FALLBACK": "true",
+    "PARITY_TRACE_ENABLED": "false",
+    "RERANKER_ENABLED": "false",
+    "GUARDRAILS_ENABLED": "false",
+    "PRESIDIO_ENABLED": "false",
+    "USE_VERIFICATION": "false"
+  },
+  "health": {
+    "status_code": 200,
+    "body": {
+      "status": "ok",
+      "service": "hukuk-ai-api-gateway",
+      "lane": "phase22f_s7_full_shadow",
+      "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+      "guardrails": "disabled",
+      "retriever": "milvus",
+      "verification": "disabled"
+    }
+  },
+  "models_benchmark_auth": {
+    "status_code": 200,
+    "body": {
+      "object": "list",
+      "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+      "lane": "phase22f_s7_full_shadow",
+      "headers": {
+        "X-Hukuk-AI-API-Version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+        "X-Hukuk-AI-Lane": "phase22f_s7_full_shadow",
+        "X-Request-ID": "req-e7748b4366054784b4f9"
+      },
+      "data": [
+        {
+          "id": "hukuk-ai-poc",
+          "object": "model",
+          "created": 1777969350,
+          "owned_by": "hukuk-ai",
+          "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+          "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+          "lane": "phase22f_s7_full_shadow"
+        }
+      ]
+    }
+  },
+  "milvus_collection": {
+    "name": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "row_count": 349403,
+    "load_state": "Loaded"
+  },
+  "expected_base": {
+    "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "row_count": 349403,
+    "lane": "phase22f_s7_full_shadow",
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "model_id": "hukuk-ai-poc",
+    "dgx_model": "/models/merged_model_fabric_stage_20260321"
+  },
+  "checks": {
+    "health_ok": true,
+    "lane_match": true,
+    "api_version_match": true,
+    "collection_match": true,
+    "row_count_match": true,
+    "model_contract_match": true,
+    "dgx_model_match": true
+  },
+  "rollback_verified": true,
+  "rollback_reason": "Phase 24S-E full benchmark minimum gate failed"
+}
