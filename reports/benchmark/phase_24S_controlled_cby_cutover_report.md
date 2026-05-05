@@ -14,7 +14,7 @@ Phase24S-E post-cutover full benchmark = fbcb42d
 Phase24S-E rollback after full gate failure = 454603f
 Phase24S-G residual register update = b6f23f3
 Phase24S-H TEB-04 raw intake reminder = 07a8131
-Phase24S final report = pending_this_commit
+Phase24S final report = 20526a5
 ```
 
 ## 2. Candidate Manifest
