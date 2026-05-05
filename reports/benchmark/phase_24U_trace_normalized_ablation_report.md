@@ -12,7 +12,7 @@ b7f304f Attribute Phase 24U source supplement drift rows
 c351588 Run Phase 24U CBY trace-on full benchmark
 84e9c22 Run Phase 24U BASE trace-on full benchmark
 66de153 Plan Phase 24U trace-normalized matched A/B
-Phase24U final report = pending_this_commit
+d35012d Report Phase 24U trace-normalized ablation outcome
 ```
 
 ## 2. Trace-Normalized A/B Plan
