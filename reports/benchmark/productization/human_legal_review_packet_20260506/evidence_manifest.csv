@@ -1,0 +1,13 @@
+file,qids,purpose
+evidence/phase_24B_legal_scorer_review_packet.csv,TEB-04,"Original legal/scorer review question for TEB-04."
+evidence/phase_24H_legal_scorer_review_normalization.csv,TEB-04,"Normalized previous legal/scorer decision and productization condition."
+evidence/filled_phase_24H_legal_scorer_review_return.csv,TEB-04,"Raw prior legal/scorer return."
+evidence/phase_24I_official_source_acquisition_return_validation.csv,TUZUK-05,"Source acquisition validation showing TUZUK-05 remains unresolved."
+evidence/phase_21A_source_span_blocker_audit.csv,TUZUK-05,"Prior source/span candidates and wrong-document blocker for TUZUK-05."
+evidence/phase_24P_B_teb04_kdv_section_audit.csv,TEB-04,"TEB-04 section candidates and materialization blocker."
+evidence/phase_24P_B_teb04_kdv_section_audit.md,TEB-04,"TEB-04 section audit narrative."
+evidence/phase_24R_F_teb04_manual_download_instruction.md,TEB-04,"Manual official PDF download instruction for reviewer."
+evidence/phase_24R_F_teb04_manual_raw_intake.csv,TEB-04,"Current missing-manual-raw intake state."
+evidence/teb_04_kdv_gut_web_extract_acquisition_record.txt,TEB-04,"Limited browser extraction/provenance record."
+evidence/teb04_failed_local_capture_summary.md,TEB-04,"Explains why existing local PDF-named files are rejected and why a new official raw attachment may be needed."
+evidence/residual_closure_matrix.csv,"TUZUK-05;TEB-04","Current productization residual closure decision."

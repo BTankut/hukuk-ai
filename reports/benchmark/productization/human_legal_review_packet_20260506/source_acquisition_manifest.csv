@@ -1,0 +1,8 @@
+qid,candidate_or_required_source,status,path_or_url,sha256,notes
+TUZUK-05,"Exact valid tüzük/hierarchy source","missing","","","Phase24I returned source_not_acquired / needs_more_review. Human lawyer must identify source or declare source_not_identifiable."
+TUZUK-05,"Prior retrieved candidate: Gıda Maddelerinin ve Umumi Sağlığı İlgilendiren Eşya ve Levazımın Hususi Vasıflarını Gösteren Tüzük","unconfirmed_prior_candidate","evidence/phase_21A_source_span_blocker_audit.csv","","Included only as prior wrong-document/title-only candidate context; do not treat as accepted."
+TEB-04,"Katma Değer Vergisi Genel Uygulama Tebliği consolidated GİB PDF URL","browser_verified_not_hashable_local_raw","https://cdn.gib.gov.tr/api/gibportal-file/file/getFile?objectKey=MEVZUAT_TEBLIGLER%2FUNIVERSAL%2F2025%2Fkdv_genteb18092025.pdf","","Browser-visible source; local scripted capture failed. Lawyer may provide official browser-saved raw file in attachments."
+TEB-04,"Browser extract acquisition record","limited_browser_extract_only","evidence/teb_04_kdv_gut_web_extract_acquisition_record.txt","81554111c9dbeba987a24192424198b42208485b762e54ba625dd2f3e5f80901","Not enough for deterministic product materialization by itself."
+TEB-04,"Manual download instruction","action_required_if_raw_pdf_available","evidence/phase_24R_F_teb04_manual_download_instruction.md","","Use only if reviewer can download/save original official PDF."
+TEB-04,"Manual raw intake expectation","missing","evidence/phase_24R_F_teb04_manual_raw_intake.csv","","Currently reports expected manual raw PDF missing."
+

@@ -1,0 +1,2 @@
+expected_path,exists,file_size_bytes,sha256,pdf_text_extraction_status,I_C_2_1_3_visible,tevkifat_visible,iade_visible,safe_for_teb04_materialization,blocking_reason
+reports/benchmark/source_acquisition/phase_24R/raw/kdv_gut_2025_official_manual.pdf,false,,,not_run_missing_file,false,false,false,false,expected manual browser-saved official raw PDF missing

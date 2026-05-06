@@ -1,0 +1,4 @@
+qid,reviewer_name,review_date,decision_enum,decision_summary,primary_source_family,primary_source_title,primary_source_identifier,official_url,publication_date_or_rg,publication_number,effective_state,exact_required_span_or_section,source_chain,required_answer_tokens,raw_file_provided,raw_file_path_or_attachment_name,sha256,parser_ready,internal_eval_acceptance,serving_candidate_acceptance,productization_acceptance,runtime_fix_allowed_if_systemic,notes
+TUZUK-05,,,,,,,,,,,,,,,,,,,,,,,
+TEB-04,,,,,,,,,,,,,,,,,,,,,,,
+
