@@ -19,6 +19,7 @@ This plan does not authorize live `8000`, internal eval, serving candidate, prod
 | Shadow build dry-run manifest | `reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` |
 | Guarded shadow build plan | `reports/benchmark/phase_24HR_shadow_collection_build_plan.md` |
 | Guarded shadow build script | `scripts/benchmark/phase24hr_shadow_collection_build.py` |
+| Guarded build fail-closed smoke | `reports/benchmark/phase_24HR_shadow_build_guard_smoke.md` |
 | Authorization packet | `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md` |
 
 ## Required Shadow Validation Steps
@@ -27,11 +28,12 @@ This plan does not authorize live `8000`, internal eval, serving candidate, prod
 3. Preserve source metadata: `source_family=teblig`, `source_family_raw=TEBLIGLER`, `source_identifier=19631`, `canonical_source_key_v2`, `binding_source_key`, raw PDF SHA-256.
 4. Do not create QID-specific runtime branches.
 5. Use the local dry-run manifest as the row-level input contract for any authorized shadow collection build.
-6. Execute the guarded build script only after option-A authorization; it must refuse without `--execute` and the authorization token.
-7. Run a non-live candidate gateway or benchmark lane that points only to the shadow candidate collection.
-8. Run targeted trace-on smoke for `TEB-04`, `TUZUK-05`, and guard rows that historically regress around source identity/family.
-9. If targeted smoke passes, run full trace-on candidate benchmark.
-10. Keep live `8000` unchanged until full gate review explicitly authorizes any switch.
+6. Re-run the guard smoke to verify the build script still refuses unsafe invocation before option-A authorization.
+7. Execute the guarded build script only after option-A authorization; it must refuse without `--execute` and the authorization token.
+8. Run a non-live candidate gateway or benchmark lane that points only to the shadow candidate collection.
+9. Run targeted trace-on smoke for `TEB-04`, `TUZUK-05`, and guard rows that historically regress around source identity/family.
+10. If targeted smoke passes, run full trace-on candidate benchmark.
+11. Keep live `8000` unchanged until full gate review explicitly authorizes any switch.
 
 ## Targeted Acceptance Criteria
 | qid | criteria |

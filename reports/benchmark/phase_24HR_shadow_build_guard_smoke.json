@@ -1,0 +1,71 @@
+{
+  "summary": {
+    "generated_at_utc": "2026-05-06T14:11:35.233623+00:00",
+    "status": "PASS",
+    "row_count": 4,
+    "pass_count": 4,
+    "fail_count": 0,
+    "live_8000_modified": false,
+    "milvus_modified": false,
+    "embedding_called": false,
+    "candidate_gateway_started": false,
+    "model_inference_called": false,
+    "safe_without_authorization": true,
+    "csv": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.csv",
+    "report_md": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.md"
+  },
+  "rows": [
+    {
+      "case_id": "plan_local_only",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_shadow_collection_build.py plan",
+      "expected_returncode": 0,
+      "observed_returncode": 0,
+      "expected_status": "READY_FOR_OPTION_A_AUTHORIZATION",
+      "observed_status": "READY_FOR_OPTION_A_AUTHORIZATION",
+      "expected_error_substring": "",
+      "observed_error": "",
+      "stdout_last_json": "{\"authorization_token_required\": \"OPTION_A_APPROVED_PHASE24HR\", \"base_collection\": \"mevzuat_faz1_shadow_20260418_compat1024_p0_backfill\", \"candidate_gateway_started\": false, \"delta_row_count\": 59, \"dry_run_manifest_jsonl\": \"reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.jsonl\", \"dry_run_summary\": \"reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json\", \"embedding_base_url\": \"http://127.0.0.1:8081/v1\", \"embedding_model\": \"intfloat/multilingual-e5-large-instruct\", \"execute_required\": true, \"generated_at_utc\": \"2026-05-06T14:11:35.094601+00:00\", \"live_8000_modified\": false, \"milvus_modified_by_plan\": false, \"milvus_uri\": \"http://localhost:19530\", \"model_inference_called\": false, \"status\": \"READY_FOR_OPTION_A_AUTHORIZATION\", \"target_collection\": \"mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr\", \"vector_dimension\": 1024}",
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "case_id": "build_shadow_without_execute_refused",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_shadow_collection_build.py build-shadow",
+      "expected_returncode": 2,
+      "observed_returncode": 2,
+      "expected_status": "REFUSED",
+      "observed_status": "REFUSED",
+      "expected_error_substring": "--execute",
+      "observed_error": "Refusing Milvus mutation: pass --execute only after owner option-A authorization.",
+      "stdout_last_json": "{\"error\": \"Refusing Milvus mutation: pass --execute only after owner option-A authorization.\", \"status\": \"REFUSED\"}",
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "case_id": "build_shadow_without_token_refused",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_shadow_collection_build.py build-shadow --execute",
+      "expected_returncode": 2,
+      "observed_returncode": 2,
+      "expected_status": "REFUSED",
+      "observed_status": "REFUSED",
+      "expected_error_substring": "authorization token",
+      "observed_error": "Refusing Milvus mutation: missing or invalid option-A authorization token.",
+      "stdout_last_json": "{\"error\": \"Refusing Milvus mutation: missing or invalid option-A authorization token.\", \"status\": \"REFUSED\"}",
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "case_id": "build_shadow_base_target_refused_before_milvus",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_shadow_collection_build.py build-shadow --execute --authorization-token OPTION_A_APPROVED_PHASE24HR --target-collection mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+      "expected_returncode": 2,
+      "observed_returncode": 2,
+      "expected_status": "REFUSED",
+      "observed_status": "REFUSED",
+      "expected_error_substring": "target collection must differ",
+      "observed_error": "Refusing Milvus mutation: target collection must differ from base collection.",
+      "stdout_last_json": "{\"error\": \"Refusing Milvus mutation: target collection must differ from base collection.\", \"status\": \"REFUSED\"}",
+      "stderr": "",
+      "status": "PASS"
+    }
+  ]
+}

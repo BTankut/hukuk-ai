@@ -2,7 +2,7 @@
 
 Generated: 2026-05-06
 
-Audit scope includes productization artifacts, Phase 24HR local preflight, dry-run shadow manifest, and guarded shadow build runner evidence. Verify the current pushed commit with `git log -1 --oneline`.
+Audit scope includes productization artifacts, Phase 24HR local preflight, dry-run shadow manifest, guarded shadow build runner, and fail-closed guard smoke evidence. Verify the current pushed commit with `git log -1 --oneline`.
 
 ## Objective Restatement
 Complete the autonomous product-level completion task defined in `reports/benchmark/hukuk_ai_product_level_completion_criteria_autonomous_brief.md` without confusing benchmark-only success with product readiness.
@@ -86,9 +86,10 @@ Concrete success criteria:
 |---|---|---|
 | TEB-04 | `reports/benchmark/phase_24HR_teb04_kdv_gut_materialization_report.md` | Official GIB PDF SHA verified; 6 full spans and 59 chunked subspans materialized. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` | 9/9 artifact-level non-live checks passed; no live 8000, Milvus, or model inference. |
-| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 27/27 local preflight checks passed; no live 8000, Milvus, candidate gateway, or model inference. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 31/31 local preflight checks passed; no live 8000, Milvus, candidate gateway, or model inference. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` | 59 proposed TEB-04 delta rows passed local row-contract checks; no live 8000, Milvus, embedding, candidate gateway, or model inference. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_build_plan.md` and `scripts/benchmark/phase24hr_shadow_collection_build.py` | Guarded build runner is prepared; it refuses before Milvus unless `--execute` and `OPTION_A_APPROVED_PHASE24HR` are provided. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_build_guard_smoke.md` | 4/4 fail-closed guard paths passed; no live 8000, Milvus, embedding, candidate gateway, or model inference. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Shadow/full validation plan and authorization packet exist; execution requires explicit authorization. |
 
 ## Completion Decision

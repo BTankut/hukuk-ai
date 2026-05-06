@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generated_at_utc": "2026-05-06T14:07:41.493150+00:00",
+    "generated_at_utc": "2026-05-06T14:11:35.257820+00:00",
     "status": "PASS",
-    "row_count": 27,
-    "pass_count": 27,
+    "row_count": 31,
+    "pass_count": 31,
     "fail_count": 0,
     "csv": "reports/benchmark/phase_24HR_shadow_validation_preflight.csv",
     "live_8000_modified": false,
@@ -61,6 +61,20 @@
       "expected": "exists",
       "observed": "exists",
       "evidence": "reports/benchmark/phase_24HR_shadow_collection_build_plan.md"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_build_guard_smoke.json",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.json"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_build_guard_smoke.md",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.md"
     },
     {
       "check_id": "path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md",
@@ -173,6 +187,20 @@
       "expected": "live=false milvus=false embedding=false gateway=false model=false",
       "observed": "live=False milvus=False embedding=False gateway=False model=False",
       "evidence": "reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json"
+    },
+    {
+      "check_id": "shadow_build_guard_smoke_pass",
+      "status": "PASS",
+      "expected": "PASS fail_count=0",
+      "observed": "PASS fail_count=0",
+      "evidence": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.json"
+    },
+    {
+      "check_id": "shadow_build_guard_smoke_no_side_effects",
+      "status": "PASS",
+      "expected": "live=false milvus=false embedding=false gateway=false model=false",
+      "observed": "live=False milvus=False embedding=False gateway=False model=False",
+      "evidence": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.json"
     },
     {
       "check_id": "productization_gate_still_closed",

@@ -27,6 +27,8 @@ NON_LIVE_SMOKE = REPORTS_DIR / "phase_24HR_non_live_residual_smoke.json"
 DRY_RUN_SUMMARY = REPORTS_DIR / "phase_24HR_shadow_collection_dry_run_summary.json"
 DRY_RUN_REPORT = REPORTS_DIR / "phase_24HR_shadow_collection_dry_run_report.md"
 BUILD_PLAN = REPORTS_DIR / "phase_24HR_shadow_collection_build_plan.md"
+GUARD_SMOKE = REPORTS_DIR / "phase_24HR_shadow_build_guard_smoke.json"
+GUARD_SMOKE_REPORT = REPORTS_DIR / "phase_24HR_shadow_build_guard_smoke.md"
 SHADOW_PLAN = PRODUCT_DIR / "phase_24HR_shadow_validation_plan.md"
 FINAL_GATE = PRODUCT_DIR / "final_productization_gate.md"
 SOURCE_IDENTITY = REPO_ROOT / "api-gateway/src/rag/source_identity.py"
@@ -90,6 +92,8 @@ def path_checks() -> list[dict[str, str]]:
         DRY_RUN_SUMMARY,
         DRY_RUN_REPORT,
         BUILD_PLAN,
+        GUARD_SMOKE,
+        GUARD_SMOKE_REPORT,
         SHADOW_PLAN,
         FINAL_GATE,
         SOURCE_IDENTITY,
@@ -195,7 +199,9 @@ def teb_span_checks() -> list[dict[str, str]]:
 def smoke_and_gate_checks() -> list[dict[str, str]]:
     smoke = json.loads(NON_LIVE_SMOKE.read_text(encoding="utf-8"))
     dry_run = json.loads(DRY_RUN_SUMMARY.read_text(encoding="utf-8"))
+    guard_smoke = json.loads(GUARD_SMOKE.read_text(encoding="utf-8"))
     summary = smoke.get("summary", {})
+    guard_summary = guard_smoke.get("summary", {})
     final_gate_text = FINAL_GATE.read_text(encoding="utf-8")
     source_identity_text = SOURCE_IDENTITY.read_text(encoding="utf-8")
     return [
@@ -245,6 +251,30 @@ def smoke_and_gate_checks() -> list[dict[str, str]]:
                 f"model={dry_run.get('model_inference_called')}"
             ),
             DRY_RUN_SUMMARY,
+        ),
+        status_row(
+            "shadow_build_guard_smoke_pass",
+            "PASS" if guard_summary.get("status") == "PASS" and guard_summary.get("fail_count") == 0 else "FAIL",
+            "PASS fail_count=0",
+            f"{guard_summary.get('status')} fail_count={guard_summary.get('fail_count')}",
+            GUARD_SMOKE,
+        ),
+        status_row(
+            "shadow_build_guard_smoke_no_side_effects",
+            "PASS"
+            if guard_summary.get("live_8000_modified") is False
+            and guard_summary.get("milvus_modified") is False
+            and guard_summary.get("embedding_called") is False
+            and guard_summary.get("candidate_gateway_started") is False
+            and guard_summary.get("model_inference_called") is False
+            else "FAIL",
+            "live=false milvus=false embedding=false gateway=false model=false",
+            (
+                f"live={guard_summary.get('live_8000_modified')} milvus={guard_summary.get('milvus_modified')} "
+                f"embedding={guard_summary.get('embedding_called')} gateway={guard_summary.get('candidate_gateway_started')} "
+                f"model={guard_summary.get('model_inference_called')}"
+            ),
+            GUARD_SMOKE,
         ),
         status_row(
             "productization_gate_still_closed",
