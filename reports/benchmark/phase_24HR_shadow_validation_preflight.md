@@ -1,9 +1,9 @@
 # Phase 24HR Shadow Validation Preflight
 
-- generated_at_utc: `2026-05-06T13:51:46.102651+00:00`
+- generated_at_utc: `2026-05-06T14:02:45.850506+00:00`
 - status: `PASS`
-- row_count: `21`
-- pass_count: `21`
+- row_count: `25`
+- pass_count: `25`
 - fail_count: `0`
 - live_8000_modified: `false`
 - milvus_modified: `false`
@@ -16,6 +16,8 @@
 | `path_exists:reports/benchmark/source_acquisition/phase_24HR/teb04_kdv_gut/spans/teb04_kdv_gut_chunked_subspans.jsonl` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/source_acquisition/phase_24HR/teb04_kdv_gut/catalog_delta/teb04_kdv_gut_catalog_delta.json` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/phase_24HR_non_live_residual_smoke.json` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/final_productization_gate.md` | `PASS` | exists | exists |
 | `path_exists:api-gateway/src/rag/source_identity.py` | `PASS` | exists | exists |
@@ -30,6 +32,8 @@
 | `teb_no_duplicate_binding_source_key` | `PASS` | no duplicates | none |
 | `non_live_smoke_pass` | `PASS` | PASS fail_count=0 | PASS fail_count=0 |
 | `non_live_smoke_no_side_effects` | `PASS` | live=false milvus=false model=false | live=False milvus=False model=False |
+| `shadow_build_dry_run_pass` | `PASS` | PASS rows=59 collisions=0 | PASS rows=59 canonical=0 binding=0 |
+| `shadow_build_dry_run_no_side_effects` | `PASS` | live=false milvus=false embedding=false gateway=false model=false | live=False milvus=False embedding=False gateway=False model=False |
 | `productization_gate_still_closed` | `PASS` | not_productization_ready | not_productization_ready |
 | `no_qid_specific_source_identity_branch` | `PASS` | no TEB-04/TUZUK-05 literals | clean |
 | `authorization_requirements_present` | `PASS` | all explicit authorization requirements | none missing |

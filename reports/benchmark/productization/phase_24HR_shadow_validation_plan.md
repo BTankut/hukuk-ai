@@ -16,6 +16,7 @@ This plan does not authorize live `8000`, internal eval, serving candidate, prod
 | TUZUK-05 policy | `reports/benchmark/productization/post_human_review_tuzuk05_policy_update_report.md` |
 | Artifact-level smoke | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` |
 | Shadow validation preflight | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` |
+| Shadow build dry-run manifest | `reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` |
 | Authorization packet | `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md` |
 
 ## Required Shadow Validation Steps
@@ -23,10 +24,11 @@ This plan does not authorize live `8000`, internal eval, serving candidate, prod
 2. Insert TEB-04 chunked subspans, not the oversized full `I/C-2.1.3` section, to avoid truncation.
 3. Preserve source metadata: `source_family=teblig`, `source_family_raw=TEBLIGLER`, `source_identifier=19631`, `canonical_source_key_v2`, `binding_source_key`, raw PDF SHA-256.
 4. Do not create QID-specific runtime branches.
-5. Run a non-live candidate gateway or benchmark lane that points only to the shadow candidate collection.
-6. Run targeted trace-on smoke for `TEB-04`, `TUZUK-05`, and guard rows that historically regress around source identity/family.
-7. If targeted smoke passes, run full trace-on candidate benchmark.
-8. Keep live `8000` unchanged until full gate review explicitly authorizes any switch.
+5. Use the local dry-run manifest as the row-level input contract for any authorized shadow collection build.
+6. Run a non-live candidate gateway or benchmark lane that points only to the shadow candidate collection.
+7. Run targeted trace-on smoke for `TEB-04`, `TUZUK-05`, and guard rows that historically regress around source identity/family.
+8. If targeted smoke passes, run full trace-on candidate benchmark.
+9. Keep live `8000` unchanged until full gate review explicitly authorizes any switch.
 
 ## Targeted Acceptance Criteria
 | qid | criteria |

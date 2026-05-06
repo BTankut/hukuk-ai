@@ -2,7 +2,7 @@
 
 Generated: 2026-05-06
 
-Last audited commit: `d594b54` (`Prepare shadow validation authorization packet`), pushed to `origin/bt/hukuk-ai-100-benchmark-hardening`.
+Last audit refresh before the local dry-run follow-up: `80e0ba7` (`Update product completion audit evidence`), pushed to `origin/bt/hukuk-ai-100-benchmark-hardening`.
 
 ## Objective Restatement
 Complete the autonomous product-level completion task defined in `reports/benchmark/hukuk_ai_product_level_completion_criteria_autonomous_brief.md` without confusing benchmark-only success with product readiness.
@@ -34,7 +34,7 @@ Concrete success criteria:
 | Phase P5 serving candidate readiness recheck | `reports/benchmark/productization/serving_candidate_readiness_recheck.md` | PASS artifact exists | Decision remains `not_ready_residuals_open`; serving candidate not opened. |
 | Phase P6 final productization gate | `reports/benchmark/productization/final_productization_gate.md` | PASS artifact exists | Decision remains `not_productization_ready`. |
 | Mandatory final report | `reports/benchmark/productization/product_level_completion_report.md` | PASS artifact exists | Contains required 11 sections and current blockers. |
-| Push required | git HEAD `d594b54` pushed to `bt/hukuk-ai-100-benchmark-hardening` | PASS | Latest pushed commit: `Prepare shadow validation authorization packet`. |
+| Push required | Scoped artifacts committed and pushed to `bt/hukuk-ai-100-benchmark-hardening` | PASS | Verify final commit with `git log -1 --oneline`; no scoped artifact should remain unstaged/unpushed at completion. |
 | No live 8000 change | Product reports and smoke summary record `live_8000_modified=false` | PASS | No live switch/cutover was performed. |
 | No internal eval/serving/productization opening | Product reports record closed decisions | PASS | Gates remain closed. |
 | No fine-tuning/model/prompt/top-k change | Product reports record no such change | PASS | Fine-tuning remains closed. |
@@ -86,7 +86,8 @@ Concrete success criteria:
 |---|---|---|
 | TEB-04 | `reports/benchmark/phase_24HR_teb04_kdv_gut_materialization_report.md` | Official GIB PDF SHA verified; 6 full spans and 59 chunked subspans materialized. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` | 9/9 artifact-level non-live checks passed; no live 8000, Milvus, or model inference. |
-| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 21/21 local preflight checks passed; no live 8000, Milvus, candidate gateway, or model inference. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 25/25 local preflight checks passed; no live 8000, Milvus, candidate gateway, or model inference. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` | 59 proposed TEB-04 delta rows passed local row-contract checks; no live 8000, Milvus, embedding, candidate gateway, or model inference. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Shadow/full validation plan and authorization packet exist; execution requires explicit authorization. |
 
 ## Completion Decision

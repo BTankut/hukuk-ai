@@ -24,6 +24,8 @@ FULL_SPANS = REPORTS_DIR / "source_acquisition/phase_24HR/teb04_kdv_gut/spans/te
 CHUNKED_SPANS = REPORTS_DIR / "source_acquisition/phase_24HR/teb04_kdv_gut/spans/teb04_kdv_gut_chunked_subspans.jsonl"
 CATALOG = REPORTS_DIR / "source_acquisition/phase_24HR/teb04_kdv_gut/catalog_delta/teb04_kdv_gut_catalog_delta.json"
 NON_LIVE_SMOKE = REPORTS_DIR / "phase_24HR_non_live_residual_smoke.json"
+DRY_RUN_SUMMARY = REPORTS_DIR / "phase_24HR_shadow_collection_dry_run_summary.json"
+DRY_RUN_REPORT = REPORTS_DIR / "phase_24HR_shadow_collection_dry_run_report.md"
 SHADOW_PLAN = PRODUCT_DIR / "phase_24HR_shadow_validation_plan.md"
 FINAL_GATE = PRODUCT_DIR / "final_productization_gate.md"
 SOURCE_IDENTITY = REPO_ROOT / "api-gateway/src/rag/source_identity.py"
@@ -79,7 +81,17 @@ def duplicates(values: list[str]) -> list[str]:
 
 def path_checks() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
-    for path in (FULL_SPANS, CHUNKED_SPANS, CATALOG, NON_LIVE_SMOKE, SHADOW_PLAN, FINAL_GATE, SOURCE_IDENTITY):
+    for path in (
+        FULL_SPANS,
+        CHUNKED_SPANS,
+        CATALOG,
+        NON_LIVE_SMOKE,
+        DRY_RUN_SUMMARY,
+        DRY_RUN_REPORT,
+        SHADOW_PLAN,
+        FINAL_GATE,
+        SOURCE_IDENTITY,
+    ):
         rows.append(
             status_row(
                 f"path_exists:{rel(path)}",
@@ -180,6 +192,7 @@ def teb_span_checks() -> list[dict[str, str]]:
 
 def smoke_and_gate_checks() -> list[dict[str, str]]:
     smoke = json.loads(NON_LIVE_SMOKE.read_text(encoding="utf-8"))
+    dry_run = json.loads(DRY_RUN_SUMMARY.read_text(encoding="utf-8"))
     summary = smoke.get("summary", {})
     final_gate_text = FINAL_GATE.read_text(encoding="utf-8")
     source_identity_text = SOURCE_IDENTITY.read_text(encoding="utf-8")
@@ -201,6 +214,35 @@ def smoke_and_gate_checks() -> list[dict[str, str]]:
             "live=false milvus=false model=false",
             f"live={summary.get('live_8000_modified')} milvus={summary.get('milvus_modified')} model={summary.get('model_inference_called')}",
             NON_LIVE_SMOKE,
+        ),
+        status_row(
+            "shadow_build_dry_run_pass",
+            "PASS"
+            if dry_run.get("status") == "PASS"
+            and dry_run.get("delta_row_count") == 59
+            and dry_run.get("canonical_key_collision_count") == 0
+            and dry_run.get("binding_key_collision_count") == 0
+            else "FAIL",
+            "PASS rows=59 collisions=0",
+            f"{dry_run.get('status')} rows={dry_run.get('delta_row_count')} canonical={dry_run.get('canonical_key_collision_count')} binding={dry_run.get('binding_key_collision_count')}",
+            DRY_RUN_SUMMARY,
+        ),
+        status_row(
+            "shadow_build_dry_run_no_side_effects",
+            "PASS"
+            if dry_run.get("live_8000_modified") is False
+            and dry_run.get("milvus_modified") is False
+            and dry_run.get("embedding_called") is False
+            and dry_run.get("candidate_gateway_started") is False
+            and dry_run.get("model_inference_called") is False
+            else "FAIL",
+            "live=false milvus=false embedding=false gateway=false model=false",
+            (
+                f"live={dry_run.get('live_8000_modified')} milvus={dry_run.get('milvus_modified')} "
+                f"embedding={dry_run.get('embedding_called')} gateway={dry_run.get('candidate_gateway_started')} "
+                f"model={dry_run.get('model_inference_called')}"
+            ),
+            DRY_RUN_SUMMARY,
         ),
         status_row(
             "productization_gate_still_closed",

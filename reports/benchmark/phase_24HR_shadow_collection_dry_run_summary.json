@@ -1,0 +1,40 @@
+{
+  "authorization_required_for_next_step": true,
+  "base_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "base_collection_collision_check_executed": false,
+  "binding_key_collision_count": 0,
+  "candidate_gateway_started": false,
+  "canonical_key_collision_count": 0,
+  "chunked_subspans_used_for_delta": true,
+  "delta_row_count": 59,
+  "embedding_called": false,
+  "embedding_model": "intfloat/multilingual-e5-large-instruct",
+  "expected_delta_row_count": 59,
+  "fail_reasons": [],
+  "full_spans_used_for_delta": false,
+  "generated_at_utc": "2026-05-06T14:02:45.826171+00:00",
+  "live_8000_modified": false,
+  "manifest_csv": "reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.csv",
+  "manifest_jsonl": "reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.jsonl",
+  "max_chunk_body_text_length": 6410,
+  "max_full_span_body_text_length": 76818,
+  "max_proposed_id_length": 79,
+  "max_proposed_text_length": 6462,
+  "milvus_modified": false,
+  "model_inference_called": false,
+  "proposed_id_collision_count": 0,
+  "raw_sha256": [
+    "bdea3737f421203d3814fce7c4b72c617dacd03878d4d8e655cacc9e19d0df68"
+  ],
+  "report_md": "reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md",
+  "runtime_locator_coverage_pass": true,
+  "source_family": [
+    "teblig"
+  ],
+  "source_identifier": [
+    "19631"
+  ],
+  "status": "PASS",
+  "target_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr",
+  "vector_dimension": 1024
+}

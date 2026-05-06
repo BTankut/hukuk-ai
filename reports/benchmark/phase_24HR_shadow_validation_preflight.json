@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generated_at_utc": "2026-05-06T13:51:46.102651+00:00",
+    "generated_at_utc": "2026-05-06T14:02:45.850506+00:00",
     "status": "PASS",
-    "row_count": 21,
-    "pass_count": 21,
+    "row_count": 25,
+    "pass_count": 25,
     "fail_count": 0,
     "csv": "reports/benchmark/phase_24HR_shadow_validation_preflight.csv",
     "live_8000_modified": false,
@@ -40,6 +40,20 @@
       "expected": "exists",
       "observed": "exists",
       "evidence": "reports/benchmark/phase_24HR_non_live_residual_smoke.json"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md"
     },
     {
       "check_id": "path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md",
@@ -138,6 +152,20 @@
       "expected": "live=false milvus=false model=false",
       "observed": "live=False milvus=False model=False",
       "evidence": "reports/benchmark/phase_24HR_non_live_residual_smoke.json"
+    },
+    {
+      "check_id": "shadow_build_dry_run_pass",
+      "status": "PASS",
+      "expected": "PASS rows=59 collisions=0",
+      "observed": "PASS rows=59 canonical=0 binding=0",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json"
+    },
+    {
+      "check_id": "shadow_build_dry_run_no_side_effects",
+      "status": "PASS",
+      "expected": "live=false milvus=false embedding=false gateway=false model=false",
+      "observed": "live=False milvus=False embedding=False gateway=False model=False",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json"
     },
     {
       "check_id": "productization_gate_still_closed",

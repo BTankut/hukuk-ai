@@ -25,14 +25,14 @@ Additional required decisions before this can change:
 | Contract hard metrics | Latest full run has 0 answer-contract invalid, 0 unsupported confident answer, 0 `source_key_v2` collision. | pass for these metrics only |
 
 ## Productization Decision
-Productization must remain closed. The current system has useful hard-metric clears, the `TEB-04` / `TUZUK-05` human review blockers are closed, `TEB-04` has non-live materialized spans, `TUZUK-05` has offline scorer policy coverage, and artifact-level non-live smoke passed, but product-level readiness still requires shadow/full benchmark validation, policy enforcement, rollback rehearsal, and full benchmark stability. Those conditions are not met.
+Productization must remain closed. The current system has useful hard-metric clears, the `TEB-04` / `TUZUK-05` human review blockers are closed, `TEB-04` has non-live materialized spans and a local dry-run shadow row manifest, `TUZUK-05` has offline scorer policy coverage, and artifact-level non-live smoke passed, but product-level readiness still requires authorized shadow/full benchmark validation, policy enforcement, rollback rehearsal, and full benchmark stability. Those conditions are not met.
 
 ## Fine-Tuning Decision
 Fine-tuning remains closed for this gate. The observed blockers are legal/source identity, corpus/materialization, verification, guardrails, privacy, audit, and release-control gaps. Fine-tuning would not be an acceptable substitute for resolving these product-readiness blockers.
 
 ## Required Next Decision
 - No additional human lawyer decision is currently pending for `TEB-04` or `TUZUK-05`.
-- Engineering has a shadow validation plan, local preflight, and authorization packet for `TEB-04` and `TUZUK-05`; Milvus shadow build, candidate gateway, or full candidate validation should run only if explicitly authorized.
+- Engineering has a shadow validation plan, local preflight, local dry-run build manifest, and authorization packet for `TEB-04` and `TUZUK-05`; Milvus shadow build, candidate gateway, or full candidate validation should run only if explicitly authorized.
 
 ## Runtime Change
 No live runtime change was made.
