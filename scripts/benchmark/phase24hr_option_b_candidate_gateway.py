@@ -55,6 +55,8 @@ BUILD_REPORT = REPORTS_DIR / "phase_24HR_shadow_collection_build_report.md"
 OPTION_B_PLAN = PRODUCT_DIR / "phase_24HR_option_B_candidate_gateway_plan.md"
 OUT_PLAN_JSON = REPORTS_DIR / "phase_24HR_option_B_candidate_gateway_runner_plan.json"
 OUT_PLAN_MD = REPORTS_DIR / "phase_24HR_option_B_candidate_gateway_runner_plan.md"
+OUT_START_JSON = REPORTS_DIR / "phase_24HR_option_B_candidate_gateway_start_report.json"
+OUT_START_MD = REPORTS_DIR / "phase_24HR_option_B_candidate_gateway_start_report.md"
 
 
 def utc_now() -> str:
@@ -288,6 +290,27 @@ def start_candidate(args: argparse.Namespace) -> dict[str, Any]:
         "model_inference_called": False,
         "chat_completions_called": False,
     }
+    OUT_START_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    OUT_START_MD.write_text(
+        "\n".join(
+            [
+                "# Phase 24HR Option B Candidate Gateway Start Report",
+                "",
+                f"- generated_at_utc: `{report['generated_at_utc']}`",
+                f"- status: `{report['status']}`",
+                f"- pid: `{report['pid']}`",
+                f"- host: `{report['host']}`",
+                f"- port: `{report['port']}`",
+                f"- lane: `{report['lane']}`",
+                f"- collection: `{report['collection']}`",
+                "- live_8000_modified: `false`",
+                "- model_inference_called: `false`",
+                "- chat_completions_called: `false`",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
     return report
 

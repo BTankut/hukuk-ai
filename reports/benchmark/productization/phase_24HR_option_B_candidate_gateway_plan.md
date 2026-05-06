@@ -26,7 +26,7 @@ This plan does not authorize or perform:
 |---|---|---|
 | Option-A shadow build/load | `reports/benchmark/phase_24HR_shadow_collection_build_report.md` | `PASS`, target `349462`, delta `59` |
 | Option-A read-only verification | `reports/benchmark/phase_24HR_shadow_collection_verify.md` | `PASS`, `59/59` delta rows, base collision `0`, load state `Loaded` |
-| Phase 24HR preflight | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | `PASS`, `43/43` |
+| Phase 24HR preflight | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | `PASS`, `49/49` |
 | Live runtime boundary | `http://127.0.0.1:8000/v1/health` | remains benchmark-only; no switch |
 
 ## Proposed Candidate Boundary

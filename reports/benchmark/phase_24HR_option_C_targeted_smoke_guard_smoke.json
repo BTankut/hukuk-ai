@@ -1,0 +1,83 @@
+{
+  "summary": {
+    "generated_at_utc": "2026-05-06T16:32:47.216007+00:00",
+    "status": "PASS",
+    "row_count": 5,
+    "pass_count": 5,
+    "fail_count": 0,
+    "live_8000_modified": false,
+    "candidate_gateway_started": false,
+    "model_inference_called": false,
+    "chat_completions_called": false,
+    "safe_without_authorization": true,
+    "csv": "reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.csv",
+    "report_md": "reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.md"
+  },
+  "rows": [
+    {
+      "case_id": "plan_local_only",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_option_c_targeted_smoke.py plan --no-write",
+      "expected_returncode": 0,
+      "observed_returncode": 0,
+      "expected_status": "BLOCKED_WAITING_FOR_OPTION_B",
+      "observed_status": "BLOCKED_WAITING_FOR_OPTION_B",
+      "expected_error_substring": "",
+      "observed_error": "",
+      "stdout_last_json": "{\"api_url\": \"http://127.0.0.1:8010/v1\", \"authorization_token_required\": \"OPTION_C_APPROVED_PHASE24HR\", \"candidate_gateway_started\": false, \"chat_completions_called\": false, \"execute_required\": true, \"generated_at_utc\": \"2026-05-06T16:32:47.030180+00:00\", \"live_8000_modified\": false, \"model\": \"hukuk-ai-poc\", \"model_inference_called\": false, \"option_b_status\": {\"reason\": \"Option-B candidate gateway start report is missing.\", \"report\": \"reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.json\", \"status\": \"MISSING\"}, \"out_dir\": \"reports/benchmark/runs/phase_24HR_option_C_targeted_candidate_smoke\", \"status\": \"BLOCKED_WAITING_FOR_OPTION_B\", \"target_qids\": [\"TEB-04\", \"TUZUK-05\", \"KANUN-08\", \"YON-05\"]}",
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "case_id": "run_without_execute_refused",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_option_c_targeted_smoke.py run-smoke",
+      "expected_returncode": 2,
+      "observed_returncode": 2,
+      "expected_status": "REFUSED",
+      "observed_status": "REFUSED",
+      "expected_error_substring": "--execute",
+      "observed_error": "Refusing targeted smoke: pass --execute only after owner option-C authorization.",
+      "stdout_last_json": "{\"error\": \"Refusing targeted smoke: pass --execute only after owner option-C authorization.\", \"status\": \"REFUSED\"}",
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "case_id": "run_without_token_refused",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_option_c_targeted_smoke.py run-smoke --execute",
+      "expected_returncode": 2,
+      "observed_returncode": 2,
+      "expected_status": "REFUSED",
+      "observed_status": "REFUSED",
+      "expected_error_substring": "authorization token",
+      "observed_error": "Refusing targeted smoke: missing or invalid option-C authorization token.",
+      "stdout_last_json": "{\"error\": \"Refusing targeted smoke: missing or invalid option-C authorization token.\", \"status\": \"REFUSED\"}",
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "case_id": "run_live_8000_refused_before_candidate",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_option_c_targeted_smoke.py run-smoke --execute --authorization-token OPTION_C_APPROVED_PHASE24HR --api-url http://127.0.0.1:8000/v1",
+      "expected_returncode": 2,
+      "observed_returncode": 2,
+      "expected_status": "REFUSED",
+      "observed_status": "REFUSED",
+      "expected_error_substring": "live 8000",
+      "observed_error": "Refusing targeted smoke: live 8000 must not be used.",
+      "stdout_last_json": "{\"error\": \"Refusing targeted smoke: live 8000 must not be used.\", \"status\": \"REFUSED\"}",
+      "stderr": "",
+      "status": "PASS"
+    },
+    {
+      "case_id": "run_missing_option_b_refused_before_chat",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_option_c_targeted_smoke.py run-smoke --execute --authorization-token OPTION_C_APPROVED_PHASE24HR",
+      "expected_returncode": 2,
+      "observed_returncode": 2,
+      "expected_status": "REFUSED",
+      "observed_status": "REFUSED",
+      "expected_error_substring": "option-B candidate gateway is not verified",
+      "observed_error": "Refusing targeted smoke: option-B candidate gateway is not verified.",
+      "stdout_last_json": "{\"error\": \"Refusing targeted smoke: option-B candidate gateway is not verified.\", \"status\": \"REFUSED\"}",
+      "stderr": "",
+      "status": "PASS"
+    }
+  ]
+}

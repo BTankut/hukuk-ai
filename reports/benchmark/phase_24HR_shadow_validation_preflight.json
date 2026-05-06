@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generated_at_utc": "2026-05-06T16:23:37.560140+00:00",
+    "generated_at_utc": "2026-05-06T16:32:49.772334+00:00",
     "status": "PASS",
-    "row_count": 43,
-    "pass_count": 43,
+    "row_count": 49,
+    "pass_count": 49,
     "fail_count": 0,
     "csv": "reports/benchmark/phase_24HR_shadow_validation_preflight.csv",
     "live_8000_modified": false,
@@ -131,6 +131,34 @@
       "expected": "exists",
       "observed": "exists",
       "evidence": "reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/productization/phase_24HR_option_C_targeted_smoke_plan.md",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/productization/phase_24HR_option_C_targeted_smoke_plan.md"
+    },
+    {
+      "check_id": "path_exists:scripts/benchmark/phase24hr_option_c_targeted_smoke.py",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "scripts/benchmark/phase24hr_option_c_targeted_smoke.py"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.json",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.json"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.md",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.md"
     },
     {
       "check_id": "path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md",
@@ -271,6 +299,20 @@
       "expected": "live=false gateway=false model=false chat=false",
       "observed": "live=False gateway=False model=False chat=False",
       "evidence": "reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.json"
+    },
+    {
+      "check_id": "option_c_guard_smoke_pass",
+      "status": "PASS",
+      "expected": "PASS fail_count=0",
+      "observed": "PASS fail_count=0",
+      "evidence": "reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.json"
+    },
+    {
+      "check_id": "option_c_guard_smoke_no_side_effects",
+      "status": "PASS",
+      "expected": "live=false gateway=false model=false chat=false",
+      "observed": "live=False gateway=False model=False chat=False",
+      "evidence": "reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.json"
     },
     {
       "check_id": "shadow_collection_build_pass",

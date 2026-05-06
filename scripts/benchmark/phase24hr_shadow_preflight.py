@@ -37,6 +37,10 @@ OPTION_B_PLAN = PRODUCT_DIR / "phase_24HR_option_B_candidate_gateway_plan.md"
 OPTION_B_RUNNER = REPO_ROOT / "scripts/benchmark/phase24hr_option_b_candidate_gateway.py"
 OPTION_B_GUARD_SMOKE = REPORTS_DIR / "phase_24HR_option_B_candidate_gateway_guard_smoke.json"
 OPTION_B_GUARD_SMOKE_REPORT = REPORTS_DIR / "phase_24HR_option_B_candidate_gateway_guard_smoke.md"
+OPTION_C_PLAN = PRODUCT_DIR / "phase_24HR_option_C_targeted_smoke_plan.md"
+OPTION_C_RUNNER = REPO_ROOT / "scripts/benchmark/phase24hr_option_c_targeted_smoke.py"
+OPTION_C_GUARD_SMOKE = REPORTS_DIR / "phase_24HR_option_C_targeted_smoke_guard_smoke.json"
+OPTION_C_GUARD_SMOKE_REPORT = REPORTS_DIR / "phase_24HR_option_C_targeted_smoke_guard_smoke.md"
 SHADOW_PLAN = PRODUCT_DIR / "phase_24HR_shadow_validation_plan.md"
 FINAL_GATE = PRODUCT_DIR / "final_productization_gate.md"
 SOURCE_IDENTITY = REPO_ROOT / "api-gateway/src/rag/source_identity.py"
@@ -110,6 +114,10 @@ def path_checks() -> list[dict[str, str]]:
         OPTION_B_RUNNER,
         OPTION_B_GUARD_SMOKE,
         OPTION_B_GUARD_SMOKE_REPORT,
+        OPTION_C_PLAN,
+        OPTION_C_RUNNER,
+        OPTION_C_GUARD_SMOKE,
+        OPTION_C_GUARD_SMOKE_REPORT,
         SHADOW_PLAN,
         FINAL_GATE,
         SOURCE_IDENTITY,
@@ -219,9 +227,11 @@ def smoke_and_gate_checks() -> list[dict[str, str]]:
     build_provenance = json.loads(BUILD_PROVENANCE.read_text(encoding="utf-8"))
     build_verify = json.loads(BUILD_VERIFY.read_text(encoding="utf-8"))
     option_b_guard_smoke = json.loads(OPTION_B_GUARD_SMOKE.read_text(encoding="utf-8"))
+    option_c_guard_smoke = json.loads(OPTION_C_GUARD_SMOKE.read_text(encoding="utf-8"))
     summary = smoke.get("summary", {})
     guard_summary = guard_smoke.get("summary", {})
     option_b_guard_summary = option_b_guard_smoke.get("summary", {})
+    option_c_guard_summary = option_c_guard_smoke.get("summary", {})
     verify_summary = build_verify.get("summary", {})
     final_gate_text = FINAL_GATE.read_text(encoding="utf-8")
     source_identity_text = SOURCE_IDENTITY.read_text(encoding="utf-8")
@@ -320,6 +330,30 @@ def smoke_and_gate_checks() -> list[dict[str, str]]:
                 f"chat={option_b_guard_summary.get('chat_completions_called')}"
             ),
             OPTION_B_GUARD_SMOKE,
+        ),
+        status_row(
+            "option_c_guard_smoke_pass",
+            "PASS" if option_c_guard_summary.get("status") == "PASS" and option_c_guard_summary.get("fail_count") == 0 else "FAIL",
+            "PASS fail_count=0",
+            f"{option_c_guard_summary.get('status')} fail_count={option_c_guard_summary.get('fail_count')}",
+            OPTION_C_GUARD_SMOKE,
+        ),
+        status_row(
+            "option_c_guard_smoke_no_side_effects",
+            "PASS"
+            if option_c_guard_summary.get("live_8000_modified") is False
+            and option_c_guard_summary.get("candidate_gateway_started") is False
+            and option_c_guard_summary.get("model_inference_called") is False
+            and option_c_guard_summary.get("chat_completions_called") is False
+            else "FAIL",
+            "live=false gateway=false model=false chat=false",
+            (
+                f"live={option_c_guard_summary.get('live_8000_modified')} "
+                f"gateway={option_c_guard_summary.get('candidate_gateway_started')} "
+                f"model={option_c_guard_summary.get('model_inference_called')} "
+                f"chat={option_c_guard_summary.get('chat_completions_called')}"
+            ),
+            OPTION_C_GUARD_SMOKE,
         ),
         status_row(
             "shadow_collection_build_pass",

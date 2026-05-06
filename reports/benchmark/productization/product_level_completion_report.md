@@ -82,7 +82,7 @@ No additional human lawyer decision is currently pending for `TEB-04` or `TUZUK-
 
 Next required action is engineering remediation:
 
-- `TEB-04` / `TUZUK-05`: option-A shadow build/load is complete and verified; option-B candidate gateway plan and fail-closed runner guard are drafted; start candidate gateway, targeted smoke, or full candidate validation only if options B/C/D are explicitly authorized.
+- `TEB-04` / `TUZUK-05`: option-A shadow build/load is complete and verified; option-B candidate gateway plan/guard and option-C targeted smoke plan/guard are drafted; start candidate gateway, targeted smoke, or full candidate validation only if options B/C/D are explicitly authorized.
 
 ## 11. Final Live State
 Latest observed live health:
