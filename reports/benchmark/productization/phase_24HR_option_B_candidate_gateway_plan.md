@@ -21,6 +21,16 @@ This plan does not authorize or perform:
 - Model, prompt, top-k, or fine-tuning change.
 - Targeted trace-on smoke or full benchmark execution.
 
+## Execution Status
+Option `B` was approved by the owner and executed on 2026-05-06.
+
+Evidence:
+
+- Start report: `reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.md`
+- Candidate health: `status=ok`, lane `phase24hr_option_b_candidate`, host `127.0.0.1`, port `8010`
+- Live `8000`: unchanged
+- Chat/model inference: not called
+
 ## Current Prerequisites
 | prerequisite | evidence | required state |
 |---|---|---|

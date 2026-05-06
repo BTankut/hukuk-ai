@@ -15,6 +15,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = REPO_ROOT / "reports/benchmark"
 RUNNER = REPO_ROOT / "scripts/benchmark/phase24hr_option_c_targeted_smoke.py"
+OPTION_B_START_REPORT = REPORTS_DIR / "phase_24HR_option_B_candidate_gateway_start_report.json"
 
 OUT_CSV = REPORTS_DIR / "phase_24HR_option_C_targeted_smoke_guard_smoke.csv"
 OUT_JSON = REPORTS_DIR / "phase_24HR_option_C_targeted_smoke_guard_smoke.json"
@@ -72,12 +73,38 @@ def run_case(
 
 
 def run_cases() -> list[dict[str, Any]]:
+    option_b_present = OPTION_B_START_REPORT.exists()
+    plan_status = "READY_FOR_OPTION_C_AUTHORIZATION" if option_b_present else "BLOCKED_WAITING_FOR_OPTION_B"
+    final_guard_case = (
+        run_case(
+            "run_candidate_port_mismatch_refused_before_chat",
+            [
+                "run-smoke",
+                "--execute",
+                "--authorization-token",
+                AUTHORIZATION_TOKEN,
+                "--api-url",
+                "http://127.0.0.1:8011/v1",
+            ],
+            expected_returncode=2,
+            expected_status="REFUSED",
+            expected_error_substring="api-url port does not match",
+        )
+        if option_b_present
+        else run_case(
+            "run_missing_option_b_refused_before_chat",
+            ["run-smoke", "--execute", "--authorization-token", AUTHORIZATION_TOKEN],
+            expected_returncode=2,
+            expected_status="REFUSED",
+            expected_error_substring="option-B candidate gateway is not verified",
+        )
+    )
     return [
         run_case(
             "plan_local_only",
             ["plan", "--no-write"],
             expected_returncode=0,
-            expected_status="BLOCKED_WAITING_FOR_OPTION_B",
+            expected_status=plan_status,
         ),
         run_case(
             "run_without_execute_refused",
@@ -100,13 +127,7 @@ def run_cases() -> list[dict[str, Any]]:
             expected_status="REFUSED",
             expected_error_substring="live 8000",
         ),
-        run_case(
-            "run_missing_option_b_refused_before_chat",
-            ["run-smoke", "--execute", "--authorization-token", AUTHORIZATION_TOKEN],
-            expected_returncode=2,
-            expected_status="REFUSED",
-            expected_error_substring="option-B candidate gateway is not verified",
-        ),
+        final_guard_case,
     ]
 
 

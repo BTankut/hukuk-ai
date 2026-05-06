@@ -1,11 +1,11 @@
 # Phase 24HR Option C Targeted Smoke Runner Plan
 
-- generated_at_utc: `2026-05-06T16:32:40.855929+00:00`
-- status: `BLOCKED_WAITING_FOR_OPTION_B`
+- generated_at_utc: `2026-05-06T17:30:02.087871+00:00`
+- status: `READY_FOR_OPTION_C_AUTHORIZATION`
 - api_url: `http://127.0.0.1:8010/v1`
 - model: `hukuk-ai-poc`
 - target_qids: `TEB-04 TUZUK-05 KANUN-08 YON-05`
-- option_b_status: `MISSING`
+- option_b_status: `PASS`
 - live_8000_modified: `false`
 - candidate_gateway_started: `false`
 - model_inference_called: `false`

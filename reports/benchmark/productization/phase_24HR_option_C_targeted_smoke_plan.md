@@ -17,6 +17,16 @@ This plan does not authorize or perform:
 - Model, prompt, top-k, or fine-tuning change.
 - Full benchmark execution.
 
+## Current Status
+Option `B` is complete and the runner plan is `READY_FOR_OPTION_C_AUTHORIZATION`.
+
+Evidence:
+
+- Option-B start report: `reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.md`
+- Option-C runner plan: `reports/benchmark/phase_24HR_option_C_targeted_smoke_runner_plan.md`
+- Candidate API URL: `http://127.0.0.1:8010/v1`
+- No targeted smoke, full benchmark, chat call, or model inference has been run under option `C`.
+
 ## Targeted QIDs
 | qid | reason |
 |---|---|

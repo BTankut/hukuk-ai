@@ -5,7 +5,7 @@ Generated: 2026-05-06
 ## Request
 Authorization is requested for the next gated, non-live validation step for `TEB-04` and `TUZUK-05`.
 
-Option `A` was approved by the owner and executed on 2026-05-06. Options `B`, `C`, and `D` remain unauthorized.
+Option `A` was approved by the owner and executed on 2026-05-06. Option `B` was approved by the owner and executed on 2026-05-06 as a non-live candidate gateway on `127.0.0.1:8010`. Options `C` and `D` remain unauthorized.
 
 This authorization is **not** a productization approval, internal eval opening, serving-candidate opening, live `8000` switch, model change, prompt/top-k change, or fine-tuning approval.
 
@@ -31,9 +31,10 @@ This authorization is **not** a productization approval, internal eval opening, 
 | Option-B guarded runner | `scripts/benchmark/phase24hr_option_b_candidate_gateway.py` |
 | Option-B runner plan | `reports/benchmark/phase_24HR_option_B_candidate_gateway_runner_plan.md`; `READY_FOR_OPTION_B_AUTHORIZATION`, prerequisites `PASS` |
 | Option-B guard smoke | `reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md`; `PASS`, 5/5 fail-closed paths; no live 8000, gateway, chat, or model inference |
+| Option-B start report | `reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.md`; `STARTED`, host `127.0.0.1`, port `8010`, lane `phase24hr_option_b_candidate`, no live 8000 change, no chat/model inference |
 | Option-C targeted smoke plan | `reports/benchmark/productization/phase_24HR_option_C_targeted_smoke_plan.md` |
 | Option-C guarded runner | `scripts/benchmark/phase24hr_option_c_targeted_smoke.py` |
-| Option-C runner plan | `reports/benchmark/phase_24HR_option_C_targeted_smoke_runner_plan.md`; currently `BLOCKED_WAITING_FOR_OPTION_B` until option-B start report exists |
+| Option-C runner plan | `reports/benchmark/phase_24HR_option_C_targeted_smoke_runner_plan.md`; `READY_FOR_OPTION_C_AUTHORIZATION`, option-B status `PASS` |
 | Option-C guard smoke | `reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.md`; `PASS`, 5/5 fail-closed paths; no live 8000, gateway, chat, or model inference |
 
 ## Authorization Options
@@ -42,7 +43,7 @@ Approve only the smallest scope needed.
 | option | authorization scope | side-effect boundary |
 |---|---|---|
 | A | Build/load a Milvus shadow collection for `TEB-04` chunked spans and `TUZUK-05` policy validation. | **Completed**; no live `8000`; no existing base collection overwrite; no serving candidate. |
-| B | Start a non-live candidate gateway on a separate port after shadow collection build. | No live `8000`; no public endpoint; no Open WebUI switch. |
+| B | Start a non-live candidate gateway on a separate port after shadow collection build. | **Completed**; candidate `127.0.0.1:8010`; no live `8000`; no public endpoint; no Open WebUI switch; no chat/model inference. |
 | C | Run targeted trace-on candidate smoke for `TEB-04`, `TUZUK-05`, and source-identity guard rows. | No full benchmark yet; no gate change. |
 | D | If targeted smoke passes, run full trace-on candidate benchmark. | Uses shared model/GPU resources; no product/internal/serving switch. |
 
@@ -52,7 +53,7 @@ Approve only the smallest scope needed.
 3. Re-run `python3 scripts/benchmark/phase24hr_shadow_build_guard_smoke.py`.
 4. Re-run `python3 scripts/benchmark/phase24hr_shadow_collection_build.py plan`.
 5. Option A is complete; do not rebuild unless explicitly re-authorized.
-6. Start a non-live candidate gateway only if option B is approved, using `scripts/benchmark/phase24hr_option_b_candidate_gateway.py` and following `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md`.
+6. Option B is complete; keep candidate `127.0.0.1:8010` isolated and do not expose it.
 7. Run targeted trace-on smoke only if option C is approved and option-B candidate health evidence exists, using `scripts/benchmark/phase24hr_option_c_targeted_smoke.py`.
 8. Run full trace-on candidate benchmark only if option D is approved and targeted smoke passes.
 9. Update productization reports; keep final gate `not_productization_ready` unless all brief gates pass or explicit waivers are recorded.

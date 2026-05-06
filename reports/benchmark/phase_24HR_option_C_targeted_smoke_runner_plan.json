@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-05-06T16:32:40.855929+00:00",
-  "status": "BLOCKED_WAITING_FOR_OPTION_B",
+  "generated_at_utc": "2026-05-06T17:30:02.087871+00:00",
+  "status": "READY_FOR_OPTION_C_AUTHORIZATION",
   "authorization_token_required": "OPTION_C_APPROVED_PHASE24HR",
   "execute_required": true,
   "api_url": "http://127.0.0.1:8010/v1",
@@ -13,9 +13,28 @@
   ],
   "out_dir": "reports/benchmark/runs/phase_24HR_option_C_targeted_candidate_smoke",
   "option_b_status": {
-    "status": "MISSING",
-    "reason": "Option-B candidate gateway start report is missing.",
-    "report": "reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.json"
+    "status": "PASS",
+    "problems": [],
+    "report": "reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.json",
+    "candidate_health": {
+      "status": "ok",
+      "service": "hukuk-ai-api-gateway",
+      "lane": "phase24hr_option_b_candidate",
+      "api_version": "2026-05-06-phase24hr-option-b-candidate",
+      "guardrails": "disabled",
+      "retriever": "milvus",
+      "verification": "disabled"
+    },
+    "live_health": {
+      "status": "ok",
+      "service": "hukuk-ai-api-gateway",
+      "lane": "phase22f_s7_full_shadow",
+      "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+      "guardrails": "disabled",
+      "retriever": "milvus",
+      "verification": "disabled"
+    },
+    "candidate_port": 8010
   },
   "live_8000_modified": false,
   "candidate_gateway_started": false,
