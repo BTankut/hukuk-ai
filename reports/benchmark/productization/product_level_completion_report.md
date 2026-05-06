@@ -63,7 +63,7 @@ Serving-candidate cutover remains closed.
 ## 7. Productization Decision
 Decision: `not_productization_ready`.
 
-Productization remains closed because benchmark stability, residual implementation, policy enforcement, privacy/audit controls, rollback rehearsal, and shadow/full validation are not complete.
+Productization remains closed because benchmark stability, residual implementation, policy enforcement, privacy/audit controls, rollback rehearsal, and candidate/full validation are not complete.
 
 ## 8. Fine-Tuning Decision
 Fine-tuning remains closed. Current blockers are product, source, corpus, policy, verification, privacy, audit, and release-control blockers. Fine-tuning is not an acceptable substitute for those unresolved gates.

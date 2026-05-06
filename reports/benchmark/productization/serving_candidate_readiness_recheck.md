@@ -12,8 +12,8 @@ Secondary blockers:
 | gate | evidence | result |
 |---|---|---|
 | Residual closure | `residual_closure_matrix.csv` has 9 residual rows and 0 rows accepted for serving candidate. | fail |
-| Human review | `TUZUK-05` human review is closed; exact tüzük source is not identifiable, offline scorer policy implements general hierarchy handling, and artifact-level non-live smoke passed. | pass for review/scorer/artifact smoke; fail for shadow/full validation |
-| Product scorer confirmation | `TEB-04` product spans are confirmed, official GIB PDF hash is verified, deterministic non-live spans are materialized, and artifact-level non-live smoke passed. | pass for review/materialization/artifact smoke; fail for shadow/full validation |
+| Human review | `TUZUK-05` human review is closed; exact tüzük source is not identifiable, offline scorer policy implements general hierarchy handling, and artifact-level non-live smoke passed. | pass for review/scorer/artifact smoke; fail for candidate/full validation |
+| Product scorer confirmation | `TEB-04` product spans are confirmed, official GIB PDF hash is verified, deterministic non-live spans are materialized, artifact-level non-live smoke passed, and option-A shadow collection build/read-only verification passed. | pass for review/materialization/artifact smoke/shadow build; fail for candidate/full validation |
 | Guardrails | Live health reports `guardrails=disabled`. | fail |
 | Verification | Live health reports `verification=disabled`. | fail |
 | Privacy/PII | Policy exists but runtime enforcement is not evidenced. | fail |

@@ -13,7 +13,7 @@ Additional required decisions before this can change:
 |---|---|---|
 | Benchmark stability | Latest full run is `805.09/89`; reference full run was `816.86/91`. | fail |
 | Residual closure | 9 residual rows remain open; 0 accepted for productization. | fail |
-| Human legal/source review | `TUZUK-05` human review closed: exact single tüzük source is not identifiable; offline scorer policy implements general hierarchy handling; artifact-level smoke passed. | pass for review/scorer/artifact smoke; fail for shadow/full validation |
+| Human legal/source review | `TUZUK-05` human review closed: exact single tüzük source is not identifiable; offline scorer policy implements general hierarchy handling; artifact-level smoke passed. | pass for review/scorer/artifact smoke; fail for candidate/full validation |
 | Scorer/product confirmation | `TEB-04` product spans confirmed, official GIB PDF hash verified, 6 spans materialized as non-live artifacts, artifact-level smoke passed, and option-A shadow collection build/load verified 59 delta rows. | pass for review/materialization/artifact smoke/shadow build; fail for candidate trace-on validation |
 | Guardrails | Policy drafted; live reports `guardrails=disabled`. | fail |
 | Verification | Policy drafted; live reports `verification=disabled`. | fail |
