@@ -1,9 +1,9 @@
 # Phase 24HR Shadow Validation Preflight
 
-- generated_at_utc: `2026-05-06T16:08:20.089408+00:00`
+- generated_at_utc: `2026-05-06T16:23:37.560140+00:00`
 - status: `PASS`
-- row_count: `37`
-- pass_count: `37`
+- row_count: `43`
+- pass_count: `43`
 - fail_count: `0`
 - live_8000_modified: `false`
 - milvus_modified: `false`
@@ -25,6 +25,10 @@
 | `path_exists:reports/benchmark/phase_24HR_shadow_runtime_provenance.json` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.json` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.md` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md` | `PASS` | exists | exists |
+| `path_exists:scripts/benchmark/phase24hr_option_b_candidate_gateway.py` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.json` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/final_productization_gate.md` | `PASS` | exists | exists |
 | `path_exists:api-gateway/src/rag/source_identity.py` | `PASS` | exists | exists |
@@ -43,6 +47,8 @@
 | `shadow_build_dry_run_no_side_effects` | `PASS` | live=false milvus=false embedding=false gateway=false model=false | live=False milvus=False embedding=False gateway=False model=False |
 | `shadow_build_guard_smoke_pass` | `PASS` | PASS fail_count=0 | PASS fail_count=0 |
 | `shadow_build_guard_smoke_no_side_effects` | `PASS` | live=false milvus=false embedding=false gateway=false model=false | live=False milvus=False embedding=False gateway=False model=False |
+| `option_b_guard_smoke_pass` | `PASS` | PASS fail_count=0 | PASS fail_count=0 |
+| `option_b_guard_smoke_no_side_effects` | `PASS` | live=false gateway=false model=false chat=false | live=False gateway=False model=False chat=False |
 | `shadow_collection_build_pass` | `PASS` | PASS delta=59 live=false gateway=false | PASS delta=59 live=False gateway=False |
 | `shadow_collection_verify_pass` | `PASS` | PASS target_delta_rows=59 base_collision=0 | PASS target_delta=59 base_collision=0 |
 | `productization_gate_still_closed` | `PASS` | not_productization_ready | not_productization_ready |

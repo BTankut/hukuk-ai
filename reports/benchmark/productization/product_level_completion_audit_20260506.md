@@ -86,14 +86,14 @@ Concrete success criteria:
 |---|---|---|
 | TEB-04 | `reports/benchmark/phase_24HR_teb04_kdv_gut_materialization_report.md` | Official GIB PDF SHA verified; 6 full spans and 59 chunked subspans materialized. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` | 9/9 artifact-level non-live checks passed; no live 8000, Milvus, or model inference. |
-| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 37/37 local preflight checks passed after option-A build/load and read-only verification; the preflight itself made no live 8000, Milvus, candidate gateway, or model inference changes. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 43/43 local preflight checks passed after option-A build/load, read-only verification, and option-B guard coverage; the preflight itself made no live 8000, Milvus, candidate gateway, or model inference changes. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` | 59 proposed TEB-04 delta rows passed local row-contract checks; no live 8000, Milvus, embedding, candidate gateway, or model inference. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_build_plan.md` and `scripts/benchmark/phase24hr_shadow_collection_build.py` | Guarded build runner is prepared; it refuses before Milvus unless `--execute` and `OPTION_A_APPROVED_PHASE24HR` are provided. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_build_guard_smoke.md` | 4/4 fail-closed guard paths passed; no live 8000, Milvus, embedding, candidate gateway, or model inference. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_build_report.md` | Option-A shadow collection build/load passed; target has 349462 rows with 59 delta rows and no live 8000 cutover. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_verify.md` | Read-only verification passed; 59/59 delta rows found in target, base delta collision `0`, load state observed `Loaded`. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Option A complete; options B/C/D still require explicit authorization. |
-| TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md` | Option-B execution boundary is documented; no candidate gateway was started and no chat/model inference was called. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md`, `reports/benchmark/phase_24HR_option_B_candidate_gateway_runner_plan.md`, and `reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md` | Option-B execution boundary is documented; runner plan is ready; guard smoke passed 5/5 fail-closed paths; no candidate gateway was started and no chat/model inference was called. |
 
 ## Completion Decision
 Objective artifacts are produced and pushed, but product-level completion is **not achieved** under the brief's Section 8 definition.

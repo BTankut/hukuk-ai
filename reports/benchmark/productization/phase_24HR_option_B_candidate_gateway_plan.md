@@ -26,7 +26,7 @@ This plan does not authorize or perform:
 |---|---|---|
 | Option-A shadow build/load | `reports/benchmark/phase_24HR_shadow_collection_build_report.md` | `PASS`, target `349462`, delta `59` |
 | Option-A read-only verification | `reports/benchmark/phase_24HR_shadow_collection_verify.md` | `PASS`, `59/59` delta rows, base collision `0`, load state `Loaded` |
-| Phase 24HR preflight | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | `PASS`, `37/37` |
+| Phase 24HR preflight | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | `PASS`, `43/43` |
 | Live runtime boundary | `http://127.0.0.1:8000/v1/health` | remains benchmark-only; no switch |
 
 ## Proposed Candidate Boundary
@@ -60,6 +60,15 @@ Expected:
 
 ## Candidate Start Command
 Run only after explicit option-B approval:
+
+Preferred guarded runner:
+
+```bash
+python3 scripts/benchmark/phase24hr_option_b_candidate_gateway.py start-candidate \
+  --execute --authorization-token OPTION_B_APPROVED_PHASE24HR
+```
+
+Equivalent expanded command used by the runner:
 
 ```bash
 mkdir -p runtime_logs/phase24hr
@@ -130,3 +139,8 @@ The next explicit approvals are:
 
 - Option `C`: targeted trace-on candidate smoke for `TEB-04`, `TUZUK-05`, and source-identity guard rows.
 - Option `D`: full trace-on candidate benchmark, only after targeted smoke passes.
+
+## Guard Evidence
+The fail-closed runner is `scripts/benchmark/phase24hr_option_b_candidate_gateway.py`.
+
+The no-authorization guard smoke is `reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md`.

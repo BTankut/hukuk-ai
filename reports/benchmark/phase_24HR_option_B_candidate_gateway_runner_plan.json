@@ -1,0 +1,31 @@
+{
+  "generated_at_utc": "2026-05-06T16:23:32.591246+00:00",
+  "status": "READY_FOR_OPTION_B_AUTHORIZATION",
+  "authorization_token_required": "OPTION_B_APPROVED_PHASE24HR",
+  "execute_required": true,
+  "host": "127.0.0.1",
+  "port": 8010,
+  "lane": "phase24hr_option_b_candidate",
+  "api_version": "2026-05-06-phase24hr-option-b-candidate",
+  "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr",
+  "milvus_uri": "http://localhost:19530",
+  "embedding_base_url": "http://127.0.0.1:8081/v1",
+  "embedding_model": "intfloat/multilingual-e5-large-instruct",
+  "embedding_dim": 1024,
+  "dgx_base_url": "http://192.168.12.243:30000/v1",
+  "dgx_model": "/models/merged_model_fabric_stage_20260321",
+  "pid_file": "runtime_logs/phase24hr/option_b_candidate_gateway.pid",
+  "log_file": "runtime_logs/phase24hr/option_b_candidate_gateway.log",
+  "trace_dir": "logs/traces/phase24hr_option_b_candidate",
+  "live_8000_modified": false,
+  "candidate_gateway_started": false,
+  "model_inference_called": false,
+  "chat_completions_called": false,
+  "prerequisites": {
+    "preflight_status": "PASS",
+    "preflight_pass_count": 43,
+    "verify_status": "PASS",
+    "target_delta_rows_found": 59,
+    "base_delta_id_collision_count": 0
+  }
+}

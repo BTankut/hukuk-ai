@@ -12,6 +12,10 @@ path_exists:reports/benchmark/phase_24HR_shadow_collection_build_report.md,PASS,
 path_exists:reports/benchmark/phase_24HR_shadow_runtime_provenance.json,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_runtime_provenance.json
 path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.json,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_verify.json
 path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.md,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_verify.md
+path_exists:reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md,PASS,exists,exists,reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md
+path_exists:scripts/benchmark/phase24hr_option_b_candidate_gateway.py,PASS,exists,exists,scripts/benchmark/phase24hr_option_b_candidate_gateway.py
+path_exists:reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.json,PASS,exists,exists,reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.json
+path_exists:reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md,PASS,exists,exists,reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md
 path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md,PASS,exists,exists,reports/benchmark/productization/phase_24HR_shadow_validation_plan.md
 path_exists:reports/benchmark/productization/final_productization_gate.md,PASS,exists,exists,reports/benchmark/productization/final_productization_gate.md
 path_exists:api-gateway/src/rag/source_identity.py,PASS,exists,exists,api-gateway/src/rag/source_identity.py
@@ -30,6 +34,8 @@ shadow_build_dry_run_pass,PASS,PASS rows=59 collisions=0,PASS rows=59 canonical=
 shadow_build_dry_run_no_side_effects,PASS,live=false milvus=false embedding=false gateway=false model=false,live=False milvus=False embedding=False gateway=False model=False,reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json
 shadow_build_guard_smoke_pass,PASS,PASS fail_count=0,PASS fail_count=0,reports/benchmark/phase_24HR_shadow_build_guard_smoke.json
 shadow_build_guard_smoke_no_side_effects,PASS,live=false milvus=false embedding=false gateway=false model=false,live=False milvus=False embedding=False gateway=False model=False,reports/benchmark/phase_24HR_shadow_build_guard_smoke.json
+option_b_guard_smoke_pass,PASS,PASS fail_count=0,PASS fail_count=0,reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.json
+option_b_guard_smoke_no_side_effects,PASS,live=false gateway=false model=false chat=false,live=False gateway=False model=False chat=False,reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.json
 shadow_collection_build_pass,PASS,PASS delta=59 live=false gateway=false,PASS delta=59 live=False gateway=False,reports/benchmark/phase_24HR_shadow_runtime_provenance.json
 shadow_collection_verify_pass,PASS,PASS target_delta_rows=59 base_collision=0,PASS target_delta=59 base_collision=0,reports/benchmark/phase_24HR_shadow_collection_verify.json
 productization_gate_still_closed,PASS,not_productization_ready,not_productization_ready,reports/benchmark/productization/final_productization_gate.md
