@@ -15,8 +15,8 @@ This report records the productization tracking changes after intake of the huma
 ## Updated Residual State
 | qid | previous blocker | post-review state | remaining blocker |
 |---|---|---|---|
-| `TUZUK-05` | Human legal/source review needed; exact tüzük source unresolved. | Human review closed; exact single tüzük source is not identifiable. | Implement systemic general hierarchy rubric/source-policy handling and reject wrong subject-specific tüzük candidates. |
-| `TEB-04` | Human product span confirmation and hashable official raw source needed. | Human review closed; product spans confirmed; official GIB PDF hash verified. | Deterministically materialize confirmed KDV GUT spans and run non-live validation. |
+| `TUZUK-05` | Human legal/source review needed; exact tüzük source unresolved. | Human review closed; exact single tüzük source is not identifiable; offline scorer policy implemented for abstract hierarchy source-policy class. | Run runtime/source-policy non-live validation before any shadow/runtime integration. |
+| `TEB-04` | Human product span confirmation and hashable official raw source needed. | Human review closed; product spans confirmed; official GIB PDF hash verified; 6 non-live spans materialized from PDFKit extraction. | Run gated non-live retrieval/selector validation before any shadow/runtime integration. |
 
 ## Product Gate Impact
 - Legal/scorer review blocker is reduced, but productization remains closed.
@@ -26,4 +26,3 @@ This report records the productization tracking changes after intake of the huma
 
 ## Runtime Change
 No live runtime change, benchmark rerun, internal eval opening, serving-candidate cutover, productization cutover, model change, prompt change, or top-k change was performed.
-

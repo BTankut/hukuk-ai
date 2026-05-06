@@ -12,6 +12,7 @@ SPEC.loader.exec_module(score_hukuk_ai_100)
 
 score_row = score_hukuk_ai_100.score_row
 term_present = score_hukuk_ai_100.term_present
+hierarchy_policy_term_present = score_hukuk_ai_100.hierarchy_policy_term_present
 
 
 def test_term_present_matches_turkish_ascii_variants() -> None:
@@ -121,3 +122,89 @@ def test_score_row_computes_article_alignment_when_missing() -> None:
 
     assert row["article_alignment"] == "exact"
     assert row["selected_article_equals_claimed_article"] == "True"
+
+
+def _contract_answer(**overrides: str) -> dict[str, str]:
+    answer = {
+        "qid": "TUZUK-GENERIC",
+        "primary_type": "TUZUK",
+        "task_type": "hierarchy_conflict",
+        "answer": "",
+        "citations": "",
+        "source_titles": "",
+        "source_ids": "",
+        "doc_types": "tuzuk",
+        "confidence_0_100": "75",
+        "final_reason": "grounded",
+        "answer_mode": "direct_answer",
+        "grounding_status": "fully_grounded",
+        "source_family_claimed": "TUZUK",
+        "source_title_claimed": "ilgili yürürlükteki tüzük hükümleri",
+        "source_identifier_claimed": "genel norm hiyerarşisi",
+        "article_or_section_claimed": "",
+        "effective_state_claimed": "active",
+        "temporal_qualification": "current",
+        "needs_manual_review": "False",
+        "contract_valid": "True",
+        "contract_repaired": "False",
+        "claimed_source_parse_success": "True",
+        "confidence_policy_ok": "True",
+        "uncertainty_disclosed": "True",
+        "manual_review_flag": "False",
+        "unsupported_confident_answer": "False",
+        "retrieval_trace_id": "trace-hierarchy",
+    }
+    answer.update(overrides)
+    return answer
+
+
+def _hierarchy_key() -> dict[str, str]:
+    return {
+        "q_id": "TUZUK-GENERIC",
+        "gold_summary": "Normlar hiyerarşisinde kurum içi düzenleme geçerli tüzüğe aykırı olamaz.",
+        "gold_documents": "ilgili yürürlükteki tüzük hükümleri",
+        "must_include": "tüzük üst normdur|kurum içi düzenleme aykırı olamaz",
+        "auto_fail_if": "Kurum içi düzenlemeyi tüzükten üstün göstermek",
+        "max_points": "10",
+    }
+
+
+def test_hierarchy_policy_terms_match_semantic_variants() -> None:
+    text = "Normlar hiyerarşisinde tüzük üst normdur; kurum içi talimat tüzüğe aykırıysa uygulanmaz."
+
+    assert hierarchy_policy_term_present("tüzük üst normdur", text)
+    assert hierarchy_policy_term_present("kurum içi düzenleme aykırı olamaz", text)
+
+
+def test_score_row_accepts_abstract_tuzuk_hierarchy_source_policy() -> None:
+    answer = _contract_answer(
+        answer=(
+            "Normlar hiyerarşisinde tüzük, kurum içi yönerge ve talimatlara göre üst normdur. "
+            "Kurum içi düzenleme geçerli tüzüğe aykırıysa uygulanmaz; çatışmada üst norm uygulanır."
+        ),
+        citations="ilgili yürürlükteki tüzük hükümleri; normlar hiyerarşisi",
+    )
+
+    row = score_row(answer, _hierarchy_key())
+
+    assert row["document_match_score"] == "1.00"
+    assert row["must_include_hit_count"] == "2"
+    assert "wrong_document" not in row["failure_classes"]
+    assert "missing_gold_document_signal" not in row["failure_classes"]
+
+
+def test_score_row_rejects_concrete_tuzuk_title_for_abstract_hierarchy_policy() -> None:
+    answer = _contract_answer(
+        answer=(
+            "Normlar hiyerarşisinde tüzük üst normdur ve kurum içi düzenleme aykırı olamaz."
+        ),
+        citations="Gıda Maddelerinin Hususi Vasıflarını Gösteren Tüzüğü",
+        source_titles="Gıda Maddelerinin Hususi Vasıflarını Gösteren Tüzüğü",
+        source_title_claimed="Gıda Maddelerinin Hususi Vasıflarını Gösteren Tüzüğü",
+        source_identifier_claimed="gida-tuzugu",
+    )
+
+    row = score_row(answer, _hierarchy_key())
+
+    assert row["document_match_score"] == "0.00"
+    assert "wrong_document" in row["failure_classes"]

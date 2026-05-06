@@ -28,7 +28,8 @@ Manual review is required when legal source identity, current-law status, source
 
 ## Current Human Review Status
 - `TUZUK-05`: human lawyer/source review was received on 2026-05-06. Decision: exact single tüzük source is not identifiable from the abstract prompt; scorer should accept the general norm-hierarchy rule and reject the prior `Gıda Maddelerinin... Tüzüğü` candidate.
-- `TEB-04`: human scorer/legal review was received on 2026-05-06. Decision: the current consolidated KDV General Implementation Communique is the product source; confirmed spans require deterministic materialization from the verified official GIB PDF.
+- `TUZUK-05`: offline scorer policy was implemented after review. Runtime/source-policy validation remains required before any internal eval, serving candidate, or productization gate changes.
+- `TEB-04`: human scorer/legal review was received on 2026-05-06. Decision: the current consolidated KDV General Implementation Communique is the product source; confirmed spans were deterministically materialized as non-live artifacts from the verified official GIB PDF and now require gated retrieval/selector validation.
 
 ## Current State
 - Residual closure is not complete.

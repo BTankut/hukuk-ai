@@ -321,6 +321,111 @@ def term_present(term: str, text: str) -> bool:
     return False
 
 
+def hierarchy_policy_term_present(term: str, text: str) -> bool:
+    norm_term = normalize(term)
+    norm_text = normalize(text)
+    if "tuzuk" in norm_term and ("ust norm" in norm_term or "ust normdur" in norm_term):
+        return ("tuzuk" in norm_text or "tuzug" in norm_text) and (
+            "ust norm" in norm_text
+            or "normlar hiyerarsisi" in norm_text
+            or "normlar hiyerarsisinde" in norm_text
+        )
+    if "kurum ici" in norm_term and "aykiri" in norm_term:
+        lower_norm = (
+            "kurum ici" in norm_text
+            or "ic duzenleme" in norm_text
+            or "alt duzenleme" in norm_text
+            or "yonerge" in norm_text
+            or "talimat" in norm_text
+        )
+        conflict_rule = (
+            "aykiri olamaz" in norm_text
+            or "aykiriysa uygulanmaz" in norm_text
+            or ("aykiri" in norm_text and "uygulanmaz" in norm_text)
+            or ("celis" in norm_text and "ust norm" in norm_text)
+        )
+        return lower_norm and conflict_rule
+    return False
+
+
+def concrete_tuzuk_title_claimed(answer: dict[str, str]) -> bool:
+    surface = normalize(
+        " ".join(
+            [
+                answer.get("source_title_claimed", ""),
+                answer.get("source_titles", ""),
+                answer.get("citations", ""),
+            ]
+        )
+    )
+    if "tuzuk" not in surface and "tuzug" not in surface:
+        return False
+    generic_surfaces = (
+        "ilgili yururlukteki tuzuk",
+        "gecerli tuzuk",
+        "yururlukteki tuzuk",
+        "tuzuk hukum",
+        "tuzuk ust norm",
+        "normlar hiyerarsisi",
+        "normlar hiyerarsisinde",
+    )
+    if any(token in surface for token in generic_surfaces):
+        return False
+    if "tuzugu" in surface or "tuzugunu" in surface or "tuzug" in surface:
+        return True
+    return False
+
+
+def abstract_hierarchy_policy_case(
+    key: dict[str, str],
+    gold_documents: list[str],
+    must_include: list[str],
+) -> bool:
+    rubric_surface = normalize(
+        " ".join([key.get("gold_summary", ""), *gold_documents, *must_include, key.get("task_type", "")])
+    )
+    generic_tuzuk_document = any(
+        "tuzuk" in normalize(document)
+        and ("ilgili" in normalize(document) or "yururlukteki" in normalize(document) or "gecerli" in normalize(document))
+        for document in gold_documents
+    )
+    hierarchy_surface = (
+        "normlar hiyerarsisi" in rubric_surface
+        or "ust norm" in rubric_surface
+        or "kurum ici" in rubric_surface
+        or "aykiri olamaz" in rubric_surface
+    )
+    return generic_tuzuk_document and hierarchy_surface
+
+
+def abstract_hierarchy_policy_answer_match(answer: dict[str, str], evidence_text: str) -> bool:
+    if concrete_tuzuk_title_claimed(answer):
+        return False
+    norm_text = normalize(evidence_text)
+    has_tuzuk = "tuzuk" in norm_text or "tuzug" in norm_text
+    has_lower_norm = (
+        "kurum ici" in norm_text
+        or "ic duzenleme" in norm_text
+        or "alt duzenleme" in norm_text
+        or "yonerge" in norm_text
+        or "talimat" in norm_text
+    )
+    has_priority_rule = (
+        "ust norm" in norm_text
+        or "normlar hiyerarsisi" in norm_text
+        or "normlar hiyerarsisinde" in norm_text
+        or "anayasa" in norm_text
+        or "danistay" in norm_text
+    )
+    has_conflict_outcome = (
+        "aykiri olamaz" in norm_text
+        or "aykiriysa uygulanmaz" in norm_text
+        or ("aykiri" in norm_text and "uygulanmaz" in norm_text)
+        or ("celis" in norm_text and ("ust norm" in norm_text or "tuzuk" in norm_text))
+    )
+    return has_tuzuk and has_lower_norm and has_priority_rule and has_conflict_outcome
+
+
 def numeric_score(value: bool | float) -> float:
     if isinstance(value, bool):
         return 1.0 if value else 0.0
@@ -417,8 +522,15 @@ def score_row(answer: dict[str, str], key: dict[str, str]) -> dict[str, Any]:
     must_include = split_rubric(key.get("must_include", ""))
     auto_fail_if = split_rubric(key.get("auto_fail_if", ""))
     gold_document_hits = sum(1 for term in gold_documents if term_present(term, evidence_text))
-    must_include_hits = sum(1 for term in must_include if term_present(term, evidence_text))
+    must_include_hits = sum(
+        1 for term in must_include if term_present(term, evidence_text) or hierarchy_policy_term_present(term, evidence_text)
+    )
     auto_fail_hits = sum(1 for term in auto_fail_if if term_present(term, evidence_text))
+    hierarchy_policy_match = abstract_hierarchy_policy_case(key, gold_documents, must_include) and (
+        abstract_hierarchy_policy_answer_match(answer, evidence_text)
+    )
+    if hierarchy_policy_match and gold_documents and not gold_document_hits:
+        gold_document_hits = len(gold_documents)
 
     answer_source = canonicalize_answer_row(answer)
     gold_source = canonicalize_gold_row(key, fallback_family=answer.get("primary_type"))
