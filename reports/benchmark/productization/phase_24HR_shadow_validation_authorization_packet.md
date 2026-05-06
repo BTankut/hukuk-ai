@@ -27,6 +27,7 @@ This authorization is **not** a productization approval, internal eval opening, 
 | Option-A read-only verify | `reports/benchmark/phase_24HR_shadow_collection_verify.md` |
 | Option-A verify result | `PASS`, 59/59 delta rows found in target, base delta collision `0`, load state observed `Loaded` |
 | Shadow validation plan | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` |
+| Option-B candidate gateway plan | `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md` |
 
 ## Authorization Options
 Approve only the smallest scope needed.
@@ -44,7 +45,7 @@ Approve only the smallest scope needed.
 3. Re-run `python3 scripts/benchmark/phase24hr_shadow_build_guard_smoke.py`.
 4. Re-run `python3 scripts/benchmark/phase24hr_shadow_collection_build.py plan`.
 5. Option A is complete; do not rebuild unless explicitly re-authorized.
-6. Start a non-live candidate gateway only if option B is approved.
+6. Start a non-live candidate gateway only if option B is approved, following `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md`.
 7. Run targeted trace-on smoke only if option C is approved.
 8. Run full trace-on candidate benchmark only if option D is approved and targeted smoke passes.
 9. Update productization reports; keep final gate `not_productization_ready` unless all brief gates pass or explicit waivers are recorded.

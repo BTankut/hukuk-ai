@@ -21,6 +21,7 @@
 - Option-A shadow build: `reports/benchmark/phase_24HR_shadow_collection_build_report.md`; build `PASS`, target collection `mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr`, 349462 rows, 59 delta rows, `load_after_build=true`.
 - Option-A read-only verification: `reports/benchmark/phase_24HR_shadow_collection_verify.md`; verify `PASS`, 59/59 delta rows found in target, base delta collision `0`, load state observed `Loaded`.
 - Shadow validation plan and authorization packet: `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md`; `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md`; option A completed; options B/C/D still require explicit authorization for candidate gateway, targeted smoke, or full trace-on candidate benchmark.
+- Option-B candidate gateway plan: `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md`; non-executing plan only, no gateway started.
 - TEB-04 materialization evidence: `reports/benchmark/phase_24HR_teb04_kdv_gut_materialization_report.md`; 6 spans were extracted from the hash-verified GIB PDF with no live or Milvus change.
 - TUZUK-05 scorer policy evidence: `reports/benchmark/productization/post_human_review_tuzuk05_policy_update_report.md`; offline scorer policy has tests and no live runtime change.
 

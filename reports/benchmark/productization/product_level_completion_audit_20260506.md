@@ -93,6 +93,7 @@ Concrete success criteria:
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_build_report.md` | Option-A shadow collection build/load passed; target has 349462 rows with 59 delta rows and no live 8000 cutover. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_verify.md` | Read-only verification passed; 59/59 delta rows found in target, base delta collision `0`, load state observed `Loaded`. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Option A complete; options B/C/D still require explicit authorization. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md` | Option-B execution boundary is documented; no candidate gateway was started and no chat/model inference was called. |
 
 ## Completion Decision
 Objective artifacts are produced and pushed, but product-level completion is **not achieved** under the brief's Section 8 definition.
