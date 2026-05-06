@@ -2,6 +2,8 @@
 
 Generated: 2026-05-06
 
+Last audited commit: `d594b54` (`Prepare shadow validation authorization packet`), pushed to `origin/bt/hukuk-ai-100-benchmark-hardening`.
+
 ## Objective Restatement
 Complete the autonomous product-level completion task defined in `reports/benchmark/hukuk_ai_product_level_completion_criteria_autonomous_brief.md` without confusing benchmark-only success with product readiness.
 
@@ -32,10 +34,30 @@ Concrete success criteria:
 | Phase P5 serving candidate readiness recheck | `reports/benchmark/productization/serving_candidate_readiness_recheck.md` | PASS artifact exists | Decision remains `not_ready_residuals_open`; serving candidate not opened. |
 | Phase P6 final productization gate | `reports/benchmark/productization/final_productization_gate.md` | PASS artifact exists | Decision remains `not_productization_ready`. |
 | Mandatory final report | `reports/benchmark/productization/product_level_completion_report.md` | PASS artifact exists | Contains required 11 sections and current blockers. |
-| Push required | git HEAD `135bfd9` pushed to `bt/hukuk-ai-100-benchmark-hardening` | PASS | Latest pushed commit: `Validate post-review residuals non-live`. |
+| Push required | git HEAD `d594b54` pushed to `bt/hukuk-ai-100-benchmark-hardening` | PASS | Latest pushed commit: `Prepare shadow validation authorization packet`. |
 | No live 8000 change | Product reports and smoke summary record `live_8000_modified=false` | PASS | No live switch/cutover was performed. |
 | No internal eval/serving/productization opening | Product reports record closed decisions | PASS | Gates remain closed. |
 | No fine-tuning/model/prompt/top-k change | Product reports record no such change | PASS | Fine-tuning remains closed. |
+
+## Section 8 Done Checklist
+| done requirement | required state | evidence inspected | result |
+|---|---|---|---|
+| Benchmark stability PASS | Two stable full trace-on runs at or above threshold | `phase_24U_B_base_trace_on_full_20260505T121226Z/score_summary.json` reports `805.09/89`; below `816/91` | FAIL |
+| Residual closure matrix accepted | All 9 residuals closed or formally accepted | `residual_closure_matrix.csv` has 9 residual rows; 0 accepted for productization | FAIL |
+| Internal eval gate PASS | `internal_eval_ready` or explicit permitted limited state | `internal_eval_readiness_recheck.md` decision is `not_ready_residuals_open` | FAIL |
+| Serving candidate gate PASS or waived | Ready with restrictions or explicit waiver | `serving_candidate_readiness_recheck.md` decision is `not_ready_residuals_open`; no waiver | FAIL |
+| Guardrails policy PASS | Policy plus runtime enforcement or waiver | `guardrails_policy.md` exists; live health reports `guardrails=disabled`; no waiver | FAIL |
+| Verification policy PASS | Policy plus runtime enforcement or waiver | `verification_policy.md` exists; live health reports `verification=disabled`; no waiver | FAIL |
+| Privacy/PII policy PASS | Policy plus runtime enforcement or waiver | `privacy_pii_policy.md` exists; runtime enforcement not evidenced; no waiver | FAIL |
+| Audit logging policy PASS | Policy plus runtime enforcement or waiver | `audit_logging_policy.md` exists; runtime enforcement not evidenced; no waiver | FAIL |
+| Trace exposure policy PASS | Policy and operational controls | `trace_exposure_policy.md` exists; adoption/rehearsal not fully evidenced | PARTIAL |
+| Manual review workflow PASS | Workflow, queue, SLA, enums, audit trail operational | `manual_review_workflow.md` exists; product-operations adoption not evidenced | PARTIAL |
+| Confidence/UX policy PASS | Runtime answer behavior enforced | `confidence_ux_policy.md` exists; runtime enforcement not evidenced | PARTIAL |
+| Rollback runbook PASS | Runbook and rehearsal | `rollback_incident_runbook.md` exists; rehearsal not completed | FAIL |
+| Legal/scorer review closure PASS | All named legal/scorer decisions closed | TEB-04/TUZUK-05 closed; CBY/KKY/TUZUK-04 remain open/conditional | PARTIAL |
+| Source/corpus materialization closure PASS | Product-critical sources materialized and validated | TEB-04 artifact-level materialization passed; shadow/full validation pending; other residual sources remain open | FAIL |
+| Final productization gate PASS or restricted PASS | `productization_ready_with_restrictions` or equivalent approved decision | `final_productization_gate.md` decision is `not_productization_ready` | FAIL |
+| Fine-tuning decision explicitly closed or separately approved | Closed or separate approval | Fine-tuning remains closed | PASS |
 
 ## Gate Completion Audit
 | gate | required by brief | current evidence | completion status |
