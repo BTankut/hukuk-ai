@@ -11,11 +11,13 @@ This authorization is **not** a productization approval, internal eval opening, 
 | item | evidence |
 |---|---|
 | Local shadow preflight | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` |
-| Preflight result | `PASS`, 25/25 checks |
+| Preflight result | `PASS`, 27/27 checks |
 | Non-live residual smoke | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` |
 | Non-live smoke result | `PASS`, 9/9 checks |
 | Shadow build dry-run manifest | `reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` |
 | Dry-run result | `PASS`, 59 proposed delta rows; no live 8000, Milvus, embedding, gateway, or model inference |
+| Guarded shadow build plan | `reports/benchmark/phase_24HR_shadow_collection_build_plan.md` |
+| Guarded build script | `scripts/benchmark/phase24hr_shadow_collection_build.py`; refuses before Milvus without `--execute` and `OPTION_A_APPROVED_PHASE24HR` |
 | Shadow validation plan | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` |
 
 ## Authorization Options
@@ -31,11 +33,12 @@ Approve only the smallest scope needed.
 ## Proposed Execution Order
 1. Re-run `python3 scripts/benchmark/phase24hr_shadow_preflight.py`.
 2. Re-run `python3 scripts/benchmark/phase24hr_shadow_build_dry_run.py`.
-3. Build/load a shadow-only candidate collection if option A is approved.
-4. Start a non-live candidate gateway if option B is approved.
-5. Run targeted trace-on smoke if option C is approved.
-6. Run full trace-on candidate benchmark only if option D is approved and targeted smoke passes.
-7. Update productization reports; keep final gate `not_productization_ready` unless all brief gates pass or explicit waivers are recorded.
+3. Re-run `python3 scripts/benchmark/phase24hr_shadow_collection_build.py plan`.
+4. Build/load a shadow-only candidate collection if option A is approved, using the guarded command in the build plan.
+5. Start a non-live candidate gateway if option B is approved.
+6. Run targeted trace-on smoke if option C is approved.
+7. Run full trace-on candidate benchmark only if option D is approved and targeted smoke passes.
+8. Update productization reports; keep final gate `not_productization_ready` unless all brief gates pass or explicit waivers are recorded.
 
 ## Hard Stop Conditions
 Stop immediately and report if any condition occurs:

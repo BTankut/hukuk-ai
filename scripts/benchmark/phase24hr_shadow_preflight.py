@@ -26,6 +26,7 @@ CATALOG = REPORTS_DIR / "source_acquisition/phase_24HR/teb04_kdv_gut/catalog_del
 NON_LIVE_SMOKE = REPORTS_DIR / "phase_24HR_non_live_residual_smoke.json"
 DRY_RUN_SUMMARY = REPORTS_DIR / "phase_24HR_shadow_collection_dry_run_summary.json"
 DRY_RUN_REPORT = REPORTS_DIR / "phase_24HR_shadow_collection_dry_run_report.md"
+BUILD_PLAN = REPORTS_DIR / "phase_24HR_shadow_collection_build_plan.md"
 SHADOW_PLAN = PRODUCT_DIR / "phase_24HR_shadow_validation_plan.md"
 FINAL_GATE = PRODUCT_DIR / "final_productization_gate.md"
 SOURCE_IDENTITY = REPO_ROOT / "api-gateway/src/rag/source_identity.py"
@@ -88,6 +89,7 @@ def path_checks() -> list[dict[str, str]]:
         NON_LIVE_SMOKE,
         DRY_RUN_SUMMARY,
         DRY_RUN_REPORT,
+        BUILD_PLAN,
         SHADOW_PLAN,
         FINAL_GATE,
         SOURCE_IDENTITY,
@@ -263,6 +265,7 @@ def smoke_and_gate_checks() -> list[dict[str, str]]:
 
 def authorization_checks() -> list[dict[str, str]]:
     plan_text = SHADOW_PLAN.read_text(encoding="utf-8")
+    build_plan_text = BUILD_PLAN.read_text(encoding="utf-8")
     required_phrases = [
         "Building or loading a Milvus shadow collection",
         "Starting a candidate gateway",
@@ -270,7 +273,7 @@ def authorization_checks() -> list[dict[str, str]]:
         "Any switch, cutover, internal eval opening, serving candidate opening, or productization decision",
     ]
     missing = [phrase for phrase in required_phrases if phrase not in plan_text]
-    return [
+    rows = [
         status_row(
             "authorization_requirements_present",
             "PASS" if not missing else "FAIL",
@@ -279,6 +282,23 @@ def authorization_checks() -> list[dict[str, str]]:
             SHADOW_PLAN,
         )
     ]
+    build_guard_phrases = [
+        "--execute",
+        "OPTION_A_APPROVED_PHASE24HR",
+        "refuses before connecting to Milvus",
+        "base collection is never dropped",
+    ]
+    missing_build_guard = [phrase for phrase in build_guard_phrases if phrase not in build_plan_text]
+    rows.append(
+        status_row(
+            "guarded_build_plan_present",
+            "PASS" if not missing_build_guard else "FAIL",
+            "execute flag + authorization token + fail-closed text",
+            "none missing" if not missing_build_guard else "|".join(missing_build_guard),
+            BUILD_PLAN,
+        )
+    )
+    return rows
 
 
 def write_csv(path: Path, rows: list[dict[str, str]]) -> None:

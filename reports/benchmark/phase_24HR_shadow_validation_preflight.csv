@@ -5,6 +5,7 @@ path_exists:reports/benchmark/source_acquisition/phase_24HR/teb04_kdv_gut/catalo
 path_exists:reports/benchmark/phase_24HR_non_live_residual_smoke.json,PASS,exists,exists,reports/benchmark/phase_24HR_non_live_residual_smoke.json
 path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json
 path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md
+path_exists:reports/benchmark/phase_24HR_shadow_collection_build_plan.md,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_build_plan.md
 path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md,PASS,exists,exists,reports/benchmark/productization/phase_24HR_shadow_validation_plan.md
 path_exists:reports/benchmark/productization/final_productization_gate.md,PASS,exists,exists,reports/benchmark/productization/final_productization_gate.md
 path_exists:api-gateway/src/rag/source_identity.py,PASS,exists,exists,api-gateway/src/rag/source_identity.py
@@ -24,3 +25,4 @@ shadow_build_dry_run_no_side_effects,PASS,live=false milvus=false embedding=fals
 productization_gate_still_closed,PASS,not_productization_ready,not_productization_ready,reports/benchmark/productization/final_productization_gate.md
 no_qid_specific_source_identity_branch,PASS,no TEB-04/TUZUK-05 literals,clean,api-gateway/src/rag/source_identity.py
 authorization_requirements_present,PASS,all explicit authorization requirements,none missing,reports/benchmark/productization/phase_24HR_shadow_validation_plan.md
+guarded_build_plan_present,PASS,execute flag + authorization token + fail-closed text,none missing,reports/benchmark/phase_24HR_shadow_collection_build_plan.md

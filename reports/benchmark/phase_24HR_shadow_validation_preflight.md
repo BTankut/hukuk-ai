@@ -1,9 +1,9 @@
 # Phase 24HR Shadow Validation Preflight
 
-- generated_at_utc: `2026-05-06T14:02:45.850506+00:00`
+- generated_at_utc: `2026-05-06T14:07:41.493150+00:00`
 - status: `PASS`
-- row_count: `25`
-- pass_count: `25`
+- row_count: `27`
+- pass_count: `27`
 - fail_count: `0`
 - live_8000_modified: `false`
 - milvus_modified: `false`
@@ -18,6 +18,7 @@
 | `path_exists:reports/benchmark/phase_24HR_non_live_residual_smoke.json` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_shadow_collection_build_plan.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/final_productization_gate.md` | `PASS` | exists | exists |
 | `path_exists:api-gateway/src/rag/source_identity.py` | `PASS` | exists | exists |
@@ -37,6 +38,7 @@
 | `productization_gate_still_closed` | `PASS` | not_productization_ready | not_productization_ready |
 | `no_qid_specific_source_identity_branch` | `PASS` | no TEB-04/TUZUK-05 literals | clean |
 | `authorization_requirements_present` | `PASS` | all explicit authorization requirements | none missing |
+| `guarded_build_plan_present` | `PASS` | execute flag + authorization token + fail-closed text | none missing |
 
 ## Decision
 

@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generated_at_utc": "2026-05-06T14:02:45.850506+00:00",
+    "generated_at_utc": "2026-05-06T14:07:41.493150+00:00",
     "status": "PASS",
-    "row_count": 25,
-    "pass_count": 25,
+    "row_count": 27,
+    "pass_count": 27,
     "fail_count": 0,
     "csv": "reports/benchmark/phase_24HR_shadow_validation_preflight.csv",
     "live_8000_modified": false,
@@ -54,6 +54,13 @@
       "expected": "exists",
       "observed": "exists",
       "evidence": "reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_collection_build_plan.md",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_build_plan.md"
     },
     {
       "check_id": "path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md",
@@ -187,6 +194,13 @@
       "expected": "all explicit authorization requirements",
       "observed": "none missing",
       "evidence": "reports/benchmark/productization/phase_24HR_shadow_validation_plan.md"
+    },
+    {
+      "check_id": "guarded_build_plan_present",
+      "status": "PASS",
+      "expected": "execute flag + authorization token + fail-closed text",
+      "observed": "none missing",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_build_plan.md"
     }
   ]
 }
