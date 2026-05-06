@@ -131,7 +131,89 @@ def test_phase24w_recovery_flag_preserves_canonical_selected_source_match(monkey
     assert _chunk_matches_selected_source_key(chunk, {"123"}) is True
 
 
+def test_phase24x_gate_demotes_support_law_identifier_when_regulation_is_requested(monkeypatch):
+    monkeypatch.setenv("ENABLE_PHASE24X_FAMILY_DOMAIN_COMPATIBILITY_GATE", "true")
+
+    selector = _select_metadata_first_source_candidates(
+        query="3194 sayılı kanun tek başına yetmez; planlı alanlar imar yönetmeliği de devreye girer mi?",
+        requested_source_families=["kanun", "yonetmelik"],
+        source_family_resolution=SourceFamilyResolution(
+            predicted_family="kanun",
+            family_confidence=0.82,
+            routing_families=["kanun", "yonetmelik"],
+            preferred_families=["kanun", "yonetmelik"],
+        ),
+        catalog_loader=lambda: {
+            "3194": {
+                "source_key": "3194",
+                "canonical_title": "İMAR KANUNU",
+                "canonical_identifier": "3194",
+                "canonical_identifier_type": "law_no",
+                "source_family_canonical": "kanun",
+                "source_family_raw": "kanun",
+                "source_family_mapped": "kanun",
+                "effective_state": "active",
+            },
+            "23722": {
+                "source_key": "23722",
+                "canonical_title": "PLANLI ALANLAR İMAR YÖNETMELİĞİ",
+                "canonical_identifier": "23722",
+                "canonical_identifier_type": "regulation_no",
+                "source_family_canonical": "yonetmelik",
+                "source_family_raw": "yonetmelik",
+                "source_family_mapped": "yonetmelik",
+                "effective_state": "active",
+            },
+        },
+    )
+
+    assert selector is not None
+    assert selector["selected_source_keys"][0] == "23722"
+    assert selector["phase24x_family_domain_gate_enabled"] is True
+    assert selector["phase24x_filtered_candidates"][0]["source_key"] == "3194"
+    assert selector["phase24x_filtered_candidates"][0]["phase24x_candidate_block_reason"] == "support_identifier_context"
+
+
+def test_phase24x_gate_blocks_sector_title_only_primary_and_forces_fallback(monkeypatch):
+    monkeypatch.setenv("ENABLE_PHASE24X_FAMILY_DOMAIN_COMPATIBILITY_GATE", "true")
+
+    selector = _select_metadata_first_source_candidates(
+        query="Tüketici hakları yönetmeliği kişiye özel ölçü mobilya cayma hakkı nedir?",
+        requested_source_families=["yonetmelik"],
+        source_family_resolution=SourceFamilyResolution(
+            predicted_family="yonetmelik",
+            family_confidence=0.8,
+            routing_families=["yonetmelik"],
+            preferred_families=["yonetmelik"],
+        ),
+        catalog_loader=lambda: {
+            "24039": {
+                "source_key": "24039",
+                "canonical_title": "ELEKTRONİK HABERLEŞME SEKTÖRÜNE İLİŞKİN TÜKETİCİ HAKLARI YÖNETMELİĞİ",
+                "canonical_identifier": "24039",
+                "canonical_identifier_type": "regulation_no",
+                "source_family_canonical": "kky",
+                "source_family_raw": "kky",
+                "source_family_mapped": "yonetmelik",
+                "source_family_mapping_reason": "kky_to_yonetmelik",
+                "effective_state": "active",
+            },
+        },
+    )
+
+    assert selector is not None
+    assert selector["metadata_lookup_hit"] is False
+    assert selector["phase24x_fallback_after_all_metadata_candidates_blocked"] is True
+    assert selector["phase24x_filtered_candidates"][0]["source_key"] == "24039"
+    assert (
+        selector["phase24x_filtered_candidates"][0]["phase24x_candidate_block_reason"]
+        == "domain_incompatible_title_only_primary"
+    )
+
+
 def test_phase22f_s7_source_identity_fix_has_no_qid_specific_runtime_branch():
     source = Path(__file__).resolve().parents[1] / "src" / "rag" / "source_identity.py"
 
     assert "TEB-04" not in source.read_text(encoding="utf-8")
+    assert "KANUN-08" not in source.read_text(encoding="utf-8")
+    assert "YON-05" not in source.read_text(encoding="utf-8")

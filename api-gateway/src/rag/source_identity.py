@@ -612,6 +612,55 @@ def _phase24w_source_identity_recovery_enabled() -> bool:
     }
 
 
+def _phase24x_family_domain_compatibility_gate_enabled() -> bool:
+    return os.getenv("ENABLE_PHASE24X_FAMILY_DOMAIN_COMPATIBILITY_GATE", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+_PHASE24X_GENERIC_TITLE_DOMAIN_TERMS = {
+    "ana",
+    "amac",
+    "amaci",
+    "bag",
+    "bagini",
+    "bakimindan",
+    "belirlenmesine",
+    "belirlenmesi",
+    "birinci",
+    "bolum",
+    "dayanak",
+    "esas",
+    "esaslar",
+    "genel",
+    "hak",
+    "hakkinda",
+    "haklari",
+    "iliskin",
+    "kanun",
+    "kapsam",
+    "kapsami",
+    "kurulmasi",
+    "madde",
+    "merkez",
+    "norm",
+    "normlar",
+    "ozel",
+    "sayi",
+    "sayili",
+    "teblig",
+    "temel",
+    "tuketici",
+    "uygulama",
+    "usul",
+    "yonetmelik",
+    "yonetmeligi",
+}
+
+
 def _chunk_source_identity_values(chunk: RetrievedChunk) -> set[str]:
     metadata = chunk.metadata or {}
     values: set[str] = set()
@@ -1523,6 +1572,178 @@ def _metadata_lookup_has_strong_query_anchor(query_metadata_signals: dict[str, A
     return False
 
 
+def _phase24x_requested_primary_family(query: str) -> str:
+    normalized = f" {normalize_query_text(query or '')} "
+    if re.search(r"\bhangi\s+(?:ana\s+|temel\s+)?yonetmelig?i?\b", normalized) or any(
+        token in normalized
+        for token in (
+            " hangi yonetmelik ",
+            " hangi yonetmeligi ",
+            " temel yonetmelik ",
+            " temel yonetmeligi ",
+            " yonetmeligi de ",
+            " yonetmelik de ",
+        )
+    ):
+        return "yonetmelik"
+    if re.search(r"\bhangi\s+(?:ana\s+|temel\s+|konsolide\s+)?teblig\b", normalized) or any(
+        token in normalized
+        for token in (
+            " ana teblig ",
+            " konsolide teblig ",
+            " tebligin konsolide ",
+        )
+    ):
+        return "teblig"
+    if re.search(r"\bhangi\s+(?:ana\s+|temel\s+)?kanun\b", normalized):
+        return "kanun"
+    if any(token in normalized for token in (" hangi cbk ", " hangi kararname ", " cbk bagi ")):
+        return "cb_kararname"
+    return ""
+
+
+def _phase24x_support_identifier_context(
+    *,
+    query: str,
+    identifier_values: set[str],
+) -> bool:
+    normalized = f" {normalize_query_text(query or '')} "
+    identifiers = [
+        value
+        for value in sorted(identifier_values, key=len, reverse=True)
+        if value and not re.fullmatch(r"(?:18|19|20)\d{2}", value)
+    ]
+    if not identifiers or not any(re.search(rf"(?<!\d){re.escape(value)}(?!\d)", normalized) for value in identifiers):
+        return False
+    limiting_context = any(
+        token in normalized
+        for token in (
+            " yalniz ",
+            " sadece ",
+            " tek basina ",
+            " neden eksik ",
+            " eksik olur",
+            " yetmez",
+            " yeterli degil",
+        )
+    )
+    requested_companion = any(
+        token in normalized
+        for token in (
+            " hangi yonetmelik",
+            " hangi yonetmeligi",
+            " yonetmeligi de ",
+            " yonetmelik de ",
+            " devreye ",
+            " birlikte ",
+            " ayrica ",
+            " yaninda ",
+        )
+    )
+    return limiting_context and requested_companion
+
+
+def _phase24x_domain_terms(text: str) -> list[str]:
+    terms: list[str] = []
+    seen: set[str] = set()
+    for token in _extract_retrieval_priority_terms(text or ""):
+        if token in _PHASE24X_GENERIC_TITLE_DOMAIN_TERMS:
+            continue
+        if token.isdigit() or len(token) < 3:
+            continue
+        if token in seen:
+            continue
+        seen.add(token)
+        terms.append(token)
+    return terms
+
+
+def _phase24x_query_supports_title_domain(*, query: str, title: str) -> tuple[bool, list[str], list[str]]:
+    title_terms = _phase24x_domain_terms(title)
+    query_terms = set(_phase24x_domain_terms(query))
+    if not title_terms:
+        return True, title_terms, sorted(query_terms)
+    normalized_title = normalize_query_text(title or "")
+    normalized_query = normalize_query_text(query or "")
+    if normalized_title and len(normalized_title) >= 18 and normalized_title in normalized_query:
+        return True, title_terms, sorted(query_terms)
+    title_term_set = set(title_terms)
+    overlap = title_term_set & query_terms
+    leading_terms = [term for term in title_terms[:4] if term not in {"sektoru", "sektorune"}]
+    leading_overlap = set(leading_terms) & query_terms
+    if len(leading_overlap) >= 2:
+        return True, title_terms, sorted(query_terms)
+    if len(overlap) >= 3 and leading_overlap:
+        return True, title_terms, sorted(query_terms)
+    return False, title_terms, sorted(query_terms)
+
+
+def _phase24x_candidate_primary_gate(
+    *,
+    record: dict[str, Any],
+    query: str,
+    lookup_source: str,
+    match_reasons: list[str],
+    query_metadata_signals: dict[str, Any] | None,
+) -> dict[str, Any]:
+    requested_primary_family = _phase24x_requested_primary_family(query)
+    family = str(record.get("source_family_mapped") or record.get("source_family_canonical") or "")
+    relation_group = _source_family_relation_group(family)
+    identifier_values = _record_identifier_values(record)
+    identifier_values |= _metadata_lookup_signal_values(query_metadata_signals, "parsed_identifier_candidates")
+    support_identifier_context = _phase24x_support_identifier_context(
+        query=query,
+        identifier_values=identifier_values,
+    )
+    title = str(record.get("canonical_title") or "")
+    domain_supported, title_domain_terms, query_domain_terms = _phase24x_query_supports_title_domain(
+        query=query,
+        title=title,
+    )
+    role = "primary_eligible"
+    block_reason = ""
+    allowed_relation = ""
+    blocked_relation = ""
+
+    if support_identifier_context and relation_group == "kanun" and requested_primary_family in {
+        "yonetmelik",
+        "teblig",
+    }:
+        role = "primary_candidate_demoted"
+        block_reason = "support_identifier_context"
+        allowed_relation = f"{relation_group}->{requested_primary_family}:supporting_source"
+    elif requested_primary_family:
+        requested_group = _source_family_relation_group(requested_primary_family)
+        if requested_group and requested_group != relation_group:
+            role = "primary_candidate_blocked"
+            block_reason = "requested_primary_family_mismatch"
+            blocked_relation = f"{relation_group}->{requested_primary_family}:primary"
+
+    weak_title_lookup = lookup_source in {"normalized_title_lookup", "title_ngram_family_lookup"}
+    exact_or_issuer_anchor = bool({"identifier_exact", "issuer_exact"} & set(match_reasons))
+    title_has_university_domain = any(
+        term in set(title_domain_terms)
+        for term in ("universite", "universitesi")
+    )
+    if role == "primary_eligible" and title_has_university_domain and not _query_has_academic_regulation_intent(query):
+        role = "primary_candidate_blocked"
+        block_reason = "academic_domain_without_query_support"
+    elif role == "primary_eligible" and weak_title_lookup and not exact_or_issuer_anchor and not domain_supported:
+        role = "primary_candidate_blocked"
+        block_reason = "domain_incompatible_title_only_primary"
+
+    return {
+        "phase24x_candidate_primary_role": role,
+        "phase24x_candidate_block_reason": block_reason,
+        "phase24x_requested_primary_family": requested_primary_family,
+        "phase24x_support_identifier_context": support_identifier_context,
+        "phase24x_title_domain_terms": title_domain_terms[:8],
+        "phase24x_query_domain_terms": query_domain_terms[:12],
+        "phase24x_allowed_cross_family_relation": allowed_relation,
+        "phase24x_blocked_cross_family_relation": blocked_relation,
+    }
+
+
 _TEB_KDV_GENERAL_APPLICATION_SOURCE_KEY = "19631"
 _TEB_KDV_CORE_SIGNAL_TERMS = ("kdv", "katma deger vergisi")
 _TEB_KDV_OPERATIONAL_SIGNAL_TERMS = (
@@ -2084,6 +2305,8 @@ def _select_metadata_first_source_candidates(
     if not catalog:
         return None
 
+    phase24x_gate_enabled = _phase24x_family_domain_compatibility_gate_enabled()
+    phase24x_filtered_candidates: list[dict[str, Any]] = []
     scored: list[dict[str, Any]] = []
     for record in catalog.values():
         score, reasons = _source_identity_record_score(
@@ -2157,6 +2380,39 @@ def _select_metadata_first_source_candidates(
             lookup_source = "teb_kdv_source_identity_lookup"
         else:
             lookup_source = "title_ngram_family_lookup"
+        phase24x_gate_trace = {
+            "phase24x_candidate_primary_role": "primary_eligible",
+            "phase24x_candidate_block_reason": "",
+            "phase24x_requested_primary_family": "",
+            "phase24x_support_identifier_context": False,
+            "phase24x_title_domain_terms": [],
+            "phase24x_query_domain_terms": [],
+            "phase24x_allowed_cross_family_relation": "",
+            "phase24x_blocked_cross_family_relation": "",
+        }
+        if phase24x_gate_enabled:
+            phase24x_gate_trace = _phase24x_candidate_primary_gate(
+                record=record,
+                query=query,
+                lookup_source=lookup_source,
+                match_reasons=reasons,
+                query_metadata_signals=query_metadata_signals,
+            )
+            if phase24x_gate_trace["phase24x_candidate_primary_role"] != "primary_eligible":
+                phase24x_filtered_candidates.append(
+                    {
+                        "source_key": record.get("source_key"),
+                        "canonical_title": record.get("canonical_title"),
+                        "canonical_identifier": record.get("canonical_identifier"),
+                        "source_family": record.get("source_family_mapped")
+                        or record.get("source_family_canonical"),
+                        "score": round(score, 3),
+                        "metadata_lookup_source": lookup_source,
+                        "match_reasons": reasons,
+                        **phase24x_gate_trace,
+                    }
+                )
+                continue
         scored.append(
             {
                 "source_key": record.get("source_key"),
@@ -2175,6 +2431,7 @@ def _select_metadata_first_source_candidates(
                 "metadata_lookup_confidence": round(min(0.99, 0.45 + score / 100.0), 3),
                 "match_reasons": reasons,
                 "teb_kdv_rerank_boost_applied": has_teb_kdv_anchor,
+                **phase24x_gate_trace,
                 "focus_keys": [
                     key
                     for key in (
@@ -2187,6 +2444,28 @@ def _select_metadata_first_source_candidates(
         )
 
     if not scored:
+        if phase24x_gate_enabled and phase24x_filtered_candidates:
+            return {
+                "applied": True,
+                "reason": "phase24x_all_metadata_candidates_blocked",
+                "metadata_lookup_hit": False,
+                "metadata_lookup_suppressed": True,
+                "metadata_lookup_suppression_reason": "phase24x_all_metadata_candidates_blocked",
+                "metadata_lookup_source": "",
+                "metadata_lookup_rank": None,
+                "metadata_lookup_confidence": 0.0,
+                "candidate_count": 0,
+                "selected_source_keys": [],
+                "selected_families": [],
+                "query_identifier_tokens": sorted(_extract_source_identity_identifier_tokens(query)),
+                "query_year_tokens": _extract_year_tokens(query),
+                "phase24x_family_domain_gate_enabled": True,
+                "phase24x_filtered_candidate_count": len(phase24x_filtered_candidates),
+                "phase24x_filtered_candidates": phase24x_filtered_candidates,
+                "phase24x_fallback_after_all_metadata_candidates_blocked": True,
+                "query_metadata_signals": query_metadata_signals,
+                "candidates": [],
+            }
         return None
     ranked = sorted(
         scored,
@@ -2263,6 +2542,10 @@ def _select_metadata_first_source_candidates(
             if teb_kdv_candidate_injected
             else ""
         ),
+        "phase24x_family_domain_gate_enabled": phase24x_gate_enabled,
+        "phase24x_filtered_candidate_count": len(phase24x_filtered_candidates),
+        "phase24x_filtered_candidates": phase24x_filtered_candidates,
+        "phase24x_fallback_after_all_metadata_candidates_blocked": False,
         "query_metadata_signals": query_metadata_signals,
         "candidates": ranked,
     }
