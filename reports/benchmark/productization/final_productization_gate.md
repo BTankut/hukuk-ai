@@ -32,7 +32,7 @@ Fine-tuning remains closed for this gate. The observed blockers are legal/source
 
 ## Required Next Decision
 - No additional human lawyer decision is currently pending for `TEB-04` or `TUZUK-05`.
-- Engineering has a shadow validation plan for `TEB-04` and `TUZUK-05`; Milvus shadow build, candidate gateway, or full candidate validation should run only if explicitly authorized.
+- Engineering has a shadow validation plan, local preflight, and authorization packet for `TEB-04` and `TUZUK-05`; Milvus shadow build, candidate gateway, or full candidate validation should run only if explicitly authorized.
 
 ## Runtime Change
 No live runtime change was made.

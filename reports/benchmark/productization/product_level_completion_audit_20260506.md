@@ -64,7 +64,8 @@ Concrete success criteria:
 |---|---|---|
 | TEB-04 | `reports/benchmark/phase_24HR_teb04_kdv_gut_materialization_report.md` | Official GIB PDF SHA verified; 6 full spans and 59 chunked subspans materialized. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` | 9/9 artifact-level non-live checks passed; no live 8000, Milvus, or model inference. |
-| TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` | Shadow/full validation plan exists; execution requires explicit authorization. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 21/21 local preflight checks passed; no live 8000, Milvus, candidate gateway, or model inference. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Shadow/full validation plan and authorization packet exist; execution requires explicit authorization. |
 
 ## Completion Decision
 Objective artifacts are produced and pushed, but product-level completion is **not achieved** under the brief's Section 8 definition.
@@ -77,5 +78,7 @@ Explicit owner authorization is required before the next execution step:
 - Build/load a Milvus shadow collection for TEB-04/TUZUK-05 validation.
 - Start any candidate gateway on a non-live port.
 - Run a full trace-on candidate benchmark if it uses shared model/GPU resources.
+
+The authorization packet is `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md`.
 
 Until that authorization is given, the correct state is `productization = not_ready`.

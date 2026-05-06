@@ -71,7 +71,7 @@ Fine-tuning remains closed. Current blockers are product, source, corpus, policy
 ## 9. Remaining Blockers
 - Full benchmark stability is below target.
 - Nine residual rows remain open or conditional.
-- `TUZUK-05` and `TEB-04` still require shadow/full benchmark validation before any serving/productization gate can change; the shadow validation plan is drafted.
+- `TUZUK-05` and `TEB-04` still require shadow/full benchmark validation before any serving/productization gate can change; the shadow validation plan, local preflight, and authorization packet are prepared.
 - Guardrails and verification are disabled in live health.
 - Privacy/PII and audit logging enforcement are not evidenced.
 - Rollback runbook exists but has not been rehearsed.
@@ -82,7 +82,7 @@ No additional human lawyer decision is currently pending for `TEB-04` or `TUZUK-
 
 Next required action is engineering remediation:
 
-- `TEB-04` / `TUZUK-05`: shadow validation plan is drafted; run Milvus shadow build, candidate gateway, or full candidate validation only if explicitly authorized.
+- `TEB-04` / `TUZUK-05`: shadow validation plan, local preflight, and authorization packet are prepared; run Milvus shadow build, candidate gateway, or full candidate validation only if explicitly authorized.
 
 ## 11. Final Live State
 Latest observed live health:

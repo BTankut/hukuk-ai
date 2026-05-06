@@ -15,6 +15,8 @@ This plan does not authorize live `8000`, internal eval, serving candidate, prod
 | TEB-04 chunked spans | `reports/benchmark/source_acquisition/phase_24HR/teb04_kdv_gut/spans/teb04_kdv_gut_chunked_subspans.jsonl` |
 | TUZUK-05 policy | `reports/benchmark/productization/post_human_review_tuzuk05_policy_update_report.md` |
 | Artifact-level smoke | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` |
+| Shadow validation preflight | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` |
+| Authorization packet | `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md` |
 
 ## Required Shadow Validation Steps
 1. Build a new shadow-only candidate collection from the current base collection.
@@ -63,3 +65,5 @@ The following require explicit owner authorization before execution:
 - Starting a candidate gateway on a non-live port.
 - Running a full trace-on candidate benchmark if it uses shared GPU/model resources.
 - Any switch, cutover, internal eval opening, serving candidate opening, or productization decision.
+
+Use `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md` to approve the smallest needed scope.
