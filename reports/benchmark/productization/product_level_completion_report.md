@@ -6,7 +6,7 @@
 | A Benchmark Stability | FAIL | Latest full run is `805.09/89`; below `816/91` target and below Phase23R-E reference. |
 | B Residual Risk Closure | FAIL | Nine residual rows remain open or conditional. |
 | C Legal / Scorer Review | PARTIAL | `TEB-04` and `TUZUK-05` human review blockers are closed; other legal/scorer residuals remain open or conditional. |
-| D Source / Corpus / Materialization | FAIL | `TEB-04` official PDF and product spans are materialized as non-live artifacts but not retrieval/shadow validated; `TUZUK-05` offline scorer policy is implemented but runtime/source-policy validation remains. |
+| D Source / Corpus / Materialization | FAIL | `TEB-04` and `TUZUK-05` artifact-level non-live smoke passed, but shadow/full benchmark validation remains. |
 | E Source Identity / Selector | PARTIAL | Phase24X focused smoke recovered `KANUN-08` and `YON-05`; no full candidate benchmark proof. |
 | F Temporal / Current-Law Validity | FAIL | `TUZUK-04` current-law vs repealed-source blocker remains. |
 | G Guardrails Policy | FAIL | Policy drafted; live guardrails disabled. |
@@ -31,8 +31,8 @@
 - Residual rows: 9.
 - Accepted for serving candidate: 0.
 - Accepted for productization: 0.
-- `TUZUK-05` human review is closed as `rubric_should_accept_general_hierarchy_rule`; exact tüzük materialization should not be fabricated. Offline scorer policy now accepts the abstract hierarchy source-policy class and rejects concrete irrelevant tüzük titles in that class.
-- `TEB-04` human review is closed as `product_span_confirmed`; official GIB PDF SHA-256 is verified and 6 deterministic non-live spans are materialized from PDFKit extraction.
+- `TUZUK-05` human review is closed as `rubric_should_accept_general_hierarchy_rule`; exact tüzük materialization should not be fabricated. Offline scorer policy accepts the abstract hierarchy source-policy class and rejects concrete irrelevant tüzük titles in that class; artifact-level non-live smoke passed.
+- `TEB-04` human review is closed as `product_span_confirmed`; official GIB PDF SHA-256 is verified, 6 deterministic non-live spans are materialized from PDFKit extraction, and artifact-level span/selector smoke passed.
 
 ## 4. Policy Artifact Status
 | artifact | status |
@@ -63,7 +63,7 @@ Serving-candidate cutover remains closed.
 ## 7. Productization Decision
 Decision: `not_productization_ready`.
 
-Productization remains closed because benchmark stability, residual implementation, policy enforcement, privacy/audit controls, rollback rehearsal, and non-live validation are not complete.
+Productization remains closed because benchmark stability, residual implementation, policy enforcement, privacy/audit controls, rollback rehearsal, and shadow/full validation are not complete.
 
 ## 8. Fine-Tuning Decision
 Fine-tuning remains closed. Current blockers are product, source, corpus, policy, verification, privacy, audit, and release-control blockers. Fine-tuning is not an acceptable substitute for those unresolved gates.
@@ -71,8 +71,7 @@ Fine-tuning remains closed. Current blockers are product, source, corpus, policy
 ## 9. Remaining Blockers
 - Full benchmark stability is below target.
 - Nine residual rows remain open or conditional.
-- `TUZUK-05` requires runtime/source-policy validation for abstract norm-hierarchy questions.
-- `TEB-04` requires gated non-live retrieval/selector smoke and shadow integration from the materialized KDV GUT spans.
+- `TUZUK-05` and `TEB-04` still require shadow/full benchmark validation before any serving/productization gate can change; the shadow validation plan is drafted.
 - Guardrails and verification are disabled in live health.
 - Privacy/PII and audit logging enforcement are not evidenced.
 - Rollback runbook exists but has not been rehearsed.
@@ -83,8 +82,7 @@ No additional human lawyer decision is currently pending for `TEB-04` or `TUZUK-
 
 Next required action is engineering remediation:
 
-- `TUZUK-05`: run non-live runtime/source-policy smoke for the systemic general hierarchy policy before any gate change.
-- `TEB-04`: run gated non-live retrieval/selector smoke against the materialized KDV GUT spans before any shadow/runtime integration.
+- `TEB-04` / `TUZUK-05`: shadow validation plan is drafted; run Milvus shadow build, candidate gateway, or full candidate validation only if explicitly authorized.
 
 ## 11. Final Live State
 Latest observed live health:

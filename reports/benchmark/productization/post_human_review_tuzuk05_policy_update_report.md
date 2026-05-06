@@ -24,4 +24,4 @@ This does not open internal eval, serving candidate, productization, live `8000`
 | Exact tüzük materialization | Not fabricated; human review says no exact single current tüzük source is identifiable from the prompt. |
 
 ## Remaining Gate
-Runtime/source-policy validation remains required. The offline scorer now reflects the legal review decision, but serving/productization cannot open until non-live runtime smoke proves the same policy at answer-contract and retrieval/selector level.
+Artifact-level non-live runtime priority/scorer smoke passed in `reports/benchmark/phase_24HR_non_live_residual_smoke.md`. Serving/productization still cannot open until shadow/full benchmark validation proves the same policy without regression.

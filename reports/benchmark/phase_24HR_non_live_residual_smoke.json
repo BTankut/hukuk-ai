@@ -1,0 +1,96 @@
+{
+  "summary": {
+    "generated_at_utc": "2026-05-06T13:45:18.273742+00:00",
+    "status": "PASS",
+    "row_count": 9,
+    "pass_count": 9,
+    "fail_count": 0,
+    "csv": "reports/benchmark/phase_24HR_non_live_residual_smoke.csv",
+    "live_8000_modified": false,
+    "milvus_modified": false,
+    "model_inference_called": false
+  },
+  "rows": [
+    {
+      "qid": "TEB-04",
+      "check_id": "teb_source_identity_selects_kdv_gut",
+      "status": "PASS",
+      "expected": "19631",
+      "observed": "19631",
+      "evidence": "metadata_first_source_selector",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TEB-04",
+      "check_id": "teb_required_locators_materialized",
+      "status": "PASS",
+      "expected": "I/C-2.1.3|I/C-2.1.5.2.1|I/C-2.1.5.2.2|I/C-2.1.5.3",
+      "observed": "I/C-2.1.3|I/C-2.1.5.2.1|I/C-2.1.5.2.2|I/C-2.1.5.3",
+      "evidence": "reports/benchmark/source_acquisition/phase_24HR/teb04_kdv_gut/spans/teb04_kdv_gut_spans.jsonl + reports/benchmark/source_acquisition/phase_24HR/teb04_kdv_gut/spans/teb04_kdv_gut_chunked_subspans.jsonl",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TEB-04",
+      "check_id": "teb_span_recall_kismi_tevkifat",
+      "status": "PASS",
+      "expected": "I/C-2.1.3",
+      "observed": "I/C-2.1.5.2.2|I/C-2.1.3.1|I/C-2.1.3.2|I/C-2.1.3.2.5.2|I/C-2.1.3.4",
+      "evidence": "local_chunked_subspan_lexical_recall_top5",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TEB-04",
+      "check_id": "teb_span_recall_mahsuben_iade",
+      "status": "PASS",
+      "expected": "I/C-2.1.5.2.1",
+      "observed": "I/C-2.1.5.2.1|I/C-2.1.5.1|I/C-2.1.5.3|I/C-2.1.3.4.3.2|I/C-2.1.5.2.2",
+      "evidence": "local_chunked_subspan_lexical_recall_top5",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TEB-04",
+      "check_id": "teb_span_recall_nakden_iade",
+      "status": "PASS",
+      "expected": "I/C-2.1.5.2.2",
+      "observed": "I/C-2.1.5.2.2|I/C-2.1.5.1|I/C-2.1.5.3|I/C-2.1.3.4.3.2|I/C-2.1.3.1",
+      "evidence": "local_chunked_subspan_lexical_recall_top5",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TEB-04",
+      "check_id": "teb_span_recall_diger_hususlar",
+      "status": "PASS",
+      "expected": "I/C-2.1.5.3",
+      "observed": "I/C-2.1.5.3|I/C-2.1.3.4.3.2|I/C-2.1.5.2.1|I/C-2.1.5.2.2|I/C-2.1.3.2.14",
+      "evidence": "local_chunked_subspan_lexical_recall_top5",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TUZUK-05",
+      "check_id": "tuzuk_runtime_priority_selects_general_hierarchy_chunk",
+      "status": "PASS",
+      "expected": "genel-hiyerarsi tüzük",
+      "observed": "genel-hiyerarsi tüzük",
+      "evidence": "RAGOrchestrator._extract_priority_chunks",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TUZUK-05",
+      "check_id": "tuzuk_scorer_accepts_abstract_hierarchy_policy",
+      "status": "PASS",
+      "expected": "document_match_score=1.00 without wrong_document",
+      "observed": "document_match_score=1.00 failure_classes=",
+      "evidence": "score_hukuk_ai_100.score_row",
+      "live_8000_modified": "false"
+    },
+    {
+      "qid": "TUZUK-05",
+      "check_id": "tuzuk_scorer_rejects_irrelevant_concrete_tuzuk_title",
+      "status": "PASS",
+      "expected": "document_match_score=0.00 with wrong_document",
+      "observed": "document_match_score=0.00 failure_classes=missing_gold_document_signal | wrong_document | hallucinated_identifier | unsupported_confident_claim",
+      "evidence": "score_hukuk_ai_100.score_row",
+      "live_8000_modified": "false"
+    }
+  ]
+}

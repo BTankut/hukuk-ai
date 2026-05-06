@@ -32,6 +32,6 @@ This does not open internal eval, serving candidate, productization, live `8000`
 | `I/C-2.1.5.3` | materialized from verified PDF |
 
 ## Remaining Gate
-`TEB-04` remains blocked for serving/productization until a gated non-live retrieval/selector smoke proves the materialized spans are selected and answerable without regression.
+`TEB-04` artifact-level non-live retrieval/selector smoke passed in `reports/benchmark/phase_24HR_non_live_residual_smoke.md`. It remains blocked for serving/productization until shadow/full benchmark validation proves the materialized spans work without regression.
 
 `I/C-2.1.3` is 76,818 characters as a full section. The materialization script also produced 59 deterministic subheading chunks with max chunk length 6,410. Any runtime insertion should use the chunked subspan file rather than truncating the full section.

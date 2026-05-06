@@ -14,9 +14,9 @@
 | KANUN-12 | confirmed_source_no_runtime_improvement | legal_confirmation_available | raw_verified_ready | no_scorer_review_required | no | no | no | source_acquisition_legal_review | systemic_runtime_materialization_and_retrieval_revalidation |
 | KKY-01 | taxonomy_mapping_blocker | legal_taxonomy_confirmed_conditional | not_required | scorer_review_required | conditional | no | no | legal_scorer_taxonomy | systemic_family_normalization_required |
 | KKY-03 | confirmed_source_no_runtime_improvement | legal_confirmation_available | raw_verified_ready | scorer_review_required | no | no | no | legal_scorer_source_acquisition | systemic_family_materialization_and_retrieval_revalidation |
-| TEB-04 | verified_kdv_gut_spans_materialized_non_live | product_span_confirmed | raw_pdf_verified_and_spans_materialized | product_span_confirmed | yes | no | no | corpus_materialization_owner | run_gated_non_live_teb04_retrieval_selector_smoke_then_shadow_integration_plan |
+| TEB-04 | artifact_level_non_live_smoke_passed_shadow_integration_pending | product_span_confirmed | raw_pdf_verified_spans_materialized_smoke_passed | product_span_confirmed | yes | no | no | corpus_materialization_owner | prepare_shadow_integration_plan_then_full_candidate_validation_if_authorized |
 | TUZUK-04 | current_law_vs_repealed_source_blocker | legal_taxonomy_confirmed_blocks | raw_verified_historical_repealed_ready | no_scorer_review_required | no | no | no | source_acquisition_legal_review | current_law_repealed_source_demotion_and_revalidation |
-| TUZUK-05 | general_hierarchy_scorer_policy_implemented_runtime_pending | human_review_closed_accept_general_hierarchy_rule | exact_tuzuk_source_not_identifiable | rubric_policy_implemented_offline_scorer | yes_if_no_wrong_candidate_source | no | no | scorer_policy_runtime_owner | wire_systemic_hierarchy_source_policy_into_runtime_then_non_live_smoke |
+| TUZUK-05 | artifact_level_non_live_policy_smoke_passed_shadow_validation_pending | human_review_closed_accept_general_hierarchy_rule | exact_tuzuk_source_not_identifiable | rubric_policy_implemented_offline_scorer_and_smoke_passed | yes_if_no_wrong_candidate_source | no | no | scorer_policy_runtime_owner | prepare_shadow_validation_plan_then_full_candidate_validation_if_authorized |
 | YON-04 | confirmed_source_no_runtime_improvement | legal_confirmation_available | raw_verified_ready | no_scorer_review_required | no | no | no | legal_scorer_source_acquisition | systemic_runtime_materialization_and_retrieval_revalidation |
 
 ## Source Basis
@@ -26,12 +26,12 @@
 - `reports/benchmark/productization/human_legal_review_packet_20260506/intake/human_legal_review_intake_report.md`
 
 ## Human Review Intake Update
-- `TUZUK-05`: human review closed the source ambiguity as `rubric_should_accept_general_hierarchy_rule`. Offline scorer policy now accepts the abstract hierarchy source-policy class and rejects concrete irrelevant tüzük titles for that class. Runtime/source-policy validation is still pending.
-- `TEB-04`: human review confirmed `product_span_confirmed`; official GIB KDV GUT PDF was SHA-256 verified and 6 deterministic non-live spans were materialized from PDFKit extraction. Productization still requires gated non-live retrieval/selector smoke and shadow/runtime integration.
+- `TUZUK-05`: human review closed the source ambiguity as `rubric_should_accept_general_hierarchy_rule`. Offline scorer policy accepts the abstract hierarchy source-policy class and rejects concrete irrelevant tüzük titles for that class; artifact-level non-live runtime priority/scorer smoke passed. Shadow/full benchmark validation is still pending.
+- `TEB-04`: human review confirmed `product_span_confirmed`; official GIB KDV GUT PDF was SHA-256 verified, 6 deterministic non-live spans were materialized from PDFKit extraction, and artifact-level non-live span/selector smoke passed. Productization still requires shadow/runtime integration and full benchmark validation.
 - `CBY-04`, `CBY-06`, `TUZUK-04`: reviewed evidence still blocks internal/product progression until systemic source/corpus fixes are completed and revalidated.
 
 ## Decision
 - Residual closure status: **not closed**.
 - Human legal/scorer review blocker is closed for `TUZUK-05` and `TEB-04`.
-- Productization remains blocked because `TEB-04` materialization is artifact-only, `TUZUK-05` runtime/source-policy validation is pending, and the other residual rows remain open or conditional.
+- Productization remains blocked because `TEB-04` and `TUZUK-05` are validated only at artifact-level non-live smoke, shadow/full benchmark validation is pending, and the other residual rows remain open or conditional.
 - Serving candidate remains blocked because no residual row is accepted for serving-candidate without implementation and non-live validation.
