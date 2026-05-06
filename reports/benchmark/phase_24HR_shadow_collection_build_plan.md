@@ -1,6 +1,6 @@
 # Phase 24HR Shadow Collection Build Plan
 
-- generated_at_utc: `2026-05-06T14:07:41.467349+00:00`
+- generated_at_utc: `2026-05-06T14:11:35.094601+00:00`
 - status: `READY_FOR_OPTION_A_AUTHORIZATION`
 - base_collection: `mevzuat_faz1_shadow_20260418_compat1024_p0_backfill`
 - target_collection: `mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr`

@@ -123,7 +123,8 @@ def write_plan(args: argparse.Namespace) -> dict[str, Any]:
         "- Existing target collection rebuild requires `--force-target-rebuild`; base collection is never dropped.",
         "- Live `8000`, Open WebUI, internal eval, serving candidate, productization, model path, prompt, and top-k are not changed by this script.",
     ]
-    OUT_BUILD_PLAN_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if not getattr(args, "no_write", False):
+        OUT_BUILD_PLAN_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps(plan, ensure_ascii=False, sort_keys=True))
     return plan
 
@@ -414,6 +415,7 @@ def parse_args() -> argparse.Namespace:
     plan.add_argument("--target-collection", default=TARGET_COLLECTION)
     plan.add_argument("--embedding-base-url", default=os.getenv("EMBEDDING_BASE_URL", EMBEDDING_BASE_URL))
     plan.add_argument("--embedding-model", default=os.getenv("EMBEDDING_MODEL", EMBEDDING_MODEL))
+    plan.add_argument("--no-write", action="store_true", help="Print the plan JSON without rewriting the markdown artifact.")
     plan.set_defaults(func=command_plan)
 
     build = subparsers.add_parser("build-shadow")

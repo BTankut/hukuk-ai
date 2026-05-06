@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generated_at_utc": "2026-05-06T14:11:35.233623+00:00",
+    "generated_at_utc": "2026-05-06T14:14:18.036531+00:00",
     "status": "PASS",
     "row_count": 4,
     "pass_count": 4,
@@ -17,14 +17,14 @@
   "rows": [
     {
       "case_id": "plan_local_only",
-      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_shadow_collection_build.py plan",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/btmacstudio/Projects/hukuk-ai/scripts/benchmark/phase24hr_shadow_collection_build.py plan --no-write",
       "expected_returncode": 0,
       "observed_returncode": 0,
       "expected_status": "READY_FOR_OPTION_A_AUTHORIZATION",
       "observed_status": "READY_FOR_OPTION_A_AUTHORIZATION",
       "expected_error_substring": "",
       "observed_error": "",
-      "stdout_last_json": "{\"authorization_token_required\": \"OPTION_A_APPROVED_PHASE24HR\", \"base_collection\": \"mevzuat_faz1_shadow_20260418_compat1024_p0_backfill\", \"candidate_gateway_started\": false, \"delta_row_count\": 59, \"dry_run_manifest_jsonl\": \"reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.jsonl\", \"dry_run_summary\": \"reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json\", \"embedding_base_url\": \"http://127.0.0.1:8081/v1\", \"embedding_model\": \"intfloat/multilingual-e5-large-instruct\", \"execute_required\": true, \"generated_at_utc\": \"2026-05-06T14:11:35.094601+00:00\", \"live_8000_modified\": false, \"milvus_modified_by_plan\": false, \"milvus_uri\": \"http://localhost:19530\", \"model_inference_called\": false, \"status\": \"READY_FOR_OPTION_A_AUTHORIZATION\", \"target_collection\": \"mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr\", \"vector_dimension\": 1024}",
+      "stdout_last_json": "{\"authorization_token_required\": \"OPTION_A_APPROVED_PHASE24HR\", \"base_collection\": \"mevzuat_faz1_shadow_20260418_compat1024_p0_backfill\", \"candidate_gateway_started\": false, \"delta_row_count\": 59, \"dry_run_manifest_jsonl\": \"reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.jsonl\", \"dry_run_summary\": \"reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json\", \"embedding_base_url\": \"http://127.0.0.1:8081/v1\", \"embedding_model\": \"intfloat/multilingual-e5-large-instruct\", \"execute_required\": true, \"generated_at_utc\": \"2026-05-06T14:14:17.897865+00:00\", \"live_8000_modified\": false, \"milvus_modified_by_plan\": false, \"milvus_uri\": \"http://localhost:19530\", \"model_inference_called\": false, \"status\": \"READY_FOR_OPTION_A_AUTHORIZATION\", \"target_collection\": \"mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr\", \"vector_dimension\": 1024}",
       "stderr": "",
       "status": "PASS"
     },

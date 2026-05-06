@@ -74,7 +74,7 @@ def run_cases() -> list[dict[str, Any]]:
     return [
         run_case(
             "plan_local_only",
-            ["plan"],
+            ["plan", "--no-write"],
             expected_returncode=0,
             expected_status="READY_FOR_OPTION_A_AUTHORIZATION",
         ),
