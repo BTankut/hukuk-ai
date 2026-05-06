@@ -1,6 +1,6 @@
 # Phase 24HR Shadow Build Guard Smoke
 
-- generated_at_utc: `2026-05-06T14:14:18.036531+00:00`
+- generated_at_utc: `2026-05-06T15:59:05.423582+00:00`
 - status: `PASS`
 - row_count: `4`
 - pass_count: `4`

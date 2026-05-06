@@ -8,6 +8,10 @@ path_exists:reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md,PAS
 path_exists:reports/benchmark/phase_24HR_shadow_collection_build_plan.md,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_build_plan.md
 path_exists:reports/benchmark/phase_24HR_shadow_build_guard_smoke.json,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_build_guard_smoke.json
 path_exists:reports/benchmark/phase_24HR_shadow_build_guard_smoke.md,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_build_guard_smoke.md
+path_exists:reports/benchmark/phase_24HR_shadow_collection_build_report.md,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_build_report.md
+path_exists:reports/benchmark/phase_24HR_shadow_runtime_provenance.json,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_runtime_provenance.json
+path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.json,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_verify.json
+path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.md,PASS,exists,exists,reports/benchmark/phase_24HR_shadow_collection_verify.md
 path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md,PASS,exists,exists,reports/benchmark/productization/phase_24HR_shadow_validation_plan.md
 path_exists:reports/benchmark/productization/final_productization_gate.md,PASS,exists,exists,reports/benchmark/productization/final_productization_gate.md
 path_exists:api-gateway/src/rag/source_identity.py,PASS,exists,exists,api-gateway/src/rag/source_identity.py
@@ -26,6 +30,8 @@ shadow_build_dry_run_pass,PASS,PASS rows=59 collisions=0,PASS rows=59 canonical=
 shadow_build_dry_run_no_side_effects,PASS,live=false milvus=false embedding=false gateway=false model=false,live=False milvus=False embedding=False gateway=False model=False,reports/benchmark/phase_24HR_shadow_collection_dry_run_summary.json
 shadow_build_guard_smoke_pass,PASS,PASS fail_count=0,PASS fail_count=0,reports/benchmark/phase_24HR_shadow_build_guard_smoke.json
 shadow_build_guard_smoke_no_side_effects,PASS,live=false milvus=false embedding=false gateway=false model=false,live=False milvus=False embedding=False gateway=False model=False,reports/benchmark/phase_24HR_shadow_build_guard_smoke.json
+shadow_collection_build_pass,PASS,PASS delta=59 live=false gateway=false,PASS delta=59 live=False gateway=False,reports/benchmark/phase_24HR_shadow_runtime_provenance.json
+shadow_collection_verify_pass,PASS,PASS target_delta_rows=59 base_collision=0,PASS target_delta=59 base_collision=0,reports/benchmark/phase_24HR_shadow_collection_verify.json
 productization_gate_still_closed,PASS,not_productization_ready,not_productization_ready,reports/benchmark/productization/final_productization_gate.md
 no_qid_specific_source_identity_branch,PASS,no TEB-04/TUZUK-05 literals,clean,api-gateway/src/rag/source_identity.py
 authorization_requirements_present,PASS,all explicit authorization requirements,none missing,reports/benchmark/productization/phase_24HR_shadow_validation_plan.md

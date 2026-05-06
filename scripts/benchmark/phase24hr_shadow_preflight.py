@@ -29,6 +29,10 @@ DRY_RUN_REPORT = REPORTS_DIR / "phase_24HR_shadow_collection_dry_run_report.md"
 BUILD_PLAN = REPORTS_DIR / "phase_24HR_shadow_collection_build_plan.md"
 GUARD_SMOKE = REPORTS_DIR / "phase_24HR_shadow_build_guard_smoke.json"
 GUARD_SMOKE_REPORT = REPORTS_DIR / "phase_24HR_shadow_build_guard_smoke.md"
+BUILD_REPORT = REPORTS_DIR / "phase_24HR_shadow_collection_build_report.md"
+BUILD_PROVENANCE = REPORTS_DIR / "phase_24HR_shadow_runtime_provenance.json"
+BUILD_VERIFY = REPORTS_DIR / "phase_24HR_shadow_collection_verify.json"
+BUILD_VERIFY_REPORT = REPORTS_DIR / "phase_24HR_shadow_collection_verify.md"
 SHADOW_PLAN = PRODUCT_DIR / "phase_24HR_shadow_validation_plan.md"
 FINAL_GATE = PRODUCT_DIR / "final_productization_gate.md"
 SOURCE_IDENTITY = REPO_ROOT / "api-gateway/src/rag/source_identity.py"
@@ -94,6 +98,10 @@ def path_checks() -> list[dict[str, str]]:
         BUILD_PLAN,
         GUARD_SMOKE,
         GUARD_SMOKE_REPORT,
+        BUILD_REPORT,
+        BUILD_PROVENANCE,
+        BUILD_VERIFY,
+        BUILD_VERIFY_REPORT,
         SHADOW_PLAN,
         FINAL_GATE,
         SOURCE_IDENTITY,
@@ -200,8 +208,11 @@ def smoke_and_gate_checks() -> list[dict[str, str]]:
     smoke = json.loads(NON_LIVE_SMOKE.read_text(encoding="utf-8"))
     dry_run = json.loads(DRY_RUN_SUMMARY.read_text(encoding="utf-8"))
     guard_smoke = json.loads(GUARD_SMOKE.read_text(encoding="utf-8"))
+    build_provenance = json.loads(BUILD_PROVENANCE.read_text(encoding="utf-8"))
+    build_verify = json.loads(BUILD_VERIFY.read_text(encoding="utf-8"))
     summary = smoke.get("summary", {})
     guard_summary = guard_smoke.get("summary", {})
+    verify_summary = build_verify.get("summary", {})
     final_gate_text = FINAL_GATE.read_text(encoding="utf-8")
     source_identity_text = SOURCE_IDENTITY.read_text(encoding="utf-8")
     return [
@@ -277,6 +288,35 @@ def smoke_and_gate_checks() -> list[dict[str, str]]:
             GUARD_SMOKE,
         ),
         status_row(
+            "shadow_collection_build_pass",
+            "PASS"
+            if build_provenance.get("build_status") == "PASS"
+            and build_provenance.get("delta_entity_count") == 59
+            and build_provenance.get("live_8000_cutover") is False
+            and build_provenance.get("candidate_gateway_started") is False
+            else "FAIL",
+            "PASS delta=59 live=false gateway=false",
+            (
+                f"{build_provenance.get('build_status')} delta={build_provenance.get('delta_entity_count')} "
+                f"live={build_provenance.get('live_8000_cutover')} gateway={build_provenance.get('candidate_gateway_started')}"
+            ),
+            BUILD_PROVENANCE,
+        ),
+        status_row(
+            "shadow_collection_verify_pass",
+            "PASS"
+            if verify_summary.get("status") == "PASS"
+            and verify_summary.get("target_delta_rows_found") == 59
+            and verify_summary.get("base_delta_id_collision_count") == 0
+            else "FAIL",
+            "PASS target_delta_rows=59 base_collision=0",
+            (
+                f"{verify_summary.get('status')} target_delta={verify_summary.get('target_delta_rows_found')} "
+                f"base_collision={verify_summary.get('base_delta_id_collision_count')}"
+            ),
+            BUILD_VERIFY,
+        ),
+        status_row(
             "productization_gate_still_closed",
             "PASS" if "not_productization_ready" in final_gate_text else "FAIL",
             "not_productization_ready",
@@ -297,7 +337,7 @@ def authorization_checks() -> list[dict[str, str]]:
     plan_text = SHADOW_PLAN.read_text(encoding="utf-8")
     build_plan_text = BUILD_PLAN.read_text(encoding="utf-8")
     required_phrases = [
-        "Building or loading a Milvus shadow collection",
+        "Rebuilding or reloading a Milvus shadow collection",
         "Starting a candidate gateway",
         "Running a full trace-on candidate benchmark",
         "Any switch, cutover, internal eval opening, serving candidate opening, or productization decision",
@@ -383,7 +423,7 @@ def write_outputs(rows: list[dict[str, str]]) -> dict[str, Any]:
             "",
             "- Local preflight is sufficient to request owner authorization for the next gated shadow validation step.",
             "- This is not product readiness and not a serving/productization approval.",
-            "- Base collection collision checks, shadow collection build, candidate gateway, and full trace-on benchmark are intentionally not executed here.",
+            "- This preflight reads existing shadow build/verify artifacts; it does not execute a new shadow build, candidate gateway, or full trace-on benchmark.",
         ]
     )
     OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")

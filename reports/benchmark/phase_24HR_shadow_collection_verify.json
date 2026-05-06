@@ -1,0 +1,87 @@
+{
+  "summary": {
+    "generated_at_utc": "2026-05-06T16:06:39.674787+00:00",
+    "status": "PASS",
+    "row_count": 9,
+    "pass_count": 9,
+    "warn_count": 0,
+    "fail_count": 0,
+    "base_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "target_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr",
+    "base_entity_count": 349403,
+    "target_entity_count": 349462,
+    "delta_row_count": 59,
+    "target_delta_rows_found": 59,
+    "base_delta_id_collision_count": 0,
+    "load_state": "{'state': <LoadState: Loaded>}",
+    "live_8000_modified": false,
+    "candidate_gateway_started": false,
+    "model_inference_called": false,
+    "milvus_modified": false
+  },
+  "rows": [
+    {
+      "check_id": "base_collection_exists",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "True",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill"
+    },
+    {
+      "check_id": "target_collection_exists",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "True",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr"
+    },
+    {
+      "check_id": "base_entity_count",
+      "status": "PASS",
+      "expected": ">0",
+      "observed": "349403",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill"
+    },
+    {
+      "check_id": "target_entity_count",
+      "status": "PASS",
+      "expected": ">= 349462",
+      "observed": "349462",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr"
+    },
+    {
+      "check_id": "target_delta_rows_found",
+      "status": "PASS",
+      "expected": "59",
+      "observed": "59",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.jsonl"
+    },
+    {
+      "check_id": "base_delta_id_collision",
+      "status": "PASS",
+      "expected": "0",
+      "observed": "0",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill"
+    },
+    {
+      "check_id": "delta_metadata_integrity",
+      "status": "PASS",
+      "expected": "all expected metadata values",
+      "observed": "ok",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr"
+    },
+    {
+      "check_id": "delta_text_not_truncated",
+      "status": "PASS",
+      "expected": "no truncation and expected text lengths",
+      "observed": "ok",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr"
+    },
+    {
+      "check_id": "target_load_state_observed",
+      "status": "PASS",
+      "expected": "loaded if server exposes load state",
+      "observed": "{'state': <LoadState: Loaded>}",
+      "evidence": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr"
+    }
+  ]
+}

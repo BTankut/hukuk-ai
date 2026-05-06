@@ -1,9 +1,9 @@
 # Phase 24HR Shadow Validation Preflight
 
-- generated_at_utc: `2026-05-06T14:14:18.060482+00:00`
+- generated_at_utc: `2026-05-06T16:08:20.089408+00:00`
 - status: `PASS`
-- row_count: `31`
-- pass_count: `31`
+- row_count: `37`
+- pass_count: `37`
 - fail_count: `0`
 - live_8000_modified: `false`
 - milvus_modified: `false`
@@ -21,6 +21,10 @@
 | `path_exists:reports/benchmark/phase_24HR_shadow_collection_build_plan.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/phase_24HR_shadow_build_guard_smoke.json` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/phase_24HR_shadow_build_guard_smoke.md` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_shadow_collection_build_report.md` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_shadow_runtime_provenance.json` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.json` | `PASS` | exists | exists |
+| `path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` | `PASS` | exists | exists |
 | `path_exists:reports/benchmark/productization/final_productization_gate.md` | `PASS` | exists | exists |
 | `path_exists:api-gateway/src/rag/source_identity.py` | `PASS` | exists | exists |
@@ -39,6 +43,8 @@
 | `shadow_build_dry_run_no_side_effects` | `PASS` | live=false milvus=false embedding=false gateway=false model=false | live=False milvus=False embedding=False gateway=False model=False |
 | `shadow_build_guard_smoke_pass` | `PASS` | PASS fail_count=0 | PASS fail_count=0 |
 | `shadow_build_guard_smoke_no_side_effects` | `PASS` | live=false milvus=false embedding=false gateway=false model=false | live=False milvus=False embedding=False gateway=False model=False |
+| `shadow_collection_build_pass` | `PASS` | PASS delta=59 live=false gateway=false | PASS delta=59 live=False gateway=False |
+| `shadow_collection_verify_pass` | `PASS` | PASS target_delta_rows=59 base_collision=0 | PASS target_delta=59 base_collision=0 |
 | `productization_gate_still_closed` | `PASS` | not_productization_ready | not_productization_ready |
 | `no_qid_specific_source_identity_branch` | `PASS` | no TEB-04/TUZUK-05 literals | clean |
 | `authorization_requirements_present` | `PASS` | all explicit authorization requirements | none missing |
@@ -48,4 +54,4 @@
 
 - Local preflight is sufficient to request owner authorization for the next gated shadow validation step.
 - This is not product readiness and not a serving/productization approval.
-- Base collection collision checks, shadow collection build, candidate gateway, and full trace-on benchmark are intentionally not executed here.
+- This preflight reads existing shadow build/verify artifacts; it does not execute a new shadow build, candidate gateway, or full trace-on benchmark.

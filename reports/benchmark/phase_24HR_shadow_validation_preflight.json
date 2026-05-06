@@ -1,9 +1,9 @@
 {
   "summary": {
-    "generated_at_utc": "2026-05-06T14:14:18.060482+00:00",
+    "generated_at_utc": "2026-05-06T16:08:20.089408+00:00",
     "status": "PASS",
-    "row_count": 31,
-    "pass_count": 31,
+    "row_count": 37,
+    "pass_count": 37,
     "fail_count": 0,
     "csv": "reports/benchmark/phase_24HR_shadow_validation_preflight.csv",
     "live_8000_modified": false,
@@ -75,6 +75,34 @@
       "expected": "exists",
       "observed": "exists",
       "evidence": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.md"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_collection_build_report.md",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_build_report.md"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_runtime_provenance.json",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_runtime_provenance.json"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.json",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_verify.json"
+    },
+    {
+      "check_id": "path_exists:reports/benchmark/phase_24HR_shadow_collection_verify.md",
+      "status": "PASS",
+      "expected": "exists",
+      "observed": "exists",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_verify.md"
     },
     {
       "check_id": "path_exists:reports/benchmark/productization/phase_24HR_shadow_validation_plan.md",
@@ -201,6 +229,20 @@
       "expected": "live=false milvus=false embedding=false gateway=false model=false",
       "observed": "live=False milvus=False embedding=False gateway=False model=False",
       "evidence": "reports/benchmark/phase_24HR_shadow_build_guard_smoke.json"
+    },
+    {
+      "check_id": "shadow_collection_build_pass",
+      "status": "PASS",
+      "expected": "PASS delta=59 live=false gateway=false",
+      "observed": "PASS delta=59 live=False gateway=False",
+      "evidence": "reports/benchmark/phase_24HR_shadow_runtime_provenance.json"
+    },
+    {
+      "check_id": "shadow_collection_verify_pass",
+      "status": "PASS",
+      "expected": "PASS target_delta_rows=59 base_collision=0",
+      "observed": "PASS target_delta=59 base_collision=0",
+      "evidence": "reports/benchmark/phase_24HR_shadow_collection_verify.json"
     },
     {
       "check_id": "productization_gate_still_closed",

@@ -12,7 +12,7 @@
   "expected_delta_row_count": 59,
   "fail_reasons": [],
   "full_spans_used_for_delta": false,
-  "generated_at_utc": "2026-05-06T14:02:45.826171+00:00",
+  "generated_at_utc": "2026-05-06T15:59:05.202251+00:00",
   "live_8000_modified": false,
   "manifest_csv": "reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.csv",
   "manifest_jsonl": "reports/benchmark/phase_24HR_shadow_collection_dry_run_manifest.jsonl",

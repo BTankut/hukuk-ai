@@ -20,19 +20,21 @@ This plan does not authorize live `8000`, internal eval, serving candidate, prod
 | Guarded shadow build plan | `reports/benchmark/phase_24HR_shadow_collection_build_plan.md` |
 | Guarded shadow build script | `scripts/benchmark/phase24hr_shadow_collection_build.py` |
 | Guarded build fail-closed smoke | `reports/benchmark/phase_24HR_shadow_build_guard_smoke.md` |
+| Option-A build report | `reports/benchmark/phase_24HR_shadow_collection_build_report.md` |
+| Option-A read-only verify | `reports/benchmark/phase_24HR_shadow_collection_verify.md` |
 | Authorization packet | `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md` |
 
 ## Required Shadow Validation Steps
-1. Build a new shadow-only candidate collection from the current base collection.
-2. Insert TEB-04 chunked subspans, not the oversized full `I/C-2.1.3` section, to avoid truncation.
+1. **Completed:** build a new shadow-only candidate collection from the current base collection.
+2. **Completed:** insert TEB-04 chunked subspans, not the oversized full `I/C-2.1.3` section, to avoid truncation.
 3. Preserve source metadata: `source_family=teblig`, `source_family_raw=TEBLIGLER`, `source_identifier=19631`, `canonical_source_key_v2`, `binding_source_key`, raw PDF SHA-256.
 4. Do not create QID-specific runtime branches.
 5. Use the local dry-run manifest as the row-level input contract for any authorized shadow collection build.
 6. Re-run the guard smoke to verify the build script still refuses unsafe invocation before option-A authorization.
-7. Execute the guarded build script only after option-A authorization; it must refuse without `--execute` and the authorization token.
-8. Run a non-live candidate gateway or benchmark lane that points only to the shadow candidate collection.
-9. Run targeted trace-on smoke for `TEB-04`, `TUZUK-05`, and guard rows that historically regress around source identity/family.
-10. If targeted smoke passes, run full trace-on candidate benchmark.
+7. **Completed:** execute the guarded build script after option-A authorization and verify the target collection read-only.
+8. Run a non-live candidate gateway or benchmark lane that points only to the shadow candidate collection; this requires option-B authorization.
+9. Run targeted trace-on smoke for `TEB-04`, `TUZUK-05`, and guard rows that historically regress around source identity/family; this requires option-C authorization.
+10. If targeted smoke passes, run full trace-on candidate benchmark; this requires option-D authorization.
 11. Keep live `8000` unchanged until full gate review explicitly authorizes any switch.
 
 ## Targeted Acceptance Criteria
@@ -68,7 +70,7 @@ Stop and report without switching anything if any of these occur:
 ## Required Authorization Before Execution
 The following require explicit owner authorization before execution:
 
-- Building or loading a Milvus shadow collection.
+- Rebuilding or reloading a Milvus shadow collection after the completed option-A build/load.
 - Starting a candidate gateway on a non-live port.
 - Running a full trace-on candidate benchmark if it uses shared GPU/model resources.
 - Any switch, cutover, internal eval opening, serving candidate opening, or productization decision.

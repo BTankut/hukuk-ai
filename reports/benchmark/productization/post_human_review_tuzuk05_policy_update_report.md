@@ -24,4 +24,4 @@ This does not open internal eval, serving candidate, productization, live `8000`
 | Exact tüzük materialization | Not fabricated; human review says no exact single current tüzük source is identifiable from the prompt. |
 
 ## Remaining Gate
-Artifact-level non-live runtime priority/scorer smoke passed in `reports/benchmark/phase_24HR_non_live_residual_smoke.md`. Serving/productization still cannot open until shadow/full benchmark validation proves the same policy without regression.
+Artifact-level non-live runtime priority/scorer smoke passed in `reports/benchmark/phase_24HR_non_live_residual_smoke.md`, and option-A shadow collection build/read-only verification passed in `reports/benchmark/phase_24HR_shadow_collection_verify.md`. Serving/productization still cannot open until candidate gateway and full benchmark validation prove the same policy without regression.

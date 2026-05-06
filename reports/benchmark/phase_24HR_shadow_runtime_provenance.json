@@ -1,0 +1,31 @@
+{
+  "base_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "base_entity_count": 349403,
+  "build_status": "PASS",
+  "candidate_gateway_started": false,
+  "candidate_runtime_contract": {
+    "api_url": "not_started",
+    "candidate_gateway_started": false,
+    "dgx_model": "/models/merged_model_fabric_stage_20260321",
+    "embedding_model": "intfloat/multilingual-e5-large-instruct",
+    "live_8000_cutover": false,
+    "milvus_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr"
+  },
+  "cloned_base_entity_count": 349403,
+  "defer_index": true,
+  "delta_entity_count": 59,
+  "dry_run_manifest_hash": "d4a0433fd5c8d785b5fcc5dae312bac2598f7d2039eb94ae40884f359e8a94b7",
+  "dry_run_summary_hash": "4a788847e9cc44380034bba68177205c922478d400c6851481b4ba172fce5630",
+  "embedding_base_url": "http://127.0.0.1:8081/v1",
+  "embedding_model": "intfloat/multilingual-e5-large-instruct",
+  "generated_at_utc": "2026-05-06T16:02:07.656434+00:00",
+  "index_type": "FLAT",
+  "live_8000_cutover": false,
+  "load_after_build": true,
+  "mmap_enabled": true,
+  "proposed_id_collision_count": 0,
+  "source_span_count": 59,
+  "target_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill_phase24hr",
+  "target_entity_count": 349462,
+  "vector_dimension": 1024
+}

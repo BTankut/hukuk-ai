@@ -2,7 +2,7 @@
 
 Generated: 2026-05-06
 
-Audit scope includes productization artifacts, Phase 24HR local preflight, dry-run shadow manifest, guarded shadow build runner, and fail-closed guard smoke evidence. Verify the current pushed commit with `git log -1 --oneline`.
+Audit scope includes productization artifacts, Phase 24HR local preflight, dry-run shadow manifest, guarded shadow build runner, fail-closed guard smoke, option-A shadow collection build, and read-only Milvus verification evidence. Verify the current pushed commit with `git log -1 --oneline`.
 
 ## Objective Restatement
 Complete the autonomous product-level completion task defined in `reports/benchmark/hukuk_ai_product_level_completion_criteria_autonomous_brief.md` without confusing benchmark-only success with product readiness.
@@ -55,7 +55,7 @@ Concrete success criteria:
 | Confidence/UX policy PASS | Runtime answer behavior enforced | `confidence_ux_policy.md` exists; runtime enforcement not evidenced | PARTIAL |
 | Rollback runbook PASS | Runbook and rehearsal | `rollback_incident_runbook.md` exists; rehearsal not completed | FAIL |
 | Legal/scorer review closure PASS | All named legal/scorer decisions closed | TEB-04/TUZUK-05 closed; CBY/KKY/TUZUK-04 remain open/conditional | PARTIAL |
-| Source/corpus materialization closure PASS | Product-critical sources materialized and validated | TEB-04 artifact-level materialization passed; shadow/full validation pending; other residual sources remain open | FAIL |
+| Source/corpus materialization closure PASS | Product-critical sources materialized and validated | TEB-04 shadow collection build/load and read-only verification passed; candidate gateway/full validation pending; other residual sources remain open | FAIL |
 | Final productization gate PASS or restricted PASS | `productization_ready_with_restrictions` or equivalent approved decision | `final_productization_gate.md` decision is `not_productization_ready` | FAIL |
 | Fine-tuning decision explicitly closed or separately approved | Closed or separate approval | Fine-tuning remains closed | PASS |
 
@@ -65,7 +65,7 @@ Concrete success criteria:
 | A Benchmark Stability | `raw_score_proxy >= 816`, `pass_proxy >= 91`, hard counters zero, two stable full trace-on runs | Latest full trace-on BASE `reports/benchmark/runs/phase_24U_B_base_trace_on_full_20260505T121226Z/score_summary.json`: `raw_score_proxy=805.09`, `pass_proxy=89`; hard counters zero | FAIL |
 | B Residual Risk Closure | 9 residuals closed or formally accepted | `residual_closure_matrix.csv`: 9 rows remain open/conditional; 0 accepted for productization | FAIL |
 | C Legal / Scorer Review | CBY, KKY/YONETMELIK, TEB-04, TUZUK-04, TUZUK-05 decisions closed | TEB-04/TUZUK-05 review closed; CBY-04, CBY-06, TUZUK-04 and conditional taxonomy rows still block product readiness | PARTIAL |
-| D Source / Corpus / Materialization | Product-critical sources hashable, parser-ready, section boundaries detectable, confirmed | TEB-04 materialized and artifact smoke passed; TUZUK-05 policy smoke passed; shadow/full validation pending; other source rows remain open | FAIL |
+| D Source / Corpus / Materialization | Product-critical sources hashable, parser-ready, section boundaries detectable, confirmed | TEB-04 shadow collection build/load and read-only verification passed; TUZUK-05 policy smoke passed; candidate/full validation pending; other source rows remain open | FAIL |
 | E Source Identity / Selector | Wrong-family/document/identifier controls within thresholds and stable full proof | Latest full run below target; no full post-Phase24HR candidate proof | PARTIAL |
 | F Temporal / Current-Law Validity | No repealed/historical source as active current law; role-separated evidence | TUZUK-04 current-law vs repealed-source blocker remains | FAIL |
 | G Guardrails Policy | Policy and runtime/waiver | Policy exists; live health reports guardrails disabled | FAIL |
@@ -86,22 +86,24 @@ Concrete success criteria:
 |---|---|---|
 | TEB-04 | `reports/benchmark/phase_24HR_teb04_kdv_gut_materialization_report.md` | Official GIB PDF SHA verified; 6 full spans and 59 chunked subspans materialized. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_non_live_residual_smoke.md` | 9/9 artifact-level non-live checks passed; no live 8000, Milvus, or model inference. |
-| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 31/31 local preflight checks passed; no live 8000, Milvus, candidate gateway, or model inference. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_validation_preflight.md` | 37/37 local preflight checks passed after option-A build/load and read-only verification; the preflight itself made no live 8000, Milvus, candidate gateway, or model inference changes. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_dry_run_report.md` | 59 proposed TEB-04 delta rows passed local row-contract checks; no live 8000, Milvus, embedding, candidate gateway, or model inference. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_build_plan.md` and `scripts/benchmark/phase24hr_shadow_collection_build.py` | Guarded build runner is prepared; it refuses before Milvus unless `--execute` and `OPTION_A_APPROVED_PHASE24HR` are provided. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_build_guard_smoke.md` | 4/4 fail-closed guard paths passed; no live 8000, Milvus, embedding, candidate gateway, or model inference. |
-| TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Shadow/full validation plan and authorization packet exist; execution requires explicit authorization. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_build_report.md` | Option-A shadow collection build/load passed; target has 349462 rows with 59 delta rows and no live 8000 cutover. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_shadow_collection_verify.md` | Read-only verification passed; 59/59 delta rows found in target, base delta collision `0`, load state observed `Loaded`. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Option A complete; options B/C/D still require explicit authorization. |
 
 ## Completion Decision
 Objective artifacts are produced and pushed, but product-level completion is **not achieved** under the brief's Section 8 definition.
 
-Reason: Benchmark stability, residual closure, source/materialization closure at shadow/full level, temporal validity, runtime guardrails, runtime verification, privacy/PII enforcement, audit logging, rollback rehearsal, internal eval readiness, serving candidate readiness, and final productization gate are not complete.
+Reason: Benchmark stability, residual closure, source/materialization closure at candidate/full level, temporal validity, runtime guardrails, runtime verification, privacy/PII enforcement, audit logging, rollback rehearsal, internal eval readiness, serving candidate readiness, and final productization gate are not complete.
 
 ## Next Required Input
 Explicit owner authorization is required before the next execution step:
 
-- Build/load a Milvus shadow collection for TEB-04/TUZUK-05 validation.
 - Start any candidate gateway on a non-live port.
+- Run targeted trace-on candidate smoke.
 - Run a full trace-on candidate benchmark if it uses shared model/GPU resources.
 
 The authorization packet is `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md`.

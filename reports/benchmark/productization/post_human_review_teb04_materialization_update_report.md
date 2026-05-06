@@ -5,7 +5,7 @@ Generated: 2026-05-06
 ## Decision
 `TEB-04` official source acquisition and deterministic span extraction are closed as non-live artifacts.
 
-This does not open internal eval, serving candidate, productization, live `8000`, Milvus write, model change, prompt change, or top-k change.
+This materialization step did not open internal eval, serving candidate, productization, live `8000`, model change, prompt change, or top-k change. The later option-A Milvus shadow build is separately recorded in `reports/benchmark/phase_24HR_shadow_collection_build_report.md`.
 
 ## Evidence
 | item | value |
@@ -32,6 +32,6 @@ This does not open internal eval, serving candidate, productization, live `8000`
 | `I/C-2.1.5.3` | materialized from verified PDF |
 
 ## Remaining Gate
-`TEB-04` artifact-level non-live retrieval/selector smoke passed in `reports/benchmark/phase_24HR_non_live_residual_smoke.md`. It remains blocked for serving/productization until shadow/full benchmark validation proves the materialized spans work without regression.
+`TEB-04` artifact-level non-live retrieval/selector smoke passed in `reports/benchmark/phase_24HR_non_live_residual_smoke.md`, and option-A shadow collection build/read-only verification passed in `reports/benchmark/phase_24HR_shadow_collection_verify.md`. It remains blocked for serving/productization until candidate gateway and full benchmark validation prove the materialized spans work without regression.
 
 `I/C-2.1.3` is 76,818 characters as a full section. The materialization script also produced 59 deterministic subheading chunks with max chunk length 6,410. Any runtime insertion should use the chunked subspan file rather than truncating the full section.
