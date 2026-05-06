@@ -26,12 +26,11 @@ Manual review is required when legal source identity, current-law status, source
 - Runtime changes must be systemic. QID-specific branches are not allowed.
 - Review closure must be recorded before productization.
 
-## Current Human Review Requirements
-- `TUZUK-05`: exact official source identity is not acquired. Human lawyer/source review is required before any runtime remediation or productization acceptance.
-- `TEB-04`: productization requires human/scorer confirmation that the current consolidated KDV General Implementation Communique span is correctly materialized and accepted.
+## Current Human Review Status
+- `TUZUK-05`: human lawyer/source review was received on 2026-05-06. Decision: exact single tüzük source is not identifiable from the abstract prompt; scorer should accept the general norm-hierarchy rule and reject the prior `Gıda Maddelerinin... Tüzüğü` candidate.
+- `TEB-04`: human scorer/legal review was received on 2026-05-06. Decision: the current consolidated KDV General Implementation Communique is the product source; confirmed spans require deterministic materialization from the verified official GIB PDF.
 
 ## Current State
 - Residual closure is not complete.
 - Productization remains blocked.
 - No live runtime change was made by this workflow artifact.
-

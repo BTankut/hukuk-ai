@@ -14,22 +14,24 @@
 | KANUN-12 | confirmed_source_no_runtime_improvement | legal_confirmation_available | raw_verified_ready | no_scorer_review_required | no | no | no | source_acquisition_legal_review | systemic_runtime_materialization_and_retrieval_revalidation |
 | KKY-01 | taxonomy_mapping_blocker | legal_taxonomy_confirmed_conditional | not_required | scorer_review_required | conditional | no | no | legal_scorer_taxonomy | systemic_family_normalization_required |
 | KKY-03 | confirmed_source_no_runtime_improvement | legal_confirmation_available | raw_verified_ready | scorer_review_required | no | no | no | legal_scorer_source_acquisition | systemic_family_materialization_and_retrieval_revalidation |
-| TEB-04 | consolidated_teblig_source_span_blocker | scorer_rubric_mismatch_internal_acceptance | not_required | productization_span_confirmation_required | yes_with_review_note | no | no | legal_scorer_corpus | human_scorer_confirmation_of_current_consolidated_span_before_productization |
+| TEB-04 | verified_kdv_gut_span_materialization_pending | product_span_confirmed | raw_pdf_verified_sha256_match | product_span_confirmed | yes | no | no | corpus_materialization_owner | materialize_verified_kdv_gut_spans_from_official_pdf_then_non_live_smoke |
 | TUZUK-04 | current_law_vs_repealed_source_blocker | legal_taxonomy_confirmed_blocks | raw_verified_historical_repealed_ready | no_scorer_review_required | no | no | no | source_acquisition_legal_review | current_law_repealed_source_demotion_and_revalidation |
-| TUZUK-05 | unidentified_source_blocker | needs_more_review | source_not_acquired | no_scorer_review_required | no | no | no | human_lawyer_source_acquisition | notify_user_human_lawyer_review_required_for_exact_source_identity |
+| TUZUK-05 | general_hierarchy_rubric_policy_blocker | human_review_closed_accept_general_hierarchy_rule | exact_tuzuk_source_not_identifiable | rubric_policy_update_required | yes_if_no_wrong_candidate_source | no | no | scorer_policy_runtime_owner | systemically_accept_general_hierarchy_chain_and_reject_wrong_gida_tuzugu_candidate |
 | YON-04 | confirmed_source_no_runtime_improvement | legal_confirmation_available | raw_verified_ready | no_scorer_review_required | no | no | no | legal_scorer_source_acquisition | systemic_runtime_materialization_and_retrieval_revalidation |
 
 ## Source Basis
 - `reports/benchmark/phase_24M_residual_blocker_consolidation.csv`
 - `reports/benchmark/phase_24H_legal_scorer_review_normalization.csv`
 - `reports/benchmark/phase_24I_official_source_acquisition_return_validation.csv`
+- `reports/benchmark/productization/human_legal_review_packet_20260506/intake/human_legal_review_intake_report.md`
 
-## Human Lawyer Review Required
-- `TUZUK-05`: exact source identity is not acquired; Phase24I returned `source_not_acquired`, `not_downloaded`, and `needs_more_review`. Human legal/source review is required before any runtime patch or productization acceptance.
-- `TEB-04`: internal eval can be conditionally accepted with review note, but productization requires human/scorer confirmation of current consolidated KDV GUT span materialization.
+## Human Review Intake Update
+- `TUZUK-05`: human review closed the source ambiguity as `rubric_should_accept_general_hierarchy_rule`. No exact single tüzük source should be fabricated; the prior `Gıda Maddelerinin... Tüzüğü` candidate must be rejected for this abstract hierarchy question.
+- `TEB-04`: human review confirmed `product_span_confirmed`; official GIB KDV GUT PDF was provided and SHA-256 verified. Productization still requires deterministic span materialization and non-live validation.
 - `CBY-04`, `CBY-06`, `TUZUK-04`: reviewed evidence still blocks internal/product progression until systemic source/corpus fixes are completed and revalidated.
 
 ## Decision
 - Residual closure status: **not closed**.
-- Productization remains blocked for all nine residual rows.
-- Serving candidate remains blocked because no residual row is accepted for serving-candidate.
+- Human legal/scorer review blocker is closed for `TUZUK-05` and `TEB-04`.
+- Productization remains blocked because the two newly reviewed rows still require systemic runtime/corpus work and the other residual rows remain open or conditional.
+- Serving candidate remains blocked because no residual row is accepted for serving-candidate without implementation and non-live validation.

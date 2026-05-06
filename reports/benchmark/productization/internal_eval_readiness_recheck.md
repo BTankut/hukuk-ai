@@ -14,8 +14,8 @@ Secondary blocker: `not_ready_policy_controls_missing`.
 | Unsupported confident answer count | `0`; this specific hard blocker is clear in the latest full run. |
 | `source_key_v2` collision count | `0`; this specific hard blocker is clear in the latest full run. |
 | Residual closure | Not closed; 9 residual rows remain in `residual_closure_matrix.csv`. |
-| Human legal/source review | Required for `TUZUK-05`; exact official source identity is unresolved. |
-| Scorer/product confirmation | Required for `TEB-04` before productization. |
+| Human legal/source review | Closed for `TUZUK-05` by 2026-05-06 human intake; decision is general hierarchy rubric/source-policy handling, not exact tüzük materialization. |
+| Scorer/product confirmation | Closed for `TEB-04` by 2026-05-06 human intake; verified KDV GUT spans still require materialization and non-live validation. |
 | Guardrails | Policy drafted; live health reports `guardrails=disabled`. |
 | Verification | Policy drafted; live health reports `verification=disabled`. |
 | Privacy/PII | Policy drafted; runtime enforcement not evidenced. |
@@ -28,8 +28,7 @@ Secondary blocker: `not_ready_policy_controls_missing`.
 - `not_ready_policy_controls_missing`: yes.
 
 ## Rationale
-Internal eval should not open as a normal product-readiness gate while unresolved legal/source identity and runtime-control blockers remain. `TEB-04` may be accepted for review-note accounting, but that does not close the broader internal-eval gate because other residual rows still block progression.
+Internal eval should not open as a normal product-readiness gate while residual implementation and runtime-control blockers remain. Human review is now closed for `TEB-04` and `TUZUK-05`, but that does not close the broader internal-eval gate because materialization, scorer/source-policy remediation, other residual rows, and product controls still block progression.
 
 ## Runtime Change
 No live runtime change was made.
-

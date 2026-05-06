@@ -13,8 +13,8 @@ Additional required decisions before this can change:
 |---|---|---|
 | Benchmark stability | Latest full run is `805.09/89`; reference full run was `816.86/91`. | fail |
 | Residual closure | 9 residual rows remain open; 0 accepted for productization. | fail |
-| Human legal/source review | `TUZUK-05` exact official source is not acquired and needs more review. | fail |
-| Scorer/product confirmation | `TEB-04` requires current consolidated span confirmation before productization. | fail |
+| Human legal/source review | `TUZUK-05` human review closed: exact single tüzük source is not identifiable; use general hierarchy source-policy handling. | pass for review; fail for implementation |
+| Scorer/product confirmation | `TEB-04` product spans confirmed and official GIB PDF hash verified. | pass for review; fail for materialization |
 | Guardrails | Policy drafted; live reports `guardrails=disabled`. | fail |
 | Verification | Policy drafted; live reports `verification=disabled`. | fail |
 | Privacy/PII | Policy drafted; runtime enforcement not evidenced. | fail |
@@ -25,15 +25,14 @@ Additional required decisions before this can change:
 | Contract hard metrics | Latest full run has 0 answer-contract invalid, 0 unsupported confident answer, 0 `source_key_v2` collision. | pass for these metrics only |
 
 ## Productization Decision
-Productization must remain closed. The current system has useful hard-metric clears, but product-level readiness requires residual closure, policy enforcement, rollback rehearsal, and full benchmark stability. Those conditions are not met.
+Productization must remain closed. The current system has useful hard-metric clears and the `TEB-04` / `TUZUK-05` human review blockers are now closed, but product-level readiness still requires systemic residual remediation, policy enforcement, rollback rehearsal, and full benchmark stability. Those conditions are not met.
 
 ## Fine-Tuning Decision
 Fine-tuning remains closed for this gate. The observed blockers are legal/source identity, corpus/materialization, verification, guardrails, privacy, audit, and release-control gaps. Fine-tuning would not be an acceptable substitute for resolving these product-readiness blockers.
 
-## Required Next Human Decision
-- `TUZUK-05`: assign a human lawyer/source reviewer to identify or reject the exact official source expected by the benchmark.
-- `TEB-04`: obtain human scorer/legal confirmation for the current consolidated KDV General Implementation Communique span before any productization acceptance.
+## Required Next Decision
+- No additional human lawyer decision is currently pending for `TEB-04` or `TUZUK-05`.
+- Engineering must implement systemic `TUZUK-05` hierarchy rubric/source-policy handling and deterministic `TEB-04` KDV GUT span materialization, then rerun non-live validation.
 
 ## Runtime Change
 No live runtime change was made.
-
