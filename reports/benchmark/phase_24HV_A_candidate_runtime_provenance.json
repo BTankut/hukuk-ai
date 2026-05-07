@@ -1,0 +1,277 @@
+{
+  "DGX_BASE_URL": "http://192.168.12.243:30000/v1",
+  "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+  "acceptance": {
+    "candidate_health_ok": true,
+    "collection_is_base_p0_backfill": true,
+    "entity_count_is_349403": true,
+    "feature_flags_enabled": true,
+    "include_trace_support": true,
+    "live_8000_untouched": true,
+    "models_ok": true,
+    "phase24hs_family_domain_gate_enabled": true
+  },
+  "api_url": "http://127.0.0.1:8044/v1",
+  "api_version": "2026-05-07-phase24hv-full-candidate-validation",
+  "branch": "bt/hukuk-ai-100-benchmark-hardening",
+  "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "embedding_backend": "remote",
+  "embedding_base_url": "http://127.0.0.1:8081/v1",
+  "embedding_model": "intfloat/multilingual-e5-large-instruct",
+  "embedding_probe": {
+    "ok": true,
+    "payload": {
+      "data": [
+        {
+          "created": 1677610602,
+          "id": "intfloat/multilingual-e5-large-instruct",
+          "object": "model",
+          "owned_by": "hukuk-ai"
+        }
+      ],
+      "object": "list"
+    },
+    "status": 200,
+    "url": "http://127.0.0.1:8081/v1/models"
+  },
+  "entity_count": 349403,
+  "feature_flags": {
+    "ENABLE_PHASE24HS_FAMILY_DOMAIN_GATE": "true",
+    "ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING": "true",
+    "ENABLE_PHASE24HU_EXCEPTION_SLOT_GUARD": "true",
+    "ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL": "true"
+  },
+  "generated_at_utc": "2026-05-07T15:19:57.339255+00:00",
+  "git_sha": "c569def46e12191b57480d9866d9ad7037b78675",
+  "guardrails": "disabled",
+  "health": {
+    "api_version": "2026-05-07-phase24hv-full-candidate-validation",
+    "guardrails": "disabled",
+    "lane": "phase24hv_full_candidate_validation",
+    "retriever": "milvus",
+    "service": "hukuk-ai-api-gateway",
+    "status": "ok",
+    "verification": "disabled"
+  },
+  "include_trace_support": {
+    "include_trace_support": true,
+    "method": "one non-live include_trace=true chat probe against 8044",
+    "request_id": "chatcmpl-ed5e4d5e6752"
+  },
+  "lane": "phase24hv_full_candidate_validation",
+  "live_8000_health": {
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "guardrails": "disabled",
+    "lane": "phase22f_s7_full_shadow",
+    "retriever": "milvus",
+    "service": "hukuk-ai-api-gateway",
+    "status": "ok",
+    "verification": "disabled"
+  },
+  "live_8000_untouched": true,
+  "milvus_probe_ok": true,
+  "model": "hukuk-ai-poc",
+  "model_detail": {
+    "api_version": "2026-05-07-phase24hv-full-candidate-validation",
+    "created": 1778167197,
+    "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+    "id": "hukuk-ai-poc",
+    "lane": "phase24hv_full_candidate_validation",
+    "object": "model",
+    "owned_by": "hukuk-ai"
+  },
+  "model_detail_ok": true,
+  "models": {
+    "api_version": "2026-05-07-phase24hv-full-candidate-validation",
+    "data": [
+      {
+        "api_version": "2026-05-07-phase24hv-full-candidate-validation",
+        "created": 1778167197,
+        "description": "AI Hukuk Asistanı — Türk Mevzuatı RAG Modeli",
+        "id": "hukuk-ai-poc",
+        "lane": "phase24hv_full_candidate_validation",
+        "object": "model",
+        "owned_by": "hukuk-ai"
+      }
+    ],
+    "headers": {
+      "X-Hukuk-AI-API-Version": "2026-05-07-phase24hv-full-candidate-validation",
+      "X-Hukuk-AI-Lane": "phase24hv_full_candidate_validation",
+      "X-Request-ID": "req-95efe81b10c945dfa91d"
+    },
+    "lane": "phase24hv_full_candidate_validation",
+    "object": "list"
+  },
+  "models_ok": true,
+  "pid": 21728,
+  "pid_file": "runtime_logs/phase24HV/candidate_8044.pid",
+  "source_catalog_hash": "3000c8176a2e3b4d64d89c895f2561b3c8c0080426d6a566c718d5dc05fd4d9a",
+  "source_catalog_hashes": [
+    {
+      "bytes": 38132,
+      "exists": true,
+      "path": "api-gateway/src/rag/source_catalog.py",
+      "sha256": "f04dc600f306f5724c8e795fcf462bf601083e62250505686c3da55fb2a9016e"
+    },
+    {
+      "bytes": 18918,
+      "exists": true,
+      "path": "api-gateway/src/rag/retriever.py",
+      "sha256": "d036bc2152af51a90689464af303009d822594076feb7a6a07ac93c7db74b20a"
+    },
+    {
+      "bytes": 60351,
+      "exists": true,
+      "path": "api-gateway/src/source_family_resolver.py",
+      "sha256": "b8a534984eece3b98c1a96d23d847cbeaab6cdae8456610b2d476ff2869d95ea"
+    },
+    {
+      "bytes": 7390345,
+      "exists": true,
+      "path": "reports/benchmark/phase_05_canonical_source_catalog.csv",
+      "sha256": "3e1a906ca1c0daaffc839b8757c6bdac25228d8f4e60f5001c2534a00fa309b2"
+    },
+    {
+      "bytes": 907,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/cmk/source_manifest.json",
+      "sha256": "1929713475ab06e76691b98409463b147e576e281c0f4414ab301113e7ac6578"
+    },
+    {
+      "bytes": 908,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/hmk/source_manifest.json",
+      "sha256": "f5b2ad40df50e1415ecef157edb2e3394ca9f98ea5c4f150b12220e507844cae"
+    },
+    {
+      "bytes": 915,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ik/source_manifest.json",
+      "sha256": "fdefff21b1548fd7973d5321ac45bc4e6c5719d17b3abb4fb9b8ee7da1dae9a2"
+    },
+    {
+      "bytes": 900,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tck/source_manifest.json",
+      "sha256": "352e420ceb3e79ba7c52260c0ff85c6d0e5da7f933580a5726628e202ce73bf0"
+    },
+    {
+      "bytes": 928,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tmk_core_corpus/source_manifest.json",
+      "sha256": "a99d7b5eb1a9234bf0a3e842cb3b6d37df42007b2b8fcbe0a112f4b5d6a625b2"
+    },
+    {
+      "bytes": 906,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ttk/source_manifest.json",
+      "sha256": "700d7ac77b43111cced6033f3fccf183a63ff51ea60adc55451d01c5771b2519"
+    },
+    {
+      "bytes": 372814,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/cmk/normalized_source.txt",
+      "sha256": "ef03790c8c2ef82229a7eeceb0f79c50e696be4f7735b931cfc7e92a44567ad9"
+    },
+    {
+      "bytes": 298250,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/hmk/normalized_source.txt",
+      "sha256": "bf1a326eb121e0d73a33e74a7db43af0e1f0e25f2201b7117bc958399315fdf4"
+    },
+    {
+      "bytes": 453984,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ik/normalized_source.txt",
+      "sha256": "3577da9cfbdc706947641146948f93346a2f2c194d88c07a09b0690c508880f9"
+    },
+    {
+      "bytes": 307546,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tck/normalized_source.txt",
+      "sha256": "9cde7d1ac5290f2a4f1e2b4d19ffc2c67b888535850db23c90fe52d8e46ae872"
+    },
+    {
+      "bytes": 425015,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/tmk_core_corpus/normalized_source.txt",
+      "sha256": "0de4c7b84a9111d353ad1e61f9dd6938d14c4a7339377a25ba646a758c0ed591"
+    },
+    {
+      "bytes": 1060631,
+      "exists": true,
+      "path": "data/primary_sources/full_acquisition/ttk/normalized_source.txt",
+      "sha256": "1325e46fb164cf0218fa15d20078cb97ccf907cfbc2e170020d47bc9bd753742"
+    }
+  ],
+  "source_supplement_hash": "f4698a85006b4eda8341456ebf1d83d80af6a58005acd18d523e8355857bd1ef",
+  "source_supplement_hashes": [
+    {
+      "bytes": 29135,
+      "exists": true,
+      "path": "api-gateway/src/rag/source_supplements.py",
+      "sha256": "b9ed3492fec515993e215341c7c7ef5b75b74fd2c7cb581afa720bd50c125466"
+    },
+    {
+      "bytes": 7813,
+      "exists": true,
+      "path": "reports/benchmark/phase_16a_corpus_materialization_remediation.csv",
+      "sha256": "ebf51c4c156c37d25011368f80ca785fb599e4eeb1d0ba86cc341151a52563f8"
+    },
+    {
+      "bytes": 3703,
+      "exists": true,
+      "path": "reports/benchmark/phase_16e_corpus_materialization_remediation.csv",
+      "sha256": "40179b1b8a39bea7b10ad22ef6a4fb56ea140704e74b9cbf4b97cd1a3e454aad"
+    },
+    {
+      "bytes": 2329,
+      "exists": true,
+      "path": "reports/benchmark/phase_16b_source_key_v2_collision_report.csv",
+      "sha256": "9872acbb5ba08e2d899feede9a0ee0b0527ea3a32016df89909aca72e6d3c976"
+    },
+    {
+      "bytes": 1302,
+      "exists": true,
+      "path": "reports/benchmark/phase_16e_source_key_v2_collision_report.csv",
+      "sha256": "06a125e1f0b5f99e18e427f42d9166984fc9c18250ce9b31ceae7b146dcdf73b"
+    },
+    {
+      "bytes": 1212,
+      "exists": true,
+      "path": "reports/benchmark/phase_17_corpus_materialization_audit.csv",
+      "sha256": "dff7afd5785b5b564b7883dd260e111d573b1243fbf738ecd09dd2a190c87bdb"
+    },
+    {
+      "bytes": 2028,
+      "exists": true,
+      "path": "reports/benchmark/phase_17a_corpus_materialization_remediation.csv",
+      "sha256": "82728fbeb06791512ff27542650c25d5fa906e6362761a043526010ea8ea8d18"
+    },
+    {
+      "bytes": 2676,
+      "exists": true,
+      "path": "reports/benchmark/phase_17b_corpus_materialization_remediation.csv",
+      "sha256": "f7800ac8dcf0b0009b5901922b31d4cd866535850d64b968aef40db09df58a33"
+    },
+    {
+      "bytes": 1499,
+      "exists": true,
+      "path": "reports/benchmark/phase_17a_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+    },
+    {
+      "bytes": 1499,
+      "exists": true,
+      "path": "reports/benchmark/phase_17b_sourcekey_binding_audit.csv",
+      "sha256": "67b22bf3307836954c8c6b8ef5a529511a7ae5f8940e4991de941dc24c208bab"
+    },
+    {
+      "bytes": 3386,
+      "exists": true,
+      "path": "reports/benchmark/phase_18e_side_backlog_source_materialization_report.md",
+      "sha256": "9c472e41f8ec75495b634bb5bf1863849944bbd3a4477b0749cc1b3852f1411a"
+    }
+  ],
+  "verification": "disabled"
+}
