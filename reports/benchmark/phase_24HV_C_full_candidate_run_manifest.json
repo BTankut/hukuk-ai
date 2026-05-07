@@ -1,0 +1,41 @@
+{
+  "api_url": "http://127.0.0.1:8044/v1",
+  "green_lane_dir": "reports/benchmark/green_lane/phase_24HV_C_full_candidate",
+  "run_dir": "reports/benchmark/runs/phase_24HV_C_full_candidate",
+  "runtime": {
+    "branch": "bt/hukuk-ai-100-benchmark-hardening",
+    "dgx_model_env": "/models/merged_model_fabric_stage_20260321",
+    "embedding_backend": "remote",
+    "embedding_model": "intfloat/multilingual-e5-large-instruct",
+    "git_sha": "79515c42de05fafae7818e4e8e475ad9f20ba8b0",
+    "guardrails_enabled": "false",
+    "live_8000_untouched": true,
+    "milvus_collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "milvus_entity_count": 349403,
+    "presidio_enabled": "false",
+    "vector_dimension": 1024
+  },
+  "runtime_provenance": "reports/benchmark/runs/phase_24HV_C_full_candidate/runtime_provenance.json",
+  "score_summary": "reports/benchmark/runs/phase_24HV_C_full_candidate/score/score_summary.md",
+  "scored_csv": "reports/benchmark/runs/phase_24HV_C_full_candidate/score/scored.csv",
+  "summary": {
+    "answer_contract_invalid": 0,
+    "base_hallucinated_identifier": 7,
+    "base_pass_proxy": 89,
+    "base_raw_score_proxy": 805.09,
+    "base_wrong_document": 3,
+    "binding_collision": 0,
+    "contract_valid": 100,
+    "green_lane_status": "pass",
+    "hallucinated_identifier": 22,
+    "legacy_source_key_collision": 4,
+    "minimum_gate_pass": false,
+    "pass_proxy": 74,
+    "preferred_gate_pass": false,
+    "raw_score_proxy": 727.39,
+    "source_key_v2_collision": 0,
+    "total": 100,
+    "unsupported_confident_answer": 0,
+    "wrong_document": 18
+  }
+}
