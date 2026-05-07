@@ -2092,6 +2092,7 @@ def _select_article_span_evidence(
     explicit_article_refs: list[tuple[str, str]] | None = None,
     selected_source_keys: set[str] | None = None,
     source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+    source_identity_reranker: dict[str, Any] | None = None,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     return _select_article_span_evidence_impl(
         query=query,
@@ -2100,6 +2101,7 @@ def _select_article_span_evidence(
         explicit_article_refs=explicit_article_refs,
         selected_source_keys=selected_source_keys,
         source_family_resolution=source_family_resolution,
+        source_identity_reranker=source_identity_reranker,
         runtime_namespace=globals(),
     )
 
@@ -9406,6 +9408,7 @@ async def chat_completions(
             explicit_article_refs=all_exact_article_refs,
             selected_source_keys=selected_source_keys,
             source_family_resolution=source_family_resolution,
+            source_identity_reranker=source_identity_reranker,
         )
         retrieved_chunks = _apply_selected_document_only_bundle(
             chunks=retrieved_chunks,

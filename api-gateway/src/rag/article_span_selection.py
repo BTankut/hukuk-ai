@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from typing import Any
 
@@ -272,6 +273,187 @@ def _chunk_has_selectable_body_span(chunk: RetrievedChunk) -> bool:
 def _chunk_has_non_title_body_span(chunk: RetrievedChunk) -> bool:
     return bool(_chunk_article_token(chunk) not in {"", "0"} and _chunk_has_selectable_body_span(chunk))
 
+
+def _phase24ht_same_family_domain_scoring_enabled() -> bool:
+    return os.getenv("ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _phase24ht_identity_record_score(record: dict[str, Any]) -> float:
+    for key in ("document_identity_score", "score"):
+        try:
+            return float(record.get(key) or 0.0)
+        except (TypeError, ValueError):
+            continue
+    return 0.0
+
+
+def _phase24ht_document_values_from_identity_record(record: dict[str, Any]) -> set[str]:
+    values: set[str] = set()
+    for key in (
+        "source_key",
+        "source_identifier",
+        "source_title",
+        "canonical_document_key_v2",
+        "binding_source_key",
+        "document_key",
+    ):
+        raw = str(record.get(key) or "").strip()
+        if not raw:
+            continue
+        values.update({raw.lower(), _normalize_tr_text(raw), normalize_canonical_text(raw)})
+    source_id = str(record.get("source_id") or "").strip()
+    if source_id:
+        values.add(_normalize_tr_text(source_id.split(":", 1)[0]))
+    return {value for value in values if value}
+
+
+def _phase24ht_document_values_from_selector_trace(trace: dict[str, Any]) -> set[str]:
+    values: set[str] = set()
+    for key in (
+        "source_key",
+        "source_identifier",
+        "source_title",
+        "canonical_document_key_v2",
+        "binding_source_key",
+        "document_key",
+    ):
+        raw = str(trace.get(key) or "").strip()
+        if not raw:
+            continue
+        values.update({raw.lower(), _normalize_tr_text(raw), normalize_canonical_text(raw)})
+    source_id = str(trace.get("source_id") or "").strip()
+    if source_id:
+        values.add(_normalize_tr_text(source_id.split(":", 1)[0]))
+    return {value for value in values if value}
+
+
+def _phase24ht_identity_record_matches_trace(record: dict[str, Any], trace: dict[str, Any]) -> bool:
+    record_values = _phase24ht_document_values_from_identity_record(record)
+    trace_values = _phase24ht_document_values_from_selector_trace(trace)
+    return bool(record_values and trace_values and record_values & trace_values)
+
+
+def _phase24ht_same_family_domain_identity_lock(
+    *,
+    ranked: list[tuple[float, int, RetrievedChunk, dict[str, Any]]],
+    document_lock_candidates: list[tuple[float, int, RetrievedChunk, dict[str, Any]]],
+    source_identity_reranker: dict[str, Any] | None,
+    article_tokens: set[str],
+    identifier_tokens: set[str],
+    numbered_laws: set[str],
+    explicit_ref_set: set[tuple[str, str]],
+    relation_query_detected: bool,
+    legacy_intent_binding_active: bool,
+) -> tuple[list[tuple[float, int, RetrievedChunk, dict[str, Any]]], dict[str, Any]]:
+    trace: dict[str, Any] = {
+        "phase24ht_same_family_domain_scoring_enabled": _phase24ht_same_family_domain_scoring_enabled(),
+        "phase24ht_same_family_domain_lock_applied": False,
+        "phase24ht_same_family_domain_lock_reason": "disabled",
+        "phase24ht_same_family_domain_selected_source_key": "",
+        "phase24ht_same_family_domain_selected_source_title": "",
+        "phase24ht_same_family_domain_selected_document_identity_score": 0.0,
+        "phase24ht_same_family_domain_replaced_document_identity_score": 0.0,
+        "phase24ht_same_family_domain_score_margin": 0.0,
+    }
+    if not trace["phase24ht_same_family_domain_scoring_enabled"]:
+        return document_lock_candidates, trace
+    trace["phase24ht_same_family_domain_lock_reason"] = "not_applied"
+    if not ranked:
+        trace["phase24ht_same_family_domain_lock_reason"] = "no_ranked_candidates"
+        return document_lock_candidates, trace
+    if not isinstance(source_identity_reranker, dict) or not source_identity_reranker.get("applied"):
+        trace["phase24ht_same_family_domain_lock_reason"] = "no_source_identity_signal"
+        return document_lock_candidates, trace
+    if article_tokens or identifier_tokens or numbered_laws or explicit_ref_set:
+        trace["phase24ht_same_family_domain_lock_reason"] = "explicit_query_lock_present"
+        return document_lock_candidates, trace
+    if relation_query_detected or legacy_intent_binding_active:
+        trace["phase24ht_same_family_domain_lock_reason"] = "relation_or_legacy_scope"
+        return document_lock_candidates, trace
+
+    identity_records = [
+        record
+        for record in source_identity_reranker.get("top_scores") or []
+        if isinstance(record, dict) and _phase24ht_document_values_from_identity_record(record)
+    ]
+    if not identity_records:
+        trace["phase24ht_same_family_domain_lock_reason"] = "no_identity_records"
+        return document_lock_candidates, trace
+    top_record = identity_records[0]
+    top_score = _phase24ht_identity_record_score(top_record)
+    trace["phase24ht_same_family_domain_selected_document_identity_score"] = round(top_score, 4)
+    trace["phase24ht_same_family_domain_selected_source_key"] = str(top_record.get("source_key") or "")
+    trace["phase24ht_same_family_domain_selected_source_title"] = str(top_record.get("source_title") or "")
+    if top_score < 45.0:
+        trace["phase24ht_same_family_domain_lock_reason"] = "identity_score_below_threshold"
+        return document_lock_candidates, trace
+
+    reasons = {str(reason) for reason in (top_record.get("reasons") or [])}
+    lanes = {str(lane) for lane in (top_record.get("retrieval_lane_sources") or [])}
+    dual_lane_confirmed = (
+        "dual_lane_confirmation" in reasons
+        or {"metadata_guided_recall", "semantic_dense_recall"}.issubset(lanes)
+    )
+    if not dual_lane_confirmed:
+        trace["phase24ht_same_family_domain_lock_reason"] = "identity_not_dual_lane_confirmed"
+        return document_lock_candidates, trace
+
+    target_items = [
+        item for item in ranked if _phase24ht_identity_record_matches_trace(top_record, item[3])
+    ]
+    if not target_items:
+        trace["phase24ht_same_family_domain_lock_reason"] = "identity_document_not_in_article_pool"
+        return document_lock_candidates, trace
+    if not any(
+        item[3].get("text_overlap", 0) >= 2
+        or item[3].get("heading_overlap", 0) >= 1
+        or item[3].get("title_overlap", 0) >= 1
+        or item[3].get("contains_exception_signal")
+        or item[3].get("scope_match")
+        for item in target_items
+    ):
+        trace["phase24ht_same_family_domain_lock_reason"] = "identity_document_lacks_span_support"
+        return document_lock_candidates, trace
+
+    current_item = (document_lock_candidates or ranked)[0]
+    current_trace = current_item[3]
+    if _phase24ht_identity_record_matches_trace(top_record, current_trace):
+        trace["phase24ht_same_family_domain_lock_reason"] = "identity_document_already_selected"
+        return document_lock_candidates, trace
+
+    target_family = str(top_record.get("source_family_mapped") or top_record.get("source_family") or "")
+    current_family = str(current_trace.get("source_family") or "")
+    if not (
+        target_family
+        and current_family
+        and (
+            target_family == current_family
+            or _temporal_guard_family_compatible(target_family, current_family)
+        )
+    ):
+        trace["phase24ht_same_family_domain_lock_reason"] = "not_same_family"
+        return document_lock_candidates, trace
+
+    current_score = 0.0
+    for record in identity_records:
+        if _phase24ht_identity_record_matches_trace(record, current_trace):
+            current_score = max(current_score, _phase24ht_identity_record_score(record))
+    score_margin = top_score - current_score
+    trace["phase24ht_same_family_domain_replaced_document_identity_score"] = round(current_score, 4)
+    trace["phase24ht_same_family_domain_score_margin"] = round(score_margin, 4)
+    if score_margin < 20.0:
+        trace["phase24ht_same_family_domain_lock_reason"] = "identity_margin_below_threshold"
+        return document_lock_candidates, trace
+
+    trace["phase24ht_same_family_domain_lock_applied"] = True
+    trace["phase24ht_same_family_domain_lock_reason"] = "same_family_domain_identity_lock"
+    return target_items, trace
+
 _RUNTIME_DEPENDENCY_NAMES = {
     "_asks_current_validity_query",
     "_asks_hierarchy_or_conflict_article_query",
@@ -339,6 +521,7 @@ def _select_article_span_evidence(
     explicit_article_refs: list[tuple[str, str]] | None = None,
     selected_source_keys: set[str] | None = None,
     source_family_resolution: SourceFamilyResolution | dict[str, Any] | None = None,
+    source_identity_reranker: dict[str, Any] | None = None,
     runtime_namespace: dict[str, Any] | None = None,
 ) -> tuple[list[RetrievedChunk], dict[str, Any]]:
     _bind_runtime_namespace(runtime_namespace)
@@ -688,6 +871,32 @@ def _select_article_span_evidence(
             document_lock_reason = "numbered_law_lock"
     if not document_lock_candidates and ranked:
         document_lock_candidates = [ranked[0]]
+    phase24ht_same_family_domain_trace: dict[str, Any] = {
+        "phase24ht_same_family_domain_scoring_enabled": _phase24ht_same_family_domain_scoring_enabled(),
+        "phase24ht_same_family_domain_lock_applied": False,
+        "phase24ht_same_family_domain_lock_reason": "not_evaluated",
+        "phase24ht_same_family_domain_selected_source_key": "",
+        "phase24ht_same_family_domain_selected_source_title": "",
+        "phase24ht_same_family_domain_selected_document_identity_score": 0.0,
+        "phase24ht_same_family_domain_replaced_document_identity_score": 0.0,
+        "phase24ht_same_family_domain_score_margin": 0.0,
+    }
+    (
+        document_lock_candidates,
+        phase24ht_same_family_domain_trace,
+    ) = _phase24ht_same_family_domain_identity_lock(
+        ranked=ranked,
+        document_lock_candidates=document_lock_candidates,
+        source_identity_reranker=source_identity_reranker,
+        article_tokens=article_tokens,
+        identifier_tokens=identifier_tokens,
+        numbered_laws=numbered_laws,
+        explicit_ref_set=explicit_ref_set,
+        relation_query_detected=relation_query_detected,
+        legacy_intent_binding_active=legacy_intent_binding_active,
+    )
+    if phase24ht_same_family_domain_trace.get("phase24ht_same_family_domain_lock_applied"):
+        document_lock_reason = "same_family_domain_identity_lock"
     if temporal_guard_enabled and document_lock_candidates and active_candidate_available:
         locked_trace = document_lock_candidates[0][3]
         if locked_trace.get("temporally_inactive"):
@@ -1239,6 +1448,7 @@ def _select_article_span_evidence(
         "support_contains_exception_signal": _support_contains_exception_signal(query, top_traces),
         "selector_reason": document_lock_reason,
         "document_lock_reason": document_lock_reason,
+        **phase24ht_same_family_domain_trace,
         "relation_query_detected": relation_query_detected,
         "temporary_clause_query_detected": temporary_or_transitional_clause_query,
         "temporary_clause_match_selected": bool(top_trace and top_trace.get("temporary_clause_match")),

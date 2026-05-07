@@ -4515,6 +4515,152 @@ class TestLawSignalParsing:
         assert selected[0].citation == "40969 m.27/f.0"
         assert selector["top_scores"][0]["source_family"] == "uy"
 
+    def test_phase24ht_article_selector_uses_same_family_identity_lock_for_natural_query(self, monkeypatch):
+        monkeypatch.setenv("ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING", "true")
+        chunks = [
+            RetrievedChunk(
+                text="Kişiye özel ölçüyle yapılan mobilya eser sözleşmesi ve bedel hükümleri.",
+                citation="TBK m.255/f.0",
+                source="tbk m.1",
+                score=0.98,
+                metadata={
+                    "source_title": "TÜRK BORÇLAR KANUNU",
+                    "belge_turu": "kanun",
+                    "kanun_no": "6098",
+                    "canonical_identifier_display": "tbk m.1",
+                    "law_short_name": "TBK",
+                    "madde_no": "255",
+                    "effective_state": "active",
+                },
+            ),
+            RetrievedChunk(
+                text=(
+                    "Tüketici sözleşmelerinde internetten satış, cayma hakkı ve kişiye özel "
+                    "üretim istisnası birlikte değerlendirilir."
+                ),
+                citation="TKHK m.18/f.0",
+                source="tkhk m.1",
+                score=0.40,
+                metadata={
+                    "source_title": "TÜKETİCİNİN KORUNMASI HAKKINDA KANUN",
+                    "belge_turu": "kanun",
+                    "kanun_no": "6502",
+                    "canonical_identifier_display": "tkhk m.1",
+                    "law_short_name": "TKHK",
+                    "madde_no": "18",
+                    "effective_state": "active",
+                },
+            ),
+        ]
+        source_identity_reranker = {
+            "applied": True,
+            "top_scores": [
+                {
+                    "source_key": "tkhk m.1",
+                    "source_title": "TÜKETİCİNİN KORUNMASI HAKKINDA KANUN",
+                    "source_family": "kanun",
+                    "source_family_mapped": "kanun",
+                    "document_identity_score": 60.0,
+                    "reasons": ["family_match", "dual_lane_confirmation"],
+                    "retrieval_lane_sources": ["metadata_guided_recall", "semantic_dense_recall"],
+                },
+                {
+                    "source_key": "tbk m.1",
+                    "source_title": "TÜRK BORÇLAR KANUNU",
+                    "source_family": "kanun",
+                    "source_family_mapped": "kanun",
+                    "document_identity_score": 18.0,
+                    "reasons": ["family_match"],
+                    "retrieval_lane_sources": ["metadata_guided_recall"],
+                },
+            ],
+        }
+
+        selected, selector = _select_article_span_evidence(
+            query="İnternetten kişiye özel ölçüyle üretilen mobilyada tüketicinin cayma hakkı istisnası nasıl test edilir?",
+            chunks=chunks,
+            requested_source_families=["kanun"],
+            explicit_article_refs=[],
+            selected_source_keys={"tbk m.1"},
+            source_identity_reranker=source_identity_reranker,
+        )
+
+        assert selected[0].citation == "TKHK m.18/f.0"
+        assert selector["selector_reason"] == "same_family_domain_identity_lock"
+        assert selector["phase24ht_same_family_domain_lock_applied"] is True
+        assert selector["phase24ht_same_family_domain_score_margin"] == 42.0
+
+    def test_phase24ht_article_selector_keeps_explicit_source_article_lock(self, monkeypatch):
+        monkeypatch.setenv("ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING", "true")
+        chunks = [
+            RetrievedChunk(
+                text="Kişiye özel ölçüyle yapılan mobilya eser sözleşmesi ve bedel hükümleri.",
+                citation="TBK m.255/f.0",
+                source="tbk m.1",
+                score=0.98,
+                metadata={
+                    "source_title": "TÜRK BORÇLAR KANUNU",
+                    "belge_turu": "kanun",
+                    "kanun_no": "6098",
+                    "canonical_identifier_display": "tbk m.1",
+                    "law_short_name": "TBK",
+                    "madde_no": "255",
+                    "effective_state": "active",
+                },
+            ),
+            RetrievedChunk(
+                text="Tüketici sözleşmelerinde cayma hakkı ve kişiye özel üretim istisnası.",
+                citation="TKHK m.18/f.0",
+                source="tkhk m.1",
+                score=0.40,
+                metadata={
+                    "source_title": "TÜKETİCİNİN KORUNMASI HAKKINDA KANUN",
+                    "belge_turu": "kanun",
+                    "kanun_no": "6502",
+                    "canonical_identifier_display": "tkhk m.1",
+                    "law_short_name": "TKHK",
+                    "madde_no": "18",
+                    "effective_state": "active",
+                },
+            ),
+        ]
+        source_identity_reranker = {
+            "applied": True,
+            "top_scores": [
+                {
+                    "source_key": "tkhk m.1",
+                    "source_title": "TÜKETİCİNİN KORUNMASI HAKKINDA KANUN",
+                    "source_family": "kanun",
+                    "source_family_mapped": "kanun",
+                    "document_identity_score": 60.0,
+                    "reasons": ["family_match", "dual_lane_confirmation"],
+                    "retrieval_lane_sources": ["metadata_guided_recall", "semantic_dense_recall"],
+                },
+                {
+                    "source_key": "tbk m.1",
+                    "source_title": "TÜRK BORÇLAR KANUNU",
+                    "source_family": "kanun",
+                    "source_family_mapped": "kanun",
+                    "document_identity_score": 18.0,
+                    "reasons": ["family_match"],
+                    "retrieval_lane_sources": ["metadata_guided_recall"],
+                },
+            ],
+        }
+
+        selected, selector = _select_article_span_evidence(
+            query="TBK m.255 için kişiye özel üretim sözleşmesi nasıl değerlendirilir?",
+            chunks=chunks,
+            requested_source_families=["kanun"],
+            explicit_article_refs=[("tbk", "255")],
+            selected_source_keys={"tbk m.1"},
+            source_identity_reranker=source_identity_reranker,
+        )
+
+        assert selected[0].citation == "TBK m.255/f.0"
+        assert selector["phase24ht_same_family_domain_lock_applied"] is False
+        assert selector["phase24ht_same_family_domain_lock_reason"] == "explicit_query_lock_present"
+
     def test_article_span_selector_builds_source_local_adjacent_window_metrics(self):
         chunks = [
             RetrievedChunk(
