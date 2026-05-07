@@ -1,0 +1,70 @@
+{
+  "generated_at_utc": "2026-05-07T04:20:43.511615+00:00",
+  "status": "PASS",
+  "api_url": "http://127.0.0.1:8010/v1",
+  "model": "hukuk-ai-poc",
+  "target_qids": [
+    "TEB-04",
+    "TUZUK-05",
+    "KANUN-08",
+    "YON-05"
+  ],
+  "out_dir": "reports/benchmark/runs/phase_24HR_option_C_targeted_candidate_smoke",
+  "run_returncode": 0,
+  "score_returncode": 0,
+  "quality_gate_status": "FAIL",
+  "score_summary": {
+    "total": 4,
+    "raw_score_proxy": 10.45,
+    "max_score": 40.0,
+    "pass_proxy": 0,
+    "fail_proxy": 4,
+    "answer_contract_invalid_count": 0,
+    "unsupported_confident_answer_count": 0,
+    "source_key_v2_collision_detected_count": 0,
+    "binding_source_key_collision_detected_count": 0,
+    "repealed_as_active_count": 0,
+    "temporal_validity_miss_count": 0,
+    "hallucinated_source_count": 2,
+    "manual_review_count": 4
+  },
+  "qid_results": {
+    "TEB-04": {
+      "pass_fail_proxy": "FAIL",
+      "score_0_10_proxy": 0.0,
+      "selected_document_id": "KATMA DEĞER VERGİSİ GENEL UYGULAMA TEBLİĞİ",
+      "canonical_source_key_v2": "fam=teblig|id=19631|title=bf0347798456|start=2014-04-26|state=active|article=2|clause=0",
+      "failure_classes": "auto_fail_triggered | missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only",
+      "stop_condition_status": "WARN",
+      "stop_condition_reason": "Source 19631 was selected, but the answer claimed MULGA/repealed for an active KDV GUT source and auto-failed."
+    },
+    "TUZUK-05": {
+      "pass_fail_proxy": "FAIL",
+      "score_0_10_proxy": 3.25,
+      "selected_document_id": "GIDA MADDELERİNİN VE UMUMİ SAĞLIĞI İLGİLENDİREN EŞYA VE LEVAZIMIN HUSUSİ VASIFLARINI GÖSTEREN TÜZÜK",
+      "canonical_source_key_v2": "fam=tuzuk|id=315481|title=9cc058bb1faf|start=unknown|state=active|article=0|clause=0",
+      "failure_classes": "missing_gold_document_signal | missing_required_content_signal | wrong_document | partial_grounding_only",
+      "stop_condition_status": "FAIL",
+      "stop_condition_reason": "Selected a concrete irrelevant tüzük as primary source; human review required general hierarchy handling instead."
+    },
+    "KANUN-08": {
+      "pass_fail_proxy": "FAIL",
+      "score_0_10_proxy": 1.45,
+      "selected_document_id": "ELEKTRONİK HABERLEŞME SEKTÖRÜNE İLİŞKİN TÜKETİCİ HAKLARI YÖNETMELİĞİ",
+      "canonical_source_key_v2": "fam=yonetmelik|id=24039|title=5452627d2b68|start=2017-10-28|state=active|article=0|clause=0",
+      "failure_classes": "missing_gold_document_signal | missing_required_content_signal | wrong_family | wrong_document | partial_grounding_only"
+    },
+    "YON-05": {
+      "pass_fail_proxy": "FAIL",
+      "score_0_10_proxy": 5.75,
+      "selected_document_id": "İMAR KANUNU",
+      "canonical_source_key_v2": "fam=kanun|id=3194|title=005c418f455c|start=unknown|state=active|article=18|clause=0",
+      "failure_classes": "missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only"
+    }
+  },
+  "decision": "Option C targeted smoke executed but failed quality and stop-condition gates. Do not proceed to option D until systemic remediation passes another targeted smoke.",
+  "live_8000_modified": false,
+  "candidate_gateway_started": false,
+  "model_inference_called": true,
+  "chat_completions_called": true
+}

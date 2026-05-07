@@ -22,7 +22,7 @@
 - Option-A read-only verification: `reports/benchmark/phase_24HR_shadow_collection_verify.md`; verify `PASS`, 59/59 delta rows found in target, base delta collision `0`, load state observed `Loaded`.
 - Shadow validation plan and authorization packet: `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md`; `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md`; option A completed; option B completed as non-live candidate `127.0.0.1:8010`; options C/D still require explicit authorization for targeted smoke or full trace-on candidate benchmark.
 - Option-B candidate gateway plan, guard, and start evidence: `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md`; `reports/benchmark/phase_24HR_option_B_candidate_gateway_runner_plan.md`; `reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md`; `reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.md`; guard smoke passed 5/5, candidate health is `ok`, no live 8000 change, no chat/model call made.
-- Option-C targeted smoke plan and guard: `reports/benchmark/productization/phase_24HR_option_C_targeted_smoke_plan.md`; `reports/benchmark/phase_24HR_option_C_targeted_smoke_runner_plan.md`; `reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.md`; runner plan is `READY_FOR_OPTION_C_AUTHORIZATION`, no chat/model call made.
+- Option-C targeted smoke evidence: `reports/benchmark/productization/phase_24HR_option_C_targeted_smoke_plan.md`; `reports/benchmark/phase_24HR_option_C_targeted_smoke_run_report.md`; technical run `PASS`, quality gate `FAIL`, `raw_score_proxy=10.45/40`, `pass_proxy=0/4`, hard counters `0`; option-D is blocked.
 - TEB-04 materialization evidence: `reports/benchmark/phase_24HR_teb04_kdv_gut_materialization_report.md`; 6 spans were extracted from the hash-verified GIB PDF with no live or Milvus change.
 - TUZUK-05 scorer policy evidence: `reports/benchmark/productization/post_human_review_tuzuk05_policy_update_report.md`; offline scorer policy has tests and no live runtime change.
 
@@ -32,7 +32,7 @@
 | A Benchmark Stability | FAIL | Latest full run is `805.09/89`, below `816/91`; consecutive stability delta vs Phase23R-E is `-11.77` raw and `-2` pass. |
 | B Residual Risk Closure | FAIL | Nine residual rows remain open or conditional. |
 | C Legal / Scorer Review | PARTIAL | TEB-04 and TUZUK-05 human review blockers are closed; CBY-04, CBY-06, TUZUK-04 and conditional taxonomy rows still block product readiness. |
-| D Source / Corpus / Materialization | FAIL | TEB-04 shadow collection build/load, read-only verification, and non-live candidate gateway health passed, but targeted/full trace-on benchmark validation remains. |
+| D Source / Corpus / Materialization | FAIL | TEB-04 shadow collection build/load, read-only verification, and non-live candidate gateway health passed, but option-C targeted trace-on smoke failed. |
 | E Source Identity / Selector | PARTIAL | Phase24X focused smoke fixed two primary selector rows; no full benchmark proof yet. |
 | F Temporal / Current-Law Validity | FAIL | TUZUK-04 current-law vs repealed-source blocker remains. |
 | G Guardrails Policy | FAIL | Runtime guardrails disabled and no product policy existed before this phase. |
@@ -46,5 +46,5 @@
 
 ## Decision
 - Product readiness inventory status: **not product-ready**.
-- Safe autonomous next action: wait for explicit option-C authorization before running targeted trace-on benchmark involving `TEB-04` / `TUZUK-05`; full benchmark still requires separate option-D authorization.
+- Safe autonomous next action: perform systemic remediation planning for option-C failures; do not run option-D full benchmark from this state.
 - No runtime change is authorized by this inventory.

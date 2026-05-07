@@ -55,7 +55,7 @@ Concrete success criteria:
 | Confidence/UX policy PASS | Runtime answer behavior enforced | `confidence_ux_policy.md` exists; runtime enforcement not evidenced | PARTIAL |
 | Rollback runbook PASS | Runbook and rehearsal | `rollback_incident_runbook.md` exists; rehearsal not completed | FAIL |
 | Legal/scorer review closure PASS | All named legal/scorer decisions closed | TEB-04/TUZUK-05 closed; CBY/KKY/TUZUK-04 remain open/conditional | PARTIAL |
-| Source/corpus materialization closure PASS | Product-critical sources materialized and validated | TEB-04 shadow collection build/load, read-only verification, and option-B candidate health passed; targeted/full validation pending; other residual sources remain open | FAIL |
+| Source/corpus materialization closure PASS | Product-critical sources materialized and validated | TEB-04 shadow collection build/load, read-only verification, and option-B candidate health passed; option-C targeted validation failed; other residual sources remain open | FAIL |
 | Final productization gate PASS or restricted PASS | `productization_ready_with_restrictions` or equivalent approved decision | `final_productization_gate.md` decision is `not_productization_ready` | FAIL |
 | Fine-tuning decision explicitly closed or separately approved | Closed or separate approval | Fine-tuning remains closed | PASS |
 
@@ -65,7 +65,7 @@ Concrete success criteria:
 | A Benchmark Stability | `raw_score_proxy >= 816`, `pass_proxy >= 91`, hard counters zero, two stable full trace-on runs | Latest full trace-on BASE `reports/benchmark/runs/phase_24U_B_base_trace_on_full_20260505T121226Z/score_summary.json`: `raw_score_proxy=805.09`, `pass_proxy=89`; hard counters zero | FAIL |
 | B Residual Risk Closure | 9 residuals closed or formally accepted | `residual_closure_matrix.csv`: 9 rows remain open/conditional; 0 accepted for productization | FAIL |
 | C Legal / Scorer Review | CBY, KKY/YONETMELIK, TEB-04, TUZUK-04, TUZUK-05 decisions closed | TEB-04/TUZUK-05 review closed; CBY-04, CBY-06, TUZUK-04 and conditional taxonomy rows still block product readiness | PARTIAL |
-| D Source / Corpus / Materialization | Product-critical sources hashable, parser-ready, section boundaries detectable, confirmed | TEB-04 shadow collection build/load, read-only verification, and option-B candidate health passed; TUZUK-05 policy smoke passed; targeted/full validation pending; other source rows remain open | FAIL |
+| D Source / Corpus / Materialization | Product-critical sources hashable, parser-ready, section boundaries detectable, confirmed | TEB-04 shadow collection build/load, read-only verification, and option-B candidate health passed; TUZUK-05 policy smoke passed; option-C targeted validation failed; other source rows remain open | FAIL |
 | E Source Identity / Selector | Wrong-family/document/identifier controls within thresholds and stable full proof | Latest full run below target; no full post-Phase24HR candidate proof | PARTIAL |
 | F Temporal / Current-Law Validity | No repealed/historical source as active current law; role-separated evidence | TUZUK-04 current-law vs repealed-source blocker remains | FAIL |
 | G Guardrails Policy | Policy and runtime/waiver | Policy exists; live health reports guardrails disabled | FAIL |
@@ -95,6 +95,7 @@ Concrete success criteria:
 | TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_shadow_validation_plan.md` and `phase_24HR_shadow_validation_authorization_packet.md` | Option A and option B complete; options C/D still require explicit authorization. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_option_B_candidate_gateway_plan.md`, `reports/benchmark/phase_24HR_option_B_candidate_gateway_runner_plan.md`, `reports/benchmark/phase_24HR_option_B_candidate_gateway_guard_smoke.md`, and `reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.md` | Option-B execution boundary is documented; runner plan was ready; guard smoke passed 5/5 fail-closed paths; candidate gateway is started on `127.0.0.1:8010` with health `ok`; live 8000 unchanged; no chat/model inference was called. |
 | TEB-04 / TUZUK-05 | `reports/benchmark/productization/phase_24HR_option_C_targeted_smoke_plan.md`, `reports/benchmark/phase_24HR_option_C_targeted_smoke_runner_plan.md`, and `reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.md` | Option-C targeted smoke boundary is documented; runner plan is `READY_FOR_OPTION_C_AUTHORIZATION`; guard smoke passed 5/5 fail-closed paths; no chat/model inference was called. |
+| TEB-04 / TUZUK-05 | `reports/benchmark/phase_24HR_option_C_targeted_smoke_run_report.md` | Option-C targeted smoke executed; technical run `PASS`; quality gate `FAIL`; pass_proxy `0/4`; hard counters `0`; `TEB-04` auto-failed after claiming active KDV GUT as `MULGA`; `TUZUK-05` violated stop condition by selecting a concrete irrelevant tüzük. |
 
 ## Completion Decision
 Objective artifacts are produced and pushed, but product-level completion is **not achieved** under the brief's Section 8 definition.
@@ -102,10 +103,10 @@ Objective artifacts are produced and pushed, but product-level completion is **n
 Reason: Benchmark stability, residual closure, source/materialization closure at candidate/full level, temporal validity, runtime guardrails, runtime verification, privacy/PII enforcement, audit logging, rollback rehearsal, internal eval readiness, serving candidate readiness, and final productization gate are not complete.
 
 ## Next Required Input
-Explicit owner authorization is required before the next execution step:
+Systemic remediation is required before the next execution step:
 
-- Run targeted trace-on candidate smoke.
-- Run a full trace-on candidate benchmark if it uses shared model/GPU resources.
+- Do not run full trace-on candidate benchmark from this state.
+- Do not rerun targeted smoke without remediation and fresh explicit authorization.
 
 The authorization packet is `reports/benchmark/productization/phase_24HR_shadow_validation_authorization_packet.md`.
 

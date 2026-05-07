@@ -14,7 +14,7 @@ Additional required decisions before this can change:
 | Benchmark stability | Latest full run is `805.09/89`; reference full run was `816.86/91`. | fail |
 | Residual closure | 9 residual rows remain open; 0 accepted for productization. | fail |
 | Human legal/source review | `TUZUK-05` human review closed: exact single tüzük source is not identifiable; offline scorer policy implements general hierarchy handling; artifact-level smoke passed. | pass for review/scorer/artifact smoke; fail for candidate/full validation |
-| Scorer/product confirmation | `TEB-04` product spans confirmed, official GIB PDF hash verified, 6 spans materialized as non-live artifacts, artifact-level smoke passed, option-A shadow collection build/load verified 59 delta rows, and option-B non-live candidate gateway health is `ok`. | pass for review/materialization/artifact smoke/shadow build/candidate health; fail for targeted/full trace-on validation |
+| Scorer/product confirmation | `TEB-04` product spans confirmed, official GIB PDF hash verified, 6 spans materialized as non-live artifacts, artifact-level smoke passed, option-A shadow collection build/load verified 59 delta rows, and option-B non-live candidate gateway health is `ok`; option-C targeted smoke failed quality gate. | pass for review/materialization/artifact smoke/shadow build/candidate health; fail for targeted trace-on validation |
 | Guardrails | Policy drafted; live reports `guardrails=disabled`. | fail |
 | Verification | Policy drafted; live reports `verification=disabled`. | fail |
 | Privacy/PII | Policy drafted; runtime enforcement not evidenced. | fail |
@@ -25,14 +25,14 @@ Additional required decisions before this can change:
 | Contract hard metrics | Latest full run has 0 answer-contract invalid, 0 unsupported confident answer, 0 `source_key_v2` collision. | pass for these metrics only |
 
 ## Productization Decision
-Productization must remain closed. The current system has useful hard-metric clears, the `TEB-04` / `TUZUK-05` human review blockers are closed, `TEB-04` has non-live materialized spans, a local dry-run shadow row manifest, a guarded build plan, fail-closed guard smoke, verified option-A shadow collection build/load, and option-B non-live candidate gateway health, `TUZUK-05` has offline scorer policy coverage, and artifact-level non-live smoke passed, but product-level readiness still requires targeted/full trace-on benchmark validation, policy enforcement, rollback rehearsal, and full benchmark stability. Those conditions are not met.
+Productization must remain closed. The current system has useful hard-metric clears, the `TEB-04` / `TUZUK-05` human review blockers are closed, `TEB-04` has non-live materialized spans, a local dry-run shadow row manifest, a guarded build plan, fail-closed guard smoke, verified option-A shadow collection build/load, and option-B non-live candidate gateway health, `TUZUK-05` has offline scorer policy coverage, and artifact-level non-live smoke passed, but option-C targeted smoke failed with `pass_proxy=0/4`. Product-level readiness still requires systemic remediation, a passing targeted smoke, full trace-on benchmark stability, policy enforcement, and rollback rehearsal. Those conditions are not met.
 
 ## Fine-Tuning Decision
 Fine-tuning remains closed for this gate. The observed blockers are legal/source identity, corpus/materialization, verification, guardrails, privacy, audit, and release-control gaps. Fine-tuning would not be an acceptable substitute for resolving these product-readiness blockers.
 
 ## Required Next Decision
 - No additional human lawyer decision is currently pending for `TEB-04` or `TUZUK-05`.
-- Engineering completed option-A shadow collection build/load, read-only verification, and option-B non-live candidate gateway start for `TEB-04` / `TUZUK-05`; targeted smoke or full candidate validation should run only if options C/D are explicitly authorized.
+- Engineering completed option-A shadow collection build/load, read-only verification, option-B non-live candidate gateway start, and option-C targeted smoke for `TEB-04` / `TUZUK-05`; option-C failed quality gate. Full candidate validation must not run until systemic remediation and a passing targeted smoke.
 
 ## Runtime Change
-No live runtime change was made. Option-B started a non-live candidate gateway on `127.0.0.1:8010`.
+No live runtime change was made. Option-B started a non-live candidate gateway on `127.0.0.1:8010`; option-C used only that non-live candidate.

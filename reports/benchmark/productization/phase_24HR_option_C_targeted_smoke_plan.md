@@ -18,14 +18,26 @@ This plan does not authorize or perform:
 - Full benchmark execution.
 
 ## Current Status
-Option `B` is complete and the runner plan is `READY_FOR_OPTION_C_AUTHORIZATION`.
+Option `C` was approved by the owner and executed on 2026-05-07.
+
+Technical run status is `PASS`, but targeted quality gate status is `FAIL`.
 
 Evidence:
 
 - Option-B start report: `reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.md`
 - Option-C runner plan: `reports/benchmark/phase_24HR_option_C_targeted_smoke_runner_plan.md`
+- Option-C run report: `reports/benchmark/phase_24HR_option_C_targeted_smoke_run_report.md`
 - Candidate API URL: `http://127.0.0.1:8010/v1`
-- No targeted smoke, full benchmark, chat call, or model inference has been run under option `C`.
+- Targeted smoke called chat/model inference for 4 QIDs only.
+- No full benchmark, live cutover, internal eval, serving candidate, productization, prompt/top-k change, model change, or fine-tuning was performed.
+
+Result summary:
+
+- `raw_score_proxy=10.45/40`
+- `pass_proxy=0/4`
+- hard counters stayed clean: answer contract invalid `0`, unsupported confident answer `0`, source-key collision `0`, binding collision `0`
+- `TUZUK-05` selected a concrete irrelevant tüzük as primary source, so the stop condition failed
+- Option `D` is blocked until systemic remediation passes another targeted smoke under explicit authorization
 
 ## Targeted QIDs
 | qid | reason |
@@ -84,4 +96,4 @@ Stop and report without running smoke if any condition occurs:
 - `TUZUK-05` selects a concrete irrelevant tüzük as primary source.
 
 ## Boundary To Option D
-Option `C` does not authorize a full benchmark. Option `D` may be requested only if targeted smoke passes without the stop conditions above.
+Option `C` did not authorize a full benchmark. Option `D` must not be requested from this state because targeted smoke failed.

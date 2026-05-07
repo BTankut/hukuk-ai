@@ -5,7 +5,7 @@ Generated: 2026-05-06
 ## Request
 Authorization is requested for the next gated, non-live validation step for `TEB-04` and `TUZUK-05`.
 
-Option `A` was approved by the owner and executed on 2026-05-06. Option `B` was approved by the owner and executed on 2026-05-06 as a non-live candidate gateway on `127.0.0.1:8010`. Options `C` and `D` remain unauthorized.
+Option `A` was approved by the owner and executed on 2026-05-06. Option `B` was approved by the owner and executed on 2026-05-06 as a non-live candidate gateway on `127.0.0.1:8010`. Option `C` was approved by the owner and executed on 2026-05-07; it failed the targeted quality gate. Option `D` remains unauthorized and blocked until a targeted smoke passes.
 
 This authorization is **not** a productization approval, internal eval opening, serving-candidate opening, live `8000` switch, model change, prompt/top-k change, or fine-tuning approval.
 
@@ -36,6 +36,7 @@ This authorization is **not** a productization approval, internal eval opening, 
 | Option-C guarded runner | `scripts/benchmark/phase24hr_option_c_targeted_smoke.py` |
 | Option-C runner plan | `reports/benchmark/phase_24HR_option_C_targeted_smoke_runner_plan.md`; `READY_FOR_OPTION_C_AUTHORIZATION`, option-B status `PASS` |
 | Option-C guard smoke | `reports/benchmark/phase_24HR_option_C_targeted_smoke_guard_smoke.md`; `PASS`, 5/5 fail-closed paths; no live 8000, gateway, chat, or model inference |
+| Option-C run report | `reports/benchmark/phase_24HR_option_C_targeted_smoke_run_report.md`; technical run `PASS`, quality gate `FAIL`, pass_proxy `0/4`, hard counters `0`, option-D blocked |
 
 ## Authorization Options
 Approve only the smallest scope needed.
@@ -44,8 +45,8 @@ Approve only the smallest scope needed.
 |---|---|---|
 | A | Build/load a Milvus shadow collection for `TEB-04` chunked spans and `TUZUK-05` policy validation. | **Completed**; no live `8000`; no existing base collection overwrite; no serving candidate. |
 | B | Start a non-live candidate gateway on a separate port after shadow collection build. | **Completed**; candidate `127.0.0.1:8010`; no live `8000`; no public endpoint; no Open WebUI switch; no chat/model inference. |
-| C | Run targeted trace-on candidate smoke for `TEB-04`, `TUZUK-05`, and source-identity guard rows. | No full benchmark yet; no gate change. |
-| D | If targeted smoke passes, run full trace-on candidate benchmark. | Uses shared model/GPU resources; no product/internal/serving switch. |
+| C | Run targeted trace-on candidate smoke for `TEB-04`, `TUZUK-05`, and source-identity guard rows. | **Executed and failed quality gate**; no live `8000`; no full benchmark; no gate change. |
+| D | If targeted smoke passes, run full trace-on candidate benchmark. | **Blocked** because option-C targeted smoke failed; uses shared model/GPU resources; no product/internal/serving switch. |
 
 ## Proposed Execution Order
 1. Re-run `python3 scripts/benchmark/phase24hr_shadow_preflight.py`.
@@ -54,8 +55,8 @@ Approve only the smallest scope needed.
 4. Re-run `python3 scripts/benchmark/phase24hr_shadow_collection_build.py plan`.
 5. Option A is complete; do not rebuild unless explicitly re-authorized.
 6. Option B is complete; keep candidate `127.0.0.1:8010` isolated and do not expose it.
-7. Run targeted trace-on smoke only if option C is approved and option-B candidate health evidence exists, using `scripts/benchmark/phase24hr_option_c_targeted_smoke.py`.
-8. Run full trace-on candidate benchmark only if option D is approved and targeted smoke passes.
+7. Option C is complete and failed; do not rerun without remediation and fresh explicit authorization.
+8. Do not run full trace-on candidate benchmark until a future targeted smoke passes and option D is explicitly approved.
 9. Update productization reports; keep final gate `not_productization_ready` unless all brief gates pass or explicit waivers are recorded.
 
 ## Hard Stop Conditions

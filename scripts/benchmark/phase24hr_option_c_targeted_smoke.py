@@ -60,6 +60,10 @@ def api_root(api_url: str) -> str:
     return api_url.rstrip("/").removesuffix("/v1")
 
 
+def api_health_url(api_url: str) -> str:
+    return f"{api_url.rstrip('/')}/health"
+
+
 def http_json(url: str, *, timeout: float = 5.0) -> dict[str, Any]:
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:
@@ -174,7 +178,7 @@ def ensure_run_authorized(args: argparse.Namespace) -> None:
         raise RuntimeError("Refusing targeted smoke: option-B candidate gateway is not verified.")
     if api_port(args.api_url) != b_status.get("candidate_port"):
         raise RuntimeError("Refusing targeted smoke: api-url port does not match the option-B candidate port.")
-    health = http_json(f"{api_root(args.api_url)}/health")
+    health = http_json(api_health_url(args.api_url))
     if health.get("status") != "ok":
         raise RuntimeError("Refusing targeted smoke: candidate health is not ok.")
 
@@ -204,15 +208,48 @@ def run_smoke(args: argparse.Namespace) -> dict[str, Any]:
         str(args.out_dir / "score"),
     ]
     score_completed = subprocess.run(score_cmd, cwd=REPO_ROOT, text=True, capture_output=True, check=False)
+    score_summary_path = args.out_dir / "score/score_summary.json"
+    score_summary: dict[str, Any] = {}
+    if score_summary_path.exists():
+        score_summary = read_json(score_summary_path)
+    hard_counter_keys = [
+        "answer_contract_invalid_count",
+        "unsupported_confident_answer_count",
+        "source_key_v2_collision_detected_count",
+        "binding_source_key_collision_detected_count",
+    ]
+    quality_gate_pass = (
+        run_completed.returncode == 0
+        and score_completed.returncode == 0
+        and score_summary.get("pass_proxy") == len(TARGET_QIDS)
+        and all(score_summary.get(key) == 0 for key in hard_counter_keys)
+    )
     report = {
         "generated_at_utc": utc_now(),
         "status": "PASS" if run_completed.returncode == 0 and score_completed.returncode == 0 else "FAIL",
+        "quality_gate_status": "PASS" if quality_gate_pass else "FAIL",
         "api_url": args.api_url,
         "model": args.model,
         "target_qids": TARGET_QIDS,
         "out_dir": rel(args.out_dir),
         "run_returncode": run_completed.returncode,
         "score_returncode": score_completed.returncode,
+        "score_summary": {
+            key: score_summary.get(key)
+            for key in [
+                "total",
+                "raw_score_proxy",
+                "max_score",
+                "pass_proxy",
+                "fail_proxy",
+                *hard_counter_keys,
+                "repealed_as_active_count",
+                "temporal_validity_miss_count",
+                "hallucinated_source_count",
+                "manual_review_count",
+            ]
+            if key in score_summary
+        },
         "live_8000_modified": False,
         "candidate_gateway_started": False,
         "model_inference_called": True,

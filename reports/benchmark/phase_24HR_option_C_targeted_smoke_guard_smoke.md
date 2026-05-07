@@ -1,6 +1,6 @@
 # Phase 24HR Option C Targeted Smoke Guard Smoke
 
-- generated_at_utc: `2026-05-06T17:32:52.870470+00:00`
+- generated_at_utc: `2026-05-07T04:18:12.745457+00:00`
 - status: `PASS`
 - row_count: `5`
 - pass_count: `5`

@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generated_at_utc": "2026-05-06T17:32:52.870470+00:00",
+    "generated_at_utc": "2026-05-07T04:18:12.745457+00:00",
     "status": "PASS",
     "row_count": 5,
     "pass_count": 5,
@@ -23,7 +23,7 @@
       "observed_status": "READY_FOR_OPTION_C_AUTHORIZATION",
       "expected_error_substring": "",
       "observed_error": "",
-      "stdout_last_json": "{\"api_url\": \"http://127.0.0.1:8010/v1\", \"authorization_token_required\": \"OPTION_C_APPROVED_PHASE24HR\", \"candidate_gateway_started\": false, \"chat_completions_called\": false, \"execute_required\": true, \"generated_at_utc\": \"2026-05-06T17:32:52.731413+00:00\", \"live_8000_modified\": false, \"model\": \"hukuk-ai-poc\", \"model_inference_called\": false, \"option_b_status\": {\"candidate_health\": {\"api_version\": \"2026-05-06-phase24hr-option-b-candidate\", \"guardrails\": \"disabled\", \"lane\": \"phase24hr_option_b_candidate\", \"retriever\": \"milvus\", \"service\": \"hukuk-ai-api-gateway\", \"status\": \"ok\", \"verification\": \"disabled\"}, \"candidate_port\": 8010, \"live_health\": {\"api_version\": \"2026-05-03-phase23R-E-benchmark-only-cutover\", \"guardrails\": \"disabled\", \"lane\": \"phase22f_s7_full_shadow\", \"retriever\": \"milvus\", \"service\": \"hukuk-ai-api-gateway\", \"status\": \"ok\", \"verification\": \"disabled\"}, \"problems\": [], \"report\": \"reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.json\", \"status\": \"PASS\"}, \"out_dir\": \"reports/benchmark/runs/phase_24HR_option_C_targeted_candidate_smoke\", \"status\": \"READY_FOR_OPTION_C_AUTHORIZATION\", \"target_qids\": [\"TEB-04\", \"TUZUK-05\", \"KANUN-08\", \"YON-05\"]}",
+      "stdout_last_json": "{\"api_url\": \"http://127.0.0.1:8010/v1\", \"authorization_token_required\": \"OPTION_C_APPROVED_PHASE24HR\", \"candidate_gateway_started\": false, \"chat_completions_called\": false, \"execute_required\": true, \"generated_at_utc\": \"2026-05-07T04:18:12.604950+00:00\", \"live_8000_modified\": false, \"model\": \"hukuk-ai-poc\", \"model_inference_called\": false, \"option_b_status\": {\"candidate_health\": {\"api_version\": \"2026-05-06-phase24hr-option-b-candidate\", \"guardrails\": \"disabled\", \"lane\": \"phase24hr_option_b_candidate\", \"retriever\": \"milvus\", \"service\": \"hukuk-ai-api-gateway\", \"status\": \"ok\", \"verification\": \"disabled\"}, \"candidate_port\": 8010, \"live_health\": {\"api_version\": \"2026-05-03-phase23R-E-benchmark-only-cutover\", \"guardrails\": \"disabled\", \"lane\": \"phase22f_s7_full_shadow\", \"retriever\": \"milvus\", \"service\": \"hukuk-ai-api-gateway\", \"status\": \"ok\", \"verification\": \"disabled\"}, \"problems\": [], \"report\": \"reports/benchmark/phase_24HR_option_B_candidate_gateway_start_report.json\", \"status\": \"PASS\"}, \"out_dir\": \"reports/benchmark/runs/phase_24HR_option_C_targeted_candidate_smoke\", \"status\": \"READY_FOR_OPTION_C_AUTHORIZATION\", \"target_qids\": [\"TEB-04\", \"TUZUK-05\", \"KANUN-08\", \"YON-05\"]}",
       "stderr": "",
       "status": "PASS"
     },
