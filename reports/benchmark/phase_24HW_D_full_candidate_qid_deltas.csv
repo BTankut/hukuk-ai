@@ -1,0 +1,21 @@
+change_type,qid,base_score,phase24hw_score,base_pass,phase24hw_pass,phase24hw_failure_classes
+pass_to_fail_vs_base,CBKAR-06,9.32,0.00,pass,fail,auto_fail_triggered | missing_required_content_signal | partial_grounding_only
+pass_to_fail_vs_base,CBY-01,7.75,1.45,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_family | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,CBY-02,8.65,3.25,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,CBY-04,7.12,6.85,pass,fail,missing_required_content_signal | wrong_family | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-04,8.00,3.70,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-05,8.17,2.77,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-06,9.32,3.93,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-11,8.65,3.25,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-14,8.24,3.18,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-16,8.65,3.25,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-17,7.55,3.25,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-18,8.65,3.25,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KANUN-20,8.99,3.59,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,KKY-11,7.89,3.25,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+pass_to_fail_vs_base,TEB-03,8.00,0.00,pass,fail,auto_fail_triggered | missing_required_content_signal | partial_grounding_only
+pass_to_fail_vs_base,UY-07,8.09,3.79,pass,fail,missing_gold_document_signal | missing_required_content_signal | wrong_document | hallucinated_identifier | partial_grounding_only
+fail_to_pass_vs_base,KANUN-08,1.45,8.22,fail,pass,missing_required_content_signal | partial_grounding_only
+fail_to_pass_vs_base,TEB-04,0.00,8.15,fail,pass,
+fail_to_pass_vs_base,TUZUK-05,3.25,10.00,fail,pass,
+fail_to_pass_vs_base,YON-05,5.75,7.55,fail,pass,missing_required_content_signal | partial_grounding_only
