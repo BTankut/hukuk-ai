@@ -736,6 +736,11 @@ def _select_article_span_evidence(
                 score -= 24
         if legacy_profile["legacy_intent_binding_active"]:
             score += float(legacy_profile["score"])
+        if (
+            metadata.get("phase24hu_secondary_family_recall")
+            and not (explicit_ref_match or selected_source_match or identifier_match)
+        ):
+            score -= 70
 
         scored.append(
             (
@@ -810,6 +815,11 @@ def _select_article_span_evidence(
                     "contains_exception_signal": _contains_exception_signal(chunk.text),
                     "temporal_state_resolved": _chunk_effective_state_resolved(chunk),
                     "domain_law_supporting_source": bool(metadata.get("domain_law_supporting_source")),
+                    "phase24hu_secondary_family_recall": bool(
+                        metadata.get("phase24hu_secondary_family_recall")
+                    ),
+                    "source_role": metadata.get("source_role") or "",
+                    "secondary_family_recall_role": metadata.get("secondary_family_recall_role") or "",
                 },
             )
         )
@@ -1585,6 +1595,22 @@ def _apply_selected_document_only_bundle(
         article_span_selector["selected_document_only_bundle"] = False
         article_span_selector["selected_document_bundle_skip_reason"] = "selected_document_chunks_missing"
         return chunks
+    phase24hu_support_chunks = [
+        chunk
+        for chunk in chunks
+        if chunk not in selected_document_chunks
+        and (chunk.metadata or {}).get("phase24hu_secondary_family_recall")
+        and (chunk.metadata or {}).get("domain_law_supporting_source")
+    ]
+    if phase24hu_support_chunks:
+        article_span_selector["selected_document_only_bundle"] = False
+        article_span_selector[
+            "selected_document_bundle_skip_reason"
+        ] = "phase24hu_supporting_source_role_required"
+        article_span_selector["phase24hu_supporting_bundle_preserved_count"] = len(
+            phase24hu_support_chunks[:4]
+        )
+        return [*selected_document_chunks, *phase24hu_support_chunks[:4]]
 
     suppressed_count = len(chunks) - len(selected_document_chunks)
     article_span_selector["selected_document_only_bundle"] = True

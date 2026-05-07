@@ -79,6 +79,8 @@ from routers.chat import (
     _infer_domain_article_refs,
     _domain_law_supporting_source_family_hints,
     _select_domain_law_supporting_source_candidates,
+    _phase24hu_secondary_family_recall_policy,
+    _phase24hu_mark_secondary_family_chunks,
     _extract_source_identifier_tokens,
     _focus_chunks_on_selected_sources,
     _infer_requested_source_families,
@@ -4660,6 +4662,165 @@ class TestLawSignalParsing:
         assert selected[0].citation == "TBK m.255/f.0"
         assert selector["phase24ht_same_family_domain_lock_applied"] is False
         assert selector["phase24ht_same_family_domain_lock_reason"] == "explicit_query_lock_present"
+
+    def test_phase24hu_secondary_family_recall_uses_runtime_role_signals(self, monkeypatch):
+        monkeypatch.setenv("ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL", "true")
+
+        policy = _phase24hu_secondary_family_recall_policy(
+            query=(
+                "İnternetten kişiye özel ölçüyle satılan üründe cayma hakkı istisnası "
+                "hangi normlarla birlikte okunur?"
+            ),
+            requested_source_families=["kanun"],
+            source_family_resolution=SourceFamilyResolution(
+                predicted_family="kanun",
+                family_confidence=0.9,
+                routing_families=["kanun"],
+                preferred_families=["kanun"],
+                fallback_families=[],
+                expected_family_prior="kanun",
+                family_candidates=[],
+                selected_family_confidence=0.9,
+                family_override_reason="test",
+            ),
+            metadata_lookup_query_signals={"parsed_family_candidates": ["yonetmelik"]},
+            metadata_first_selector=None,
+        )
+
+        assert policy["secondary_family_recall_reason"] == "source_role_secondary_family_signal"
+        assert "yonetmelik" in policy["secondary_family_recall_types"]
+        assert "norm_chain" in policy["phase24hu_source_role_signals"]
+
+    def test_phase24hu_marks_supporting_family_chunks_with_roles(self, monkeypatch):
+        monkeypatch.setenv("ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL", "true")
+        chunks = [
+            RetrievedChunk(
+                text=(
+                    "Cayma hakkı; tüketicinin istekleri veya kişisel ihtiyaçları doğrultusunda "
+                    "hazırlanan mallarda uygulanmaz."
+                ),
+                citation="MSY m.15/f.1",
+                source="29188",
+                score=0.80,
+                metadata={
+                    "source_title": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ",
+                    "belge_turu": "yonetmelik",
+                    "madde_no": "15",
+                },
+            )
+        ]
+
+        marked = _phase24hu_mark_secondary_family_chunks(
+            chunks=chunks,
+            query="İnternetten kişiye özel üretimde cayma hakkı istisnası nasıl test edilir?",
+        )
+
+        assert len(marked) == 1
+        metadata = marked[0].metadata
+        assert metadata["phase24hu_secondary_family_recall"] is True
+        assert metadata["source_role"] == "supporting_source"
+        assert metadata["secondary_family_recall_role"] == "exception_rule"
+
+    def test_phase24hu_exception_guard_prefers_supporting_role_evidence(self, monkeypatch):
+        monkeypatch.setenv("ENABLE_PHASE24HU_EXCEPTION_SLOT_GUARD", "true")
+        primary = RetrievedChunk(
+            text="Tüketici, cayma hakkını kanunda belirlenen çerçevede kullanabilir.",
+            citation="TK m.18/f.0",
+            source="6502",
+            score=0.91,
+            metadata={
+                "source_title": "TÜKETİCİ KANUNU",
+                "belge_turu": "kanun",
+                "kanun_no": "6502",
+                "madde_no": "18",
+                "canonical_identifier_display": "TK m.1",
+            },
+        )
+        unrelated = RetrievedChunk(
+            text="Satıcının ek bedel isteme hakkını saklı tutan kayıtlar geçersizdir.",
+            citation="BK m.268/f.0",
+            source="6098",
+            score=0.99,
+            metadata={
+                "source_title": "BORÇLAR KANUNU",
+                "belge_turu": "kanun",
+                "kanun_no": "6098",
+                "madde_no": "268",
+                "canonical_identifier_display": "BK m.1",
+            },
+        )
+        supporting = RetrievedChunk(
+            text="Cayma hakkı, tüketicinin istekleri doğrultusunda hazırlanan mallarda uygulanmaz.",
+            citation="MSY m.15/f.1",
+            source="29188",
+            score=0.50,
+            metadata={
+                "source_title": "MESAFELİ SÖZLEŞMELER YÖNETMELİĞİ",
+                "belge_turu": "yonetmelik",
+                "madde_no": "15",
+                "phase24hu_secondary_family_recall": True,
+                "domain_law_supporting_source": True,
+                "source_role": "supporting_source",
+                "secondary_family_recall_role": "exception_rule",
+            },
+        )
+
+        rows = _build_evidence_required_slot_values(
+            required_slots=["exception_or_limitation"],
+            article_span_selector={
+                "selected_main_span_id": "TK m.18/f.0",
+                "binding_source_key": "fam=kanun|id=6502",
+            },
+            chunks=[primary, unrelated, supporting],
+            query="İnternetten kişiye özel üretimde cayma hakkı istisnası nasıl test edilir?",
+        )
+
+        assert rows[0]["evidence_span_id"] == "MSY m.15/f.1"
+        assert rows[0]["evidence_source_role"] == "supporting_source"
+        assert rows[0]["phase24hu_exception_slot_guard_reason"] == "supporting_role_match"
+
+    def test_phase24hu_exception_guard_blocks_unrelated_cross_document_same_family(self, monkeypatch):
+        monkeypatch.setenv("ENABLE_PHASE24HU_EXCEPTION_SLOT_GUARD", "true")
+        primary = RetrievedChunk(
+            text="Tüketici, cayma hakkını kanunda belirlenen çerçevede kullanabilir.",
+            citation="TK m.18/f.0",
+            source="6502",
+            score=0.91,
+            metadata={
+                "source_title": "TÜKETİCİ KANUNU",
+                "belge_turu": "kanun",
+                "kanun_no": "6502",
+                "madde_no": "18",
+                "canonical_identifier_display": "TK m.1",
+            },
+        )
+        unrelated = RetrievedChunk(
+            text="Satıcının ek bedel isteme hakkını saklı tutan kayıtlar geçersizdir.",
+            citation="BK m.268/f.0",
+            source="6098",
+            score=0.99,
+            metadata={
+                "source_title": "BORÇLAR KANUNU",
+                "belge_turu": "kanun",
+                "kanun_no": "6098",
+                "madde_no": "268",
+                "canonical_identifier_display": "BK m.1",
+            },
+        )
+
+        rows = _build_evidence_required_slot_values(
+            required_slots=["exception_or_limitation"],
+            article_span_selector={
+                "selected_main_span_id": "TK m.18/f.0",
+                "binding_source_key": "fam=kanun|id=6502",
+            },
+            chunks=[primary, unrelated],
+            query="İnternetten kişiye özel üretimde cayma hakkı istisnası nasıl test edilir?",
+        )
+
+        assert rows[0]["evidence_span_id"] == ""
+        assert rows[0]["slot_confidence"] == 0.0
+        assert rows[0]["slot_missing_reason"] == "phase24hu_exception_slot_guard_no_role_matching_evidence"
 
     def test_article_span_selector_builds_source_local_adjacent_window_metrics(self):
         chunks = [

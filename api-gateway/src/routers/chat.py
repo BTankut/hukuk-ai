@@ -4871,6 +4871,399 @@ def _mark_historical_current_counterpart_chunks(chunks: list[RetrievedChunk]) ->
             )
         )
     return marked
+
+
+_PHASE24HU_SOURCE_ROLE_TERMS: dict[str, tuple[str, ...]] = {
+    "norm_chain": (
+        "hangi normlar birlikte",
+        "birlikte okun",
+        "birlikte uygulan",
+        "dayanak",
+        "alt düzenleme",
+        "alt duzenleme",
+        "ikincil düzenleme",
+        "ikincil duzenleme",
+    ),
+    "exception": (
+        "istisna",
+        "istisnası",
+        "istisnasi",
+        "hariç",
+        "haric",
+        "muaf",
+        "uygulanmaz",
+        "saklı",
+        "sakli",
+    ),
+    "procedure": (
+        "usul",
+        "şart",
+        "sart",
+        "koşul",
+        "kosul",
+        "test edilmeli",
+        "nasıl test",
+        "nasil test",
+        "nasıl uygulan",
+        "nasil uygulan",
+        "kapsam",
+    ),
+    "online_sale": (
+        "internet",
+        "internetten",
+        "online",
+        "uzaktan",
+        "mesafeli",
+    ),
+    "withdrawal": (
+        "cayma hakkı",
+        "cayma hakki",
+        "14 gün",
+        "14 gun",
+        "on dört gün",
+        "on dort gun",
+    ),
+    "custom_production": (
+        "kişiye özel",
+        "kisiye ozel",
+        "özel ölçü",
+        "ozel olcu",
+        "özel üretim",
+        "ozel uretim",
+    ),
+}
+_PHASE24HU_GUARDED_SLOTS = {
+    "exception_or_limitation",
+    "procedure_or_consequence",
+    "scenario_applicability",
+}
+
+
+def _phase24hu_secondary_family_recall_enabled() -> bool:
+    return os.getenv("ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _phase24hu_exception_slot_guard_enabled() -> bool:
+    return os.getenv("ENABLE_PHASE24HU_EXCEPTION_SLOT_GUARD", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _phase24hu_query_role_signals(query: str) -> list[str]:
+    return [
+        signal
+        for signal, terms in _PHASE24HU_SOURCE_ROLE_TERMS.items()
+        if _contains_any_query_term(query, list(terms))
+    ]
+
+
+def _phase24hu_query_needs_source_role_support(query: str) -> bool:
+    signals = set(_phase24hu_query_role_signals(query))
+    return bool(
+        signals
+        & {
+            "norm_chain",
+            "exception",
+            "procedure",
+        }
+        or {"online_sale", "withdrawal"} <= signals
+    )
+
+
+def _phase24hu_metadata_family_candidates(
+    *,
+    query: str,
+    metadata_lookup_query_signals: dict[str, Any] | None = None,
+    metadata_first_selector: dict[str, Any] | None = None,
+) -> list[str]:
+    families: list[str] = []
+    signals = metadata_lookup_query_signals if isinstance(metadata_lookup_query_signals, dict) else {}
+    for value in signals.get("parsed_family_candidates") or []:
+        canonical = _canonical_source_family_value(str(value or ""))
+        if canonical:
+            families.append(canonical)
+
+    selector = metadata_first_selector if isinstance(metadata_first_selector, dict) else {}
+    for candidate in [
+        *(selector.get("candidates") or []),
+        *(selector.get("phase24x_filtered_candidates") or []),
+    ]:
+        if not isinstance(candidate, dict):
+            continue
+        family = _canonical_source_family_value(
+            candidate.get("source_family_raw")
+            or candidate.get("source_family")
+            or candidate.get("source_family_mapped")
+            or ""
+        )
+        if family:
+            families.append(family)
+
+    if _contains_any_query_term(query, ("yönetmelik", "yonetmelik", "alt düzenleme", "alt duzenleme")):
+        families.append("yonetmelik")
+    if {"online_sale", "withdrawal"} <= set(_phase24hu_query_role_signals(query)):
+        families.append("yonetmelik")
+    return dedupe_strings(families)
+
+
+def _phase24hu_primary_family_is_kanun(
+    *,
+    requested_source_families: list[str],
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
+) -> bool:
+    requested = set(_expand_source_family_aliases(requested_source_families))
+    if "kanun" in requested:
+        return True
+    if isinstance(source_family_resolution, SourceFamilyResolution):
+        values = [
+            source_family_resolution.expected_family_prior,
+            source_family_resolution.predicted_family,
+            *source_family_resolution.preferred_families,
+            *source_family_resolution.routing_families,
+        ]
+    elif isinstance(source_family_resolution, dict):
+        values = [
+            source_family_resolution.get("expected_family_prior"),
+            source_family_resolution.get("predicted_family"),
+            *(source_family_resolution.get("preferred_families") or []),
+            *(source_family_resolution.get("routing_families") or []),
+        ]
+    else:
+        values = []
+    return "kanun" in set(_expand_source_family_aliases([str(value) for value in values if str(value or "").strip()]))
+
+
+def _phase24hu_supporting_retrieval_families(
+    *,
+    query: str,
+    family_candidates: list[str],
+) -> list[str]:
+    candidates = set(_expand_source_family_aliases(family_candidates))
+    families: list[str] = []
+    if candidates & {"yonetmelik", "kky", "cb_yonetmelik", "uy"}:
+        families.extend(["yonetmelik", "kky", "cb_yonetmelik"])
+        if _query_has_academic_regulation_intent(query):
+            families.append("uy")
+    return dedupe_strings(families)
+
+
+def _phase24hu_secondary_family_recall_policy(
+    *,
+    query: str,
+    requested_source_families: list[str],
+    source_family_resolution: SourceFamilyResolution | dict[str, Any] | None,
+    metadata_lookup_query_signals: dict[str, Any] | None = None,
+    metadata_first_selector: dict[str, Any] | None = None,
+    law_filter: str | None = None,
+) -> dict[str, Any]:
+    role_signals = _phase24hu_query_role_signals(query)
+    family_candidates = _phase24hu_metadata_family_candidates(
+        query=query,
+        metadata_lookup_query_signals=metadata_lookup_query_signals,
+        metadata_first_selector=metadata_first_selector,
+    )
+    retrieval_families = _phase24hu_supporting_retrieval_families(
+        query=query,
+        family_candidates=family_candidates,
+    )
+    policy: dict[str, Any] = {
+        "phase24hu_secondary_family_recall_enabled": _phase24hu_secondary_family_recall_enabled(),
+        "secondary_family_recall_applied": False,
+        "secondary_family_recall_types": retrieval_families,
+        "secondary_family_recall_candidates": [],
+        "secondary_family_recall_selected": [],
+        "secondary_family_recall_reason": "disabled",
+        "phase24hu_source_role_signals": role_signals,
+        "phase24hu_metadata_family_candidates": family_candidates,
+        "primary_source_role": "primary_rule",
+        "supporting_source_roles": [],
+    }
+    if not policy["phase24hu_secondary_family_recall_enabled"]:
+        return policy
+    if law_filter:
+        policy["secondary_family_recall_reason"] = "law_filter_present"
+        return policy
+    if not _phase24hu_primary_family_is_kanun(
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+    ):
+        policy["secondary_family_recall_reason"] = "primary_family_not_kanun"
+        return policy
+    if not _phase24hu_query_needs_source_role_support(query):
+        policy["secondary_family_recall_reason"] = "no_source_role_query_signal"
+        return policy
+    if not retrieval_families:
+        policy["secondary_family_recall_reason"] = "no_secondary_family_signal"
+        return policy
+    policy["secondary_family_recall_reason"] = "source_role_secondary_family_signal"
+    return policy
+
+
+def _phase24hu_support_query(query: str, role_signals: list[str]) -> str:
+    expansions: list[str] = []
+    signal_set = set(role_signals)
+    if {"online_sale", "withdrawal"} <= signal_set:
+        expansions.append("mesafeli sözleşme uzaktan satış cayma hakkı")
+    if "exception" in signal_set:
+        expansions.append("istisna sınırlama uygulanmaz hariç")
+    if "procedure" in signal_set:
+        expansions.append("usul şart koşul kapsam uygulama")
+    if "custom_production" in signal_set:
+        expansions.append("kişiye özel üretim özel istek kişisel ihtiyaç")
+    return _normalize_whitespace(" ".join([query, *dedupe_strings(expansions)]))
+
+
+def _phase24hu_role_for_chunk(chunk: RetrievedChunk, *, query: str) -> str:
+    surface = normalize_query_text(
+        " ".join(
+            part
+            for part in (
+                query,
+                chunk.text,
+                chunk.citation,
+                _resolve_chunk_source_title(chunk),
+                _resolve_chunk_source_identifier(chunk),
+            )
+            if part
+        )
+    )
+    if _answer_contains_any(surface, ("istisna", "haric", "hariç", "muaf", "uygulanmaz", "kişiye", "kisiye")):
+        return "exception_rule"
+    if _answer_contains_any(surface, ("usul", "sart", "şart", "kosul", "koşul", "bildirim", "sure", "süre")):
+        return "procedure_rule"
+    if _answer_contains_any(surface, ("uygulama", "kapsam", "mesafeli", "internet", "online")):
+        return "implementation_detail"
+    return "supporting_rule"
+
+
+def _phase24hu_role_supports_slot(role: str, slot: str) -> bool:
+    if slot == "exception_or_limitation":
+        return role in {"exception_rule", "supporting_rule", "implementation_detail"}
+    if slot == "procedure_or_consequence":
+        return role in {"procedure_rule", "implementation_detail", "supporting_rule"}
+    if slot == "scenario_applicability":
+        return role in {"exception_rule", "implementation_detail", "supporting_rule", "procedure_rule"}
+    return False
+
+
+def _phase24hu_candidate_summary(chunks: list[RetrievedChunk]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for chunk in chunks[:8]:
+        metadata = chunk.metadata or {}
+        rows.append(
+            {
+                "citation": chunk.citation,
+                "source_key": _resolve_chunk_source_key(chunk),
+                "source_title": _resolve_chunk_source_title(chunk),
+                "source_family": _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk),
+                "source_role": metadata.get("source_role") or "",
+                "secondary_family_recall_role": metadata.get("secondary_family_recall_role") or "",
+            }
+        )
+    return rows
+
+
+def _phase24hu_mark_secondary_family_chunks(
+    *,
+    chunks: list[RetrievedChunk],
+    query: str,
+) -> list[RetrievedChunk]:
+    query_terms = _extract_retrieval_priority_terms(query)
+    marked: list[RetrievedChunk] = []
+    for chunk in chunks:
+        family = _resolve_chunk_routing_family(chunk) or _resolve_chunk_source_family(chunk) or ""
+        if family == "uy" and not _query_has_academic_regulation_intent(query):
+            continue
+        overlap = max(
+            _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms),
+            _count_term_overlap(chunk.text, query_terms),
+        )
+        role = _phase24hu_role_for_chunk(chunk, query=query)
+        if overlap <= 0 and role == "supporting_rule":
+            continue
+        metadata = dict(chunk.metadata or {})
+        lanes = [
+            str(value)
+            for value in (metadata.get("retrieval_lane_sources") or [])
+            if isinstance(value, str) and value.strip()
+        ]
+        metadata["phase24hu_secondary_family_recall"] = True
+        metadata["domain_law_supporting_source"] = True
+        metadata["source_role"] = "supporting_source"
+        metadata["secondary_family_recall_role"] = role
+        metadata["retrieval_lane_sources"] = dedupe_strings(
+            [*lanes, "phase24hu_secondary_family_recall", "domain_law_supporting_source"]
+        )
+        marked.append(
+            RetrievedChunk(
+                text=chunk.text,
+                citation=chunk.citation,
+                source=chunk.source,
+                score=chunk.score,
+                metadata=metadata,
+            )
+        )
+    return marked
+
+
+def _phase24hu_update_selected_support_trace(
+    policy: dict[str, Any],
+    *,
+    chunks: list[RetrievedChunk],
+    article_span_selector: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(policy, dict):
+        return {}
+    selector = article_span_selector if isinstance(article_span_selector, dict) else {}
+    selected_span_ids = {
+        str(value or "").strip()
+        for value in [
+            *(selector.get("selected_supporting_span_ids") or []),
+            selector.get("selected_main_span_id"),
+        ]
+        if str(value or "").strip()
+    }
+    selected = [
+        chunk
+        for chunk in chunks
+        if (chunk.metadata or {}).get("phase24hu_secondary_family_recall")
+        and _chunk_span_id(chunk) in selected_span_ids
+    ]
+    updated = dict(policy)
+    updated["secondary_family_recall_selected"] = _phase24hu_candidate_summary(selected)
+    updated["supporting_source_roles"] = dedupe_strings(
+        str((chunk.metadata or {}).get("secondary_family_recall_role") or "")
+        for chunk in chunks
+        if (chunk.metadata or {}).get("phase24hu_secondary_family_recall")
+    )
+    return updated
+
+
+def _phase24hu_annotate_exception_slot_trace(
+    answer_contract: dict[str, Any],
+    retrieval_verification_features: dict[str, Any],
+) -> None:
+    rows = answer_contract.get("evidence_required_slot_values")
+    if not isinstance(rows, list):
+        return
+    for row in rows:
+        if not isinstance(row, dict) or row.get("slot_name") != "exception_or_limitation":
+            continue
+        retrieval_verification_features["exception_slot_source_key"] = str(row.get("evidence_span_id") or "")
+        retrieval_verification_features["exception_slot_role"] = str(row.get("evidence_source_role") or "")
+        answer_contract["exception_slot_source_key"] = retrieval_verification_features["exception_slot_source_key"]
+        answer_contract["exception_slot_role"] = retrieval_verification_features["exception_slot_role"]
+        return
+
+
 def _build_retrieval_verification_features(
     *,
     query: str,
@@ -5437,6 +5830,9 @@ def _chunk_article(chunk: RetrievedChunk) -> str:
 
 def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
     metadata = chunk.metadata or {}
+    role = str(metadata.get("secondary_family_recall_role") or "")
+    if role and _phase24hu_role_supports_slot(role, slot):
+        return True
     surface = normalize_query_text(
         " ".join(
             part
@@ -5475,6 +5871,122 @@ def _chunk_supports_slot(chunk: RetrievedChunk, slot: str) -> bool:
     ):
         return True
     return _slot_hint_score(surface, hints) > 0
+
+
+def _phase24hu_chunk_source_role(chunk: RetrievedChunk | None) -> str:
+    if chunk is None:
+        return ""
+    metadata = chunk.metadata or {}
+    if metadata.get("source_role"):
+        return str(metadata.get("source_role"))
+    if metadata.get("phase24hu_secondary_family_recall") or metadata.get("domain_law_supporting_source"):
+        return "supporting_source"
+    return "primary_or_untyped"
+
+
+def _phase24hu_same_document(left: RetrievedChunk | None, right: RetrievedChunk | None) -> bool:
+    if left is None or right is None:
+        return False
+    left_values = {
+        _resolve_chunk_binding_source_key(left, include_span=False),
+        _resolve_chunk_canonical_source_key_v2(left, include_span=False),
+        _resolve_chunk_document_key(left),
+        _resolve_chunk_source_key(left),
+    }
+    right_values = {
+        _resolve_chunk_binding_source_key(right, include_span=False),
+        _resolve_chunk_canonical_source_key_v2(right, include_span=False),
+        _resolve_chunk_document_key(right),
+        _resolve_chunk_source_key(right),
+    }
+    return bool({str(value).strip() for value in left_values if str(value or "").strip()} & {
+        str(value).strip() for value in right_values if str(value or "").strip()
+    })
+
+
+def _phase24hu_guarded_slot_candidate_score(
+    chunk: RetrievedChunk,
+    *,
+    slot: str,
+    query_terms: set[str],
+) -> int:
+    metadata = chunk.metadata or {}
+    role = str(metadata.get("secondary_family_recall_role") or "")
+    if not (
+        metadata.get("phase24hu_secondary_family_recall")
+        or metadata.get("domain_law_supporting_source")
+        or role
+    ):
+        return -1
+    if role and not _phase24hu_role_supports_slot(role, slot):
+        return -1
+    score = 0
+    if metadata.get("phase24hu_secondary_family_recall"):
+        score += 30
+    if metadata.get("domain_law_supporting_source"):
+        score += 12
+    if role:
+        score += 18
+    if _chunk_supports_slot(chunk, slot):
+        score += 12
+    score += min(5, _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms)) * 3
+    score += min(5, _count_term_overlap(chunk.text, query_terms)) * 2
+    return score
+
+
+def _phase24hu_select_guarded_slot_chunk(
+    *,
+    chunks: list[RetrievedChunk],
+    slot: str,
+    query: str,
+    current_chunk: RetrievedChunk | None,
+    primary_chunk: RetrievedChunk | None,
+) -> tuple[RetrievedChunk | None, dict[str, Any]]:
+    if not _phase24hu_exception_slot_guard_enabled() or slot not in _PHASE24HU_GUARDED_SLOTS:
+        return current_chunk, {
+            "phase24hu_exception_slot_guard_applied": False,
+            "phase24hu_exception_slot_guard_reason": "disabled_or_slot_not_guarded",
+        }
+    if not _phase24hu_query_needs_source_role_support(query):
+        return current_chunk, {
+            "phase24hu_exception_slot_guard_applied": False,
+            "phase24hu_exception_slot_guard_reason": "no_source_role_query_signal",
+        }
+    query_terms = _extract_retrieval_priority_terms(query)
+    support_candidates = [
+        (_phase24hu_guarded_slot_candidate_score(chunk, slot=slot, query_terms=query_terms), index, chunk)
+        for index, chunk in enumerate(chunks)
+    ]
+    support_candidates = [
+        item
+        for item in support_candidates
+        if item[0] >= 0
+    ]
+    if support_candidates:
+        support_candidates.sort(key=lambda item: (-item[0], item[1]))
+        return support_candidates[0][2], {
+            "phase24hu_exception_slot_guard_applied": True,
+            "phase24hu_exception_slot_guard_reason": "supporting_role_match",
+        }
+    if current_chunk is None:
+        return None, {
+            "phase24hu_exception_slot_guard_applied": True,
+            "phase24hu_exception_slot_guard_reason": "no_matching_evidence_span",
+        }
+    if primary_chunk is not None and _phase24hu_same_document(current_chunk, primary_chunk):
+        return current_chunk, {
+            "phase24hu_exception_slot_guard_applied": True,
+            "phase24hu_exception_slot_guard_reason": "primary_document_slot_support",
+        }
+    if _phase24hu_chunk_source_role(current_chunk) == "supporting_source":
+        return current_chunk, {
+            "phase24hu_exception_slot_guard_applied": True,
+            "phase24hu_exception_slot_guard_reason": "supporting_source_without_secondary_role",
+        }
+    return None, {
+        "phase24hu_exception_slot_guard_applied": True,
+        "phase24hu_exception_slot_guard_reason": "phase24hu_exception_slot_guard_no_role_matching_evidence",
+    }
 
 
 def _select_chunk_for_slot(chunks: list[RetrievedChunk], slot: str, *, query: str = "") -> RetrievedChunk | None:
@@ -5912,6 +6424,17 @@ def _build_evidence_required_slot_values(
             and primary_chunk is not None
             else _select_chunk_for_slot(chunks, slot, query=query)
         )
+        guard_policy = {
+            "phase24hu_exception_slot_guard_applied": False,
+            "phase24hu_exception_slot_guard_reason": "",
+        }
+        matched_chunk, guard_policy = _phase24hu_select_guarded_slot_chunk(
+            chunks=chunks,
+            slot=slot,
+            query=query,
+            current_chunk=matched_chunk,
+            primary_chunk=primary_chunk,
+        )
         if matched_chunk is None and slot in {"result_or_holding", "governing_source", "exact_source_identity"} and chunks:
             matched_chunk = chunks[0]
         span_id = _chunk_span_id(matched_chunk) if matched_chunk is not None else ""
@@ -5928,7 +6451,16 @@ def _build_evidence_required_slot_values(
                     "evidence_article": article,
                     "evidence_quote_hash": "",
                     "slot_confidence": 0.0,
-                    "slot_missing_reason": "no_matching_evidence_span",
+                    "slot_missing_reason": guard_policy.get("phase24hu_exception_slot_guard_reason")
+                    or "no_matching_evidence_span",
+                    "phase24hu_exception_slot_guard_applied": guard_policy.get(
+                        "phase24hu_exception_slot_guard_applied"
+                    ),
+                    "phase24hu_exception_slot_guard_reason": guard_policy.get(
+                        "phase24hu_exception_slot_guard_reason"
+                    ),
+                    "evidence_source_family": "",
+                    "evidence_source_role": "",
                 }
             )
             continue
@@ -5947,6 +6479,18 @@ def _build_evidence_required_slot_values(
                 "evidence_quote_hash": _slot_quote_hash(slot_value),
                 "slot_confidence": round(confidence, 3),
                 "slot_missing_reason": reason if slot_value else "slot_value_empty",
+                "phase24hu_exception_slot_guard_applied": guard_policy.get(
+                    "phase24hu_exception_slot_guard_applied"
+                ),
+                "phase24hu_exception_slot_guard_reason": guard_policy.get(
+                    "phase24hu_exception_slot_guard_reason"
+                ),
+                "evidence_source_family": (
+                    _resolve_chunk_routing_family(matched_chunk)
+                    or _resolve_chunk_source_family(matched_chunk)
+                    or ""
+                ),
+                "evidence_source_role": _phase24hu_chunk_source_role(matched_chunk),
             }
         )
     return rows
@@ -6004,6 +6548,12 @@ def _build_answer_slot_evidence_map(
             span_id = selected_main_span_id
             article = selected_article or article
         evidence_value = evidence_slot_values.get(slot) or {}
+        if (
+            evidence_value.get("phase24hu_exception_slot_guard_applied")
+            and float(evidence_value.get("slot_confidence") or 0.0) <= 0.0
+        ):
+            span_id = ""
+            article = ""
         if not span_id:
             span_id = str(evidence_value.get("evidence_span_id") or "")
         if not article:
@@ -8772,6 +9322,14 @@ async def chat_completions(
     relation_chain_policy: dict[str, Any] | None = None
     selected_source_keys: set[str] = set()
     family_routing_policy: dict[str, Any] | None = None
+    phase24hu_secondary_family_policy: dict[str, Any] = _phase24hu_secondary_family_recall_policy(
+        query=routing_query,
+        requested_source_families=requested_source_families,
+        source_family_resolution=source_family_resolution,
+        metadata_lookup_query_signals=metadata_lookup_query_signals,
+        metadata_first_selector=metadata_first_selector,
+        law_filter=request_body.law_filter,
+    )
     if metadata_first_selector:
         selected_source_keys.update(_metadata_first_focus_keys_for_source_lock(metadata_first_selector))
     top_k_effective = retrieval_top_k
@@ -9224,6 +9782,59 @@ async def chat_completions(
                             len(marked_support_chunks),
                             len(retrieved_chunks),
                         )
+                if (
+                    phase24hu_secondary_family_policy.get("phase24hu_secondary_family_recall_enabled")
+                    and phase24hu_secondary_family_policy.get("secondary_family_recall_reason")
+                    == "source_role_secondary_family_signal"
+                ):
+                    secondary_families = [
+                        str(value)
+                        for value in phase24hu_secondary_family_policy.get("secondary_family_recall_types") or []
+                        if str(value or "").strip()
+                    ]
+                    support_query = _phase24hu_support_query(
+                        routing_query,
+                        [
+                            str(value)
+                            for value in phase24hu_secondary_family_policy.get("phase24hu_source_role_signals") or []
+                            if str(value or "").strip()
+                        ],
+                    )
+                    secondary_chunks = _retrieve_source_family_chunks(
+                        retriever=retriever,
+                        query=support_query,
+                        source_families=secondary_families,
+                        top_k=max(4, min(8, top_k_effective)),
+                    )
+                    marked_secondary_chunks = _phase24hu_mark_secondary_family_chunks(
+                        chunks=secondary_chunks,
+                        query=routing_query,
+                    )
+                    phase24hu_secondary_family_policy["secondary_family_recall_candidates"] = (
+                        _phase24hu_candidate_summary(marked_secondary_chunks)
+                    )
+                    phase24hu_secondary_family_policy["secondary_family_recall_candidate_count"] = len(
+                        marked_secondary_chunks
+                    )
+                    if marked_secondary_chunks:
+                        phase24hu_secondary_family_policy["secondary_family_recall_applied"] = True
+                        domain_supporting_source_families = dedupe_strings(
+                            [*domain_supporting_source_families, *secondary_families]
+                        )
+                        retrieved_chunks = _dedupe_retrieved_chunks(
+                            marked_secondary_chunks + retrieved_chunks
+                        )
+                        logger.info(
+                            "Retrieval phase24hu-secondary-family-recall: session=%s families=%s added=%d total=%d",
+                            session_id,
+                            secondary_families,
+                            len(marked_secondary_chunks),
+                            len(retrieved_chunks),
+                        )
+                    else:
+                        phase24hu_secondary_family_policy[
+                            "secondary_family_recall_reason"
+                        ] = "source_role_secondary_family_signal_no_candidates"
                 before_family_pool_count = len(retrieved_chunks)
                 family_pool_query = routing_query
                 if all_exact_article_refs:
@@ -9410,6 +10021,11 @@ async def chat_completions(
             source_family_resolution=source_family_resolution,
             source_identity_reranker=source_identity_reranker,
         )
+        phase24hu_secondary_family_policy = _phase24hu_update_selected_support_trace(
+            phase24hu_secondary_family_policy,
+            chunks=retrieved_chunks,
+            article_span_selector=article_span_selector,
+        )
         retrieved_chunks = _apply_selected_document_only_bundle(
             chunks=retrieved_chunks,
             article_span_selector=article_span_selector,
@@ -9445,6 +10061,8 @@ async def chat_completions(
         chunks=post_rerank_chunks,
         family_routing_policy=family_routing_policy,
     )
+    if phase24hu_secondary_family_policy:
+        retrieval_verification_features.update(phase24hu_secondary_family_policy)
     if relation_chain_policy:
         retrieval_verification_features.update(relation_chain_policy)
 
@@ -9540,6 +10158,10 @@ async def chat_completions(
         source_family_resolution=source_family_resolution,
     )
     hardening.answer_contract.update(completeness_synthesis)
+    _phase24hu_annotate_exception_slot_trace(
+        hardening.answer_contract,
+        retrieval_verification_features,
+    )
     if completeness_synthesis.get("insufficient_canonical_span_evidence"):
         hardening.answer_contract["needs_manual_review"] = True
         hardening.answer_contract["support_insufficient_for_specific_claim"] = True
