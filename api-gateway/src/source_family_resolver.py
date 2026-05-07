@@ -875,6 +875,22 @@ def _apply_family_collision_rules(
             "kanun ve yonetmelik duzeyi",
         ),
     )
+    supporting_law_regulation_request = explicit_yonetmelik_request and contains_any(
+        normalized_query,
+        (
+            "yalniz",
+            "sadece",
+            "tek basina",
+            "neden eksik",
+            "eksik olur",
+            "yetmez",
+            "yeterli degil",
+            "devreye",
+            "birlikte",
+            "ayrica",
+            "yaninda",
+        ),
+    )
     comparison_query = contains_any(
         normalized_query,
         (
@@ -1056,6 +1072,19 @@ def _apply_family_collision_rules(
             demoted_families=("uy",),
             demote_amount=5.0,
             reason="central_higher_education_regulation_prefers_yonetmelik",
+        )
+        return collision_detected, collision_pair, resolution_reason
+
+    if supporting_law_regulation_request and _has_signal(scores, "kanun") and _has_signal(scores, "yonetmelik"):
+        apply_collision(
+            pair="kanun|yonetmelik",
+            preferred_family="yonetmelik",
+            preferred_boost=6.5,
+            fallback_families=("kanun",),
+            fallback_boost=1.5,
+            demoted_families=("kanun",),
+            demote_amount=2.5,
+            reason="supporting_law_context_prefers_requested_yonetmelik",
         )
         return collision_detected, collision_pair, resolution_reason
 

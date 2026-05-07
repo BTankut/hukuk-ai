@@ -569,7 +569,15 @@ _SPLIT_ACTIVE_NON_MULGA_FAMILIES = {
     "cb_kararname",
     "cb_yonetmelik",
 }
-_SPLIT_ACTIVE_NON_REPEALED_STATES = {"active", "current", "amended", "unknown_non_repealed", "unknown"}
+_SPLIT_ACTIVE_NON_REPEALED_STATES = {
+    "active",
+    "current",
+    "current_consolidated",
+    "consolidated_current",
+    "amended",
+    "unknown_non_repealed",
+    "unknown",
+}
 _SPLIT_HISTORICAL_RISK_TERMS = (
     "hatali",
     "hata",
@@ -778,6 +786,54 @@ def _temporal_identifier_claim(item: dict[str, Any] | None) -> str:
     return _temporal_first_text(item.get("citation"), item.get("source_identifier"), item.get("source_id"), "unknown")
 
 
+def _temporal_document_identifier_claim(item: dict[str, Any] | None) -> str:
+    base = _temporal_identifier_base(item)
+    if not base:
+        return _temporal_first_text(
+            item.get("source_identifier") if isinstance(item, dict) else "",
+            item.get("source_id") if isinstance(item, dict) else "",
+            "unknown",
+        )
+    if re.search(r"\bm\.\w+\b", base, flags=re.IGNORECASE):
+        return base
+    return f"{base} m.0"
+
+
+def _temporal_trace_query(trace_payload: dict[str, Any] | None) -> str:
+    if not isinstance(trace_payload, dict):
+        return ""
+    parsed_query = trace_payload.get("parsed_query")
+    query_signals = trace_payload.get("query_signals")
+    return _temporal_first_text(
+        trace_payload.get("user_query"),
+        trace_payload.get("question_raw"),
+        trace_payload.get("question_normalized"),
+        trace_payload.get("question"),
+        trace_payload.get("retrieval_query"),
+        trace_payload.get("enriched_query"),
+        parsed_query.get("user_query") if isinstance(parsed_query, dict) else "",
+        query_signals.get("user_query") if isinstance(query_signals, dict) else "",
+    )
+
+
+def _temporal_document_level_source_identity_query(
+    *,
+    selected: dict[str, Any],
+    trace_payload: dict[str, Any] | None,
+) -> bool:
+    if _temporal_family(selected) not in {"teblig", "tebligler"}:
+        return False
+    if isinstance(trace_payload, dict) and trace_payload.get("explicit_article_refs"):
+        return False
+    normalized_query = _temporal_normalized(_temporal_trace_query(trace_payload))
+    if not normalized_query:
+        return False
+    return bool(
+        ("konsolide metin" in normalized_query or "konsolide" in normalized_query)
+        and ("ana teblig" in normalized_query or "hangi ana teblig" in normalized_query)
+    )
+
+
 def _temporal_source_title(item: dict[str, Any] | None) -> str:
     if not isinstance(item, dict):
         return "unknown"
@@ -847,7 +903,7 @@ def _temporal_effective_state(item: dict[str, Any] | None) -> str:
 
 def _temporal_effective_state_claim(item: dict[str, Any] | None) -> str:
     state = _temporal_effective_state(item)
-    if state in {"active", "current"}:
+    if state in {"active", "current", "current_consolidated", "consolidated_current"}:
         return "active"
     if state == "amended":
         return "amended"
@@ -1771,11 +1827,29 @@ def _temporal_active_preservation_patch(
     selected: dict[str, Any],
     consistency_status: str,
     split_policy: dict[str, Any],
+    trace_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     selected_family = _temporal_family(selected)
     source_family = _temporal_family_claim(selected_family)
     source_identifier = _temporal_identifier_claim(selected)
     article_or_section = _temporal_article_claim(selected)
+    if _temporal_document_level_source_identity_query(selected=selected, trace_payload=trace_payload):
+        previous_identifier = source_identifier
+        previous_article = article_or_section
+        source_identifier = _temporal_document_identifier_claim(selected)
+        article_or_section = "document_level"
+        answer_text = answer_text.replace(
+            f"{previous_identifier}; {previous_article}.",
+            f"{source_identifier}; belge düzeyi.",
+        )
+        document_base = _temporal_identifier_base(selected)
+        if document_base:
+            answer_text = re.sub(
+                rf"{re.escape(document_base)}\s+m\.[A-Za-zÇĞİÖŞÜçğıöşü0-9/_\-.]+\s*;\s*madde:[A-Za-zÇĞİÖŞÜçğıöşü0-9/_\-.]+\.",
+                f"{source_identifier}; belge düzeyi.",
+                answer_text,
+                flags=re.IGNORECASE,
+            )
     effective_state = _temporal_effective_state_claim(selected)
     answer_mode = _temporal_text(answer_contract.get("answer_mode"))
     if answer_mode in _TEMPORAL_REPEALED_MODES or not answer_mode:
@@ -2047,7 +2121,11 @@ def apply_temporal_claim_alignment(
                 )
                 return patched_answer_text, patch
             patched_answer_text = answer_text
-            if split_policy.get("s5_guard_type") == "active_non_mulga_historical_surface_clamp":
+            if split_policy.get("s5_guard_type") in {
+                "active_non_mulga_claim_preservation",
+                "active_non_mulga_historical_surface_clamp",
+                "teblig_domain_mismatch_guard",
+            }:
                 patched_answer_text = _s5_active_non_mulga_clamp_answer(
                     selected=selected,
                     evidence=evidence,
@@ -2058,6 +2136,7 @@ def apply_temporal_claim_alignment(
                 selected=selected,
                 consistency_status="active_non_mulga_preserved",
                 split_policy=split_policy,
+                trace_payload=trace_payload,
             )
             return patched_answer_text, patch
     if (answer_text or "").strip().startswith(TEMPORAL_CLAIM_ALIGNMENT_HEADER):

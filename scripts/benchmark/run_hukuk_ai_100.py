@@ -803,15 +803,18 @@ def stringify_list(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True)
 
 
-def iter_dicts(value: Any) -> list[dict[str, Any]]:
+def iter_dicts(value: Any, *, skip_keys: set[str] | None = None) -> list[dict[str, Any]]:
+    skip_keys = skip_keys or set()
     found: list[dict[str, Any]] = []
     if isinstance(value, dict):
         found.append(value)
-        for child in value.values():
-            found.extend(iter_dicts(child))
+        for key, child in value.items():
+            if key in skip_keys:
+                continue
+            found.extend(iter_dicts(child, skip_keys=skip_keys))
     elif isinstance(value, list):
         for item in value:
-            found.extend(iter_dicts(item))
+            found.extend(iter_dicts(item, skip_keys=skip_keys))
     return found
 
 
@@ -832,14 +835,48 @@ def unique_join(values: list[Any], limit: int = 30) -> str:
 
 
 def collect_source_fields(response: dict[str, Any]) -> tuple[str, str, str]:
-    title_keys = ("source_title", "title", "official_title", "document_title", "law_name")
-    id_keys = ("source_id", "doc_id", "document_id", "canonical_id", "source_key")
-    type_keys = ("doc_type", "document_type", "primary_type", "belge_turu", "source_type")
+    title_keys = (
+        "source_title",
+        "source_title_claimed",
+        "current_law_basis_source_title",
+        "current_law_basis_title",
+        "title",
+        "official_title",
+        "document_title",
+        "law_name",
+    )
+    id_keys = (
+        "source_id",
+        "source_identifier_claimed",
+        "current_law_basis_identifier",
+        "current_law_basis_source_key",
+        "mulga_current_law_basis_identifier",
+        "mulga_current_law_basis_source_key",
+        "temporal_claim_current_basis_identifier",
+        "temporal_claim_current_basis_source_key",
+        "primary_historical_source_identifier",
+        "primary_historical_source_key",
+        "doc_id",
+        "document_id",
+        "canonical_id",
+        "source_key",
+    )
+    type_keys = (
+        "doc_type",
+        "document_type",
+        "source_family_claimed",
+        "primary_type",
+        "belge_turu",
+        "source_type",
+    )
 
     titles: list[Any] = []
     source_ids: list[Any] = []
     doc_types: list[Any] = []
-    for item in iter_dicts(response):
+    # Source surface fields must reflect the answer envelope, not trace diagnostics.
+    # Trace remains written separately; including pre-rerank candidates here can
+    # make scorer auto-fail on sources the answer did not cite or claim.
+    for item in iter_dicts(response, skip_keys={"trace"}):
         for key in title_keys:
             if key in item:
                 titles.append(item.get(key))

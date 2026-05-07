@@ -4903,6 +4903,9 @@ def _build_retrieval_verification_features(
     source_key_collision_keys: list[str] = []
     source_key_collision_pair = ""
     source_key_collision_families_by_key: dict[str, list[str]] = {}
+    source_identity_stop_condition_applied = False
+    source_identity_stop_reason = ""
+    manual_review_required = False
     if isinstance(source_family_resolution, dict):
         predicted_family = source_family_resolution.get("predicted_family")
         try:
@@ -4986,6 +4989,12 @@ def _build_retrieval_verification_features(
                 for key, families in raw_families_by_key.items()
                 if isinstance(families, list)
             }
+        source_identity_stop_condition_applied = bool(
+            family_routing_policy.get("source_identity_stop_condition_applied")
+        )
+        if family_routing_policy.get("source_identity_stop_reason"):
+            source_identity_stop_reason = str(family_routing_policy.get("source_identity_stop_reason"))
+        manual_review_required = bool(family_routing_policy.get("manual_review_required"))
 
     identifier_tokens = sorted(_extract_source_identifier_tokens(query))
     chunk_families = [
@@ -5082,6 +5091,9 @@ def _build_retrieval_verification_features(
         "family_gate_status": family_gate_status,
         "family_gate_reason": family_gate_reason,
         "no_gate_reason": no_gate_reason,
+        "source_identity_stop_condition_applied": source_identity_stop_condition_applied,
+        "source_identity_stop_reason": source_identity_stop_reason,
+        "manual_review_required": manual_review_required,
     }
 
 
@@ -7370,6 +7382,40 @@ def _resolve_public_answer_text(
     )
 
 
+def _normalize_document_level_answer_surface(
+    *,
+    answer_text: str,
+    answer_contract: dict[str, Any] | None,
+) -> str:
+    if not isinstance(answer_contract, dict):
+        return answer_text
+    if str(answer_contract.get("article_or_section_claimed") or "").strip() != "document_level":
+        return answer_text
+    identifier = str(answer_contract.get("source_identifier_claimed") or "").strip()
+    match = re.match(r"^(?P<base>.+?)\s+m\.0$", identifier, flags=re.IGNORECASE)
+    if not match:
+        return answer_text
+    base = match.group("base").strip()
+    if not base:
+        return answer_text
+    source_title = str(answer_contract.get("source_title_claimed") or "").strip()
+    source_family = str(answer_contract.get("source_family_claimed") or "").strip()
+    if source_family == "TEBLIGLER" and source_title:
+        return (
+            "Güncellik/yürürlük sınırı:\n"
+            f"- Esas alınacak ana konsolide metin: {source_title}; {identifier}; belge düzeyi. "
+            f"[Kaynak: {identifier}]\n"
+            "- Sınır: Bu cevap belge kimliğini bildirir; somut tevkifat/iade uygulamasında ilgili "
+            "bölüm ve madde ayrıca seçilmelidir."
+        )
+    return re.sub(
+        rf"{re.escape(base)}\s+m\.[A-Za-zÇĞİÖŞÜçğıöşü0-9/_\-.]+\s*;\s*madde:[A-Za-zÇĞİÖŞÜçğıöşü0-9/_\-.]+\.",
+        f"{identifier}; belge düzeyi.",
+        answer_text,
+        flags=re.IGNORECASE,
+    )
+
+
 def _verification_has_hallucination_fail(verification: dict[str, Any] | None) -> bool:
     if not isinstance(verification, dict):
         return False
@@ -7628,6 +7674,15 @@ def _finalize_chat_response(
             final_mode = "partial"
             final_reason = None
         final_reason = answer_contract.get("final_reason") or final_reason
+    answer_text = _normalize_document_level_answer_surface(
+        answer_text=answer_text,
+        answer_contract=answer_contract,
+    )
+    normalized_inline_citations = _extract_inline_citation_ids(answer_text)
+    if normalized_inline_citations:
+        citations = normalized_inline_citations
+    answer_contract["answer_text"] = answer_text
+    answer_contract["final_answer"] = answer_text
     trace_payload = dict(trace_payload)
     trace_payload["final_mode"] = final_mode
     trace_payload["final_reason"] = final_reason
@@ -9493,6 +9548,49 @@ async def chat_completions(
             "insufficient_grounding",
         }:
             hardening.answer_contract["grounding_status"] = "insufficient_supported_evidence"
+    if retrieval_verification_features.get("source_identity_stop_condition_applied"):
+        stop_reason = str(
+            retrieval_verification_features.get("source_identity_stop_reason")
+            or "source_identity_stop_condition"
+        )
+        stop_answer = (
+            "Bu soruda tekil tüzük kaynağı doğrulanamadığı için rastgele bir tüzük metnini birincil "
+            "kaynak göstermiyorum. Genel norm ilişkisi bakımından, ilgili yürürlükteki tüzük hükümleri "
+            "kurum içi alt düzenlemeye göre üst normdur; kurum içi düzenleme geçerli tüzüğe aykırıysa "
+            "uygulanamaz. Exact tüzük/source identity için manuel hukukçu incelemesi gerekir."
+        )
+        hardening.answer_text = stop_answer
+        hardening.citations = []
+        hardening.final_mode = "partial"
+        hardening.internal_blocked = False
+        stop_final_reason = (
+            "dayanak=TUZUK:source_not_identified; madde=general_hierarchy; "
+            "yururluk=unknown; grounding=not_grounded; sonuc=insufficient_grounding; belirsizlik=var"
+        )
+        hardening.final_reason = "insufficient_supported_evidence"
+        hardening.answer_contract.update(
+            {
+                "answer_text": stop_answer,
+                "final_answer": stop_answer,
+                "answer_mode": "insufficient_grounding",
+                "grounding_status": "not_grounded",
+                "source_family_claimed": "TUZUK",
+                "source_title_claimed": "ilgili yürürlükteki tüzük hükümleri (exact source identity unresolved)",
+                "source_identifier_claimed": "source_not_identified",
+                "article_or_section_claimed": "general_hierarchy",
+                "effective_state_claimed": "unknown",
+                "temporal_qualification": "source_identity_unresolved",
+                "needs_manual_review": True,
+                "confidence_0_100": 16,
+                "final_reason": stop_final_reason,
+                "answer_suppressed_due_to_evidence_gap": False,
+                "support_insufficient_for_specific_claim": True,
+                "insufficient_canonical_span_evidence": True,
+                "source_identity_stop_condition_applied": True,
+                "source_identity_stop_reason": stop_reason,
+                "manual_review_trigger_reason": stop_reason,
+            }
+        )
     trace_started_at = time.perf_counter()
     trace_payload = _build_trace_payload(
         request_id=response_id,

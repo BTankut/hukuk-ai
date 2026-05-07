@@ -613,7 +613,26 @@ def _phase24w_source_identity_recovery_enabled() -> bool:
 
 
 def _phase24x_family_domain_compatibility_gate_enabled() -> bool:
-    return os.getenv("ENABLE_PHASE24X_FAMILY_DOMAIN_COMPATIBILITY_GATE", "false").lower() in {
+    return (
+        os.getenv("ENABLE_PHASE24X_FAMILY_DOMAIN_COMPATIBILITY_GATE", "false").lower()
+        in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        or os.getenv("ENABLE_PHASE24HS_FAMILY_DOMAIN_GATE", "false").lower()
+        in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+    )
+
+
+def _phase24hs_ambiguous_tuzuk_stop_enabled() -> bool:
+    return os.getenv("ENABLE_PHASE24HS_AMBIGUOUS_TUZUK_STOP", "true").lower() in {
         "1",
         "true",
         "yes",
@@ -658,6 +677,41 @@ _PHASE24X_GENERIC_TITLE_DOMAIN_TERMS = {
     "usul",
     "yonetmelik",
     "yonetmeligi",
+}
+
+_PHASE24HS_TUZUK_HIERARCHY_TERMS = (
+    "alt duzenleme",
+    "kurum ici",
+    "celisir",
+    "celisme",
+    "aykiri",
+    "aykirilik",
+    "hangisi uygulan",
+    "normlar hiyerarsisi",
+    "ust norm",
+    "hiyerarsi",
+)
+_PHASE24HS_GENERIC_TUZUK_IDENTITY_TERMS = {
+    "alt",
+    "aykiri",
+    "aykirilik",
+    "bir",
+    "celisir",
+    "celisme",
+    "duzenleme",
+    "gecerli",
+    "hangisi",
+    "hiyerarsi",
+    "hiyerarsisi",
+    "hukmu",
+    "ici",
+    "kurum",
+    "norm",
+    "normlar",
+    "tuzuk",
+    "tuzugu",
+    "uygulanir",
+    "ust",
 }
 
 
@@ -1676,6 +1730,57 @@ def _phase24x_query_supports_title_domain(*, query: str, title: str) -> tuple[bo
     if len(overlap) >= 3 and leading_overlap:
         return True, title_terms, sorted(query_terms)
     return False, title_terms, sorted(query_terms)
+
+
+def _phase24hs_looks_like_abstract_tuzuk_hierarchy_query(query: str) -> bool:
+    normalized = normalize_query_text(query or "")
+    return bool("tuzuk" in normalized and any(term in normalized for term in _PHASE24HS_TUZUK_HIERARCHY_TERMS))
+
+
+def _phase24hs_query_has_concrete_tuzuk_identity(query: str) -> bool:
+    normalized = normalize_query_text(query or "")
+    if not normalized or "tuzuk" not in normalized:
+        return False
+    if _extract_source_identity_identifier_tokens(query):
+        return True
+    if re.search(r"[\"'“”‘’][^\"'“”‘’]{4,80}t[uü]z[uü]k[^\"'“”‘’]*[\"'“”‘’]", query or "", re.IGNORECASE):
+        return True
+    priority_stopwords = {normalize_canonical_text(item) for item in _RETRIEVAL_PRIORITY_STOPWORDS}
+    tokens = [
+        token
+        for token in _RETRIEVAL_PRIORITY_TOKEN_RE.findall(normalized)
+        if len(token) >= 3 and token not in priority_stopwords and not re.fullmatch(r"(?:18|19|20)\d{2}", token)
+    ]
+    try:
+        tuzuk_index = tokens.index("tuzuk")
+    except ValueError:
+        try:
+            tuzuk_index = tokens.index("tuzugu")
+        except ValueError:
+            return False
+    title_window = tokens[max(0, tuzuk_index - 5) : tuzuk_index]
+    distinctive_terms = [
+        token
+        for token in title_window
+        if token not in _PHASE24HS_GENERIC_TUZUK_IDENTITY_TERMS and len(token) >= 4
+    ]
+    return len(distinctive_terms) >= 2
+
+
+def _phase24hs_tuzuk_stop_condition(
+    *,
+    query: str,
+    preferred_family_set: set[str],
+) -> tuple[bool, str]:
+    if not _phase24hs_ambiguous_tuzuk_stop_enabled():
+        return False, "phase24hs_ambiguous_tuzuk_stop_disabled"
+    if "tuzuk" not in preferred_family_set:
+        return False, "preferred_family_not_tuzuk"
+    if not _phase24hs_looks_like_abstract_tuzuk_hierarchy_query(query):
+        return False, "not_abstract_tuzuk_hierarchy_query"
+    if _phase24hs_query_has_concrete_tuzuk_identity(query):
+        return False, "concrete_tuzuk_identity_in_query"
+    return True, "abstract_tuzuk_hierarchy_without_confirmed_concrete_source"
 
 
 def _phase24x_candidate_primary_gate(
@@ -3686,6 +3791,27 @@ def _apply_pre_generation_family_pool(
             and _count_term_overlap(_resolve_chunk_source_title(chunk), query_terms) >= 3
         ][: max(2, min(6, top_k_effective // 3))]
     policy["preferred_family_pool_size"] = len(preferred_chunks)
+    tuzuk_stop_applies, tuzuk_stop_reason = _phase24hs_tuzuk_stop_condition(
+        query=query,
+        preferred_family_set=preferred_family_set,
+    )
+    if preferred_chunks and tuzuk_stop_applies:
+        policy["family_override_reason"] = "phase24hs_ambiguous_tuzuk_stop_condition"
+        policy["family_gate_reason"] = tuzuk_stop_reason
+        policy["no_gate_reason"] = ""
+        policy["reranked_family_set"] = []
+        policy["selected_family_source"] = None
+        policy["family_gate_status"] = "ambiguous_source_identity_stop"
+        policy["source_identity_stop_condition_applied"] = True
+        policy["source_identity_stop_reason"] = tuzuk_stop_reason
+        policy["manual_review_required"] = True
+        policy["preferred_family_pool_size"] = len(preferred_chunks)
+        policy["phase24hs_ambiguous_tuzuk_stop_enabled"] = True
+        return [], policy
+    policy["source_identity_stop_condition_applied"] = False
+    policy["source_identity_stop_reason"] = tuzuk_stop_reason
+    policy["manual_review_required"] = False
+    policy["phase24hs_ambiguous_tuzuk_stop_enabled"] = _phase24hs_ambiguous_tuzuk_stop_enabled()
     if preferred_chunks:
         policy["family_override_reason"] = "strong_preferred_family_pool"
         policy["family_gate_reason"] = "preferred_family_pool_available"
