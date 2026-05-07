@@ -1,0 +1,10 @@
+combination_name,feature_flags,expected_target_rows_recovered,expected_risk,run_targeted_smoke,run_full_if_targeted_passes
+BASE,all_flags_off,none,lowest risk; should reproduce current default behavior on focused set,yes,no
+HS_only,ENABLE_PHASE24HS_FAMILY_DOMAIN_GATE=true,TEB-04; TUZUK-05; YON-05,risk: broad family/domain lock over-application,yes,if target rows improve and guards stable
+HT_only,ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING=true,partial KANUN-08 primary identity support,risk: same-family replacement over-selection,yes,if no guard regression
+HU_recall_only,ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL=true,unlikely alone; recall policy requires primary/family signals but no HT support,risk: secondary-family over-recall on general procedure queries,yes,if no guard regression
+HU_guard_only,ENABLE_PHASE24HU_EXCEPTION_SLOT_GUARD=true,unlikely alone; guard only affects slot filling,low-medium risk: missing slots instead of wrong slots,yes,if no guard regression
+HS_HT,ENABLE_PHASE24HS_FAMILY_DOMAIN_GATE=true;ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING=true,TEB-04; TUZUK-05; YON-05; partial KANUN-08,risk: HS/HT document-selection interaction,yes,if target rows improve and guards stable
+HS_HT_HU_recall,ENABLE_PHASE24HS_FAMILY_DOMAIN_GATE=true;ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING=true;ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL=true,KANUN-08 plus HS target rows,risk: HU secondary recall over-application,yes,if target rows improve and guards stable
+HS_HT_HU_guard,ENABLE_PHASE24HS_FAMILY_DOMAIN_GATE=true;ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING=true;ENABLE_PHASE24HU_EXCEPTION_SLOT_GUARD=true,HS target rows plus guarded exception slots; may not recover KANUN-08 fully,risk: lower than recall; slot-only interaction,yes,if target rows improve and guards stable
+ALL,ENABLE_PHASE24HS_FAMILY_DOMAIN_GATE=true;ENABLE_PHASE24HT_SAME_FAMILY_DOMAIN_SCORING=true;ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL=true;ENABLE_PHASE24HU_EXCEPTION_SLOT_GUARD=true,TEB-04; TUZUK-05; YON-05; KANUN-08,known risk: full-corpus regression in Phase24HV,yes,no unless used as reference only
