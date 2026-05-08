@@ -263,8 +263,7 @@ def evaluate_phase24hy_replacement(
         block_reason = "ambiguous_tuzuk_concrete_source_blocked"
 
     replacement_allowed = bool(phase24hy_replacement_guard_enabled() and replacement_attempted and not block_reason)
-    if replacement_allowed:
-        primary_source_preserved = False
+    primary_source_preserved = not replacement_allowed
 
     return {
         "phase24hy_replacement_guard": phase24hy_replacement_guard_enabled(),

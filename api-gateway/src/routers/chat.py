@@ -175,6 +175,7 @@ from rag.phase24hx_constrained_routing import (
     phase24hx_constrained_routing_enabled,
 )
 from rag.phase24hy_replacement_guard import (
+    apply_phase24hy_metadata_replacement_guard,
     build_phase24hy_replacement_guard_trace,
 )
 from rag.runtime_trace import (
@@ -8924,6 +8925,11 @@ async def _prepare_retrieval_runtime_context(
         metadata_first_selector,
         query=routing_query,
         domain_law_hints=domain_law_hints,
+    )
+    metadata_first_selector = apply_phase24hy_metadata_replacement_guard(
+        metadata_first_selector,
+        query=routing_query,
+        source_family_resolution=source_family_resolution,
     )
     if metadata_first_selector:
         source_family_resolution = _apply_metadata_lookup_family_prior(

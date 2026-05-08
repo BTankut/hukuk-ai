@@ -14,6 +14,10 @@ from rag.source_catalog import (
     resolve_effective_state,
     source_family_mapping_profile,
 )
+from rag.phase24hy_replacement_guard import (
+    evaluate_phase24hy_replacement,
+    phase24hy_replacement_guard_enabled,
+)
 from source_family_resolver import SourceFamilyResolution
 from source_family_resolver import resolve_source_family_prior as _resolve_source_family_prior_impl
 
@@ -3103,6 +3107,15 @@ def _rerank_chunks_by_source_identity(
                 else "title_only"
             ),
         )
+        article_match_type_for_trace = (
+            "source_local_support" if article_token and article_token != "0" else "title_only"
+        )
+        source_role = str(metadata.get("source_role") or "").strip()
+        if metadata.get("phase24hu_secondary_family_recall") or metadata.get("domain_law_supporting_source"):
+            source_role = "supporting_source"
+        elif not source_role:
+            source_role = "primary_source"
+        effective_state = str(metadata.get("effective_state") or resolve_effective_state(metadata) or "").strip()
 
         scored.append(
             (
@@ -3119,7 +3132,10 @@ def _rerank_chunks_by_source_identity(
                     "source_family_raw": family_profile.get("raw_family"),
                     "source_family_mapping_reason": family_profile.get("mapping_reason"),
                     "source_identifier": resolve_chunk_source_identifier(chunk),
+                    "source_role": source_role,
+                    "effective_state": effective_state,
                     "article_or_section": article_token or None,
+                    "article_match_type": article_match_type_for_trace,
                     "score": round(score, 4),
                     "document_identity_score": round(score, 4),
                     "metadata_first_match": metadata_first_match,
@@ -3158,7 +3174,83 @@ def _rerank_chunks_by_source_identity(
             )
         )
 
-    ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
+    initial_ranked = sorted(scored, key=lambda item: (-item[0], item[1]))
+    ranked = initial_ranked
+    phase24hy_guard_trace: dict[str, Any] = {
+        "phase24hy_replacement_guard": phase24hy_replacement_guard_enabled(),
+        "base_primary_source_key": "",
+        "candidate_primary_source_key": "",
+        "replacement_attempted": False,
+        "replacement_allowed": False,
+        "replacement_block_reason": (
+            "phase24hy_replacement_guard_disabled"
+            if not phase24hy_replacement_guard_enabled()
+            else "not_evaluated"
+        ),
+        "candidate_role": "",
+        "candidate_metadata_lock_strength": "unknown",
+        "candidate_domain_score": 0.0,
+        "base_domain_score": 0.0,
+        "identifier_drift_blocked": False,
+        "article_drift_blocked": False,
+        "supporting_only_added": False,
+        "primary_source_preserved": True,
+    }
+    if phase24hy_replacement_guard_enabled() and scored and initial_ranked:
+        base_item = scored[0]
+        candidate_item = initial_ranked[0]
+        base_trace = base_item[3]
+        candidate_trace = candidate_item[3]
+        requested_family_for_guard = ""
+        if requested_source_families:
+            requested_family_for_guard = str(requested_source_families[0] or "")
+        elif isinstance(source_family_resolution, dict):
+            requested_family_for_guard = str(
+                source_family_resolution.get("expected_family_prior")
+                or source_family_resolution.get("predicted_family")
+                or ""
+            )
+        elif source_family_resolution is not None:
+            requested_family_for_guard = str(
+                getattr(source_family_resolution, "expected_family_prior", "")
+                or getattr(source_family_resolution, "predicted_family", "")
+                or ""
+            )
+        phase24hy_guard_trace = evaluate_phase24hy_replacement(
+            base_primary_source_key=str(base_trace.get("source_key") or ""),
+            candidate_primary_source_key=str(candidate_trace.get("source_key") or ""),
+            base_family=str(base_trace.get("source_family") or ""),
+            candidate_family=str(candidate_trace.get("source_family") or ""),
+            requested_family=requested_family_for_guard,
+            candidate_role=str(candidate_trace.get("source_role") or "primary_source"),
+            candidate_metadata_lock_strength=str(candidate_trace.get("identity_lock_strength") or ""),
+            base_domain_score=float(base_trace.get("document_identity_score") or 0.0),
+            candidate_domain_score=float(candidate_trace.get("document_identity_score") or 0.0),
+            base_title_match_type=str(base_trace.get("title_match_type") or ""),
+            candidate_title_match_type=str(candidate_trace.get("title_match_type") or ""),
+            base_identifier_match_type=str(base_trace.get("identifier_match_type") or ""),
+            candidate_identifier_match_type=str(candidate_trace.get("identifier_match_type") or ""),
+            base_article=str(base_trace.get("article_or_section") or ""),
+            candidate_article=str(candidate_trace.get("article_or_section") or ""),
+            base_article_alignment=str(base_trace.get("post_identity_article_alignment") or ""),
+            candidate_article_alignment=str(candidate_trace.get("post_identity_article_alignment") or ""),
+            base_article_match_type=str(base_trace.get("article_match_type") or ""),
+            candidate_article_match_type=str(candidate_trace.get("article_match_type") or ""),
+            base_effective_state=str(base_trace.get("effective_state") or ""),
+            candidate_effective_state=str(candidate_trace.get("effective_state") or ""),
+            identifier_ambiguity_increases=bool(
+                str(candidate_trace.get("identifier_match_type") or "") != "exact_identifier"
+                and str(candidate_trace.get("source_identifier") or "")
+                and str(candidate_trace.get("source_identifier") or "")
+                != str(base_trace.get("source_identifier") or "")
+            ),
+            query=query,
+        )
+        if (
+            phase24hy_guard_trace.get("replacement_attempted")
+            and not phase24hy_guard_trace.get("replacement_allowed")
+        ):
+            ranked = [base_item, *[item for item in initial_ranked if item[1] != base_item[1]]]
     reordered = [chunk for _score, _index, chunk, _trace in ranked]
     first_changed = bool(reordered and chunks and reordered[0].citation != chunks[0].citation)
     ranked_traces: list[dict[str, Any]] = []
@@ -3167,6 +3259,11 @@ def _rerank_chunks_by_source_identity(
         trace_with_rank["selected_document_rank_after_identity_rerank"] = reranked_index
         ranked_traces.append(trace_with_rank)
     top_trace = ranked_traces[0] if ranked_traces else {}
+    if phase24hy_guard_trace:
+        phase24hy_guard_trace["selected_after_guard_source_key"] = str(top_trace.get("source_key") or "")
+        phase24hy_guard_trace["selected_after_guard_original_rank"] = top_trace.get(
+            "selected_document_original_rank"
+        )
     relation_primary_candidate = ""
     relation_supporting_candidate = ""
     if relation_query_detected:
@@ -3219,6 +3316,7 @@ def _rerank_chunks_by_source_identity(
             if candidate.get("source_key")
         ],
         "top_scores": ranked_traces,
+        "phase24hy_replacement_guard": phase24hy_guard_trace,
     }
 
 
