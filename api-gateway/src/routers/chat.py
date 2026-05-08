@@ -174,6 +174,9 @@ from rag.phase24hx_constrained_routing import (
     build_phase24hx_feature_trace,
     phase24hx_constrained_routing_enabled,
 )
+from rag.phase24hy_replacement_guard import (
+    build_phase24hy_replacement_guard_trace,
+)
 from rag.runtime_trace import (
     _attach_parity_trace,
     _extract_answer_source_ids,
@@ -6703,6 +6706,13 @@ def _build_trace_payload(
         retrieval_verification_features=retrieval_verification_features,
         source_family_resolution=source_family_resolution,
     )
+    phase24hy_replacement_guard_trace = build_phase24hy_replacement_guard_trace(
+        source_identity_reranker=source_identity_reranker,
+        article_span_selector=article_span_selector,
+        metadata_first_selector=metadata_first_selector,
+        source_family_resolution=source_family_resolution,
+        query=user_query,
+    )
     allowed_source_whitelist = (
         _build_allowed_source_whitelist(post_rerank_chunks)
         if post_rerank_chunks
@@ -6744,6 +6754,7 @@ def _build_trace_payload(
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
             "phase24hx_feature_trace": phase24hx_feature_trace,
+            "phase24hy_replacement_guard": phase24hy_replacement_guard_trace,
             "document_identity_score": (source_identity_reranker or {}).get("document_identity_score"),
             "title_match_type": (source_identity_reranker or {}).get("title_match_type"),
             "identifier_match_type": (source_identity_reranker or {}).get("identifier_match_type"),
@@ -6782,6 +6793,7 @@ def _build_trace_payload(
         "question_type": question_type,
         "target_date": target_date,
         "phase24hx_feature_trace": phase24hx_feature_trace,
+        "phase24hy_replacement_guard": phase24hy_replacement_guard_trace,
         "retrieval_top_k": top_k_effective,
         "rerank_list": [
             _serialize_trace_chunk(chunk) for chunk in post_rerank_chunks
