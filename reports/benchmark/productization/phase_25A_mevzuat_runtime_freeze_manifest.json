@@ -1,0 +1,162 @@
+{
+  "DGX_MODEL": "/models/merged_model_fabric_stage_20260321",
+  "branch": "bt/hukuk-ai-100-benchmark-hardening",
+  "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+  "embedding_base_url": "http://127.0.0.1:8081/v1",
+  "embedding_model": "intfloat/multilingual-e5-large-instruct",
+  "entity_count": 349403,
+  "freeze_decision": {
+    "baseline_status": "benchmark_only_frozen",
+    "fine_tuning_status": "closed",
+    "internal_eval_status": "closed",
+    "productization_status": "closed",
+    "runtime_recovery_line": "closed"
+  },
+  "generated_at_utc": "2026-05-08T09:09:11.382917+00:00",
+  "git_sha": "1a1251d922f2ab746ad81f2929c927fe3f057d78",
+  "guardrails_state": "disabled",
+  "known_closed_paths": [
+    "runtime_source_selection_residual_patching",
+    "global_feature_flag_recovery",
+    "qid_specific_runtime_fixes",
+    "new_full_corpus_selector_reranker_heuristics",
+    "fine_tuning",
+    "productization",
+    "public_serving",
+    "internal_eval_opening"
+  ],
+  "known_residuals": [
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "source_identity_design_blocker",
+      "owner": "legal_scorer_plus_source_identity",
+      "qid": "CBY-04",
+      "root_cause": "wrong_family_and_hallucinated_identifier"
+    },
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "current_amendment_span_blocker",
+      "owner": "source_acquisition_corpus",
+      "qid": "CBY-06",
+      "root_cause": "missing_current_2026_amendment_span"
+    },
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "confirmed_source_no_runtime_improvement",
+      "owner": "source_acquisition_legal_review",
+      "qid": "KANUN-12",
+      "root_cause": "confirmed_5651_source_but_retrieval_runtime_not_recovered"
+    },
+    {
+      "accepted_for_internal_eval": "conditional",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "taxonomy_mapping_blocker",
+      "owner": "legal_scorer_taxonomy",
+      "qid": "KKY-01",
+      "root_cause": "kky_yonetmelik_family_normalization_gap"
+    },
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "confirmed_source_no_runtime_improvement",
+      "owner": "legal_scorer_source_acquisition",
+      "qid": "KKY-03",
+      "root_cause": "source_family_confirmed_yonetmelik_but_runtime_not_recovered"
+    },
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "option_c_targeted_smoke_failed",
+      "owner": "corpus_materialization_owner",
+      "qid": "TEB-04",
+      "root_cause": "active_teblig_selected_but_answer_claimed_mulga_repealed_and_auto_failed"
+    },
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "current_law_vs_repealed_source_blocker",
+      "owner": "source_acquisition_legal_review",
+      "qid": "TUZUK-04",
+      "root_cause": "repealed_tuzuk_not_current_law_primary"
+    },
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "option_c_targeted_smoke_failed_stop_condition",
+      "owner": "scorer_policy_runtime_owner",
+      "qid": "TUZUK-05",
+      "root_cause": "concrete_irrelevant_tuzuk_selected_as_primary_despite_general_hierarchy_policy"
+    },
+    {
+      "accepted_for_internal_eval": "no",
+      "accepted_for_productization": "no",
+      "accepted_for_serving_candidate": "no",
+      "current_status": "confirmed_source_no_runtime_improvement",
+      "owner": "legal_scorer_source_acquisition",
+      "qid": "YON-04",
+      "root_cause": "confirmed_kvkk_regulation_source_but_runtime_not_recovered"
+    }
+  ],
+  "latest_accepted_benchmark_runs": [
+    {
+      "binding_collision": 0,
+      "contract_invalid": 0,
+      "hallucinated_identifier": 4,
+      "label": "Phase23R-E6 stability full",
+      "pass_proxy": 91,
+      "path": "reports/benchmark/runs/20260503T091350Z_phase23R_E6_stability_full",
+      "raw_score_proxy": 816.86,
+      "rows": 100,
+      "source_key_v2_collision": 0,
+      "unsupported_confident_answer": 0,
+      "wrong_document": 4
+    },
+    {
+      "binding_collision": 0,
+      "contract_invalid": 0,
+      "hallucinated_identifier": 7,
+      "label": "Phase24U-B base trace-on full",
+      "pass_proxy": 89,
+      "path": "reports/benchmark/runs/phase_24U_B_base_trace_on_full_20260505T121226Z",
+      "raw_score_proxy": 805.09,
+      "rows": 100,
+      "source_key_v2_collision": 0,
+      "unsupported_confident_answer": 0,
+      "wrong_document": 3
+    }
+  ],
+  "live_api_url": "http://127.0.0.1:8000/v1",
+  "live_api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+  "live_health": {
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "guardrails": "disabled",
+    "lane": "phase22f_s7_full_shadow",
+    "retriever": "milvus",
+    "service": "hukuk-ai-api-gateway",
+    "status": "ok",
+    "verification": "disabled"
+  },
+  "live_lane": "phase22f_s7_full_shadow",
+  "milvus_uri": "http://localhost:19530",
+  "model": "hukuk-ai-poc",
+  "presidio_enabled": "false",
+  "rollback_target": {
+    "api_version": "2026-05-03-phase23R-E-benchmark-only-cutover",
+    "collection": "mevzuat_faz1_shadow_20260418_compat1024_p0_backfill",
+    "lane": "phase22f_s7_full_shadow",
+    "model": "/models/merged_model_fabric_stage_20260321",
+    "policy": "retain_current_frozen_benchmark_only_runtime; no new cutover target authorized"
+  },
+  "verification_state": "disabled"
+}
