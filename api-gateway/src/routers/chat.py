@@ -170,7 +170,10 @@ from rag.source_identity import (
 from rag.required_slot_matrix import (
     RequiredSlotResolution,
 )
-from rag.phase24hx_constrained_routing import build_phase24hx_feature_trace
+from rag.phase24hx_constrained_routing import (
+    build_phase24hx_feature_trace,
+    phase24hx_constrained_routing_enabled,
+)
 from rag.runtime_trace import (
     _attach_parity_trace,
     _extract_answer_source_ids,
@@ -4941,12 +4944,16 @@ _PHASE24HU_GUARDED_SLOTS = {
 
 
 def _phase24hu_secondary_family_recall_enabled() -> bool:
-    return os.getenv("ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL", "false").lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    return (
+        os.getenv("ENABLE_PHASE24HU_SECONDARY_FAMILY_RECALL", "false").lower()
+        in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        or phase24hx_constrained_routing_enabled()
+    )
 
 
 def _phase24hu_exception_slot_guard_enabled() -> bool:
