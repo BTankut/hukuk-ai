@@ -170,6 +170,7 @@ from rag.source_identity import (
 from rag.required_slot_matrix import (
     RequiredSlotResolution,
 )
+from rag.phase24hx_constrained_routing import build_phase24hx_feature_trace
 from rag.runtime_trace import (
     _attach_parity_trace,
     _extract_answer_source_ids,
@@ -6688,6 +6689,13 @@ def _build_trace_payload(
             model_cited_source_ids,
             fallback_excerpt=answer_contract.get("answer_text") or assembled_context or "",
         )
+    phase24hx_feature_trace = build_phase24hx_feature_trace(
+        metadata_first_selector=metadata_first_selector,
+        source_identity_reranker=source_identity_reranker,
+        article_span_selector=article_span_selector,
+        retrieval_verification_features=retrieval_verification_features,
+        source_family_resolution=source_family_resolution,
+    )
     allowed_source_whitelist = (
         _build_allowed_source_whitelist(post_rerank_chunks)
         if post_rerank_chunks
@@ -6728,6 +6736,7 @@ def _build_trace_payload(
             "metadata_lookup_confidence": (metadata_first_selector or {}).get("metadata_lookup_confidence"),
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
+            "phase24hx_feature_trace": phase24hx_feature_trace,
             "document_identity_score": (source_identity_reranker or {}).get("document_identity_score"),
             "title_match_type": (source_identity_reranker or {}).get("title_match_type"),
             "identifier_match_type": (source_identity_reranker or {}).get("identifier_match_type"),
@@ -6765,6 +6774,7 @@ def _build_trace_payload(
         "law_scope_signal": law_scope_signal,
         "question_type": question_type,
         "target_date": target_date,
+        "phase24hx_feature_trace": phase24hx_feature_trace,
         "retrieval_top_k": top_k_effective,
         "rerank_list": [
             _serialize_trace_chunk(chunk) for chunk in post_rerank_chunks
@@ -6852,6 +6862,7 @@ def _build_trace_payload(
             "metadata_lookup_confidence": (metadata_first_selector or {}).get("metadata_lookup_confidence"),
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
+            "phase24hx_feature_trace": phase24hx_feature_trace,
             "source_cluster_selector": source_cluster_selector,
             "article_span_selector": article_span_selector,
             "explicit_article_refs": [
@@ -6876,6 +6887,7 @@ def _build_trace_payload(
             "metadata_lookup_confidence": (metadata_first_selector or {}).get("metadata_lookup_confidence"),
             "metadata_first_selector": metadata_first_selector,
             "source_identity_reranker": source_identity_reranker,
+            "phase24hx_feature_trace": phase24hx_feature_trace,
             "reranker_family_bonus": (retrieval_verification_features or {}).get("reranker_family_bonus"),
             "identifier_match_flag": (retrieval_verification_features or {}).get("identifier_match_flag"),
             "temporal_alignment_flag": (retrieval_verification_features or {}).get("temporal_alignment_flag"),
@@ -6905,6 +6917,7 @@ def _build_trace_payload(
             "assembled_evidence": assembled_evidence,
             "allowed_source_whitelist": allowed_source_whitelist,
             "article_span_selector": article_span_selector,
+            "phase24hx_feature_trace": phase24hx_feature_trace,
         },
         "generation_outcome": {
             "decision_lane": decision_lane,
