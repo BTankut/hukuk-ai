@@ -1,0 +1,3 @@
+pr_number,pr_title,previous_recommendation,updated_recommendation,scope_status,risk_status,merge_authorization,owner_decision_needed,notes
+1,Product policy documentation packet,request_changes,approve_for_review,clean_docs_only,low,false,yes,Body stop-rule correction succeeded; owner may review or advance draft PR but merge remains unauthorized
+2,Judicial corpus architecture and dry-run plan,request_changes,approve_for_review,clean_docs_only,medium,false,yes,Body stop-rule correction succeeded; owner may review or advance draft PR but merge remains unauthorized
