@@ -1,0 +1,12 @@
+check_name,status,evidence,required_action
+docs_only_scope,pass,"PR2 diff has 7 files; all are reports/benchmark/productization/*.md or *.csv",none
+runtime_code_absent,pass,"No app/source/runtime/config paths in PR2 diff",none
+trace_run_raw_absent,pass,"No trace.jsonl run directory raw source package log PDF ZIP or judicial raw artifact in PR2 diff",none
+judicial_architecture_present,pass,"phase_25A_judicial_corpus_architecture.md is present in PR2 diff",none
+dry_run_intake_plan_present,pass,"phase_25B_G_judicial_dry_run_intake_plan.md and .csv are present in PR2 diff",none
+no_live_retrieval,pass,"No endpoint retriever router serving config or live retrieval wiring in PR2 diff; body states No yargı-live retrieval",none
+no_production_index,pass,"No indexing implementation production index config or Milvus mutation in PR2 diff",none
+no_mevzuat_collection_merge,pass,"No collection merge code/config/data in PR2 diff; body states No mevzuat/yargı collection merge",none
+no_fine_tuning,pass,"No model training dataset or fine-tuning workflow in PR2 diff; body states No fine-tuning",none
+stop_rules_present_in_body,pass,"PR2 body contains Explicit Stop Rules block including Draft PR only and No merge authorization",none
+final_decision,merge_ready,"All Phase25I PR2 merge-readiness checks pass","May be recommended for next-phase merge only; merge_allowed_in_this_phase remains false"
