@@ -1,0 +1,3 @@
+pr_number,pr_title,readiness_status,merge_recommendation,merge_allowed_in_this_phase,required_owner_action,notes
+1,Product policy documentation packet,request_changes,request_changes,false,Approve remediation or revise Phase25I required file checks,"PR1 is docs-only and safe but missing required access control monitoring metrics reviewer template and artifact retention files"
+2,Judicial corpus architecture and dry-run plan,merge_ready,approve_merge_next_phase,false,Owner may approve Phase25J merge execution after PR1 issue is resolved or explicitly decide PR2 can proceed independently,"PR2 passes Phase25I merge-readiness checks but Phase25I does not merge"
