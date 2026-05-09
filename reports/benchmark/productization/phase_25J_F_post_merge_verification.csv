@@ -1,0 +1,15 @@
+check_name,expected,actual,status,notes
+PR1 closed/merged,true,true,pass,PR1 state is MERGED with merge SHA b75262ae467582612b33276bae42c947c1f1cf20
+PR2 closed/merged,true,true,pass,PR2 state is MERGED with merge SHA 3778fa4189f4529adf5dc5477b3ff168a9a95421
+main contains expected PR1 docs,true,true,pass,origin/main contains required PR1 product-control policy/template docs
+main contains expected PR2 docs,true,true,pass,origin/main contains judicial architecture and dry-run docs
+main does not contain runtime code from hardening recovery,true,true,pass,Merge commits changed only reports/benchmark/productization/*.md and .csv
+main does not contain trace/run/raw artifacts,true,true,pass,No trace run raw artifact paths in merge commits
+live 8000 unchanged,true,true,pass,Health endpoint unchanged after merge
+productization closed,true,true,pass,No productization action performed after merge
+internal eval closed,true,true,pass,No internal eval action performed after merge
+reviewer-only eval closed,true,true,pass,No reviewer-only eval action performed after merge
+fine-tuning closed,true,true,pass,No fine-tuning action performed after merge
+judicial live retrieval disabled,true,true,pass,No live judicial retrieval code/config merged
+mevzuat/judicial collection merge absent,true,true,pass,No collection merge code/config merged
+origin main head,3778fa4,3778fa4,pass,origin/main head after merge
