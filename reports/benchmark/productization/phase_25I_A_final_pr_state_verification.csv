@@ -1,0 +1,33 @@
+pr_number,check_name,expected,actual,status,notes
+1,PR exists,true,true,pass,PR1 exists on GitHub
+1,PR open,true,true,pass,PR1 state is OPEN
+1,PR draft,false,false,pass,PR1 is ready for review
+1,base,main,main,pass,PR1 base branch is main
+1,merged,false,false,pass,PR1 mergedAt is null
+1,auto_merge,false,false,pass,PR1 autoMergeRequest is null
+1,runtime code absent,true,true,pass,PR1 diff contains only productization docs/CSV
+1,trace/run/raw absent,true,true,pass,PR1 diff contains no trace run raw artifacts
+1,live config absent,true,true,pass,PR1 diff contains no live config
+1,model/prompt/top-k absent,true,true,pass,PR1 diff contains no model prompt top-k changes
+1,productization not opened,true,true,pass,No productization action performed
+1,internal eval not opened,true,true,pass,No internal eval action performed
+1,reviewer-only eval not opened,true,true,pass,No reviewer-only eval action performed
+1,fine-tuning not opened,true,true,pass,No fine-tuning action performed
+1,mergeable,MERGEABLE,MERGEABLE,pass,GitHub reports PR1 mergeable
+1,status checks success,true,true,pass,GitGuardian Security Checks completed successfully
+2,PR exists,true,true,pass,PR2 exists on GitHub
+2,PR open,true,true,pass,PR2 state is OPEN
+2,PR draft,false,false,pass,PR2 is ready for review
+2,base,main,main,pass,PR2 base branch is main
+2,merged,false,false,pass,PR2 mergedAt is null
+2,auto_merge,false,false,pass,PR2 autoMergeRequest is null
+2,runtime code absent,true,true,pass,PR2 diff contains only productization docs/CSV
+2,trace/run/raw absent,true,true,pass,PR2 diff contains no trace run raw artifacts
+2,live config absent,true,true,pass,PR2 diff contains no live config
+2,model/prompt/top-k absent,true,true,pass,PR2 diff contains no model prompt top-k changes
+2,productization not opened,true,true,pass,No productization action performed
+2,internal eval not opened,true,true,pass,No internal eval action performed
+2,reviewer-only eval not opened,true,true,pass,No reviewer-only eval action performed
+2,fine-tuning not opened,true,true,pass,No fine-tuning action performed
+2,mergeable,MERGEABLE,MERGEABLE,pass,GitHub reports PR2 mergeable
+2,status checks success,true,true,pass,GitGuardian Security Checks completed successfully
