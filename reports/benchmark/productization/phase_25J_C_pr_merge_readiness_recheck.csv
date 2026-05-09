@@ -1,0 +1,33 @@
+pr_number,check_name,expected,actual,status,notes
+1,PR open,true,true,pass,PR1 state is OPEN
+1,base main,main,main,pass,PR1 base branch is main
+1,mergeable clean,true,true,pass,PR1 mergeable MERGEABLE and mergeStateStatus CLEAN
+1,auto_merge false,false,false,pass,PR1 autoMergeRequest is null
+1,runtime code absent,true,true,pass,PR1 diff is productization docs/CSV only
+1,trace/run/raw absent,true,true,pass,No trace run raw artifacts in PR1 diff
+1,live config absent,true,true,pass,No live config in PR1 diff
+1,model/prompt/top-k absent,true,true,pass,No model prompt top-k changes in PR1 diff
+1,productization authorization absent,true,true,pass,PR1 body/scope does not authorize productization
+1,internal eval authorization absent,true,true,pass,PR1 body/scope does not authorize internal eval
+1,reviewer-only eval authorization absent,true,true,pass,Reviewer template is dormant and body says no reviewer-only eval opening
+1,fine-tuning absent,true,true,pass,No fine-tuning files or authorization in PR1
+1,access_control_policy_present,true,true,pass,access_control_policy.md present after remediation
+1,monitoring_metrics_policy_present,true,true,pass,monitoring_metrics_policy.md present after remediation
+1,reviewer_template_present,true,true,pass,reviewer_only_eval_form_template.md and .csv present after remediation
+1,artifact_retention_policy_present,true,true,pass,artifact_retention_and_trace_exclusion_policy.md present after remediation
+1,status checks success,true,true,pass,GitGuardian Security Checks completed successfully
+1,decision,merge_ready,merge_ready,pass,All PR1 Phase25J readiness checks pass
+2,PR open,true,true,pass,PR2 state is OPEN
+2,base main,main,main,pass,PR2 base branch is main
+2,mergeable clean,true,true,pass,PR2 mergeable MERGEABLE and mergeStateStatus CLEAN
+2,auto_merge false,false,false,pass,PR2 autoMergeRequest is null
+2,runtime code absent,true,true,pass,PR2 diff is productization docs/CSV only
+2,trace/run/raw absent,true,true,pass,No trace run raw artifacts in PR2 diff
+2,live config absent,true,true,pass,No live config in PR2 diff
+2,model/prompt/top-k absent,true,true,pass,No model prompt top-k changes in PR2 diff
+2,productization authorization absent,true,true,pass,PR2 body/scope does not authorize productization
+2,internal eval authorization absent,true,true,pass,PR2 body/scope does not authorize internal eval
+2,reviewer-only eval authorization absent,true,true,pass,PR2 body/scope does not authorize reviewer-only eval
+2,fine-tuning absent,true,true,pass,No fine-tuning files or authorization in PR2
+2,status checks success,true,true,pass,GitGuardian Security Checks completed successfully
+2,decision,merge_ready,merge_ready,pass,All PR2 Phase25J readiness checks pass
