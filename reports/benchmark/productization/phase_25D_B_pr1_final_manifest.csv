@@ -1,0 +1,27 @@
+path,include,category,risk,reason,final_pr1_decision
+reports/benchmark/productization/guardrails_policy.md,yes,product_policy_docs,low,Required product policy doc for guardrails behavior before eval/serving/productization,include_in_PR1
+reports/benchmark/productization/verification_policy.md,yes,product_policy_docs,low,Required claim/source verification policy before eval/serving/productization,include_in_PR1
+reports/benchmark/productization/privacy_pii_policy.md,yes,product_policy_docs,low,"Required privacy/PII policy for prompts, traces, reviewer packets, and logs",include_in_PR1
+reports/benchmark/productization/audit_logging_policy.md,yes,product_policy_docs,low,Required audit logging policy for accepted/blocked answers,include_in_PR1
+reports/benchmark/productization/trace_exposure_policy.md,yes,trace exposure policy,low,Required trace exposure policy for split PR safety,include_in_PR1
+reports/benchmark/productization/manual_review_workflow.md,yes,manual review workflow,low,Required manual review workflow for residual and reviewer-only gates,include_in_PR1
+reports/benchmark/productization/confidence_ux_policy.md,yes,confidence / UX policy,low,Required confidence/abstention UX policy,include_in_PR1
+reports/benchmark/productization/rollback_incident_runbook.md,yes,rollback / incident runbook,low,Required rollback/incident runbook before candidate/product operations,include_in_PR1
+reports/benchmark/productization/final_productization_gate.md,yes,product_policy_docs,low,Productization gate summary and closure context,include_in_PR1
+reports/benchmark/productization/product_level_completion_report.md,yes,product_policy_docs,low,Product readiness report used for product-governance history,include_in_PR1
+reports/benchmark/productization/product_level_completion_report_after_phase24HY.md,yes,product_policy_docs,low,Latest Phase24HY product readiness update and stop-loss context,include_in_PR1
+reports/benchmark/productization/product_readiness_inventory.md,yes,product_policy_docs,low,Product readiness inventory with gate summary,include_in_PR1
+reports/benchmark/productization/product_readiness_inventory.csv,yes,product_policy_docs,low,Structured product readiness inventory,include_in_PR1
+reports/benchmark/productization/phase_25A_residual_acceptance_matrix.md,yes,residual acceptance matrix,low,Required residual acceptance matrix for product risk framing,include_in_PR1
+reports/benchmark/productization/phase_25A_residual_acceptance_matrix.csv,yes,residual acceptance matrix,low,Structured residual acceptance matrix,include_in_PR1
+reports/benchmark/productization/phase_25A_product_controls_gap_plan.md,yes,product_policy_docs,low,Phase25A controls gap baseline feeding Phase25B/C workplans,include_in_PR1
+reports/benchmark/productization/phase_25B_E_product_controls_closure_workplan.md,yes,product_policy_docs,low,Required Phase25B controls closure workplan,include_in_PR1
+reports/benchmark/productization/phase_25B_E_product_controls_closure_workplan.csv,yes,product_policy_docs,low,Structured controls closure workplan,include_in_PR1
+reports/benchmark/productization/phase_25B_F_reviewer_only_eval_preparation.md,yes,reviewer-only eval template,low,Reviewer-only eval preparation without opening eval,include_in_PR1
+reports/benchmark/productization/phase_25B_B_merge_inclusion_policy.md,yes,product_policy_docs,low,Merge inclusion/exclusion policy constraining PR scope,include_in_PR1
+reports/benchmark/productization/phase_25B_H_main_merge_readiness_decision.md,yes,product_policy_docs,low,Main merge readiness decision selecting docs/policy PR only,include_in_PR1
+api-gateway/src/**,no,runtime code,high,Runtime code is explicitly out of PR1 scope,exclude_from_PR1
+reports/benchmark/runs/**,no,run directories,high,Run directories are explicitly excluded from main PRs,exclude_from_PR1
+**/trace.jsonl,no,trace.jsonl,high,Trace payloads are explicitly excluded,exclude_from_PR1
+reports/benchmark/legal_review_returns/**,no,raw source artifacts,high,"Raw/legal-review return packages are controlled artifacts, not PR1 docs",exclude_from_PR1
+reports/benchmark/**/*.pdf,no,raw source artifacts,high,Raw source PDFs are excluded from PR1,exclude_from_PR1
