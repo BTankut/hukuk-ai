@@ -1,0 +1,22 @@
+file_path,expected_in_pr1,actual_in_pr1,category,risk,review_status,comment
+reports/benchmark/productization/guardrails_policy.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/verification_policy.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/privacy_pii_policy.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/audit_logging_policy.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/trace_exposure_policy.md,true,true,product_policy_doc,low,ok,Policy document present and not a trace artifact
+reports/benchmark/productization/manual_review_workflow.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/confidence_ux_policy.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/rollback_incident_runbook.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/final_productization_gate.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/product_level_completion_report.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/product_level_completion_report_after_phase24HY.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/product_readiness_inventory.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/product_readiness_inventory.csv,true,true,product_policy_csv,low,ok,Expected product policy CSV present
+reports/benchmark/productization/phase_25A_residual_acceptance_matrix.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/phase_25A_residual_acceptance_matrix.csv,true,true,product_policy_csv,low,ok,Expected product policy CSV present
+reports/benchmark/productization/phase_25A_product_controls_gap_plan.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/phase_25B_E_product_controls_closure_workplan.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/phase_25B_E_product_controls_closure_workplan.csv,true,true,product_policy_csv,low,ok,Expected product policy CSV present
+reports/benchmark/productization/phase_25B_F_reviewer_only_eval_preparation.md,true,true,product_policy_doc,medium,ok,Governance document only and does not open reviewer-only eval
+reports/benchmark/productization/phase_25B_B_merge_inclusion_policy.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
+reports/benchmark/productization/phase_25B_H_main_merge_readiness_decision.md,true,true,product_policy_doc,low,ok,Expected product policy documentation file present
