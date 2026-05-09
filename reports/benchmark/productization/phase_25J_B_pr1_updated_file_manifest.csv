@@ -1,0 +1,6 @@
+file_path,added_in_phase25j,category,risk,guard_status,notes
+reports/benchmark/productization/access_control_policy.md,true,product_control_policy,low,allowed,Added to satisfy access_control_policy_present
+reports/benchmark/productization/monitoring_metrics_policy.md,true,product_control_policy,low,allowed,Added to satisfy monitoring_metrics_policy_present
+reports/benchmark/productization/reviewer_only_eval_form_template.md,true,reviewer_template,medium,allowed,Template only; does not open reviewer-only eval
+reports/benchmark/productization/reviewer_only_eval_form_template.csv,true,reviewer_template,medium,allowed,Template only; does not open reviewer-only eval
+reports/benchmark/productization/artifact_retention_and_trace_exclusion_policy.md,true,artifact_retention_policy,low,allowed,Policy only; not a trace/run/raw artifact
