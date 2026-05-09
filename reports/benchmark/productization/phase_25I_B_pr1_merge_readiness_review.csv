@@ -1,0 +1,13 @@
+check_name,status,evidence,required_action
+docs_only_scope,pass,"PR1 diff has 21 files; all are reports/benchmark/productization/*.md or *.csv",none
+runtime_code_absent,pass,"No app/source/runtime/config paths in PR1 diff",none
+trace_run_raw_absent,pass,"No trace.jsonl run directory raw source package log PDF or ZIP artifact in PR1 diff",none
+policy_docs_present,pass,"Core policy docs present: guardrails verification privacy audit logging trace exposure manual review confidence UX rollback final gate",none
+access_control_policy_present,fail,"reports/benchmark/productization/access_control_policy.md is not present in PR1 diff","Add access_control_policy.md to PR1 or explicitly revise Phase25I requirement"
+monitoring_metrics_policy_present,fail,"reports/benchmark/productization/monitoring_metrics_policy.md is not present in PR1 diff","Add monitoring_metrics_policy.md to PR1 or explicitly revise Phase25I requirement"
+reviewer_template_present,fail,"Dedicated reviewer_only_eval_form_template.md/csv is not present in PR1 diff; only phase_25B_F_reviewer_only_eval_preparation.md is present","Add reviewer_only_eval_form_template.md/csv to PR1 or explicitly accept preparation doc as sufficient"
+artifact_retention_policy_present,fail,"reports/benchmark/productization/artifact_retention_and_trace_exclusion_policy.md is not present in PR1 diff; trace_exposure_policy.md is present but is not the dedicated artifact retention policy","Add artifact_retention_and_trace_exclusion_policy.md to PR1 or explicitly revise Phase25I requirement"
+stop_rules_present_in_body,pass,"PR1 body contains Explicit Stop Rules block including Draft PR only and No merge authorization",none
+no_productization_authorization,pass,"PR1 body and scope do not authorize productization",none
+no_eval_authorization,pass,"PR1 body and scope do not authorize internal or reviewer-only eval opening",none
+final_decision,request_changes,"Required Phase25I PR1 merge-readiness policy/template files are absent from PR1 diff","Do not merge PR1; remediate missing required docs or update owner requirement"
