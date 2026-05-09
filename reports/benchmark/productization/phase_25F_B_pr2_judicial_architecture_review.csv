@@ -1,0 +1,8 @@
+file_path,expected_in_pr2,actual_in_pr2,category,risk,review_status,comment
+reports/benchmark/productization/phase_25A_judicial_corpus_architecture.md,true,true,judicial_architecture_doc,medium,ok,Expected dry-run architecture documentation file present
+reports/benchmark/productization/phase_25A_judicial_ingestion_readiness_checklist.md,true,true,judicial_architecture_doc,medium,ok,Expected dry-run readiness documentation file present
+reports/benchmark/productization/phase_25A_judicial_ingestion_readiness_checklist.csv,true,true,judicial_architecture_csv,medium,ok,Expected dry-run readiness CSV present
+reports/benchmark/productization/phase_25B_G_judicial_dry_run_intake_plan.md,true,true,judicial_dry_run_doc,medium,ok,Expected dry-run intake documentation file present
+reports/benchmark/productization/phase_25B_G_judicial_dry_run_intake_plan.csv,true,true,judicial_dry_run_csv,medium,ok,Expected dry-run intake CSV present
+reports/benchmark/productization/phase_25B_product_controls_and_merge_readiness_report.md,true,true,judicial_architecture_doc,medium,ok,Expected merge-readiness context documentation file present
+reports/benchmark/productization/phase_25B_H_main_merge_readiness_decision.md,true,true,judicial_architecture_doc,medium,ok,Expected main merge readiness documentation file present
