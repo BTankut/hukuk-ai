@@ -1,0 +1,27 @@
+pr_number,check_name,expected,actual,status,notes
+1,PR exists,true,true,pass,PR1 exists on GitHub
+1,PR open,true,true,pass,PR1 state is OPEN
+1,PR draft,true,true,pass,PR1 is draft before transition
+1,base main,main,main,pass,PR1 base branch is main
+1,head expected,bt/phase25e-product-policy-docs,bt/phase25e-product-policy-docs,pass,PR1 head branch matches expected
+1,merge false,false,false,pass,PR1 mergedAt is null
+1,auto_merge false,false,false,pass,PR1 autoMergeRequest is null
+1,runtime code absent,true,true,pass,PR1 diff contains only productization docs/CSV
+1,trace/run/raw absent,true,true,pass,PR1 diff contains no trace run raw artifacts
+1,live config absent,true,true,pass,PR1 diff contains no live config
+1,model/prompt/top-k absent,true,true,pass,PR1 diff contains no model prompt top-k changes
+1,manifest match,true,true,pass,PR1 actual diff matches Phase25D PR1 include manifest
+1,stop-rule block present,true,true,pass,PR1 body contains Explicit Stop Rules block
+2,PR exists,true,true,pass,PR2 exists on GitHub
+2,PR open,true,true,pass,PR2 state is OPEN
+2,PR draft,true,true,pass,PR2 is draft before transition
+2,base main,main,main,pass,PR2 base branch is main
+2,head expected,bt/phase25e-judicial-architecture-docs,bt/phase25e-judicial-architecture-docs,pass,PR2 head branch matches expected
+2,merge false,false,false,pass,PR2 mergedAt is null
+2,auto_merge false,false,false,pass,PR2 autoMergeRequest is null
+2,runtime code absent,true,true,pass,PR2 diff contains only productization docs/CSV
+2,trace/run/raw absent,true,true,pass,PR2 diff contains no trace run raw artifacts
+2,live config absent,true,true,pass,PR2 diff contains no live config
+2,model/prompt/top-k absent,true,true,pass,PR2 diff contains no model prompt top-k changes
+2,manifest match,true,true,pass,PR2 actual diff matches Phase25D PR2 include manifest
+2,stop-rule block present,true,true,pass,PR2 body contains Explicit Stop Rules block
