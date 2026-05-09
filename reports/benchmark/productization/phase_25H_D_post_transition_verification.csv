@@ -1,0 +1,29 @@
+pr_number,check_name,expected,actual,status,notes
+1,PR state open,true,true,pass,PR1 state is OPEN
+1,ready_for_review,true,true,pass,PR1 is no longer draft
+1,PR base main,main,main,pass,PR1 base remains main
+1,PR not merged,true,true,pass,PR1 mergedAt remains null
+1,auto_merge false,false,false,pass,PR1 autoMergeRequest remains null
+1,runtime code absent,true,true,pass,PR1 diff remains docs/CSV only
+1,trace/run/raw absent,true,true,pass,PR1 diff contains no trace run raw artifacts
+1,live 8000 unchanged,true,true,pass,Live health unchanged after transition
+1,productization closed,true,true,pass,No productization action performed
+1,internal eval closed,true,true,pass,No internal eval action performed
+1,reviewer-only eval closed,true,true,pass,No reviewer-only eval action performed
+1,serving candidate closed,true,true,pass,No serving candidate action performed
+1,fine-tuning closed,true,true,pass,No fine-tuning action performed
+1,manifest match,true,true,pass,PR1 diff still matches Phase25D manifest
+2,PR state open,true,true,pass,PR2 state is OPEN
+2,ready_for_review,true,true,pass,PR2 is no longer draft
+2,PR base main,main,main,pass,PR2 base remains main
+2,PR not merged,true,true,pass,PR2 mergedAt remains null
+2,auto_merge false,false,false,pass,PR2 autoMergeRequest remains null
+2,runtime code absent,true,true,pass,PR2 diff remains docs/CSV only
+2,trace/run/raw absent,true,true,pass,PR2 diff contains no trace run raw artifacts
+2,live 8000 unchanged,true,true,pass,Live health unchanged after transition
+2,productization closed,true,true,pass,No productization action performed
+2,internal eval closed,true,true,pass,No internal eval action performed
+2,reviewer-only eval closed,true,true,pass,No reviewer-only eval action performed
+2,serving candidate closed,true,true,pass,No serving candidate action performed
+2,fine-tuning closed,true,true,pass,No fine-tuning action performed
+2,manifest match,true,true,pass,PR2 diff still matches Phase25D manifest
