@@ -1,0 +1,13 @@
+path,include,category,risk,reason,final_pr2_decision
+reports/benchmark/productization/phase_25A_judicial_corpus_architecture.md,yes,judicial corpus architecture,low,Core architecture for separate judicial corpus and retrieval lane,include_in_PR2
+reports/benchmark/productization/phase_25A_judicial_ingestion_readiness_checklist.md,yes,judicial ingestion readiness checklist,low,Dry-run readiness checklist for judicial corpus ingestion,include_in_PR2
+reports/benchmark/productization/phase_25A_judicial_ingestion_readiness_checklist.csv,yes,judicial ingestion readiness checklist,low,Structured judicial ingestion readiness checklist,include_in_PR2
+reports/benchmark/productization/phase_25B_G_judicial_dry_run_intake_plan.md,yes,judicial dry-run intake plan,low,Phase25B dry-run intake operation plan,include_in_PR2
+reports/benchmark/productization/phase_25B_G_judicial_dry_run_intake_plan.csv,yes,judicial dry-run intake plan,low,Structured dry-run stage plan,include_in_PR2
+reports/benchmark/productization/phase_25B_product_controls_and_merge_readiness_report.md,yes,judicial routing design docs,low,Context for Option B docs/policy PR-only decision,include_in_PR2
+reports/benchmark/productization/phase_25B_H_main_merge_readiness_decision.md,yes,judicial routing design docs,low,Confirms docs/policy only and runtime exclusion decision,include_in_PR2
+api-gateway/src/**,no,runtime code,high,Runtime code and live routing are outside PR2 scope,exclude_from_PR2
+reports/benchmark/runs/**,no,run directories,high,Run directories are excluded from PR2,exclude_from_PR2
+**/trace.jsonl,no,trace.jsonl,high,Trace payloads are excluded,exclude_from_PR2
+reports/benchmark/legal_review_returns/**,no,raw source artifacts,high,Raw/legal-review returns are not judicial architecture docs,exclude_from_PR2
+reports/benchmark/**/*.pdf,no,raw source artifacts,high,Raw source PDFs are excluded from PR2,exclude_from_PR2
