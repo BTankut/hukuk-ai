@@ -1,0 +1,29 @@
+pr_number,check_name,expected,actual,status,notes
+1,PR1 draft,true,true,pass,PR1 remains draft
+1,PR1 open,true,true,pass,PR1 state remains OPEN
+1,base,main,main,pass,PR1 base remains main
+1,merge,false,false,pass,PR1 mergedAt remains null
+1,auto_merge,false,false,pass,PR1 autoMergeRequest remains null
+1,ready_for_review,false,false,pass,PR1 remains draft and was not marked ready for review
+1,runtime_code_absent,true,true,pass,PR1 diff contains only productization docs and CSV files
+1,trace_run_raw_absent,true,true,pass,PR1 diff contains no trace run raw artifacts
+1,live_config_absent,true,true,pass,PR1 diff contains no live serving config
+1,model_prompt_topk_absent,true,true,pass,PR1 diff contains no model prompt top-k changes
+1,reviewer_only_eval_not_opened,true,true,pass,PR1 body now explicitly says no reviewer-only eval opening
+1,mevzuat_yargi_collection_merge_absent,true,true,pass,PR1 body now explicitly says no mevzuat/yargı collection merge
+1,required_stop_rule_block_present,true,true,pass,PR1 body contains Explicit Stop Rules block
+1,file_diff_unchanged,true,true,pass,PR1 changed files remain 21
+2,PR2 draft,true,true,pass,PR2 remains draft
+2,PR2 open,true,true,pass,PR2 state remains OPEN
+2,base,main,main,pass,PR2 base remains main
+2,merge,false,false,pass,PR2 mergedAt remains null
+2,auto_merge,false,false,pass,PR2 autoMergeRequest remains null
+2,ready_for_review,false,false,pass,PR2 remains draft and was not marked ready for review
+2,runtime_code_absent,true,true,pass,PR2 diff contains only productization docs and CSV files
+2,trace_run_raw_absent,true,true,pass,PR2 diff contains no trace run raw artifacts
+2,live_config_absent,true,true,pass,PR2 diff contains no live serving config
+2,model_prompt_topk_absent,true,true,pass,PR2 diff contains no model prompt top-k changes
+2,reviewer_only_eval_not_opened,true,true,pass,PR2 body now explicitly says no reviewer-only eval opening
+2,mevzuat_yargi_collection_merge_absent,true,true,pass,PR2 body now explicitly says no mevzuat/yargı collection merge
+2,required_stop_rule_block_present,true,true,pass,PR2 body contains Explicit Stop Rules block
+2,file_diff_unchanged,true,true,pass,PR2 changed files remain 7
