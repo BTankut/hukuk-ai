@@ -1,0 +1,3 @@
+pr_number,pr_title,scope_status,risk_status,review_recommendation,required_changes,owner_decision_needed
+1,Product policy documentation packet,clean_docs_only,low_diff_risk_body_needs_edit,request_changes,Add missing stop-rule statements to PR body: No reviewer-only eval opening; No mevzuat/yargı collection merge; Draft PR only; No merge authorization,yes
+2,Judicial corpus architecture and dry-run plan,clean_docs_only,medium_domain_risk_body_needs_edit,request_changes,Add missing stop-rule statements to PR body: No reviewer-only eval opening; No mevzuat/yargı collection merge; Draft PR only; No merge authorization,yes
