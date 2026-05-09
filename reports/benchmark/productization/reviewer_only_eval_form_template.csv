@@ -1,0 +1,2 @@
+"review_id","reviewer_name","query","answer","selected_sources","source_roles","legal_correctness","citation_correctness","current_law_validity","missing_context","risk_level","decision","required_action","notes"
+"EXAMPLE-001","","","","","","unknown","unknown","unknown","","medium","needs_legal_review","",""
