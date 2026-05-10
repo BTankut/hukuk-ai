@@ -1,0 +1,31 @@
+pr_number,check_name,expected,actual,status,notes
+1,open,true,true,pass,Pre-merge evidence from Phase25J-C showed PR1 open; current state is MERGED after allowed merge
+1,base main,main,main,pass,PR1 base was main
+1,mergeable clean,true,true,pass,Pre-merge evidence showed PR1 MERGEABLE/CLEAN
+1,auto_merge false,false,false,pass,PR1 autoMergeRequest remained null
+1,runtime code absent,true,true,pass,PR1 diff contained only productization docs/CSV
+1,trace/run/raw absent,true,true,pass,No trace/run/raw artifacts in PR1 diff
+1,live config absent,true,true,pass,No live config in PR1 diff
+1,model/prompt/top-k absent,true,true,pass,No model/prompt/top-k changes in PR1 diff
+1,productization authorization absent,true,true,pass,PR1 did not authorize productization
+1,internal eval authorization absent,true,true,pass,PR1 did not authorize internal eval
+1,reviewer-only eval authorization absent,true,true,pass,Reviewer template remained dormant and PR1 did not authorize reviewer-only eval
+1,fine-tuning absent,true,true,pass,No fine-tuning scope in PR1
+1,access_control_policy_present,true,true,pass,Required PR1 file present after remediation
+1,monitoring_metrics_policy_present,true,true,pass,Required PR1 file present after remediation
+1,reviewer_template_present,true,true,pass,Required PR1 template files present after remediation
+1,artifact_retention_policy_present,true,true,pass,Required PR1 file present after remediation
+1,decision,merge_ready,merge_ready,pass,PR1 was merge_ready before merge
+2,open,true,true,pass,Pre-merge evidence from Phase25J-C showed PR2 open; current state is MERGED after allowed merge
+2,base main,main,main,pass,PR2 base was main
+2,mergeable clean,true,true,pass,Pre-merge evidence showed PR2 MERGEABLE/CLEAN
+2,auto_merge false,false,false,pass,PR2 autoMergeRequest remained null
+2,runtime code absent,true,true,pass,PR2 diff contained only productization docs/CSV
+2,trace/run/raw absent,true,true,pass,No trace/run/raw artifacts in PR2 diff
+2,live config absent,true,true,pass,No live config in PR2 diff
+2,model/prompt/top-k absent,true,true,pass,No model/prompt/top-k changes in PR2 diff
+2,productization authorization absent,true,true,pass,PR2 did not authorize productization
+2,internal eval authorization absent,true,true,pass,PR2 did not authorize internal eval
+2,reviewer-only eval authorization absent,true,true,pass,PR2 did not authorize reviewer-only eval
+2,fine-tuning absent,true,true,pass,No fine-tuning scope in PR2
+2,decision,merge_ready,merge_ready,pass,PR2 was merge_ready before merge
