@@ -3459,6 +3459,7 @@ def _finalize_boundary_proxy_response(
     store: ConversationStore,
     session_id: str,
     user_message: str,
+    conversation_history: list[ConversationMessage],
     canonical_snapshot: dict[str, Any],
     proxy_response: dict[str, Any],
 ) -> Any:
@@ -5039,6 +5040,7 @@ async def chat_completions(
             store=store,
             session_id=session_id,
             user_message=last_user_msg,
+            conversation_history=conversation_history,
             canonical_snapshot=canonical_snapshot,
             proxy_response=proxy_response,
         )

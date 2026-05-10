@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from faz2a_hardening import harden_answer
+from faz2a_hardening import harden_answer_diagnostic
 
 
 def _evidence(*rows: tuple[str, str | None]) -> list[dict[str, object]]:
@@ -29,7 +29,7 @@ def _evidence(*rows: tuple[str, str | None]) -> list[dict[str, object]]:
 def test_rc_f_prefers_parser_target_as_primary_source() -> None:
     evidence = _evidence(("TBK m.49", None), ("TBK m.50", None))
 
-    result = harden_answer(
+    result = harden_answer_diagnostic(
         answer_text=(
             "- TBK m.49 kusur sorumluluğunu düzenler. [Kaynak: TBK m.49]\n"
             "- TBK m.50 ise ispat yükünü düzenler. [Kaynak: TBK m.50]"
@@ -56,7 +56,7 @@ def test_rc_f_prefers_parser_target_as_primary_source() -> None:
 def test_rc_f_treats_article_target_as_supported_when_evidence_is_paragraph_level() -> None:
     evidence = _evidence(("TBK m.49", "1"))
 
-    result = harden_answer(
+    result = harden_answer_diagnostic(
         answer_text="TBK m.49 haksız fiil sorumluluğunu düzenler. [Kaynak: TBK m.49]",
         citations=["TBK m.49"],
         blocked=False,
@@ -79,7 +79,7 @@ def test_rc_f_treats_article_target_as_supported_when_evidence_is_paragraph_leve
 def test_rc_f_recovers_partial_only_when_claims_are_dropped() -> None:
     evidence = _evidence(("TBK m.49", None))
 
-    result = harden_answer(
+    result = harden_answer_diagnostic(
         answer_text=(
             "- TBK m.49 haksız fiil sorumluluğunu düzenler. [Kaynak: TBK m.49]\n"
             "- İkinci iddia için kaynak verilmedi."
