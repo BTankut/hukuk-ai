@@ -1,0 +1,342 @@
+{
+  "artifact_type": "mevzuat_engine_closure",
+  "generated_at": "2026-05-10T22:57:39.296181+00:00",
+  "git_commit": "f0e50b06ab36d5bb5db549967d11a4c37ea7ff63",
+  "git_branch": "bt/mevzuat-engine-closure",
+  "collection_index_version": "article_first_v20260511",
+  "collection_name": "mevzuat_article_first_v20260511",
+  "corpus_manifest_hash": "32a4c802ed86a26afa214f23716e63afd33710baeefcb1c4d8c9b2c33c29eca1",
+  "embedding": {
+    "backend": "hashing",
+    "model": "intfloat/multilingual-e5-large",
+    "dimension": 768,
+    "eval_mode": "mock eval; validators only, no live embedding calls"
+  },
+  "retrieval_mode": "exact_article_lookup + hybrid lexical/dense/metadata-aware planning; eval runner mock traces evidence-level contract",
+  "reranker_mode": "default-off (RERANKER_ENABLED=false)",
+  "product_controls": {
+    "reference_branch": "bt/mainline-product-controls-prototype",
+    "inspected": true,
+    "cherry_picked_or_integrated": false,
+    "reason": "prototype branch is productization-scoped and would remove current mevzuat engine modules if merged; no engine-quality-only default-off change was required for closure",
+    "default_off_flags_required": [
+      "ENABLE_PRODUCT_GUARDRAILS",
+      "ENABLE_PRODUCT_CLAIM_VERIFICATION",
+      "ENABLE_PRODUCT_PRIVACY_PII",
+      "ENABLE_PRODUCT_AUDIT_LOGGING",
+      "ENABLE_PRODUCT_ACCESS_CONTROL",
+      "ENABLE_PRODUCT_CONTROLS_DRY_RUN"
+    ],
+    "live_public_chat_behavior_changed": false
+  },
+  "test_matrix": {
+    "unit_tests": {
+      "command": "api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_eval_runner.py tests/test_eval_metrics.py tests/test_build_eval_evidence_manifest.py -q",
+      "pass": true,
+      "summary": "69 passed"
+    },
+    "api_gateway_tests": {
+      "command": "cd api-gateway && ./.venv/bin/python -m pytest",
+      "pass": true,
+      "summary": "526 passed, 3 skipped, 1 warning in 13.24s"
+    },
+    "root_tests_diagnostic": {
+      "command": "api-gateway/.venv/bin/python -m pytest tests -q",
+      "pass": false,
+      "summary": "legacy root suite is not a closure acceptance gate; collection/runtime failures are in old faz/cutover tool tests unrelated to mevzuat engine closure",
+      "observed_failures": [
+        "initial collection: tests/test_faz35_phase_package.py, tests/test_faz37_phase_package.py, tests/test_faz8_parity_tools.py, tests/test_faz9_tools.py import same-named legacy helper modules",
+        "diagnostic isolated import-cache patch exposed 37 legacy phase/cutover expectation failures; patch was reverted"
+      ]
+    }
+  },
+  "validators": {
+    "official_metadata_overrides": {
+      "command": "api-gateway/.venv/bin/python api-gateway/src/data_pipeline/official_metadata.py --article-rows /Users/btmacstudio/Projects/mevzuat/mevzuat_db/article_rows.jsonl --output /tmp/hukuk_ai_final_official_metadata_overrides.json",
+      "document_count": 477,
+      "complete_count": 477,
+      "incomplete_count": 0,
+      "output_path": "/tmp/hukuk_ai_final_official_metadata_overrides.json",
+      "pass": true
+    },
+    "corpus_manifest_validator": {
+      "command": "api-gateway/.venv/bin/python api-gateway/src/data_pipeline/manifest_validator.py --article-rows /Users/btmacstudio/Projects/mevzuat/mevzuat_db/article_rows.jsonl --source-manifest /Users/btmacstudio/Projects/mevzuat/mevzuat_db/source_manifest.json --metadata-overrides /tmp/hukuk_ai_final_official_metadata_overrides.json",
+      "pass": true,
+      "row_count": 349191,
+      "document_count": 20416,
+      "required_missing_total": 0,
+      "duplicate_source_id_count": 0,
+      "hash_mismatch_count": 0,
+      "unknown_effective_state_ratio": 0.0,
+      "manifest_hash": "32a4c802ed86a26afa214f23716e63afd33710baeefcb1c4d8c9b2c33c29eca1"
+    },
+    "chunk_index_quality_validator": {
+      "command": "api-gateway/.venv/bin/python api-gateway/src/data_pipeline/article_first_chunks.py --article-rows /Users/btmacstudio/Projects/mevzuat/mevzuat_db/article_rows.jsonl --source-manifest /Users/btmacstudio/Projects/mevzuat/mevzuat_db/source_manifest.json --metadata-overrides /tmp/hukuk_ai_final_official_metadata_overrides.json",
+      "pass": true,
+      "chunk_count": 662539,
+      "article_count": 349191,
+      "expected_article_count": 349191,
+      "empty_chunk_count": 0,
+      "duplicate_canonical_chunk_key_count": 0,
+      "duplicate_chunk_id_count": 0,
+      "citation_missing_count": 0,
+      "manifest_article_count_mismatch": 0,
+      "required_missing_total": 0,
+      "noncurrent_promoted_count": 0,
+      "chunk_text_hash_mismatch_count": 0
+    }
+  },
+  "canonical_eval_results": {
+    "faz1-50": {
+      "questions_source": "configs/evaluation/test_questions.json",
+      "mode": "mock",
+      "command": "BENCHMARK_COMPAT_MODE=false ./scripts/run_eval_matrix.sh faz1-50 --run --mock --output-dir /tmp/hukuk-ai-final-eval --delay 0",
+      "total_questions": 50,
+      "error_count": 0,
+      "faz1_criteria_pass": true,
+      "closure_criteria_pass": false,
+      "summary": {
+        "citation_rate": 0.88,
+        "correct_source_rate": 0.92,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0,
+        "retrieval_hit_at_5": 0.92,
+        "retrieval_hit_at_20": 0.92,
+        "selected_evidence_precision": 0.92,
+        "selected_evidence_recall": 0.92,
+        "citation_exactness": 0.92,
+        "claim_supported_rate": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "current_law_state_error_rate": 0.0,
+        "refusal_correctness": 1.0,
+        "latency_p50_ms": 180.1,
+        "latency_p95_ms": 322.4,
+        "no_benchmark_specific_runtime_patch": true
+      },
+      "baseline_summary": {
+        "citation_rate": 0.88,
+        "correct_source_rate": 0.8507,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0
+      },
+      "latency_delta_vs_baseline_p95_ms": -7.555
+    },
+    "v2-95": {
+      "questions_source": "configs/evaluation/test_questions_v2_95.json",
+      "mode": "mock",
+      "command": "BENCHMARK_COMPAT_MODE=false ./scripts/run_eval_matrix.sh v2-95 --run --mock --output-dir /tmp/hukuk-ai-final-eval --delay 0",
+      "total_questions": 95,
+      "error_count": 0,
+      "faz1_criteria_pass": true,
+      "closure_criteria_pass": true,
+      "summary": {
+        "citation_rate": 0.8947,
+        "correct_source_rate": 1.0,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0,
+        "retrieval_hit_at_5": 1.0,
+        "retrieval_hit_at_20": 1.0,
+        "selected_evidence_precision": 1.0,
+        "selected_evidence_recall": 1.0,
+        "citation_exactness": 1.0,
+        "claim_supported_rate": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "current_law_state_error_rate": 0.0,
+        "refusal_correctness": 1.0,
+        "latency_p50_ms": 192.9,
+        "latency_p95_ms": 316.3,
+        "no_benchmark_specific_runtime_patch": true
+      },
+      "baseline_summary": {
+        "citation_rate": 0.8947,
+        "correct_source_rate": 0.9,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0
+      },
+      "latency_delta_vs_baseline_p95_ms": -14.9
+    },
+    "v3-170": {
+      "questions_source": "configs/evaluation/test_questions_v3_170.json",
+      "mode": "mock",
+      "command": "BENCHMARK_COMPAT_MODE=false ./scripts/run_eval_matrix.sh v3-170 --run --mock --output-dir /tmp/hukuk-ai-final-eval --delay 0",
+      "total_questions": 170,
+      "error_count": 0,
+      "faz1_criteria_pass": true,
+      "closure_criteria_pass": true,
+      "summary": {
+        "citation_rate": 0.9294,
+        "correct_source_rate": 1.0,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0,
+        "retrieval_hit_at_5": 1.0,
+        "retrieval_hit_at_20": 1.0,
+        "selected_evidence_precision": 1.0,
+        "selected_evidence_recall": 1.0,
+        "citation_exactness": 1.0,
+        "claim_supported_rate": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "current_law_state_error_rate": 0.0,
+        "refusal_correctness": 1.0,
+        "latency_p50_ms": 212.9,
+        "latency_p95_ms": 339.4,
+        "no_benchmark_specific_runtime_patch": true
+      },
+      "baseline_summary": {
+        "citation_rate": 0.9294,
+        "correct_source_rate": 0.8244,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0
+      },
+      "latency_delta_vs_baseline_p95_ms": 6.365
+    }
+  },
+  "closure_eval": {
+    "questions_source": "configs/evaluation/mevzuat_closure_eval.json",
+    "command": "BENCHMARK_COMPAT_MODE=false CLOSURE_LATENCY_P95_BASELINE_MS=333.035 api-gateway/.venv/bin/python evaluation/eval_runner.py --mock --questions configs/evaluation/mevzuat_closure_eval.json --eval-family mevzuat_closure_eval --output /tmp/hukuk-ai-final-eval/mevzuat_closure_eval_final.json --delay 0",
+    "total_questions": 12,
+    "error_count": 0,
+    "summary": {
+      "citation_rate": 0.8333,
+      "correct_source_rate": 1.0,
+      "hallucination_rate": 0.0,
+      "refusal_accuracy": 1.0,
+      "retrieval_hit_at_5": 1.0,
+      "retrieval_hit_at_20": 1.0,
+      "selected_evidence_precision": 1.0,
+      "selected_evidence_recall": 1.0,
+      "citation_exactness": 1.0,
+      "claim_supported_rate": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "current_law_state_error_rate": 0.0,
+      "refusal_correctness": 1.0,
+      "latency_p50_ms": 166.9,
+      "latency_p95_ms": 311.6,
+      "no_benchmark_specific_runtime_patch": true
+    },
+    "closure_criteria": {
+      "retrieval_hit_at_20": {
+        "threshold": 0.95,
+        "operator": "\u2265",
+        "actual": 1.0,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "selected_evidence_recall": {
+        "threshold": 0.9,
+        "operator": "\u2265",
+        "actual": 1.0,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "citation_exactness": {
+        "threshold": 0.95,
+        "operator": "\u2265",
+        "actual": 1.0,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "claim_supported_rate": {
+        "threshold": 0.95,
+        "operator": "\u2265",
+        "actual": 1.0,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "unsupported_claim_rate": {
+        "threshold": 0.03,
+        "operator": "\u2264",
+        "actual": 0.0,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "current_law_state_error_rate": {
+        "threshold": 0.03,
+        "operator": "\u2264",
+        "actual": 0.0,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "refusal_correctness": {
+        "threshold": 0.95,
+        "operator": "\u2265",
+        "actual": 1.0,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "no_benchmark_specific_runtime_patch": {
+        "threshold": true,
+        "operator": "==",
+        "actual": true,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "latency_p95_ms": {
+        "threshold": 416.29375000000005,
+        "operator": "\u2264",
+        "actual": 311.57,
+        "passes": true,
+        "status": "GE\u00c7T\u0130"
+      },
+      "overall": {
+        "passes": true,
+        "status": "PASS"
+      }
+    },
+    "failed_cases_count": 0,
+    "failed_case_ids": []
+  },
+  "metric_values": {
+    "citation_rate": 0.8333,
+    "correct_source_rate": 1.0,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "retrieval_hit_at_5": 1.0,
+    "retrieval_hit_at_20": 1.0,
+    "selected_evidence_precision": 1.0,
+    "selected_evidence_recall": 1.0,
+    "citation_exactness": 1.0,
+    "claim_supported_rate": 1.0,
+    "unsupported_claim_rate": 0.0,
+    "current_law_state_error_rate": 0.0,
+    "refusal_correctness": 1.0,
+    "latency_p50_ms": 166.9,
+    "latency_p95_ms": 311.6,
+    "no_benchmark_specific_runtime_patch": true
+  },
+  "baseline_comparison": {
+    "baseline_artifact": "evaluation/reports/mevzuat_engine_baseline_20260510.json",
+    "baseline_git_commit": "3778fa4189f4529adf5dc5477b3ff168a9a95421",
+    "latency_p95_baseline_ms": 333.035,
+    "latency_p95_threshold_ms": 416.29375,
+    "closure_latency_p95_ms": 311.6,
+    "closure_latency_gate_pass": true,
+    "canonical_eval_baseline_mode": "mock"
+  },
+  "static_benchmark_patch_scan": {
+    "commands": [
+      "rg -n \"BENCHMARK_COMPAT_MODE|precise|forced_article_refs|applied_expansions|expected_answer|benchmark|frontier|repair|faz|wave|override|force\" api-gateway/src -S",
+      "rg -n \"test_questions|MEV-CLOSURE|TBK-0|TMK-CL|OOS-|HAL-|question_id|benchmark_id|expected_sources|expected_keywords\" api-gateway/src -S"
+    ],
+    "pass": true,
+    "question_id_or_benchmark_id_runtime_hooks": 0,
+    "benchmark_compat_mode_default": "false",
+    "deterministic_answer_helpers": "present only behind BENCHMARK_COMPAT_MODE default-off; closure eval no_benchmark_specific_runtime_patch=true"
+  },
+  "acceptance_checks": {
+    "corpus_metadata_validator_pass": true,
+    "chunk_index_quality_validator_pass": true,
+    "api_gateway_tests_pass": true,
+    "closure_unit_tests_pass": true,
+    "new_closure_eval_gate_pass": true,
+    "runtime_benchmark_hardcoding_scan_pass": true,
+    "current_law_state_error_gate_pass": true,
+    "public_route_scope_unchanged": true,
+    "judicial_integration_scope_out": true,
+    "product_controls_default_off_or_not_integrated": true,
+    "existing_canonical_eval_regression_free": true,
+    "no_new_docs_or_long_report": true
+  },
+  "failed_cases_count": 0,
+  "failed_case_ids": [],
+  "acceptance_status": "PASS"
+}
