@@ -1,0 +1,6 @@
+file_path,added_to_pr1_branch,category,risk,guard_status,notes
+reports/benchmark/productization/access_control_policy.md,true,product_control_policy,low,allowed,Added by PR1 branch commit 8db22a6; docs-only policy artifact
+reports/benchmark/productization/monitoring_metrics_policy.md,true,product_control_policy,low,allowed,Added by PR1 branch commit 8db22a6; docs-only policy artifact
+reports/benchmark/productization/reviewer_only_eval_form_template.md,true,reviewer_template,medium,allowed,Added by PR1 branch commit 8db22a6; dormant template only
+reports/benchmark/productization/reviewer_only_eval_form_template.csv,true,reviewer_template,medium,allowed,Added by PR1 branch commit 8db22a6; dormant CSV template only
+reports/benchmark/productization/artifact_retention_and_trace_exclusion_policy.md,true,artifact_retention_policy,low,allowed,Added by PR1 branch commit 8db22a6; policy only and not trace/run/raw artifact
