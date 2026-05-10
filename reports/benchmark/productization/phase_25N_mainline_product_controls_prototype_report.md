@@ -15,8 +15,10 @@ Phase25N commits before this final report:
 | `d7c0b299` | Add Phase25N audit event and access control prototype |
 | `95151c21` | Run Phase25N non-live product controls smoke |
 | `2a5e2c73` | Record Phase25N product controls PR readiness |
+| `faa71b5b` | Report Phase25N mainline product controls prototype outcome |
+| `8e59e27f` | Normalize Phase25N smoke artifact formatting |
 
-This final report is committed separately with message `Report Phase25N mainline product controls prototype outcome`.
+This final report is updated and committed separately with message `Report Phase25N mainline product controls prototype outcome`.
 
 ## 2. Mainline Branch Setup
 
