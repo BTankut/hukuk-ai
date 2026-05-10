@@ -36,6 +36,7 @@ from routers.chat import (
     ChatCompletionRequest,
     ConversationMessage,
     _apply_retrieval_plan_hints,
+    _benchmark_compat_mode_enabled,
     _build_numbered_law_reference_expansion,
     _build_retrieval_plan_expansion,
     _build_source_cluster_candidates,
@@ -45,6 +46,7 @@ from routers.chat import (
     _extract_explicit_article_refs,
     _extract_law_mentions,
     _infer_requested_source_families,
+    _legacy_query_expansions_enabled,
     _prioritize_chunks_for_source_families,
     _resolve_public_answer_text,
     _sanitize_source_cluster_selector_payload,
@@ -101,6 +103,8 @@ def _make_app(mock_orch: Any = None, mock_retriever: Any = None) -> FastAPI:
 @pytest.fixture(autouse=True)
 def _trace_log_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("TRACE_LOG_DIR", str(tmp_path / "traces"))
+    monkeypatch.delenv("BENCHMARK_COMPAT_MODE", raising=False)
+    monkeypatch.delenv("LEGACY_QUERY_EXPANSIONS_ENABLED", raising=False)
 
 
 @pytest.fixture
@@ -358,6 +362,23 @@ class TestScopeRefusalDetection:
         assert reason is None
 
 
+class TestRuntimeFeatureFlags:
+
+    def test_benchmark_compat_mode_defaults_off(self, monkeypatch):
+        monkeypatch.delenv("BENCHMARK_COMPAT_MODE", raising=False)
+
+        assert _benchmark_compat_mode_enabled() is False
+
+    def test_legacy_query_expansions_require_benchmark_compat_mode(self, monkeypatch):
+        monkeypatch.setenv("LEGACY_QUERY_EXPANSIONS_ENABLED", "true")
+
+        assert _legacy_query_expansions_enabled() is False
+
+        monkeypatch.setenv("BENCHMARK_COMPAT_MODE", "true")
+
+        assert _legacy_query_expansions_enabled() is True
+
+
 class TestLawSignalParsing:
 
     def test_contains_query_term_matches_inflected_turkish_phrase_endings(self):
@@ -406,21 +427,34 @@ class TestLawSignalParsing:
         laws = _extract_law_mentions("3224 m.1 metni ile 126 m.1 birlikte değerlendirilsin.")
         assert laws == ["3224", "126"]
 
-    def test_extract_law_mentions_infers_tbk_tmk_for_cross_law_concepts(self):
+    def test_extract_law_mentions_does_not_infer_concept_laws_by_default(self):
+        laws = _extract_law_mentions(
+            "Evli bir kişinin kefalet sözleşmesi yapmasında eş rızası şartı aile birliğinin "
+            "korunması ilkesiyle nasıl ilişkilidir?"
+        )
+        assert laws == []
+
+    def test_extract_law_mentions_infers_tbk_tmk_for_cross_law_concepts_in_compat_mode(self, monkeypatch):
+        monkeypatch.setenv("BENCHMARK_COMPAT_MODE", "true")
+
         laws = _extract_law_mentions(
             "Evli bir kişinin kefalet sözleşmesi yapmasında eş rızası şartı aile birliğinin "
             "korunması ilkesiyle nasıl ilişkilidir?"
         )
         assert laws == ["TBK", "TMK"]
 
-    def test_extract_law_mentions_infers_tbk_tmk_for_nafaka_zamanasimi_family(self):
+    def test_extract_law_mentions_infers_tbk_tmk_for_nafaka_zamanasimi_family(self, monkeypatch):
+        monkeypatch.setenv("BENCHMARK_COMPAT_MODE", "true")
+
         laws = _extract_law_mentions(
             "Aile hukukunda öngörülen nafaka yükümlülüğü sözleşmeden doğan alacak gibi "
             "zamanaşımına uğrar mı, özel bir süre var mıdır?"
         )
         assert laws == ["TBK", "TMK"]
 
-    def test_extract_law_mentions_infers_tbk_tmk_for_bagislama_tasfiye_family(self):
+    def test_extract_law_mentions_infers_tbk_tmk_for_bagislama_tasfiye_family(self, monkeypatch):
+        monkeypatch.setenv("BENCHMARK_COMPAT_MODE", "true")
+
         laws = _extract_law_mentions(
             "Eşler arasında yapılan bağışlamanın edinilmiş mallara katılma rejiminin "
             "tasfiyesindeki etkisi nasıldır? Bu bağışlama denkleştirmeye tabi midir?"
@@ -1227,6 +1261,33 @@ class TestChatCompletionsNonStreaming:
         assert "session_id" in data
         assert data["session_id"].startswith("sess-")
 
+    def test_precise_answer_shortcut_is_disabled_by_default(self, client, mock_orchestrator):
+        mock_orchestrator.answer = AsyncMock(
+            return_value=_make_orch_response(
+                "RAG cevabı. [Kaynak: TBK m.166]",
+                citations=["TBK m.166"],
+            )
+        )
+
+        resp = client.post(
+            "/v1/chat/completions",
+            json={
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Müteselsil borçlulukta borçlulardan birinin ifası diğerlerini kurtarır mı?",
+                    }
+                ],
+                "include_trace": True,
+            },
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        mock_orchestrator.answer.assert_awaited_once()
+        assert "RAG cevabı" in data["choices"][0]["message"]["content"]
+        assert data["trace"]["generation_outcome"]["decision_lane"] == "rag"
+
     def test_response_includes_citations(self, client, mock_orchestrator):
         mock_orchestrator.answer = AsyncMock(
             return_value=_make_orch_response(
@@ -1920,6 +1981,7 @@ class TestLawFilterAndRetrieval:
         with patch.dict(
             os.environ,
             {
+                "BENCHMARK_COMPAT_MODE": "true",
                 "SOURCE_CLUSTER_SELECTOR_ENABLED": "false",
                 "LEGACY_QUERY_EXPANSIONS_ENABLED": "true",
             },
@@ -2284,7 +2346,11 @@ class TestLawFilterAndRetrieval:
         new_store = ConversationStore()
         app.dependency_overrides[get_conversation_store] = lambda: new_store
 
-        with patch.dict(os.environ, {"LEGACY_QUERY_EXPANSIONS_ENABLED": "true"}, clear=False):
+        with patch.dict(
+            os.environ,
+            {"BENCHMARK_COMPAT_MODE": "true", "LEGACY_QUERY_EXPANSIONS_ENABLED": "true"},
+            clear=False,
+        ):
             with TestClient(app) as c:
                 resp = c.post(
                     "/v1/chat/completions",
@@ -2402,7 +2468,11 @@ class TestLawFilterAndRetrieval:
         new_store = ConversationStore()
         app.dependency_overrides[get_conversation_store] = lambda: new_store
 
-        with patch.dict(os.environ, {"LEGACY_QUERY_EXPANSIONS_ENABLED": "true"}, clear=False):
+        with patch.dict(
+            os.environ,
+            {"BENCHMARK_COMPAT_MODE": "true", "LEGACY_QUERY_EXPANSIONS_ENABLED": "true"},
+            clear=False,
+        ):
             with TestClient(app) as c:
                 resp = c.post(
                     "/v1/chat/completions",

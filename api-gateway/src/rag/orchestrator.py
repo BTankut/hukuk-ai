@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -21,6 +22,12 @@ _MAX_CONTEXT_CHARS = 1600
 _MAX_CONTEXT_CHUNK_EXCERPT_CHARS = 320
 _PROCEDURE_CONTEXT_CHUNK_EXCERPT_CHARS = 960
 _PRIORITY_TOKEN_RE = re.compile(r"[a-z0-9]+")
+
+
+def _benchmark_compat_mode_enabled() -> bool:
+    return os.getenv("BENCHMARK_COMPAT_MODE", "false").lower() in {"1", "true", "yes", "on"}
+
+
 _PRIORITY_STOPWORDS = {
     "ve",
     "ile",
@@ -598,6 +605,9 @@ class RAGOrchestrator:
         query: str,
         max_chunks: int,
     ) -> list[RetrievedChunk]:
+        if not _benchmark_compat_mode_enabled():
+            return []
+
         normalized_query = query.lower().translate(_TR_ASCII_TRANS)
         forced_citations: list[str] = []
 

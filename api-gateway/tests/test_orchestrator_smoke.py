@@ -446,7 +446,26 @@ def test_extract_priority_chunks_prefers_article_pair_for_split_ttk_question():
     assert [chunk.citation for chunk in selected] == ["TTK m.408", "TTK m.410"]
 
 
-def test_extract_priority_chunks_prefers_cmk_compensation_pair_over_generic_tazminat_hint():
+def test_priority_override_chunks_are_disabled_by_default(monkeypatch):
+    monkeypatch.delenv("BENCHMARK_COMPAT_MODE", raising=False)
+
+    chunks = [
+        RetrievedChunk(text="CMK m.141 tazminat istemini duzenler.", citation="CMK m.141"),
+        RetrievedChunk(text="CMK m.142 basvuru usulunu duzenler.", citation="CMK m.142"),
+    ]
+
+    selected = RAGOrchestrator._extract_priority_override_chunks(
+        candidates=chunks,
+        query="CMK'da koruma tedbirleri nedeniyle tazminat ve basvuru usulunu maddeleriyle ozetler misin?",
+        max_chunks=2,
+    )
+
+    assert selected == []
+
+
+def test_extract_priority_chunks_prefers_cmk_compensation_pair_over_generic_tazminat_hint(monkeypatch):
+    monkeypatch.setenv("BENCHMARK_COMPAT_MODE", "true")
+
     chunks = [
         RetrievedChunk(
             text=(
@@ -479,7 +498,9 @@ def test_extract_priority_chunks_prefers_cmk_compensation_pair_over_generic_tazm
     assert [chunk.citation for chunk in selected] == ["CMK m.141", "CMK m.142"]
 
 
-def test_extract_priority_chunks_prefers_cmk_article_90_for_rights_notification_query():
+def test_extract_priority_chunks_prefers_cmk_article_90_for_rights_notification_query(monkeypatch):
+    monkeypatch.setenv("BENCHMARK_COMPAT_MODE", "true")
+
     chunks = [
         RetrievedChunk(
             text=(

@@ -387,8 +387,14 @@ def _retrieval_planner_enabled() -> bool:
     return os.getenv("RETRIEVAL_PLANNER_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
 
 
+def _benchmark_compat_mode_enabled() -> bool:
+    return os.getenv("BENCHMARK_COMPAT_MODE", "false").lower() in {"1", "true", "yes", "on"}
+
+
 def _legacy_query_expansions_enabled() -> bool:
-    return os.getenv("LEGACY_QUERY_EXPANSIONS_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
+    return _benchmark_compat_mode_enabled() and (
+        os.getenv("LEGACY_QUERY_EXPANSIONS_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
+    )
 
 
 def _source_cluster_selector_enabled() -> bool:
@@ -2523,10 +2529,11 @@ def _extract_law_mentions(query: str) -> list[str]:
             mentions.append(law)
             seen.add(law)
 
-    for code in _infer_law_mentions_from_concepts(query):
-        if code not in seen:
-            mentions.append(code)
-            seen.add(code)
+    if _benchmark_compat_mode_enabled():
+        for code in _infer_law_mentions_from_concepts(query):
+            if code not in seen:
+                mentions.append(code)
+                seen.add(code)
 
     return mentions
 
@@ -4878,12 +4885,14 @@ async def chat_completions(
             llm_trace=native_llm_trace,
         )
 
-    # Dar kapsamlı, yüksek isabetli deterministic çapraz-kanun / TBK yanıtları
+    # Benchmark compatibility shortcuts are default-off in normal runtime.
     precise_lane = "precise_cross_law_shortcut"
-    precise_answer = _build_precise_tmk_tbk_cross_law_answer(last_user_msg)
-    if not precise_answer:
-        precise_lane = "precise_tbk_shortcut"
-        precise_answer = _build_precise_tbk_answer(last_user_msg)
+    precise_answer = None
+    if _benchmark_compat_mode_enabled():
+        precise_answer = _build_precise_tmk_tbk_cross_law_answer(last_user_msg)
+        if not precise_answer:
+            precise_lane = "precise_tbk_shortcut"
+            precise_answer = _build_precise_tbk_answer(last_user_msg)
     if precise_answer:
         answer_text, precise_citations = precise_answer
         mentioned_laws = _extract_law_mentions(last_user_msg)
@@ -4983,7 +4992,11 @@ async def chat_completions(
         )
 
     # Deterministic kapsam-dışı refusal (low-risk hardening)
-    scope_refusal_reason = _detect_scope_refusal_reason(last_user_msg)
+    scope_refusal_reason = (
+        _detect_scope_refusal_reason(last_user_msg)
+        if _benchmark_compat_mode_enabled()
+        else None
+    )
     if scope_refusal_reason:
         answer_text = (
             "Bu soru TBK kapsamı dışı bir konuya giriyor "
