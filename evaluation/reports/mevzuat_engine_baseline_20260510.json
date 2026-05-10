@@ -1,0 +1,106 @@
+{
+  "artifact_type": "mevzuat_engine_baseline",
+  "generated_at": "2026-05-10T20:58:43.886142+00:00",
+  "git_commit": "3778fa4189f4529adf5dc5477b3ff168a9a95421",
+  "git_branch": "bt/mevzuat-engine-closure",
+  "baseline_source": "origin/main",
+  "test_commands": [
+    {
+      "command": "python3 -m pytest",
+      "working_directory": "/Users/btmacstudio/Projects/hukuk-ai",
+      "exit_code": 2,
+      "pass": false,
+      "summary": "collection failed: 12 errors; missing fastapi/pymilvus plus legacy script import mismatches"
+    },
+    {
+      "command": "python3 -m pytest",
+      "working_directory": "/Users/btmacstudio/Projects/hukuk-ai/api-gateway",
+      "exit_code": 2,
+      "pass": false,
+      "summary": "collection failed: 6 errors; system python missing fastapi"
+    },
+    {
+      "command": "./.venv/bin/python -m pytest",
+      "working_directory": "/Users/btmacstudio/Projects/hukuk-ai/api-gateway",
+      "exit_code": 1,
+      "pass": false,
+      "summary": "472 passed, 4 failed, 3 skipped; failures in test_faz34_perimeter_proxy and test_faz5_rc_f_hardening",
+      "failed_tests": [
+        "tests/test_faz34_perimeter_proxy.py::test_boundary_proxy_perimeter_isolation_skips_local_store_history_and_write",
+        "tests/test_faz5_rc_f_hardening.py::test_rc_f_prefers_parser_target_as_primary_source",
+        "tests/test_faz5_rc_f_hardening.py::test_rc_f_treats_article_target_as_supported_when_evidence_is_paragraph_level",
+        "tests/test_faz5_rc_f_hardening.py::test_rc_f_recovers_partial_only_when_claims_are_dropped"
+      ]
+    }
+  ],
+  "canonical_eval_results": [
+    {
+      "eval_family": "faz1-50",
+      "questions_source": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions.json",
+      "mode": "mock",
+      "command": "PYTHON=api-gateway/.venv/bin/python GIT_COMMIT=3778fa41 MODEL_REF=gateway-api CHECKPOINT_REF=gateway-main-baseline ./scripts/run_eval_matrix.sh all --run --mock --output-dir /tmp/hukuk-ai-mevzuat-baseline-eval --delay 0",
+      "total_questions": 50,
+      "error_count": 0,
+      "pass": true,
+      "summary": {
+        "citation_rate": 0.88,
+        "correct_source_rate": 0.8507,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0,
+        "avg_keyword_coverage": 0.6915,
+        "phrase_hit_rate": 0.8837,
+        "avg_response_time_ms": 178.3,
+        "blocked_rate": 0.0
+      },
+      "latency_p50_ms": 183.85,
+      "latency_p95_ms": 329.955
+    },
+    {
+      "eval_family": "v2-95",
+      "questions_source": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions_v2_95.json",
+      "mode": "mock",
+      "command": "PYTHON=api-gateway/.venv/bin/python GIT_COMMIT=3778fa41 MODEL_REF=gateway-api CHECKPOINT_REF=gateway-main-baseline ./scripts/run_eval_matrix.sh all --run --mock --output-dir /tmp/hukuk-ai-mevzuat-baseline-eval --delay 0",
+      "total_questions": 95,
+      "error_count": 0,
+      "pass": true,
+      "summary": {
+        "citation_rate": 0.8947,
+        "correct_source_rate": 0.9,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0,
+        "avg_keyword_coverage": 0.7289,
+        "phrase_hit_rate": 0.5312,
+        "avg_response_time_ms": 194.9,
+        "blocked_rate": 0.0
+      },
+      "latency_p50_ms": 196.7,
+      "latency_p95_ms": 331.2
+    },
+    {
+      "eval_family": "v3-170",
+      "questions_source": "/Users/btmacstudio/Projects/hukuk-ai/configs/evaluation/test_questions_v3_170.json",
+      "mode": "mock",
+      "command": "PYTHON=api-gateway/.venv/bin/python GIT_COMMIT=3778fa41 MODEL_REF=gateway-api CHECKPOINT_REF=gateway-main-baseline ./scripts/run_eval_matrix.sh all --run --mock --output-dir /tmp/hukuk-ai-mevzuat-baseline-eval --delay 0",
+      "total_questions": 170,
+      "error_count": 0,
+      "pass": true,
+      "summary": {
+        "citation_rate": 0.9294,
+        "correct_source_rate": 0.8244,
+        "hallucination_rate": 0.0,
+        "refusal_accuracy": 1.0,
+        "avg_keyword_coverage": 0.7261,
+        "phrase_hit_rate": 0.5789,
+        "avg_response_time_ms": 205.8,
+        "blocked_rate": 0.0
+      },
+      "latency_p50_ms": 222.35,
+      "latency_p95_ms": 333.035
+    }
+  ],
+  "retrieval_hit_measurements": null,
+  "notes": {
+    "live_api_eval": "not_run; no live API/RAG service was started for baseline capture",
+    "canonical_eval_runner": "scripts/run_eval_matrix.sh all --run --mock with api-gateway/.venv/bin/python"
+  }
+}
