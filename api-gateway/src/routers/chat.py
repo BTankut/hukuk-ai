@@ -61,7 +61,10 @@ from faz2a_hardening import (
 from observability import get_metrics_registry, looks_like_refusal
 from pydantic import BaseModel, Field
 
+from rag.evidence_selector import evidence_selection_trace, select_evidence_chunks
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
+from rag.query_analyzer import QueryAnalysis, analyze_query
+from rag.retrieval_plan import build_retrieval_plan
 from rag.source_catalog import enrich_metadata_with_source_title
 from rag.token_manager import estimate_tokens
 from release_controls import (
@@ -381,7 +384,7 @@ def _build_native_dialog_fallback_answer(intent: str) -> str:
 
 
 def _retrieval_planner_enabled() -> bool:
-    return os.getenv("RETRIEVAL_PLANNER_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+    return os.getenv("RETRIEVAL_PLANNER_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
 
 
 def _legacy_query_expansions_enabled() -> bool:
@@ -389,7 +392,7 @@ def _legacy_query_expansions_enabled() -> bool:
 
 
 def _source_cluster_selector_enabled() -> bool:
-    return os.getenv("SOURCE_CLUSTER_SELECTOR_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+    return os.getenv("SOURCE_CLUSTER_SELECTOR_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
 
 
 def _strip_json_fence(text: str) -> str:
@@ -577,6 +580,11 @@ def _apply_retrieval_plan_hints(
     requested_source_families = dedupe_strings(
         [*requested_source_families, *(retrieval_plan.get("source_family_hints") or [])]
     )
+    if retrieval_plan.get("planner") == "deterministic_query_analyzer_v1":
+        if retrieval_plan.get("term_hints") or retrieval_plan.get("law_hints") or retrieval_plan.get("exact_article_refs"):
+            retrieval_top_k = max(retrieval_top_k, 20)
+        return retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k
+
     planner_expansion = _build_retrieval_plan_expansion(retrieval_plan)
     if planner_expansion:
         retrieval_query = _append_unique_expansion(
@@ -2825,7 +2833,9 @@ def _build_trace_payload(
     final_mode: str,
     final_reason: str | None,
     retrieval_plan: dict[str, Any] | None = None,
+    query_analysis: QueryAnalysis | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
+    evidence_selector: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     assembled_evidence = _build_assembled_evidence(post_rerank_chunks)
     if not assembled_evidence and model_cited_source_ids:
@@ -2854,6 +2864,20 @@ def _build_trace_payload(
             "mentioned_laws": mentioned_laws,
             "requested_source_families": requested_source_families,
             "retrieval_plan": retrieval_plan,
+            "query_analysis": (
+                {
+                    "law_mentions": query_analysis.law_mentions,
+                    "law_numbers": query_analysis.law_numbers,
+                    "source_families": query_analysis.source_families,
+                    "temporal_intent": query_analysis.temporal_intent,
+                    "date_filters": query_analysis.date_filters,
+                    "domain_signals": query_analysis.domain_signals,
+                    "out_of_scope": query_analysis.out_of_scope,
+                    "insufficient_query": query_analysis.insufficient_query,
+                }
+                if query_analysis
+                else None
+            ),
             "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
@@ -2887,6 +2911,7 @@ def _build_trace_payload(
             "mentioned_laws": mentioned_laws,
             "cross_law_mode": cross_law_mode,
             "retrieval_plan": retrieval_plan,
+            "evidence_selector": evidence_selector,
             "source_cluster_selector": source_cluster_selector,
             "explicit_article_refs": [
                 {"law": law, "madde": madde}
@@ -3944,7 +3969,9 @@ def _pre_answer_stage_payload(
     top_k_effective: int,
     reranker_enabled: bool,
     retrieval_plan: dict[str, Any] | None = None,
+    query_analysis: QueryAnalysis | None = None,
     source_cluster_selector: dict[str, Any] | None = None,
+    evidence_selector: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "decision_lane": decision_lane,
@@ -3958,7 +3985,22 @@ def _pre_answer_stage_payload(
         "forced_article_refs": forced_article_refs,
         "applied_expansions": applied_expansions,
         "retrieval_plan": retrieval_plan,
+        "query_analysis": (
+            {
+                "law_mentions": query_analysis.law_mentions,
+                "law_numbers": query_analysis.law_numbers,
+                "source_families": query_analysis.source_families,
+                "temporal_intent": query_analysis.temporal_intent,
+                "date_filters": query_analysis.date_filters,
+                "domain_signals": query_analysis.domain_signals,
+                "out_of_scope": query_analysis.out_of_scope,
+                "insufficient_query": query_analysis.insufficient_query,
+            }
+            if query_analysis
+            else None
+        ),
         "source_cluster_selector": source_cluster_selector,
+        "evidence_selector": evidence_selector,
         "top_k_requested": top_k_requested,
         "top_k_effective": top_k_effective,
         "reranker_enabled": reranker_enabled,
@@ -5054,12 +5096,31 @@ async def chat_completions(
     # Terminoloji / eşanlamlı genişletmesi (Retrieval için)
     retrieval_query = last_user_msg
     retrieval_top_k = request_body.top_k
-    mentioned_laws = _extract_law_mentions(last_user_msg)
-    explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
-    requested_source_families = _infer_requested_source_families(last_user_msg)
+    query_analysis = analyze_query(last_user_msg)
+    deterministic_retrieval_plan = build_retrieval_plan(query_analysis)
+    retrieval_plan = deterministic_retrieval_plan.to_router_plan()
+    mentioned_laws = dedupe_strings(
+        [
+            *_extract_law_mentions(last_user_msg),
+            *query_analysis.law_mentions,
+            *query_analysis.law_numbers,
+        ]
+    )
+    explicit_article_refs = _dedupe_article_refs(
+        [
+            *_extract_explicit_article_refs(last_user_msg),
+            *(ref.as_tuple() for ref in query_analysis.article_refs),
+        ]
+    )
+    requested_source_families = dedupe_strings(
+        [
+            *_infer_requested_source_families(last_user_msg),
+            *query_analysis.source_families,
+        ]
+    )
     forced_article_refs: list[tuple[str, str]] = []
     applied_expansions: list[str] = []
-    retrieval_plan = await _run_retrieval_planner(
+    llm_retrieval_plan = await _run_retrieval_planner(
         request=request,
         user_query=last_user_msg,
         mentioned_laws=mentioned_laws,
@@ -5067,6 +5128,23 @@ async def chat_completions(
         explicit_article_refs=explicit_article_refs,
         law_filter=request_body.law_filter,
     )
+    if llm_retrieval_plan:
+        retrieval_plan = {
+            **retrieval_plan,
+            "law_hints": dedupe_strings(
+                [*(retrieval_plan.get("law_hints") or []), *(llm_retrieval_plan.get("law_hints") or [])]
+            ),
+            "source_family_hints": dedupe_strings(
+                [
+                    *(retrieval_plan.get("source_family_hints") or []),
+                    *(llm_retrieval_plan.get("source_family_hints") or []),
+                ]
+            ),
+            "term_hints": dedupe_strings(
+                [*(retrieval_plan.get("term_hints") or []), *(llm_retrieval_plan.get("term_hints") or [])]
+            )[:8],
+            "llm_diagnostic_plan": llm_retrieval_plan,
+        }
     retrieval_query, mentioned_laws, requested_source_families, retrieval_top_k = _apply_retrieval_plan_hints(
         retrieval_query=retrieval_query,
         mentioned_laws=mentioned_laws,
@@ -5337,6 +5415,7 @@ async def chat_completions(
     pre_rerank_chunks: list[RetrievedChunk] = []
     post_rerank_chunks: list[RetrievedChunk] = []
     source_cluster_selector: dict[str, Any] | None = None
+    evidence_selector_payload: dict[str, Any] | None = None
     top_k_effective = retrieval_top_k
     retriever = _get_retriever(request)
 
@@ -5374,7 +5453,17 @@ async def chat_completions(
                 )
 
                 planner_focus_query = _build_retrieval_plan_focus_query(retrieval_plan)
-                if planner_focus_query and normalize_query_text(planner_focus_query) != normalize_query_text(retrieval_query):
+                planner_focus_enabled = (
+                    retrieval_plan
+                    and retrieval_plan.get("planner") != "deterministic_query_analyzer_v1"
+                    and not request_body.law_filter
+                    and not explicit_article_refs
+                )
+                if (
+                    planner_focus_enabled
+                    and planner_focus_query
+                    and normalize_query_text(planner_focus_query) != normalize_query_text(retrieval_query)
+                ):
                     planner_top_k = max(6, min(10, top_k_effective))
                     planner_results, planner_stats = retriever.retrieve(
                         query=planner_focus_query,
@@ -5445,7 +5534,12 @@ async def chat_completions(
                         )
 
                 planner_law_hints = set(retrieval_plan.get("law_hints") or []) if retrieval_plan else set()
-                if planner_law_hints and not request_body.law_filter:
+                planner_law_hints_enabled = (
+                    retrieval_plan
+                    and retrieval_plan.get("planner") != "deterministic_query_analyzer_v1"
+                    and not explicit_article_refs
+                )
+                if planner_law_hints_enabled and planner_law_hints and not request_body.law_filter:
                     planner_law_chunks = _retrieve_law_bucket_chunks(
                         retriever=retriever,
                         query=retrieval_query,
@@ -5513,6 +5607,16 @@ async def chat_completions(
                     query=last_user_msg,
                     chunks=retrieved_chunks,
                     source_families=requested_source_families,
+                )
+                retrieved_chunks = select_evidence_chunks(
+                    query=last_user_msg,
+                    chunks=retrieved_chunks,
+                    analysis=query_analysis,
+                    limit=max(20, top_k_effective),
+                )
+                evidence_selector_payload = evidence_selection_trace(
+                    chunks=retrieved_chunks,
+                    analysis=query_analysis,
                 )
 
                 source_cluster_selector = await _run_source_cluster_selector(
@@ -5721,7 +5825,9 @@ async def chat_completions(
         final_mode=hardening.final_mode,
         final_reason=hardening.final_reason,
         retrieval_plan=retrieval_plan,
+        query_analysis=query_analysis,
         source_cluster_selector=source_cluster_selector,
+        evidence_selector=evidence_selector_payload,
     )
     pre_answer_payload = _pre_answer_stage_payload(
         decision_lane="rag",
@@ -5738,7 +5844,9 @@ async def chat_completions(
         top_k_effective=top_k_effective,
         reranker_enabled=_reranker_enabled,
         retrieval_plan=retrieval_plan,
+        query_analysis=query_analysis,
         source_cluster_selector=source_cluster_selector,
+        evidence_selector=evidence_selector_payload,
     )
     return _finalize_chat_response(
         request=request,

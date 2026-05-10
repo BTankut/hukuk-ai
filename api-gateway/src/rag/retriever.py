@@ -54,6 +54,7 @@ class MetadataFilter:
     domain: str | None = None           # Hukuk alanı (serbest metin)
     mulga: bool | None = None           # Mülga madde filtresi — None = filtre yok (alan Milvus'ta yoksa)
     belge_turu: str | None = None       # "kanun", "tuzuk", "yonetmelik", ...
+    source_family: str | None = None    # normalize edilmiş source family
 
     # Madde aralığı filtresi
     madde_no_min: int | None = None     # Madde no ≥ min
@@ -91,7 +92,12 @@ class MetadataFilter:
 
         if self.belge_turu is not None:
             clauses.append(
-                f'(metadata["belge_turu"] == "{self.belge_turu}" || metadata["source_type"] == "{self.belge_turu}")'
+                f'(metadata["belge_turu"] == "{self.belge_turu}" || metadata["source_family"] == "{self.belge_turu}" || metadata["source_type"] == "{self.belge_turu}")'
+            )
+
+        if self.source_family is not None:
+            clauses.append(
+                f'(metadata["source_family"] == "{self.source_family}" || metadata["belge_turu"] == "{self.source_family}" || metadata["raw_source_family"] == "{self.source_family}")'
             )
 
         if self.mulga is not None:
@@ -279,8 +285,12 @@ class MockRetriever:
         if f.domain is not None and meta.get("domain") != f.domain:
             return False
         if f.belge_turu is not None:
-            belge_turu = meta.get("belge_turu") or meta.get("source_type")
+            belge_turu = meta.get("belge_turu") or meta.get("source_family") or meta.get("source_type")
             if belge_turu != f.belge_turu:
+                return False
+        if f.source_family is not None:
+            source_family = meta.get("source_family") or meta.get("belge_turu") or meta.get("raw_source_family")
+            if source_family != f.source_family:
                 return False
         if f.mulga is not None and meta.get("mulga", False) != f.mulga:
             return False
