@@ -1,0 +1,13 @@
+check_name,expected,actual,status,notes
+origin/main head,3778fa4_or_newer_docs_only,3778fa4,pass,origin/main is at expected PR2 merge head
+PR1 state,merged,merged,pass,PR1 is MERGED with SHA b75262a
+PR2 state,merged,merged,pass,PR2 is MERGED with SHA 3778fa4
+main contains PR1 docs,true,true,pass,Required product policy docs/templates present on origin/main
+main contains PR2 docs,true,true,pass,Required judicial architecture/dry-run docs present on origin/main
+main contains no runtime recovery code from hardening,true,true,pass,Merge commits changed only productization md/csv files
+main contains no trace/run/raw artifacts,true,true,pass,No trace/run/raw artifact paths in merge commits
+main contains no live config change,true,true,pass,No live config paths in merge commits
+main contains no model/prompt/top-k change,true,true,pass,No model/prompt/top-k paths in merge commits
+main contains no judicial live retrieval code,true,true,pass,No runtime retrieval code in merge commits
+main contains no mevzuat/yargı collection merge,true,true,pass,No collection merge code/config in merge commits
+live 8000 unchanged,true,true,pass,Health endpoint unchanged
