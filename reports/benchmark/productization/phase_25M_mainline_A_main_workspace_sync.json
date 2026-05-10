@@ -1,0 +1,16 @@
+{
+  "phase": "Phase25M-A",
+  "generated": "2026-05-10",
+  "worktree_path": "/Users/btmacstudio/Projects/hukuk-ai-mainline-phase25M",
+  "branch": "bt/mainline-phase25M-product-controls",
+  "main_head": "3778fa4",
+  "origin_main_head": "3778fa4",
+  "working_tree_clean": true,
+  "product_docs_present": true,
+  "judicial_docs_present": true,
+  "runtime_recovery_code_absent": true,
+  "trace_run_raw_absent": true,
+  "trace_run_raw_scope": "No logs directory, no runtime_logs directory, and no new Phase25M trace/run/raw artifacts in the mainline worktree. Historical evaluation report filenames already present on main are out of this migration scope.",
+  "hardening_branch_used_as_base": false,
+  "live_8000_modified": false
+}
