@@ -235,6 +235,7 @@ class MockChatClient:
         meta = _question_meta or {}
         category = meta.get("category", "")
         expected_sources = meta.get("expected_sources", [])
+        expected_evidence_sources = meta.get("expected_evidence_sources") or expected_sources
         expected_keywords = meta.get("expected_keywords", [])
         refusal_expected = meta.get("refusal_expected", False)
 
@@ -261,8 +262,26 @@ class MockChatClient:
                 "verification": {"verdict": "pass", "hallucination_risk": 0.0},
                 "final_mode": "refusal",
                 "final_reason": "insufficient_supported_evidence",
-                "answer_contract": None,
-                "trace": None,
+                "answer_contract": {
+                    "answer": answer,
+                    "selected_source_keys": [],
+                    "primary_source_id": None,
+                    "secondary_source_ids": [],
+                    "claim_units": [],
+                    "source_validity": "unknown",
+                    "applicability_note": "",
+                    "final_mode": "refusal",
+                },
+                "trace": {
+                    "query_signals": {
+                        "user_query": question,
+                        "forced_article_refs": [],
+                        "applied_expansions": [],
+                    },
+                    "retrieval": {"pre_rerank_chunks": [], "post_rerank_chunks": []},
+                    "context_assembly": {"assembled_evidence": []},
+                    "generation_outcome": {"decision_lane": "rag"},
+                },
                 "response_time_ms": 12.5,
                 "error": None,
             }
@@ -278,13 +297,35 @@ class MockChatClient:
             f"Detaylı bilgi için {source_text} hükümlerini incelemenizi öneririm."
         )
 
-        # Yarı doğru atıf simülasyonu (%70 doğru, %30 yanlış)
         import random
         rng = random.Random(hash(question) % 1000)
-        if expected_sources and rng.random() > 0.3:
-            citations = expected_sources[:2]
-        else:
-            citations = expected_sources[:1] if expected_sources else []
+        citations = expected_sources
+        evidence_rows = [
+            {
+                "source_id": source,
+                "citation": source,
+                "excerpt": f"Mock evidence for {source}",
+                "score": 1.0,
+            }
+            for source in expected_evidence_sources
+        ]
+        answer_contract = {
+            "answer": answer,
+            "selected_source_keys": expected_evidence_sources,
+            "primary_source_id": expected_evidence_sources[0] if expected_evidence_sources else None,
+            "secondary_source_ids": expected_evidence_sources[1:],
+            "source_validity": "active",
+            "applicability_note": "",
+            "final_mode": "answer",
+            "claim_units": [
+                {
+                    "claim_text": f"{source} hükmü bu soruda dayanak olarak seçildi.",
+                    "source_id": source,
+                    "selected_source_key": source,
+                }
+                for source in expected_evidence_sources
+            ],
+        }
 
         return {
             "answer_text": answer,
@@ -296,8 +337,23 @@ class MockChatClient:
             },
             "final_mode": "answer",
             "final_reason": None,
-            "answer_contract": None,
-            "trace": None,
+            "answer_contract": answer_contract,
+            "trace": {
+                "query_signals": {
+                    "user_query": question,
+                    "forced_article_refs": [],
+                    "applied_expansions": [],
+                },
+                "retrieval": {
+                    "pre_rerank_chunks": evidence_rows,
+                    "post_rerank_chunks": evidence_rows,
+                },
+                "context_assembly": {
+                    "assembled_evidence": evidence_rows,
+                    "allowed_source_whitelist": expected_evidence_sources,
+                },
+                "generation_outcome": {"decision_lane": "rag"},
+            },
             "response_time_ms": rng.uniform(80, 350),
             "error": None,
         }
@@ -464,8 +520,21 @@ def build_report(
             "phrase_hit_rate": summary.phrase_hit_rate,
             "avg_response_time_ms": summary.avg_response_time_ms,
             "blocked_rate": summary.blocked_rate,
+            "retrieval_hit_at_5": getattr(summary, "retrieval_hit_at_5", 0.0),
+            "retrieval_hit_at_20": getattr(summary, "retrieval_hit_at_20", 0.0),
+            "selected_evidence_precision": getattr(summary, "selected_evidence_precision", 0.0),
+            "selected_evidence_recall": getattr(summary, "selected_evidence_recall", 0.0),
+            "citation_exactness": getattr(summary, "citation_exactness", 0.0),
+            "claim_supported_rate": getattr(summary, "claim_supported_rate", 0.0),
+            "unsupported_claim_rate": getattr(summary, "unsupported_claim_rate", 0.0),
+            "current_law_state_error_rate": getattr(summary, "current_law_state_error_rate", 0.0),
+            "refusal_correctness": getattr(summary, "refusal_correctness", 0.0),
+            "latency_p50_ms": getattr(summary, "latency_p50_ms", 0.0),
+            "latency_p95_ms": getattr(summary, "latency_p95_ms", 0.0),
+            "no_benchmark_specific_runtime_patch": getattr(summary, "no_benchmark_specific_runtime_patch", True),
         },
         "faz1_criteria": summary.faz1_criteria,
+        "closure_criteria": getattr(summary, "closure_criteria", {}),
         "by_category": summary.by_category,
         "by_difficulty": summary.by_difficulty,
         "per_question": [result_to_dict(r) for r in results],
@@ -491,6 +560,10 @@ def print_summary(summary: AggregatedMetrics) -> None:
     print(f"  Phrase Hit Rate      : {summary.phrase_hit_rate:.1%}")
     print(f"  Avg Response Time    : {summary.avg_response_time_ms:.0f} ms")
     print(f"  Blocked Rate         : {summary.blocked_rate:.1%}")
+    print(f"  Retrieval Hit@20     : {getattr(summary, 'retrieval_hit_at_20', 0.0):.1%}")
+    print(f"  Evidence Recall      : {getattr(summary, 'selected_evidence_recall', 0.0):.1%}")
+    print(f"  Claim Supported      : {getattr(summary, 'claim_supported_rate', 0.0):.1%}")
+    print(f"  Latency P95          : {getattr(summary, 'latency_p95_ms', 0.0):.0f} ms")
     print()
     print("  ─── Faz 1 Kabul Kriterleri ────────────────────────────────")
     for metric, data in summary.faz1_criteria.items():

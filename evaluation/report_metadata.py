@@ -12,6 +12,7 @@ KNOWN_EVAL_FAMILIES = {
     "test_questions.json": "faz1-50",
     "test_questions_v2_95.json": "v2-95",
     "test_questions_v3_170.json": "v3-170",
+    "mevzuat_closure_eval.json": "mevzuat_closure_eval",
 }
 
 

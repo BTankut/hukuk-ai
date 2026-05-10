@@ -333,6 +333,82 @@ class TestComputeMetrics:
         )
         assert result.error == "Connection refused"
 
+    def test_evidence_level_metrics_from_trace_and_contract(self, tbk_question):
+        contract = {
+            "selected_source_keys": ["TBK m.1", "TBK m.2"],
+            "primary_source_id": "TBK m.1",
+            "secondary_source_ids": ["TBK m.2"],
+            "source_validity": "active",
+            "claim_units": [
+                {
+                    "claim_text": "Sözleşme irade açıklamalarıyla kurulur.",
+                    "source_id": "TBK m.1",
+                    "selected_source_key": "TBK m.1",
+                },
+                {
+                    "claim_text": "Taraflar esaslı noktaları kararlaştırmalıdır.",
+                    "source_id": "TBK m.2",
+                    "selected_source_key": "TBK m.2",
+                },
+            ],
+        }
+        trace = {
+            "query_signals": {"forced_article_refs": [], "applied_expansions": []},
+            "retrieval": {
+                "pre_rerank_chunks": [
+                    {"source_id": "TBK m.1"},
+                    {"source_id": "TBK m.2"},
+                    {"source_id": "TBK m.3"},
+                ],
+                "post_rerank_chunks": [
+                    {"source_id": "TBK m.1"},
+                    {"source_id": "TBK m.2"},
+                ],
+            },
+            "context_assembly": {
+                "assembled_evidence": [
+                    {"source_id": "TBK m.1"},
+                    {"source_id": "TBK m.2"},
+                ]
+            },
+            "generation_outcome": {"decision_lane": "rag"},
+        }
+
+        result = compute_metrics(
+            question={**tbk_question, "expected_evidence_sources": ["TBK m.1", "TBK m.2"], "expected_law_state": "current"},
+            answer_text="TBK m.1 ve TBK m.2 uyarınca cevap. [Kaynak: TBK m.1] [Kaynak: TBK m.2]",
+            cited_sources=["TBK m.1", "TBK m.2"],
+            answer_contract=contract,
+            final_mode="answer",
+            trace=trace,
+        )
+
+        assert result.retrieval_hit_at_5 == 1.0
+        assert result.retrieval_hit_at_20 == 1.0
+        assert result.selected_evidence_precision == 1.0
+        assert result.selected_evidence_recall == 1.0
+        assert result.citation_exactness == 1.0
+        assert result.claim_supported_rate == 1.0
+        assert result.unsupported_claim_rate == 0.0
+        assert result.current_law_state_error is False
+        assert result.no_benchmark_specific_runtime_patch is True
+
+    def test_benchmark_runtime_patch_trace_fails_static_metric(self, tbk_question):
+        result = compute_metrics(
+            question=tbk_question,
+            answer_text="TBK m.1 yanıtı. [Kaynak: TBK m.1]",
+            cited_sources=["TBK m.1"],
+            trace={
+                "query_signals": {
+                    "forced_article_refs": [{"law": "TBK", "madde": "1"}],
+                    "applied_expansions": [],
+                },
+                "generation_outcome": {"decision_lane": "precise_tbk_shortcut"},
+            },
+        )
+
+        assert result.no_benchmark_specific_runtime_patch is False
+
 
 # ===========================================================================
 # aggregate_metrics
@@ -421,6 +497,47 @@ class TestAggregateMetrics:
         agg = aggregate_metrics(results)
         assert "easy" in agg.by_difficulty
         assert "hard" in agg.by_difficulty
+
+    def test_closure_criteria_pass_for_evidence_metrics(self):
+        results = [
+            self._make_result(
+                retrieval_hit_at_20=1.0,
+                selected_evidence_recall=1.0,
+                citation_exactness=1.0,
+                claim_supported_rate=1.0,
+                unsupported_claim_rate=0.0,
+                current_law_state_error=False,
+                refusal_correctness=1.0,
+                no_benchmark_specific_runtime_patch=True,
+            )
+            for _ in range(3)
+        ]
+
+        agg = aggregate_metrics(results)
+
+        assert agg.retrieval_hit_at_20 == 1.0
+        assert agg.selected_evidence_recall == 1.0
+        assert agg.closure_criteria["overall"]["passes"] is True
+
+    def test_closure_criteria_fail_for_benchmark_patch_metric(self):
+        results = [
+            self._make_result(
+                retrieval_hit_at_20=1.0,
+                selected_evidence_recall=1.0,
+                citation_exactness=1.0,
+                claim_supported_rate=1.0,
+                unsupported_claim_rate=0.0,
+                current_law_state_error=False,
+                refusal_correctness=1.0,
+                no_benchmark_specific_runtime_patch=False,
+            )
+        ]
+
+        agg = aggregate_metrics(results)
+
+        assert agg.no_benchmark_specific_runtime_patch is False
+        assert agg.closure_criteria["no_benchmark_specific_runtime_patch"]["passes"] is False
+        assert agg.closure_criteria["overall"]["passes"] is False
 
 
 # ===========================================================================
@@ -581,6 +698,20 @@ class TestQuestionsJSON:
         refusal_qs = [q for q in data["questions"] if q.get("refusal_expected")]
         assert len(refusal_qs) >= 1, "En az 1 refusal sorusu bekleniyor"
 
+    def test_mevzuat_closure_eval_file_has_required_evidence_fields(self):
+        path = PROJECT_ROOT / "configs" / "evaluation" / "mevzuat_closure_eval.json"
+        assert path.exists(), f"mevzuat_closure_eval.json bulunamadı: {path}"
+
+        with open(path) as f:
+            data = json.load(f)
+
+        assert data["_meta"]["eval_family"] == "mevzuat_closure_eval"
+        assert len(data["questions"]) >= 10
+        required = {"id", "question", "category", "expected_sources", "expected_evidence_sources", "refusal_expected"}
+        for q in data["questions"]:
+            missing = required - q.keys()
+            assert not missing, f"Soru {q.get('id')} eksik alanlar: {missing}"
+
 
 class TestReportMetadata:
     def test_build_report_embeds_identity_metadata(self):
@@ -622,6 +753,45 @@ class TestReportMetadata:
         assert meta["checkpoint_ref"] == "dgxnode2-runtime-20260321"
         assert meta["git_commit"] == "abc1234"
         assert meta["config_fingerprint"] == {"verification_enabled": True}
+
+    def test_build_report_includes_closure_metrics(self):
+        summary = aggregate_metrics([
+            QuestionResult(
+                question_id="MEV-CLOSURE-001",
+                question_text="TBK m.1 nedir?",
+                category="explicit_law_article",
+                difficulty="easy",
+                answer_text="TBK m.1",
+                cited_sources=["TBK m.1"],
+                expected_sources=["TBK m.1"],
+                expected_evidence_sources=["TBK m.1"],
+                has_citation=True,
+                correct_source_overlap=1,
+                expected_source_count=1,
+                correct_source_rate=1.0,
+                refusal_correct=True,
+                retrieval_hit_at_20=1.0,
+                selected_evidence_recall=1.0,
+                selected_evidence_precision=1.0,
+                citation_exactness=1.0,
+                claim_supported_rate=1.0,
+                unsupported_claim_rate=0.0,
+                refusal_correctness=1.0,
+                no_benchmark_specific_runtime_patch=True,
+            )
+        ])
+
+        report = build_report(
+            results=[],
+            summary=summary,
+            questions_path=PROJECT_ROOT / "configs" / "evaluation" / "mevzuat_closure_eval.json",
+            api_url="http://localhost:8000",
+            mock_mode=False,
+        )
+
+        assert report["summary"]["retrieval_hit_at_20"] == 1.0
+        assert report["summary"]["claim_supported_rate"] == 1.0
+        assert report["closure_criteria"]["overall"]["passes"] is True
 
     def test_build_report_preserves_optional_trace(self):
         summary = SimpleNamespace(

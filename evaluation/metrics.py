@@ -23,6 +23,7 @@ Kullanım:
 
 from __future__ import annotations
 
+import os
 import re
 import string
 import unicodedata
@@ -95,10 +96,250 @@ def normalize_source(src: str) -> str:
     # "m. " → "m."
     s = re.sub(r"m\.\s+", "m.", s)
     # "tbk-299" → "tbk m.299"
-    s = re.sub(r"(tbk|tmk|tck|ik)\s*[-–]\s*(\d+)", r"\1 m.\2", s)
+    law_tokens = "tbk|tmk|tck|cmk|hmk|ttk|ik|i̇k|iyuk|i̇yuk|iik|i̇i̇k|anayasa|ay|kvkk"
+    s = re.sub(rf"({law_tokens})\s*[-–]\s*(\d+)", r"\1 m.\2", s)
     # Normalize whitespace
     s = re.sub(r"\s+", " ", s).strip()
     return s
+
+
+def _canonical_source_set(values: list[str]) -> set[str]:
+    return {normalize_source(item) for item in values if isinstance(item, str) and item.strip()}
+
+
+def _source_from_trace_item(item: Any) -> str | None:
+    if not isinstance(item, dict):
+        return None
+    for key in ("source_id", "canonical_citation", "citation"):
+        value = item.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
+
+
+def _trace_list(trace: dict[str, Any] | None, *path: str) -> list[Any]:
+    current: Any = trace
+    for key in path:
+        if not isinstance(current, dict):
+            return []
+        current = current.get(key)
+    return current if isinstance(current, list) else []
+
+
+def _extract_trace_source_ids(
+    trace: dict[str, Any] | None,
+    *,
+    list_name: str,
+    limit: int | None = None,
+) -> list[str]:
+    items = _trace_list(trace, "retrieval", list_name)
+    if not items and list_name == "post_rerank_chunks":
+        items = _trace_list(trace, "rerank_list")
+    if limit is not None:
+        items = items[:limit]
+
+    source_ids: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        source_id = _source_from_trace_item(item)
+        if not source_id:
+            continue
+        normalized = normalize_source(source_id)
+        if normalized not in seen:
+            source_ids.append(source_id)
+            seen.add(normalized)
+    return source_ids
+
+
+def _extract_selected_evidence_sources(
+    *,
+    trace: dict[str, Any] | None,
+    answer_contract: dict[str, Any] | None,
+    cited_sources: list[str],
+) -> list[str]:
+    selected: list[str] = []
+    seen: set[str] = set()
+
+    def add(value: Any) -> None:
+        if not isinstance(value, str) or not value.strip():
+            return
+        normalized = normalize_source(value)
+        if normalized in seen:
+            return
+        selected.append(value)
+        seen.add(normalized)
+
+    if isinstance(answer_contract, dict):
+        for value in answer_contract.get("selected_source_keys") or []:
+            add(value)
+        add(answer_contract.get("primary_source_id"))
+        for value in answer_contract.get("secondary_source_ids") or []:
+            add(value)
+
+    for item in _trace_list(trace, "context_assembly", "assembled_evidence"):
+        add(_source_from_trace_item(item))
+    for item in _trace_list(trace, "assembled_evidence"):
+        add(_source_from_trace_item(item))
+
+    if not selected:
+        for value in cited_sources:
+            add(value)
+
+    return selected
+
+
+def _extract_claim_sources(answer_contract: dict[str, Any] | None) -> list[str]:
+    if not isinstance(answer_contract, dict):
+        return []
+    claim_units = answer_contract.get("claim_units")
+    if not isinstance(claim_units, list):
+        return []
+
+    sources: list[str] = []
+    seen: set[str] = set()
+    for claim in claim_units:
+        if not isinstance(claim, dict):
+            continue
+        source_id = claim.get("selected_source_key") or claim.get("source_id")
+        if not isinstance(source_id, str) or not source_id.strip():
+            continue
+        normalized = normalize_source(source_id)
+        if normalized not in seen:
+            sources.append(source_id)
+            seen.add(normalized)
+    return sources
+
+
+def _expected_evidence_sources(question: dict[str, Any], expected_sources: list[str]) -> list[str]:
+    values = question.get("expected_evidence_sources")
+    if isinstance(values, list):
+        return [item for item in values if isinstance(item, str) and item.strip()]
+    return expected_sources
+
+
+def _source_recall(found_sources: list[str], expected_sources: list[str]) -> float:
+    expected = _canonical_source_set(expected_sources)
+    if not expected:
+        return 1.0
+    found = _canonical_source_set(found_sources)
+    return len(found & expected) / len(expected)
+
+
+def _source_precision(found_sources: list[str], expected_sources: list[str]) -> float:
+    found = _canonical_source_set(found_sources)
+    if not found:
+        return 1.0 if not expected_sources else 0.0
+    expected = _canonical_source_set(expected_sources)
+    if not expected:
+        return 1.0
+    return len(found & expected) / len(found)
+
+
+def _citation_exactness(cited_sources: list[str], expected_sources: list[str], *, refusal_correct: bool) -> float:
+    cited = _canonical_source_set(cited_sources)
+    expected = _canonical_source_set(expected_sources)
+    if not expected:
+        return 1.0 if (not cited and refusal_correct) or not cited else 0.0
+    if not cited:
+        return 0.0
+    return len(cited & expected) / len(cited | expected)
+
+
+def _claim_support_rates(
+    *,
+    answer_contract: dict[str, Any] | None,
+    selected_evidence_sources: list[str],
+    final_mode: str | None,
+    refusal_correct: bool,
+) -> tuple[float, float]:
+    if final_mode == "refusal":
+        supported = 1.0 if refusal_correct else 0.0
+        return supported, 1.0 - supported
+
+    if not isinstance(answer_contract, dict):
+        return 0.0, 1.0
+    claim_units = answer_contract.get("claim_units")
+    if not isinstance(claim_units, list) or not claim_units:
+        return 0.0, 1.0
+
+    selected = _canonical_source_set(selected_evidence_sources)
+    supported_count = 0
+    for claim in claim_units:
+        if not isinstance(claim, dict):
+            continue
+        source_id = claim.get("selected_source_key") or claim.get("source_id")
+        if isinstance(source_id, str) and normalize_source(source_id) in selected:
+            supported_count += 1
+    supported_rate = supported_count / len(claim_units)
+    return supported_rate, 1.0 - supported_rate
+
+
+def _current_law_state_error(
+    *,
+    question: dict[str, Any],
+    answer_contract: dict[str, Any] | None,
+    trace: dict[str, Any] | None,
+) -> bool:
+    expected_state = str(question.get("expected_law_state") or "").strip().lower()
+    if expected_state not in {"current", "historical", "repealed"}:
+        return False
+
+    contract = answer_contract if isinstance(answer_contract, dict) else {}
+    source_validity = str(contract.get("source_validity") or "").lower()
+    applicability_note = str(contract.get("applicability_note") or "").lower()
+    temporal_intent = ""
+    parsed = trace.get("parsed_query") if isinstance(trace, dict) else None
+    if isinstance(parsed, dict):
+        analysis = parsed.get("query_analysis")
+        if isinstance(analysis, dict):
+            temporal_intent = str(analysis.get("temporal_intent") or "").lower()
+
+    historical_signal = any(
+        token in f"{source_validity} {applicability_note} {temporal_intent}"
+        for token in ("historical", "repealed", "mülga", "mulga", "tarihsel", "yürürlükten", "yururlukten")
+    )
+
+    if expected_state == "current":
+        return historical_signal
+    return not historical_signal
+
+
+def _no_benchmark_runtime_patch(trace: dict[str, Any] | None) -> bool:
+    if not isinstance(trace, dict):
+        return True
+    generation = trace.get("generation_outcome")
+    decision_lane = ""
+    if isinstance(generation, dict):
+        decision_lane = str(generation.get("decision_lane") or "")
+    if any(token in decision_lane.lower() for token in ("precise", "benchmark", "shortcut")):
+        return False
+
+    query_signals = trace.get("query_signals")
+    if isinstance(query_signals, dict):
+        if query_signals.get("forced_article_refs"):
+            return False
+        if query_signals.get("applied_expansions"):
+            return False
+    parsed_query = trace.get("parsed_query")
+    if isinstance(parsed_query, dict):
+        if parsed_query.get("forced_article_refs"):
+            return False
+        if parsed_query.get("applied_expansions"):
+            return False
+    return True
+
+
+def _percentile(values: list[float], percentile: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    if len(ordered) == 1:
+        return ordered[0]
+    rank = (len(ordered) - 1) * percentile
+    lower = int(rank)
+    upper = min(lower + 1, len(ordered) - 1)
+    weight = rank - lower
+    return ordered[lower] * (1 - weight) + ordered[upper] * weight
 
 
 def sources_overlap(cited: list[str], expected: list[str]) -> tuple[int, int]:
@@ -224,6 +465,7 @@ class QuestionResult:
     answer_text: str
     cited_sources: list[str] = field(default_factory=list)
     expected_sources: list[str] = field(default_factory=list)
+    expected_evidence_sources: list[str] = field(default_factory=list)
     expected_keywords: list[str] = field(default_factory=list)
     expected_answer_contains: str | None = None
     refusal_expected: bool = False
@@ -238,6 +480,20 @@ class QuestionResult:
     refusal_correct: bool = False       # Beklenen ret → doğru ret?
     kw_coverage: float = 0.0           # Keyword coverage (0-1)
     phrase_hit_result: bool | None = None  # expected_answer_contains sonucu
+    retrieved_source_ids_top5: list[str] = field(default_factory=list)
+    retrieved_source_ids_top20: list[str] = field(default_factory=list)
+    selected_evidence_source_ids: list[str] = field(default_factory=list)
+    claim_source_ids: list[str] = field(default_factory=list)
+    retrieval_hit_at_5: float = 0.0
+    retrieval_hit_at_20: float = 0.0
+    selected_evidence_precision: float = 0.0
+    selected_evidence_recall: float = 0.0
+    citation_exactness: float = 0.0
+    claim_supported_rate: float = 0.0
+    unsupported_claim_rate: float = 0.0
+    current_law_state_error: bool = False
+    refusal_correctness: float = 0.0
+    no_benchmark_specific_runtime_patch: bool = True
 
     # API meta
     response_time_ms: float = 0.0
@@ -283,6 +539,7 @@ def compute_metrics(
     category = question.get("category", "unknown")
     difficulty = question.get("difficulty", "medium")
     expected_sources = question.get("expected_sources", [])
+    expected_evidence = _expected_evidence_sources(question, expected_sources)
     expected_keywords = question.get("expected_keywords", [])
     expected_answer_contains = question.get("expected_answer_contains")
     refusal_expected = question.get("refusal_expected", False)
@@ -296,6 +553,31 @@ def compute_metrics(
     refusal_correct = (refusal_expected == is_refusal)
     kw_cov = keyword_coverage(answer_text, expected_keywords)
     p_hit = phrase_hit(answer_text, expected_answer_contains)
+    retrieved_top5 = _extract_trace_source_ids(trace, list_name="pre_rerank_chunks", limit=5)
+    retrieved_top20 = _extract_trace_source_ids(trace, list_name="pre_rerank_chunks", limit=20)
+    selected_evidence = _extract_selected_evidence_sources(
+        trace=trace,
+        answer_contract=answer_contract,
+        cited_sources=cited_sources,
+    )
+    claim_sources = _extract_claim_sources(answer_contract)
+    retrieval_hit_at_5 = 1.0 if _source_recall(retrieved_top5, expected_evidence) >= 1.0 else 0.0
+    retrieval_hit_at_20 = 1.0 if _source_recall(retrieved_top20, expected_evidence) >= 1.0 else 0.0
+    selected_precision = _source_precision(selected_evidence, expected_evidence)
+    selected_recall = _source_recall(selected_evidence, expected_evidence)
+    citation_exact = _citation_exactness(cited_sources, expected_sources, refusal_correct=refusal_correct)
+    claim_supported, unsupported_claim = _claim_support_rates(
+        answer_contract=answer_contract,
+        selected_evidence_sources=selected_evidence,
+        final_mode=final_mode,
+        refusal_correct=refusal_correct,
+    )
+    current_law_error = _current_law_state_error(
+        question=question,
+        answer_contract=answer_contract,
+        trace=trace,
+    )
+    no_benchmark_patch = _no_benchmark_runtime_patch(trace)
 
     # Verification Engine verdict'i
     v_verdict = None
@@ -310,6 +592,7 @@ def compute_metrics(
         answer_text=answer_text,
         cited_sources=cited_sources,
         expected_sources=expected_sources,
+        expected_evidence_sources=expected_evidence,
         expected_keywords=expected_keywords,
         expected_answer_contains=expected_answer_contains,
         refusal_expected=refusal_expected,
@@ -322,6 +605,20 @@ def compute_metrics(
         refusal_correct=refusal_correct,
         kw_coverage=round(kw_cov, 4),
         phrase_hit_result=p_hit,
+        retrieved_source_ids_top5=retrieved_top5,
+        retrieved_source_ids_top20=retrieved_top20,
+        selected_evidence_source_ids=selected_evidence,
+        claim_source_ids=claim_sources,
+        retrieval_hit_at_5=round(retrieval_hit_at_5, 4),
+        retrieval_hit_at_20=round(retrieval_hit_at_20, 4),
+        selected_evidence_precision=round(selected_precision, 4),
+        selected_evidence_recall=round(selected_recall, 4),
+        citation_exactness=round(citation_exact, 4),
+        claim_supported_rate=round(claim_supported, 4),
+        unsupported_claim_rate=round(unsupported_claim, 4),
+        current_law_state_error=current_law_error,
+        refusal_correctness=1.0 if refusal_correct else 0.0,
+        no_benchmark_specific_runtime_patch=no_benchmark_patch,
         response_time_ms=round(response_time_ms, 1),
         blocked=blocked,
         verification_verdict=v_verdict,
@@ -355,6 +652,18 @@ class AggregatedMetrics:
     phrase_hit_rate: float = 0.0         # expected_answer_contains geçme oranı
     avg_response_time_ms: float = 0.0    # Ortalama yanıt süresi
     blocked_rate: float = 0.0            # Guardrails tarafından bloklanan oran
+    retrieval_hit_at_5: float = 0.0
+    retrieval_hit_at_20: float = 0.0
+    selected_evidence_precision: float = 0.0
+    selected_evidence_recall: float = 0.0
+    citation_exactness: float = 0.0
+    claim_supported_rate: float = 0.0
+    unsupported_claim_rate: float = 0.0
+    current_law_state_error_rate: float = 0.0
+    refusal_correctness: float = 0.0
+    latency_p50_ms: float = 0.0
+    latency_p95_ms: float = 0.0
+    no_benchmark_specific_runtime_patch: bool = True
 
     # Kategori bazlı
     by_category: dict[str, dict[str, float]] = field(default_factory=dict)
@@ -362,6 +671,7 @@ class AggregatedMetrics:
 
     # Faz 1 başarı kriterleri
     faz1_criteria: dict[str, Any] = field(default_factory=dict)
+    closure_criteria: dict[str, Any] = field(default_factory=dict)
 
 
 def aggregate_metrics(results: list[QuestionResult]) -> AggregatedMetrics:
@@ -394,7 +704,20 @@ def aggregate_metrics(results: list[QuestionResult]) -> AggregatedMetrics:
     phrase_hits = [r for r in non_error if r.phrase_hit_result is not None]
     phrase_hit_rate = _safe_mean([1.0 if r.phrase_hit_result else 0.0 for r in phrase_hits]) if phrase_hits else 1.0
     avg_rt = _safe_mean([r.response_time_ms for r in non_error])
+    latency_values = [r.response_time_ms for r in non_error]
+    latency_p50 = _percentile(latency_values, 0.50)
+    latency_p95 = _percentile(latency_values, 0.95)
     blocked_rate = _safe_mean([1.0 if r.blocked else 0.0 for r in non_error])
+    retrieval_hit_at_5 = _safe_mean([r.retrieval_hit_at_5 for r in non_error])
+    retrieval_hit_at_20 = _safe_mean([r.retrieval_hit_at_20 for r in non_error])
+    selected_evidence_precision = _safe_mean([r.selected_evidence_precision for r in non_error])
+    selected_evidence_recall = _safe_mean([r.selected_evidence_recall for r in non_error])
+    citation_exactness = _safe_mean([r.citation_exactness for r in non_error])
+    claim_supported_rate = _safe_mean([r.claim_supported_rate for r in non_error])
+    unsupported_claim_rate = _safe_mean([r.unsupported_claim_rate for r in non_error])
+    current_law_state_error_rate = _safe_mean([1.0 if r.current_law_state_error else 0.0 for r in non_error])
+    refusal_correctness = _safe_mean([r.refusal_correctness for r in non_error])
+    no_benchmark_specific_runtime_patch = all(r.no_benchmark_specific_runtime_patch for r in non_error)
 
     # Kategori bazlı
     by_category: dict[str, list[QuestionResult]] = {}
@@ -410,6 +733,9 @@ def aggregate_metrics(results: list[QuestionResult]) -> AggregatedMetrics:
             "hallucination_rate": round(_safe_mean([1.0 if r.is_hallucination else 0.0 for r in cat_results]), 4),
             "refusal_accuracy": round(_safe_mean([1.0 if r.refusal_correct else 0.0 for r in cat_results]), 4),
             "avg_keyword_coverage": round(_safe_mean([r.kw_coverage for r in cat_results]), 4),
+            "retrieval_hit_at_20": round(_safe_mean([r.retrieval_hit_at_20 for r in cat_results]), 4),
+            "selected_evidence_recall": round(_safe_mean([r.selected_evidence_recall for r in cat_results]), 4),
+            "claim_supported_rate": round(_safe_mean([r.claim_supported_rate for r in cat_results]), 4),
         }
 
     # Zorluk bazlı
@@ -463,6 +789,67 @@ def aggregate_metrics(results: list[QuestionResult]) -> AggregatedMetrics:
         "status": "✅ FAZ 1 KABULEDİLDİ" if all_pass else "❌ FAZ 1 KRİTERLERİ KARŞILANMADI",
     }
 
+    closure_actual_values: dict[str, float | bool] = {
+        "retrieval_hit_at_20": retrieval_hit_at_20,
+        "selected_evidence_recall": selected_evidence_recall,
+        "citation_exactness": citation_exactness,
+        "claim_supported_rate": claim_supported_rate,
+        "unsupported_claim_rate": unsupported_claim_rate,
+        "current_law_state_error_rate": current_law_state_error_rate,
+        "refusal_correctness": refusal_correctness,
+        "no_benchmark_specific_runtime_patch": no_benchmark_specific_runtime_patch,
+    }
+    closure_thresholds: dict[str, tuple[str, float | bool]] = {
+        "retrieval_hit_at_20": ("≥", 0.95),
+        "selected_evidence_recall": ("≥", 0.90),
+        "citation_exactness": ("≥", 0.95),
+        "claim_supported_rate": ("≥", 0.95),
+        "unsupported_claim_rate": ("≤", 0.03),
+        "current_law_state_error_rate": ("≤", 0.03),
+        "refusal_correctness": ("≥", 0.95),
+        "no_benchmark_specific_runtime_patch": ("==", True),
+    }
+    latency_baseline_raw = os.getenv("CLOSURE_LATENCY_P95_BASELINE_MS", "").strip()
+    try:
+        latency_threshold = float(latency_baseline_raw) * 1.25 if latency_baseline_raw else None
+    except ValueError:
+        latency_threshold = None
+    if latency_threshold is not None:
+        closure_actual_values["latency_p95_ms"] = latency_p95
+        closure_thresholds["latency_p95_ms"] = ("≤", latency_threshold)
+
+    closure_criteria: dict[str, Any] = {}
+    closure_all_pass = True
+    for metric, (op, threshold) in closure_thresholds.items():
+        value = closure_actual_values[metric]
+        if op == "≥":
+            passes = float(value) >= float(threshold)
+        elif op == "≤":
+            passes = float(value) <= float(threshold)
+        else:
+            passes = value is threshold
+        closure_criteria[metric] = {
+            "threshold": threshold,
+            "operator": op,
+            "actual": round(value, 4) if isinstance(value, float) else value,
+            "passes": passes,
+            "status": "GEÇTİ" if passes else "BAŞARISIZ",
+        }
+        if not passes:
+            closure_all_pass = False
+    if latency_threshold is None:
+        closure_criteria["latency_p95_ms"] = {
+            "threshold": "CLOSURE_LATENCY_P95_BASELINE_MS * 1.25",
+            "operator": "≤",
+            "actual": round(latency_p95, 1),
+            "passes": True,
+            "status": "BASIS_YOK",
+        }
+    closure_criteria["overall"] = {
+        "passes": closure_all_pass,
+        "status": "PASS" if closure_all_pass else "NO_GO",
+    }
+
     return AggregatedMetrics(
         total_questions=total,
         error_count=errors,
@@ -474,7 +861,20 @@ def aggregate_metrics(results: list[QuestionResult]) -> AggregatedMetrics:
         phrase_hit_rate=round(phrase_hit_rate, 4),
         avg_response_time_ms=round(avg_rt, 1),
         blocked_rate=round(blocked_rate, 4),
+        retrieval_hit_at_5=round(retrieval_hit_at_5, 4),
+        retrieval_hit_at_20=round(retrieval_hit_at_20, 4),
+        selected_evidence_precision=round(selected_evidence_precision, 4),
+        selected_evidence_recall=round(selected_evidence_recall, 4),
+        citation_exactness=round(citation_exactness, 4),
+        claim_supported_rate=round(claim_supported_rate, 4),
+        unsupported_claim_rate=round(unsupported_claim_rate, 4),
+        current_law_state_error_rate=round(current_law_state_error_rate, 4),
+        refusal_correctness=round(refusal_correctness, 4),
+        latency_p50_ms=round(latency_p50, 1),
+        latency_p95_ms=round(latency_p95, 1),
+        no_benchmark_specific_runtime_patch=no_benchmark_specific_runtime_patch,
         by_category=cat_summary,
         by_difficulty=diff_summary,
         faz1_criteria=faz1_criteria,
+        closure_criteria=closure_criteria,
     )
