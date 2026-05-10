@@ -1,0 +1,11 @@
+tool_name,docs_on_main,implementation_branch,input_expected,output_expected,sample_size,live_risk,production_index_risk,ready_to_start,notes
+package_inventory,true,bt/mainline-judicial-dryrun-tools,raw package directory,inventory csv and summary json,all_files,none,none,true,Dry-run metadata only
+checksum_manifest,true,bt/mainline-judicial-dryrun-tools,raw package directory,sha256 manifest csv,all_files,none,none,true,Deterministic file hashing
+file_format_classifier,true,bt/mainline-judicial-dryrun-tools,inventory csv,format classification csv,all_files,low,none,true,No production conversion
+dedup_sampler,true,bt/mainline-judicial-dryrun-tools,classified files,dedup sample report,sample_only,low,none,true,No deletion or corpus mutation
+metadata_extraction_sampler,true,bt/mainline-judicial-dryrun-tools,classified text-capable files,metadata sample csv,sample_only,low,none,true,Redacted sample output
+citation_extraction_sampler,true,bt/mainline-judicial-dryrun-tools,classified text-capable files,citation sample csv,sample_only,low,none,true,No live mevzuat lookup
+PII_risk_sampler,true,bt/mainline-judicial-dryrun-tools,classified text-capable files,PII risk sample report,sample_only,medium,none,true,Must run before wider text export
+chunking_simulator,true,bt/mainline-judicial-dryrun-tools,sample text files,chunk simulation report,sample_only,low,blocked_no_index,true,No embeddings and no index
+embedding_index_sample_plan,true,bt/mainline-judicial-dryrun-tools,chunk simulation report,offline sample plan,plan_only,low,blocked_until_future_gate,true,Plan only in this branch
+dry_run_report_generator,true,bt/mainline-judicial-dryrun-tools,all dry-run outputs,consolidated dry-run report,all_tool_outputs,none,none,true,Must assert no live retrieval and no mevzuat merge
