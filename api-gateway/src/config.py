@@ -75,6 +75,13 @@ class Settings:
     # Hallucination self-check
     hallucination_samples: int = 3
 
+    # Product controls prototypes (Phase25N, default-off/non-live)
+    enable_product_guardrails: bool = False
+    enable_product_claim_verification: bool = False
+    enable_product_privacy_pii: bool = False
+    enable_product_audit_logging: bool = False
+    enable_product_access_control: bool = False
+
     def __init__(self, **overrides):
         values = {
             "app_name": os.getenv("APP_NAME", "hukuk-ai-api-gateway"),
@@ -107,6 +114,14 @@ class Settings:
                 "PERSON,PHONE_NUMBER,EMAIL_ADDRESS,LOCATION,TR_ID_NUMBER",
             ),
             "hallucination_samples": _to_int(os.getenv("HALLUCINATION_SAMPLES"), 3),
+            "enable_product_guardrails": _to_bool(os.getenv("ENABLE_PRODUCT_GUARDRAILS"), False),
+            "enable_product_claim_verification": _to_bool(
+                os.getenv("ENABLE_PRODUCT_CLAIM_VERIFICATION"),
+                False,
+            ),
+            "enable_product_privacy_pii": _to_bool(os.getenv("ENABLE_PRODUCT_PRIVACY_PII"), False),
+            "enable_product_audit_logging": _to_bool(os.getenv("ENABLE_PRODUCT_AUDIT_LOGGING"), False),
+            "enable_product_access_control": _to_bool(os.getenv("ENABLE_PRODUCT_ACCESS_CONTROL"), False),
         }
 
         values.update(overrides)
