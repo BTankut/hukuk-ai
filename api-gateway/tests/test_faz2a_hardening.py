@@ -92,6 +92,12 @@ def test_harden_answer_keeps_supported_answer_in_answer_mode():
     assert result.citations == ["TBK m.49"]
     assert result.answer_contract["primary_source_id"] == "TBK m.49"
     assert result.answer_contract["claim_units"][0]["source_id"] == "TBK m.49"
+    assert result.answer_contract["claim_units"][0]["selected_source_key"] == "TBK m.49"
+    assert result.answer_contract["answer"] == result.answer_text
+    assert result.answer_contract["citations"] == ["TBK m.49"]
+    assert result.answer_contract["selected_source_keys"] == ["TBK m.49"]
+    assert result.answer_contract["legal_basis"][0]["citation"] == "TBK m.49"
+    assert result.answer_contract["requires_human_review"] is False
     assert result.answer_text == "Haksız fiil sorumluluğu vardır. [Kaynak: TBK m.49]"
 
 
@@ -115,7 +121,8 @@ def test_harden_answer_blocks_law_scope_mismatch():
     assert result.final_mode == "refusal"
     assert result.final_reason == "law_scope_mismatch"
     assert result.citations == []
-    assert result.answer_text == ""
+    assert result.answer_text.startswith("Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla")
+    assert result.answer_contract["uncertainty_or_refusal_reason"] == "law_scope_mismatch"
     assert result.internal_blocked is False
 
 
@@ -139,7 +146,7 @@ def test_harden_answer_blocks_citation_out_of_whitelist():
     assert result.final_mode == "refusal"
     assert result.final_reason == "citation_out_of_whitelist"
     assert result.answer_contract["unsupported_reason"] == "citation_out_of_whitelist"
-    assert result.answer_text == ""
+    assert result.answer_text.startswith("Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla")
     assert result.internal_blocked is True
 
 
@@ -199,7 +206,7 @@ def test_harden_answer_requires_inline_citation_for_narrow_claim():
     assert result.final_mode == "refusal"
     assert result.final_reason == "claim_support_missing"
     assert result.answer_contract["claim_units"] == []
-    assert result.answer_text == ""
+    assert result.answer_text.startswith("Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla")
 
 
 def test_harden_answer_blocks_temporal_mismatch_for_current_question():
@@ -223,7 +230,7 @@ def test_harden_answer_blocks_temporal_mismatch_for_current_question():
     assert result.final_mode == "refusal"
     assert result.final_reason == "temporal_mismatch"
     assert result.answer_contract["source_validity"] == "repealed"
-    assert result.answer_text == ""
+    assert result.answer_text.startswith("Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla")
     assert result.internal_blocked is True
 
 
@@ -249,6 +256,9 @@ def test_harden_answer_allows_historical_source_when_target_date_matches():
     assert result.final_mode == "answer"
     assert result.final_reason is None
     assert result.answer_contract["source_validity"] == "historical"
+    assert result.answer_text.startswith("Uygulanabilirlik notu:")
+    assert "tarihsel mevzuat" in result.answer_contract["applicability_note"]
+    assert result.answer_contract["requires_human_review"] is True
 
 
 def test_harden_answer_blocks_narrow_claim_when_multiple_sources_are_unbound():
@@ -270,10 +280,10 @@ def test_harden_answer_blocks_narrow_claim_when_multiple_sources_are_unbound():
 
     assert result.final_mode == "refusal"
     assert result.final_reason == "claim_support_missing"
-    assert result.answer_text == ""
+    assert result.answer_text.startswith("Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla")
 
 
-def test_harden_answer_skips_claim_binding_for_broad_procedure_question_without_explicit_article():
+def test_harden_answer_binds_broad_procedure_claims_without_explicit_article():
     evidence = _evidence("TBK m.146", "TBK m.156")
 
     result = harden_answer(
@@ -297,7 +307,8 @@ def test_harden_answer_skips_claim_binding_for_broad_procedure_question_without_
     assert result.final_mode == "answer"
     assert result.final_reason is None
     assert result.citations == ["TBK m.146", "TBK m.156"]
-    assert result.answer_contract["claim_units"] == []
+    assert len(result.answer_contract["claim_units"]) == 2
+    assert result.answer_contract["claim_units"][0]["selected_source_key"] == "TBK m.146"
 
 
 def test_harden_answer_drops_out_of_scope_secondary_citations_for_single_law_high_conf():
@@ -320,7 +331,7 @@ def test_harden_answer_drops_out_of_scope_secondary_citations_for_single_law_hig
         today=date(2026, 3, 23),
     )
 
-    assert result.final_mode == "answer"
+    assert result.final_mode == "partial"
     assert result.final_reason is None
     assert result.citations == ["TBK m.237"]
     assert result.answer_contract["primary_source_id"] == "TBK m.237"
@@ -407,7 +418,7 @@ def test_harden_answer_returns_partial_when_supported_and_unsupported_claim_unit
     assert len(result.answer_contract["claim_units"]) == 1
 
 
-def test_harden_answer_skips_claim_binding_for_complexity_marker():
+def test_harden_answer_binds_claims_for_complexity_marker():
     evidence = _evidence("TBK m.49", "TBK m.50")
 
     result = harden_answer(
@@ -429,7 +440,8 @@ def test_harden_answer_skips_claim_binding_for_complexity_marker():
 
     assert result.final_mode == "answer"
     assert result.final_reason is None
-    assert result.answer_contract["claim_units"] == []
+    assert len(result.answer_contract["claim_units"]) == 2
+    assert result.answer_contract["selected_source_keys"] == ["TBK m.49", "TBK m.50"]
 
 
 def test_harden_answer_rc_e_projects_broad_answer_and_keeps_expected_citations():
@@ -513,7 +525,7 @@ def test_harden_answer_rc_e_refuses_when_no_valid_primary_source_remains():
 
     assert result.final_mode == "refusal"
     assert result.final_reason == "insufficient_supported_evidence"
-    assert result.answer_text == ""
+    assert result.answer_text.startswith("Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla")
     assert result.citations == []
 
 

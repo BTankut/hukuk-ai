@@ -884,6 +884,13 @@ async def _run_retrieval_planner(
 def _build_native_dialog_answer_contract(*, answer_text: str) -> dict[str, Any]:
     return {
         "answer_text": answer_text,
+        "answer": answer_text,
+        "legal_basis": [],
+        "citations": [],
+        "selected_source_keys": [],
+        "applicability_note": None,
+        "uncertainty_or_refusal_reason": None,
+        "requires_human_review": False,
         "primary_source_id": None,
         "secondary_source_ids": [],
         "law_scope": [],
@@ -4980,8 +4987,9 @@ async def chat_completions(
     if scope_refusal_reason:
         answer_text = (
             "Bu soru TBK kapsamı dışı bir konuya giriyor "
-            f"({scope_refusal_reason}). Elimdeki TBK kaynaklarıyla bu soruya yanıt veremiyorum. "
-            "Lütfen ilgili mevzuat için uzman bir hukukçuya danışın."
+            f"({scope_refusal_reason}). Bu soruyu mevcut mevzuat veri tabanındaki güvenilir "
+            "kaynaklarla cevaplayamıyorum; ilgili kanun, madde veya tarih bağlamını belirtirsen "
+            "tekrar deneyebilirim."
         )
         mentioned_laws = _extract_law_mentions(last_user_msg)
         explicit_article_refs = _extract_explicit_article_refs(last_user_msg)
@@ -5118,6 +5126,90 @@ async def chat_completions(
             *query_analysis.source_families,
         ]
     )
+    if query_analysis.out_of_scope:
+        hardening = harden_answer(
+            answer_text="",
+            citations=[],
+            blocked=False,
+            verification=None,
+            question_raw=last_user_msg,
+            mentioned_laws=mentioned_laws,
+            explicit_article_refs=explicit_article_refs,
+            law_filter=request_body.law_filter,
+            assembled_evidence=[],
+            allowed_source_whitelist=[],
+        )
+        trace_payload = _build_trace_payload(
+            request_id=response_id,
+            decision_lane="mevzuat_scope_refusal",
+            user_query=last_user_msg,
+            enriched_query=enriched_query,
+            retrieval_query=retrieval_query,
+            question_normalized=normalize_query_text(last_user_msg),
+            question_type=hardening.question_type,
+            target_date=hardening.target_date,
+            law_scope_signal=hardening.law_scope_signal,
+            law_filter=request_body.law_filter,
+            mentioned_laws=mentioned_laws,
+            cross_law_mode=False,
+            requested_source_families=requested_source_families,
+            explicit_article_refs=explicit_article_refs,
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+            pre_rerank_chunks=[],
+            post_rerank_chunks=[],
+            assembled_context="",
+            blocked=hardening.internal_blocked,
+            guardrails_reasons=[],
+            verification=None,
+            answer_contract=hardening.answer_contract,
+            model_cited_source_ids=hardening.model_cited_source_ids,
+            final_mode=hardening.final_mode,
+            final_reason=hardening.final_reason,
+            retrieval_plan=retrieval_plan,
+            query_analysis=query_analysis,
+        )
+        pre_answer_payload = _pre_answer_stage_payload(
+            decision_lane="mevzuat_scope_refusal",
+            user_message=last_user_msg,
+            enriched_query=enriched_query,
+            retrieval_query=retrieval_query,
+            conversation_history=conversation_history,
+            mentioned_laws=mentioned_laws,
+            requested_source_families=requested_source_families,
+            explicit_article_refs=explicit_article_refs,
+            forced_article_refs=[],
+            applied_expansions=[],
+            top_k_requested=request_body.top_k,
+            top_k_effective=0,
+            reranker_enabled=False,
+            retrieval_plan=retrieval_plan,
+            query_analysis=query_analysis,
+        )
+        return _finalize_chat_response(
+            request=request,
+            request_body=request_body,
+            store=store,
+            session_id=session_id,
+            response_id=response_id,
+            user_message=last_user_msg,
+            conversation_history=conversation_history,
+            pre_answer_payload=pre_answer_payload,
+            answer_text=hardening.answer_text,
+            citations=hardening.citations,
+            blocked=hardening.internal_blocked,
+            guardrails_reasons=[],
+            verification=None,
+            trace_payload=trace_payload,
+            answer_contract=hardening.answer_contract,
+            final_mode=hardening.final_mode,
+            final_reason=hardening.final_reason,
+            upstream_usage=None,
+            llm_trace=None,
+        )
     forced_article_refs: list[tuple[str, str]] = []
     applied_expansions: list[str] = []
     llm_retrieval_plan = await _run_retrieval_planner(

@@ -423,10 +423,18 @@ class ClaimUnit(BaseModel):
     claim_text: str
     source_id: str
     source_excerpt: str
+    selected_source_key: str | None = None
 
 
 class StructuredAnswerContract(BaseModel):
     answer_text: str
+    answer: str = ""
+    legal_basis: list[dict[str, Any]] = Field(default_factory=list)
+    citations: list[str] = Field(default_factory=list)
+    selected_source_keys: list[str] = Field(default_factory=list)
+    applicability_note: str | None = None
+    uncertainty_or_refusal_reason: str | None = None
+    requires_human_review: bool = False
     primary_source_id: str | None = None
     secondary_source_ids: list[str] = Field(default_factory=list)
     law_scope: list[str] = Field(default_factory=list)
@@ -622,6 +630,40 @@ def extract_model_cited_source_ids(
         if normalized:
             resolved.append(normalized)
     return dedupe_strings(resolved)
+
+
+def canonicalize_inline_citations(
+    *,
+    answer_text: str,
+    assembled_evidence: list[dict[str, Any]],
+) -> str:
+    def replace(match: re.Match[str]) -> str:
+        raw_citation = normalize_whitespace(match.group(1))
+        resolved = _resolve_canonical_citation(
+            citation=raw_citation,
+            assembled_evidence=assembled_evidence,
+        )
+        canonical = canonicalize_source_id(resolved) or canonicalize_source_id(raw_citation) or raw_citation
+        return f"[Kaynak: {canonical}]"
+
+    return _INLINE_CITATION_RE.sub(replace, answer_text or "")
+
+
+def canonicalize_citation_list(
+    *,
+    citations: list[str],
+    assembled_evidence: list[dict[str, Any]],
+) -> list[str]:
+    canonicalized: list[str] = []
+    for citation in citations:
+        resolved = _resolve_canonical_citation(
+            citation=citation,
+            assembled_evidence=assembled_evidence,
+        )
+        canonical = canonicalize_source_id(resolved) or canonicalize_source_id(citation)
+        if canonical:
+            canonicalized.append(canonical)
+    return dedupe_strings(canonicalized)
 
 
 def build_initial_answer_contract(
@@ -996,6 +1038,22 @@ def _passes_law_scope_surface(
     return extract_law_code_from_source_id(source_id) == expected[0]
 
 
+def _evidence_textually_references_numbered_law(
+    *,
+    evidence: dict[str, Any],
+    expected_law: str,
+) -> bool:
+    mention_re = re.compile(
+        rf"(?:{re.escape(expected_law)}\s+say[ıi]l[ıi]|khk[-/\s]?{re.escape(expected_law)}|{re.escape(expected_law)}\s+sayili)",
+        re.IGNORECASE,
+    )
+    surface = " ".join(
+        str(evidence.get(field) or "")
+        for field in ("excerpt", "source_title", "belge_adi", "citation")
+    )
+    return bool(mention_re.search(surface))
+
+
 def _build_allowed_claim_source_ids(
     *,
     assembled_evidence: list[dict[str, Any]],
@@ -1016,7 +1074,17 @@ def _build_allowed_claim_source_ids(
         if not _passes_temporal_surface(evidence=evidence, target_date=target_date):
             continue
         if not _passes_law_scope_surface(source_id=source_id, law_scope_signal=law_scope_signal):
-            continue
+            expected = law_scope_signal.get("expected_law_scope") or []
+            expected_law = expected[0] if expected else None
+            if not (
+                isinstance(expected_law, str)
+                and expected_law.isdigit()
+                and _evidence_textually_references_numbered_law(
+                    evidence=evidence,
+                    expected_law=expected_law,
+                )
+            ):
+                continue
         allowed.add(source_id)
     return allowed
 
@@ -1610,6 +1678,7 @@ def apply_claim_to_norm_projection_v2(
                 claim_text=unit["claim_text"],
                 source_id=registry_entry["canonical_source_id"],
                 source_excerpt=excerpt,
+                selected_source_key=registry_entry["canonical_source_id"],
             )
         )
         retained_units.append(unit["rendered_text"])
@@ -1788,6 +1857,7 @@ def apply_kept_claim_citation_projection_v1(
                 claim_text=unit["claim_text"],
                 source_id=anchor_source_id,
                 source_excerpt=excerpt,
+                selected_source_key=anchor_source_id,
             )
         )
         retained_units.append(unit["rendered_text"])
@@ -1903,6 +1973,7 @@ def apply_selective_claim_binding_v3(
                 claim_text=_strip_inline_citations(unit_text),
                 source_id=source_id,
                 source_excerpt=excerpt,
+                selected_source_key=source_id,
             )
         )
         retained_units.append(normalize_whitespace(unit_text))
@@ -1937,30 +2008,141 @@ def apply_selective_claim_binding_v3(
 
 
 def build_external_refusal_text(reason: UnsupportedReason | None) -> str:
+    base = "Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla cevaplayamıyorum."
     if reason == "law_scope_mismatch":
         return (
-            "Bu soruda seçilen kaynak kapsamı ile soru kapsamı uyumlu görünmüyor. "
-            "Elde edilen doğrulanmış kaynaklarla güvenli bir yanıt veremiyorum."
+            f"{base} Seçilen kaynak kapsamı soru kapsamıyla eşleşmedi; "
+            "kanun, madde veya tarih bağlamı belirtirsen tekrar deneyebilirim."
         )
     if reason == "temporal_mismatch":
         return (
-            "Soru tarihine uygun doğrulanmış kaynak bulunamadığı için güvenli bir yanıt veremiyorum."
+            f"{base} Soru tarihine uygun yürürlükte veya tarihsel kaynak desteği bulunamadı."
         )
     if reason == "source_validity_unknown":
         return (
-            "İlgili kaynağın yürürlük durumu doğrulanamadığı için güvenli bir yanıt veremiyorum."
+            f"{base} İlgili kaynağın yürürlük durumu doğrulanamadı."
         )
     if reason == "citation_out_of_whitelist":
         return (
-            "Yanıt içindeki kaynaklar doğrulanmış bağlam kümesiyle eşleşmediği için yanıtı teslim etmiyorum."
+            f"{base} Yanıt içindeki kaynaklar seçilmiş evidence kümesiyle eşleşmedi."
         )
     if reason == "claim_support_missing":
         return (
-            "Dar kapsamlı soruda tüm iddialar doğrulanmış kaynakla bağlanamadığı için güvenli bir yanıt veremiyorum."
+            f"{base} Yanıttaki hukuki iddialar seçilmiş evidence ile yeterince bağlanamadı."
         )
     if reason == "schema_validation_failed":
-        return "Yanıt şeması doğrulanamadığı için güvenli bir yanıt veremiyorum."
-    return "Bu soru için doğrulanmış kaynaklarla yeterli destek bulunamadı."
+        return f"{base} Yanıt şeması doğrulanamadı."
+    return f"{base} Kanun, madde veya tarih bağlamı belirtirsen tekrar deneyebilirim."
+
+
+def _selected_contract_source_ids(contract: StructuredAnswerContract) -> list[str]:
+    return dedupe_strings(
+        [source_id for source_id in [contract.primary_source_id, *contract.secondary_source_ids] if source_id]
+    )
+
+
+def _evidence_source_validity(evidence: dict[str, Any] | None) -> SourceValidity:
+    if not evidence:
+        return "unknown"
+    if evidence.get("mulga") is True:
+        return "repealed"
+    end = _parse_optional_date(evidence.get("yururluk_bitis"))
+    if end is not None and str(evidence.get("yururluk_bitis")).strip() not in {"9999-12-31"}:
+        return "historical"
+    return "active"
+
+
+def _build_legal_basis_payload(
+    *,
+    contract: StructuredAnswerContract,
+    assembled_evidence: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    evidence_lookup = _build_evidence_lookup(assembled_evidence)
+    basis: list[dict[str, Any]] = []
+    for source_id in _selected_contract_source_ids(contract):
+        canonical_source_id = canonicalize_source_id(source_id) or source_id
+        evidence = evidence_lookup.get(canonical_source_id)
+        citation = (
+            canonicalize_source_id((evidence or {}).get("citation"))
+            or canonicalize_source_id((evidence or {}).get("source_id"))
+            or canonical_source_id
+        )
+        basis.append(
+            {
+                "selected_source_key": canonical_source_id,
+                "source_id": canonical_source_id,
+                "citation": citation,
+                "source_title": (evidence or {}).get("source_title")
+                or (evidence or {}).get("belge_adi")
+                or (evidence or {}).get("kanun_adi"),
+                "article_no": (evidence or {}).get("madde_no"),
+                "paragraph_no": (evidence or {}).get("fikra_no"),
+                "source_validity": _evidence_source_validity(evidence),
+                "excerpt": _normalize_excerpt_text(str((evidence or {}).get("excerpt") or "")),
+            }
+        )
+    return basis
+
+
+def _build_applicability_note(contract: StructuredAnswerContract) -> str | None:
+    if contract.final_mode in {"refusal", "blocked"}:
+        return "Yanıt, seçilmiş mevzuat evidence'ı ile doğrulanamadığı için kapsamlı cevap verilmedi."
+    if contract.source_validity == "historical":
+        return (
+            "Bu yanıt, soruda verilen tarih itibarıyla tarihsel mevzuat metnine dayanır; "
+            "güncel yürürlük sonucu ayrıca doğrulanmalıdır."
+        )
+    if contract.source_validity == "repealed":
+        return (
+            "Bu yanıt mülga veya yürürlükten kalkmış kaynak uyarısı taşır; "
+            "güncel hukuk sonucu için yürürlükteki metin ayrıca doğrulanmalıdır."
+        )
+    if contract.source_validity == "unknown":
+        return "Yanıt seçilmiş kaynaklarla sınırlıdır; yürürlük durumu kesin doğrulanamadı."
+    return "Yanıt yalnız seçilmiş mevzuat evidence'ı kapsamıyla sınırlıdır."
+
+
+def _apply_historical_warning_to_answer(
+    *,
+    answer_text: str,
+    contract: StructuredAnswerContract,
+) -> str:
+    note = _build_applicability_note(contract)
+    if contract.final_mode not in {"answer", "partial"} or contract.source_validity != "historical" or not note:
+        return answer_text
+    normalized_answer = normalize_query_text(answer_text)
+    if "tarihsel mevzuat" in normalized_answer or "soruda verilen tarih" in normalized_answer:
+        return answer_text
+    return f"Uygulanabilirlik notu: {note}\n\n{answer_text}"
+
+
+def finalize_evidence_first_contract(
+    *,
+    contract: StructuredAnswerContract,
+    final_answer_text: str,
+    final_citations: list[str],
+    final_reason: UnsupportedReason | None,
+    assembled_evidence: list[dict[str, Any]],
+) -> None:
+    selected_source_keys = _selected_contract_source_ids(contract)
+    for claim in contract.claim_units:
+        if not claim.selected_source_key:
+            claim.selected_source_key = claim.source_id
+
+    contract.answer_text = final_answer_text
+    contract.answer = final_answer_text
+    contract.citations = list(final_citations)
+    contract.selected_source_keys = selected_source_keys
+    contract.legal_basis = _build_legal_basis_payload(
+        contract=contract,
+        assembled_evidence=assembled_evidence,
+    )
+    contract.applicability_note = _build_applicability_note(contract)
+    contract.uncertainty_or_refusal_reason = final_reason
+    contract.requires_human_review = (
+        contract.final_mode in {"partial", "refusal", "blocked"}
+        or contract.source_validity in {"historical", "repealed", "unknown"}
+    )
 
 
 def _map_external_mode(contract: StructuredAnswerContract) -> tuple[FinalMode, bool]:
@@ -2084,6 +2266,14 @@ def _harden_answer_with_profile(
     today: date | None = None,
     recovery_profile: RecoveryProfile = "rc_d",
 ) -> HardeningResult:
+    answer_text = canonicalize_inline_citations(
+        answer_text=answer_text,
+        assembled_evidence=assembled_evidence,
+    )
+    citations = canonicalize_citation_list(
+        citations=citations,
+        assembled_evidence=assembled_evidence,
+    )
     target_date, target_date_explicit = resolve_target_date(question_raw, today=today)
     question_type = infer_question_type(question_raw, explicit_article_refs)
 
@@ -2148,7 +2338,53 @@ def _harden_answer_with_profile(
             final_reason=final_reason,
         )
 
-    if final_reason is None and recovery_profile in {"rc_e", "rc_f"}:
+    if final_reason is None and recovery_profile == "rc_d":
+        if claim_binding_outcome.active:
+            projection_outcome = CitationProjectionOutcome(
+                active=True,
+                kept_count=claim_binding_outcome.kept_count,
+                dropped_count=claim_binding_outcome.dropped_count,
+                final_reason=claim_binding_outcome.final_reason,
+                primary_source_id=contract.primary_source_id,
+                emitted_source_ids=dedupe_strings(
+                    [
+                        source_id
+                        for source_id in [contract.primary_source_id, *contract.secondary_source_ids]
+                        if source_id
+                    ]
+                ),
+                supported_source_ids=dedupe_strings(
+                    [
+                        source_id
+                        for source_id in [contract.primary_source_id, *contract.secondary_source_ids]
+                        if source_id
+                    ]
+                ),
+                kept_claim_units=[unit.model_dump() for unit in contract.claim_units],
+                dropped_claim_units=[],
+                supported_claim_count_by_source={},
+                retrieval_rank_by_source={},
+                canonical_details=None,
+            )
+            final_reason = apply_final_mode_mapping_v3(
+                contract=contract,
+                claim_binding_outcome=claim_binding_outcome,
+            )
+        else:
+            projection_outcome = apply_kept_claim_citation_projection_v1(
+                contract=contract,
+                answer_text=answer_text,
+                assembled_evidence=assembled_evidence,
+                allowed_source_whitelist=allowed_source_whitelist,
+                law_scope_signal=law_scope_signal,
+                explicit_article_refs=explicit_article_refs,
+                target_date=target_date,
+            )
+            final_reason = apply_final_mode_boundary_v4(
+                contract=contract,
+                projection_outcome=projection_outcome,
+            )
+    elif final_reason is None and recovery_profile in {"rc_e", "rc_f"}:
         if recovery_profile == "rc_f":
             projection_outcome = apply_claim_to_norm_projection_v2(
                 contract=contract,
@@ -2228,8 +2464,21 @@ def _harden_answer_with_profile(
         [source_id for source_id in [contract.primary_source_id, *contract.secondary_source_ids] if source_id]
     )
     if external_mode == "refusal":
-        external_answer_text = ""
+        external_answer_text = build_external_refusal_text(final_reason)
         external_citations = []
+    else:
+        external_answer_text = _apply_historical_warning_to_answer(
+            answer_text=external_answer_text,
+            contract=contract,
+        )
+
+    finalize_evidence_first_contract(
+        contract=contract,
+        final_answer_text=external_answer_text,
+        final_citations=external_citations,
+        final_reason=final_reason,
+        assembled_evidence=assembled_evidence,
+    )
 
     return HardeningResult(
         answer_text=external_answer_text,

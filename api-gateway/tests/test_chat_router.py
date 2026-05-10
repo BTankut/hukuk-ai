@@ -1209,13 +1209,13 @@ class TestChatCompletionsNonStreaming:
 
     def test_basic_request(self, client, mock_orchestrator):
         mock_orchestrator.answer = AsyncMock(
-            return_value=_make_orch_response("TBK m.49 haksız fiili düzenler.")
+            return_value=_make_orch_response("TBK m.49 haksız fiili düzenler. [Kaynak: TBK m.49]")
         )
         resp = client.post(
             "/v1/chat/completions",
             json={
                 "model": "hukuk-ai-poc",
-                "messages": [{"role": "user", "content": "Haksız fiil nedir?"}],
+                "messages": [{"role": "user", "content": "TBK m.49 haksız fiil nedir?"}],
                 "stream": False,
             },
         )
@@ -1229,11 +1229,15 @@ class TestChatCompletionsNonStreaming:
 
     def test_response_includes_citations(self, client, mock_orchestrator):
         mock_orchestrator.answer = AsyncMock(
-            return_value=_make_orch_response(citations=["TBK m.49", "TBK m.50"])
+            return_value=_make_orch_response(
+                "- TBK m.49 haksız fiili düzenler. [Kaynak: TBK m.49]\n"
+                "- TBK m.50 ispat yükünü düzenler. [Kaynak: TBK m.50]",
+                citations=["TBK m.49", "TBK m.50"],
+            )
         )
         resp = client.post(
             "/v1/chat/completions",
-            json={"messages": [{"role": "user", "content": "soru"}]},
+            json={"messages": [{"role": "user", "content": "TBK m.49 ve TBK m.50 nedir?"}]},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -1395,6 +1399,21 @@ class TestChatCompletionsNonStreaming:
         assert resp.status_code == 200
         assert resp.json()["verification"] == verification_data
 
+    def test_case_law_query_refuses_before_generation(self, client, mock_orchestrator):
+        resp = client.post(
+            "/v1/chat/completions",
+            json={"messages": [{"role": "user", "content": "Yargıtay emsal karar no nedir?"}]},
+        )
+
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload["final_mode"] == "refusal"
+        assert payload["citations"] == []
+        assert payload["choices"][0]["message"]["content"].startswith(
+            "Bu soruyu mevcut mevzuat veri tabanındaki güvenilir kaynaklarla"
+        )
+        mock_orchestrator.answer.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # POST /v1/chat/completions — Streaming Testleri
@@ -1451,7 +1470,7 @@ class TestChatCompletionsStreaming:
 
     def test_streaming_metadata_chunk(self, client, mock_orchestrator):
         mock_orchestrator.answer = AsyncMock(
-            return_value=_make_orch_response(citations=["TMK m.1"])
+            return_value=_make_orch_response("TMK m.1 uygulanır. [Kaynak: TMK m.1]", citations=["TMK m.1"])
         )
         resp = client.post(
             "/v1/chat/completions",

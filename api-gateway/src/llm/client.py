@@ -288,7 +288,7 @@ class LLMClient:
                 content=(
                     "Aşağıdaki soru için ilgili mevzuat kaynağı bulunamadı. "
                     "Kaynak olmadan yanıt verme; kullanıcıya mevcut kaynaklarda açık dayanak "
-                    "bulunmadığını kibarca açıkla ve uzman bir avukata danışmasını öner.\n\n"
+                    "bulunmadığını açıkla; gerekiyorsa kanun, madde veya tarih bağlamı iste.\n\n"
                     f"SORU:\n{query}"
                 ),
             ),
