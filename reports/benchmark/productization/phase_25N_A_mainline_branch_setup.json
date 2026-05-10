@@ -1,0 +1,14 @@
+{
+  "phase": "Phase25N-A",
+  "generated": "2026-05-10",
+  "worktree_path": "/Users/btmacstudio/Projects/hukuk-ai-mainline-product-controls",
+  "branch_name": "bt/mainline-product-controls-prototype",
+  "base_sha": "3778fa41",
+  "origin_main_sha": "3778fa41",
+  "hardening_used_as_base": false,
+  "working_tree_clean_before_changes": true,
+  "live_8000_modified": false,
+  "productization_opened": false,
+  "eval_opened": false,
+  "fine_tuning_started": false
+}
