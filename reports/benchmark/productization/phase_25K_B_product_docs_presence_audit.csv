@@ -1,0 +1,18 @@
+path,exists_on_main,category,required_for_productization,required_for_internal_eval,status,notes
+reports/benchmark/productization/access_control_policy.md,true,access_control,true,false,present,Required Phase25J remediation doc present on main
+reports/benchmark/productization/monitoring_metrics_policy.md,true,monitoring_metrics,true,true,present,Required Phase25J remediation doc present on main
+reports/benchmark/productization/reviewer_only_eval_form_template.md,true,reviewer_only_eval_template,false,true,present,Dormant template present; does not open eval
+reports/benchmark/productization/reviewer_only_eval_form_template.csv,true,reviewer_only_eval_template,false,true,present,Dormant CSV template present; does not open eval
+reports/benchmark/productization/artifact_retention_and_trace_exclusion_policy.md,true,artifact_retention,true,true,present,Required Phase25J remediation doc present on main
+reports/benchmark/productization/guardrails_policy.md,true,guardrails,true,true,present,Product policy doc present on main
+reports/benchmark/productization/verification_policy.md,true,verification,true,true,present,Product policy doc present on main
+reports/benchmark/productization/privacy_pii_policy.md,true,privacy_pii,true,true,present,Product policy doc present on main
+reports/benchmark/productization/audit_logging_policy.md,true,audit_logging,true,true,present,Product policy doc present on main
+reports/benchmark/productization/trace_exposure_policy.md,true,trace_exposure,true,true,present,Product policy doc present on main
+reports/benchmark/productization/manual_review_workflow.md,true,manual_review,true,true,present,Product policy doc present on main
+reports/benchmark/productization/confidence_ux_policy.md,true,confidence_ux,true,true,present,Product policy doc present on main
+reports/benchmark/productization/rollback_incident_runbook.md,true,rollback,true,true,present,Product policy doc present on main
+reports/benchmark/productization/phase_25A_residual_acceptance_matrix.md,true,residual_acceptance,true,true,present,Residual acceptance matrix present on main
+reports/benchmark/productization/phase_25A_residual_acceptance_matrix.csv,true,residual_acceptance,true,true,present,Residual acceptance CSV present on main
+reports/benchmark/productization/phase_25B_E_product_controls_closure_workplan.md,true,product_controls_workplan,true,true,present,Product controls closure workplan present on main
+reports/benchmark/productization/phase_25B_E_product_controls_closure_workplan.csv,true,product_controls_workplan,true,true,present,Product controls closure workplan CSV present on main
