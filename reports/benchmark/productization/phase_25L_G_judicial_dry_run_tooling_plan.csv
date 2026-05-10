@@ -1,0 +1,11 @@
+tool_name,purpose,input,output,sample_size,live_risk,implementation_phase,blocked_by,notes
+package_inventory,Create immutable inventory of received judicial package,raw package directory,inventory csv and summary json,all_files,none_if_dry_run_only,Phase25M-JD1,package receipt convention,No parsing beyond file metadata
+checksum_manifest,Generate SHA-256 manifest for package integrity,raw package directory,sha256 manifest csv,all_files,none_if_dry_run_only,Phase25M-JD1,package_inventory,Manifest must be deterministic and append-only
+file_format_classifier,Classify file types and unreadable files,inventory csv,format classification csv,all_files,low_if_no_content_export,Phase25M-JD1,checksum_manifest,No production conversion
+dedup_sampler,Estimate duplicate and near-duplicate risk,classified files,dedup sample report,statistical_sample,low_if_sample_only,Phase25M-JD2,file_format_classifier,No destructive deletion
+metadata_extraction_sampler,Sample court/date/docket metadata extraction,classified text-capable files,metadata sample csv,sample_only,low_if_redacted,Phase25M-JD2,file_format_classifier,Extraction output remains dry-run
+citation_extraction_sampler,Sample legal citation extraction quality,classified text-capable files,citation sample csv,sample_only,low_if_redacted,Phase25M-JD2,file_format_classifier,No link to live mevzuat retrieval
+PII_risk_sampler,Estimate personal data risk before wider processing,classified text-capable files,PII risk sample report,sample_only,medium_without_redaction,Phase25M-JD2,privacy PII design,Must redact examples by default
+chunking_simulator,Simulate chunk boundaries without indexing,sample text files,chunk simulation report,sample_only,low_if_no_index,Phase25M-JD3,metadata and citation samplers,No embeddings and no production index
+embedding_index_sample_plan,Plan small offline embedding/index sample without production binding,chunk simulation report,offline sample plan,plan_only,medium_if_index_created,Phase25N-JD4,chunking_simulator,Plan only until explicitly authorized
+dry_run_report_generator,Generate consolidated dry-run report from tool outputs,all dry-run manifests and reports,dry-run final report,all_tool_outputs,none_if_docs_only,Phase25M-JD3,all prior dry-run tools,Report must state no live retrieval and no mevzuat merge
