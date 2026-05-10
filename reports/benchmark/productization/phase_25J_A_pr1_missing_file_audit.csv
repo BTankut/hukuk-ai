@@ -1,0 +1,6 @@
+required_file,exists_on_hardening,docs_or_csv_only,runtime_code,trace_or_raw_artifact,safe_to_add_to_pr1,notes
+reports/benchmark/productization/access_control_policy.md,true,true,false,false,true,Tracked docs-only policy file; already added to PR1 in commit 8db22a6 and present on main after merge b75262a
+reports/benchmark/productization/monitoring_metrics_policy.md,true,true,false,false,true,Tracked docs-only policy file; already added to PR1 in commit 8db22a6 and present on main after merge b75262a
+reports/benchmark/productization/reviewer_only_eval_form_template.md,true,true,false,false,true,Tracked dormant reviewer-only eval template; does not open reviewer-only eval; already added to PR1 in commit 8db22a6 and present on main after merge b75262a
+reports/benchmark/productization/reviewer_only_eval_form_template.csv,true,true,false,false,true,Tracked dormant reviewer-only eval CSV template; does not open reviewer-only eval; already added to PR1 in commit 8db22a6 and present on main after merge b75262a
+reports/benchmark/productization/artifact_retention_and_trace_exclusion_policy.md,true,true,false,false,true,Tracked docs-only policy file; not a trace/run/raw artifact; already added to PR1 in commit 8db22a6 and present on main after merge b75262a
