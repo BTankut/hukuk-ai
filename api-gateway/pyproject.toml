@@ -32,6 +32,7 @@ milvus = [
 [project.scripts]
 tbk-pilot = "data_pipeline.cli:main"
 tbk-milvus-smoke = "data_pipeline.milvus_smoke:main"
+mevzuat-article-first-chunks = "data_pipeline.article_first_chunks:main"
 
 [build-system]
 requires = ["setuptools>=70.0"]
