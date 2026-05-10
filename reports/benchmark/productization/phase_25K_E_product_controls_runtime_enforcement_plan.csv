@@ -1,0 +1,11 @@
+control_area,policy_exists_on_main,runtime_enforced_now,safe_implementation_phase,test_required,blocks_reviewer_eval,blocks_internal_eval,blocks_serving_candidate,notes
+guardrails enforcement,true,false,Phase25L,true,true,true,true,Plan only; implement small runtime gate later
+claim-level verification enforcement,true,false,Phase25L,true,true,true,true,Plan only; tie to verification policy later
+privacy / PII enforcement,true,false,Phase25L,true,true,true,true,Plan only; add PII filters/tests later
+audit logging enforcement,true,false,Phase25L,true,false,true,true,Plan only; define append-only safe logging checks
+access control enforcement,true,false,Phase25L,true,true,true,true,Plan only; access policy exists on main
+monitoring / metrics,true,false,Phase25M,true,false,true,true,Plan only; metrics policy exists on main
+trace redaction / retention,true,false,Phase25M,true,true,true,true,Plan only; artifact retention policy exists on main
+manual review queue,true,false,Phase25M,true,false,true,true,Plan only; workflow doc exists on main
+confidence / abstention UX,true,false,Phase25M,true,true,true,true,Plan only; UX policy exists on main
+rollback rehearsal,true,false,Phase25N,true,false,true,true,Plan only; runbook exists on main
