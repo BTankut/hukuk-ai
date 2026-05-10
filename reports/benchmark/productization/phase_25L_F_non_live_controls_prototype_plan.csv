@@ -1,0 +1,7 @@
+component,feature_flag,files_to_touch,runtime_default,non_live_only,test_required,risk,blocks_reviewer_eval,notes
+guardrails decision module,ENABLE_PRODUCT_GUARDRAILS,api-gateway/src/product_controls/guardrails.py; api-gateway/tests/test_product_guardrails.py,off,true,true,medium,true,Dry-run decision enum and fallback mode only
+claim verification module,ENABLE_PRODUCT_CLAIM_VERIFICATION,api-gateway/src/product_controls/claim_verification.py; api-gateway/tests/test_product_claim_verification.py,off,true,true,high,true,Consumes answer contract and selected evidence without changing retrieval
+privacy redaction module,ENABLE_PRODUCT_PRIVACY_PII,api-gateway/src/product_controls/privacy.py; api-gateway/tests/test_product_privacy.py,off,true,true,medium,true,Redaction preview and minimized trace fields only
+audit event schema,ENABLE_PRODUCT_AUDIT_LOGGING,api-gateway/src/product_controls/audit.py; api-gateway/tests/test_product_audit.py,off,true,true,medium,false,Builds minimized audit event preview before any audit sink is enabled
+access-control middleware,ENABLE_PRODUCT_ACCESS_CONTROL,api-gateway/src/product_controls/access.py; api-gateway/tests/test_product_access.py,off,true,true,medium,true,Operator-only dry-run access decisions
+non-live smoke harness,ENABLE_PRODUCT_CONTROLS_DRY_RUN,api-gateway/src/routers/product_controls.py; api-gateway/tests/test_product_controls_dry_run.py,off,true,true,medium,true,Internal dry-run routes only and not mounted publicly
