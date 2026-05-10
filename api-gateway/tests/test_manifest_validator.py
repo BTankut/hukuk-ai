@@ -100,3 +100,59 @@ def test_validate_article_rows_detects_hash_mismatch(tmp_path: Path) -> None:
     assert result["pass"] is False
     assert result["hash_checked_count"] == 1
     assert result["hash_mismatch_count"] == 1
+
+
+def test_validate_article_rows_uses_official_metadata_overrides(tmp_path: Path) -> None:
+    rows_path = tmp_path / "article_rows.jsonl"
+    overrides_path = tmp_path / "official_overrides.json"
+    _write_jsonl(
+        rows_path,
+        [
+            _row(
+                resmi_gazete_tarih=None,
+                yururluk_baslangic=None,
+                source_id="6098:6098:m1:f0:from1900-01-01:to9999-12-31",
+            )
+        ],
+    )
+    overrides_path.write_text(
+        json.dumps(
+            {
+                "records": [
+                    {
+                        "source_id": "kanun:6098",
+                        "official_gazette_date": "2011-02-04",
+                        "publish_date": "2011-02-04",
+                        "effective_start_date": "2012-07-01",
+                        "version_date": "2011-02-04",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = validate_article_rows(rows_path, metadata_overrides_path=overrides_path)
+
+    assert result["pass"] is True
+    assert result["metadata_override_count"] == 1
+
+
+def test_validate_article_rows_uses_source_id_temporal_end_date(tmp_path: Path) -> None:
+    rows_path = tmp_path / "article_rows.jsonl"
+    _write_jsonl(
+        rows_path,
+        [
+            _row(
+                belge_turu="mulga_kanun",
+                source_id="7354:7354:m1:f0:from2022-02-14:to1900-01-01",
+                yururluk_bitis=None,
+                mulga=True,
+            )
+        ],
+    )
+
+    result = validate_article_rows(rows_path)
+
+    assert result["pass"] is True
+    assert "effective_end_date" not in result["required_missing_by_field"]

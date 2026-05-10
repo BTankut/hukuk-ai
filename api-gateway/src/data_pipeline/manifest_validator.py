@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
@@ -77,9 +78,14 @@ def _is_missing_required_field(field_name: str, value: Any) -> bool:
     return text.lower() == "unknown"
 
 
-def _derive_effective_state(row: dict[str, Any]) -> str:
-    end_date = _clean(row.get("yururluk_bitis"))
-    start_date = _clean(row.get("yururluk_baslangic"))
+def _derive_effective_state(row: dict[str, Any], override: dict[str, Any] | None = None) -> str:
+    override = override or {}
+    end_date = (
+        _clean(override.get("effective_end_date"))
+        or _clean(row.get("yururluk_bitis"))
+        or _source_id_temporal_date(row, "to")
+    )
+    start_date = _clean(override.get("effective_start_date")) or _clean(row.get("yururluk_baslangic"))
     if row.get("mulga") is True:
         return "repealed"
     if end_date and end_date != "9999-12-31":
@@ -105,6 +111,16 @@ def _row_source_no(row: dict[str, Any]) -> str | None:
     return _clean(row.get("belge_no")) or _clean(row.get("kanun_no"))
 
 
+def _source_id_temporal_date(row: dict[str, Any], label: str) -> str | None:
+    source_id = _clean(row.get("source_id"))
+    if not source_id:
+        return None
+    match = re.search(rf":{label}(\d{{4}}-\d{{2}}-\d{{2}})(?::|$)", source_id)
+    if not match:
+        return None
+    return match.group(1)
+
+
 @dataclass(slots=True)
 class _DocumentAccumulator:
     source_id: str
@@ -123,17 +139,29 @@ class _DocumentAccumulator:
     row_hashes: list[str] = field(default_factory=list)
     conflicting_fields: set[str] = field(default_factory=set)
 
-    def update(self, row: dict[str, Any]) -> None:
+    def update(self, row: dict[str, Any], override: dict[str, Any] | None = None) -> None:
+        override = override or {}
         values = {
             "source_family": normalize_source_family(row.get("belge_turu")),
             "title": _clean(row.get("belge_adi")) or _clean(row.get("kanun_adi")),
-            "official_url": _clean(row.get("kaynak_url")),
-            "official_gazette_date": _clean(row.get("resmi_gazete_tarih")),
-            "publish_date": _clean(row.get("resmi_gazete_tarih")),
-            "effective_start_date": _clean(row.get("yururluk_baslangic")),
-            "effective_end_date": _clean(row.get("yururluk_bitis")),
+            "official_url": _clean(override.get("official_url")) or _clean(row.get("kaynak_url")),
+            "official_gazette_date": _clean(override.get("official_gazette_date")) or _clean(row.get("resmi_gazete_tarih")),
+            "publish_date": _clean(override.get("publish_date")) or _clean(row.get("resmi_gazete_tarih")),
+            "effective_start_date": (
+                _clean(override.get("effective_start_date"))
+                or _clean(row.get("yururluk_baslangic"))
+            ),
+            "effective_end_date": (
+                _clean(override.get("effective_end_date"))
+                or _clean(row.get("yururluk_bitis"))
+                or _source_id_temporal_date(row, "to")
+            ),
             "source_no": _row_source_no(row),
-            "version_date": _clean(row.get("resmi_gazete_tarih")) or _clean(row.get("yururluk_baslangic")),
+            "version_date": (
+                _clean(override.get("version_date"))
+                or _clean(row.get("resmi_gazete_tarih"))
+                or _clean(row.get("yururluk_baslangic"))
+            ),
         }
         for field_name, value in values.items():
             if value is None:
@@ -144,7 +172,7 @@ class _DocumentAccumulator:
             elif current != value:
                 self.conflicting_fields.add(field_name)
 
-        self.effective_states[_derive_effective_state(row)] += 1
+        self.effective_states[_derive_effective_state(row, override)] += 1
         row_hash = _clean(row.get("metin_sha256"))
         if row_hash:
             self.row_hashes.append(row_hash)
@@ -207,6 +235,24 @@ def _load_source_manifest(path: Path | None) -> dict[str, Any] | None:
     return data
 
 
+def _load_metadata_overrides(path: Path | None) -> dict[str, dict[str, Any]]:
+    if path is None:
+        return {}
+    with path.open(encoding="utf-8") as handle:
+        data = json.load(handle)
+    records = data.get("records", data) if isinstance(data, dict) else data
+    if not isinstance(records, list):
+        raise ValueError(f"metadata overrides must be a list or contain records[]: {path}")
+    overrides: dict[str, dict[str, Any]] = {}
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        source_id = _clean(record.get("source_id"))
+        if source_id:
+            overrides[source_id] = record
+    return overrides
+
+
 def _iter_jsonl(path: Path) -> Iterable[dict[str, Any]]:
     with path.open(encoding="utf-8") as handle:
         for line_no, line in enumerate(handle, start=1):
@@ -225,9 +271,11 @@ def validate_article_rows(
     article_rows_path: Path,
     *,
     source_manifest_path: Path | None = None,
+    metadata_overrides_path: Path | None = None,
     unknown_effective_state_threshold: float = 0.0,
 ) -> dict[str, Any]:
     documents: dict[str, _DocumentAccumulator] = {}
+    metadata_overrides = _load_metadata_overrides(metadata_overrides_path)
     raw_source_family_counts: Counter[str] = Counter()
     normalized_source_family_counts: Counter[str] = Counter()
     row_effective_state_counts: Counter[str] = Counter()
@@ -254,7 +302,10 @@ def validate_article_rows(
         source_id = _row_document_source_id(row)
         if source_id is None:
             source_id = f"missing-source-id:{row_count}"
-        documents.setdefault(source_id, _DocumentAccumulator(source_id=source_id)).update(row)
+        documents.setdefault(source_id, _DocumentAccumulator(source_id=source_id)).update(
+            row,
+            override=metadata_overrides.get(source_id),
+        )
 
     records = [doc.to_record() for doc in documents.values()]
     missing_by_field: Counter[str] = Counter()
@@ -336,6 +387,8 @@ def validate_article_rows(
         "validator": "data_pipeline.manifest_validator",
         "article_rows_path": str(article_rows_path),
         "source_manifest_path": str(source_manifest_path) if source_manifest_path else None,
+        "metadata_overrides_path": str(metadata_overrides_path) if metadata_overrides_path else None,
+        "metadata_override_count": len(metadata_overrides),
         "row_count": row_count,
         "document_count": len(documents),
         "required_fields": list(REQUIRED_MANIFEST_FIELDS),
@@ -374,6 +427,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Optional source_manifest.json used for cross-checks.",
     )
     parser.add_argument(
+        "--metadata-overrides",
+        type=Path,
+        default=None,
+        help="Optional JSON overrides produced from official sources.",
+    )
+    parser.add_argument(
         "--unknown-effective-state-threshold",
         type=float,
         default=0.0,
@@ -385,6 +444,7 @@ def main(argv: list[str] | None = None) -> int:
     result = validate_article_rows(
         args.article_rows,
         source_manifest_path=source_manifest_path,
+        metadata_overrides_path=args.metadata_overrides,
         unknown_effective_state_threshold=args.unknown_effective_state_threshold,
     )
     json.dump(result, sys.stdout, ensure_ascii=False, indent=2)
