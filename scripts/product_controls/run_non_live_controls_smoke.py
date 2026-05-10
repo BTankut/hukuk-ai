@@ -306,7 +306,7 @@ def write_outputs(rows: list[dict[str, str]]) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
