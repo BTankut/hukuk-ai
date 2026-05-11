@@ -338,5 +338,336 @@
   },
   "failed_cases_count": 0,
   "failed_case_ids": [],
-  "acceptance_status": "PASS"
+  "acceptance_status": "PASS_LOCAL_ONLY",
+  "acceptance_lock": {
+    "artifact_type": "mevzuat_acceptance_lock",
+    "generated_at": "2026-05-11T00:55:22.026294+00:00",
+    "objective_source": "docs/hukuk-ai-goal_v1.md",
+    "commit_basis": "2124942b750eede0b5c24ff7dd0b7ad997d02c5f",
+    "branch": "bt/mevzuat-engine-closure",
+    "canonical_branch_visibility": {
+      "status": "local_only_reported",
+      "remote": "origin",
+      "remote_head_query": "git ls-remote --heads origin bt/mevzuat-engine-closure",
+      "remote_head_found": false,
+      "remote_head_output": "",
+      "note": "Required commits f0e50b06 and 2124942b are present locally; no matching origin branch head was found during acceptance lock. No push was performed in this turn."
+    },
+    "anti_overfit_audit": {
+      "status": "pass_for_runtime_acceptance_lock",
+      "commands": [
+        "rg -n \"MEV-CLOSURE|mevzuat_closure_eval|expected_evidence_sources|expected_sources|MockChatClient|BENCHMARK_COMPAT_MODE|_benchmark_compat_mode_enabled|forced_article_refs|precise_|scope_refusal_shortcut|source_lock_fallback\" api-gateway/src evaluation/eval_runner.py evaluation/metrics.py configs/evaluation/mevzuat_closure_eval.json -S",
+        "rg -n \"def harden_answer\\(|harden_answer\\(|_build_trace_payload\\(|answer_contract|allowed_source_whitelist|assembled_evidence\" api-gateway/src/routers/chat.py api-gateway/src/faz2a_hardening.py evaluation/eval_runner.py evaluation/metrics.py -S"
+      ],
+      "runtime_findings": [
+        "api-gateway/src contains no MEV-CLOSURE ids, expected_sources, expected_evidence_sources, or closure question ids.",
+        "Default runtime gates benchmark-specific precise/scope shortcuts behind BENCHMARK_COMPAT_MODE=false; acceptance smoke decision lanes were rag or mevzuat_scope_refusal, not precise_* or scope_refusal_shortcut.",
+        "General exact-article inclusion, source-family planning, evidence selection, source-lock fallback, and harden_answer are current runtime behavior, not closure-question keyed behavior."
+      ],
+      "eval_findings": [
+        "evaluation/eval_runner.py MockChatClient still derives mock traces/contracts from expected_sources and expected_evidence_sources; this is diagnostic-only and is not accepted as a production closure gate.",
+        "configs/evaluation/mevzuat_closure_eval.json necessarily contains expected sources for metric scoring; that data is not imported by api-gateway/src runtime.",
+        "evaluation/metrics.py reads expected sources only for scoring and computes evidence metrics from trace/answer_contract when live/runtime results provide them."
+      ],
+      "benchmark_specific_behavior_removed_or_quarantined": true,
+      "mock_closure_metrics_reclassified": "diagnostic_only_for_acceptance_lock"
+    },
+    "hidden_mevzuat_runtime_smoke": {
+      "status": "pass",
+      "command": "PYTHONPATH=api-gateway/src api-gateway/.venv/bin/python - <<PY (inline FastAPI TestClient hidden runtime smoke; output /tmp/hukuk_ai_acceptance_lock_hidden_smoke_20260511.json)",
+      "output_path": "/tmp/hukuk_ai_acceptance_lock_hidden_smoke_20260511.json",
+      "runtime_path": "FastAPI TestClient /v1/chat/completions include_trace=true with real router retrieval, evidence selection, RAGOrchestrator, harden_answer, trace serialization",
+      "fixture_scope": "focused in-memory retriever + deterministic LLM, not persisted as benchmark config",
+      "pass_criteria": [
+        "every non-refusal answer cites retrieved evidence",
+        "no unsupported legal claim in final answer",
+        "no invented article",
+        "no stale law-state assertion",
+        "no citation-answer mismatch",
+        "negative judicial-precedent query refuses without judicial dependency"
+      ],
+      "passed": 7,
+      "total": 7,
+      "all_passed": true,
+      "cases": [
+        {
+          "id": "hidden_direct_article_tmk2",
+          "category": "direct_article_lookup",
+          "question": "TMK m.2 d\u00fcr\u00fcstl\u00fck kural\u0131 hangi sonucu do\u011furur?",
+          "expected_citations": [
+            "TMK m.2"
+          ],
+          "expect_refusal": false,
+          "status_code": 200,
+          "pass": true,
+          "answer": "TMK m.2 d\u00fcr\u00fcstl\u00fck kural\u0131n\u0131 ve hakk\u0131n k\u00f6t\u00fcye kullan\u0131lmas\u0131n\u0131n korunmayaca\u011f\u0131n\u0131 d\u00fczenler [Kaynak: TMK m.2].",
+          "citations": [
+            "TMK m.2"
+          ],
+          "final_mode": "answer",
+          "final_reason": null,
+          "decision_lane": "rag",
+          "selected_source_keys": [
+            "TMK m.2"
+          ],
+          "assembled_source_ids": [
+            "TMK m.2"
+          ],
+          "allowed_source_whitelist": [
+            "TMK m.2"
+          ],
+          "unsupported_reason": null,
+          "citation_answer_mismatch": false,
+          "judicial_precedent_dependency": false
+        },
+        {
+          "id": "hidden_cross_law_tbk49_tmk24",
+          "category": "cross_law_query",
+          "question": "Ki\u015filik hakk\u0131 sald\u0131r\u0131s\u0131nda TBK m.49 ile TMK m.24 nas\u0131l birlikte dayanak olur?",
+          "expected_citations": [
+            "TBK m.49",
+            "TMK m.24"
+          ],
+          "expect_refusal": false,
+          "status_code": 200,
+          "pass": true,
+          "answer": "Haks\u0131z fiil sorumlulu\u011fu TBK m.49'a dayan\u0131r [Kaynak: TBK m.49]. Ki\u015filik hakk\u0131na sald\u0131r\u0131da korunma talebi TMK m.24 ile kurulabilir [Kaynak: TMK m.24].",
+          "citations": [
+            "TMK m.24",
+            "TBK m.49"
+          ],
+          "final_mode": "answer",
+          "final_reason": null,
+          "decision_lane": "rag",
+          "selected_source_keys": [
+            "TMK m.24",
+            "TBK m.49"
+          ],
+          "assembled_source_ids": [
+            "TMK m.24",
+            "TBK m.49"
+          ],
+          "allowed_source_whitelist": [
+            "TMK m.24",
+            "TBK m.49"
+          ],
+          "unsupported_reason": null,
+          "citation_answer_mismatch": false,
+          "judicial_precedent_dependency": false
+        },
+        {
+          "id": "hidden_current_law_state_818_6098",
+          "category": "repealed_amended_current_law_state",
+          "question": "818 say\u0131l\u0131 eski Bor\u00e7lar Kanunu yerine g\u00fcncel genel bor\u00e7lar kanunu bak\u0131m\u0131ndan hangi y\u00fcr\u00fcrl\u00fck maddelerine bak\u0131l\u0131r?",
+          "expected_citations": [
+            "TBK m.648",
+            "TBK m.649"
+          ],
+          "expect_refusal": false,
+          "status_code": 200,
+          "pass": true,
+          "answer": "818 say\u0131l\u0131 Bor\u00e7lar Kanunu TBK m.648 ile y\u00fcr\u00fcrl\u00fckten kald\u0131r\u0131lm\u0131\u015ft\u0131r [Kaynak: TBK m.648]. 6098 say\u0131l\u0131 T\u00fcrk Bor\u00e7lar Kanunu'nun y\u00fcr\u00fcrl\u00fck tarihi TBK m.649'da g\u00f6sterilir [Kaynak: TBK m.649].",
+          "citations": [
+            "TBK m.648",
+            "TBK m.649"
+          ],
+          "final_mode": "answer",
+          "final_reason": null,
+          "decision_lane": "rag",
+          "selected_source_keys": [
+            "TBK m.648",
+            "TBK m.649"
+          ],
+          "assembled_source_ids": [
+            "TBK m.648",
+            "TBK m.649"
+          ],
+          "allowed_source_whitelist": [
+            "TBK m.648",
+            "TBK m.649"
+          ],
+          "unsupported_reason": null,
+          "citation_answer_mismatch": false,
+          "judicial_precedent_dependency": false
+        },
+        {
+          "id": "hidden_ambiguous_medeni_iyiniyet",
+          "category": "ambiguous_law_name",
+          "question": "Medeni Kanun iyiniyet karinesini hangi maddede d\u00fczenler?",
+          "expected_citations": [
+            "TMK m.3"
+          ],
+          "expect_refusal": false,
+          "status_code": 200,
+          "pass": true,
+          "answer": "TMK m.3'e g\u00f6re kanunun iyiniyete sonu\u00e7 ba\u011flad\u0131\u011f\u0131 durumlarda as\u0131l olan iyiniyetin varl\u0131\u011f\u0131d\u0131r [Kaynak: TMK m.3].",
+          "citations": [
+            "TMK m.3"
+          ],
+          "final_mode": "answer",
+          "final_reason": null,
+          "decision_lane": "rag",
+          "selected_source_keys": [
+            "TMK m.3"
+          ],
+          "assembled_source_ids": [
+            "TMK m.3"
+          ],
+          "allowed_source_whitelist": [
+            "TMK m.3"
+          ],
+          "unsupported_reason": null,
+          "citation_answer_mismatch": false,
+          "judicial_precedent_dependency": false
+        },
+        {
+          "id": "hidden_procedural_hmk94",
+          "category": "procedural_legal_consequence",
+          "question": "HMK m.94'e g\u00f6re kesin s\u00fcreye uyulmazsa usuli sonu\u00e7 nedir?",
+          "expected_citations": [
+            "HMK m.94"
+          ],
+          "expect_refusal": false,
+          "status_code": 200,
+          "pass": true,
+          "answer": "HMK m.94'e g\u00f6re kesin s\u00fcre i\u00e7inde yap\u0131lmas\u0131 gereken i\u015flem yap\u0131lmazsa o i\u015flemi yapma hakk\u0131 ortadan kalkar [Kaynak: HMK m.94].",
+          "citations": [
+            "HMK m.94"
+          ],
+          "final_mode": "answer",
+          "final_reason": null,
+          "decision_lane": "rag",
+          "selected_source_keys": [
+            "HMK m.94"
+          ],
+          "assembled_source_ids": [
+            "HMK m.94"
+          ],
+          "allowed_source_whitelist": [
+            "HMK m.94"
+          ],
+          "unsupported_reason": null,
+          "citation_answer_mismatch": false,
+          "judicial_precedent_dependency": false
+        },
+        {
+          "id": "hidden_negative_judicial_precedent",
+          "category": "negative_refusal_unsupported",
+          "question": "Yarg\u0131tay'\u0131n en yeni karar\u0131n\u0131 mevzuatla kan\u0131tlay\u0131p emsal sonucu s\u00f6yle.",
+          "expected_citations": [],
+          "expect_refusal": true,
+          "status_code": 200,
+          "pass": true,
+          "answer": "Bu soruyu mevcut mevzuat veri taban\u0131ndaki g\u00fcvenilir kaynaklarla cevaplayam\u0131yorum. Kanun, madde veya tarih ba\u011flam\u0131 belirtirsen tekrar deneyebilirim.",
+          "citations": [],
+          "final_mode": "refusal",
+          "final_reason": "insufficient_supported_evidence",
+          "decision_lane": "mevzuat_scope_refusal",
+          "selected_source_keys": [],
+          "assembled_source_ids": [],
+          "allowed_source_whitelist": [],
+          "unsupported_reason": "insufficient_supported_evidence",
+          "citation_answer_mismatch": false,
+          "judicial_precedent_dependency": false
+        },
+        {
+          "id": "hidden_multi_article_temerrut",
+          "category": "multi_article_synthesis",
+          "question": "TBK'da bor\u00e7lu temerr\u00fcd\u00fc ile alacakl\u0131n\u0131n se\u00e7imlik haklar\u0131 i\u00e7in hangi maddeler birlikte okunur?",
+          "expected_citations": [
+            "TBK m.117",
+            "TBK m.125"
+          ],
+          "expect_refusal": false,
+          "status_code": 200,
+          "pass": true,
+          "answer": "Bor\u00e7lu temerr\u00fcd\u00fcn\u00fcn ba\u015flang\u0131c\u0131 TBK m.117 ile kurulur [Kaynak: TBK m.117]. Alacakl\u0131n\u0131n se\u00e7imlik sonu\u00e7lar\u0131 TBK m.125 \u00e7er\u00e7evesinde de\u011ferlendirilir [Kaynak: TBK m.125].",
+          "citations": [
+            "TBK m.117",
+            "TBK m.125"
+          ],
+          "final_mode": "answer",
+          "final_reason": null,
+          "decision_lane": "rag",
+          "selected_source_keys": [
+            "TBK m.117",
+            "TBK m.125"
+          ],
+          "assembled_source_ids": [
+            "TBK m.117",
+            "TBK m.125"
+          ],
+          "allowed_source_whitelist": [
+            "TBK m.117",
+            "TBK m.125"
+          ],
+          "unsupported_reason": null,
+          "citation_answer_mismatch": false,
+          "judicial_precedent_dependency": false
+        }
+      ]
+    },
+    "evidence_contract_lock": {
+      "status": "pass",
+      "runtime_contract": "routers.chat builds assembled_evidence and allowed_source_whitelist from post-rerank chunks, calls harden_answer, serializes answer_contract and trace when include_trace=true.",
+      "measured_contract": "evaluation.metrics extracts selected evidence, claim sources, citation exactness, current-law-state, and unsupported-claim metrics from answer_contract and trace/context_assembly.",
+      "public_response_contract": "ChatCompletionResponse includes citations, final_mode, final_reason, answer_contract, and optional trace; public answer text is resolved from answer_contract.",
+      "required_fields_observed_in_hidden_smoke": [
+        "citations",
+        "final_mode",
+        "answer_contract.selected_source_keys",
+        "trace.context_assembly.assembled_evidence",
+        "trace.context_assembly.allowed_source_whitelist"
+      ]
+    },
+    "runtime_eval_parity": {
+      "status": "pass_with_mock_reclassified_diagnostic",
+      "production_runtime_path": "/v1/chat/completions -> retriever -> select_evidence_chunks -> RAGOrchestrator -> harden_answer -> _build_trace_payload -> _finalize_chat_response",
+      "acceptance_gate_path": "FastAPI TestClient invoked /v1/chat/completions with include_trace=true and used the same runtime hardening/trace serialization path.",
+      "closure_eval_mock_path": "evaluation/eval_runner.py --mock fabricates expected-source trace data and must not be used as a production-candidate acceptance gate.",
+      "required_future_gate": "Use --api-url with include_trace=true against runtime, or an in-process route harness equivalent to the hidden smoke, for production acceptance."
+    },
+    "legacy_test_policy": {
+      "status": "classified",
+      "current_path_commands": [
+        "api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_eval_runner.py tests/test_eval_metrics.py tests/test_build_eval_evidence_manifest.py -q",
+        "cd api-gateway && ./.venv/bin/python -m pytest"
+      ],
+      "diagnostic_only_legacy_failures": [
+        "initial collection: tests/test_faz35_phase_package.py, tests/test_faz37_phase_package.py, tests/test_faz8_parity_tools.py, tests/test_faz9_tools.py import same-named legacy helper modules",
+        "diagnostic isolated import-cache patch exposed 37 legacy phase/cutover expectation failures; patch was reverted"
+      ],
+      "policy": "Do not chase old faz/cutover/root failures unless a failure is on the current mevzuat production runtime path.",
+      "current_path_result": "pass: 69 focused eval/metrics tests; pass: 526 api-gateway tests, 3 skipped, 1 warning in 13.16s"
+    },
+    "product_controls": {
+      "status": "reference_only_prototype",
+      "live_enabled": false,
+      "evidence": "No ENABLE_PRODUCT_* flags are present in api-gateway/src/configs; release boundary proxy flags default false; prior closure artifact records product-controls prototype branch as not integrated."
+    },
+    "canonical_state": {
+      "MEVZUAT_ENGINE_STATUS": "production-candidate closed",
+      "JUDICIAL_CORPUS_STATUS": "pending corpus/download completion",
+      "PRODUCT_CONTROLS_STATUS": "reference-only prototype",
+      "NEXT_ENGINEERING_SCOPE": "judicial corpus ingestion/retrieval/evidence integration only after download completion"
+    },
+    "acceptance_lock_status": "PASS_LOCAL_ONLY",
+    "stop_condition": "acceptance-lock checks complete; no new faz/wave/docs/benchmark tuning/eval expansion started",
+    "test_commands": {
+      "focused_eval_metrics": {
+        "command": "api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_eval_runner.py tests/test_eval_metrics.py tests/test_build_eval_evidence_manifest.py -q",
+        "pass": true,
+        "summary": "69 passed"
+      },
+      "api_gateway_current_path": {
+        "command": "cd api-gateway && ./.venv/bin/python -m pytest",
+        "pass": true,
+        "summary": "526 passed, 3 skipped, 1 warning in 13.16s"
+      },
+      "artifact_json_validation": {
+        "command": "api-gateway/.venv/bin/python -m json.tool evaluation/reports/mevzuat_engine_closure_20260511.json >/tmp/hukuk_ai_acceptance_lock_json_check.txt",
+        "pass": true
+      }
+    }
+  }
 }
