@@ -1,0 +1,141 @@
+{
+  "artifact_type": "judicial_corpus_prep_acceptance",
+  "generated_at": "2026-05-11T11:16:40.255387+00:00",
+  "git_commit": "1ad9da205d46af77ec8e9790f3542ea09f83408d",
+  "branch": "bt/mevzuat-engine-closure",
+  "mevzuat_closure_visibility_status": {
+    "required_commits_present": {
+      "f0e50b06": true,
+      "2124942b": true,
+      "28732f04": true
+    },
+    "artifact_present": true,
+    "remote_branch_visible": false,
+    "remote_head_output": "",
+    "recorded_status": "local_only_reported"
+  },
+  "tag_lock_marker_status": {
+    "tag": "mevzuat-engine-closed-20260511",
+    "exists": true,
+    "target_commit": "28732f0412219f99edd1b2038d01f1e325602f74",
+    "pushed": false,
+    "status": "local_marker_created"
+  },
+  "manifest_validator_status": {
+    "status": "pass",
+    "summary": {
+      "pass": true,
+      "total_records": 1,
+      "error_count": 0,
+      "errors": [],
+      "duplicate_counts": {
+        "unique": 1
+      },
+      "metadata_conflict_count": 0
+    },
+    "required_source_type": "judicial_decision",
+    "deterministic_citation_key": "YARGITAY_9HD_2024_12345E_2024_6789K_2024-05-10"
+  },
+  "normalization_utility_status": {
+    "status": "pass",
+    "preserves_original_text": true,
+    "paragraph_count": 4,
+    "paragraph_boundaries_preserved": true,
+    "document_hash_len": 64,
+    "normalized_text_hash_len": 64
+  },
+  "duplicate_detector_status": {
+    "status": "pass",
+    "duplicate_counts": {
+      "exact_duplicate": 1,
+      "unique": 1
+    },
+    "metadata_conflict_count": 0,
+    "deletes_duplicates": false
+  },
+  "chunk_metadata_contract_status": {
+    "status": "pass",
+    "summary": {
+      "pass": true,
+      "total_records": 3,
+      "error_count": 0,
+      "errors": [],
+      "duplicate_counts": {},
+      "metadata_conflict_count": 0
+    },
+    "chunk_count": 3,
+    "header_chunk_present": true,
+    "first_body_chunk_key": "judicial_decision:YARGITAY_9HD_2024_12345E_2024_6789K_2024-05-10:p1-2"
+  },
+  "judicial_retrieval_lane_status": {
+    "status": "prepared_offline_disabled_runtime",
+    "indexable_document_count": 3,
+    "offline_retrieve_hit_count": 1,
+    "offline_collection": "judicial_decisions_pending",
+    "runtime_enabled": false
+  },
+  "runtime_disabled_confirmation": {
+    "runtime_enabled": false,
+    "pass": true,
+    "env_var": "JUDICIAL_RUNTIME_ENABLED",
+    "required_state": "false until judicial corpus closure gate passes",
+    "case_law_query_out_of_scope_before_generation": true,
+    "no_partial_judicial_answer_mode": true
+  },
+  "judicial_gate_skeleton_status": {
+    "status": "inactive_prepared",
+    "active": false,
+    "metrics": [
+      "judicial_retrieval_hit_at_20",
+      "decision_citation_validity_rate",
+      "court_metadata_accuracy",
+      "esas_karar_number_accuracy",
+      "decision_date_accuracy",
+      "selected_judicial_evidence_recall",
+      "unsupported_judicial_claim_rate",
+      "mevzuat_judicial_confusion_rate"
+    ],
+    "runtime_path_requirement": "Gate must call the same judicial retrieval and evidence path that runtime will use after judicial closure; no eval-only quality path."
+  },
+  "smoke_check_results": {
+    "manifest_validation": true,
+    "duplicate_detection": true,
+    "canonical_decision_id_generation": true,
+    "citation_key_generation": true,
+    "paragraph_preserving_chunk_generation": true,
+    "judicial_lane_indexability": true,
+    "judicial_retriever_runtime_disabled": true,
+    "answer_path_no_judicial_evidence_before_closure": true
+  },
+  "known_limitations": [
+    "Near-duplicate detection is represented as an explicit status value but not enabled with fuzzy similarity until corpus quality is measurable.",
+    "Judicial gate is a skeleton and remains inactive until download and indexing complete.",
+    "Judicial retrieval lane is offline/indexability-only; runtime use raises unless explicitly enabled after closure."
+  ],
+  "final_status": {
+    "MEVZUAT_ENGINE_STATUS": "production-candidate closed",
+    "JUDICIAL_CORPUS_STATUS": "downloading / integration infrastructure prepared",
+    "JUDICIAL_RUNTIME_STATUS": "disabled until corpus closure gate passes",
+    "PRODUCT_CONTROLS_STATUS": "reference-only prototype",
+    "NEXT_ENGINEERING_SCOPE": "wait for judicial download completion, then run judicial corpus closure"
+  },
+  "acceptance_status": "PASS_LOCAL_ONLY",
+  "test_commands": {
+    "focused_judicial_and_runtime_disabled": {
+      "command": "cd api-gateway && ./.venv/bin/python -m pytest tests/test_judicial_corpus_prep.py tests/test_chat_router.py::TestChatCompletionsNonStreaming::test_case_law_query_refuses_before_generation -q",
+      "pass": true,
+      "summary": "9 passed, 1 warning"
+    },
+    "api_gateway_current_path": {
+      "command": "cd api-gateway && ./.venv/bin/python -m pytest",
+      "pass": true,
+      "summary": "534 passed, 3 skipped, 1 warning in 12.83s"
+    },
+    "artifact_json_validation": {
+      "command": "api-gateway/.venv/bin/python -m json.tool evaluation/reports/judicial_corpus_prep_20260511.json >/tmp/judicial_corpus_prep_json_check.txt",
+      "pass": true
+    }
+  },
+  "git_commit_role": "implementation_commit_before_artifact_commit",
+  "artifact_commit_note": "This artifact is committed in the next commit; git_commit points to the implementation commit it validates."
+}
