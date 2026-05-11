@@ -24,6 +24,25 @@ class ChunkMetadata(TypedDict, total=False):
     article_heading: str
     chunk_part: int
     chunk_part_total: int
+    canonical_decision_id: str
+    citation_key: str
+    source_authority: str
+    court: str
+    chamber: str
+    decision_date: str
+    case_no: str
+    esas_no: str
+    decision_no: str
+    karar_no: str
+    paragraph_index: int
+    paragraph_start: int
+    paragraph_end: int
+    source_url: str
+    document_hash: str
+    normalized_text_hash: str
+    chunk_hash: str
+    chunk_key: str
+    duplicate_status: str
 
 
 @dataclass(slots=True)
