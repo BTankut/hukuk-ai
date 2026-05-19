@@ -47,7 +47,7 @@ JUDICIAL_OFFLINE_GATE_CHECKS = (
     "selected_judicial_evidence_recall",
     "unsupported_judicial_claim_rate",
     "mevzuat_judicial_confusion_rate",
-    "runtime_disabled",
+    "runtime_enabled_false",
 )
 
 
@@ -74,8 +74,8 @@ def evaluate_offline_judicial_gate_state(checks: dict[str, Any]) -> dict[str, An
     missing = [check for check in JUDICIAL_OFFLINE_GATE_CHECKS if check not in checks]
     failing = [check for check, value in checks.items() if check in JUDICIAL_OFFLINE_GATE_CHECKS and not bool(value)]
     runtime_enabled = bool(checks.get("runtime_enabled", False))
-    if runtime_enabled and "runtime_disabled" not in failing:
-        failing.append("runtime_disabled")
+    if runtime_enabled and "runtime_enabled_false" not in failing:
+        failing.append("runtime_enabled_false")
     return {
         "gate_name": "judicial_corpus_closure",
         "active": active,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import sqlite3
 
 import pytest
 
@@ -154,6 +155,9 @@ def test_preflight_streams_schema_inventory_and_capped_samples(tmp_path) -> None
     assert len(summary["malformed_row_samples"]) == 1
     assert len(summary["metadata_deficient_row_samples"]) == 1
     assert summary["estimated_embedding_index_storage"]["collection"] == "judicial_decisions_v1_shadow"
+    assert summary["source_authority_distribution"]["Adalet Bakanlığı İçtihat"] == 1
+    assert summary["source_url_coverage"] == 2
+    assert summary["estimated_exact_lookup_index_storage"]["lookup_keys_per_record"] == 7
 
 
 def test_package_integrity_check_reads_sha256sums_and_merge_report(tmp_path) -> None:
@@ -205,6 +209,27 @@ def test_manifest_validation_fails_missing_required_identity_fields() -> None:
     }
 
 
+def test_raw_schema_adapter_quarantines_missing_chamber_for_chambered_court() -> None:
+    mapping = adapt_raw_judicial_decision(
+        {
+            "court": "Yargıtay",
+            "plain_text": (
+                "Yargıtay\n\n"
+                "ESAS NO : 2024/123\n"
+                "KARAR NO : 2024/456\n"
+                "KARAR TARİHİ : 10/05/2024\n\n"
+                "Karar metni."
+            ),
+            "source_url": "https://karararama.yargitay.gov.tr/ornek",
+        },
+        row_number=3,
+    )
+
+    assert mapping.accepted is False
+    assert mapping.quarantine is not None
+    assert "missing_chamber" in mapping.quarantine["reasons"]
+
+
 def test_duplicate_detection_marks_exact_normalized_and_metadata_conflicts() -> None:
     first = _sample_record(source_url="https://example.test/a")
     exact = dict(first, source_url="https://example.test/b")
@@ -234,13 +259,14 @@ def test_chunk_generation_preserves_decision_identity_and_paragraph_range() -> N
     summary = validate_judicial_chunks(chunks).to_dict()
 
     assert summary["pass"] is True
-    assert len(chunks) == 3
+    assert len(chunks) == 2
     first_meta = chunks[0]["metadata"]
     assert first_meta["source_type"] == "judicial_decision"
     assert first_meta["citation_key"] == "YARGITAY_9HD_2024_12345E_2024_6789K_2024-05-10"
-    assert first_meta["paragraph_index"] == 0
-    assert first_meta["evidence_block_type"] == "metadata_header"
-    body_meta = chunks[1]["metadata"]
+    assert first_meta["source_authority"] == "Yargıtay"
+    assert first_meta["paragraph_index"] == 1
+    assert first_meta["evidence_block_type"] == "unknown"
+    body_meta = chunks[0]["metadata"]
     assert body_meta["paragraph_index"] == 1
     assert body_meta["paragraph_start"] == 1
     assert body_meta["paragraph_end"] == 2
@@ -257,7 +283,7 @@ def test_judicial_retrieval_lane_is_indexable_offline_but_disabled_at_runtime(mo
     offline_results, stats = lane.retrieve(query="işçilik alacağı", top_k=5)
 
     assert assert_judicial_runtime_disabled()["pass"] is True
-    assert len(docs) == len([chunk for chunk in chunks if chunk["metadata"]["evidence_block_type"] != "metadata_header"])
+    assert len(docs) == len([chunk for chunk in chunks if chunk["metadata"]["vector_index_eligible"]])
     assert stats.collection == "judicial_decisions_v1_shadow"
     assert offline_results
     with pytest.raises(DisabledJudicialRuntimeError):
@@ -301,6 +327,29 @@ def test_streaming_manifest_builder_quarantines_and_marks_duplicates(tmp_path) -
     assert validate_judicial_manifest(records).to_dict()["pass"] is True
 
 
+def test_streaming_manifest_builder_marks_canonical_id_collisions(tmp_path) -> None:
+    raw_path = tmp_path / "decision_rows.jsonl"
+    first = dict(
+        RAW_DECISION_ROW,
+        court="İSTANBUL 19. ASLİYE TİCARET MAHKEMESİ",
+    )
+    collision = dict(
+        RAW_DECISION_ROW,
+        court="ISTANBUL 19. ASLIYE TICARET MAHKEMESI",
+        source_url="https://mevzuat.adalet.gov.tr/ictihat/1021302999",
+        plain_text=RAW_DECISION_ROW["plain_text"] + "\n\nEk gerekçe.",
+    )
+    _write_jsonl(raw_path, [first, collision])
+
+    stats = build_judicial_manifest_stream(raw_path, tmp_path / "processed")
+    manifest_path = tmp_path / "processed" / "judicial_manifest.jsonl"
+    records = [json.loads(line) for line in manifest_path.read_text(encoding="utf-8").splitlines()]
+
+    assert stats["duplicate_counts"] == {"near_duplicate_candidate": 1, "unique": 1}
+    assert stats["canonical_decision_count"] == 1
+    assert [record["duplicate_status"] for record in records] == ["unique", "near_duplicate_candidate"]
+
+
 def test_streaming_chunk_writer_keeps_only_canonical_records_by_default(tmp_path) -> None:
     manifest_path = tmp_path / "judicial_manifest.jsonl"
     unique = _sample_record()
@@ -318,7 +367,7 @@ def test_streaming_chunk_writer_keeps_only_canonical_records_by_default(tmp_path
     assert stats["canonical_records"] == 1
     assert stats["skipped_noncanonical_records"] == 1
     assert stats["chunks_written"] == 2
-    assert all(chunk["metadata"]["evidence_block_type"] == "decision_body" for chunk in chunks)
+    assert all(chunk["metadata"]["evidence_block_type"] == "unknown" for chunk in chunks)
     assert validate_judicial_chunks(chunks).to_dict()["pass"] is True
 
 
@@ -345,9 +394,49 @@ def test_exact_lookup_supports_required_keys_and_persistent_index(tmp_path) -> N
 
     manifest_path = tmp_path / "judicial_manifest.jsonl"
     _write_jsonl(manifest_path, [record])
-    stats = build_judicial_exact_lookup_index(manifest_path, tmp_path)
+    chunks_path = tmp_path / "judicial_chunks.jsonl"
+    chunks = prepare_judicial_chunks(record, max_paragraphs_per_chunk=2)
+    _write_jsonl(chunks_path, chunks)
+    stats = build_judicial_exact_lookup_index(manifest_path, tmp_path, chunks_path=chunks_path)
     assert stats["records_indexed"] == 1
     assert stats["lookup_key_count"] == len(build_exact_lookup_keys(record))
+    assert stats["chunk_refs_count"] == len(chunks)
+    with sqlite3.connect(tmp_path / "judicial_exact_lookup.sqlite") as conn:
+        refs = conn.execute("SELECT COUNT(*) FROM chunk_refs").fetchone()[0]
+    assert refs == len(chunks)
+
+
+def test_persistent_exact_lookup_keeps_ambiguous_lookup_keys(tmp_path) -> None:
+    first = _sample_record()
+    second = build_judicial_manifest_record(
+        text=f"{SAMPLE_DECISION_TEXT}\n\nEk gerekçe.",
+        source_authority="Yargıtay",
+        court="Yargıtay",
+        chamber="9HD",
+        decision_date="2024-05-11",
+        esas_no="2024/12345",
+        karar_no="2024/6789",
+        source_url="https://karararama.yargitay.gov.tr/ornek-2",
+        download_timestamp="2026-05-11T00:00:00+00:00",
+        related_law_refs=["TBK m.49"],
+    )
+    manifest_path = tmp_path / "judicial_manifest.jsonl"
+    _write_jsonl(manifest_path, [first, second])
+
+    stats = build_judicial_exact_lookup_index(manifest_path, tmp_path)
+    ambiguous_key = dict(build_exact_lookup_keys(first))["court_chamber_esas_karar"]
+
+    assert stats["lookup_key_count"] == len(build_exact_lookup_keys(first)) + len(build_exact_lookup_keys(second))
+    assert stats["duplicate_lookup_keys"] == 1
+    with sqlite3.connect(tmp_path / "judicial_exact_lookup.sqlite") as conn:
+        rows = conn.execute(
+            "SELECT canonical_decision_id FROM lookup WHERE lookup_type = ? AND lookup_key = ?",
+            ("court_chamber_esas_karar", ambiguous_key),
+        ).fetchall()
+    assert {row[0] for row in rows} == {
+        first["canonical_decision_id"],
+        second["canonical_decision_id"],
+    }
 
 
 def test_shadow_index_plan_is_offline_and_skips_metadata_headers() -> None:
@@ -383,9 +472,11 @@ def test_offline_retrieval_path_exposes_exact_and_semantic_lanes(monkeypatch) ->
     semantic_results = path.retrieve(query="işçilik alacağı")
 
     assert exact_results[0]["retrieval_lane"] == "exact"
+    assert exact_results[0]["retrieval_score"] == 1.0
     assert exact_results[0]["citation_key"] == record["citation_key"]
     assert exact_results[0]["paragraph_start"] == 1
     assert semantic_results[0]["retrieval_lane"] == "semantic"
+    assert semantic_results[0]["metadata_filters_applied"] == {}
     assert semantic_results[0]["selected_chunk_text"]
     with pytest.raises(DisabledJudicialRuntimeError):
         path.retrieve(query="işçilik alacağı", runtime=True)
@@ -424,7 +515,7 @@ def test_offline_judicial_gate_requires_all_checks_and_runtime_disabled(monkeypa
         "selected_judicial_evidence_recall": True,
         "unsupported_judicial_claim_rate": True,
         "mevzuat_judicial_confusion_rate": True,
-        "runtime_disabled": True,
+        "runtime_enabled_false": True,
         "runtime_enabled": False,
     }
 

@@ -34,8 +34,10 @@ REQUIRED_JUDICIAL_MANIFEST_FIELDS = (
     "document_hash",
     "normalized_text_hash",
     "citation_key",
+    "canonical_decision_id",
     "download_timestamp",
     "duplicate_status",
+    "original_text",
 )
 
 REQUIRED_JUDICIAL_CHUNK_FIELDS = (
@@ -45,11 +47,13 @@ REQUIRED_JUDICIAL_CHUNK_FIELDS = (
     "court",
     "chamber",
     "decision_date",
+    "year",
     "case_no",
     "esas_no",
     "decision_no",
     "karar_no",
     "paragraph_index",
+    "source_authority",
     "source_url",
     "document_hash",
     "normalized_text_hash",
@@ -64,13 +68,23 @@ JUDICIAL_QUARANTINE_REASONS = (
     "invalid_json",
     "missing_text",
     "missing_court",
+    "missing_chamber",
     "missing_decision_date",
     "missing_case_or_esas_no",
     "missing_decision_or_karar_no",
     "invalid_date",
     "invalid_source_identity",
     "unsupported_schema",
+    "metadata_conflict",
 )
+
+JUDICIAL_EVIDENCE_BLOCK_TYPES = {
+    "body",
+    "procedural_history",
+    "legal_reasoning",
+    "holding",
+    "unknown",
+}
 
 RAW_TEXT_FIELDS = (
     "plain_text",
@@ -340,6 +354,10 @@ def _parse_date_token(value: str | None) -> tuple[str | None, bool]:
     return parsed.date().isoformat(), False
 
 
+def _metadata_scan_text(text: str) -> str:
+    return _compact_spaces(text[:5000])
+
+
 def _extract_decision_date(record: dict[str, Any], text: str) -> tuple[str | None, str | None]:
     explicit = _first_present(
         record,
@@ -355,7 +373,7 @@ def _extract_decision_date(record: dict[str, Any], text: str) -> tuple[str | Non
     if parsed or invalid:
         return parsed, "invalid_date" if invalid else None
 
-    normalized = _compact_spaces(text)
+    normalized = _metadata_scan_text(text)
     targeted = re.search(
         r"KARAR\s+TAR[İI]H[İI]\s*[:：]?\s*" + _DATE_TOKEN_RE.pattern,
         normalized,
@@ -383,7 +401,7 @@ def _extract_case_number(record: dict[str, Any], text: str) -> str | None:
     if explicit:
         return _normalize_legal_number(explicit)
 
-    normalized = _compact_spaces(text)
+    normalized = _metadata_scan_text(text)
     for pattern in (
         r"\bESAS\s+NO\s*[:：]?\s*" + _LEGAL_NO_RE.pattern,
         r"\bE\.\s*[:：]?\s*" + _LEGAL_NO_RE.pattern,
@@ -400,7 +418,7 @@ def _extract_decision_number(record: dict[str, Any], text: str) -> str | None:
     if explicit:
         return _normalize_legal_number(explicit)
 
-    normalized = _compact_spaces(text)
+    normalized = _metadata_scan_text(text)
     for pattern in (
         r"\bKARAR\s+NO\s*[:：]?\s*" + _LEGAL_NO_RE.pattern,
         r"\bK\.\s*[:：]?\s*" + _LEGAL_NO_RE.pattern,
@@ -447,6 +465,16 @@ def _split_court_and_chamber(label: str) -> tuple[str | None, str | None]:
     return cleaned, "GENEL"
 
 
+def _court_requires_chamber(court: str) -> bool:
+    return bool(
+        re.search(
+            r"\b(?:YARGITAY|DANIŞTAY|SAYIŞTAY|BÖLGE\s+(?:ADLİYE|İDARE)\s+MAHKEMESİ)\b",
+            court,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
 def _extract_court_and_chamber(record: dict[str, Any], text: str) -> tuple[str | None, str | None, list[str]]:
     warnings: list[str] = []
     explicit_court = _first_present(
@@ -455,9 +483,15 @@ def _extract_court_and_chamber(record: dict[str, Any], text: str) -> tuple[str |
     )
     explicit_chamber = _first_present(record, ("chamber", "daire", "department", "source_chamber"))
     if explicit_court:
-        court = _compact_spaces(explicit_court)
-        chamber = _compact_spaces(explicit_chamber) if explicit_chamber else "GENEL"
-        if not explicit_chamber:
+        parsed_court, parsed_chamber = _split_court_and_chamber(explicit_court)
+        court = parsed_court or _compact_spaces(explicit_court)
+        chamber = _compact_spaces(explicit_chamber) if explicit_chamber else parsed_chamber
+        if not explicit_chamber and chamber == "GENEL" and _court_requires_chamber(court):
+            return court, None, warnings
+        if not chamber and _court_requires_chamber(court):
+            return court, None, warnings
+        if not chamber:
+            chamber = "GENEL"
             warnings.append("chamber_absent_defaulted_to_GENEL")
         return court, chamber, warnings
 
@@ -522,6 +556,7 @@ def adapt_raw_judicial_decision(
     *,
     row_number: int = 0,
     download_timestamp: str | None = None,
+    build_manifest: bool = True,
 ) -> RawJudicialMapping:
     if not isinstance(raw_record, dict):
         return RawJudicialMapping(
@@ -559,6 +594,8 @@ def adapt_raw_judicial_decision(
 
     if not court:
         reasons.append("missing_court")
+    if court and not chamber:
+        reasons.append("missing_chamber")
     if not decision_date and "invalid_date" not in reasons:
         reasons.append("missing_decision_date")
     if not case_no:
@@ -570,6 +607,27 @@ def adapt_raw_judicial_decision(
         return RawJudicialMapping(
             record=None,
             quarantine=_quarantine_record(row_number=row_number, reasons=reasons, raw_record=raw_record),
+        )
+
+    if not build_manifest:
+        return RawJudicialMapping(
+            record={
+                "source_type": JUDICIAL_SOURCE_TYPE,
+                "source_authority": source_authority or "",
+                "court": court or "",
+                "chamber": chamber or "GENEL",
+                "decision_date": decision_date or "",
+                "case_no": case_no,
+                "esas_no": case_no,
+                "decision_no": decision_no,
+                "karar_no": decision_no,
+                "source_url": source_url or "",
+                "raw_row_number": row_number,
+                "source_schema": schema,
+                "text_field": text_field,
+                "mapping_warnings": warnings,
+            },
+            quarantine=None,
         )
 
     manifest = build_judicial_manifest_record(
@@ -589,6 +647,7 @@ def adapt_raw_judicial_decision(
     manifest.update(
         {
             "raw_document_id": _clean(raw_record.get("document_id")),
+            "raw_row_number": row_number,
             "raw_mime_type": _clean(raw_record.get("mime_type")),
             "source_schema": schema,
             "text_field": text_field,
@@ -730,16 +789,17 @@ def preflight_judicial_jsonl(
     invalid_json = 0
     accepted_like = 0
     metadata_deficient = 0
-    estimated_chunk_count = 0
     field_inventory: Counter[str] = Counter()
     null_empty_counts: Counter[str] = Counter()
     text_field_coverage: Counter[str] = Counter()
     source_distribution: Counter[str] = Counter()
     court_distribution: Counter[str] = Counter()
     chamber_distribution: Counter[str] = Counter()
+    source_url_coverage = 0
     quarantine_reasons: Counter[str] = Counter()
     text_lengths: list[int] = []
     paragraph_counts: list[int] = []
+    chunk_count_samples: list[int] = []
     malformed_samples: list[dict[str, Any]] = []
     metadata_deficient_samples: list[dict[str, Any]] = []
     text_min: int | None = None
@@ -778,11 +838,14 @@ def preflight_judicial_jsonl(
 
             valid_json += 1
             field_inventory.update(raw_record.keys())
+            if _clean(raw_record.get("source_url")) or _clean(raw_record.get("url")):
+                source_url_coverage += 1
             for field_name, value in raw_record.items():
                 if _clean(value) is None:
                     null_empty_counts[field_name] += 1
 
             text, text_field = _extract_text(raw_record)
+            sampled_paragraph_count: int | None = None
             if text is not None and text_field is not None:
                 text_field_coverage[text_field] += 1
                 text_length = len(text)
@@ -790,15 +853,15 @@ def preflight_judicial_jsonl(
                 text_max = max(text_max, text_length)
                 if len(text_lengths) < length_sample_cap:
                     text_lengths.append(text_length)
-                normalized = normalize_judicial_text(text)
-                paragraph_count = len(normalized.paragraphs)
                 if len(paragraph_counts) < length_sample_cap:
-                    paragraph_counts.append(paragraph_count)
+                    sampled_paragraph_count = len(normalize_judicial_text(text).paragraphs)
+                    paragraph_counts.append(sampled_paragraph_count)
 
             mapping = adapt_raw_judicial_decision(
                 raw_record,
                 row_number=row_number,
                 download_timestamp=download_timestamp,
+                build_manifest=False,
             )
             if mapping.accepted and mapping.record is not None:
                 accepted_like += 1
@@ -806,8 +869,10 @@ def preflight_judicial_jsonl(
                 source_distribution[str(record["source_authority"])] += 1
                 court_distribution[str(record["court"])] += 1
                 chamber_distribution[str(record["chamber"])] += 1
-                paragraphs = record.get("normalized_text", "").split("\n\n") if record.get("normalized_text") else []
-                estimated_chunk_count += math.ceil(len(paragraphs) / max(1, max_paragraphs_per_chunk))
+                if sampled_paragraph_count is not None:
+                    chunk_count_samples.append(
+                        math.ceil(sampled_paragraph_count / max(1, max_paragraphs_per_chunk))
+                    )
             elif mapping.quarantine is not None:
                 metadata_deficient += 1
                 for reason in mapping.quarantine["reasons"]:
@@ -815,8 +880,13 @@ def preflight_judicial_jsonl(
                 if len(metadata_deficient_samples) < sample_cap:
                     metadata_deficient_samples.append(mapping.quarantine)
 
+    average_chunks_per_accepted = (
+        sum(chunk_count_samples) / len(chunk_count_samples) if chunk_count_samples else 0
+    )
+    estimated_chunk_count = int(round(accepted_like * average_chunks_per_accepted))
     estimated_vector_bytes = int(estimated_chunk_count * embedding_dim * vector_bytes)
     estimated_total_index_bytes = int(estimated_vector_bytes * index_overhead_ratio)
+    estimated_lookup_index_bytes = int(accepted_like * 7 * 256)
     blockers: list[str] = []
     if valid_json == 0:
         blockers.append("no_valid_json_rows")
@@ -844,11 +914,13 @@ def preflight_judicial_jsonl(
         "field_inventory": dict(sorted(field_inventory.items())),
         "null_empty_counts": dict(sorted(null_empty_counts.items())),
         "source_distribution": _distribution(source_distribution),
+        "source_authority_distribution": _distribution(source_distribution),
         "court_distribution": _distribution(court_distribution),
         "chamber_distribution": _distribution(chamber_distribution),
         "decision_date_coverage": accepted_like,
         "case_or_esas_coverage": accepted_like,
         "decision_or_karar_coverage": accepted_like,
+        "source_url_coverage": source_url_coverage,
         "text_field_coverage": dict(sorted(text_field_coverage.items())),
         "text_length": {
             "min": text_min,
@@ -860,6 +932,7 @@ def preflight_judicial_jsonl(
             "median": _percentile(paragraph_counts, 50),
             "p95": _percentile(paragraph_counts, 95),
         },
+        "average_chunks_per_accepted_estimate": average_chunks_per_accepted,
         "estimated_chunk_count": estimated_chunk_count,
         "estimated_embedding_index_storage": {
             "collection": "judicial_decisions_v1_shadow",
@@ -868,8 +941,17 @@ def preflight_judicial_jsonl(
             "index_overhead_ratio": index_overhead_ratio,
             "total_estimated_bytes": estimated_total_index_bytes,
         },
+        "estimated_exact_lookup_index_storage": {
+            "lookup_keys_per_record": 7,
+            "bytes_per_lookup_key_estimate": 256,
+            "total_estimated_bytes": estimated_lookup_index_bytes,
+        },
+        "estimated_duplicate_rate": None,
+        "estimated_duplicate_rate_note": "not measured during preflight; duplicate status is measured during manifest build",
         "accepted_like_rows": accepted_like,
+        "estimated_accepted_row_count": accepted_like,
         "metadata_deficient_rows": metadata_deficient,
+        "estimated_quarantine_count": metadata_deficient + invalid_json,
         "quarantine_reason_counts": dict(sorted(quarantine_reasons.items())),
         "malformed_row_samples": malformed_samples,
         "metadata_deficient_row_samples": metadata_deficient_samples,
@@ -981,8 +1063,10 @@ def _metadata_identity_key(record: dict[str, Any]) -> str:
 
 
 def _connect_duplicate_state(db_path: Path, *, reset: bool) -> sqlite3.Connection:
-    if reset and db_path.exists():
-        db_path.unlink()
+    if reset:
+        for path in (db_path, Path(f"{db_path}-wal"), Path(f"{db_path}-shm")):
+            if path.exists():
+                path.unlink()
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
@@ -1003,6 +1087,10 @@ def _connect_duplicate_state(db_path: Path, *, reset: bool) -> sqlite3.Connectio
         "CREATE TABLE IF NOT EXISTS metadata_keys ("
         "metadata_key TEXT PRIMARY KEY, first_row INTEGER NOT NULL, first_document_hash TEXT NOT NULL, "
         "first_normalized_text_hash TEXT NOT NULL, count INTEGER NOT NULL, conflict_count INTEGER NOT NULL)"
+    )
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS canonical_ids ("
+        "canonical_decision_id TEXT PRIMARY KEY, first_row INTEGER NOT NULL, count INTEGER NOT NULL)"
     )
     return conn
 
@@ -1043,6 +1131,7 @@ def _record_duplicate_state(conn: sqlite3.Connection, record: dict[str, Any], ro
     )
     _upsert_seen_hash(conn, "doc_hashes", "document_hash", document_hash, row_number)
     _upsert_seen_hash(conn, "norm_hashes", "normalized_text_hash", normalized_hash, row_number)
+    _upsert_seen_hash(conn, "canonical_ids", "canonical_decision_id", str(record["canonical_decision_id"]), row_number)
     existing = conn.execute(
         "SELECT first_document_hash, first_normalized_text_hash, count, conflict_count "
         "FROM metadata_keys WHERE metadata_key = ?",
@@ -1087,6 +1176,13 @@ def _duplicate_status(conn: sqlite3.Connection, record: dict[str, Any], row_numb
     ).fetchone()
     if norm_hash and int(norm_hash[1]) > 1 and row_number != int(norm_hash[0]):
         return "normalized_duplicate", int(norm_hash[0])
+
+    canonical = conn.execute(
+        "SELECT first_row, count FROM canonical_ids WHERE canonical_decision_id = ?",
+        (record["canonical_decision_id"],),
+    ).fetchone()
+    if canonical and int(canonical[1]) > 1 and row_number != int(canonical[0]):
+        return "near_duplicate_candidate", int(canonical[0])
 
     return "unique", None
 
@@ -1153,6 +1249,7 @@ def build_judicial_manifest_stream(
             "invalid_json_rows": 0,
             "accepted_rows": 0,
             "quarantined_rows": 0,
+            "canonical_decision_count": 0,
             "duplicate_counts": Counter(),
             "quarantine_reason_counts": Counter(),
             "runtime_enabled": False,
@@ -1205,6 +1302,7 @@ def build_judicial_manifest_stream(
                 record = mapping.record or {}
                 duplicate_status, canonical_row_number = _duplicate_status(conn, record, row_number)
                 record["duplicate_status"] = duplicate_status
+                record.pop("normalized_text", None)
                 if duplicate_status != "unique":
                     duplicate_file.write(
                         _json_line(
@@ -1222,6 +1320,10 @@ def build_judicial_manifest_stream(
 
         stats["duplicate_counts"] = dict(sorted(stats["duplicate_counts"].items()))
         stats["quarantine_reason_counts"] = dict(sorted(stats["quarantine_reason_counts"].items()))
+        stats["canonical_decision_count"] = stats["duplicate_counts"].get("unique", 0)
+        stats["exact_duplicate_count"] = stats["duplicate_counts"].get("exact_duplicate", 0)
+        stats["normalized_duplicate_count"] = stats["duplicate_counts"].get("normalized_duplicate", 0)
+        stats["near_duplicate_candidate_count"] = stats["duplicate_counts"].get("near_duplicate_candidate", 0)
         stats["metadata_conflict_count"] = stats["duplicate_counts"].get("metadata_conflict", 0)
         with stats_path.open("w", encoding="utf-8") as stats_file:
             json.dump(stats, stats_file, ensure_ascii=False, indent=2, sort_keys=True)
@@ -1239,7 +1341,7 @@ def prepare_judicial_chunks(
     record: dict[str, Any],
     *,
     max_paragraphs_per_chunk: int = 6,
-    include_header_chunk: bool = True,
+    include_header_chunk: bool = False,
 ) -> list[dict[str, Any]]:
     text = _clean(record.get("normalized_text")) or _clean(record.get("original_text")) or ""
     normalized = normalize_judicial_text(text)
@@ -1251,6 +1353,7 @@ def prepare_judicial_chunks(
         "source_type": JUDICIAL_SOURCE_TYPE,
         "canonical_decision_id": record.get("canonical_decision_id") or generate_canonical_decision_id(record),
         "citation_key": record.get("citation_key") or generate_citation_key(record),
+        "source_authority": record.get("source_authority"),
         "court": record.get("court"),
         "chamber": record.get("chamber"),
         "decision_date": record.get("decision_date"),
@@ -1263,6 +1366,7 @@ def prepare_judicial_chunks(
         "normalized_text_hash": record.get("normalized_text_hash") or normalized.normalized_text_hash,
         "duplicate_status": record.get("duplicate_status") or "unique",
         "year": str(record.get("decision_date") or "")[:4] or None,
+        "related_law_refs": record.get("related_law_refs") or [],
     }
 
     chunks: list[dict[str, Any]] = []
@@ -1273,7 +1377,7 @@ def prepare_judicial_chunks(
             f"{base_metadata['decision_date']}."
         )
         header_hash = _sha256_text(header_text)
-        header_key = f"{base_metadata['canonical_decision_id']}:p0-0"
+        header_key = f"{base_metadata['canonical_decision_id']}:meta"
         chunks.append(
             {
                 "chunk_id": header_key,
@@ -1285,7 +1389,8 @@ def prepare_judicial_chunks(
                     "paragraph_end": 0,
                     "chunk_hash": header_hash,
                     "chunk_key": header_key,
-                    "evidence_block_type": "metadata_header",
+                    "evidence_block_type": "unknown",
+                    "vector_index_eligible": False,
                 },
             }
         )
@@ -1303,7 +1408,8 @@ def prepare_judicial_chunks(
             "paragraph_end": end + 1,
             "chunk_hash": chunk_hash,
             "chunk_key": chunk_key,
-            "evidence_block_type": "decision_body",
+            "evidence_block_type": "unknown",
+            "vector_index_eligible": True,
         }
         chunks.append(
             {
@@ -1335,12 +1441,14 @@ def validate_judicial_chunks(chunks: Iterable[dict[str, Any]]) -> ValidationSumm
             _add_error(errors, index, "chunk_hash", "does not match chunk text")
         if _clean(metadata.get("chunk_key")) and chunk.get("chunk_id") != metadata.get("chunk_key"):
             _add_error(errors, index, "chunk_key", "must match chunk_id")
-        if metadata.get("evidence_block_type") not in {"metadata_header", "decision_body", "official_headnote"}:
+        if metadata.get("evidence_block_type") not in JUDICIAL_EVIDENCE_BLOCK_TYPES:
             _add_error(errors, index, "evidence_block_type", "unsupported evidence block type")
         start = metadata.get("paragraph_start")
         end = metadata.get("paragraph_end")
         if isinstance(start, int) and isinstance(end, int) and start > end:
             _add_error(errors, index, "paragraph_start", "must be less than or equal to paragraph_end")
+        if start == 0 and metadata.get("vector_index_eligible") is not False:
+            _add_error(errors, index, "vector_index_eligible", "metadata/header chunks must not be vector indexed")
     return ValidationSummary(
         pass_=not errors,
         total_records=len(materialized),
@@ -1352,8 +1460,10 @@ def validate_judicial_chunks(chunks: Iterable[dict[str, Any]]) -> ValidationSumm
 
 
 def _connect_chunk_state(db_path: Path, *, reset: bool) -> sqlite3.Connection:
-    if reset and db_path.exists():
-        db_path.unlink()
+    if reset:
+        for path in (db_path, Path(f"{db_path}-wal"), Path(f"{db_path}-shm")):
+            if path.exists():
+                path.unlink()
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
@@ -1545,6 +1655,7 @@ def build_judicial_exact_lookup_index(
     manifest_path: str | Path,
     output_dir: str | Path,
     *,
+    chunks_path: str | Path | None = None,
     limit: int | None = None,
     include_duplicates: bool = False,
 ) -> dict[str, Any]:
@@ -1553,8 +1664,9 @@ def build_judicial_exact_lookup_index(
     out_dir.mkdir(parents=True, exist_ok=True)
     db_path = out_dir / "judicial_exact_lookup.sqlite"
     stats_path = out_dir / "judicial_exact_lookup_stats.json"
-    if db_path.exists():
-        db_path.unlink()
+    for path in (db_path, Path(f"{db_path}-wal"), Path(f"{db_path}-shm")):
+        if path.exists():
+            path.unlink()
     conn = sqlite3.connect(db_path)
     stats: dict[str, Any] = {
         "manifest_path": str(manifest_file),
@@ -1564,6 +1676,7 @@ def build_judicial_exact_lookup_index(
         "records_indexed": 0,
         "lookup_key_count": 0,
         "duplicate_lookup_keys": 0,
+        "chunk_refs_count": 0,
         "include_duplicates": include_duplicates,
         "runtime_enabled": False,
     }
@@ -1572,7 +1685,13 @@ def build_judicial_exact_lookup_index(
             "CREATE TABLE lookup ("
             "lookup_type TEXT NOT NULL, lookup_key TEXT NOT NULL, canonical_decision_id TEXT NOT NULL, "
             "citation_key TEXT NOT NULL, manifest_row_number INTEGER NOT NULL, duplicate_status TEXT NOT NULL, "
-            "PRIMARY KEY (lookup_type, lookup_key))"
+            "PRIMARY KEY (lookup_type, lookup_key, canonical_decision_id))"
+        )
+        conn.execute("CREATE INDEX idx_lookup_key ON lookup (lookup_type, lookup_key)")
+        conn.execute(
+            "CREATE TABLE chunk_refs ("
+            "canonical_decision_id TEXT NOT NULL, chunk_key TEXT NOT NULL, paragraph_start INTEGER NOT NULL, "
+            "paragraph_end INTEGER NOT NULL, evidence_block_type TEXT NOT NULL, PRIMARY KEY (canonical_decision_id, chunk_key))"
         )
         with manifest_file.open("r", encoding="utf-8") as source:
             for manifest_row_number, line in enumerate(source, start=1):
@@ -1584,6 +1703,11 @@ def build_judicial_exact_lookup_index(
                     continue
                 stats["records_indexed"] += 1
                 for key_type, lookup_key in build_exact_lookup_keys(record):
+                    if conn.execute(
+                        "SELECT 1 FROM lookup WHERE lookup_type = ? AND lookup_key = ? LIMIT 1",
+                        (key_type, lookup_key),
+                    ).fetchone():
+                        stats["duplicate_lookup_keys"] += 1
                     try:
                         conn.execute(
                             "INSERT INTO lookup "
@@ -1600,9 +1724,40 @@ def build_judicial_exact_lookup_index(
                         )
                         stats["lookup_key_count"] += 1
                     except sqlite3.IntegrityError:
-                        stats["duplicate_lookup_keys"] += 1
+                        continue
                 if stats["records_seen"] % 10_000 == 0:
                     conn.commit()
+        if chunks_path is not None:
+            chunk_file = Path(chunks_path)
+            with chunk_file.open("r", encoding="utf-8") as source:
+                for line in source:
+                    chunk = json.loads(line)
+                    metadata = dict(chunk.get("metadata") or {})
+                    canonical_decision_id = _clean(metadata.get("canonical_decision_id"))
+                    chunk_key = _clean(metadata.get("chunk_key"))
+                    paragraph_start = metadata.get("paragraph_start")
+                    paragraph_end = metadata.get("paragraph_end")
+                    evidence_block_type = _clean(metadata.get("evidence_block_type")) or "unknown"
+                    if canonical_decision_id is None or chunk_key is None:
+                        continue
+                    try:
+                        conn.execute(
+                            "INSERT INTO chunk_refs "
+                            "(canonical_decision_id, chunk_key, paragraph_start, paragraph_end, evidence_block_type) "
+                            "VALUES (?, ?, ?, ?, ?)",
+                            (
+                                canonical_decision_id,
+                                chunk_key,
+                                int(paragraph_start),
+                                int(paragraph_end),
+                                evidence_block_type,
+                            ),
+                        )
+                        stats["chunk_refs_count"] += 1
+                    except (sqlite3.IntegrityError, TypeError, ValueError):
+                        continue
+                    if stats["chunk_refs_count"] % 10_000 == 0:
+                        conn.commit()
         conn.commit()
         with stats_path.open("w", encoding="utf-8") as stats_file:
             json.dump(stats, stats_file, ensure_ascii=False, indent=2, sort_keys=True)

@@ -40,7 +40,7 @@ def build_indexable_documents(
     documents: list[dict[str, Any]] = []
     for chunk in chunks:
         metadata = dict(chunk.get("metadata") or {})
-        if not include_metadata_header and metadata.get("evidence_block_type") == "metadata_header":
+        if not include_metadata_header and metadata.get("vector_index_eligible") is False:
             continue
         documents.append(
             {
@@ -90,6 +90,7 @@ def build_shadow_index_plan(
         "resume_behavior": "skip existing chunk_key entries and resume from last committed batch",
         "metadata_filters": [
             "source_type",
+            "source_authority",
             "court",
             "chamber",
             "decision_date",
@@ -189,6 +190,8 @@ def _format_offline_result(
         "paragraph_end": metadata.get("paragraph_end"),
         "source_url": metadata.get("source_url"),
         "score": score,
+        "retrieval_score": score,
+        "metadata_filters_applied": {},
         "retrieval_lane": lane,
         "lane": lane,
     }
