@@ -97,7 +97,7 @@ RAW_TEXT_FIELDS = (
 
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$", re.IGNORECASE)
-_SPACE_RE = re.compile(r"[ \t\r\f\v]+")
+_SPACE_RE = re.compile(r"\s+")
 _BLANK_LINE_RE = re.compile(r"\n\s*\n+")
 _LEGAL_NO_RE = re.compile(r"(\d{4}\s*/\s*\d+[A-Za-zÇĞİÖŞÜçğıöşü/-]*)")
 _DATE_TOKEN_RE = re.compile(r"(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[./]\d{1,2}[./]\d{4})")
@@ -1676,11 +1676,21 @@ def build_judicial_exact_lookup_index(
         "records_indexed": 0,
         "lookup_key_count": 0,
         "duplicate_lookup_keys": 0,
+        "decision_metadata_count": 0,
         "chunk_refs_count": 0,
         "include_duplicates": include_duplicates,
         "runtime_enabled": False,
     }
     try:
+        conn.execute(
+            "CREATE TABLE decisions ("
+            "canonical_decision_id TEXT PRIMARY KEY, citation_key TEXT NOT NULL, "
+            "source_authority TEXT NOT NULL, court TEXT NOT NULL, chamber TEXT NOT NULL, "
+            "decision_date TEXT NOT NULL, case_no TEXT NOT NULL, esas_no TEXT NOT NULL, "
+            "decision_no TEXT NOT NULL, karar_no TEXT NOT NULL, source_url TEXT NOT NULL, "
+            "document_hash TEXT NOT NULL, normalized_text_hash TEXT NOT NULL, "
+            "duplicate_status TEXT NOT NULL, manifest_row_number INTEGER NOT NULL)"
+        )
         conn.execute(
             "CREATE TABLE lookup ("
             "lookup_type TEXT NOT NULL, lookup_key TEXT NOT NULL, canonical_decision_id TEXT NOT NULL, "
@@ -1702,12 +1712,35 @@ def build_judicial_exact_lookup_index(
                 if not include_duplicates and record.get("duplicate_status") != "unique":
                     continue
                 stats["records_indexed"] += 1
+                try:
+                    conn.execute(
+                        "INSERT INTO decisions "
+                        "(canonical_decision_id, citation_key, source_authority, court, chamber, "
+                        "decision_date, case_no, esas_no, decision_no, karar_no, source_url, "
+                        "document_hash, normalized_text_hash, duplicate_status, manifest_row_number) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            record["canonical_decision_id"],
+                            record["citation_key"],
+                            record.get("source_authority") or "",
+                            record["court"],
+                            record["chamber"],
+                            record["decision_date"],
+                            record.get("case_no") or record.get("esas_no") or "",
+                            record.get("esas_no") or record.get("case_no") or "",
+                            record.get("decision_no") or record.get("karar_no") or "",
+                            record.get("karar_no") or record.get("decision_no") or "",
+                            record["source_url"],
+                            record["document_hash"],
+                            record["normalized_text_hash"],
+                            record.get("duplicate_status") or "unique",
+                            manifest_row_number,
+                        ),
+                    )
+                    stats["decision_metadata_count"] += 1
+                except sqlite3.IntegrityError:
+                    pass
                 for key_type, lookup_key in build_exact_lookup_keys(record):
-                    if conn.execute(
-                        "SELECT 1 FROM lookup WHERE lookup_type = ? AND lookup_key = ? LIMIT 1",
-                        (key_type, lookup_key),
-                    ).fetchone():
-                        stats["duplicate_lookup_keys"] += 1
                     try:
                         conn.execute(
                             "INSERT INTO lookup "
@@ -1758,6 +1791,11 @@ def build_judicial_exact_lookup_index(
                         continue
                     if stats["chunk_refs_count"] % 10_000 == 0:
                         conn.commit()
+        duplicate_lookup_keys = conn.execute(
+            "SELECT COALESCE(SUM(key_count - 1), 0) FROM ("
+            "SELECT COUNT(*) AS key_count FROM lookup GROUP BY lookup_type, lookup_key HAVING key_count > 1)"
+        ).fetchone()
+        stats["duplicate_lookup_keys"] = int(duplicate_lookup_keys[0] if duplicate_lookup_keys else 0)
         conn.commit()
         with stats_path.open("w", encoding="utf-8") as stats_file:
             json.dump(stats, stats_file, ensure_ascii=False, indent=2, sort_keys=True)
