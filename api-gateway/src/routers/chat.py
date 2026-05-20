@@ -5150,6 +5150,7 @@ async def chat_completions(
             and (
                 legal_route_name == "unsupported_or_out_of_scope"
                 or bool(getattr(legal_route, "judicial_requested", False))
+                or bool(getattr(legal_route, "legislation_requested", False))
                 or bool(legal_health.get("judicial_runtime_enabled"))
             )
         )

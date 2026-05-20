@@ -403,9 +403,11 @@ class PersistentJudicialExactLookupStore:
     def _connect(self) -> sqlite3.Connection:
         if self.read_only:
             uri = Path(self.db_path).resolve().as_uri() + "?mode=ro"
-            conn = sqlite3.connect(uri, uri=True)
+            conn = sqlite3.connect(uri, uri=True, timeout=5.0)
+            conn.execute("PRAGMA query_only=ON")
         else:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=5.0)
+        conn.execute("PRAGMA busy_timeout=5000")
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -745,7 +747,9 @@ def query_judicial_lexical_index(
         "ORDER BY bm25_score LIMIT ?"
     )
     uri = Path(index_path).resolve().as_uri() + "?mode=ro"
-    with sqlite3.connect(uri, uri=True) as conn:
+    with sqlite3.connect(uri, uri=True, timeout=5.0) as conn:
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA query_only=ON")
         conn.row_factory = sqlite3.Row
         rows = conn.execute(sql, params).fetchall()
     results: list[dict[str, Any]] = []
@@ -760,7 +764,9 @@ def _fetch_chunk_rows(index_path: str | Path, chunk_keys: list[str]) -> dict[str
         return {}
     placeholders = ",".join("?" for _ in chunk_keys)
     uri = Path(index_path).resolve().as_uri() + "?mode=ro"
-    with sqlite3.connect(uri, uri=True) as conn:
+    with sqlite3.connect(uri, uri=True, timeout=5.0) as conn:
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA query_only=ON")
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
             f"SELECT c.* FROM chunks c WHERE c.chunk_key IN ({placeholders})",
@@ -784,6 +790,7 @@ class JudicialHybridRetriever:
         exact_key: str | None = None,
         filters: dict[str, Any] | None = None,
         vector_results: list[dict[str, Any]] | None = None,
+        lexical_for_exact: bool = True,
     ) -> list[dict[str, Any]]:
         merged: dict[str, dict[str, Any]] = {}
         if exact_key_type and exact_key:
@@ -813,16 +820,25 @@ class JudicialHybridRetriever:
                     if row is None:
                         continue
                     result = _row_to_lexical_result(row, score=1.0, filters=filters or {})
+                    retrieval_lane = "hybrid" if lexical_for_exact else exact_score_component
                     result.update(
                         {
-                            "retrieval_lane": "hybrid",
-                            "lane": "hybrid",
+                            "retrieval_lane": retrieval_lane,
+                            "lane": retrieval_lane,
                             "lane_provenance": [exact_score_component],
                             "score_components": {exact_score_component: 1.0},
                             "metadata": {**result["metadata"], **metadata},
                         }
                     )
                     merged[result["chunk_key"]] = result
+            if not lexical_for_exact:
+                for result in merged.values():
+                    components = result.setdefault("score_components", {})
+                    result["final_score"] = float(components.get("exact", components.get("exact_metadata", 0.0))) * 1000.0
+                    result["score"] = result["final_score"]
+                    result["retrieval_score"] = result["final_score"]
+                    result.setdefault("metadata_filters_applied", filters or {})
+                return sorted(merged.values(), key=lambda item: float(item.get("final_score", 0.0)), reverse=True)[:top_k]
         for lexical in query_judicial_lexical_index(self.lexical_index_path, query, filters=filters, top_k=top_k):
             existing = merged.setdefault(
                 lexical["chunk_key"],

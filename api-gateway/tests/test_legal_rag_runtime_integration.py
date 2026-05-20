@@ -72,6 +72,13 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
             handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
 
+def _write_passing_coverage_audit(processed: Path) -> None:
+    (processed / "judicial_processed_coverage_audit.json").write_text(
+        json.dumps({"pass": True, "failures": []}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _build_runtime(tmp_path: Path, *, judicial_enabled: bool) -> LegalRagOrchestrator:
     processed = tmp_path / "processed"
     processed.mkdir()
@@ -96,6 +103,7 @@ def _build_runtime(tmp_path: Path, *, judicial_enabled: bool) -> LegalRagOrchest
         chunks_path=processed / "judicial_chunks.jsonl",
     )
     build_judicial_lexical_index(processed / "judicial_chunks.jsonl", processed)
+    _write_passing_coverage_audit(processed)
     return LegalRagOrchestrator(
         config=LegalRuntimeConfig(
             judicial_runtime_enabled=judicial_enabled,
@@ -131,6 +139,7 @@ def _build_trial_court_runtime(tmp_path: Path, *, judicial_enabled: bool) -> Leg
         chunks_path=processed / "judicial_chunks.jsonl",
     )
     build_judicial_lexical_index(processed / "judicial_chunks.jsonl", processed)
+    _write_passing_coverage_audit(processed)
     return LegalRagOrchestrator(
         config=LegalRuntimeConfig(
             judicial_runtime_enabled=judicial_enabled,
@@ -218,7 +227,34 @@ def test_runtime_config_judicial_enabled_exact_lookup_chat_path(tmp_path) -> Non
     assert "judicial_decision" in payload["trace"]["answer_contract"]["source_types"]
     assert payload["trace"]["answer_contract"]["source_types"] == ["judicial_decision"]
     assert payload["source_cards"]
-    assert payload["source_cards"][0]["evidence_id"].startswith(("M", "J"))
+    card = payload["source_cards"][0]
+    assert card["evidence_id"].startswith(("M", "J"))
+    assert card["source_type"] == "judicial_decision"
+    assert card["court"] == "Yargıtay"
+    assert card["chamber"] == "9HD"
+    assert card["decision_date"] == "2024-05-10"
+    assert card["esas_no"] == "2024/12345"
+    assert card["karar_no"] == "2024/6789"
+    assert card["citation_key"]
+    assert card["canonical_decision_id"]
+    assert card["source_url"]
+    assert card["paragraph_start"] >= 1
+    assert card["paragraph_end"] >= card["paragraph_start"]
+    assert card["snippet"]
+    assert card["retrieval_lane"] in {"exact", "exact_metadata", "hybrid", "lexical"}
+    assert card["score_components"]
+
+
+def test_suffix_style_exact_lookup_uses_exact_metadata_before_lexical(tmp_path) -> None:
+    runtime = _build_runtime(tmp_path, judicial_enabled=True)
+    with _make_client(runtime) as client:
+        payload = _post(client, "Yargıtay 9. HD 2024/12345 E., 2024/6789 K. kararını açıkla")
+
+    assert payload["blocked"] is False
+    assert any("E. 2024/12345 K. 2024/6789" in citation for citation in payload["citations"])
+    evidence = payload["trace"]["evidence"]
+    assert evidence
+    assert any({"exact", "exact_metadata"} & set(item["score_components"]) for item in evidence)
 
 
 def test_sqlite_fts5_lexical_runtime_path_has_judicial_citation_contract(tmp_path) -> None:
@@ -257,6 +293,12 @@ def test_mixed_legislation_and_judicial_answer_separates_source_types(tmp_path) 
     assert any("Yargıtay 9HD" in citation for citation in payload["citations"])
     assert payload["verification"]["source_type_confusion"] is False
     assert {card["source_type"] for card in payload["source_cards"]} == {"legislation", "judicial_decision"}
+    legislation_card = next(card for card in payload["source_cards"] if card["source_type"] == "legislation")
+    assert legislation_card["law_name"] == "Türk Borçlar Kanunu"
+    assert legislation_card["law_number"] == "6098"
+    assert legislation_card["article_number"] == "49"
+    assert legislation_card["source_url"] == "https://mevzuat.gov.tr/tbk-49"
+    assert legislation_card["snippet"]
 
 
 def test_legislation_only_runtime_uses_mevzuat_and_has_no_judicial_leakage_when_enabled(tmp_path) -> None:
@@ -297,6 +339,8 @@ def test_case_law_query_refuses_when_enabled_indexes_are_missing(tmp_path) -> No
     health = runtime.health()
     assert health["judicial_runtime_enabled"] is True
     assert health["judicial_ready"] is False
+    assert health["judicial_readiness_status"] == "failed"
+    assert "processed_corpus_dir_missing" in health["judicial_readiness_failures"]
     assert health["exact_lookup_available"] is False
     assert health["lexical_index_available"] is False
 

@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import sqlite3
 import time
 from collections import Counter
 from dataclasses import dataclass, field
@@ -40,9 +41,40 @@ _TR_ASCII_TRANSLATION = str.maketrans(
 _LEGAL_NO_RE = r"\d{4}/\d{1,8}"
 _E_RE = re.compile(r"(?:\bE\.?|ESAS(?:\s+NO)?)[\s:.-]*(?P<value>" + _LEGAL_NO_RE + r")", re.IGNORECASE)
 _K_RE = re.compile(r"(?:\bK\.?|KARAR(?:\s+NO)?)[\s:.-]*(?P<value>" + _LEGAL_NO_RE + r")", re.IGNORECASE)
+_E_SUFFIX_RE = re.compile(r"(?P<value>" + _LEGAL_NO_RE + r")\s*E\.?", re.IGNORECASE)
+_K_SUFFIX_RE = re.compile(r"(?P<value>" + _LEGAL_NO_RE + r")\s*K\.?", re.IGNORECASE)
 _DATE_RE = re.compile(r"\b(?P<date>\d{4}-\d{2}-\d{2}|\d{1,2}[./]\d{1,2}[./]\d{4})\b")
+_YEAR_RE = re.compile(r"\b(?P<year>19\d{2}|20\d{2})\b")
 _SHA256_RE = re.compile(r"\b[0-9a-f]{64}\b", re.IGNORECASE)
 _CANONICAL_ID_RE = re.compile(r"\bjudicial_decision:[A-Za-z0-9_./:-]+\b")
+_JUDICIAL_COVERAGE_AUDIT_FILENAME = "judicial_processed_coverage_audit.json"
+_SQLITE_BUSY_TIMEOUT_MS = 5000
+_EXACT_LOOKUP_REQUIRED_TABLES = ("decisions", "lookup", "chunk_refs")
+_LEXICAL_REQUIRED_TABLES = ("chunks", "chunks_fts")
+_EXACT_DECISION_REQUIRED_FIELDS = (
+    "canonical_decision_id",
+    "citation_key",
+    "court",
+    "chamber",
+    "decision_date",
+    "esas_no",
+    "karar_no",
+    "source_url",
+)
+_LEXICAL_CHUNK_REQUIRED_FIELDS = (
+    "chunk_key",
+    "canonical_decision_id",
+    "citation_key",
+    "court",
+    "chamber",
+    "decision_date",
+    "esas_no",
+    "karar_no",
+    "paragraph_start",
+    "paragraph_end",
+    "source_url",
+    "source_type",
+)
 _COURT_HINTS = (
     ("yargitay", "Yargıtay"),
     ("danistay", "Danıştay"),
@@ -255,30 +287,42 @@ class LegalEvidence:
 
     def packet(self, *, text_limit: int) -> dict[str, Any]:
         if self.source_type == "legislation":
+            law_number = self.metadata.get("law_no") or self.metadata.get("kanun_no")
+            article_number = self.metadata.get("madde_no") or self.metadata.get("article_no")
+            source_url = self.metadata.get("source_url")
+            snippet = _bounded_text(self.text, text_limit)
             return {
                 "evidence_id": self.evidence_id,
                 "source_type": "legislation",
                 "law_name": self.metadata.get("source_title") or self.metadata.get("law_name") or self.metadata.get("belge_adi"),
                 "law_short_name": self.metadata.get("law_short_name") or self.metadata.get("kanun_kisa_adi"),
-                "law_no": self.metadata.get("law_no") or self.metadata.get("kanun_no"),
-                "article_no": self.metadata.get("madde_no") or self.metadata.get("article_no"),
-                "madde_no": self.metadata.get("madde_no") or self.metadata.get("article_no"),
+                "law_number": law_number,
+                "law_no": law_number,
+                "article_number": article_number,
+                "article_no": article_number,
+                "madde_no": article_number,
+                "article_title": self.metadata.get("article_title") or self.metadata.get("madde_baslik"),
+                "source_url": source_url,
                 "current_law_state": self.metadata.get("current_law_state") or self.metadata.get("yururluk_durumu"),
-                "source_id": self.metadata.get("source_id") or self.metadata.get("source_url") or self.metadata.get("chunk_id"),
+                "source_id": self.metadata.get("source_id") or source_url or self.metadata.get("chunk_id"),
+                "chunk_key": self.metadata.get("chunk_key") or self.metadata.get("chunk_id"),
                 "official_source_metadata": {
                     key: value
                     for key, value in {
-                        "source_url": self.metadata.get("source_url"),
+                        "source_url": source_url,
                         "source_title": self.metadata.get("source_title"),
-                        "law_no": self.metadata.get("law_no") or self.metadata.get("kanun_no"),
+                        "law_no": law_number,
                     }.items()
                     if value
                 },
-                "selected_text": _bounded_text(self.text, text_limit),
+                "selected_text": snippet,
+                "snippet": snippet,
                 "citation": self.citation,
                 "retrieval_score": self.score,
                 "retrieval_lane": self.retrieval_lane,
+                "score_components": dict(self.score_components),
             }
+        snippet = _bounded_text(self.text, text_limit)
         return {
             "evidence_id": self.evidence_id,
             "source_type": "judicial_decision",
@@ -292,19 +336,17 @@ class LegalEvidence:
             "paragraph_start": self.metadata.get("paragraph_start"),
             "paragraph_end": self.metadata.get("paragraph_end"),
             "source_url": self.metadata.get("source_url"),
-            "selected_text": _bounded_text(self.text, text_limit),
+            "selected_text": snippet,
+            "snippet": snippet,
             "citation": self.citation,
             "retrieval_lane": self.retrieval_lane,
+            "retrieval_score": self.score,
             "score_components": dict(self.score_components),
         }
 
     def source_card(self) -> dict[str, Any]:
         packet = self.packet(text_limit=420)
-        card = {
-            key: value
-            for key, value in packet.items()
-            if key not in {"selected_text", "official_source_metadata", "retrieval_score", "retrieval_lane", "score_components"}
-        }
+        card = {key: value for key, value in packet.items() if key != "official_source_metadata"}
         card["selected_text_excerpt"] = packet["selected_text"]
         if self.source_type == "legislation":
             card["source_id"] = packet.get("source_id")
@@ -385,6 +427,12 @@ def _extract_court(query: str) -> str | None:
     )
     if trial_court:
         cleaned = re.sub(r"\s+", " ", trial_court.group(1)).strip()
+        cleaned = re.sub(
+            r"^.*\b(?:kapsamında|kapsaminda|hakkında|hakkinda|için|icin)\s+",
+            "",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
         return re.sub(r"^(?:ve|ile)\s+", "", cleaned, flags=re.IGNORECASE)
     court_match = re.search(
         r"([A-ZÇĞİÖŞÜa-zçğıöşü\s\d.]+MAHKEMES[İI])",
@@ -393,6 +441,12 @@ def _extract_court(query: str) -> str | None:
     )
     if court_match:
         cleaned = re.sub(r"\s+", " ", court_match.group(1)).strip()
+        cleaned = re.sub(
+            r"^.*\b(?:kapsamında|kapsaminda|hakkında|hakkinda|için|icin)\s+",
+            "",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
         return re.sub(r"^(?:ve|ile)\s+", "", cleaned, flags=re.IGNORECASE)
     return None
 
@@ -425,8 +479,8 @@ def _extract_exact_lookup(query: str) -> tuple[str | None, str | None, dict[str,
     url = re.search(r"https?://\S+", query)
     if url:
         return "source_url", url.group(0).rstrip(".,;)"), {}
-    e_match = _E_RE.search(query)
-    k_match = _K_RE.search(query)
+    e_match = _E_RE.search(query) or _E_SUFFIX_RE.search(query)
+    k_match = _K_RE.search(query) or _K_SUFFIX_RE.search(query)
     if e_match and k_match:
         court = _extract_court(query)
         chamber = _extract_chamber(query) or "GENEL"
@@ -454,6 +508,34 @@ def _extract_exact_lookup(query: str) -> tuple[str | None, str | None, dict[str,
                 filters,
             )
     return None, None, {}
+
+
+def _extract_judicial_metadata_filters(query: str, analysis: Any) -> dict[str, Any]:
+    filters: dict[str, Any] = {}
+    court = _extract_court(query)
+    chamber = _extract_chamber(query)
+    decision_date = _parse_tr_date(query)
+    if court:
+        filters["court"] = court
+    if chamber:
+        filters["chamber"] = chamber
+    if decision_date:
+        filters["decision_date"] = decision_date
+    else:
+        year_match = _YEAR_RE.search(query)
+        if year_match:
+            filters["year"] = year_match.group("year")
+    article_refs = list(getattr(analysis, "article_refs", []) or [])
+    has_indexed_filter = any(
+        key in filters for key in ("court", "chamber", "year", "decision_date", "esas_no", "karar_no")
+    )
+    if article_refs and not has_indexed_filter:
+        first_ref = article_refs[0]
+        law = getattr(first_ref, "law", None)
+        article_no = getattr(first_ref, "article_no", None)
+        if law and article_no:
+            filters["related_law_refs"] = f"{law} m.{article_no}"
+    return filters
 
 
 def _build_mevzuat_citation(result: RetrievalResult) -> str:
@@ -622,6 +704,31 @@ class LegalRagOrchestrator:
     def health(self) -> dict[str, Any]:
         return dict(self._status)
 
+    def public_health(self) -> dict[str, Any]:
+        keys = (
+            "legal_rag_runtime_mode",
+            "judicial_runtime_enabled",
+            "judicial_ready",
+            "judicial_readiness_status",
+            "judicial_readiness_failures",
+            "judicial_indexes_available",
+            "exact_lookup_available",
+            "lexical_index_available",
+            "chunk_refs_available",
+            "required_metadata_ready",
+            "coverage_audit_available",
+            "coverage_audit_pass",
+            "vector_index_status",
+            "mevzuat_retriever_available",
+            "mevzuat_retriever_degraded",
+            "verifier_enabled",
+            "processed_corpus_dir_configured",
+            "retrieval_timeout_ms",
+            "llm_timeout_ms",
+            "verification_timeout_ms",
+        )
+        return {key: self._status.get(key) for key in keys}
+
     def should_handle(self, query: str) -> bool:
         route = self.route_query(query)
         return route.route not in {"native_dialog", "unsupported_or_out_of_scope"}
@@ -633,6 +740,8 @@ class LegalRagOrchestrator:
 
         analysis = analyze_query(query)
         exact_key_type, exact_key, filters = _extract_exact_lookup(query)
+        if not filters:
+            filters = _extract_judicial_metadata_filters(query, analysis)
         has_exact = exact_key_type is not None and exact_key is not None
         judicial_score = sum(1 for term in _JUDICIAL_TERMS if _term_in_normalized(normalized, term))
         explicit_legislation_score = (
@@ -748,6 +857,7 @@ class LegalRagOrchestrator:
                 "legislation": route.legislation_requested,
                 "judicial_decision": route.judicial_requested,
             },
+            "judicial_filters": dict(route.judicial_filters),
             "latency_by_lane_ms": {},
         }
         if route.route in {"native_dialog", "unsupported_or_out_of_scope"}:
@@ -820,6 +930,23 @@ class LegalRagOrchestrator:
             judicial_query = self._build_judicial_query(query=query, mevzuat_evidence=mevzuat_evidence, route=route)
             judicial_evidence = self._retrieve_judicial(query=judicial_query, route=route, top_k=min(top_k, self.config.judicial_top_k))
             retrieval_metrics["latency_by_lane_ms"]["judicial"] = round((time.perf_counter() - lane_started) * 1000.0, 3)
+            judicial_lanes = Counter(evidence.retrieval_lane for evidence in judicial_evidence)
+            exact_requested = bool(route.exact_key_type and route.exact_key)
+            retrieval_metrics["judicial_retrieval"] = {
+                "exact_lookup_requested": exact_requested,
+                "exact_lookup_hit": bool(
+                    exact_requested
+                    and any(
+                        {"exact", "exact_metadata"} & set(evidence.score_components)
+                        for evidence in judicial_evidence
+                    )
+                ),
+                "lexical_hit_count": sum(
+                    1 for evidence in judicial_evidence if "lexical" in evidence.score_components
+                ),
+                "selected_count": len(judicial_evidence),
+                "retrieval_lanes_used": dict(sorted(judicial_lanes.items())),
+            }
             if not judicial_evidence:
                 return PreparedLegalAnswer(
                     route=route,
@@ -890,13 +1017,199 @@ class LegalRagOrchestrator:
         retrieval_metrics["selected_evidence_count"] = len(mevzuat_evidence) + len(judicial_evidence)
         return PreparedLegalAnswer(route, mevzuat_evidence, judicial_evidence, retrieval_metrics)
 
+    def _connect_readonly_sqlite(self, path: Path) -> sqlite3.Connection:
+        uri = path.resolve().as_uri() + "?mode=ro"
+        conn = sqlite3.connect(uri, uri=True, timeout=_SQLITE_BUSY_TIMEOUT_MS / 1000.0)
+        conn.row_factory = sqlite3.Row
+        conn.execute(f"PRAGMA busy_timeout={_SQLITE_BUSY_TIMEOUT_MS}")
+        conn.execute("PRAGMA query_only=ON")
+        return conn
+
+    @staticmethod
+    def _sqlite_tables(conn: sqlite3.Connection) -> set[str]:
+        return {
+            str(row["name"])
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type IN ('table', 'view')")
+        }
+
+    @staticmethod
+    def _missing_required_values(row: sqlite3.Row | None, fields: tuple[str, ...]) -> list[str]:
+        if row is None:
+            return list(fields)
+        payload = dict(row)
+        missing: list[str] = []
+        for field_name in fields:
+            value = payload.get(field_name)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                missing.append(field_name)
+        return missing
+
+    def _validate_exact_lookup_store(self) -> dict[str, Any]:
+        path = self.config.exact_lookup_path
+        result: dict[str, Any] = {
+            "path_exists": path.exists(),
+            "readable": False,
+            "available": False,
+            "tables_ready": False,
+            "lookup_rows_available": False,
+            "decision_rows_available": False,
+            "chunk_refs_available": False,
+            "required_metadata_ready": False,
+            "failures": [],
+        }
+        failures: list[str] = []
+        if not path.exists():
+            failures.append("exact_lookup_missing")
+            result["failures"] = failures
+            return result
+        if not path.is_file():
+            failures.append("exact_lookup_not_file")
+            result["failures"] = failures
+            return result
+
+        try:
+            with self._connect_readonly_sqlite(path) as conn:
+                result["readable"] = True
+                tables = self._sqlite_tables(conn)
+                missing_tables = [table for table in _EXACT_LOOKUP_REQUIRED_TABLES if table not in tables]
+                if missing_tables:
+                    failures.append(f"exact_lookup_missing_tables:{','.join(missing_tables)}")
+                result["tables_ready"] = not missing_tables
+                if not missing_tables:
+                    decision = conn.execute(
+                        "SELECT canonical_decision_id, citation_key, court, chamber, decision_date, esas_no, karar_no, source_url "
+                        "FROM decisions LIMIT 1"
+                    ).fetchone()
+                    result["decision_rows_available"] = decision is not None
+                    if decision is None:
+                        failures.append("exact_lookup_decisions_empty")
+                    missing_values = self._missing_required_values(decision, _EXACT_DECISION_REQUIRED_FIELDS)
+                    if missing_values:
+                        failures.append(f"exact_lookup_missing_metadata:{','.join(missing_values)}")
+                    result["required_metadata_ready"] = not missing_values
+                    result["lookup_rows_available"] = (
+                        conn.execute("SELECT 1 FROM lookup LIMIT 1").fetchone() is not None
+                    )
+                    if not result["lookup_rows_available"]:
+                        failures.append("exact_lookup_keys_empty")
+                    result["chunk_refs_available"] = (
+                        conn.execute("SELECT 1 FROM chunk_refs LIMIT 1").fetchone() is not None
+                    )
+                    if not result["chunk_refs_available"]:
+                        failures.append("exact_lookup_chunk_refs_empty")
+        except sqlite3.DatabaseError as exc:
+            failures.append(f"exact_lookup_unreadable:{exc.__class__.__name__}")
+        result["failures"] = failures
+        result["available"] = not failures
+        return result
+
+    def _validate_lexical_index(self) -> dict[str, Any]:
+        path = self.config.lexical_index_path
+        result: dict[str, Any] = {
+            "path_exists": path.exists(),
+            "readable": False,
+            "available": False,
+            "tables_ready": False,
+            "chunk_rows_available": False,
+            "fts_rows_available": False,
+            "required_metadata_ready": False,
+            "failures": [],
+        }
+        failures: list[str] = []
+        if not path.exists():
+            failures.append("lexical_index_missing")
+            result["failures"] = failures
+            return result
+        if not path.is_file():
+            failures.append("lexical_index_not_file")
+            result["failures"] = failures
+            return result
+
+        try:
+            with self._connect_readonly_sqlite(path) as conn:
+                result["readable"] = True
+                tables = self._sqlite_tables(conn)
+                missing_tables = [table for table in _LEXICAL_REQUIRED_TABLES if table not in tables]
+                if missing_tables:
+                    failures.append(f"lexical_index_missing_tables:{','.join(missing_tables)}")
+                result["tables_ready"] = not missing_tables
+                if not missing_tables:
+                    chunk = conn.execute(
+                        "SELECT chunk_key, canonical_decision_id, citation_key, court, chamber, decision_date, "
+                        "esas_no, karar_no, paragraph_start, paragraph_end, source_url, source_type "
+                        "FROM chunks LIMIT 1"
+                    ).fetchone()
+                    result["chunk_rows_available"] = chunk is not None
+                    if chunk is None:
+                        failures.append("lexical_index_chunks_empty")
+                    missing_values = self._missing_required_values(chunk, _LEXICAL_CHUNK_REQUIRED_FIELDS)
+                    if missing_values:
+                        failures.append(f"lexical_index_missing_metadata:{','.join(missing_values)}")
+                    result["required_metadata_ready"] = not missing_values
+                    result["fts_rows_available"] = (
+                        conn.execute("SELECT 1 FROM chunks_fts LIMIT 1").fetchone() is not None
+                    )
+                    if not result["fts_rows_available"]:
+                        failures.append("lexical_index_fts_empty")
+        except sqlite3.DatabaseError as exc:
+            failures.append(f"lexical_index_unreadable:{exc.__class__.__name__}")
+        result["failures"] = failures
+        result["available"] = not failures
+        return result
+
+    def _validate_coverage_audit(self) -> dict[str, Any]:
+        path = self.config.processed_dir / _JUDICIAL_COVERAGE_AUDIT_FILENAME
+        result: dict[str, Any] = {
+            "path_exists": path.exists(),
+            "readable": False,
+            "pass": None,
+            "failure": None,
+        }
+        if not path.exists():
+            result["failure"] = "coverage_audit_missing"
+            return result
+        try:
+            with path.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+        except (OSError, json.JSONDecodeError) as exc:
+            result["failure"] = f"coverage_audit_unreadable:{exc.__class__.__name__}"
+            return result
+        result["readable"] = True
+        result["pass"] = bool(isinstance(payload, dict) and payload.get("pass") is True)
+        if result["pass"] is not True:
+            result["failure"] = "coverage_audit_not_passing"
+        return result
+
     def _validate_status(self) -> dict[str, Any]:
-        exact_exists = self.config.exact_lookup_path.exists()
-        lexical_exists = self.config.lexical_index_path.exists()
-        processed_exists = self.config.processed_dir.exists()
+        processed_configured = bool(str(self.config.processed_dir))
+        processed_exists = self.config.processed_dir.exists() and self.config.processed_dir.is_dir()
+        exact_status = self._validate_exact_lookup_store()
+        lexical_status = self._validate_lexical_index()
+        coverage_status = self._validate_coverage_audit()
+        index_failures: list[str] = []
+        if not processed_configured:
+            index_failures.append("processed_corpus_dir_not_configured")
+        elif not processed_exists:
+            index_failures.append("processed_corpus_dir_missing")
+        index_failures.extend(str(failure) for failure in exact_status["failures"])
+        index_failures.extend(str(failure) for failure in lexical_status["failures"])
+        if coverage_status["failure"] is not None:
+            index_failures.append(str(coverage_status["failure"]))
+
         vector_status = "disabled"
         if self.config.vector_enabled:
             vector_status = "not_built"
+        judicial_indexes_available = not index_failures
+        judicial_ready = self.config.judicial_runtime_enabled and judicial_indexes_available
+        if not self.config.judicial_runtime_enabled:
+            readiness_status = "disabled"
+            readiness_failures: list[str] = []
+        elif judicial_ready:
+            readiness_status = "ready"
+            readiness_failures = []
+        else:
+            readiness_status = "failed"
+            readiness_failures = index_failures
         return {
             "runtime": "legal_rag",
             "legal_rag_runtime_mode": "advisor",
@@ -904,15 +1217,33 @@ class LegalRagOrchestrator:
             "processed_dir": str(self.config.processed_dir),
             "exact_lookup_path": str(self.config.exact_lookup_path),
             "lexical_index_path": str(self.config.lexical_index_path),
+            "processed_corpus_dir_configured": processed_configured,
             "processed_dir_exists": processed_exists,
-            "exact_lookup_exists": exact_exists,
-            "lexical_index_exists": lexical_exists,
-            "exact_lookup_available": exact_exists,
-            "lexical_index_available": lexical_exists,
-            "judicial_ready": processed_exists and exact_exists and lexical_exists,
+            "exact_lookup_exists": exact_status["path_exists"],
+            "lexical_index_exists": lexical_status["path_exists"],
+            "exact_lookup_available": exact_status["available"],
+            "lexical_index_available": lexical_status["available"],
+            "chunk_refs_available": exact_status["chunk_refs_available"],
+            "required_metadata_ready": bool(
+                exact_status["required_metadata_ready"] and lexical_status["required_metadata_ready"]
+            ),
+            "coverage_audit_available": coverage_status["path_exists"],
+            "coverage_audit_pass": coverage_status["pass"],
+            "judicial_indexes_available": judicial_indexes_available,
+            "judicial_ready": judicial_ready,
+            "judicial_readiness_status": readiness_status,
+            "judicial_readiness_failures": readiness_failures,
+            "judicial_index_validation_failures": index_failures,
+            "exact_lookup_validation": exact_status,
+            "lexical_index_validation": lexical_status,
             "vector_index_status": vector_status,
-            "mevzuat_retriever": "available" if self.mevzuat_retriever is not None else "unavailable",
+            "mevzuat_retriever": "available" if self.mevzuat_retriever is not None else "degraded_unavailable",
             "mevzuat_retriever_available": self.mevzuat_retriever is not None,
+            "mevzuat_retriever_degraded": self.mevzuat_retriever is None,
+            "verifier_enabled": True,
+            "retrieval_timeout_ms": self.config.retrieval_timeout_ms,
+            "llm_timeout_ms": self.config.llm_timeout_ms,
+            "verification_timeout_ms": self.config.verification_timeout_ms,
             "llm_answer_generator": "available" if self.llm_client is not None else "fallback",
         }
 
@@ -967,6 +1298,7 @@ class LegalRagOrchestrator:
                     if key in {"court", "chamber", "year", "decision_date", "esas_no", "karar_no"}
                 },
                 top_k=top_k,
+                lexical_for_exact=False,
             )
             results = [
                 result
@@ -974,16 +1306,28 @@ class LegalRagOrchestrator:
                 if {"exact", "exact_metadata"} & set((result.get("score_components") or {}).keys())
             ]
         else:
+            lexical_filters = {
+                key: value
+                for key, value in filters.items()
+                if key in {"court", "chamber", "year", "decision_date", "esas_no", "karar_no", "related_law_refs"}
+            }
+            lexical_top_k = max(1, min(top_k, self.config.max_judicial_decisions * self.config.max_chunks_per_decision))
             results = query_judicial_lexical_index(
                 self.config.lexical_index_path,
                 query,
-                filters={
-                    key: value
-                    for key, value in filters.items()
-                    if key in {"court", "chamber", "year", "decision_date", "esas_no", "karar_no", "related_law_refs"}
-                },
-                top_k=top_k,
+                filters=lexical_filters,
+                top_k=lexical_top_k,
             )
+            if not results and "related_law_refs" in lexical_filters:
+                relaxed_filters = {key: value for key, value in lexical_filters.items() if key != "related_law_refs"}
+                results = query_judicial_lexical_index(
+                    self.config.lexical_index_path,
+                    query,
+                    filters=relaxed_filters,
+                    top_k=lexical_top_k,
+                )
+                for result in results:
+                    result["metadata_filter_relaxation"] = "dropped_related_law_refs"
             for result in results:
                 result["score_components"] = {"lexical": float(result.get("score") or 0.0)}
         validation = validate_judicial_evidence_results(results)
@@ -1221,6 +1565,11 @@ class LegalRagOrchestrator:
     ) -> dict[str, Any]:
         claims: list[dict[str, Any]] = []
         citations = [str(card["citation"]) for card in evidence_packet.get("source_cards") or [] if card.get("citation")]
+        judicial = [
+            item
+            for item in evidence_packet.get("items") or []
+            if item.get("source_type") == "judicial_decision"
+        ]
 
         def _claim_lines(key: str, claim_type: str) -> list[str]:
             lines: list[str] = []
@@ -1409,6 +1758,8 @@ class LegalRagOrchestrator:
         evidence_packet = self._build_evidence_packet(mevzuat_evidence, judicial_evidence)
         source_cards = evidence_packet["source_cards"]
         source_types = sorted({item.source_type for item in evidence})
+        public_health = self.public_health()
+        source_card_counts = dict(sorted(Counter(card.get("source_type") for card in source_cards).items()))
         contract = {
             "answer_text": answer,
             "final_mode": final_mode,
@@ -1425,6 +1776,15 @@ class LegalRagOrchestrator:
             "secondary_source_ids": [card["evidence_id"] for card in source_cards[1:]],
             "llm_answer_generation": bool(generated.llm_used) if generated else False,
             "fallback_reason": generated.fallback_reason if generated else None,
+            "retrieval_mode_metadata": dict(retrieval_metrics or {}),
+            "verification_metadata": verification,
+            "runtime_health": public_health,
+            "degraded_mode": {
+                "mevzuat_retriever_degraded": public_health["mevzuat_retriever_degraded"],
+                "judicial_readiness_status": public_health["judicial_readiness_status"],
+            },
+            "source_card_count_by_source_type": source_card_counts,
+            "verifier_enabled": public_health["verifier_enabled"],
         }
         metrics = dict(retrieval_metrics or {})
         metrics.update(
@@ -1438,6 +1798,8 @@ class LegalRagOrchestrator:
                 "source_type_confusion_failures": ["source_type_confusion"]
                 if (verification or {}).get("source_type_confusion")
                 else [],
+                "source_card_count_by_source_type": source_card_counts,
+                "streaming_mode": "set_by_chat_router",
             }
         )
         trace = {
@@ -1445,7 +1807,7 @@ class LegalRagOrchestrator:
             "route": route.route,
             "route_confidence": route.confidence,
             "judicial_runtime_enabled": self.config.judicial_runtime_enabled,
-            "judicial_index_status": self._status,
+            "judicial_index_status": public_health,
             "evidence": [item.to_public() for item in evidence],
             "evidence_packet": evidence_packet,
             "source_cards": source_cards,
@@ -1456,6 +1818,17 @@ class LegalRagOrchestrator:
             "final_reason": final_reason,
             "latency_ms": round((time.perf_counter() - started) * 1000.0, 3),
         }
+        logger.info(
+            "legal_rag_response route=%s final_mode=%s reason=%s blocked=%s sources=%s verification=%s fallback=%s latency_ms=%.3f",
+            route.route,
+            final_mode,
+            final_reason,
+            blocked,
+            source_card_counts,
+            (verification or {}).get("verdict"),
+            generated.fallback_reason if generated else None,
+            trace["latency_ms"],
+        )
         return LegalRuntimeResponse(
             handled=True,
             answer=answer,
