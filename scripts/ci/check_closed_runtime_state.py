@@ -13,6 +13,7 @@ LOCK_TAG = "mevzuat-engine-closed-20260511"
 ROOT = Path(__file__).resolve().parents[2]
 MEVZUAT_LOCK_ARTIFACT = ROOT / "evaluation/reports/mevzuat_engine_closure_20260511.json"
 JUDICIAL_PREP_ARTIFACT = ROOT / "evaluation/reports/judicial_corpus_prep_20260511.json"
+DEFAULT_JUDICIAL_PROCESSED_DIR = Path("/Users/btmacstudio/Projects/yargi/_work/final_package/processed")
 
 
 def _fail(message: str) -> None:
@@ -74,10 +75,6 @@ def _check_mevzuat_closed() -> None:
 
 
 def _check_judicial_runtime_disabled() -> None:
-    enabled_value = os.getenv("JUDICIAL_RUNTIME_ENABLED", "false").strip().lower()
-    if enabled_value in {"1", "true", "yes", "on"}:
-        _fail("JUDICIAL_RUNTIME_ENABLED must remain false before judicial corpus closure")
-
     artifact = _load_json(JUDICIAL_PREP_ARTIFACT)
     if artifact.get("acceptance_status") != "PASS_LOCAL_ONLY":
         _fail("judicial prep artifact must be PASS_LOCAL_ONLY")
@@ -95,10 +92,51 @@ def _check_judicial_runtime_disabled() -> None:
         _fail("judicial gate must remain inactive until corpus download/indexing completes")
 
 
+def _check_judicial_enabled_runtime_integrity() -> None:
+    processed = Path(os.getenv("JUDICIAL_PROCESSED_DIR", str(DEFAULT_JUDICIAL_PROCESSED_DIR)))
+    exact_lookup = Path(os.getenv("JUDICIAL_EXACT_LOOKUP_PATH", str(processed / "judicial_exact_lookup.sqlite")))
+    lexical_index = Path(os.getenv("JUDICIAL_LEXICAL_INDEX_PATH", str(processed / "judicial_lexical_index.sqlite")))
+    coverage = processed / "judicial_processed_coverage_audit.json"
+    lexical_stats = processed / "judicial_lexical_index_stats.json"
+    eval_metrics = processed / "judicial_offline_eval_metrics.json"
+
+    for path in (processed, exact_lookup, lexical_index, coverage, lexical_stats, eval_metrics):
+        if not path.exists():
+            _fail(f"judicial enabled runtime missing required path: {path}")
+
+    coverage_payload = _load_json(coverage)
+    if coverage_payload.get("pass") is not True:
+        _fail("judicial processed coverage audit is not passing")
+
+    lexical_payload = _load_json(lexical_stats)
+    if lexical_payload.get("complete") is not True or lexical_payload.get("metadata_errors"):
+        _fail("judicial lexical index is not complete or has metadata errors")
+    if lexical_payload.get("chunks_indexed") != lexical_payload.get("sqlite_fts_rows"):
+        _fail("judicial lexical index row count mismatch")
+
+    eval_payload = _load_json(eval_metrics)
+    evaluation = eval_payload.get("evaluation") or {}
+    if evaluation.get("pass") is not True:
+        _fail("judicial offline eval metrics are not passing")
+    metrics = evaluation.get("metrics") or {}
+    if metrics.get("mevzuat_judicial_confusion_rate") != 0.0:
+        _fail("judicial enabled runtime has mevzuat/judicial confusion")
+    if metrics.get("exact_lookup_success_rate") != 1.0:
+        _fail("judicial exact lookup success rate is not passing")
+
+
+def _check_judicial_runtime_integrity() -> None:
+    enabled_value = os.getenv("JUDICIAL_RUNTIME_ENABLED", "false").strip().lower()
+    if enabled_value in {"1", "true", "yes", "on"}:
+        _check_judicial_enabled_runtime_integrity()
+    else:
+        _check_judicial_runtime_disabled()
+
+
 def main() -> int:
     _check_mevzuat_closed()
-    _check_judicial_runtime_disabled()
-    print("closed runtime state gates passed")
+    _check_judicial_runtime_integrity()
+    print("runtime integrity gates passed")
     return 0
 
 

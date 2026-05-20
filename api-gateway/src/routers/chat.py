@@ -3270,6 +3270,11 @@ def _get_retriever(request: Request) -> Any | None:
     return getattr(request.app.state, "retriever", None)
 
 
+def _get_legal_rag_orchestrator(request: Request) -> Any | None:
+    """FastAPI app.state'ten legal runtime orchestrator al (opsiyonel)."""
+    return getattr(request.app.state, "legal_rag_orchestrator", None)
+
+
 async def _run_native_dialog_passthrough(
     *,
     request: Request,
@@ -5117,6 +5122,75 @@ async def chat_completions(
     # Terminoloji / eşanlamlı genişletmesi (Retrieval için)
     retrieval_query = last_user_msg
     retrieval_top_k = request_body.top_k
+    legal_runtime = _get_legal_rag_orchestrator(request)
+    if legal_runtime is not None and hasattr(legal_runtime, "route_query") and hasattr(legal_runtime, "answer"):
+        legal_route = legal_runtime.route_query(last_user_msg)
+        legal_health = legal_runtime.health() if hasattr(legal_runtime, "health") else {}
+        should_use_legal_runtime = (
+            getattr(legal_route, "route", "unsupported_or_out_of_scope") != "unsupported_or_out_of_scope"
+            and (
+                bool(getattr(legal_route, "judicial_requested", False))
+                or bool(legal_health.get("judicial_runtime_enabled"))
+            )
+        )
+        if should_use_legal_runtime:
+            runtime_response = legal_runtime.answer(
+                query=enriched_query,
+                top_k=request_body.top_k,
+                law_filter=request_body.law_filter,
+            )
+            trace_payload = {
+                **runtime_response.trace,
+                "request_id": response_id,
+                "decision_lane": "legal_rag_runtime",
+                "user_query": last_user_msg,
+                "enriched_query": enriched_query,
+                "retrieval_query": retrieval_query,
+                "answer_contract": runtime_response.answer_contract,
+                "final_mode": runtime_response.final_mode,
+                "final_reason": runtime_response.final_reason,
+            }
+            pre_answer_payload = _pre_answer_stage_payload(
+                decision_lane="legal_rag_runtime",
+                user_message=last_user_msg,
+                enriched_query=enriched_query,
+                retrieval_query=retrieval_query,
+                conversation_history=conversation_history,
+                mentioned_laws=[],
+                requested_source_families=[],
+                explicit_article_refs=[],
+                forced_article_refs=[],
+                applied_expansions=[],
+                top_k_requested=request_body.top_k,
+                top_k_effective=request_body.top_k,
+                reranker_enabled=False,
+                retrieval_plan={"route": getattr(legal_route, "route", None), "planner": "legal_rag_runtime_v1"},
+                evidence_selector={
+                    "mevzuat_evidence_count": runtime_response.answer_contract.get("mevzuat_evidence_count"),
+                    "judicial_evidence_count": runtime_response.answer_contract.get("judicial_evidence_count"),
+                },
+            )
+            return _finalize_chat_response(
+                request=request,
+                request_body=request_body,
+                store=store,
+                session_id=session_id,
+                response_id=response_id,
+                user_message=last_user_msg,
+                conversation_history=conversation_history,
+                pre_answer_payload=pre_answer_payload,
+                answer_text=runtime_response.answer,
+                citations=runtime_response.citations,
+                blocked=runtime_response.blocked,
+                guardrails_reasons=runtime_response.guardrails_reasons,
+                verification=runtime_response.verification,
+                trace_payload=trace_payload,
+                answer_contract=runtime_response.answer_contract,
+                final_mode=runtime_response.final_mode,
+                final_reason=runtime_response.final_reason,
+                upstream_usage=runtime_response.usage,
+                llm_trace=None,
+            )
     query_analysis = analyze_query(last_user_msg)
     deterministic_retrieval_plan = build_retrieval_plan(query_analysis)
     retrieval_plan = deterministic_retrieval_plan.to_router_plan()

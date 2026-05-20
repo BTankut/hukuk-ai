@@ -31,6 +31,7 @@ from config import get_settings
 from guardrails.pipeline import GuardrailsPipeline
 from llm.client import LLMClient
 from observability import get_metrics_registry
+from rag.legal_rag_orchestrator import LegalRagOrchestrator
 from rag.orchestrator import RAGOrchestrator, RetrievedChunk
 from api.openai import router as openai_router
 from release_controls import (
@@ -142,6 +143,10 @@ async def metrics_middleware(request: Request, call_next):
 # app.state: bileşenleri request handler'larına inject et
 app.state.orchestrator = orchestrator
 app.state.retriever = _build_retriever()
+app.state.legal_rag_orchestrator = LegalRagOrchestrator.from_settings(
+    settings,
+    mevzuat_retriever=app.state.retriever,
+)
 get_metrics_registry().set_lane_health_state(lane=release_lane_id(), healthy=True)
 
 # ── Router'lar ─────────────────────────────────────────────────────────────────
@@ -179,6 +184,7 @@ class ChatResponse(BaseModel):
 @app.get("/v1/health")
 async def health() -> dict[str, str]:
     """Servis sağlık kontrolü."""
+    legal_runtime_health = app.state.legal_rag_orchestrator.health()
     return {
         "status": "ok",
         "service": settings.app_name,
@@ -187,6 +193,9 @@ async def health() -> dict[str, str]:
         "guardrails": "enabled" if settings.guardrails_enabled else "disabled",
         "retriever": "milvus" if app.state.retriever is not None else "none",
         "verification": "enabled" if _use_verification else "disabled",
+        "judicial_runtime_enabled": "enabled" if legal_runtime_health["judicial_runtime_enabled"] else "disabled",
+        "judicial_indexes": "available" if legal_runtime_health["judicial_ready"] else "unavailable",
+        "judicial_vector_index": str(legal_runtime_health["vector_index_status"]),
     }
 
 

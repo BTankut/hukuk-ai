@@ -61,6 +61,8 @@ _LEXICAL_FILTER_FIELDS = {
     "decision_date",
     "esas_no",
     "karar_no",
+    "citation_key",
+    "canonical_decision_id",
     "related_law_refs",
 }
 _REQUIRED_RESULT_FIELDS = {
@@ -396,9 +398,14 @@ def audit_processed_judicial_corpus(
 @dataclass(slots=True)
 class PersistentJudicialExactLookupStore:
     db_path: str | Path
+    read_only: bool = False
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        if self.read_only:
+            uri = Path(self.db_path).resolve().as_uri() + "?mode=ro"
+            conn = sqlite3.connect(uri, uri=True)
+        else:
+            conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -436,6 +443,37 @@ class PersistentJudicialExactLookupStore:
                     return dated
         undated = _composite_lookup_key(court, chamber, esas_no, karar_no)
         return [] if undated is None else self.lookup("court_chamber_esas_karar", undated, limit=limit)
+
+    def lookup_by_case_numbers(
+        self,
+        *,
+        esas_no: str,
+        karar_no: str,
+        decision_date: str | None = None,
+        chamber: str | None = None,
+        limit: int = 20,
+        chunk_ref_limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        where = ["esas_no = ?", "karar_no = ?"]
+        params: list[Any] = [esas_no, karar_no]
+        if decision_date:
+            where.append("decision_date = ?")
+            params.append(decision_date)
+        if chamber and chamber != "GENEL":
+            where.append("REPLACE(chamber, char(10), ' ') = ?")
+            params.append(_SPACE_RE.sub(" ", str(chamber)).strip())
+        params.append(int(limit))
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT canonical_decision_id FROM decisions "
+                f"WHERE {' AND '.join(where)} "
+                "ORDER BY manifest_row_number LIMIT ?",
+                params,
+            ).fetchall()
+            return [
+                self._decision_with_refs(conn, str(row["canonical_decision_id"]), chunk_ref_limit=chunk_ref_limit)
+                for row in rows
+            ]
 
     def _decision_with_refs(
         self,
@@ -706,7 +744,8 @@ def query_judicial_lexical_index(
         f"WHERE {' AND '.join(where)} "
         "ORDER BY bm25_score LIMIT ?"
     )
-    with sqlite3.connect(index_path) as conn:
+    uri = Path(index_path).resolve().as_uri() + "?mode=ro"
+    with sqlite3.connect(uri, uri=True) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(sql, params).fetchall()
     results: list[dict[str, Any]] = []
@@ -720,7 +759,8 @@ def _fetch_chunk_rows(index_path: str | Path, chunk_keys: list[str]) -> dict[str
     if not chunk_keys:
         return {}
     placeholders = ",".join("?" for _ in chunk_keys)
-    with sqlite3.connect(index_path) as conn:
+    uri = Path(index_path).resolve().as_uri() + "?mode=ro"
+    with sqlite3.connect(uri, uri=True) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
             f"SELECT c.* FROM chunks c WHERE c.chunk_key IN ({placeholders})",
@@ -748,6 +788,22 @@ class JudicialHybridRetriever:
         merged: dict[str, dict[str, Any]] = {}
         if exact_key_type and exact_key:
             exact_hits = self.exact_store.lookup(exact_key_type, exact_key, limit=top_k)
+            exact_score_component = "exact"
+            if (
+                not exact_hits
+                and exact_key_type in {"court_chamber_esas_karar", "court_chamber_date_esas_karar"}
+                and filters
+                and filters.get("esas_no")
+                and filters.get("karar_no")
+            ):
+                exact_hits = self.exact_store.lookup_by_case_numbers(
+                    esas_no=str(filters["esas_no"]),
+                    karar_no=str(filters["karar_no"]),
+                    decision_date=str(filters["decision_date"]) if filters.get("decision_date") else None,
+                    chamber=str(filters["chamber"]) if filters.get("chamber") else None,
+                    limit=top_k,
+                )
+                exact_score_component = "exact_metadata"
             refs = [ref for hit in exact_hits for ref in hit.get("chunk_refs", [])][:top_k]
             chunk_rows = _fetch_chunk_rows(self.lexical_index_path, [str(ref["chunk_key"]) for ref in refs])
             for hit in exact_hits:
@@ -761,8 +817,8 @@ class JudicialHybridRetriever:
                         {
                             "retrieval_lane": "hybrid",
                             "lane": "hybrid",
-                            "lane_provenance": ["exact"],
-                            "score_components": {"exact": 1.0},
+                            "lane_provenance": [exact_score_component],
+                            "score_components": {exact_score_component: 1.0},
                             "metadata": {**result["metadata"], **metadata},
                         }
                     )

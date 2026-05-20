@@ -1698,6 +1698,8 @@ def build_judicial_exact_lookup_index(
             "PRIMARY KEY (lookup_type, lookup_key, canonical_decision_id))"
         )
         conn.execute("CREATE INDEX idx_lookup_key ON lookup (lookup_type, lookup_key)")
+        conn.execute("CREATE INDEX idx_decisions_esas_karar ON decisions (esas_no, karar_no)")
+        conn.execute("CREATE INDEX idx_decisions_date ON decisions (decision_date)")
         conn.execute(
             "CREATE TABLE chunk_refs ("
             "canonical_decision_id TEXT NOT NULL, chunk_key TEXT NOT NULL, paragraph_start INTEGER NOT NULL, "

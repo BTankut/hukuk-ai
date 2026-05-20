@@ -75,7 +75,25 @@ class Settings:
     # Hallucination self-check
     hallucination_samples: int = 3
 
+    # Judicial runtime retrieval
+    judicial_runtime_enabled: bool = False
+    judicial_processed_dir: Path = Path("/Users/btmacstudio/Projects/yargi/_work/final_package/processed")
+    judicial_exact_lookup_path: Path = Path(
+        "/Users/btmacstudio/Projects/yargi/_work/final_package/processed/judicial_exact_lookup.sqlite"
+    )
+    judicial_lexical_index_path: Path = Path(
+        "/Users/btmacstudio/Projects/yargi/_work/final_package/processed/judicial_lexical_index.sqlite"
+    )
+    judicial_vector_collection: str = "judicial_decisions_v1_shadow"
+    judicial_vector_enabled: bool = False
+
     def __init__(self, **overrides):
+        default_judicial_processed_dir = Path(
+            os.getenv(
+                "JUDICIAL_PROCESSED_DIR",
+                "/Users/btmacstudio/Projects/yargi/_work/final_package/processed",
+            )
+        )
         values = {
             "app_name": os.getenv("APP_NAME", "hukuk-ai-api-gateway"),
             "environment": os.getenv("ENVIRONMENT", "dev"),
@@ -107,6 +125,25 @@ class Settings:
                 "PERSON,PHONE_NUMBER,EMAIL_ADDRESS,LOCATION,TR_ID_NUMBER",
             ),
             "hallucination_samples": _to_int(os.getenv("HALLUCINATION_SAMPLES"), 3),
+            "judicial_runtime_enabled": _to_bool(os.getenv("JUDICIAL_RUNTIME_ENABLED"), False),
+            "judicial_processed_dir": default_judicial_processed_dir,
+            "judicial_exact_lookup_path": Path(
+                os.getenv(
+                    "JUDICIAL_EXACT_LOOKUP_PATH",
+                    str(default_judicial_processed_dir / "judicial_exact_lookup.sqlite"),
+                )
+            ),
+            "judicial_lexical_index_path": Path(
+                os.getenv(
+                    "JUDICIAL_LEXICAL_INDEX_PATH",
+                    str(default_judicial_processed_dir / "judicial_lexical_index.sqlite"),
+                )
+            ),
+            "judicial_vector_collection": os.getenv(
+                "JUDICIAL_VECTOR_COLLECTION",
+                "judicial_decisions_v1_shadow",
+            ),
+            "judicial_vector_enabled": _to_bool(os.getenv("JUDICIAL_VECTOR_ENABLED"), False),
         }
 
         values.update(overrides)
