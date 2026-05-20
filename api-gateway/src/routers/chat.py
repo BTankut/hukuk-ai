@@ -3042,6 +3042,7 @@ class ChatCompletionResponse(BaseModel):
     evidence_summary: dict[str, Any] | None = None
     retrieval_lanes: list[str] = Field(default_factory=list)
     latency_breakdown_ms: dict[str, Any] | None = None
+    model_id: str | None = None
     trace: dict[str, Any] | None = None
 
 
@@ -3782,6 +3783,7 @@ def _extract_legal_rag_metadata(answer_contract: dict[str, Any] | None) -> dict[
             "evidence_summary": None,
             "retrieval_lanes": [],
             "latency_breakdown_ms": None,
+            "model_id": None,
         }
     return {
         "legal_rag_runtime_mode": answer_contract.get("legal_rag_runtime_mode"),
@@ -3792,6 +3794,7 @@ def _extract_legal_rag_metadata(answer_contract: dict[str, Any] | None) -> dict[
         "evidence_summary": answer_contract.get("evidence_summary"),
         "retrieval_lanes": list(answer_contract.get("retrieval_lanes") or []),
         "latency_breakdown_ms": answer_contract.get("latency_breakdown_ms"),
+        "model_id": answer_contract.get("model_id"),
     }
 
 

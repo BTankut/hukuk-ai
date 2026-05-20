@@ -98,6 +98,9 @@ def _build_synthetic_runtime(tmp_path: Path, *, judicial_enabled: bool) -> Legal
             exact_lookup_path=processed / "judicial_exact_lookup.sqlite",
             lexical_index_path=processed / "judicial_lexical_index.sqlite",
             legal_advisor_llm_enabled=False,
+            llm_base_url="http://test/v1",
+            llm_model_id="test-legal-model",
+            retrieval_timeout_ms=20000,
         ),
         mevzuat_retriever=FakeMevzuatRetriever(),
     )
@@ -159,13 +162,17 @@ def test_actual_app_disabled_mode_health_legislation_and_judicial_refusal(tmp_pa
 
     with TestClient(main.app) as client:
         health = client.get("/v1/health").json()
-        assert health["judicial_runtime_enabled"] == "disabled"
-        assert health["judicial_ready"] == "false"
+        assert health["judicial_runtime_enabled"] is False
+        assert health["judicial_ready"] is False
         assert health["judicial_readiness_status"] == "disabled"
-        assert health["exact_lookup_available"] == "true"
-        assert health["lexical_index_available"] == "true"
-        assert health["verifier_enabled"] == "true"
-        assert health["processed_corpus_dir_configured"] == "true"
+        assert health["runtime_mode"] == "judicial_disabled_fail_closed"
+        assert health["exact_lookup_available"] is True
+        assert health["lexical_index_available"] is True
+        assert health["streaming_supported"] is True
+        assert health["verifier_enabled"] is True
+        assert health["processed_corpus_dir_configured"] is True
+        assert health["llm_model"]
+        assert health["source_card_limit"] >= 1
         assert health["retrieval_timeout_ms"]
 
         legislation = _post(client, "TBK m.49 haksız fiil şartları nelerdir?")
@@ -194,6 +201,9 @@ def test_actual_app_missing_enabled_index_fails_readiness_and_refuses(tmp_path, 
             exact_lookup_path=missing / "judicial_exact_lookup.sqlite",
             lexical_index_path=missing / "judicial_lexical_index.sqlite",
             legal_advisor_llm_enabled=False,
+            llm_base_url="http://test/v1",
+            llm_model_id="test-legal-model",
+            retrieval_timeout_ms=20000,
         ),
         mevzuat_retriever=FakeMevzuatRetriever(),
     )
@@ -201,9 +211,10 @@ def test_actual_app_missing_enabled_index_fails_readiness_and_refuses(tmp_path, 
 
     with TestClient(main.app) as client:
         health = client.get("/v1/health").json()
-        assert health["judicial_runtime_enabled"] == "enabled"
-        assert health["judicial_ready"] == "false"
+        assert health["judicial_runtime_enabled"] is True
+        assert health["judicial_ready"] is False
         assert health["judicial_readiness_status"] == "failed"
+        assert health["runtime_mode"] == "judicial_enabled_unavailable_fail_closed"
         assert "processed_corpus_dir_missing" in health["judicial_readiness_failures"]
 
         payload = _post(client, "Yargıtay içtihadı nedir?")
@@ -287,6 +298,9 @@ def test_actual_app_real_index_enabled_exact_lexical_mixed_streaming_smoke(app_s
             exact_lookup_path=PROCESSED_REAL / "judicial_exact_lookup.sqlite",
             lexical_index_path=PROCESSED_REAL / "judicial_lexical_index.sqlite",
             legal_advisor_llm_enabled=False,
+            llm_base_url="http://test/v1",
+            llm_model_id="test-legal-model",
+            retrieval_timeout_ms=20000,
         ),
         mevzuat_retriever=FakeMevzuatRetriever(),
     )
@@ -300,11 +314,15 @@ def test_actual_app_real_index_enabled_exact_lexical_mixed_streaming_smoke(app_s
 
     with TestClient(main.app) as client:
         health = client.get("/v1/health").json()
-        assert health["judicial_runtime_enabled"] == "enabled"
-        assert health["judicial_ready"] == "true"
-        assert health["exact_lookup_available"] == "true"
-        assert health["lexical_index_available"] == "true"
-        assert health["verifier_enabled"] == "true"
+        assert health["judicial_runtime_enabled"] is True
+        assert health["judicial_ready"] is True
+        assert health["runtime_mode"] == "judicial_enabled_ready"
+        assert health["exact_lookup_available"] is True
+        assert health["lexical_index_available"] is True
+        assert health["judicial_chunk_refs_available"] is True
+        assert health["verifier_enabled"] is True
+        assert health["llm_configured"] is False
+        assert health["mevzuat_retriever_available"] is True
 
         exact = _post(client, exact_query)
         assert exact["blocked"] is False

@@ -78,6 +78,7 @@ _LEXICAL_CHUNK_REQUIRED_FIELDS = (
 _COURT_HINTS = (
     ("yargitay", "Yargıtay"),
     ("danistay", "Danıştay"),
+    ("aym", "Anayasa Mahkemesi"),
     ("anayasa mahkemesi", "Anayasa Mahkemesi"),
     ("bolge adliye mahkemesi", "Bölge Adliye Mahkemesi"),
     ("bolge idare mahkemesi", "Bölge İdare Mahkemesi"),
@@ -101,6 +102,15 @@ _JUDICIAL_TERMS = {
     "danistay",
     "danıştay",
     "aym",
+    "anayasa mahkemesi",
+    "bolge adliye mahkemesi",
+    "bolge idare mahkemesi",
+    "bam",
+    "hgk",
+    "iddk",
+    "hd",
+    "cd",
+    "daire",
     "karar",
     "esas",
     "karar no",
@@ -206,6 +216,21 @@ def _int_env(name: str, default: int) -> int:
         return default
 
 
+def _float_env(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
+def _str_env(name: str, default: str) -> str:
+    value = os.getenv(name)
+    return default if value is None else value
+
+
 def _bounded_text(value: str, limit: int) -> str:
     text = re.sub(r"\s+", " ", value).strip()
     if len(text) <= limit:
@@ -249,19 +274,33 @@ class LegalRuntimeConfig:
     processed_dir: Path
     exact_lookup_path: Path
     lexical_index_path: Path
+    chunk_refs_path: Path | None = None
     vector_collection: str = "judicial_decisions_v1_shadow"
     vector_enabled: bool = False
+    mevzuat_collection: str = "hukuk_chunks"
+    mevzuat_retrieval_enabled: bool = False
+    embedding_backend: str = "hashing"
+    embedding_base_url: str | None = None
+    embedding_model: str | None = None
+    embedding_dim: int | None = None
+    embedding_timeout_seconds: float | None = None
     mevzuat_top_k: int = 6
     judicial_top_k: int = 20
     max_judicial_decisions: int = 5
     max_chunks_per_decision: int = 2
     max_total_evidence_chars: int = 8000
+    max_source_cards: int = 16
     retrieval_timeout_ms: int = 8000
     llm_timeout_ms: int = 15000
     verification_timeout_ms: int = 5000
     legal_advisor_llm_enabled: bool = True
     request_timeout_ms: int = 8000
     max_query_chars: int = 4000
+    llm_base_url: str | None = None
+    llm_model_id: str | None = None
+    llm_temperature: float = 0.0
+    llm_max_tokens: int = 1600
+    debug_metadata_enabled: bool = False
 
     @classmethod
     def from_settings(cls, settings: Any) -> "LegalRuntimeConfig":
@@ -281,13 +320,26 @@ class LegalRuntimeConfig:
             lexical_index_path=Path(
                 getattr(settings, "judicial_lexical_index_path", processed_dir / "judicial_lexical_index.sqlite")
             ),
+            chunk_refs_path=Path(
+                getattr(settings, "judicial_chunk_refs_path", processed_dir / "judicial_exact_lookup.sqlite")
+            ),
             vector_collection=str(getattr(settings, "judicial_vector_collection", "judicial_decisions_v1_shadow")),
             vector_enabled=bool(getattr(settings, "judicial_vector_enabled", False)),
+            mevzuat_collection=str(getattr(settings, "milvus_collection", _str_env("MILVUS_COLLECTION", "hukuk_chunks"))),
+            mevzuat_retrieval_enabled=bool(getattr(settings, "milvus_enabled", _bool_env("MILVUS_ENABLED", False))),
+            embedding_backend=str(getattr(settings, "embedding_backend", _str_env("EMBEDDING_BACKEND", "hashing"))),
+            embedding_base_url=str(getattr(settings, "embedding_base_url", _str_env("EMBEDDING_BASE_URL", "")) or ""),
+            embedding_model=str(getattr(settings, "embedding_model", _str_env("EMBEDDING_MODEL", "")) or ""),
+            embedding_dim=int(getattr(settings, "embedding_dim", _int_env("EMBEDDING_DIM", 1024))),
+            embedding_timeout_seconds=float(
+                getattr(settings, "embedding_timeout_seconds", _float_env("EMBEDDING_TIMEOUT", 30.0))
+            ),
             mevzuat_top_k=int(getattr(settings, "legal_rag_max_mevzuat_evidence", _int_env("LEGAL_RAG_MAX_MEVZUAT_EVIDENCE", 6))),
             judicial_top_k=int(getattr(settings, "legal_rag_judicial_top_k", _int_env("LEGAL_RAG_JUDICIAL_TOP_K", 20))),
             max_judicial_decisions=int(getattr(settings, "legal_rag_max_judicial_decisions", _int_env("LEGAL_RAG_MAX_JUDICIAL_DECISIONS", 5))),
             max_chunks_per_decision=int(getattr(settings, "legal_rag_max_chunks_per_decision", _int_env("LEGAL_RAG_MAX_CHUNKS_PER_DECISION", 2))),
             max_total_evidence_chars=int(getattr(settings, "legal_rag_max_total_evidence_chars", _int_env("LEGAL_RAG_MAX_TOTAL_EVIDENCE_CHARS", 8000))),
+            max_source_cards=int(getattr(settings, "legal_rag_max_source_cards", _int_env("LEGAL_RAG_MAX_SOURCE_CARDS", 16))),
             retrieval_timeout_ms=int(getattr(settings, "legal_rag_retrieval_timeout_ms", _int_env("LEGAL_RAG_RETRIEVAL_TIMEOUT_MS", 8000))),
             llm_timeout_ms=int(getattr(settings, "legal_rag_llm_timeout_ms", _int_env("LEGAL_RAG_LLM_TIMEOUT_MS", 15000))),
             verification_timeout_ms=int(getattr(settings, "legal_rag_verification_timeout_ms", _int_env("LEGAL_RAG_VERIFICATION_TIMEOUT_MS", 5000))),
@@ -295,6 +347,13 @@ class LegalRuntimeConfig:
                 getattr(settings, "legal_advisor_llm_enabled", _bool_env("LEGAL_ADVISOR_LLM_ENABLED", True))
             ),
             max_query_chars=int(getattr(settings, "legal_rag_max_query_chars", _int_env("LEGAL_RAG_MAX_QUERY_CHARS", 4000))),
+            llm_base_url=str(getattr(settings, "dgx_base_url", _str_env("DGX_BASE_URL", "")) or ""),
+            llm_model_id=str(getattr(settings, "dgx_model", _str_env("DGX_MODEL", "")) or ""),
+            llm_temperature=float(getattr(settings, "dgx_temperature_default", _float_env("DGX_TEMPERATURE_DEFAULT", 0.0))),
+            llm_max_tokens=int(getattr(settings, "dgx_max_tokens_default", _int_env("DGX_MAX_TOKENS_DEFAULT", 1600))),
+            debug_metadata_enabled=bool(
+                getattr(settings, "legal_rag_debug_metadata_enabled", _bool_env("LEGAL_RAG_DEBUG_METADATA_ENABLED", False))
+            ),
         )
 
 
@@ -456,6 +515,9 @@ class GeneratedLegalAnswer:
     claims: list[dict[str, Any]]
     citations: list[str]
     llm_used: bool = False
+    llm_attempted: bool = False
+    llm_model_id: str | None = None
+    llm_error_reason: str | None = None
     llm_trace: dict[str, Any] | None = None
     usage: dict[str, int] | None = None
     fallback_reason: str | None = None
@@ -802,6 +864,21 @@ class LegalRagOrchestrator:
             "retrieval_timeout_ms",
             "llm_timeout_ms",
             "verification_timeout_ms",
+            "runtime_mode",
+            "llm_configured",
+            "llm_reachable_if_checked",
+            "llm_model",
+            "mevzuat_index_ready",
+            "mevzuat_collection",
+            "mevzuat_retrieval_enabled",
+            "judicial_processed_dir",
+            "judicial_exact_lookup_path",
+            "judicial_lexical_index_path",
+            "judicial_chunk_refs_path",
+            "judicial_vector_collection",
+            "streaming_supported",
+            "source_card_limit",
+            "debug_metadata_enabled",
         )
         return {key: self._status.get(key) for key in keys}
 
@@ -1313,19 +1390,33 @@ class LegalRagOrchestrator:
         if not self.config.judicial_runtime_enabled:
             readiness_status = "disabled"
             readiness_failures: list[str] = []
+            runtime_mode = "judicial_disabled_fail_closed"
         elif judicial_ready:
             readiness_status = "ready"
             readiness_failures = []
+            runtime_mode = "judicial_enabled_ready"
         else:
             readiness_status = "failed"
             readiness_failures = index_failures
+            runtime_mode = "judicial_enabled_unavailable_fail_closed"
+        llm_configured = bool(
+            self.config.legal_advisor_llm_enabled
+            and self.llm_client is not None
+            and self.config.llm_base_url
+            and self.config.llm_model_id
+        )
         return {
             "runtime": "legal_rag",
             "legal_rag_runtime_mode": "advisor",
+            "runtime_mode": runtime_mode,
             "judicial_runtime_enabled": self.config.judicial_runtime_enabled,
             "processed_dir": str(self.config.processed_dir),
+            "judicial_processed_dir": str(self.config.processed_dir),
             "exact_lookup_path": str(self.config.exact_lookup_path),
+            "judicial_exact_lookup_path": str(self.config.exact_lookup_path),
             "lexical_index_path": str(self.config.lexical_index_path),
+            "judicial_lexical_index_path": str(self.config.lexical_index_path),
+            "judicial_chunk_refs_path": str(self.config.chunk_refs_path or self.config.exact_lookup_path),
             "processed_corpus_dir_configured": processed_configured,
             "processed_dir_exists": processed_exists,
             "exact_lookup_exists": exact_status["path_exists"],
@@ -1346,14 +1437,32 @@ class LegalRagOrchestrator:
             "exact_lookup_validation": exact_status,
             "lexical_index_validation": lexical_status,
             "vector_index_status": vector_status,
+            "judicial_vector_collection": self.config.vector_collection,
             "mevzuat_retriever": "available" if self.mevzuat_retriever is not None else "degraded_unavailable",
             "mevzuat_retriever_available": self.mevzuat_retriever is not None,
             "mevzuat_retriever_degraded": self.mevzuat_retriever is None,
+            "mevzuat_index_ready": self.mevzuat_retriever is not None,
+            "mevzuat_collection": self.config.mevzuat_collection,
+            "mevzuat_retrieval_enabled": self.config.mevzuat_retrieval_enabled,
+            "embedding_backend": self.config.embedding_backend,
+            "embedding_base_url": self.config.embedding_base_url,
+            "embedding_model": self.config.embedding_model,
+            "embedding_dim": self.config.embedding_dim,
+            "embedding_timeout_seconds": self.config.embedding_timeout_seconds,
             "verifier_enabled": True,
             "retrieval_timeout_ms": self.config.retrieval_timeout_ms,
             "llm_timeout_ms": self.config.llm_timeout_ms,
             "verification_timeout_ms": self.config.verification_timeout_ms,
             "llm_answer_generator": "available" if self.llm_client is not None else "fallback",
+            "llm_configured": llm_configured,
+            "llm_reachable_if_checked": None,
+            "llm_model": self.config.llm_model_id,
+            "llm_base_url_configured": bool(self.config.llm_base_url),
+            "llm_temperature": self.config.llm_temperature,
+            "llm_max_tokens": self.config.llm_max_tokens,
+            "streaming_supported": True,
+            "source_card_limit": self.config.max_source_cards,
+            "debug_metadata_enabled": self.config.debug_metadata_enabled,
         }
 
     def _retrieve_mevzuat(self, *, query: str, top_k: int, law_filter: str | None) -> list[LegalEvidence]:
@@ -1367,7 +1476,14 @@ class LegalRagOrchestrator:
         try:
             results, _stats = self.mevzuat_retriever.retrieve(query=query, top_k=top_k, metadata_filter=metadata_filter)
         except TypeError:
-            results, _stats = self.mevzuat_retriever.retrieve(query=query, top_k=top_k)
+            try:
+                results, _stats = self.mevzuat_retriever.retrieve(query=query, top_k=top_k)
+            except Exception as exc:
+                logger.warning("mevzuat retrieval failed, returning no statutory evidence: %s", exc, exc_info=True)
+                return []
+        except Exception as exc:
+            logger.warning("mevzuat retrieval failed, returning no statutory evidence: %s", exc, exc_info=True)
+            return []
         evidence: list[LegalEvidence] = []
         seen: set[str] = set()
         for result in results:
@@ -1501,7 +1617,7 @@ class LegalRagOrchestrator:
         mevzuat_evidence: list[LegalEvidence],
         judicial_evidence: list[LegalEvidence],
     ) -> dict[str, Any]:
-        evidence = [*mevzuat_evidence, *judicial_evidence]
+        evidence = [*mevzuat_evidence, *judicial_evidence][: max(1, self.config.max_source_cards)]
         if not all(item.evidence_id for item in evidence):
             self._assign_evidence_ids(mevzuat_evidence, judicial_evidence)
         per_item_limit = max(500, self.config.max_total_evidence_chars // max(1, len(evidence)))
@@ -1589,11 +1705,34 @@ class LegalRagOrchestrator:
             logger.warning("Legal LLM answer failed verification, using fallback: %s", verification["failures"])
             fallback = self._compose_deterministic_answer(query=query, route=route, evidence_packet=evidence_packet)
             fallback.fallback_reason = "llm_verification_failed"
+            fallback.llm_attempted = True
+            fallback.llm_model_id = self.config.llm_model_id
+            fallback.llm_trace = generated.llm_trace
+            fallback.usage = generated.usage
+            return fallback
+        except (json.JSONDecodeError, ValueError) as exc:
+            logger.warning("Legal LLM answer was not parseable, repairing from evidence: %s", exc)
+            fallback = self._compose_deterministic_answer(query=query, route=route, evidence_packet=evidence_packet)
+            fallback.fallback_reason = "llm_output_repaired"
+            fallback.llm_attempted = True
+            fallback.llm_model_id = self.config.llm_model_id
+            fallback.llm_error_reason = "llm_output_parse_failed"
+            return fallback
+        except TimeoutError as exc:
+            logger.warning("Legal LLM answer generation timed out, failing closed: %s", exc)
+            fallback = self._compose_deterministic_answer(query=query, route=route, evidence_packet=evidence_packet)
+            fallback.fallback_reason = "llm_timeout"
+            fallback.llm_attempted = True
+            fallback.llm_model_id = self.config.llm_model_id
+            fallback.llm_error_reason = "llm_timeout"
             return fallback
         except Exception as exc:
-            logger.warning("Legal LLM answer generation failed, using fallback: %s", exc, exc_info=True)
+            logger.warning("Legal LLM answer generation failed, failing closed: %s", exc, exc_info=True)
             fallback = self._compose_deterministic_answer(query=query, route=route, evidence_packet=evidence_packet)
             fallback.fallback_reason = "llm_generation_failed"
+            fallback.llm_attempted = True
+            fallback.llm_model_id = self.config.llm_model_id
+            fallback.llm_error_reason = "llm_generation_failed"
             return fallback
 
     async def _generate_with_llm(
@@ -1630,8 +1769,8 @@ class LegalRagOrchestrator:
                 ChatMessage(role="system", content=system_prompt),
                 ChatMessage(role="user", content=json.dumps(user_payload, ensure_ascii=False, sort_keys=True)),
             ],
-            temperature=0.0,
-            max_tokens=1600,
+            temperature=self.config.llm_temperature,
+            max_tokens=self.config.llm_max_tokens,
         )
         parsed = self._parse_llm_json(result.text)
         rendered = self._render_structured_answer(parsed=parsed, route=route, evidence_packet=evidence_packet)
@@ -1647,6 +1786,8 @@ class LegalRagOrchestrator:
             claims=rendered["claims"],
             citations=rendered["citations"],
             llm_used=True,
+            llm_attempted=True,
+            llm_model_id=self.config.llm_model_id,
             llm_trace=getattr(result, "trace", None),
             usage=usage,
         )
@@ -1809,6 +1950,27 @@ class LegalRagOrchestrator:
         started: float,
     ) -> LegalRuntimeResponse:
         evidence_packet = self._build_evidence_packet(mevzuat_evidence, judicial_evidence)
+        if generated.fallback_reason in {"llm_timeout", "llm_generation_failed"}:
+            verification = {
+                "pass": False,
+                "verdict": "fail",
+                "failures": [generated.fallback_reason],
+                "latency_ms": 0.0,
+            }
+            return self._response(
+                answer="Seçilen LLM yanıt üretimi tamamlanamadı; kaynak dışı hukuki sonuç üretmemek için cevap kapatıldı.",
+                citations=[],
+                blocked=True,
+                final_mode="refusal",
+                final_reason=generated.fallback_reason,
+                route=route,
+                mevzuat_evidence=mevzuat_evidence,
+                judicial_evidence=judicial_evidence,
+                started=started,
+                verification=verification,
+                retrieval_metrics=retrieval_metrics,
+                generated=generated,
+            )
         verification_started = time.perf_counter()
         verification = verify_legal_answer(
             answer=generated.answer,
@@ -1900,6 +2062,9 @@ class LegalRagOrchestrator:
             "primary_source_id": source_cards[0]["evidence_id"] if source_cards else None,
             "secondary_source_ids": [card["evidence_id"] for card in source_cards[1:]],
             "llm_answer_generation": bool(generated.llm_used) if generated else False,
+            "llm_endpoint_called": bool(generated.llm_attempted) if generated else False,
+            "llm_error_reason": generated.llm_error_reason if generated else None,
+            "model_id": (generated.llm_model_id if generated and generated.llm_model_id else self.config.llm_model_id),
             "fallback_reason": generated.fallback_reason if generated else None,
             "retrieval_mode_metadata": dict(retrieval_metrics or {}),
             "verification_metadata": verification,

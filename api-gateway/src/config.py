@@ -48,14 +48,24 @@ class Settings:
     dgx_base_url: str = "http://192.168.12.243:30000/v1"
     dgx_model: str = "Qwen/Qwen3.5-35B-A3B-FP8"
     dgx_api_key: str = "not-needed"
-    dgx_temperature_default: float = 0.1
-    dgx_max_tokens_default: int = 512
+    dgx_temperature_default: float = 0.0
+    dgx_max_tokens_default: int = 1600
     dgx_top_p: float | None = None
     dgx_top_k: int | None = None
     dgx_seed: int | None = None
     dgx_request_timeout_seconds: float = 180.0
     dgx_retry_count: int = 0
     dgx_enable_thinking: bool = False
+
+    # Mevzuat retrieval / embedding
+    milvus_enabled: bool = False
+    milvus_uri: str = "http://localhost:19530"
+    milvus_collection: str = "hukuk_chunks"
+    embedding_backend: str = "hashing"
+    embedding_base_url: str = "http://127.0.0.1:8081/v1"
+    embedding_model: str = "intfloat/multilingual-e5-large"
+    embedding_dim: int = 1024
+    embedding_timeout_seconds: float = 30.0
 
     # Guardrails
     guardrails_enabled: bool = True
@@ -86,16 +96,21 @@ class Settings:
     )
     judicial_vector_collection: str = "judicial_decisions_v1_shadow"
     judicial_vector_enabled: bool = False
+    judicial_chunk_refs_path: Path = Path(
+        "/Users/btmacstudio/Projects/yargi/_work/final_package/processed/judicial_exact_lookup.sqlite"
+    )
     legal_advisor_llm_enabled: bool = True
     legal_rag_max_mevzuat_evidence: int = 6
     legal_rag_judicial_top_k: int = 20
     legal_rag_max_judicial_decisions: int = 5
     legal_rag_max_chunks_per_decision: int = 2
     legal_rag_max_total_evidence_chars: int = 8000
+    legal_rag_max_source_cards: int = 16
     legal_rag_retrieval_timeout_ms: int = 8000
     legal_rag_llm_timeout_ms: int = 15000
     legal_rag_verification_timeout_ms: int = 5000
     legal_rag_max_query_chars: int = 4000
+    legal_rag_debug_metadata_enabled: bool = False
 
     def __init__(self, **overrides):
         default_judicial_processed_dir = Path(
@@ -111,14 +126,22 @@ class Settings:
             "dgx_base_url": os.getenv("DGX_BASE_URL", "http://192.168.12.243:30000/v1"),
             "dgx_model": os.getenv("DGX_MODEL", "Qwen/Qwen3.5-35B-A3B-FP8"),
             "dgx_api_key": os.getenv("DGX_API_KEY", "not-needed"),
-            "dgx_temperature_default": _to_float(os.getenv("DGX_TEMPERATURE_DEFAULT"), 0.1),
-            "dgx_max_tokens_default": _to_int(os.getenv("DGX_MAX_TOKENS_DEFAULT"), 512),
+            "dgx_temperature_default": _to_float(os.getenv("DGX_TEMPERATURE_DEFAULT"), 0.0),
+            "dgx_max_tokens_default": _to_int(os.getenv("DGX_MAX_TOKENS_DEFAULT"), 1600),
             "dgx_top_p": _to_float(os.getenv("DGX_TOP_P"), None),
             "dgx_top_k": _to_int(os.getenv("DGX_TOP_K"), -1),
             "dgx_seed": _to_int(os.getenv("DGX_SEED"), -1),
             "dgx_request_timeout_seconds": _to_float(os.getenv("DGX_REQUEST_TIMEOUT_SECONDS"), 180.0),
             "dgx_retry_count": _to_int(os.getenv("DGX_RETRY_COUNT"), 0),
             "dgx_enable_thinking": _to_bool(os.getenv("DGX_ENABLE_THINKING"), False),
+            "milvus_enabled": _to_bool(os.getenv("MILVUS_ENABLED"), False),
+            "milvus_uri": os.getenv("MILVUS_URI", "http://localhost:19530"),
+            "milvus_collection": os.getenv("MILVUS_COLLECTION", "hukuk_chunks"),
+            "embedding_backend": os.getenv("EMBEDDING_BACKEND", "hashing"),
+            "embedding_base_url": os.getenv("EMBEDDING_BASE_URL", "http://127.0.0.1:8081/v1"),
+            "embedding_model": os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-large"),
+            "embedding_dim": _to_int(os.getenv("EMBEDDING_DIM"), 1024),
+            "embedding_timeout_seconds": _to_float(os.getenv("EMBEDDING_TIMEOUT"), 30.0),
             "guardrails_enabled": _to_bool(os.getenv("GUARDRAILS_ENABLED"), True),
             "guardrails_strict_mode": _to_bool(os.getenv("GUARDRAILS_STRICT_MODE"), False),
             "guardrails_config_dir": Path(os.getenv("GUARDRAILS_CONFIG_DIR", "guardrails")),
@@ -154,16 +177,27 @@ class Settings:
                 "judicial_decisions_v1_shadow",
             ),
             "judicial_vector_enabled": _to_bool(os.getenv("JUDICIAL_VECTOR_ENABLED"), False),
+            "judicial_chunk_refs_path": Path(
+                os.getenv(
+                    "JUDICIAL_CHUNK_REFS_PATH",
+                    os.getenv(
+                        "JUDICIAL_EXACT_LOOKUP_PATH",
+                        str(default_judicial_processed_dir / "judicial_exact_lookup.sqlite"),
+                    ),
+                )
+            ),
             "legal_advisor_llm_enabled": _to_bool(os.getenv("LEGAL_ADVISOR_LLM_ENABLED"), True),
             "legal_rag_max_mevzuat_evidence": _to_int(os.getenv("LEGAL_RAG_MAX_MEVZUAT_EVIDENCE"), 6),
             "legal_rag_judicial_top_k": _to_int(os.getenv("LEGAL_RAG_JUDICIAL_TOP_K"), 20),
             "legal_rag_max_judicial_decisions": _to_int(os.getenv("LEGAL_RAG_MAX_JUDICIAL_DECISIONS"), 5),
             "legal_rag_max_chunks_per_decision": _to_int(os.getenv("LEGAL_RAG_MAX_CHUNKS_PER_DECISION"), 2),
             "legal_rag_max_total_evidence_chars": _to_int(os.getenv("LEGAL_RAG_MAX_TOTAL_EVIDENCE_CHARS"), 8000),
+            "legal_rag_max_source_cards": _to_int(os.getenv("LEGAL_RAG_MAX_SOURCE_CARDS"), 16),
             "legal_rag_retrieval_timeout_ms": _to_int(os.getenv("LEGAL_RAG_RETRIEVAL_TIMEOUT_MS"), 8000),
             "legal_rag_llm_timeout_ms": _to_int(os.getenv("LEGAL_RAG_LLM_TIMEOUT_MS"), 15000),
             "legal_rag_verification_timeout_ms": _to_int(os.getenv("LEGAL_RAG_VERIFICATION_TIMEOUT_MS"), 5000),
             "legal_rag_max_query_chars": _to_int(os.getenv("LEGAL_RAG_MAX_QUERY_CHARS"), 4000),
+            "legal_rag_debug_metadata_enabled": _to_bool(os.getenv("LEGAL_RAG_DEBUG_METADATA_ENABLED"), False),
         }
 
         values.update(overrides)

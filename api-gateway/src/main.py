@@ -85,14 +85,14 @@ def _build_retriever() -> object | None:
     MILVUS_ENABLED=false → None (mock/offline mod)
     MILVUS_ENABLED=true  → MilvusRetriever.from_env()
     """
-    if os.getenv("MILVUS_ENABLED", "false").lower() not in {"1", "true", "yes"}:
+    if not settings.milvus_enabled:
         logger.info("Retriever: MILVUS_ENABLED=false → retriever yok (direkt LLM modu)")
         return None
 
     try:
         from rag.retriever import MilvusRetriever
 
-        retriever = MilvusRetriever.from_env()
+        retriever = MilvusRetriever.from_env(collection=settings.milvus_collection)
         health = retriever.health_check()
         if health["status"] == "ok":
             logger.info(
@@ -183,7 +183,7 @@ class ChatResponse(BaseModel):
 
 
 @app.get("/v1/health")
-async def health() -> dict[str, str]:
+async def health() -> dict[str, object]:
     """Servis sağlık kontrolü."""
     legal_runtime_health = app.state.legal_rag_orchestrator.health()
     return {
@@ -194,27 +194,51 @@ async def health() -> dict[str, str]:
         "guardrails": "enabled" if settings.guardrails_enabled else "disabled",
         "retriever": "milvus" if app.state.retriever is not None else "none",
         "verification": "enabled" if _use_verification else "disabled",
-        "judicial_runtime_enabled": "enabled" if legal_runtime_health["judicial_runtime_enabled"] else "disabled",
+        "llm_configured": legal_runtime_health["llm_configured"],
+        "llm_reachable_if_checked": legal_runtime_health["llm_reachable_if_checked"],
+        "llm_model": legal_runtime_health["llm_model"],
+        "llm_temperature": legal_runtime_health["llm_temperature"],
+        "llm_max_tokens": legal_runtime_health["llm_max_tokens"],
+        "mevzuat_retriever_available": legal_runtime_health["mevzuat_retriever_available"],
+        "mevzuat_index_ready": legal_runtime_health["mevzuat_index_ready"],
+        "mevzuat_collection": legal_runtime_health["mevzuat_collection"],
+        "mevzuat_retrieval_enabled": legal_runtime_health["mevzuat_retrieval_enabled"],
+        "embedding_backend": legal_runtime_health["embedding_backend"],
+        "embedding_base_url": legal_runtime_health["embedding_base_url"],
+        "embedding_model": legal_runtime_health["embedding_model"],
+        "embedding_dim": legal_runtime_health["embedding_dim"],
+        "judicial_runtime_enabled": legal_runtime_health["judicial_runtime_enabled"],
         "judicial_indexes": "available" if legal_runtime_health["judicial_indexes_available"] else "unavailable",
-        "judicial_ready": "true" if legal_runtime_health["judicial_ready"] else "false",
-        "judicial_readiness_status": str(legal_runtime_health["judicial_readiness_status"]),
-        "judicial_readiness_failures": ",".join(legal_runtime_health["judicial_readiness_failures"]),
-        "exact_lookup_available": "true" if legal_runtime_health["exact_lookup_available"] else "false",
-        "lexical_index_available": "true" if legal_runtime_health["lexical_index_available"] else "false",
-        "chunk_refs_available": "true" if legal_runtime_health["chunk_refs_available"] else "false",
-        "required_metadata_ready": "true" if legal_runtime_health["required_metadata_ready"] else "false",
-        "coverage_audit_available": "true" if legal_runtime_health["coverage_audit_available"] else "false",
-        "coverage_audit_pass": "true" if legal_runtime_health["coverage_audit_pass"] else "false",
+        "judicial_ready": legal_runtime_health["judicial_ready"],
+        "judicial_readiness_status": legal_runtime_health["judicial_readiness_status"],
+        "judicial_readiness_failures": legal_runtime_health["judicial_readiness_failures"],
+        "judicial_processed_dir": legal_runtime_health["judicial_processed_dir"],
+        "judicial_exact_lookup_path": legal_runtime_health["judicial_exact_lookup_path"],
+        "judicial_lexical_index_path": legal_runtime_health["judicial_lexical_index_path"],
+        "judicial_chunk_refs_path": legal_runtime_health["judicial_chunk_refs_path"],
+        "judicial_exact_lookup_available": legal_runtime_health["exact_lookup_available"],
+        "judicial_lexical_index_available": legal_runtime_health["lexical_index_available"],
+        "judicial_chunk_refs_available": legal_runtime_health["chunk_refs_available"],
+        "exact_lookup_available": legal_runtime_health["exact_lookup_available"],
+        "lexical_index_available": legal_runtime_health["lexical_index_available"],
+        "chunk_refs_available": legal_runtime_health["chunk_refs_available"],
+        "required_metadata_ready": legal_runtime_health["required_metadata_ready"],
+        "coverage_audit_available": legal_runtime_health["coverage_audit_available"],
+        "coverage_audit_pass": legal_runtime_health["coverage_audit_pass"],
         "judicial_vector_index": str(legal_runtime_health["vector_index_status"]),
         "vector_index_status": str(legal_runtime_health["vector_index_status"]),
-        "mevzuat_retriever_available": "true" if legal_runtime_health["mevzuat_retriever_available"] else "false",
-        "mevzuat_retriever_degraded": "true" if legal_runtime_health["mevzuat_retriever_degraded"] else "false",
-        "verifier_enabled": "true" if legal_runtime_health["verifier_enabled"] else "false",
-        "processed_corpus_dir_configured": "true" if legal_runtime_health["processed_corpus_dir_configured"] else "false",
-        "retrieval_timeout_ms": str(legal_runtime_health["retrieval_timeout_ms"]),
-        "llm_timeout_ms": str(legal_runtime_health["llm_timeout_ms"]),
-        "verification_timeout_ms": str(legal_runtime_health["verification_timeout_ms"]),
-        "legal_rag_runtime_mode": str(legal_runtime_health["legal_rag_runtime_mode"]),
+        "judicial_vector_collection": legal_runtime_health["judicial_vector_collection"],
+        "mevzuat_retriever_degraded": legal_runtime_health["mevzuat_retriever_degraded"],
+        "verifier_enabled": legal_runtime_health["verifier_enabled"],
+        "streaming_supported": legal_runtime_health["streaming_supported"],
+        "processed_corpus_dir_configured": legal_runtime_health["processed_corpus_dir_configured"],
+        "retrieval_timeout_ms": legal_runtime_health["retrieval_timeout_ms"],
+        "llm_timeout_ms": legal_runtime_health["llm_timeout_ms"],
+        "verification_timeout_ms": legal_runtime_health["verification_timeout_ms"],
+        "source_card_limit": legal_runtime_health["source_card_limit"],
+        "debug_metadata_enabled": legal_runtime_health["debug_metadata_enabled"],
+        "runtime_mode": legal_runtime_health["runtime_mode"],
+        "legal_rag_runtime_mode": legal_runtime_health["legal_rag_runtime_mode"],
     }
 
 

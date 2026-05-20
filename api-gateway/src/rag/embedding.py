@@ -29,8 +29,8 @@ from typing import Any, Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_EMBEDDING_DIM = 768
-DEFAULT_EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
+DEFAULT_EMBEDDING_DIM = 1024
+DEFAULT_EMBEDDING_MODEL = "intfloat/multilingual-e5-large-instruct"
 
 
 # ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ class RemoteEmbeddingService:
     def from_env(cls) -> "RemoteEmbeddingService":
         """Env değişkenlerinden Remote Embedding Service oluştur."""
         return cls(
-            base_url=os.getenv("EMBEDDING_BASE_URL", os.getenv("DGX_BASE_URL", "http://192.168.12.243:30000/v1")),
+            base_url=os.getenv("EMBEDDING_BASE_URL", os.getenv("DGX_BASE_URL", "http://127.0.0.1:8081/v1")),
             model=os.getenv("EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL),
             api_key=os.getenv("DGX_API_KEY", "not-needed"),
             dimension=int(os.getenv("EMBEDDING_DIM", str(DEFAULT_EMBEDDING_DIM))),

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import asyncio
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -65,6 +68,30 @@ class FakeMevzuatRetriever:
             hit_count=1,
             latency_ms=1.0,
         )
+
+
+class RecordingLLM:
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.calls: list[dict[str, Any]] = []
+
+    async def chat(self, messages: list[Any], temperature: float, max_tokens: int):
+        self.calls.append({"messages": messages, "temperature": temperature, "max_tokens": max_tokens})
+        return SimpleNamespace(
+            text=self.text,
+            usage=SimpleNamespace(prompt_tokens=11, completion_tokens=7, total_tokens=18),
+            trace={"fake": "recording-llm"},
+        )
+
+
+class FailingLLM:
+    async def chat(self, messages: list[Any], temperature: float, max_tokens: int):
+        raise RuntimeError("llm unavailable")
+
+
+class TimeoutLLM:
+    async def chat(self, messages: list[Any], temperature: float, max_tokens: int):
+        raise TimeoutError("llm timed out")
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:
@@ -223,6 +250,10 @@ def test_query_classifier_covers_required_legal_route_classes(tmp_path) -> None:
         "işçilik alacağı hakkında Yargıtay içtihadı var mı?": "judicial_only",
         "TBK m.49 kapsamında işçilik alacağı ve Yargıtay içtihadı nedir?": "mixed_legislation_and_judicial",
         "Yargıtay 9. HD 2024/12345 E., 2024/6789 K. kararını açıkla": "specific_judicial_decision_lookup",
+        "AYM 2024/12345 E. 2024/6789 K. kararını açıkla": "specific_judicial_decision_lookup",
+        "Bölge Adliye Mahkemesi 3. HD içtihadını açıkla": "judicial_only",
+        "HGK ve İDDK kararlarını açıkla": "judicial_only",
+        "https://karararama.yargitay.gov.tr/runtime kararını özetle": "specific_judicial_decision_lookup",
         "Bugün hava nasıl?": "unsupported_or_out_of_scope",
         "Merhaba": "native_dialog_or_non_legal",
     }
@@ -288,6 +319,128 @@ def test_runtime_config_judicial_enabled_exact_lookup_chat_path(tmp_path) -> Non
         "metadata",
     ):
         assert field in packet_item
+
+
+def test_legal_llm_endpoint_contract_is_evidence_bound_and_observable(tmp_path) -> None:
+    llm = RecordingLLM(
+        json.dumps(
+            {
+                "summary": "TBK m.49 seçilen kaynakla sınırlı değerlendirilir.",
+                "statutory_analysis": [
+                    {
+                        "claim": "TBK m.49 kapsamında kusur, zarar ve uygun illiyet bağı değerlendirilir.",
+                        "evidence_ids": ["M1"],
+                    }
+                ],
+                "judicial_analysis": [],
+                "application": [
+                    {
+                        "claim": "Somut olay, seçilen TBK m.49 kanıtındaki unsurlarla sınırlı incelenebilir.",
+                        "evidence_ids": ["M1"],
+                    }
+                ],
+                "limitations": ["Kaynak paketinde olmayan madde veya karar kullanılmadı."],
+            },
+            ensure_ascii=False,
+        )
+    )
+    runtime = _build_runtime(tmp_path, judicial_enabled=True)
+    runtime = LegalRagOrchestrator(
+        config=replace(
+            runtime.config,
+            legal_advisor_llm_enabled=True,
+            llm_base_url="http://llm.test/v1",
+            llm_model_id="ft-legal-advisor",
+            llm_temperature=0.0,
+            llm_max_tokens=777,
+        ),
+        mevzuat_retriever=runtime.mevzuat_retriever,
+        llm_client=llm,
+    )
+
+    response = asyncio.run(runtime.answer_async(query="TBK m.49 haksız fiil şartları nelerdir?"))
+
+    assert response.blocked is False
+    assert response.answer_contract["llm_answer_generation"] is True
+    assert response.answer_contract["llm_endpoint_called"] is True
+    assert response.answer_contract["model_id"] == "ft-legal-advisor"
+    assert response.answer_contract["verification_status"] == "pass"
+    assert llm.calls
+    call = llm.calls[0]
+    assert call["temperature"] == 0.0
+    assert call["max_tokens"] == 777
+    assert "Yalnızca verilen evidence_packet" in call["messages"][0].content
+    user_payload = json.loads(call["messages"][1].content)
+    assert user_payload["route"] == "specific_legislation_article_lookup"
+    assert user_payload["evidence_packet"]["items"][0]["source_type"] == "legislation"
+    assert user_payload["citation_contract"]
+
+
+def test_legal_llm_generation_error_fails_closed_in_production_mode(tmp_path) -> None:
+    runtime = _build_runtime(tmp_path, judicial_enabled=True)
+    runtime = LegalRagOrchestrator(
+        config=replace(
+            runtime.config,
+            legal_advisor_llm_enabled=True,
+            llm_base_url="http://llm.test/v1",
+            llm_model_id="ft-legal-advisor",
+        ),
+        mevzuat_retriever=runtime.mevzuat_retriever,
+        llm_client=FailingLLM(),
+    )
+
+    response = asyncio.run(runtime.answer_async(query="TBK m.49 haksız fiil şartları nelerdir?"))
+
+    assert response.blocked is True
+    assert response.final_reason == "llm_generation_failed"
+    assert response.answer_contract["llm_endpoint_called"] is True
+    assert response.answer_contract["llm_error_reason"] == "llm_generation_failed"
+    assert response.answer_contract["verification_status"] == "fail"
+
+
+def test_legal_llm_timeout_fails_closed_with_machine_reason(tmp_path) -> None:
+    runtime = _build_runtime(tmp_path, judicial_enabled=True)
+    runtime = LegalRagOrchestrator(
+        config=replace(
+            runtime.config,
+            legal_advisor_llm_enabled=True,
+            llm_base_url="http://llm.test/v1",
+            llm_model_id="ft-legal-advisor",
+        ),
+        mevzuat_retriever=runtime.mevzuat_retriever,
+        llm_client=TimeoutLLM(),
+    )
+
+    response = asyncio.run(runtime.answer_async(query="TBK m.49 haksız fiil şartları nelerdir?"))
+
+    assert response.blocked is True
+    assert response.final_reason == "llm_timeout"
+    assert response.answer_contract["llm_endpoint_called"] is True
+    assert response.answer_contract["llm_error_reason"] == "llm_timeout"
+    assert response.answer_contract["verification_status"] == "fail"
+
+
+def test_legal_llm_unparseable_output_is_repaired_from_evidence(tmp_path) -> None:
+    llm = RecordingLLM("Kaynaklara göre cevap verilebilir ama JSON değil.")
+    runtime = _build_runtime(tmp_path, judicial_enabled=True)
+    runtime = LegalRagOrchestrator(
+        config=replace(
+            runtime.config,
+            legal_advisor_llm_enabled=True,
+            llm_base_url="http://llm.test/v1",
+            llm_model_id="ft-legal-advisor",
+        ),
+        mevzuat_retriever=runtime.mevzuat_retriever,
+        llm_client=llm,
+    )
+
+    response = asyncio.run(runtime.answer_async(query="TBK m.49 haksız fiil şartları nelerdir?"))
+
+    assert response.blocked is False
+    assert response.answer_contract["llm_endpoint_called"] is True
+    assert response.answer_contract["fallback_reason"] == "llm_output_repaired"
+    assert response.answer_contract["verification_status"] == "pass"
+    assert "Kaynaklar" in response.answer
 
 
 def test_suffix_style_exact_lookup_uses_exact_metadata_before_lexical(tmp_path) -> None:
