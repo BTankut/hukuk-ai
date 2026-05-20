@@ -1,299 +1,150 @@
-# AI Hukuk Asistanı
+# Hukuk-AI Legal Advisor
 
-AI Hukuk Asistanı, Türk hukuku için mevzuat-first RAG ve gate-first fine-tuning disipliniyle geliştirilen bir hukuk asistanı reposudur. Repo yalnızca bir model servisi değil; retrieval, guardrails, evaluation, training readiness ve promotion karar zincirini birlikte taşır.
+## Status
 
-## Güncel Durum
+`main` is the canonical branch for the completed application. The final application tag is `legal-advisor-app-complete-20260520`.
 
-Bu repo için iki ayrı referans fotoğraf vardır:
+The current product integrates mevzuat evidence and judicial decision evidence in one legal advisor runtime. Answers are evidence-grounded, claims are verified against selected sources, unsupported claims are blocked or bounded, and source cards are returned with the response.
 
-| Lane | Tarih | Citation | Correct Source | Hallucination | Refusal | Avg Response |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Frozen Faz 1 baseline | 2026-03-08 | 88.0% | 77.1% | 8.0% | 90.0% | 9.36s |
-| Resmi promoted aday (`dgx1` merged cleanup) | 2026-03-22 | 88.0% | 86.0% | 0.0% | 100.0% | 9.116s |
+## What the application does
 
-Resmi güncel aday artefact'ları:
+Hukuk-AI exposes an OpenAI-compatible chat API for Turkish legal questions. It retrieves official legislation evidence, optionally retrieves processed judicial decision evidence, builds a bounded evidence packet, calls the configured fine-tuned LLM endpoint, verifies the answer against the selected evidence, and fails closed when required evidence or verification is unavailable.
 
-- raw report: `evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_post_promotion_cleanup_20260322.json`
-- evidence manifest: `evaluation/reports/evidence_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_post_promotion_cleanup_20260322.json`
-- promotion sonucu: `coordination/dgx1-posttrain-promotion-result-2026-03-22.md`
-- serving lane kararı: `coordination/dgx1-merged-serving-decision-2026-03-22.md`
-
-Aktif repo gerçekliği:
-
-- Faz 1 baseline korunur; yeni aday baseline yerine örtük production kabul edilmez.
-- Primary promoted lane: `dgx1` üzerindeki merged fine-tuned model.
-- Fallback/debug lane: `node3` merged serving hattı.
-- Reranker varsayılanı: `off`
-- Guardrails varsayılanı: `safe-scope minimal`
-- Retrieval varsayılanı: `top_k=20` + explicit article force-include
-- Canonical active training package: `data/finetune/sft/final_train.jsonl` (`807` satır, `807` unique soru)
-
-## Mimari
-
-Çalışan zincir mantıksal olarak şöyledir:
+## Current runtime architecture
 
 ```text
-Client / Eval Runner
-        |
-        v
-API Gateway (FastAPI, localhost:8000 veya candidate lane 8004)
-        |
-        +--> Guardrails
-        +--> Milvus Retriever (localhost:19530)
-        +--> Embedding Service (localhost:8081)
-        |
-        v
-Remote OpenAI-compatible LLM endpoint
+Client
+  -> FastAPI API gateway
+  -> query classification
+  -> mevzuat retriever and optional judicial retrievers
+  -> evidence packet and source_cards
+  -> fine-tuned OpenAI-compatible LLM endpoint
+  -> post-generation verifier
+  -> OpenAI-compatible JSON or SSE response
 ```
 
-Lane ayrımı:
+Judicial runtime can be enabled or disabled. When enabled, processed judicial indexes must exist outside the repo. Streaming and non-streaming responses are expected to preserve the same final answer and metadata.
 
-- Baseline / default gateway lane:
-  `localhost:8000` üzerinde çalışan genel gateway; hangi upstream LLM'e gideceği env ile belirlenir.
-- Promoted candidate lane:
-  `scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh` ile açılan `localhost:8004` gateway'i; `dgx1` merged modeli loopback tunnel üzerinden kullanır.
-- Node3 fallback lane:
-  `scripts/finetune/launch_local_candidate_gateway_node3_merged.sh` ile açılan `localhost:8003` gateway'i.
+## Repository map
 
-Ana servisler:
+- `api-gateway/`: FastAPI application, chat router, RAG runtime, verification, tests.
+- `scripts/run_legal_advisor_api.sh`: readiness-checked API launch wrapper.
+- `scripts/check_legal_advisor_readiness.py`: compact environment and index readiness check.
+- `scripts/run_final_legal_advisor_smoke.py`: real-index final smoke battery.
+- `scripts/ci/check_closed_runtime_state.py`: fail-closed runtime state gate.
+- [docs/USAGE.md](docs/USAGE.md): operator usage and curl examples.
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md): environment variables and runtime modes.
+- [docs/API.md](docs/API.md): API contract and response metadata.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): concise runtime architecture.
+- [docs/DATA_AND_INDEXES.md](docs/DATA_AND_INDEXES.md): external corpus and generated index handling.
+- [docs/EVALUATION_AND_SMOKE.md](docs/EVALUATION_AND_SMOKE.md): validation commands and triage.
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): current development policy.
+- [docs/LEGACY_DOCS.md](docs/LEGACY_DOCS.md): archived historical material map.
 
-- API Gateway: `api-gateway/`
-- Embedding Service: `services/embedding-service/`
-- Milvus compose: `api-gateway/docker-compose.milvus.yml`
-- Evaluation runner: `evaluation/eval_runner.py`
-- Training / promotion gate: `scripts/check_training_readiness.py`
+## Prerequisites
 
-## Repo Haritası
+- Python 3.11+.
+- API gateway dependencies installed in `api-gateway/.venv`.
+- An OpenAI-compatible fine-tuned LLM endpoint.
+- Milvus and an embedding endpoint when mevzuat retrieval is enabled.
+- Processed judicial SQLite indexes when judicial runtime is enabled.
 
-- `api-gateway/`: FastAPI gateway, RAG orchestration, guardrails, router testleri
-- `services/embedding-service/`: OpenAI-compatible embedding servisi
-- `configs/evaluation/`: Faz 1, 95q, 170q ve weak-slice soru setleri
-- `evaluation/`: eval runner, raporlar, evidence manifest'ler
-- `data/finetune/`: canonical train/eval veri paketleri
-- `scripts/`: ingest, eval, dataset build, readiness gate ve fine-tune yardımcıları
-- `coordination/`: karar notları, milestone kayıtları, promotion ve recovery raporları
-- `docs/`: ana referans raporlar, runbook'lar, quality gate dokümanları
-- `WAVE_STATE.md`: dalga seviyesi durum ve karar özeti
-
-## Kurulum
-
-Önkoşullar:
-
-- Python 3.11+
-- Docker / Docker Compose
-- Milvus için lokal container çalıştırabilme
-- Remote inference kullanacaksanız ilgili DGX endpoint'ine erişim
-
-### 1. API Gateway ortamı
+## Quick start
 
 ```bash
 cd api-gateway
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -e .[dev,milvus]
+cd ..
 ```
 
-### 2. Embedding Service ortamı
+Configure the environment with placeholders replaced by real operator values:
 
 ```bash
-cd services/embedding-service
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -e .
+export DGX_BASE_URL=<OPENAI_COMPATIBLE_BASE_URL>
+export DGX_MODEL=<FINE_TUNED_MODEL_ID>
+export LEGAL_ADVISOR_LLM_ENABLED=true
+export MILVUS_ENABLED=true
+export MILVUS_URI=http://localhost:19530
+export MILVUS_COLLECTION=<MEVZUAT_COLLECTION>
+export EMBEDDING_BACKEND=remote
+export EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1
+export EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct
+export EMBEDDING_DIM=1024
+export JUDICIAL_RUNTIME_ENABLED=true
+export JUDICIAL_PROCESSED_DIR=<PROCESSED_JUDICIAL_DIR>
 ```
 
-### 3. Milvus'u başlat
+## Environment configuration
+
+Use `.env.example` as a template, then set real endpoint, model, Milvus, embedding, and judicial index values in your shell or deployment secret store. See `docs/CONFIGURATION.md` for every supported variable.
+
+## Readiness check
 
 ```bash
-docker compose -f api-gateway/docker-compose.milvus.yml up -d
+python3 scripts/check_legal_advisor_readiness.py
 ```
 
-### 4. Embedding Service'i başlat
+The readiness check fails if required LLM settings are missing, or if judicial runtime is enabled but the processed SQLite indexes are absent or unreadable.
+
+## Run API
 
 ```bash
-cd services/embedding-service
-. .venv/bin/activate
-python -m uvicorn src.main:app --host 127.0.0.1 --port 8081 --log-level info
+scripts/run_legal_advisor_api.sh
 ```
 
-### 5. Baseline / genel gateway lane'ini başlat
+The wrapper runs readiness first unless `SKIP_READINESS_CHECK=true` is set.
 
-Bu lane upstream LLM endpoint'ini env ile alır. Aşağıdaki örnek, remote OpenAI-compatible bir servisle gateway'i ayağa kaldırır.
+## Ask a question
 
 ```bash
-cd api-gateway
-. .venv/bin/activate
-
-DGX_BASE_URL=http://<openai-compatible-endpoint>/v1 \
-DGX_MODEL=<model-id> \
-MILVUS_ENABLED=true \
-MILVUS_URI=http://localhost:19530 \
-MILVUS_COLLECTION=mevzuat_e5_shadow \
-EMBEDDING_BACKEND=remote \
-EMBEDDING_BASE_URL=http://127.0.0.1:8081/v1 \
-EMBEDDING_MODEL=intfloat/multilingual-e5-large-instruct \
-RERANKER_ENABLED=false \
-GUARDRAILS_ENABLED=true \
-PRESIDIO_ENABLED=false \
-python -m uvicorn src.main:app --host 127.0.0.1 --port 8000 --log-level info
+curl -s http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"TBK m.49 haksiz fiil sartlari nelerdir?"}]}'
 ```
 
-`.env.example` temel gateway ayarları için bir başlangıç noktasıdır; promoted lane için gereken model/endpoint genellikle ayrıca override edilir.
-
-### 6. Promoted `dgx1` merged lane'ini başlat
-
-Repo içindeki resmi candidate bridge script'i:
+## Streaming example
 
 ```bash
-bash scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh
+curl -N http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"stream":true,"messages":[{"role":"user","content":"TBK m.49 kapsaminda emsal karar var mi?"}]}'
 ```
 
-Varsayılan davranış:
+## Judicial runtime modes
 
-- remote host: `btankut@192.168.12.243`
-- remote vLLM port: `30000`
-- local tunnel: `127.0.0.1:30004`
-- local candidate gateway: `127.0.0.1:8004`
-- model id: `/models/merged_model_fabric_stage_20260321`
+- Disabled: mevzuat-only questions can run; judicial-only questions fail closed with a judicial runtime reason.
+- Enabled and ready: exact and lexical judicial lanes can contribute source cards.
+- Enabled but unavailable or corrupt: judicial questions fail closed instead of producing partial judicial answers.
 
-İhtiyaç halinde env override edebilirsin:
+## Source cards and verification
+
+Responses include `source_cards`, `verification_status`, `retrieval_lanes`, `legal_rag_runtime_mode`, `judicial_runtime_enabled`, `judicial_ready`, and `latency_breakdown_ms`. Source cards are the public evidence contract for legislation and judicial decisions.
+
+## Smoke tests
 
 ```bash
-REMOTE_HOST=btankut@192.168.12.243 \
-REMOTE_VLLM_PORT=30000 \
-LOCAL_TUNNEL_PORT=30004 \
-GATEWAY_PORT=8004 \
-MODEL_NAME=/models/merged_model_fabric_stage_20260321 \
-bash scripts/finetune/launch_local_candidate_gateway_dgx1_merged.sh
+python3 scripts/ci/check_closed_runtime_state.py
+JUDICIAL_RUNTIME_ENABLED=true python3 scripts/ci/check_closed_runtime_state.py
+api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_legal_rag_runtime_integration.py -q
+api-gateway/.venv/bin/python -m pytest api-gateway/tests/test_legal_advisor_application_e2e.py -q
 ```
 
-### 7. Sağlık kontrolleri
+For a real endpoint and real processed indexes:
 
 ```bash
-curl http://127.0.0.1:8081/health
-curl http://127.0.0.1:8000/v1/health
-curl http://127.0.0.1:8004/v1/health
-curl http://127.0.0.1:30004/v1/models
+python3 scripts/run_final_legal_advisor_smoke.py
 ```
 
-Opsiyonel UI kullanımı için:
+## Benchmarking
 
-```bash
-docker compose -f api-gateway/docker-compose.yml up -d
-```
+Benchmarks are external quality measurements, not product truth by themselves. Do not patch individual benchmark questions. Fix the generic runtime, retrieval, evidence, or verification cause and rerun the benchmark.
 
-## Evaluation
+## Development policy
 
-Canonical eval aileleri:
+Keep runtime changes scoped, do not commit generated data or local secrets, keep legacy history archived, and keep validation tied to current runtime behavior. See `docs/DEVELOPMENT.md`.
 
-- `faz1-50`: resmi kabul ve promotion karşılaştırma seti
-- `phase3-95`: hardening / genişletilmiş slice
-- `faz2-170`: stres / misuse / training sınırı
+## Legacy docs
 
-### Matrix plan modu
-
-```bash
-./scripts/run_eval_matrix.sh
-./scripts/run_eval_matrix.sh all
-```
-
-### Canlı Faz 1 eval örnekleri
-
-Baseline lane:
-
-```bash
-MODEL_REF=gateway-api \
-CHECKPOINT_REF=gateway-live \
-GIT_COMMIT=$(git rev-parse --short HEAD) \
-./scripts/run_eval_matrix.sh faz1-50 --run --live --url http://127.0.0.1:8000
-```
-
-Promoted `dgx1` candidate lane:
-
-```bash
-MODEL_REF=hukuk-ai-sft-qwen35-807 \
-CHECKPOINT_REF=dgx1-merged-post-promotion-cleanup-20260322 \
-GIT_COMMIT=$(git rev-parse --short HEAD) \
-./scripts/run_eval_matrix.sh faz1-50 --run --live --url http://127.0.0.1:8004
-```
-
-Rapor farkı görmek için:
-
-```bash
-python3 scripts/compare_eval_reports.py \
-  --baseline evaluation/reports/eval_live_20260308_080601.json \
-  --candidate evaluation/reports/eval_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_post_promotion_cleanup_20260322.json
-```
-
-## Training, Readiness ve Promotion
-
-Bu repo'da fine-tune zinciri doğrudan “train et ve bakarız” şeklinde ilerlemez. Önce canonical veri paketi ve evidence gate geçmelidir.
-
-### Canonical training package
-
-- aktif train dosyası: `data/finetune/sft/final_train.jsonl`
-- aktif boyut: `807`
-- unique soru sayısı: `807`
-- builder: `scripts/build_training_dataset.py`
-
-### Dataset'i yeniden üret
-
-```bash
-python3 scripts/build_training_dataset.py --dry-run
-python3 scripts/build_training_dataset.py
-```
-
-### Pre-train readiness gate
-
-```bash
-python3 scripts/check_training_readiness.py \
-  --mode preflight \
-  --expected-eval-family faz1-50 \
-  --max-question-duplicate-excess 0 \
-  --baseline-evidence-path evaluation/reports/evidence_baseline_faz1_50_20260308.json
-```
-
-### Fine-tune config doğrulama
-
-```bash
-python3 scripts/finetune/check_finetune_config.py \
-  --config configs/finetune/unsloth_sft_qwen35_35b_a3b.json
-```
-
-### Promotion gate
-
-```bash
-python3 scripts/check_training_readiness.py \
-  --mode promotion \
-  --expected-eval-family faz1-50 \
-  --max-question-duplicate-excess 0 \
-  --baseline-evidence-path evaluation/reports/evidence_baseline_faz1_50_20260308.json \
-  --post-train-evidence-path evaluation/reports/evidence_post_train_faz1_50_hukuk_ai_sft_qwen35_807_dgx1_merged_post_promotion_cleanup_20260322.json
-```
-
-### Fine-tune / merge / serving runbook'ları
-
-- readiness ve gate kuralları: `docs/finetune/TRAINING_READINESS.md`
-- training geçmişi ve audit: `docs/finetune/TRAINING_LOG.md`
-- proven external node3 eğitim hattı: `docs/finetune/dgxnode3-qwen-external-runbook.md`
-- inference notları: `docs/INFERENCE_SETUP.md`
-
-## Önemli Referanslar
-
-- Faz 1 ana rapor: `docs/FAZ1-FINAL-RAPOR.md`
-- Faz 1 cevap raporu: `docs/FAZ1-FINAL-RAPOR-CEVAP-2026-03-22.md`
-- quality gate workflow: `docs/quality_gate_workflow.md`
-- current wave özeti: `WAVE_STATE.md`
-- promoted lane kararı: `coordination/dgx1-merged-serving-decision-2026-03-22.md`
-- promotion sonucu: `coordination/dgx1-posttrain-promotion-result-2026-03-22.md`
-
-## Bilinen Kararlar
-
-- Reranker şu an production default değil; karar `keep-off`.
-- Guardrails strict-facts hattı varsayılan değil; stabil safe-default korunuyor.
-- Promotion kararları yalnız matched eval family + matched runner + evidence manifest ile geçerlidir.
-- `final_train.jsonl` dışındaki türetilmiş dataset görünümleri ikinci kaynak değil, yalnız uyumluluk/export çıktısıdır.
-
-## Uyarı
-
-Bu repo iç kullanım ve kontrollü araştırma amaçlıdır. Hukuki tavsiye yerine geçmez. Üretilen yanıtlar mevzuat araştırma desteği olarak değerlendirilmelidir; doğrudan profesyonel hukuki görüş olarak kullanılmamalıdır.
+Historical development material is archived under `docs/archive/` and mapped in `docs/LEGACY_DOCS.md`. It is retained for forensics only and is not current product guidance.
