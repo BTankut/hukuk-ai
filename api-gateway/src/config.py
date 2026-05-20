@@ -86,6 +86,15 @@ class Settings:
     )
     judicial_vector_collection: str = "judicial_decisions_v1_shadow"
     judicial_vector_enabled: bool = False
+    legal_advisor_llm_enabled: bool = True
+    legal_rag_max_mevzuat_evidence: int = 6
+    legal_rag_judicial_top_k: int = 20
+    legal_rag_max_judicial_decisions: int = 5
+    legal_rag_max_chunks_per_decision: int = 2
+    legal_rag_max_total_evidence_chars: int = 8000
+    legal_rag_retrieval_timeout_ms: int = 8000
+    legal_rag_llm_timeout_ms: int = 15000
+    legal_rag_verification_timeout_ms: int = 5000
 
     def __init__(self, **overrides):
         default_judicial_processed_dir = Path(
@@ -144,6 +153,15 @@ class Settings:
                 "judicial_decisions_v1_shadow",
             ),
             "judicial_vector_enabled": _to_bool(os.getenv("JUDICIAL_VECTOR_ENABLED"), False),
+            "legal_advisor_llm_enabled": _to_bool(os.getenv("LEGAL_ADVISOR_LLM_ENABLED"), True),
+            "legal_rag_max_mevzuat_evidence": _to_int(os.getenv("LEGAL_RAG_MAX_MEVZUAT_EVIDENCE"), 6),
+            "legal_rag_judicial_top_k": _to_int(os.getenv("LEGAL_RAG_JUDICIAL_TOP_K"), 20),
+            "legal_rag_max_judicial_decisions": _to_int(os.getenv("LEGAL_RAG_MAX_JUDICIAL_DECISIONS"), 5),
+            "legal_rag_max_chunks_per_decision": _to_int(os.getenv("LEGAL_RAG_MAX_CHUNKS_PER_DECISION"), 2),
+            "legal_rag_max_total_evidence_chars": _to_int(os.getenv("LEGAL_RAG_MAX_TOTAL_EVIDENCE_CHARS"), 8000),
+            "legal_rag_retrieval_timeout_ms": _to_int(os.getenv("LEGAL_RAG_RETRIEVAL_TIMEOUT_MS"), 8000),
+            "legal_rag_llm_timeout_ms": _to_int(os.getenv("LEGAL_RAG_LLM_TIMEOUT_MS"), 15000),
+            "legal_rag_verification_timeout_ms": _to_int(os.getenv("LEGAL_RAG_VERIFICATION_TIMEOUT_MS"), 5000),
         }
 
         values.update(overrides)

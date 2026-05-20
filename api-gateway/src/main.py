@@ -146,6 +146,7 @@ app.state.retriever = _build_retriever()
 app.state.legal_rag_orchestrator = LegalRagOrchestrator.from_settings(
     settings,
     mevzuat_retriever=app.state.retriever,
+    llm_client=llm_client,
 )
 get_metrics_registry().set_lane_health_state(lane=release_lane_id(), healthy=True)
 
@@ -195,7 +196,13 @@ async def health() -> dict[str, str]:
         "verification": "enabled" if _use_verification else "disabled",
         "judicial_runtime_enabled": "enabled" if legal_runtime_health["judicial_runtime_enabled"] else "disabled",
         "judicial_indexes": "available" if legal_runtime_health["judicial_ready"] else "unavailable",
+        "judicial_ready": "true" if legal_runtime_health["judicial_ready"] else "false",
+        "exact_lookup_available": "true" if legal_runtime_health["exact_lookup_available"] else "false",
+        "lexical_index_available": "true" if legal_runtime_health["lexical_index_available"] else "false",
         "judicial_vector_index": str(legal_runtime_health["vector_index_status"]),
+        "vector_index_status": str(legal_runtime_health["vector_index_status"]),
+        "mevzuat_retriever_available": "true" if legal_runtime_health["mevzuat_retriever_available"] else "false",
+        "legal_rag_runtime_mode": str(legal_runtime_health["legal_rag_runtime_mode"]),
     }
 
 

@@ -3033,6 +3033,7 @@ class ChatCompletionResponse(BaseModel):
     final_mode: str | None = None
     final_reason: str | None = None
     answer_contract: dict[str, Any] | None = None
+    source_cards: list[dict[str, Any]] = Field(default_factory=list)
     trace: dict[str, Any] | None = None
 
 
@@ -3173,6 +3174,7 @@ async def _stream_sse_response(
     final_mode: str | None = None,
     final_reason: str | None = None,
     answer_contract: dict[str, Any] | None = None,
+    source_cards: list[dict[str, Any]] | None = None,
     include_metadata_chunk: bool = False,
     words_per_chunk: int = 5,
     delay_between_chunks: float = 0.02,
@@ -3209,12 +3211,11 @@ async def _stream_sse_response(
     yield _make_delta_chunk({"role": "assistant"})
     await asyncio.sleep(0)
 
-    # 2. Content chunks
-    words = answer.split()
-    for i in range(0, len(words), words_per_chunk):
-        group = words[i : i + words_per_chunk]
-        # İlk chunk'ta boşluk yok, sonrakilerde boşluk ekle
-        content = (" " if i > 0 else "") + " ".join(group)
+    # 2. Content chunks. Whitespace is preserved so streamed/non-streamed
+    # final content stays byte-equivalent after client concatenation.
+    tokens = re.findall(r"\S+\s*|\s+", answer)
+    for i in range(0, len(tokens), words_per_chunk):
+        content = "".join(tokens[i : i + words_per_chunk])
         yield _make_delta_chunk({"content": content})
         await asyncio.sleep(delay_between_chunks)
 
@@ -3243,6 +3244,8 @@ async def _stream_sse_response(
             meta_payload["final_reason"] = final_reason
         if answer_contract is not None:
             meta_payload["answer_contract"] = answer_contract
+        if source_cards is not None:
+            meta_payload["source_cards"] = source_cards
         yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
 
     # 5. Done sentinel
@@ -3646,6 +3649,7 @@ def _finalize_boundary_proxy_response(
 
     client_trace = trace_payload if request_body.include_trace else None
     public_answer_contract = _sanitize_public_answer_contract(answer_contract)
+    source_cards = _extract_public_source_cards(public_answer_contract)
     if request_body.stream:
         return StreamingResponse(
             _stream_sse_response(
@@ -3662,6 +3666,7 @@ def _finalize_boundary_proxy_response(
                 final_mode=final_mode,
                 final_reason=final_reason,
                 answer_contract=public_answer_contract,
+                source_cards=source_cards,
                 include_metadata_chunk=request_body.include_trace,
             ),
             media_type="text/event-stream",
@@ -3692,6 +3697,7 @@ def _finalize_boundary_proxy_response(
         final_mode=final_mode,
         final_reason=final_reason,
         answer_contract=public_answer_contract,
+        source_cards=source_cards,
         trace=client_trace,
     )
 
@@ -3742,6 +3748,15 @@ def _sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> 
     sanitized = dict(answer_contract)
     sanitized["final_mode"] = _sanitize_public_final_mode(answer_contract.get("final_mode"))
     return sanitized
+
+
+def _extract_public_source_cards(answer_contract: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(answer_contract, dict):
+        return []
+    cards = answer_contract.get("source_cards")
+    if not isinstance(cards, list):
+        return []
+    return [dict(card) for card in cards if isinstance(card, dict)]
 
 
 def _resolve_public_answer_text(
@@ -4687,6 +4702,7 @@ def _finalize_chat_response(
         include_trace=request_body.include_trace,
         trace_payload=trace_payload,
     )
+    source_cards = _extract_public_source_cards(public_answer_contract)
     if request_body.stream:
         return StreamingResponse(
             _stream_sse_response(
@@ -4703,6 +4719,7 @@ def _finalize_chat_response(
                 final_mode=final_mode,
                 final_reason=final_reason,
                 answer_contract=public_answer_contract,
+                source_cards=source_cards,
                 include_metadata_chunk=request_body.include_trace,
             ),
             media_type="text/event-stream",
@@ -4733,6 +4750,7 @@ def _finalize_chat_response(
         final_mode=final_mode,
         final_reason=final_reason,
         answer_contract=public_answer_contract,
+        source_cards=source_cards,
         trace=client_trace,
     )
 
@@ -5126,19 +5144,30 @@ async def chat_completions(
     if legal_runtime is not None and hasattr(legal_runtime, "route_query") and hasattr(legal_runtime, "answer"):
         legal_route = legal_runtime.route_query(last_user_msg)
         legal_health = legal_runtime.health() if hasattr(legal_runtime, "health") else {}
+        legal_route_name = getattr(legal_route, "route", "unsupported_or_out_of_scope")
         should_use_legal_runtime = (
-            getattr(legal_route, "route", "unsupported_or_out_of_scope") != "unsupported_or_out_of_scope"
+            legal_route_name != "native_dialog"
             and (
-                bool(getattr(legal_route, "judicial_requested", False))
+                legal_route_name == "unsupported_or_out_of_scope"
+                or bool(getattr(legal_route, "judicial_requested", False))
                 or bool(legal_health.get("judicial_runtime_enabled"))
             )
         )
         if should_use_legal_runtime:
-            runtime_response = legal_runtime.answer(
-                query=enriched_query,
-                top_k=request_body.top_k,
-                law_filter=request_body.law_filter,
-            )
+            if hasattr(legal_runtime, "answer_async"):
+                runtime_response = await legal_runtime.answer_async(
+                    query=enriched_query,
+                    top_k=request_body.top_k,
+                    law_filter=request_body.law_filter,
+                    conversation_context=conversation_history,
+                )
+            else:
+                runtime_response = await asyncio.to_thread(
+                    legal_runtime.answer,
+                    query=enriched_query,
+                    top_k=request_body.top_k,
+                    law_filter=request_body.law_filter,
+                )
             trace_payload = {
                 **runtime_response.trace,
                 "request_id": response_id,
