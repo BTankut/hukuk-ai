@@ -351,6 +351,35 @@ def test_case_law_query_refuses_when_enabled_indexes_are_missing(tmp_path) -> No
     assert payload["final_reason"] == "judicial_indexes_unavailable"
 
 
+def test_case_law_query_refuses_when_enabled_indexes_are_corrupt(tmp_path) -> None:
+    processed = tmp_path / "processed"
+    processed.mkdir()
+    _write_passing_coverage_audit(processed)
+    exact_path = processed / "judicial_exact_lookup.sqlite"
+    lexical_path = processed / "judicial_lexical_index.sqlite"
+    exact_path.write_text("not sqlite", encoding="utf-8")
+    lexical_path.write_text("not sqlite", encoding="utf-8")
+    runtime = LegalRagOrchestrator(
+        config=LegalRuntimeConfig(
+            judicial_runtime_enabled=True,
+            processed_dir=processed,
+            exact_lookup_path=exact_path,
+            lexical_index_path=lexical_path,
+        ),
+        mevzuat_retriever=FakeMevzuatRetriever(),
+    )
+    health = runtime.health()
+    assert health["judicial_ready"] is False
+    assert health["judicial_readiness_status"] == "failed"
+    assert any("unreadable" in failure for failure in health["judicial_readiness_failures"])
+
+    with _make_client(runtime) as client:
+        payload = _post(client, "Yargıtay içtihadı nedir?")
+
+    assert payload["blocked"] is True
+    assert payload["final_reason"] == "judicial_indexes_unavailable"
+
+
 def test_native_dialog_does_not_invoke_legal_rag(tmp_path) -> None:
     runtime = _build_runtime(tmp_path, judicial_enabled=True)
     with _make_client(runtime) as client:
