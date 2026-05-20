@@ -3034,6 +3034,14 @@ class ChatCompletionResponse(BaseModel):
     final_reason: str | None = None
     answer_contract: dict[str, Any] | None = None
     source_cards: list[dict[str, Any]] = Field(default_factory=list)
+    legal_rag_runtime_mode: str | None = None
+    judicial_runtime_enabled: bool | None = None
+    judicial_ready: bool | None = None
+    verification_status: str | None = None
+    claims_verified: bool | None = None
+    evidence_summary: dict[str, Any] | None = None
+    retrieval_lanes: list[str] = Field(default_factory=list)
+    latency_breakdown_ms: dict[str, Any] | None = None
     trace: dict[str, Any] | None = None
 
 
@@ -3175,6 +3183,7 @@ async def _stream_sse_response(
     final_reason: str | None = None,
     answer_contract: dict[str, Any] | None = None,
     source_cards: list[dict[str, Any]] | None = None,
+    legal_rag_metadata: dict[str, Any] | None = None,
     include_metadata_chunk: bool = False,
     words_per_chunk: int = 5,
     delay_between_chunks: float = 0.02,
@@ -3246,6 +3255,8 @@ async def _stream_sse_response(
             meta_payload["answer_contract"] = answer_contract
         if source_cards is not None:
             meta_payload["source_cards"] = source_cards
+        if legal_rag_metadata is not None:
+            meta_payload.update(legal_rag_metadata)
         yield f"data: {json.dumps(meta_payload, ensure_ascii=False)}\n\n"
 
     # 5. Done sentinel
@@ -3747,6 +3758,7 @@ def _sanitize_public_answer_contract(answer_contract: dict[str, Any] | None) -> 
         return None
     sanitized = dict(answer_contract)
     sanitized["final_mode"] = _sanitize_public_final_mode(answer_contract.get("final_mode"))
+    sanitized.pop("evidence_packet", None)
     return sanitized
 
 
@@ -3757,6 +3769,30 @@ def _extract_public_source_cards(answer_contract: dict[str, Any] | None) -> list
     if not isinstance(cards, list):
         return []
     return [dict(card) for card in cards if isinstance(card, dict)]
+
+
+def _extract_legal_rag_metadata(answer_contract: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(answer_contract, dict):
+        return {
+            "legal_rag_runtime_mode": None,
+            "judicial_runtime_enabled": None,
+            "judicial_ready": None,
+            "verification_status": None,
+            "claims_verified": None,
+            "evidence_summary": None,
+            "retrieval_lanes": [],
+            "latency_breakdown_ms": None,
+        }
+    return {
+        "legal_rag_runtime_mode": answer_contract.get("legal_rag_runtime_mode"),
+        "judicial_runtime_enabled": answer_contract.get("judicial_runtime_enabled"),
+        "judicial_ready": answer_contract.get("judicial_ready"),
+        "verification_status": answer_contract.get("verification_status"),
+        "claims_verified": answer_contract.get("claims_verified"),
+        "evidence_summary": answer_contract.get("evidence_summary"),
+        "retrieval_lanes": list(answer_contract.get("retrieval_lanes") or []),
+        "latency_breakdown_ms": answer_contract.get("latency_breakdown_ms"),
+    }
 
 
 def _resolve_public_answer_text(
@@ -4703,6 +4739,7 @@ def _finalize_chat_response(
         trace_payload=trace_payload,
     )
     source_cards = _extract_public_source_cards(public_answer_contract)
+    legal_rag_metadata = _extract_legal_rag_metadata(public_answer_contract)
     if request_body.stream:
         return StreamingResponse(
             _stream_sse_response(
@@ -4720,6 +4757,7 @@ def _finalize_chat_response(
                 final_reason=final_reason,
                 answer_contract=public_answer_contract,
                 source_cards=source_cards,
+                legal_rag_metadata=legal_rag_metadata,
                 include_metadata_chunk=request_body.include_trace,
             ),
             media_type="text/event-stream",
@@ -4751,6 +4789,7 @@ def _finalize_chat_response(
         final_reason=final_reason,
         answer_contract=public_answer_contract,
         source_cards=source_cards,
+        **legal_rag_metadata,
         trace=client_trace,
     )
 

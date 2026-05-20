@@ -95,6 +95,7 @@ class Settings:
     legal_rag_retrieval_timeout_ms: int = 8000
     legal_rag_llm_timeout_ms: int = 15000
     legal_rag_verification_timeout_ms: int = 5000
+    legal_rag_max_query_chars: int = 4000
 
     def __init__(self, **overrides):
         default_judicial_processed_dir = Path(
@@ -162,6 +163,7 @@ class Settings:
             "legal_rag_retrieval_timeout_ms": _to_int(os.getenv("LEGAL_RAG_RETRIEVAL_TIMEOUT_MS"), 8000),
             "legal_rag_llm_timeout_ms": _to_int(os.getenv("LEGAL_RAG_LLM_TIMEOUT_MS"), 15000),
             "legal_rag_verification_timeout_ms": _to_int(os.getenv("LEGAL_RAG_VERIFICATION_TIMEOUT_MS"), 5000),
+            "legal_rag_max_query_chars": _to_int(os.getenv("LEGAL_RAG_MAX_QUERY_CHARS"), 4000),
         }
 
         values.update(overrides)

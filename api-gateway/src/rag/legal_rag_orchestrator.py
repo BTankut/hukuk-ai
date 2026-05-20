@@ -160,6 +160,28 @@ _NEGATIVE_SOURCE_TERMS = {
     "yargı kararı kullanma",
     "yargi karari kullanma",
 }
+_UNSAFE_REQUEST_TERMS = {
+    "kaynak kullanmadan cevap ver",
+    "kaynak göstermeden cevap ver",
+    "kaynak gostermeden cevap ver",
+    "atıf uydur",
+    "atif uydur",
+    "emsal uydur",
+    "içtihat uydur",
+    "ictihat uydur",
+    "karar uydur",
+    "case law fabricate",
+    "ignore citations",
+    "ignore evidence",
+    "delilleri yok say",
+    "kanıtları yok say",
+    "kanitlari yok say",
+    "sistem talimatını unut",
+    "sistem talimatlarini unut",
+    "önceki talimatları görmezden gel",
+    "onceki talimatlari gormezden gel",
+}
+_CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _MATERIAL_JUDICIAL_GENERALIZATION_RE = re.compile(
     r"\b(yerleşik içtihat|yerlesik ictihat|istikrarlı uygulama|istikrarli uygulama)\b",
     re.IGNORECASE,
@@ -239,6 +261,7 @@ class LegalRuntimeConfig:
     verification_timeout_ms: int = 5000
     legal_advisor_llm_enabled: bool = True
     request_timeout_ms: int = 8000
+    max_query_chars: int = 4000
 
     @classmethod
     def from_settings(cls, settings: Any) -> "LegalRuntimeConfig":
@@ -271,6 +294,7 @@ class LegalRuntimeConfig:
             legal_advisor_llm_enabled=bool(
                 getattr(settings, "legal_advisor_llm_enabled", _bool_env("LEGAL_ADVISOR_LLM_ENABLED", True))
             ),
+            max_query_chars=int(getattr(settings, "legal_rag_max_query_chars", _int_env("LEGAL_RAG_MAX_QUERY_CHARS", 4000))),
         )
 
 
@@ -290,11 +314,20 @@ class LegalEvidence:
             law_number = self.metadata.get("law_no") or self.metadata.get("kanun_no")
             article_number = self.metadata.get("madde_no") or self.metadata.get("article_no")
             source_url = self.metadata.get("source_url")
+            source_title = self.metadata.get("source_title") or self.metadata.get("law_name") or self.metadata.get("belge_adi")
+            source_authority = self.metadata.get("source_authority") or self.metadata.get("authority") or "Mevzuat"
             snippet = _bounded_text(self.text, text_limit)
             return {
                 "evidence_id": self.evidence_id,
                 "source_type": "legislation",
-                "law_name": self.metadata.get("source_title") or self.metadata.get("law_name") or self.metadata.get("belge_adi"),
+                "source_title": source_title,
+                "source_authority": source_authority,
+                "citation_label": self.citation,
+                "pinpoint": f"m.{article_number}" if article_number else None,
+                "text": snippet,
+                "metadata": dict(self.metadata),
+                "law_id": self.metadata.get("law_id") or self.metadata.get("source_id"),
+                "law_name": source_title,
                 "law_short_name": self.metadata.get("law_short_name") or self.metadata.get("kanun_kisa_adi"),
                 "law_number": law_number,
                 "law_no": law_number,
@@ -303,6 +336,7 @@ class LegalEvidence:
                 "madde_no": article_number,
                 "article_title": self.metadata.get("article_title") or self.metadata.get("madde_baslik"),
                 "source_url": source_url,
+                "effective_state": self.metadata.get("current_law_state") or self.metadata.get("yururluk_durumu"),
                 "current_law_state": self.metadata.get("current_law_state") or self.metadata.get("yururluk_durumu"),
                 "source_id": self.metadata.get("source_id") or source_url or self.metadata.get("chunk_id"),
                 "chunk_key": self.metadata.get("chunk_key") or self.metadata.get("chunk_id"),
@@ -323,13 +357,24 @@ class LegalEvidence:
                 "score_components": dict(self.score_components),
             }
         snippet = _bounded_text(self.text, text_limit)
+        court = self.metadata.get("court")
+        chamber = self.metadata.get("chamber")
+        pinpoint = None
+        if self.metadata.get("paragraph_start") and self.metadata.get("paragraph_end"):
+            pinpoint = f"p.{self.metadata.get('paragraph_start')}-{self.metadata.get('paragraph_end')}"
         return {
             "evidence_id": self.evidence_id,
             "source_type": "judicial_decision",
+            "source_title": self.metadata.get("citation_key") or self.citation,
+            "source_authority": self.metadata.get("source_authority") or court,
+            "citation_label": self.citation,
+            "pinpoint": pinpoint,
+            "text": snippet,
+            "metadata": dict(self.metadata),
             "canonical_decision_id": self.metadata.get("canonical_decision_id"),
             "citation_key": self.metadata.get("citation_key"),
-            "court": self.metadata.get("court"),
-            "chamber": self.metadata.get("chamber"),
+            "court": court,
+            "chamber": chamber,
             "decision_date": self.metadata.get("decision_date"),
             "esas_no": self.metadata.get("esas_no"),
             "karar_no": self.metadata.get("karar_no"),
@@ -346,7 +391,11 @@ class LegalEvidence:
 
     def source_card(self) -> dict[str, Any]:
         packet = self.packet(text_limit=420)
-        card = {key: value for key, value in packet.items() if key != "official_source_metadata"}
+        card = {
+            key: value
+            for key, value in packet.items()
+            if key not in {"official_source_metadata", "metadata", "text", "selected_text"}
+        }
         card["selected_text_excerpt"] = packet["selected_text"]
         if self.source_type == "legislation":
             card["source_id"] = packet.get("source_id")
@@ -536,6 +585,33 @@ def _extract_judicial_metadata_filters(query: str, analysis: Any) -> dict[str, A
         if law and article_no:
             filters["related_law_refs"] = f"{law} m.{article_no}"
     return filters
+
+
+def _route_class(route_name: str) -> str:
+    mapping = {
+        "exact_judicial_decision_lookup": "specific_judicial_decision_lookup",
+        "specific_legislation_article_lookup": "specific_legislation_article_lookup",
+        "legislation_only": "legislation_only",
+        "judicial_only": "judicial_only",
+        "mixed_legislation_and_judicial": "mixed_legislation_and_judicial",
+        "legal_advice_scenario": "legislation_only",
+        "procedural_query": "legislation_only",
+        "negative_or_no_source_query": "legislation_only",
+        "unsupported_or_out_of_scope": "unsupported_or_out_of_scope",
+        "native_dialog": "native_dialog_or_non_legal",
+    }
+    return mapping.get(route_name, route_name)
+
+
+def _query_safety_failure(query: str, *, max_query_chars: int) -> str | None:
+    if len(query) > max_query_chars:
+        return "oversized_input"
+    if _CONTROL_CHAR_RE.search(query):
+        return "malformed_control_characters"
+    normalized = _norm(query)
+    if _has_any(normalized, _UNSAFE_REQUEST_TERMS):
+        return "prompt_injection_or_fabrication_request"
+    return None
 
 
 def _build_mevzuat_citation(result: RetrievalResult) -> str:
@@ -767,6 +843,8 @@ class LegalRagOrchestrator:
                 exact_key=exact_key,
                 judicial_filters=filters,
             )
+        if analysis.article_refs and not judicial_score:
+            return LegalRoute("specific_legislation_article_lookup", 0.86, False, True, judicial_filters=filters)
         if negative_source and (legislation_score or advice_score or procedural_score):
             return LegalRoute("negative_or_no_source_query", 0.8, False, True, judicial_filters=filters)
         if procedural_score:
@@ -850,9 +928,40 @@ class LegalRagOrchestrator:
         )
 
     def _prepare_answer(self, *, query: str, top_k: int, law_filter: str | None, started: float) -> PreparedLegalAnswer:
+        safety_failure = _query_safety_failure(query, max_query_chars=self.config.max_query_chars)
+        if safety_failure is not None:
+            route = LegalRoute("unsupported_or_out_of_scope", 0.95, False, False)
+            retrieval_metrics: dict[str, Any] = {
+                "route": route.route,
+                "route_class": _route_class(route.route),
+                "source_families_requested": {"legislation": False, "judicial_decision": False},
+                "judicial_filters": {},
+                "latency_by_lane_ms": {},
+                "input_safety_failure": safety_failure,
+            }
+            return PreparedLegalAnswer(
+                route=route,
+                mevzuat_evidence=[],
+                judicial_evidence=[],
+                retrieval_metrics=retrieval_metrics,
+                early_response=self._response(
+                    answer="Bu istek güvenli kaynaklı yanıt sözleşmesini ihlal ediyor; kaynak uydurmadan veya talimatları yok sayarak hukuki sonuç üretmiyorum.",
+                    citations=[],
+                    blocked=True,
+                    final_mode="refusal",
+                    final_reason=safety_failure,
+                    route=route,
+                    mevzuat_evidence=[],
+                    judicial_evidence=[],
+                    started=started,
+                    retrieval_metrics=retrieval_metrics,
+                    verification={"pass": False, "failures": [safety_failure], "verdict": "fail"},
+                ),
+            )
         route = self.route_query(query)
         retrieval_metrics: dict[str, Any] = {
             "route": route.route,
+            "route_class": _route_class(route.route),
             "source_families_requested": {
                 "legislation": route.legislation_requested,
                 "judicial_decision": route.judicial_requested,
@@ -1760,17 +1869,33 @@ class LegalRagOrchestrator:
         source_types = sorted({item.source_type for item in evidence})
         public_health = self.public_health()
         source_card_counts = dict(sorted(Counter(card.get("source_type") for card in source_cards).items()))
+        retrieval_lanes = sorted({item.retrieval_lane for item in evidence if item.retrieval_lane})
+        verification_status = (verification or {}).get("verdict") or ("not_run" if verification is None else "unknown")
+        claims = generated.claims if generated else []
+        latency_breakdown = dict((retrieval_metrics or {}).get("latency_by_lane_ms") or {})
+        if isinstance(verification, dict) and verification.get("latency_ms") is not None:
+            latency_breakdown["verification"] = verification["latency_ms"]
+        evidence_summary = {
+            "total": len(evidence),
+            "by_source_type": source_card_counts,
+            "mevzuat_evidence_count": len(mevzuat_evidence),
+            "judicial_evidence_count": len(judicial_evidence),
+            "retrieval_lanes": retrieval_lanes,
+        }
         contract = {
             "answer_text": answer,
             "final_mode": final_mode,
+            "legal_rag_runtime_mode": public_health["legal_rag_runtime_mode"],
             "route": route.route,
+            "route_class": _route_class(route.route),
             "source_types": source_types,
             "source_cards": source_cards,
             "evidence_packet": evidence_packet,
-            "claim_map": generated.claims if generated else [],
+            "claim_map": claims,
             "mevzuat_evidence_count": len(mevzuat_evidence),
             "judicial_evidence_count": len(judicial_evidence),
             "judicial_runtime_enabled": self.config.judicial_runtime_enabled,
+            "judicial_ready": public_health["judicial_ready"],
             "citation_contract": "complete" if citations or blocked else "no_evidence",
             "primary_source_id": source_cards[0]["evidence_id"] if source_cards else None,
             "secondary_source_ids": [card["evidence_id"] for card in source_cards[1:]],
@@ -1778,12 +1903,17 @@ class LegalRagOrchestrator:
             "fallback_reason": generated.fallback_reason if generated else None,
             "retrieval_mode_metadata": dict(retrieval_metrics or {}),
             "verification_metadata": verification,
+            "verification_status": verification_status,
+            "claims_verified": bool(verification and verification.get("pass") is True),
             "runtime_health": public_health,
             "degraded_mode": {
                 "mevzuat_retriever_degraded": public_health["mevzuat_retriever_degraded"],
                 "judicial_readiness_status": public_health["judicial_readiness_status"],
             },
             "source_card_count_by_source_type": source_card_counts,
+            "evidence_summary": evidence_summary,
+            "retrieval_lanes": retrieval_lanes,
+            "latency_breakdown_ms": latency_breakdown,
             "verifier_enabled": public_health["verifier_enabled"],
         }
         metrics = dict(retrieval_metrics or {})
@@ -1805,6 +1935,7 @@ class LegalRagOrchestrator:
         trace = {
             "decision_lane": "legal_rag_runtime",
             "route": route.route,
+            "route_class": _route_class(route.route),
             "route_confidence": route.confidence,
             "judicial_runtime_enabled": self.config.judicial_runtime_enabled,
             "judicial_index_status": public_health,
