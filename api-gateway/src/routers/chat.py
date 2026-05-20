@@ -3000,6 +3000,7 @@ class ChatCompletionRequest(BaseModel):
     use_verification: bool = True
     top_k: int = Field(default=20, ge=1, le=50)
     include_trace: bool = False
+    legal_task_type: str | None = None
 
 
 class ChatChoice(BaseModel):
@@ -3330,6 +3331,255 @@ async def _run_native_dialog_passthrough(
     return result.text.strip() or _build_native_dialog_fallback_answer(intent), usage_payload, result.trace
 
 
+def _is_legal_multiple_choice_task(value: str | None) -> bool:
+    if not value:
+        return False
+    normalized = re.sub(r"[^a-z0-9]+", "_", value.strip().lower()).strip("_")
+    return normalized in {"multiple_choice", "legal_multiple_choice", "mcq", "legal_mcq"}
+
+
+def _extract_multiple_choice_options(user_message: str) -> dict[str, str]:
+    options: dict[str, str] = {}
+    for line in user_message.splitlines():
+        match = re.match(r"^\s*([A-E])\)\s+(.+?)\s*$", line)
+        if match:
+            options[match.group(1)] = match.group(2).strip()
+    return options if set(options) == {"A", "B", "C", "D", "E"} else {}
+
+
+def _compact_mcq_text(value: Any, limit: int) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()[:limit]
+
+
+def _compact_mcq_evidence(answer_contract: dict[str, Any]) -> list[dict[str, Any]]:
+    packet = answer_contract.get("evidence_packet") if isinstance(answer_contract, dict) else {}
+    items = packet.get("items") if isinstance(packet, dict) else []
+    compact_items: list[dict[str, Any]] = []
+    for item in (items[:8] if isinstance(items, list) else []):
+        if not isinstance(item, dict):
+            continue
+        compact_items.append(
+            {
+                "evidence_id": item.get("evidence_id"),
+                "source_type": item.get("source_type"),
+                "citation": item.get("citation"),
+                "selected_text": _compact_mcq_text(item.get("selected_text"), 700),
+            }
+        )
+    return compact_items
+
+
+def _parse_mcq_adapter_payload(text: str) -> dict[str, str | None]:
+    stripped = text.strip()
+    payload: dict[str, Any] = {}
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?", "", stripped).strip()
+        stripped = re.sub(r"```$", "", stripped).strip()
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            parsed = json.loads(stripped[start : end + 1])
+            if isinstance(parsed, dict):
+                payload = parsed
+        except json.JSONDecodeError:
+            payload = {}
+
+    selected = str(payload.get("selected_option") or payload.get("secenek") or "").strip().upper()
+    if selected not in {"A", "B", "C", "D", "E"}:
+        first_line = stripped.splitlines()[0].strip() if stripped.splitlines() else ""
+        match = re.match(r"^SE[ÇC]ENEK\s*:\s*([A-E])\s*$", first_line, re.IGNORECASE)
+        selected = match.group(1).upper() if match else ""
+    evidence_status = str(payload.get("evidence_status") or payload.get("kaynak_durumu") or "").strip().lower()
+    evidence_status = evidence_status if evidence_status in {
+        "evidence_used",
+        "limited_evidence",
+        "unsupported_best_effort",
+        "blocked",
+    } else ""
+    rationale = str(payload.get("rationale") or payload.get("gerekce") or "").strip()
+    if not rationale:
+        lines = [line.strip() for line in stripped.splitlines()[1:] if line.strip()]
+        rationale = " ".join(lines)[:600]
+    return {
+        "selected_option": selected if selected in {"A", "B", "C", "D", "E"} else None,
+        "evidence_status": evidence_status or None,
+        "rationale": rationale or None,
+    }
+
+
+def _default_mcq_evidence_status(
+    *,
+    runtime_blocked: bool,
+    verification_status: str | None,
+    source_cards: list[dict[str, Any]],
+) -> str:
+    if runtime_blocked:
+        return "blocked"
+    if verification_status == "pass" and source_cards:
+        return "evidence_used"
+    if source_cards:
+        return "limited_evidence"
+    return "unsupported_best_effort"
+
+
+def _mcq_outcome(
+    *,
+    selected_option: str | None,
+    evidence_status: str,
+    runtime_blocked: bool,
+    error: str | None = None,
+) -> str:
+    if error:
+        return "api_error"
+    if not selected_option:
+        return "blocked_no_choice" if runtime_blocked else "unparseable"
+    if evidence_status == "evidence_used":
+        return "verified_choice"
+    if evidence_status == "limited_evidence":
+        return "limited_evidence_choice"
+    if evidence_status == "blocked":
+        return "blocked_no_choice" if runtime_blocked else "unparseable"
+    return "unsupported_best_effort_choice"
+
+
+def _render_mcq_answer(
+    *,
+    selected_option: str | None,
+    rationale: str | None,
+    evidence_status: str,
+    final_reason: str | None,
+) -> str:
+    first_line = f"SEÇENEK: {selected_option}" if selected_option else "SEÇENEK: YOK"
+    reason = _compact_mcq_text(rationale, 900) or (
+        "Kaynak ve model çıktısı yeterli bir seçenek seçimi oluşturamadı."
+        if not selected_option
+        else "Seçim, çoktan seçmeli değerlendirme bağlamında yapılmıştır."
+    )
+    if final_reason and evidence_status == "blocked":
+        reason = f"{reason} Final neden: {final_reason}."
+    return "\n".join(
+        [
+            first_line,
+            f"GEREKÇE: {reason}",
+            f"KAYNAK DURUMU: {evidence_status}",
+        ]
+    )
+
+
+async def _adapt_legal_multiple_choice_answer(
+    *,
+    request: Request,
+    request_body: ChatCompletionRequest,
+    user_message: str,
+    runtime_response: Any,
+) -> dict[str, Any]:
+    answer_contract = dict(runtime_response.answer_contract or {})
+    source_cards = answer_contract.get("source_cards") if isinstance(answer_contract.get("source_cards"), list) else []
+    verification_status = answer_contract.get("verification_status")
+    default_status = _default_mcq_evidence_status(
+        runtime_blocked=bool(runtime_response.blocked),
+        verification_status=str(verification_status) if verification_status else None,
+        source_cards=source_cards,
+    )
+    selected_option: str | None = None
+    rationale: str | None = None
+    adapter_error: str | None = None
+
+    options = _extract_multiple_choice_options(user_message)
+    orchestrator = _get_orchestrator(request)
+    llm_client = getattr(orchestrator, "llm_client", None)
+    if options and llm_client is not None and hasattr(llm_client, "chat"):
+        from llm.client import ChatMessage
+
+        adapter_payload = {
+            "task": "legal_multiple_choice_adapter",
+            "contract": {
+                "selected_option": "A|B|C|D|E",
+                "evidence_status": "evidence_used|limited_evidence|unsupported_best_effort|blocked",
+                "rationale": "short Turkish legal reasoning; no fabricated sources",
+            },
+            "rules": [
+                "Return only JSON.",
+                "Do not use or infer any answer key.",
+                "Use only the user question, options, advisor answer, and provided evidence summary.",
+                "If evidence is weak but the question asks for an exam choice, select the best option and mark unsupported_best_effort.",
+                "This is not production legal advice.",
+            ],
+            "question": user_message,
+            "options": options,
+            "runtime_blocked": bool(runtime_response.blocked),
+            "runtime_final_reason": runtime_response.final_reason,
+            "runtime_verification_status": verification_status,
+            "source_cards": [
+                {
+                    "evidence_id": card.get("evidence_id"),
+                    "source_type": card.get("source_type"),
+                    "citation": card.get("citation"),
+                }
+                for card in source_cards[:10]
+                if isinstance(card, dict)
+            ],
+            "evidence_items": _compact_mcq_evidence(answer_contract),
+            "advisor_answer": _compact_mcq_text(runtime_response.answer, 1600),
+        }
+        try:
+            result = await llm_client.chat(
+                messages=[
+                    ChatMessage(
+                        role="system",
+                        content=(
+                            "Sen Türk hukuku çoktan seçmeli sınav soruları için genel bir cevap "
+                            "adaptörüsün. Hukuki tavsiye verme; yalnız A-E seçenek seçimini ve "
+                            "kanıt durumunu JSON olarak döndür."
+                        ),
+                    ),
+                    ChatMessage(role="user", content=json.dumps(adapter_payload, ensure_ascii=False, sort_keys=True)),
+                ],
+                temperature=request_body.temperature if request_body.temperature is not None else 0.0,
+                max_tokens=360,
+            )
+            parsed = _parse_mcq_adapter_payload(result.text)
+            selected_option = parsed["selected_option"]
+            rationale = parsed["rationale"]
+            default_status = parsed["evidence_status"] or default_status
+        except Exception as exc:  # noqa: BLE001 - adapter must fail closed without changing normal answer.
+            adapter_error = exc.__class__.__name__
+            logger.warning("Legal multiple-choice adapter failed; preserving blocked/no-choice contract", exc_info=True)
+    else:
+        adapter_error = "mcq_options_or_llm_unavailable"
+
+    answer_text = _render_mcq_answer(
+        selected_option=selected_option,
+        rationale=rationale,
+        evidence_status=default_status,
+        final_reason=runtime_response.final_reason,
+    )
+    outcome = _mcq_outcome(
+        selected_option=selected_option,
+        evidence_status=default_status,
+        runtime_blocked=bool(runtime_response.blocked),
+        error=adapter_error if adapter_error and not selected_option else None,
+    )
+    answer_contract.update(
+        {
+            "answer_text": answer_text,
+            "legal_task_type": "multiple_choice",
+            "selected_option": selected_option,
+            "choice_evidence_status": default_status,
+            "mcq_outcome": outcome,
+            "mcq_adapter_error": adapter_error,
+            "advisor_answer_text": runtime_response.answer,
+        }
+    )
+    return {
+        "answer_text": answer_text,
+        "answer_contract": answer_contract,
+        "mcq_outcome": outcome,
+        "adapter_error": adapter_error,
+    }
+
+
 def _estimate_chat_usage(
     messages: list[ConversationMessage],
     answer_text: str,
@@ -3405,6 +3655,7 @@ def _build_canonical_request_snapshot(
         "use_verification": request_body.use_verification,
         "top_k": request_body.top_k,
         "include_trace": request_body.include_trace,
+        "legal_task_type": request_body.legal_task_type,
     }
 
 
@@ -3905,6 +4156,7 @@ def _request_stage_payload(request_body: ChatCompletionRequest) -> dict[str, Any
         "use_verification": request_body.use_verification,
         "top_k": request_body.top_k,
         "include_trace": request_body.include_trace,
+        "legal_task_type": request_body.legal_task_type,
     }
 
 
@@ -3919,6 +4171,7 @@ def _normalized_request_stage_payload(request_body: ChatCompletionRequest) -> di
         "use_verification": bool(request_body.use_verification),
         "top_k": int(request_body.top_k),
         "include_trace": bool(request_body.include_trace),
+        "legal_task_type": request_body.legal_task_type,
     }
 
 
@@ -5222,6 +5475,21 @@ async def chat_completions(
                 "final_mode": runtime_response.final_mode,
                 "final_reason": runtime_response.final_reason,
             }
+            answer_text = runtime_response.answer
+            answer_contract = runtime_response.answer_contract
+            if _is_legal_multiple_choice_task(request_body.legal_task_type):
+                mcq_adapter = await _adapt_legal_multiple_choice_answer(
+                    request=request,
+                    request_body=request_body,
+                    user_message=last_user_msg,
+                    runtime_response=runtime_response,
+                )
+                answer_text = mcq_adapter["answer_text"]
+                answer_contract = mcq_adapter["answer_contract"]
+                trace_payload["answer_contract"] = answer_contract
+                trace_payload["legal_task_type"] = "multiple_choice"
+                trace_payload["mcq_outcome"] = mcq_adapter["mcq_outcome"]
+                trace_payload["mcq_adapter_error"] = mcq_adapter["adapter_error"]
             pre_answer_payload = _pre_answer_stage_payload(
                 decision_lane="legal_rag_runtime",
                 user_message=last_user_msg,
@@ -5251,13 +5519,13 @@ async def chat_completions(
                 user_message=last_user_msg,
                 conversation_history=conversation_history,
                 pre_answer_payload=pre_answer_payload,
-                answer_text=runtime_response.answer,
+                answer_text=answer_text,
                 citations=runtime_response.citations,
                 blocked=runtime_response.blocked,
                 guardrails_reasons=runtime_response.guardrails_reasons,
                 verification=runtime_response.verification,
                 trace_payload=trace_payload,
-                answer_contract=runtime_response.answer_contract,
+                answer_contract=answer_contract,
                 final_mode=runtime_response.final_mode,
                 final_reason=runtime_response.final_reason,
                 upstream_usage=runtime_response.usage,

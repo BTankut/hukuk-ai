@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
 import statistics
 import time
@@ -19,8 +20,9 @@ OPTION_KEYS = ("A", "B", "C", "D", "E")
 LAW_NUMBER_RE = re.compile(r"\b(?!(?:202[0-9])\b)(\d{3,5})\b")
 YEAR_RE = re.compile(r"\b(20\d{2})\b")
 FAILURE_BUCKETS = (
-    "answer_parse_failure",
-    "blocked_or_refused",
+    "wrong_option_verified",
+    "wrong_option_limited_evidence",
+    "blocked_no_choice",
     "retrieval_missing_mevzuat",
     "retrieval_missing_judicial",
     "wrong_legal_rule",
@@ -30,8 +32,11 @@ FAILURE_BUCKETS = (
     "non_legal_or_iktisat",
     "llm_reasoning_error",
     "timeout_or_api_error",
+    "unparseable",
     "unknown",
 )
+APP_MODES = {"app_rag_mcq", "app_rag_strict_advisor", "app"}
+MCQ_EVIDENCE_STATUSES = {"evidence_used", "limited_evidence", "unsupported_best_effort", "blocked"}
 
 
 @dataclass(frozen=True)
@@ -132,13 +137,15 @@ def preflight_dataset(data: Any) -> PreflightResult:
 def build_prompt(question: dict[str, Any]) -> str:
     options = question["options"]
     return (
-        "Aşağıdaki Türk hukuku çoktan seçmeli sorusunu değerlendir.\n\n"
-        "Kurallar:\n"
-        "- Yalnızca A, B, C, D veya E seçeneklerinden birini seç.\n"
-        "- Cevabını uygulamanın seçtiği hukuki kanıtlarla kısa gerekçelendir.\n"
-        "- Cevap anahtarına erişimin yoktur; yalnızca soru metni, seçenekler ve hukuki kanıtları kullan.\n"
-        "- Kanıt yetersizse yine en iyi hukuki değerlendirmeyle bir seçenek seç, fakat belirsizliği belirt.\n"
-        "- Çıktının ilk satırı şu formatta olsun: SEÇENEK: <A-E>\n\n"
+        "Aşağıdaki Türk hukuku çoktan seçmeli sorusunu cevapla.\n\n"
+        "Çıktı kuralları:\n"
+        "- İlk satır tam olarak şu formatta olmalı: SEÇENEK: <A|B|C|D|E>\n"
+        "- İkinci bölümde kısa gerekçe ver.\n"
+        "- Gerekçede mevzuat ve varsa yargı kararı kanıtlarını kullan.\n"
+        "- Cevap anahtarına erişimin yoktur.\n"
+        "- Sadece soru metni, seçenekler ve getirilen hukukî kanıtları kullan.\n"
+        "- Kanıt yetersizse yine en iyi hukukî değerlendirmeyle bir seçenek seç, ancak kanıt durumunu belirt.\n"
+        "- Kaynak uydurma.\n\n"
         f"Soru adı:\n{question['question_name']}\n\n"
         f"Soru:\n{question['question']}\n\n"
         "Seçenekler:\n"
@@ -150,41 +157,121 @@ def build_prompt(question: dict[str, Any]) -> str:
     )
 
 
-def extract_selected_option(text: str) -> dict[str, Any]:
-    head = "\n".join(text.splitlines()[:6])
-    patterns = [
-        ("secenek_line", re.compile(r"\bSE[ÇC]ENEK\s*[:：-]\s*([A-E])\b", re.IGNORECASE)),
-        ("cevap_line", re.compile(r"\bCEVAP\s*[:：-]\s*([A-E])\b", re.IGNORECASE)),
+def build_strict_advisor_prompt(question: dict[str, Any]) -> str:
+    options = question["options"]
+    return (
+        "Aşağıdaki Türk hukuku çoktan seçmeli sorusunu kaynaklı hukuk danışmanı gibi değerlendir.\n\n"
+        "Cevap anahtarına erişimin yoktur; yalnızca soru metni, seçenekler ve hukuki kanıtları kullan.\n\n"
+        f"Soru adı:\n{question['question_name']}\n\n"
+        f"Soru:\n{question['question']}\n\n"
+        "Seçenekler:\n"
+        f"A) {options['A']}\n"
+        f"B) {options['B']}\n"
+        f"C) {options['C']}\n"
+        f"D) {options['D']}\n"
+        f"E) {options['E']}\n"
+    )
+
+
+def _selected_option_from_payload(payload: dict[str, Any] | None) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    candidates = [
+        payload.get("selected_option"),
+        payload.get("predicted_answer"),
     ]
-    for method, pattern in patterns:
-        match = pattern.search(head)
-        if match:
-            return {
-                "predicted_answer": match.group(1).upper(),
-                "answer_parse_method": method,
-                "answer_parse_confidence": 1.0,
-                "unparseable": False,
-            }
-    for line in text.splitlines()[:4]:
-        match = re.search(r"(^|[\s:\-])([A-E])([\).:\-\s]|$)", line.strip(), re.IGNORECASE)
-        if match:
-            return {
-                "predicted_answer": match.group(2).upper(),
-                "answer_parse_method": "first_standalone_option_marker",
-                "answer_parse_confidence": 0.5,
-                "unparseable": False,
-            }
+    answer_contract = payload.get("answer_contract") if isinstance(payload.get("answer_contract"), dict) else {}
+    candidates.extend(
+        [
+            answer_contract.get("selected_option"),
+            answer_contract.get("predicted_answer"),
+        ]
+    )
+    for candidate in candidates:
+        value = str(candidate or "").strip().upper()
+        if value in OPTION_KEYS:
+            return value
+    return None
+
+
+def _parse_success(option: str, method: str, confidence: float = 1.0) -> dict[str, Any]:
+    return {
+        "predicted_answer": option,
+        "answer_parse_method": method,
+        "answer_parse_confidence": confidence,
+        "unparseable": False,
+    }
+
+
+def _parse_failure(method: str = "unparseable") -> dict[str, Any]:
     return {
         "predicted_answer": None,
-        "answer_parse_method": "unparseable",
+        "answer_parse_method": method,
         "answer_parse_confidence": 0.0,
         "unparseable": True,
     }
 
 
+def extract_selected_option(text: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    first_line = lines[0] if lines else ""
+    first_line_match = re.match(r"^SE[ÇC]ENEK\s*:\s*([A-E])\s*$", first_line, re.IGNORECASE)
+    if first_line_match:
+        return _parse_success(first_line_match.group(1).upper(), "secenek_first_line")
+
+    payload_option = _selected_option_from_payload(payload)
+    if payload_option:
+        return _parse_success(payload_option, "json_selected_option")
+
+    head = lines[:5]
+    exact_candidates: list[tuple[str, str]] = []
+    for line in head:
+        suffix = r"(?:[\s'’]*(?:dir|dır|dur|dür|tir|tır|tur|tür))?"
+        cevap_match = re.match(rf"^CEVAP\s*:\s*([A-E]){suffix}[\s.!]*$", line, re.IGNORECASE)
+        if cevap_match:
+            exact_candidates.append((cevap_match.group(1).upper(), "cevap_line"))
+            continue
+        dogru_match = re.match(
+            rf"^DO[ĞG]RU\s+SE[ÇC]ENEK\s*:\s*([A-E]){suffix}[\s.!]*$",
+            line,
+            re.IGNORECASE,
+        )
+        if dogru_match:
+            exact_candidates.append((dogru_match.group(1).upper(), "dogru_secenek_line"))
+    distinct_exact = {candidate for candidate, _method in exact_candidates}
+    if len(distinct_exact) > 1:
+        return _parse_failure("conflicting_choices")
+    if exact_candidates:
+        option, method = exact_candidates[0]
+        return _parse_success(option, method)
+
+    standalone: list[str] = []
+    for line in head:
+        match = re.match(r"^([A-E])(?:[\).:\-]|$)(?:\s|$)", line, re.IGNORECASE)
+        if match:
+            standalone.append(match.group(1).upper())
+    if len(set(standalone)) == 1 and len(standalone) == 1:
+        return _parse_success(standalone[0], "first_standalone_option_marker", 0.5)
+    if len(set(standalone)) > 1 or len(standalone) > 1:
+        return _parse_failure("conflicting_choices")
+    return _parse_failure()
+
+
 def parse_exam_year(question_name: str) -> int | None:
     match = YEAR_RE.search(question_name or "")
     return int(match.group(1)) if match else None
+
+
+def classify_question_source(question_name: str) -> str:
+    normalized = (question_name or "").lower()
+    ascii_normalized = normalized.translate(str.maketrans({"ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u"}))
+    if "hmgs" in normalized:
+        return "hmgs"
+    if "iyös" in normalized or "iyos" in normalized:
+        return "iyos"
+    if "adalet bakanl" in ascii_normalized:
+        return "adalet_bakanligi"
+    return "unknown"
 
 
 def law_numbers_mentioned(question: dict[str, Any]) -> list[str]:
@@ -300,19 +387,56 @@ def _current_law_state_present(source_cards: list[dict[str, Any]]) -> bool:
     return False
 
 
+def _choice_evidence_status(payload: dict[str, Any], answer_text: str) -> str | None:
+    answer_contract = payload.get("answer_contract") if isinstance(payload.get("answer_contract"), dict) else {}
+    candidates = [
+        payload.get("choice_evidence_status"),
+        payload.get("evidence_status"),
+        answer_contract.get("choice_evidence_status"),
+        answer_contract.get("evidence_status"),
+    ]
+    for candidate in candidates:
+        value = str(candidate or "").strip().lower()
+        if value in MCQ_EVIDENCE_STATUSES:
+            return value
+    match = re.search(r"(?im)^KAYNAK\s+DURUMU\s*:\s*([a-z_]+)\s*$", answer_text)
+    if match and match.group(1).lower() in MCQ_EVIDENCE_STATUSES:
+        return match.group(1).lower()
+    return None
+
+
+def _mcq_outcome(row: dict[str, Any]) -> str:
+    if row.get("error_type"):
+        return "api_error"
+    if row.get("blocked") and not row.get("predicted_answer"):
+        return "blocked_no_choice"
+    if row.get("unparseable"):
+        return "unparseable"
+    status = str(row.get("choice_evidence_status") or "")
+    if status == "evidence_used" and row.get("verification_status") == "pass":
+        return "verified_choice"
+    if status == "limited_evidence":
+        return "limited_evidence_choice"
+    if status == "blocked" and row.get("blocked"):
+        return "blocked_no_choice"
+    return "unsupported_best_effort_choice"
+
+
 def _failure_bucket(row: dict[str, Any]) -> str:
     if row.get("error_type"):
         return "timeout_or_api_error" if "timeout" in row["error_type"] or "url" in row["error_type"] else "unknown"
+    if row.get("mcq_outcome") == "blocked_no_choice":
+        return "blocked_no_choice"
     if row.get("unparseable"):
-        return "answer_parse_failure"
-    if row.get("blocked"):
-        return "blocked_or_refused"
-    if row.get("possible_current_law_conflict"):
-        return "current_law_possible_conflict"
+        return "unparseable"
     if row.get("is_correct") is True:
         return "none"
     if row.get("domain") == "iktisat_or_non_legal":
         return "non_legal_or_iktisat"
+    if row.get("mcq_outcome") == "verified_choice":
+        return "wrong_option_verified"
+    if row.get("mcq_outcome") in {"limited_evidence_choice", "unsupported_best_effort_choice"}:
+        return "wrong_option_limited_evidence"
     if row.get("source_card_count", 0) == 0:
         if any("judicial" in lane or "yargi" in lane for lane in row.get("retrieval_lanes") or []):
             return "retrieval_missing_judicial"
@@ -321,6 +445,8 @@ def _failure_bucket(row: dict[str, Any]) -> str:
         return "source_type_confusion"
     if row.get("verification_status") == "fail":
         return "citation_mismatch"
+    if row.get("possible_current_law_conflict"):
+        return "current_law_possible_conflict"
     if row.get("source_card_count", 0) > 0 and row.get("is_correct") is False:
         return "wrong_legal_rule"
     return "llm_reasoning_error"
@@ -330,35 +456,61 @@ def run_question(
     question: dict[str, Any],
     *,
     api_base: str,
+    llm_base: str | None,
     model: str,
+    mode: str,
     streaming: bool,
     judicial_enabled: bool,
     temperature: float,
     timeout_seconds: float,
 ) -> dict[str, Any]:
-    prompt = build_prompt(question)
+    prompt = build_strict_advisor_prompt(question) if mode in {"app", "app_rag_strict_advisor"} else build_prompt(question)
     request_payload = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "stream": streaming,
         "temperature": temperature,
-        "include_trace": False,
+        "include_trace": mode in APP_MODES,
     }
+    if mode == "app_rag_mcq":
+        request_payload["legal_task_type"] = "multiple_choice"
     started = time.perf_counter()
     error_type: str | None = None
     payload: dict[str, Any] = {}
     answer_text = ""
     try:
-        url = api_base.rstrip("/") + "/v1/chat/completions"
-        if streaming:
-            answer_text, metadata = _post_stream(url, request_payload, timeout_seconds)
-            payload = dict(metadata)
-            payload.setdefault("choices", [{"message": {"content": answer_text}}])
-        else:
-            payload = _post_json(url, request_payload, timeout_seconds)
+        if mode == "llm_direct_mcq":
+            if not llm_base:
+                raise ValueError("--llm-base or DGX_BASE_URL is required for llm_direct_mcq")
+            url = llm_base.rstrip("/") + "/chat/completions"
+            direct_payload = dict(request_payload)
+            direct_payload["stream"] = False
+            direct_payload["messages"] = [
+                {
+                    "role": "system",
+                    "content": (
+                        "Türk hukuku çoktan seçmeli sınav sorularını cevapla. "
+                        "İlk satır tam olarak SEÇENEK: <A|B|C|D|E> olsun. "
+                        "Cevap anahtarına erişimin yoktur."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ]
+            payload = _post_json(url, direct_payload, timeout_seconds)
             choices = payload.get("choices") or []
             if choices:
                 answer_text = str(((choices[0].get("message") or {}).get("content")) or "")
+        else:
+            url = api_base.rstrip("/") + "/v1/chat/completions"
+            if streaming:
+                answer_text, metadata = _post_stream(url, request_payload, timeout_seconds)
+                payload = dict(metadata)
+                payload.setdefault("choices", [{"message": {"content": answer_text}}])
+            else:
+                payload = _post_json(url, request_payload, timeout_seconds)
+                choices = payload.get("choices") or []
+                if choices:
+                    answer_text = str(((choices[0].get("message") or {}).get("content")) or "")
     except TimeoutError:
         error_type = "timeout"
     except urllib.error.URLError as exc:
@@ -367,11 +519,15 @@ def run_question(
         error_type = f"api_error:{exc.__class__.__name__}"
     latency_ms = round((time.perf_counter() - started) * 1000, 3)
 
-    parsed = extract_selected_option(answer_text)
+    parsed = extract_selected_option(answer_text, payload)
     expected = str(question.get("answer", "")).upper()
     source_cards = payload.get("source_cards") if isinstance(payload.get("source_cards"), list) else []
     source_types = _source_types(source_cards)
     final_reason = payload.get("final_reason")
+    choice_evidence_status = _choice_evidence_status(payload, answer_text)
+    blocked = bool(payload.get("blocked", False))
+    if blocked and parsed["unparseable"]:
+        parsed = {**parsed, "unparseable": False, "answer_parse_method": "blocked_no_choice"}
     current_law_metadata = _current_law_state_present(source_cards)
     verification = payload.get("verification") if isinstance(payload.get("verification"), dict) else {}
     answer_contract = payload.get("answer_contract") if isinstance(payload.get("answer_contract"), dict) else {}
@@ -388,21 +544,23 @@ def run_question(
         "id": question["id"],
         "question_name": question["question_name"],
         "exam_year": parse_exam_year(str(question.get("question_name", ""))),
+        "question_source": classify_question_source(str(question.get("question_name", ""))),
         "domain": classify_domain(question),
         "law_numbers_mentioned": law_numbers_mentioned(question),
         "expected_answer": expected,
         "predicted_answer": parsed["predicted_answer"],
-        "is_correct": parsed["predicted_answer"] == expected if not parsed["unparseable"] else False,
+        "is_correct": (parsed["predicted_answer"] == expected if not blocked and not parsed["unparseable"] else False),
         "answer_parse_method": parsed["answer_parse_method"],
         "answer_parse_confidence": parsed["answer_parse_confidence"],
         "unparseable": parsed["unparseable"],
         "raw_answer_excerpt": _compact_excerpt(answer_text),
-        "blocked": bool(payload.get("blocked", False)),
+        "blocked": blocked,
         "final_reason": final_reason,
         "legal_rag_runtime_mode": payload.get("legal_rag_runtime_mode"),
         "judicial_runtime_enabled": payload.get("judicial_runtime_enabled", judicial_enabled),
         "judicial_ready": payload.get("judicial_ready"),
         "verification_status": payload.get("verification_status"),
+        "choice_evidence_status": choice_evidence_status,
         "source_card_count": len(source_cards),
         "source_types_used": source_types,
         "retrieval_lanes": _retrieval_lanes(payload, source_cards),
@@ -412,10 +570,11 @@ def run_question(
             verification.get("source_type_confusion") or verification_metadata.get("source_type_confusion")
         ),
         "review_needed": False,
-        "runtime_mode": "app_stream" if streaming else "app",
+        "runtime_mode": mode,
         "latency_ms": latency_ms,
         "error_type": error_type,
     }
+    row["mcq_outcome"] = _mcq_outcome(row)
     row["failure_bucket"] = _failure_bucket(row)
     row["review_needed"] = bool(
         row["error_type"]
@@ -453,7 +612,13 @@ def _accuracy_group(rows: list[dict[str, Any]], key: str) -> dict[str, Any]:
     }
 
 
-def build_summary(rows: list[dict[str, Any]], *, dataset_count: int, health: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_summary(
+    rows: list[dict[str, Any]],
+    *,
+    dataset_count: int,
+    mode: str = "app_rag_mcq",
+    health: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     attempted = len(rows)
     correct = sum(1 for row in rows if row.get("is_correct") is True)
     unparseable = sum(1 for row in rows if row.get("unparseable"))
@@ -475,6 +640,7 @@ def build_summary(rows: list[dict[str, Any]], *, dataset_count: int, health: dic
         if bucket != "none":
             buckets[bucket if bucket in buckets else "unknown"] += 1
     return {
+        "mode": mode,
         "dataset_count": dataset_count,
         "attempted_count": attempted,
         "correct_count": correct,
@@ -482,8 +648,10 @@ def build_summary(rows: list[dict[str, Any]], *, dataset_count: int, health: dic
         "unparseable_count": unparseable,
         "blocked_count": blocked,
         "raw_accuracy": _rate(correct, attempted),
+        "raw_accuracy_against_answer_key": _rate(correct, attempted),
         "accuracy_by_domain": _accuracy_group(rows, "domain"),
         "accuracy_by_exam_year": _accuracy_group(rows, "exam_year"),
+        "accuracy_by_question_source": _accuracy_group(rows, "question_source"),
         "accuracy_by_runtime_mode": _accuracy_group(rows, "runtime_mode"),
         "average_latency_ms": round(statistics.fmean(latencies), 3) if latencies else None,
         "p50_latency_ms": _percentile(latencies, 0.50),
@@ -493,7 +661,16 @@ def build_summary(rows: list[dict[str, Any]], *, dataset_count: int, health: dic
         "legislation_source_usage_rate": _rate(legislation_usage, attempted),
         "judicial_source_usage_rate": _rate(judicial_usage, attempted),
         "mixed_source_usage_rate": _rate(mixed_usage, attempted),
+        "limited_evidence_count": sum(1 for row in rows if row.get("choice_evidence_status") == "limited_evidence"),
+        "unsupported_best_effort_count": sum(
+            1 for row in rows if row.get("choice_evidence_status") == "unsupported_best_effort"
+        ),
         "possible_current_law_conflict_count": sum(1 for row in rows if row.get("possible_current_law_conflict")),
+        "manual_review_ids": [
+            row.get("id")
+            for row in rows
+            if row.get("review_needed") or row.get("possible_current_law_conflict") or row.get("blocked")
+        ],
         "review_needed_count": sum(1 for row in rows if row.get("review_needed")),
         "failure_buckets": dict(sorted(buckets.items(), key=lambda item: (-item[1], item[0]))),
         "health": health or {},
@@ -526,7 +703,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
 
     selected = _select_questions(preflight.questions, ids=args.ids, limit=args.limit)
     health: dict[str, Any] | None = None
-    if args.mode == "app":
+    if args.mode in APP_MODES:
         health = fetch_health(args.api_base, args.timeout_seconds)
         expected_judicial = bool(args.judicial_enabled)
         actual_judicial = bool(health.get("judicial_runtime_enabled"))
@@ -544,7 +721,9 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                 run_question,
                 question,
                 api_base=args.api_base,
+                llm_base=args.llm_base or os.getenv("DGX_BASE_URL"),
                 model=args.model,
+                mode=args.mode,
                 streaming=args.streaming,
                 judicial_enabled=args.judicial_enabled,
                 temperature=args.temperature,
@@ -559,7 +738,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     with (output_dir / "results.jsonl").open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
-    summary = build_summary(rows, dataset_count=preflight.payload["question_count"], health=health)
+    summary = build_summary(rows, dataset_count=preflight.payload["question_count"], mode=args.mode, health=health)
     (output_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
         encoding="utf-8",
@@ -573,10 +752,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--data-path", default=None)
     parser.add_argument("--output-dir", default=".local_eval/trlawbench_osym")
     parser.add_argument("--api-base", default="http://127.0.0.1:8000")
+    parser.add_argument("--llm-base", default=None)
     parser.add_argument("--model", required=True)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--ids", default=None)
-    parser.add_argument("--mode", choices=["app"], default="app")
+    parser.add_argument(
+        "--mode",
+        choices=["app_rag_mcq", "app_rag_strict_advisor", "llm_direct_mcq", "app"],
+        default="app_rag_mcq",
+    )
     parser.add_argument("--streaming", type=str_to_bool, default=False)
     parser.add_argument("--judicial-enabled", type=str_to_bool, default=True)
     parser.add_argument("--temperature", type=float, default=0.0)
